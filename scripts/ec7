@@ -1,0 +1,8 @@
+#!/bin/sh
+
+EMACS_NUMBER=7
+EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
+
+export EMACS_NUMBER EMACSCLIENT_SOCKET
+
+emacsclient -s $EMACSCLIENT_SOCKET --no-wait $*

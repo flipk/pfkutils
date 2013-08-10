@@ -1,0 +1,60 @@
+
+    send_done
+    receive_done
+
+    if ( first ) {
+        put_affected_file();
+        get_affected_file();
+        print_file_summary();
+        put_created_changed();
+        get_created_changed();
+        put_removed();
+        get_removed();
+    } else {
+        get_affected_file();
+        put_affected_file();
+        print_file_summary();
+        get_created_changed();
+        put_created_changed();
+        get_removed();
+        put_removed();
+    }
+
+
+put_affected_file()
+  for all on the 3 lists
+     send affected-file
+     wait for affected-file-status
+     move conflicts to conflictlist
+  send affected-done
+
+get_affected_file()
+  while !affected-done msg
+     wait for msg
+     reply to affected-file msg
+
+print_file_summary()
+
+put_created_changed()
+  for all on created+changed lists
+     send changed-file-name
+     while file !empty
+        send changed-file-contents
+     send changed-file-done
+
+get_created_changed()
+  while !changed-file-done
+     changed-file-name
+     changed-file-contents
+     changed-file-done
+
+put_removed()
+  for all on removed list
+     send removed-file-name
+  send sync-done
+
+get_removed()
+  accept
+     removed-file-name
+     sync-done
+

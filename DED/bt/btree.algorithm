@@ -1,0 +1,115 @@
+
+get_node( key )
+	local nod = rootnode
+	while true
+		lock nod
+		for i = 0 to sizeof( nod )
+			currec = nod->rec[i]
+			lock currec
+			r = compare currec to key
+			if r == match
+				unlock nod
+				return currec
+			unlock currec
+			if r < 0
+				break;
+		if nod is leaf node
+			unlock nod
+			return null
+		newnod = nod->nodes[i]
+		unlock nod
+		nod = newnod
+	endwhile
+	// notreached
+
+constant int max_levels_deep = 30   [arbitrary]
+    [could also make a dynamic linked list]
+
+put_node( key, data )
+	local nod = rootnode
+	local nods[ max_levels_deep ]
+	local numlevs = 0
+	while true
+		for i = 0 to sizeof( nod )
+			r = compare nod->rec[i] to key
+			if r <= 0
+				break
+		if r == 0 && put_overwrites
+			replace nod->rec[i].data with data
+			return
+		nods[ numlevs ].nod = nod
+		nods[ numlevs ].i = i
+		numlevs++;
+		if nod is leaf node
+			break
+		nod = nod->nodes[i]
+	endwhile
+	local node right = null
+	local rec newrec = makerec( key, data )
+	while true
+		if nod is not full
+			insert newrec at nod->rec[i]
+			if right != null
+				nod->nodes[i+1] = right
+			return
+		// else, nod is full so we must split and promote
+		right = splitnode( nod, &newrec )
+		if numlevs==0
+			// make new root node containing only
+			// newrec, pointing at nod and right
+			return
+		numlevs--
+		nod = nods[ numlevs ].nod
+		i   = nods[ numlevs ].i
+	endwhile
+
+delete:   input:item
+	curn = rootnode
+	while item not found
+		index = walknode( curn, item )
+		add_nodstor( curn, index )
+		if found or cur is leaf
+			break;
+		curn = curn->ptr[index]
+	endwhile
+	if !found
+		unlock nodes on nodstor and free nodstor
+		return failure (not found)
+	foundn = curn
+	foundindex = index
+	free key/data at foundn/foundindex
+	while curn not leaf
+		if index != 0
+			curn = curn->ptr[index+1]
+		else
+			curn = curn->ptr[0]
+		add_nodstor( curn, index )
+		index = 0
+	endwhile
+	if foundn != curn
+		copy curn/index to foundn/foundindex
+	slide down items above curn/index
+
+	while curn.items < half_node and curn is not root node
+		get parent/index from nodstor
+		locate right sib or left sib
+		if sib.items > half_node
+			[steal]
+			curn gets item from parent/index
+			parent gets item from sib/0 or sib/max
+			// curn should now pass half_node test
+		else
+			[coalesce]
+			curn gets item from parent/index
+			curn gets all items from sib
+			parent slides items above index down one
+			delete sib
+			if parent now has zero items, reparent tree
+			curn = parent
+			// if parent needs redistrib, 
+			// this node will also fail half_node test
+		endif
+	endwhile
+
+	unlock nodes on nodstor and free nodstor
+	return OK

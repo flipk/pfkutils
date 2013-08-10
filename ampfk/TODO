@@ -1,0 +1,3 @@
+
+- SUBDIRS
+- hooks: all-local, clean-local

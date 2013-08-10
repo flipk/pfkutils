@@ -1,0 +1,31 @@
+
+configure
+make
+make diffdotfiles
+make install
+
+blade:
+
+../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk
+
+hertz & adler:
+
+../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-ampfk
+
+bohr:
+
+PATH=/open_source/bin-sun/gcc/bin:$PATH STRIP=true ../configure --enable-environ=mot --enable-pdksh
+PATH=/open_source/bin-sun/gcc/bin:$PATH make
+PATH=/open_source/bin-sun/gcc/bin:$PATH make install
+
+kobukvalley:
+
+../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen --enable-ampfk
+
+faraday:
+
+../configure --enable-environ=mot --enable-pdksh --enable-ampfk
+
+sunlogin1:
+
+STRIP=true ../configure --enable-environ=mot --enable-pdksh

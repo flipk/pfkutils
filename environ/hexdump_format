@@ -1,0 +1,13 @@
+#
+# iteration count, byte count, format.
+#
+#  byte count : how many bytes each 'format' is applied to
+#  iteration count : how many units of 'byte count' to format at once.
+#
+# 1 1 _ax
+# 16 1 "%02x"
+#
+"%08_ax    "  4/1 "%02x" "  " 4/1 "%02x" "   " 4/1 "%02x" "  " 4/1 "%02x"
+"     ->" "%_p"
+"<-"
+"\n"

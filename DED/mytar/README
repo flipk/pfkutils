@@ -1,0 +1,109 @@
+
+TODO:
+   - there is something wrong with extract.  an update after an
+     extract seems to corrupt the whole database, every file becomes
+     one byte smaller!!
+   - delete files which are gone, first, before writing anything.
+   - if you can't open a file because its busy or something, just
+     skip it, mark it as up to date and leave it.
+   - combine all piece-md5s together into one data block to reduce
+     the amount of btree lookups required during the hunt for pieces
+     to update.
+
+this is a tool for archiving a set of files or a directory tree into
+an archive file, much like 'tar' does.  the difference is that this
+tool can selectively replace/update individual files in the archive in
+a space- and time-efficient manner.  in a 'tar' file, if you want to
+update one file in the archive, you must re-create the entire
+archive.  even 'zip' files have this problem.
+
+another problem is during extraction, if you want only one file or a
+directory of files extracted, you must wait while the entire archive
+is read linearly from start to finish.  this is true with TAR files,
+although it is not true with ZIP and some other formats.  with this
+tool, you can extract a single file or directory instantly because it
+can seek directly to the part of the archive which stores that file.
+
+this version also includes compression, for example using libz to
+block-compress each file.
+
+modes of operation:
+
+	create an 'mtar' file:
+		cd directory
+		mytar c file.mtar
+
+	freshen/update an 'mtar' file:
+		cd directory
+		mytar u file.mtar 
+
+	list contents of 'mtar' file:
+		mytar t file.mtar
+
+	extract contents:
+		mytar x file.mtar 
+		mytar x file.mtar filename
+		mytar x file.mtar directory
+
+internally, the 'mtar' file is actually a pkbt btree database.  there
+are the following types of records stored in this file:
+
+	- filename:  this is just an ascii string of the relative-path
+		of the filename.  leading '/' is not allowed, and no 
+		component is allowed to be "..".
+	    key  : "n" plus ascii filename, no NULL
+	    data : uniq file id number.
+	- file information:  this is a structure containing relevant
+		information about the file.  the file id number is a
+		32-bit number which is unique and randomly generated.
+	    key  : "i" plus file id number
+	    data : structure:
+			last-modified time
+			file size (64-bit number)
+			owner id, group id
+			file mode in 0777 format (rwxrwxrwx)
+	- file content info:  this is a small record describing a
+		piece of file data. each piece has a sequence number
+		identifying it within the piece stream.  each piece
+		has an md5sum so that if this piece has not changed,
+		it need not be rewritten.
+	    key  : "d" plus file id number plus piece number
+	    data : piecesize + recno_block_num + md5sum
+	- file contents:  this is a piece of file data.  a series of
+		these are strung together to hold the contents of a
+		file.  these are stored as pure raw recnoblock data
+		items, identified by recno_block_num field in the previous
+		datum.  they are not btree keys.
+
+
+algorithms:
+
+  process_dir:
+     foreach entry in dir
+        if entry is type dir,
+           process_dir  entry
+        else
+           db_ent = file_db.get_by_fname
+           if found
+              stat the file
+              compare stat.mtime to db_ent.mtime
+              if not match
+                  add file to list of files to update
+              update db_ent.mark
+           else
+              add file to list of files to add
+              update db_ent.mark
+
+  process_dir "."
+  foreach entry in btree_database
+     if entry.type == "i"
+        if mark != current_mark
+            delete entry from file_db
+  foreach entry in list of files to add
+     construct new db_ent
+     foreach piece in the file
+       ?
+
+  foreach entry in list of files to update
+     update_file
+

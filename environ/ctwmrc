@@ -1,0 +1,216 @@
+
+TitleFont        "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconManagerFont  "-adobe-helvetica-bold-r-normal--*-120-*-*-*"
+IconManagerGeometry   "150x100+0+91"
+
+UsePPosition "nonzero"
+
+OpenWindowTimeout    1
+MaxIconTitleWidth  150
+MoveOffResistance   20
+BorderWidth          3
+
+OpaqueMove
+NoDefaults
+DontMoveOff
+NoGrabServer
+SqueezeTitle
+WarpUnmapped
+NoRaiseOnMove
+PackNewWindows
+NoShowOccupyAll
+NoRaiseOnResize
+#ShowIconManager
+StartInMapState
+#SchrinkIconTitles
+DecorateTransients
+AutoRelativeResize
+#IconifyByUnmapping
+RestartPreviousState
+CenterFeedbackWindow
+ShortAllWindowsMenus
+ShowWorkSpaceManager
+AutoFocusToTransients
+#ReallyMoveInWorkspaceManager
+AlwaysShowWindowWhenMovingFromWorkspaceManager
+
+#           geometry        hgrav vgrav grid  iconjust iconregjust iconregalign
+IconRegion "945x64+246+20"  North West  10 10  "left"   "left"     "top"
+
+AutoSqueeze { "autosqueeze" }
+
+WorkSpaceManagerGeometry "120x60+0+25" 2
+WorkSpaces {
+#	space buttonbg  buttonfg  rootbg
+	"1" { "#203040" "#ffffff" }
+	"2" { "#203040" "#ffffff" }
+	"3" { "#203040" "#ffffff" }
+	"4" { "#203040" "#ffffff" }
+	"5" { "#203040" "#ffffff" }
+	"6" { "#203040" "#ffffff" }
+	"7" { "#203040" "#ffffff" }
+	"8" { "#203040" "#ffffff" }
+}
+
+NoTitle {
+	"Emacs Minibuffer*"
+	"Doxtrms"
+	"WorkSpaceManager"
+	"XTermScreen"
+	"NoTitle"
+	"XDaliClock"
+	"xdaliclock"
+	"Vncviewer"
+	"TWM Icon Manager"
+	"firefox-bin"
+	"thunderbird-bin"
+	"Wfica_Seamless"
+	"XVroot"
+	"Google-chrome"
+}
+
+IconManagerDontShow {
+	"Emacs Minibuffer"
+	"Doxtrms"
+}
+
+OccupyAll {
+	"Doxtrms"
+}
+
+MapWindowCurrentWorkSpace { "red" }
+
+Color
+{
+	BorderColor "#808080"
+	BorderTileBackground "white"
+	BorderTileForeground "black"
+	DefaultBackground "rgb:2/a/9"
+	DefaultForeground "gray85"
+	TitleBackground "#203040"
+	TitleForeground "gray85"
+	MenuBackground "#203040"
+	MenuForeground "gray85"
+	MenuTitleBackground "gray70"
+	MenuTitleForeground "rgb:2/a/9"
+	MapWindowBackground "yellow"
+	IconBackground "#c00000"
+	IconForeground "white"
+	IconBorderColor "gray85"
+	IconManagerBackground "#800000"
+	IconManagerForeground "white"
+}
+
+MoveDelta 3
+Function "move-or-raise" { f.movepack f.deltastop f.raiselower }
+Function "move-or-iconify" { f.move f.deltastop f.iconify }
+
+Button1 =   : root        : f.menu "defops"
+Button3 =   : root        : f.menu "TwmAllWindows"
+Button3 = s : root        : f.menu "TwmWindows"
+Button2 = s : window|icon : f.iconify
+Button2 = m : window|icon : f.resize
+Button3 = m : window|icon : f.function "move-or-raise"
+Button1 =   : title|frame : f.function "move-or-raise"
+Button2 =   : title|frame : f.resize
+Button3 =   : title|frame : f.menu "defops"
+Button1 =   : icon        : f.function "move-or-iconify"
+Button2 =   : icon        : f.iconify
+Button1 =   : iconmgr     : f.iconify
+Button2 =   : iconmgr     : f.iconify
+
+"t"     =   : root        : !"gnome-terminal --disable-factory &"
+"t"     = s : root        : !"gnome-terminal --disable-factory --title NoTitle &"
+"x"     =   : root        : !"x&"
+"x"     = s : root        : !"xs&"
+"e"     =   : root        : !"myemacs&"
+"r"     = c : root        : f.restart
+#"d"     = c : root        : f.quit
+#"l"	=   : root        : !"xlock&"
+"i"     =   : root        : f.showiconmgr
+"h"     =   : root        : f.hideiconmgr
+
+"0"     =   : root        : f.toggleworkspacemgr
+"1"     =   : root        : f.gotoworkspace "1"
+"2"     =   : root        : f.gotoworkspace "2"
+"3"     =   : root        : f.gotoworkspace "3"
+"4"     =   : root        : f.gotoworkspace "4"
+#"5"     =   : root        : f.gotoworkspace "5"
+#"6"     =   : root        : f.gotoworkspace "6"
+#"7"     =   : root        : f.gotoworkspace "7"
+#"8"     =   : root        : f.gotoworkspace "8"
+
+"F7"	=   : window            : f.raiselower
+
+"0"     = m : root|window|title : f.toggleworkspacemgr
+"1"     = m : root|window|title : f.gotoworkspace "1"
+"2"     = m : root|window|title : f.gotoworkspace "2"
+"3"     = m : root|window|title : f.gotoworkspace "3"
+"4"     = m : root|window|title : f.gotoworkspace "4"
+#"5"     = m : root|window|title : f.gotoworkspace "5"
+#"6"     = m : root|window|title : f.gotoworkspace "6"
+#"7"     = m : root|window|title : f.gotoworkspace "7"
+#"8"     = m : root|window|title : f.gotoworkspace "8"
+
+"Left"	= m : root|window|title : f.prevworkspace
+"Right"	= m : root|window|title : f.nextworkspace
+"Down"	= m : root|window|title : f.downworkspace
+"Up"	= m : root|window|title : f.upworkspace
+
+"Left"	=   : root              : f.prevworkspace
+"Right"	=   : root              : f.nextworkspace
+"Down"	=   : root              : f.downworkspace
+"Up"	=   : root              : f.upworkspace
+
+LeftTitleButton  ":xpm:dot"    = f.iconify
+LeftTitleButton  ":xpm:bar"    = f.squeeze
+RightTitleButton ":xpm:resize" = f.resize
+
+menu "defops"
+{
+	"Twm"			f.title
+	"Pin"			f.pin
+        ""			f.nop
+	"1024x768"		f.exec "xrandr -s 1024x768&"
+	"1280x1000"		f.exec "xrandr -s 1280x1000&"
+	"1280x1024"		f.exec "xrandr -s 1280x1024&"
+	"1360x768"		f.exec "xrandr -s 1360x768&"
+	"1440x900"		f.exec "xrandr -s 1440x900&"
+	"1440x876 t"		f.exec "xrandr -s 1440x876&"
+	"1376x876 sbt"		f.exec "xrandr -s 1376x876&"
+	"1600x1200"		f.exec "xrandr -s 1600x1200&"
+	"1920x1200 f"		f.exec "xrandr -s 1920x1200&"
+	"1920x1176 t"		f.exec "xrandr -s 1920x1176&"
+	"1856x1176 sb"		f.exec "xrandr -s 1856x1176&"
+	"1920x1080"		f.exec "xrandr -s 1920x1080&"
+        ""			f.nop
+	"Gnome terminal" 	f.exec "gnome-terminal --disable-factory &"
+        "Xterm (x)"		f.exec "x"
+        "XtermScreen (X)"	f.exec "xs"
+	"MANUAL"	f.exec "xterm -ut -fg black -bg gray85 -geometry 80x55 &"
+	"Firefox"		f.exec "firefox &"
+	"Chrome"		f.exec "google-chrome &"
+        ""			f.nop
+	"Iconify"		f.iconify
+	"Resize"		f.resize
+	"Move"			f.movepack
+	"MoveF"			f.forcemove
+        "Raise"			f.raise
+        "Lower"			f.lower
+        "Info"          	f.identify
+        "Occupy"		f.occupy
+        "Kill"			f.destroy
+        "Delete"		f.delete
+        ""			f.nop
+        "Focus"			f.focus
+        "Unfocus"		f.unfocus
+        "Show Iconmgr (i)"	f.showiconmgr
+        "Hide Iconmgr (h)"	f.hideiconmgr
+        ""			f.nop
+	"Reload Res"		!"xrdb -remove ; xrdb -load ~/.Xresources"
+        "Restart (^r)"		f.restart
+	"Exit"			f.quit
+}

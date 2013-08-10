@@ -1,0 +1,63 @@
+
+#define PFK_BUILD_ETG        @PFK_BUILD_etg@
+#define PFK_BUILD_PFKBAK     @PFK_BUILD_pfkbak@
+#define PFK_BUILD_SYSLOG     @PFK_BUILD_syslog@
+#define PFK_BUILD_CHECKSIZE  @PFK_BUILD_checksize@
+#define PFK_BUILD_TREESCAN   @PFK_BUILD_treescan@
+#define PFK_BUILD_SUDO       @PFK_BUILD_sudo@
+#define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
+
+#if PFK_BUILD_ETG
+PROG(0,etg_genkey,"Generate enc tel gate keys")
+PROG(1,etg_proxy,"Proxy enc tel gate worker")
+PROG(1,etg_worker,"Slave enc tel gate worker")
+PROG(0,pfktel_keygen,"Telnet daemon key generator")
+PROG(0,pfktel_keypick,"Telnet daemon key tester")
+PROG(0,pfktel_keyresp,"Telnet daemon key response generator")
+PROG(1,pfkteld,"Telnet daemon")
+#endif
+
+#if PFK_BUILD_PFKBAK
+PROG(0,pfkbak,"Incremental and full-history backup tool")
+#endif
+
+#if PFK_BUILD_SYSLOG
+PROG(0,syslogd,"syslogd server with regex patterns")
+PROG(0,postprocess_syslog,"syslog postprocessor with regex patterns")
+#endif
+
+#if PFK_BUILD_CHECKSIZE
+PROG(0,checksize,"check size of hard disk partition")
+#endif
+
+#if PFK_BUILD_TREESCAN
+PROG(0,treescan,"scan a tree producing tree info")
+#endif
+
+#if PFK_BUILD_SUDO
+PROG(1,sudo,"do a command as the superuser")
+#endif
+
+#if PFK_BUILD_AMPFK
+PROG(0,ampfk,"pfk build utils")
+#endif
+
+PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
+PROG(0,he,"hexedit")
+PROG(0,m,"hex/dec/bin mathematics on command line")
+PROG(0,random_hex,"generate a random hex number")
+PROG(0,random_text,"generate a random text string")
+PROG(0,rmstar,"recursive rm -rf but verbosely")
+PROG(0,fmtsdiff,"format sdiff output")
+PROG(0,genpw,"generate random passwords")
+PROG(0,xtermbar,"change title in the xterm")
+PROG(0,waitpid,"wait for some process ids to exit")
+PROG(0,i2,"internet pipe fitting mark II")
+PROG(0,pfkstat,"My own stat/ls command")
+PROG(0,fbdump,"FileBlock dumper")
+PROG(0,fbcompact,"FileBlock compacter")
+PROG(0,btdump,"FileBlock Btree dumper")
+
+#if 0 // TODO
+PROG(0,pkstgen,"phil knaack's state machine generator")
+#endif

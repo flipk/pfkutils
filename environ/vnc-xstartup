@@ -1,0 +1,29 @@
+#!/bin/sh
+
+cd $HOME
+
+# inform the .profile inside the xterm that this is the xconsole.
+# it will start the window manager there, so that all processes
+# started from the window manager will have a tty console.
+
+XCONSOLE=yes
+ENV=$HOME/.kshrc
+export XCONSOLE ENV
+
+eval `ssh-agent`
+
+add_size() {
+    modeline=$( cvt $1 $2 | awk '/^Modeline/ { $1=""; $2=""; print }' )
+    xrandr --newmode $1x$2 $modeline
+    xrandr --addmode default $1x$2
+}
+
+# note windows 7 start bar is 64 wide, and title bars are 24 tall.
+
+add_size 1440 900
+add_size 1376 876
+add_size 1440 876
+add_size 1280 1024
+add_size 1280 1000
+
+exec xterm -iconic +sb -geometry 80x10+0-20 -name Console

@@ -1,0 +1,99 @@
+
+TARG= libitsfs.a
+INODE_HEADERS= \
+	ino_types.h inode.H inode_remote.H inode_virtual.H
+INODE_SRCS= \
+	inode_remote.C inode_remote_tree.C \
+	inode_virtual.C inode_virtual_tree.C
+
+HDRS=	filehandle.H id_name_db.H svr.H remote_ino.H control_pipe.H \
+	nfssrv.H mytypes.h nfs_prot.h rpc.h xdr.h remote_ino_prot.h \
+	$(INODE_HEADERS)
+CSRCS=	nfs_prot.c rpc.c remote_ino_prot.c do_mount.c xdr.c
+CPPSRCS=filehandle.C id_name_db.C nfssrv.C control_pipe.C \
+	svr.C svr_globals.C remote_ino_client.C $(INODE_SRCS)
+
+OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o)
+
+INCS= -I../threads/h -I../dll2 -I../util -I..
+OPTS= -O3
+CC= gcc
+CCLINK= g++
+
+#ifdef solaris
+OPTS+= -DSOLARIS
+
+all: solaris $(TARG)
+
+solaris::
+	cp remote_ino_prot.c.sol remote_ino_prot.c
+	cp remote_ino_prot.h.sol remote_ino_prot.h
+#elifdef cygwin32
+OPTS+= -DCYGWIN
+
+all: cygwin32 $(TARG)
+
+cygwin32::
+	cp remote_ino_prot.c.sol remote_ino_prot.c
+	cp remote_ino_prot.h.sol remote_ino_prot.h
+#else
+all: $(TARG)
+#endif
+
+TOBJS= remote_ino_worker.o remote_ino_server.o
+TOBJS2= remote_ino_worker.o remote_ino_server.o remote_ino_prot.o xdr.o
+
+#ifdef solaris
+$(TARG): $(TOBJS2)
+#elifdef cygwin32
+$(TARG): $(TOBJS2)
+#else
+$(TARG): $(OBJS) $(TOBJS) bf
+#endif
+	rm -f $(TARG)
+#ifdef solaris
+	ar cq $(TARG) $(TOBJS2)
+#elifdef cygwin32
+	ar cq $(TARG) $(TOBJS2)
+#else
+	ar cq $(TARG) $(OBJS) $(TOBJS)
+#endif
+
+nfs_prot::
+	rpcgen -C -c nfs_prot.x | sed -e s,xdr_,myxdr_,g > nfs_prot.c
+	rpcgen -C -h nfs_prot.x | sed -e s,xdr_,myxdr_,g > nfs_prot.h
+
+remote_ino_prot.c: remote_ino_prot.x
+	rpcgen -C -c remote_ino_prot.x |\
+		sed -e s,char,uchar,g -e s,xdr_,myxdr_,g > remote_ino_prot.c
+#	cp remote_ino_prot.c remote_ino_prot.c.sol
+
+remote_ino_prot.h: remote_ino_prot.x
+	rpcgen -C -h remote_ino_prot.x |\
+		sed -e s,char,uchar,g -e s,xdr_,myxdr_,g \
+		-e 's,\#.*rpc/rpc.h.*$$,,' > remote_ino_prot.h
+#	cp remote_ino_prot.h remote_ino_prot.h.sol
+
+remote_ino_prot.o: remote_ino_prot.c remote_ino_prot.h
+	$(CC) $(OPTS) -c remote_ino_prot.c
+
+bf: bf.C xdr.o rpc.o
+	g++ bf.C -o bf xdr.o rpc.o
+
+.c.o:
+	$(CC) $(INCS) $(OPTS) -c $*.c
+
+.C.o:
+	$(CC) $(INCS) $(OPTS) -c $*.C
+
+depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	-gcc -M $(INCS) $(CSRCS) $(CPPSRCS) >> x
+	mv x Makefile
+
+clean:
+	rm -f *.o remote_ino_prot.[ch] \
+		*.core *~ M.cyg M.sol *.exe \
+		$(TARG) Makefile bf
+
+#DEPENDENCIES

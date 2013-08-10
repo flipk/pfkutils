@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# the 'tr' is here because cygwin puts parens in the revision string!
+
+os=`uname -s`
+rev=`uname -r | tr -d '()'`
+pf=$os-$rev
+
+echo $pf
+
+exit 0

@@ -1,0 +1,18 @@
+bell 'Bell in window % ~'
+activity 'Activity in window % ~'
+autodetach on
+defscrollback 5000
+chdir
+startup_message off
+deflogin off
+# acladd username
+# acldel username
+multiuser on
+defflow auto  interrupt
+bind k
+bind ^k
+bind .
+bind ^\
+bind \\
+bind 'K' kill
+bind '}' history

@@ -1,0 +1,83 @@
+
+this is the redzone malloc monitoring tool.  it is designed to catch a
+number of bugs concerning memory allocation and freeing.
+
+each allocated buffer is actually larger internally than the malloc
+user asks for; the constant REDZONE_SIZE determines how much "redzone"
+space is reserved before and after each buffer.
+
+when a buffer is in use, the first REDZONE_SIZE bytes and the last
+REDZONE_SIZE bytes are populated with the value ZONE_VALUE.  whenever
+the audit function is called, or whenever a buffer is freed, the
+buffer is checked to see if ZONE_VALUE still exists in the beginning
+and ending zone.  If any of those bytes are not ZONE_VALUE, an error
+is registered.  this catches user bugs where the user walks off the
+end of a malloc'd region, or happens to access memory just prior to
+the malloc'd region.
+
+when a buffer is allocated, the user portion of the buffer (not
+counting the redzones) are populated with LIVE_VALUE.  this is to help
+the user catch uninitialized field errors, for instance if the user
+calls malloc and then begins reading the members of the struct or
+whatever lives there before being written -- the LIVE_VALUE will end
+up showing up everywhere in the data, such as pointers and things.
+The value of LIVE_VALUE is chosen such that a pointer formed from it
+will cause a bus fault.
+
+when a buffer is freed, the entire buffer (user portion and redzones)
+are filled with DEAD_VALUE, to catch those cases where the application
+might continue to dereference a buffer pointer even when the buffer
+has been freed.  similar to above, the DEAD_VALUE will show up in user
+data, causing bus faults if the data is treated as pointers.
+
+redmalloc internally maintains a list of all buffers currently in use,
+for audit purposes.  this data is completely separate from the user
+buffers -- in case the user corrupts them, the redzone data should still
+be intact.  redmalloc stores two copies of a pointer inside the two
+redzones (exactly halfway in the middle of each redzone) which points
+to redmalloc's management structure for this buffer; to ensure further
+safety in case this pointer is corrupted, the pointer is actually
+stored four times: once in each zone in the middle, and once again
+XOR'd with a well-known value, so that the validity of the pointer
+value can be verified before it is dereferenced.
+
+when redmalloc needs to find the management control structure for a
+buffer, it has two options: look in the redzones for these pointers
+and their xor'd neighbors, or if those do not pass validity checks,
+walk the linear list of all memory blocks until it finds the match.
+thus, even if the user corrupts the redzones such that the pointers
+cannot be recovered, we can still manage the buffer.
+
+also, redmalloc's internal management structures store the program
+counter address which allocated this buffer, so that when an error is
+registered in the use of a buffer, a line of code can be produced
+which allocated the buffer in question -- this greatly helps to
+identify the purpose of the buffer which was corrupted, and thus helps
+identify candidate code which may have corrupted it.
+
+
+this code defines three functions which are externally callable:
+
+	void * _mymalloc( int size, int pc );
+	void   _myfree( void * ptr );
+	void   _mymallocaudit( void );
+
+the first two of the above functions should actually be called
+'malloc' and 'free'; however they are not named as such, in order to
+provide assembly frontend capability.  Specifically, in order to
+implement the 'pc' tracking, an assembly frontent called 'malloc'
+could peek backwards on the stack, grab the return address of the
+function which called 'malloc', and pass that value forwards to
+_mymalloc.  Similar frontends would exist for the C++ 'new' functions
+__builtin_new, __builtin_vec_new, etc.
+
+this code does not actually implement the malloc and free itself, you
+still require an outside library to do so. in order to implement the
+actual memory allocation and freeing, a real malloc library must also
+exist, with the functions 'malloc' and 'free' renamed to the following:
+
+	void * _real_malloc( int size );
+	void   _real_free( void * ptr );
+
+the redmalloc library will call these to perform actual memory allocations.
+

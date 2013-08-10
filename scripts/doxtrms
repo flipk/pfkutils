@@ -1,0 +1,41 @@
+#!/usr/bin/wish -f
+
+set hostname [exec hostname]
+
+proc doxterm { } {
+        catch {
+                exec xterm &
+        }
+}
+proc doxterm2 { } {
+        catch {
+                exec xterm -name XTermScreen &
+        }
+}
+proc sleep1 { } {
+	exec sleep 1
+}
+proc cleanup { } {
+        upvar ppid ppid
+        exit
+}
+
+if { [lindex $argv 0] == "-3" } {
+    set geom "=+297+25"
+} {
+    if { [lindex $argv 0] == "-2" } {
+        set geom "=+211+25"
+    } {
+        set geom "=+125+25"
+    }
+}
+
+wm title . "x-$hostname"
+wm geometry . $geom
+button .b1 -font fixed -text $hostname  -command doxterm -width 8
+pack .b1 -side left
+bind . "1" sleep1
+bind . <Button-2> doxterm2
+bind . "2" doxterm2
+bind . <Button-3> cleanup
+bind . "q" cleanup

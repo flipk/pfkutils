@@ -1,0 +1,17 @@
+
+- document libpfkutil
+
+- autoconf-ize ampfk (at least in a 'bootstrap' mode)
+- autoconf-ize diskloader
+
+autoconf:
+  - autoconfize pfkstat
+  - d3des implementation duplication (util & etg)
+
+threads:
+ - implement external tcp messaging in threads
+   - perhaps a connection manager object which has standard defined
+     messages for indicating connection established & connection lost,
+     as well as requests for establishing outgoing connections.
+   - perhaps support TCP & UDP as well.
+

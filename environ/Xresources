@@ -1,0 +1,134 @@
+*background:                  gray
+
+XTerm*termName: vt100
+XTerm*jumpScroll:             true
+XTerm*visualBell:             false
+XTerm*scrollBar:              on
+XTerm*utmpInhibit:            on
+XTerm*foreground:             green
+XTerm*background:             black
+XTerm*cursorColor:            white
+XTerm*Scrollbar*background:   red
+XTerm*Scrollbar*foreground:   blue
+XTerm*scrollKey:              true
+XTerm*scrollTtyOutput:        false
+XTerm*saveLines:              2000
+XTerm*vt100*charClass: 33:48,35:48,37:48,43:48,45-47:48,95:48,126:48
+
+XTerm*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+XTerm*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
+
+XTerm*fontMenu*font1*Label:  Tiny
+XTerm*VT100*font1: -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
+XTerm*fontMenu*font2*Label:  Small
+XTerm*VT100*font2:           -schumacher-clean-medium-r-normal--8-80-75-75-c-50-iso646.1991-irv
+XTerm*fontMenu*font3*Label:  Normal
+XTerm*VT100*font3:           -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+XTerm*fontMenu*font4*Label:  Large
+XTerm*VT100*font4:           10x20
+XTerm*fontMenu*font5*Label:  Huge
+XTerm*VT100*font5:           -adobe-courier-medium-r-normal-*-30-*-*-*-*-*-*-*
+XTerm*fontMenu*font6*Label:  Mongo
+XTerm*VT100*font6:           -adobe-courier-medium-r-normal-*-50-*-*-*-*-*-*-*
+
+XTermScreen*termName: vt100
+XTermScreen*utmpInhibit:      on
+XTermScreen*visualBell:       false
+XTermScreen*foreground:       yellow
+XTermScreen*scrollBar:        off
+
+XTerm.VT100.Translations: \
+#override \
+   <Key>F6:  clear-saved-lines()\n\
+   <Key>F9:  scroll-back(1,page)\n\
+   <Key>F10: scroll-forw(1,page)\n\
+   Ctrl <Key>Left:  string(0x01) string("p")\n\
+   Ctrl <Key>Right: string(0x01) string("n")\n\
+   Ctrl <Key>0:     string(0x01) string("0")\n\
+   Ctrl <Key>1:     string(0x01) string("1")\n\
+   Ctrl <Key>2:     string(0x01) string("2")\n\
+   Ctrl <Key>3:     string(0x01) string("3")\n\
+   Ctrl <Key>4:     string(0x01) string("4")\n\
+   Ctrl <Key>5:     string(0x01) string("5")\n\
+   Ctrl <Key>6:     string(0x01) string("6")\n\
+   Ctrl <Key>7:     string(0x01) string("7")\n\
+   Ctrl <Key>8:     string(0x01) string("8")\n\
+   Ctrl <Key>9:     string(0x01) string("9")\n\
+ Shift<Btn1Down>: select-start() \n\
+ Shift<Btn1Motion>: select-extend() \n\
+ Shift<Btn1Up>: select-end(CLIPBOARD) \n\
+ Shift<Btn2Up>: insert-selection(CLIPBOARD) \n\
+ Shift<Btn3Down>: start-extend() \n\
+ Shift<Btn3Motion>: select-extend() \n\
+ Shift<BtnUp>: select-end(CLIPBOARD)
+
+
+/*
+ * This is where zwgc puts zwrites.  
+ * You can actually configure it so different kinds of zwrites
+ * go to different locations on the screen...
+ * but I dont remember how to do that.
+ */
+
+Zwgc*geometry: +c+c
+Zwgc*reverseStack: True
+
+Xmessage*foreground: green
+Xmessage*background: black
+Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+
+Emacs*verticalScrollBar.background:  grey85
+Emacs*verticalScrollBar.troughColor: grey50
+Emacs.pane.menubar*foreground:       yellow
+Emacs.fsb_popup*foreground:          black
+Emacs*fsb*foreground:                yellow
+Emacs*menu*foreground:               yellow
+Emacs*foreground:                    yellow
+Emacs*background:                    black
+Emacs*cursorColor:                   white
+Emacs*pointerColor:                  white
+Emacs_Minibuffer*geometry: -0-0
+
+xload*showLabel:      false
+xload*load.update:    5
+xload*load.highlight: #203040
+xload*foreground:     gray
+xload*background:     #203040
+xload*geometry:       228x124+256-19
+
+Xman*foreground:      gray85
+Xman*background:      black
+Xman.notopbox:        true
+
+Xedit*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-70-iso646.1991-irv
+Xedit*geometry:       500x500
+Xedit*foreground:     Yellow
+Xedit*background:     Black
+Xedit*Scrollbar*background: red
+Xedit*Scrollbar*foreground: blue
+Xedit*cursorColor: yellow
+
+*zmail.geometry:                     +672+0
+*message_window.geometry:            603x925
+
+Console.keep:             False
+
+XDaliClock*foreground:    gray
+XDaliClock*background:    #203040
+XDaliClock*font:          -*-*-*-*-*-*-20-*-*-*-*-*-iso8859-*
+XDaliClock*memory:        High
+XDaliClock*mode:          24
+XDaliClock*seconds:       no
+XDaliClock*geometry:      80x18+126+64
+
+xlock*username: this terminal in use by phil knaack
+xlock*password: pknaack1@gmail.com, 224-377-9735
+xlock*info: phil knaack
+
+xlock*invalid: Password verification failed.
+xlock*validate: Checking password, please wait.
+xlock*echokeys: False
+
+xlock*foreground: red
+xlock*background: black
+
