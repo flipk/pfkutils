@@ -1,5 +1,15 @@
 
-configure
+This is a set of tools that pfk finds useful.  It also contains 
+bits and pieces and snippets of code that pfk often imports into other
+projects.  It is also pfk's entire home dir setup (shell, dot files,
+emacs config, and a ~/pfk intall prefix for installing tools, libs,
+headers, and man pages.
+
+----
+
+BUILDING
+
+configure --enable-environ=? --enable-<tool>
 make
 make diffdotfiles
 make install
