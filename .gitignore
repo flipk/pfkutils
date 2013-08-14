@@ -1,4 +1,3 @@
 BUILD-*
-config.h.in
-configure.tar
+/config.h.in
 autom4te.cache
