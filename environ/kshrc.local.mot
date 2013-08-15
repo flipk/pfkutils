@@ -3,6 +3,10 @@
 
 #FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig ccdiff ccdiff2 
 
+export GIT_SSL_NO_VERIFY=true
+export http_proxy=http://wwwgate0.mot.com:1080 
+export https_proxy=http://wwwgate0.mot.com:1080 
+
 xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
     cat > ~/.xclearcase << EOF
