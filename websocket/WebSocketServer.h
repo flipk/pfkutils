@@ -8,9 +8,9 @@
 #include <stdint.h>
 
 enum WebSocketMessageType { 
-    TEXT,
-    BINARY,
-    CLOSE
+    WS_TYPE_TEXT,
+    WS_TYPE_BINARY,
+    WS_TYPE_CLOSE
 };
 
 struct WebSocketMessage {

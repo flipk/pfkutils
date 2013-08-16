@@ -199,16 +199,157 @@ WebSocketConnection :: send_handshake_response(void)
     write(fd, out_frame, written);    
 }
 
+//
+//   websocket message format:   (see RFC 6455)
+//
+//   +-7-+-6-+-5-+-4-+-3---2---1---0-+
+//   | F | R | R | R |               |  FIN = final of segmented msg
+//   | I | S | S | S |    OPCODE     |  OPCODE = 1=text 2=bin 8=close 9=ping
+//   | N | V | V | V |               |           a=pong 3-7,b-f=rsvd
+//   |   | 1 | 2 | 3 |               |           0=continuation frame
+//   +---+---+---+---+---------------+
+//   | M |                           |  MASK = 32-bit xor mask is present
+//   | A |    PAYLOAD LEN            |  PAYLOAD LEN = 0-125 length
+//   | S |                           |     126 = following 2 bytes is length
+//   | K |                           |     127 = following 4 bytes is length
+//   +---+---------------------------+
+//   | extended length, 2 or 4 bytes |
+//   +-------------------------------+
+//   |    if MASK, 4-byte mask here  |
+//   +-------------------------------+
+//   |    PAYLOAD                    |
+//   +-------------------------------+
+//
+//  mask is always present client -> server,
+//  mask is never present server -> client.
+//  we don't support segmentation, so we error out.
+//
+
 void
 WebSocketConnection :: handle_message(void)
 {
     WebSocketMessage m;
 
+    while (1)
+    {
+        if (bufsize < 2)
+            // not enough yet.
+            return;
 
-    onMessage(m);
+        if ((buf[0] & 0x80) == 0)
+        {
+            fprintf(stderr, "FIN=0 found, segmentation not supported\n");
+            done = true;
+            return;
+        }
+
+        if ((buf[1] & 0x80) == 0)
+        {
+            fprintf(stderr, "MASK=0 found, illegal for client->server\n");
+            done = true;
+            return;
+        }
+
+        uint32_t decoded_length = buf[1] & 0x7F;
+        int pos=2;
+
+        // length is size of payload, add 2 for header.
+        // note bufsize needs to be rechecked if this is actually an
+        // extended-length frame. this logic works for those cases
+        // because if we're using 2 or 4 bytes for extended length,
+        // then at least 126 needs to be present anyway.
+        if (bufsize < (decoded_length+2))
+            // not enough yet.
+            return;
+
+        if (decoded_length == 126)
+        {
+            decoded_length = (buf[pos] << 8) + buf[pos+1];
+            pos += 2;
+        }
+        else if (decoded_length == 127)
+        {
+            decoded_length =
+                (buf[pos+0] << 24) + (buf[pos+1] << 16) +
+                (buf[pos+2] <<  8) +  buf[pos+3];
+            pos += 4;
+        }
+
+        if (bufsize < (decoded_length+2))
+            // still not enough
+            return;
+
+        uint8_t * mask = buf + pos;
+        pos += 4;
+
+        switch (buf[0] & 0xf)
+        {
+        case 1:  m.type = WS_TYPE_TEXT;    break;
+        case 2:  m.type = WS_TYPE_BINARY;  break;
+        case 8:  m.type = WS_TYPE_CLOSE;   break;
+        default:
+            fprintf(stderr, "unhandled websocket opcode %d received\n",
+                    buf[0] & 0xf);
+            done = true;
+            return;
+        }
+
+        m.buf = buf + pos;
+        m.len = decoded_length;
+
+        int counter;
+        for (counter = 0; counter < decoded_length; counter++)
+            m.buf[counter] ^= mask[counter & 3];
+
+        onMessage(m);
+
+        if (bufsize > pos)
+            memmove(buf, buf + pos, bufsize - pos);
+        bufsize -= pos;
+    }
 }
 
 void
 WebSocketConnection :: sendMessage(const WebSocketMessage &m)
 {
+    uint8_t hdr[6]; // opcode, payload len max size (no mask)
+    int hdrlen = 0;
+
+    switch (m.type)
+    {
+    case WS_TYPE_TEXT:
+        hdr[hdrlen++] = 0x81;
+        break;
+    case WS_TYPE_BINARY:
+        hdr[hdrlen++] = 0x82;
+        break;
+    case WS_TYPE_CLOSE:
+        hdr[hdrlen++] = 0x88;
+        break;
+    default:
+        fprintf(stderr, "bogus msg type %d\n", m.type);
+        return;
+    }
+
+    if (m.len < 126)
+    {
+        hdr[hdrlen++] = m.len & 0x7f;
+    }
+    else if (m.len < 65536)
+    {
+        hdr[hdrlen++] = 126;
+        hdr[hdrlen++] = (m.len >> 8) & 0xFF;
+        hdr[hdrlen++] = (m.len >> 0) & 0xFF;
+    }
+    else
+    {
+        hdr[hdrlen++] = 127;
+        hdr[hdrlen++] = (m.len >> 24) & 0xFF;
+        hdr[hdrlen++] = (m.len >> 16) & 0xFF;
+        hdr[hdrlen++] = (m.len >>  8) & 0xFF;
+        hdr[hdrlen++] = (m.len >>  0) & 0xFF;
+    }
+
+    write(fd, hdr, hdrlen);
+    write(fd, (char*)m.buf, m.len);
 }
