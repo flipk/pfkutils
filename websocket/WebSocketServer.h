@@ -19,6 +19,12 @@ struct WebSocketMessage {
     int len;
 };
 
+// TODO:
+//   provide a class which allows the user to specify a thread main,
+//   and can call a getNextMessage method, and then a derived class
+//   from that which implements a main and provides the
+//   onMessage/onReady virtual hooks.
+
 class WebSocketConnection {
     friend class WebSocketServer;
     void connection_thread_main(void);
@@ -28,7 +34,7 @@ class WebSocketConnection {
     int fd;
     static const int maxbufsize = 8192;
     uint8_t buf[maxbufsize+1];
-    int bufsize;
+    uint32_t bufsize;
     enum { STATE_HEADER, STATE_CONNECTED } state;
     bool done;
     char * host;
@@ -42,11 +48,13 @@ public:
     WebSocketConnection(int _fd);
     virtual ~WebSocketConnection(void);
     virtual void onMessage(const WebSocketMessage &m) = 0;
+    virtual void onReady(void) = 0;
     void sendMessage(const WebSocketMessage &m);
 };
 
 class WebSocketConnectionCallback {
 public:
+    virtual ~WebSocketConnectionCallback(void) { /*placeholder*/ }
     virtual WebSocketConnection * newConnection(int fd) = 0;
 };
 

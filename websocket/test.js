@@ -21,7 +21,7 @@ var makesocket = function () {
     socket = new WebSocket(newuri);
     socket.onopen = function() {
 	message('socket opened');
-	socket.send('user ' + username + ' logged in');
+	socket.send('-->user ' + username + ' logged in');
 	socket.send('__USERLOGIN:' + username);
     }
     socket.onclose = function() {
@@ -63,7 +63,7 @@ get( "clear" ).onclick = function() {
 get( "username" ).onblur = function() {
     var newusername = get("username").value;
     if (socket)
-	socket.send('username changed from ' + username + ' to ' + newusername);
+	socket.send('-->username changed from ' + username + ' to ' + newusername);
     username = newusername;
     if (socket)
 	socket.send('__USERLOGIN:' + username);

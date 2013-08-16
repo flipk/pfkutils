@@ -1,10 +1,10 @@
 #if 0
 set -e -x
-g++ -c testWebSocketServer.cc
-g++ -c WebSocketConnection.cc
-g++ -c WebSocketServer.cc
-gcc -c sha1.c
-gcc -c base64.c
+g++ -Wall -Werror -O6 -c testWebSocketServer.cc
+g++ -Wall -Werror -O6 -c WebSocketConnection.cc
+g++ -Wall -Werror -O6 -c WebSocketServer.cc
+gcc -Wall -Werror -O6 -c sha1.c
+gcc -Wall -Werror -O6 -c base64.c
 g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o sha1.o base64.o -o t -lpthread
 exit 0
 #endif
@@ -14,6 +14,7 @@ exit 0
 #include <stdio.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 
 class myWebSocketConnectionCallback : public WebSocketConnectionCallback {
 public:
@@ -49,6 +50,7 @@ public:
     myWebSocketConnection(int _fd);
     /*virtual*/ ~myWebSocketConnection(void);
     /*virtual*/ void onMessage(const WebSocketMessage &);
+    /*virtual*/ void onReady(void);
 };
 
 WebSocketConnection *
@@ -82,10 +84,25 @@ myWebSocketConnection :: myWebSocketConnection(int _fd)
     prev = NULL;
     clientList = this;
     unlock();
+    strcpy(username, "guest");
 }
 
 myWebSocketConnection :: ~myWebSocketConnection(void)
 {
+    WebSocketMessage outm;
+    char text[128];
+    outm.type = WS_TYPE_TEXT;
+    outm.buf = (uint8_t*)text;
+
+    outm.len = sprintf(text,"-->user %s logged out", username);
+
+    lock();
+    for (myWebSocketConnection * c = clientList; c; c = c->next)
+    {
+        c->sendMessage(outm);
+    }
+    unlock();
+
     lock();
     if (prev)
         prev->next = next;
@@ -97,11 +114,44 @@ myWebSocketConnection :: ~myWebSocketConnection(void)
 }
 
 void
+myWebSocketConnection :: onReady(void)
+{
+    WebSocketMessage outm;
+    char text[128];
+    outm.type = WS_TYPE_TEXT;
+    outm.buf = (uint8_t*)text;
+
+    outm.len = sprintf(text,"Users logged in:");
+    sendMessage(outm);
+
+    lock();
+    for (myWebSocketConnection * c = clientList; c; c = c->next)
+    {
+        outm.len = sprintf(text,"-->%s", c->username);
+        c->sendMessage(outm);
+    }
+    unlock();
+}
+
+void
 myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 {
-//    WebSocketMessage outm;
-//    outm.type = WS_TYPE_TEXT;
-//    outm.buf = (uint8_t*)"user SHITFUCK logged in";
-//    outm.len = sizeof("user SHITFUCK logged in");
-//    sendMessage(outm);
+    if (memcmp(m.buf, "__PINGPONG", 10) == 0)
+    {
+        printf("user %s sent ping\n", username);
+        return;
+    }
+    if (memcmp(m.buf, "__USERLOGIN:", 12) == 0)
+    {
+        memset(username, 0, sizeof(username));
+        memcpy(username, m.buf+12, m.len-12);
+        printf("username changed to %s\n", username);
+        return;
+    }
+    lock();
+    for (myWebSocketConnection * c = clientList; c; c = c->next)
+    {
+        c->sendMessage(m);
+    }
+    unlock();
 }
