@@ -168,6 +168,13 @@ WebSocketServer :: server_thread_main( void )
             }
             else
             {
+
+                printf("new connection from IP: %u.%u.%u.%u\n",
+                       (sa.sin_addr.s_addr >>  0) & 0xFF,
+                       (sa.sin_addr.s_addr >>  8) & 0xFF,
+                       (sa.sin_addr.s_addr >> 16) & 0xFF,
+                       (sa.sin_addr.s_addr >> 24) & 0xFF);
+
                 WebSocketConnection * conn = cb->newConnection(newfd);
 
                 pthread_attr_t attr;

@@ -42,13 +42,14 @@ WebSocketConnection :: connection_thread_main(void)
     done = false;
     while (!done)
     {
-        printf("calling read on fd %d\n", fd);
         int cc = read(fd, buf + bufsize, maxbufsize - bufsize);
-        printf("read on fd %d returned %d\n", fd, cc);
         if (cc < 0)
             fprintf(stderr, "read : %s\n", strerror(errno));
         if (cc <= 0)
             break;
+//        printf("**client to server:\n");
+//        fwrite(buf + bufsize, cc, 1, stdout);
+//        fflush(stdout);
         bufsize += cc;
         buf[bufsize] = 0; // safe because of +1 in defn of buf
         switch (state)
@@ -64,8 +65,9 @@ static const char websocket_guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 #define HEADERMATCH(line,hdr)                                           \
     ({                                                                  \
         int ret = (strncasecmp((char*)line, hdr, sizeof(hdr)-1) == 0);  \
-        printf("comparing '%s' to '%s' : %d\n",                         \
-               (char*) line, hdr, ret);                                 \
+        if (0)                                                          \
+            printf("comparing '%s' to '%s' : %d\n",                     \
+                   (char*) line, hdr, ret);                             \
         ret;                                                            \
     })
 
@@ -74,7 +76,7 @@ WebSocketConnection :: handle_header(void)
 {
     while (1)
     {
-        printf("handle_header : starting with bufsize %d\n", bufsize);
+//        printf("handle_header top : bufsize %d\n", bufsize);
 
         char * newline = strstr((char*)buf, (char*)"\r\n");
         if (newline == NULL)
@@ -85,22 +87,25 @@ WebSocketConnection :: handle_header(void)
         int matchlen = newline - (char*)buf;
         *newline = 0;
 
-        printf("found matchlen %d header: '%s'\n", matchlen, buf);
+//        printf("found matchlen %d header: '%s'\n", matchlen, buf);
 
         // handle header line
         if (matchlen == 0)
         {
-            printf("found end of MIME\n");
+//            printf("found end of MIME\n");
             if (host == NULL || key == NULL ||
                 origin == NULL || version == NULL ||
                 resource == NULL || upgrade_flag == false ||
                 connection_flag == false)
             {
-                printf("missing required header, bailing out\n");
+                fprintf(stderr,"missing required header, bailing out\n");
                 done = true;
                 return;
             }
-            printf("successful parsing of handshake header\n");
+            if (bufsize > 2)
+                memmove(buf, newline + 2, bufsize - 2);
+            bufsize -= 2;
+//            printf("successful parsing of handshake header\n");
             // end of the MIME headers means time to respond
             // to the client.
             send_handshake_response();
@@ -117,7 +122,7 @@ WebSocketConnection :: handle_header(void)
                 *space = 0;
                 resource = new char[strlen((char*)buf + 4) + 1];
                 strcpy(resource, (char*) buf + 4);
-                printf("resource is '%s'\n", resource);
+//                printf("resource is '%s'\n", resource);
             }
         }
         else if (HEADERMATCH(buf, "Connection: upgrade") ||
@@ -133,32 +138,32 @@ WebSocketConnection :: handle_header(void)
         {
             host = new char[strlen((char*)buf + 6) + 1];
             strcpy(host, (char*)buf+6);
-            printf("host is '%s'\n", host);
+//            printf("host is '%s'\n", host);
         }
         else if (HEADERMATCH(buf, "Origin: "))
         {
             origin = new char[strlen((char*)buf + 8) + 1];
             strcpy(origin, (char*)buf + 8);
-            printf("origin is '%s'\n", origin);
+//            printf("origin is '%s'\n", origin);
         }
         else if (HEADERMATCH(buf, "Sec-WebSocket-Version: "))
         {
             version = new char[strlen((char*)buf + 23) + 1];
             strcpy(version, (char*)buf + 23);
-            printf("version is '%s'\n", version);
+//            printf("version is '%s'\n", version);
         }
         else if (HEADERMATCH(buf, "Sec-WebSocket-Key: "))
         {
             key = new char[strlen((char*)buf + 19) + 1];
             strcpy(key, (char*)buf + 19);
-            printf("key is '%s'\n", key);
+//            printf("key is '%s'\n", key);
         }
 
         // now we include the \r\n with all these 2's.
         memmove(buf, newline + 2, bufsize - matchlen - 2);
         bufsize -= matchlen + 2;
 
-        printf("bufsize is now %d\n", bufsize);
+//        printf("bottom: bufsize is now %d\n", bufsize);
     }
 }
 
@@ -167,6 +172,8 @@ WebSocketConnection :: send_handshake_response(void)
 {
     char tempbuf[100];
     int len = sprintf(tempbuf, "%s%s", key, websocket_guid);
+
+//    printf("combined key string is len %d : '%s'\n", len, tempbuf);
 
     SHA1Context  ctx;
     uint8_t digest[SHA1HashSize];
@@ -178,13 +185,16 @@ WebSocketConnection :: send_handshake_response(void)
 
     memset(digest_b64,  0, sizeof(digest_b64));
     int i, o;
+//    printf("SHA1 hash = ");
     for (i = 0, o = 0; i < SHA1HashSize; i += 3, o += 4)
     {
+//        printf("%02x %02x %02x ", digest[i], digest[i+1], digest[i+2]);
         int len = SHA1HashSize - i;
         if (len > 3)
             len = 3;
         b64_encode_quantum(digest + i, len, digest_b64 + o);
     }
+//    printf("\nbase64 = '%s'\n", digest_b64);
 
     char out_frame[1024];
 
@@ -196,7 +206,11 @@ WebSocketConnection :: send_handshake_response(void)
         "Sec-WebSocket-Accept: %s\r\n\r\n",
         digest_b64);
 
-    write(fd, out_frame, written);    
+//    printf("**server to client:\n");
+//    fwrite(out_frame, written, 1, stdout);
+//    fflush(stdout);
+    printf("trying to write %d bytes  returns %d\n",
+           write(fd, out_frame, written));
 }
 
 //
@@ -235,6 +249,9 @@ WebSocketConnection :: handle_message(void)
         if (bufsize < 2)
             // not enough yet.
             return;
+
+//        printf("buf[0] = %#x, buf[1] = %#x, buf[2] = %#x\n",
+//               buf[0], buf[1], buf[2]);
 
         if ((buf[0] & 0x80) == 0)
         {
@@ -296,10 +313,14 @@ WebSocketConnection :: handle_message(void)
 
         m.buf = buf + pos;
         m.len = decoded_length;
+        pos += decoded_length;
 
         int counter;
         for (counter = 0; counter < decoded_length; counter++)
             m.buf[counter] ^= mask[counter & 3];
+
+//        printf("handling message, size=%d, begin=%02x %02x %02x %02x\n",
+//               m.len, m.buf[0], m.buf[1], m.buf[2], m.buf[3]);
 
         onMessage(m);
 

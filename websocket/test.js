@@ -33,15 +33,15 @@ var makesocket = function () {
     }
 }
 makesocket();
-window.setInterval(
-    function(){
-	if (socket)
-	    socket.send('__PINGPONG');
-	else {
-	    message("trying to reconnect...");
-	    makesocket();
-	}
-    }, 10000);
+//window.setInterval(
+//    function(){
+//	if (socket)
+//	    socket.send('__PINGPONG');
+//	else {
+//	    message("trying to reconnect...");
+//	    makesocket();
+//	}
+//    }, 5000);
 get( "submit" ).onclick = function() {
     var txtbox = get( "entry" );
     var str = txtbox.value;
@@ -62,7 +62,9 @@ get( "clear" ).onclick = function() {
 }
 get( "username" ).onblur = function() {
     var newusername = get("username").value;
-    socket.send('username changed from ' + username + ' to ' + newusername);
+    if (socket)
+	socket.send('username changed from ' + username + ' to ' + newusername);
     username = newusername;
-    socket.send('__USERLOGIN:' + username);
+    if (socket)
+	socket.send('__USERLOGIN:' + username);
 }
