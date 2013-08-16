@@ -5,6 +5,9 @@ CTWM= ctwm-3.8a
 
 all-local:
 if PFK_AM_BUILD_cscope
+	if [ ! -f $(builddir)/$(CSCOPE)/Makefile ] ; then \
+		touch $(abs_srcdir)/$(CSCOPE)/{Makefile.in,config.h.in,configure} ; \
+	fi
 	if [ ! -d $(builddir)/$(CSCOPE) ] ; then \
 		mkdir $(builddir)/$(CSCOPE) ; \
 	fi
@@ -14,6 +17,9 @@ if PFK_AM_BUILD_cscope
 	cd $(builddir)/$(CSCOPE) ; make all
 endif
 if PFK_AM_BUILD_pdksh
+	if [ ! -f $(builddir)/$(PDKSH)/Makefile ] ; then \
+		touch $(abs_srcdir)/$(PDKSH)/configure ; \
+	fi
 	if [ ! -d $(builddir)/$(PDKSH) ] ; then \
 		mkdir $(builddir)/$(PDKSH) ; \
 	fi

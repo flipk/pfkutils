@@ -414,6 +414,9 @@ uninstall-am:
 
 
 all-local:
+@PFK_AM_BUILD_cscope_TRUE@	if [ ! -f $(builddir)/$(CSCOPE)/Makefile ] ; then \
+@PFK_AM_BUILD_cscope_TRUE@		touch $(abs_srcdir)/$(CSCOPE)/{Makefile.in,config.h.in,configure} ; \
+@PFK_AM_BUILD_cscope_TRUE@	fi
 @PFK_AM_BUILD_cscope_TRUE@	if [ ! -d $(builddir)/$(CSCOPE) ] ; then \
 @PFK_AM_BUILD_cscope_TRUE@		mkdir $(builddir)/$(CSCOPE) ; \
 @PFK_AM_BUILD_cscope_TRUE@	fi
@@ -421,6 +424,9 @@ all-local:
 @PFK_AM_BUILD_cscope_TRUE@		cd $(builddir)/$(CSCOPE) && $(abs_srcdir)/$(CSCOPE)/configure --prefix=$(exec_prefix) ; \
 @PFK_AM_BUILD_cscope_TRUE@	fi
 @PFK_AM_BUILD_cscope_TRUE@	cd $(builddir)/$(CSCOPE) ; make all
+@PFK_AM_BUILD_pdksh_TRUE@	if [ ! -f $(builddir)/$(PDKSH)/Makefile ] ; then \
+@PFK_AM_BUILD_pdksh_TRUE@		touch $(abs_srcdir)/$(PDKSH)/configure ; \
+@PFK_AM_BUILD_pdksh_TRUE@	fi
 @PFK_AM_BUILD_pdksh_TRUE@	if [ ! -d $(builddir)/$(PDKSH) ] ; then \
 @PFK_AM_BUILD_pdksh_TRUE@		mkdir $(builddir)/$(PDKSH) ; \
 @PFK_AM_BUILD_pdksh_TRUE@	fi
