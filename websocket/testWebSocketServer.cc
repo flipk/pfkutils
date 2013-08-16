@@ -128,7 +128,7 @@ myWebSocketConnection :: onReady(void)
     for (myWebSocketConnection * c = clientList; c; c = c->next)
     {
         outm.len = sprintf(text,"-->%s", c->username);
-        c->sendMessage(outm);
+        sendMessage(outm);
     }
     unlock();
 }
