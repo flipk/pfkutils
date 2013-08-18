@@ -29,22 +29,25 @@ message UserList {
 	repeated string username = 1;
 }
 message UserStatus {
-	required string status = 1;
+	repeated string username = 1;
+	required string status = 2;
 }
 message Notification {
 	required string username = 1;
 }
 message ServerToClient {
 	enum ServerToClientType {
-		USER_LIST = 1;
-		USER_STATUS = 2;
-		LOGIN_NOTIFICATION = 3;
-		LOGOUT_NOTIFICATION = 4;
-		IM_MESSAGE = 5;
+		USER_LIST = 1;           // ?
+		USER_STATUS = 2;         // ?
+		LOGIN_NOTIFICATION = 3;  // use 'notification'
+		LOGOUT_NOTIFICATION = 4; // use 'notification'
+		CHANGE_USERNAME = 5;     // use 'changeUsername'
+		IM_MESSAGE = 6;          // use 'imMessage'
 	}
 	required ServerToClientType type = 1;
 	optional UserList userList = 2;
 	optional UserStatus userStatus = 3;
 	optional Notification notification = 4;
-	optional IM_Message imMessage = 5;
+	optional NewUsername changeUsername = 5;
+	optional IM_Message imMessage = 6;
 }

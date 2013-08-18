@@ -34,7 +34,37 @@ var makesocket = function () {
 	socket = null;
     }
     socket.onmessage = function(msg){
-	message(msg.data);
+	var b64str = new PROTO.Base64Stream(msg.data);
+	var srvToClient = new PFK.Chat.ServerToClient();
+	srvToClient.ParseFromStream(b64str);
+	switch (srvToClient.type)
+	{
+	case PFK.Chat.ServerToClient.ServerToClientType.USER_LIST:
+	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.USER_STATUS:
+	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.LOGIN_NOTIFICATION:
+	    message("user " + 
+		    srvToClient.notification.username +
+		    " has logged in");
+	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.LOGOUT_NOTIFICATION:
+	    message("user " + 
+		    srvToClient.notification.username +
+		    " has logged out");
+	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.CHANGE_USERNAME:
+	    message("username changed " +
+		    srvToClient.changeUsername.oldusername +
+		    " to " +
+		    srvToClient.changeUsername.newusername);
+	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.IM_MESSAGE:
+	    message(srvToClient.imMessage.username +
+		    ":" +
+		    srvToClient.imMessage.msg);
+	    break;
+	}
     }
 }
 makesocket();
@@ -56,6 +86,7 @@ var sendMessage = function() {
     im.imMessage.msg = txtbox.value;
     var imserial = new PROTO.Base64Stream;
     im.SerializeToStream(imserial);
+    console.log("sending message: " + imserial.getString());
     socket.send(imserial.getString());
     txtbox.value = "";
 }

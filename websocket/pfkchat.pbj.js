@@ -74,11 +74,17 @@ PFK.Chat.UserList = PROTO.Message("PFK.Chat.UserList",{
 		id: 1
 	}});
 PFK.Chat.UserStatus = PROTO.Message("PFK.Chat.UserStatus",{
+	username: {
+		options: {},
+		multiplicity: PROTO.repeated,
+		type: function(){return PROTO.string;},
+		id: 1
+	},
 	status: {
 		options: {},
 		multiplicity: PROTO.required,
 		type: function(){return PROTO.string;},
-		id: 1
+		id: 2
 	}});
 PFK.Chat.Notification = PROTO.Message("PFK.Chat.Notification",{
 	username: {
@@ -93,7 +99,8 @@ PFK.Chat.ServerToClient = PROTO.Message("PFK.Chat.ServerToClient",{
 		USER_STATUS :2,
 		LOGIN_NOTIFICATION :3,
 		LOGOUT_NOTIFICATION :4,
-		IM_MESSAGE :5	}),
+		CHANGE_USERNAME :5,
+		IM_MESSAGE :6	}),
 	type: {
 		options: {},
 		multiplicity: PROTO.required,
@@ -118,9 +125,15 @@ PFK.Chat.ServerToClient = PROTO.Message("PFK.Chat.ServerToClient",{
 		type: function(){return PFK.Chat.Notification;},
 		id: 4
 	},
+	changeUsername: {
+		options: {},
+		multiplicity: PROTO.optional,
+		type: function(){return PFK.Chat.NewUsername;},
+		id: 5
+	},
 	imMessage: {
 		options: {},
 		multiplicity: PROTO.optional,
 		type: function(){return PFK.Chat.IM_Message;},
-		id: 5
+		id: 6
 	}});

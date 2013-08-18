@@ -139,7 +139,8 @@ void protobuf_AssignDesc_pfkchat_2epbj() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(UserList));
   UserStatus_descriptor_ = file->message_type(5);
-  static const int UserStatus_offsets_[1] = {
+  static const int UserStatus_offsets_[2] = {
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UserStatus, username_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UserStatus, status_),
   };
   UserStatus_reflection_ =
@@ -169,11 +170,12 @@ void protobuf_AssignDesc_pfkchat_2epbj() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Notification));
   ServerToClient_descriptor_ = file->message_type(7);
-  static const int ServerToClient_offsets_[5] = {
+  static const int ServerToClient_offsets_[6] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, type_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, userlist_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, userstatus_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, notification_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, changeusername_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(ServerToClient, immessage_),
   };
   ServerToClient_reflection_ =
@@ -257,18 +259,20 @@ void protobuf_AddDesc_pfkchat_2epbj() {
     "mMessage\030\004 \001(\0132\024.PFK.Chat.IM_Message\"N\n\022"
     "ClientToServerType\022\t\n\005LOGIN\020\001\022\023\n\017CHANGE_"
     "USERNAME\020\002\022\016\n\nIM_MESSAGE\020\003\022\010\n\004PING\020\004\"\034\n\010"
-    "UserList\022\020\n\010username\030\001 \003(\t\"\034\n\nUserStatus"
-    "\022\016\n\006status\030\001 \002(\t\" \n\014Notification\022\020\n\010user"
-    "name\030\001 \002(\t\"\351\002\n\016ServerToClient\0229\n\004type\030\001 "
-    "\002(\0162+.PFK.Chat.ServerToClient.ServerToCl"
-    "ientType\022$\n\010userList\030\002 \001(\0132\022.PFK.Chat.Us"
-    "erList\022(\n\nuserStatus\030\003 \001(\0132\024.PFK.Chat.Us"
-    "erStatus\022,\n\014notification\030\004 \001(\0132\026.PFK.Cha"
-    "t.Notification\022\'\n\timMessage\030\005 \001(\0132\024.PFK."
-    "Chat.IM_Message\"u\n\022ServerToClientType\022\r\n"
-    "\tUSER_LIST\020\001\022\017\n\013USER_STATUS\020\002\022\026\n\022LOGIN_N"
-    "OTIFICATION\020\003\022\027\n\023LOGOUT_NOTIFICATION\020\004\022\016"
-    "\n\nIM_MESSAGE\020\005", 894);
+    "UserList\022\020\n\010username\030\001 \003(\t\".\n\nUserStatus"
+    "\022\020\n\010username\030\001 \003(\t\022\016\n\006status\030\002 \002(\t\" \n\014No"
+    "tification\022\020\n\010username\030\001 \002(\t\"\256\003\n\016ServerT"
+    "oClient\0229\n\004type\030\001 \002(\0162+.PFK.Chat.ServerT"
+    "oClient.ServerToClientType\022$\n\010userList\030\002"
+    " \001(\0132\022.PFK.Chat.UserList\022(\n\nuserStatus\030\003"
+    " \001(\0132\024.PFK.Chat.UserStatus\022,\n\014notificati"
+    "on\030\004 \001(\0132\026.PFK.Chat.Notification\022-\n\016chan"
+    "geUsername\030\005 \001(\0132\025.PFK.Chat.NewUsername\022"
+    "\'\n\timMessage\030\006 \001(\0132\024.PFK.Chat.IM_Message"
+    "\"\212\001\n\022ServerToClientType\022\r\n\tUSER_LIST\020\001\022\017"
+    "\n\013USER_STATUS\020\002\022\026\n\022LOGIN_NOTIFICATION\020\003\022"
+    "\027\n\023LOGOUT_NOTIFICATION\020\004\022\023\n\017CHANGE_USERN"
+    "AME\020\005\022\016\n\nIM_MESSAGE\020\006", 981);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "pfkchat.pbj", &protobuf_RegisterTypes);
   Username::default_instance_ = new Username();
@@ -1687,6 +1691,7 @@ void UserList::Swap(UserList* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
+const int UserStatus::kUsernameFieldNumber;
 const int UserStatus::kStatusFieldNumber;
 #endif  // !_MSC_VER
 
@@ -1744,13 +1749,14 @@ UserStatus* UserStatus::New() const {
 }
 
 void UserStatus::Clear() {
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
     if (has_status()) {
       if (status_ != &::google::protobuf::internal::kEmptyString) {
         status_->clear();
       }
     }
   }
+  username_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -1761,10 +1767,30 @@ bool UserStatus::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // required string status = 1;
+      // repeated string username = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_username:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_username()));
+          ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+            this->username(this->username_size() - 1).data(),
+            this->username(this->username_size() - 1).length(),
+            ::google::protobuf::internal::WireFormat::PARSE);
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(10)) goto parse_username;
+        if (input->ExpectTag(18)) goto parse_status;
+        break;
+      }
+
+      // required string status = 2;
+      case 2: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_status:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_status()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
@@ -1795,13 +1821,22 @@ bool UserStatus::MergePartialFromCodedStream(
 
 void UserStatus::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // required string status = 1;
+  // repeated string username = 1;
+  for (int i = 0; i < this->username_size(); i++) {
+  ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+    this->username(i).data(), this->username(i).length(),
+    ::google::protobuf::internal::WireFormat::SERIALIZE);
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->username(i), output);
+  }
+
+  // required string status = 2;
   if (has_status()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->status().data(), this->status().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      1, this->status(), output);
+      2, this->status(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1812,14 +1847,23 @@ void UserStatus::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* UserStatus::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // required string status = 1;
+  // repeated string username = 1;
+  for (int i = 0; i < this->username_size(); i++) {
+    ::google::protobuf::internal::WireFormat::VerifyUTF8String(
+      this->username(i).data(), this->username(i).length(),
+      ::google::protobuf::internal::WireFormat::SERIALIZE);
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(1, this->username(i), target);
+  }
+
+  // required string status = 2;
   if (has_status()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
       this->status().data(), this->status().length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->status(), target);
+        2, this->status(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1832,8 +1876,8 @@ void UserStatus::SerializeWithCachedSizes(
 int UserStatus::ByteSize() const {
   int total_size = 0;
 
-  if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
-    // required string status = 1;
+  if (_has_bits_[1 / 32] & (0xffu << (1 % 32))) {
+    // required string status = 2;
     if (has_status()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -1841,6 +1885,13 @@ int UserStatus::ByteSize() const {
     }
 
   }
+  // repeated string username = 1;
+  total_size += 1 * this->username_size();
+  for (int i = 0; i < this->username_size(); i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->username(i));
+  }
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -1866,7 +1917,8 @@ void UserStatus::MergeFrom(const ::google::protobuf::Message& from) {
 
 void UserStatus::MergeFrom(const UserStatus& from) {
   GOOGLE_CHECK_NE(&from, this);
-  if (from._has_bits_[0 / 32] & (0xffu << (0 % 32))) {
+  username_.MergeFrom(from.username_);
+  if (from._has_bits_[1 / 32] & (0xffu << (1 % 32))) {
     if (from.has_status()) {
       set_status(from.status());
     }
@@ -1887,13 +1939,14 @@ void UserStatus::CopyFrom(const UserStatus& from) {
 }
 
 bool UserStatus::IsInitialized() const {
-  if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
+  if ((_has_bits_[0] & 0x00000002) != 0x00000002) return false;
 
   return true;
 }
 
 void UserStatus::Swap(UserStatus* other) {
   if (other != this) {
+    username_.Swap(&other->username_);
     std::swap(status_, other->status_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
@@ -2149,6 +2202,7 @@ bool ServerToClient_ServerToClientType_IsValid(int value) {
     case 3:
     case 4:
     case 5:
+    case 6:
       return true;
     default:
       return false;
@@ -2160,6 +2214,7 @@ const ServerToClient_ServerToClientType ServerToClient::USER_LIST;
 const ServerToClient_ServerToClientType ServerToClient::USER_STATUS;
 const ServerToClient_ServerToClientType ServerToClient::LOGIN_NOTIFICATION;
 const ServerToClient_ServerToClientType ServerToClient::LOGOUT_NOTIFICATION;
+const ServerToClient_ServerToClientType ServerToClient::CHANGE_USERNAME;
 const ServerToClient_ServerToClientType ServerToClient::IM_MESSAGE;
 const ServerToClient_ServerToClientType ServerToClient::ServerToClientType_MIN;
 const ServerToClient_ServerToClientType ServerToClient::ServerToClientType_MAX;
@@ -2170,6 +2225,7 @@ const int ServerToClient::kTypeFieldNumber;
 const int ServerToClient::kUserListFieldNumber;
 const int ServerToClient::kUserStatusFieldNumber;
 const int ServerToClient::kNotificationFieldNumber;
+const int ServerToClient::kChangeUsernameFieldNumber;
 const int ServerToClient::kImMessageFieldNumber;
 #endif  // !_MSC_VER
 
@@ -2182,6 +2238,7 @@ void ServerToClient::InitAsDefaultInstance() {
   userlist_ = const_cast< ::PFK::Chat::UserList*>(&::PFK::Chat::UserList::default_instance());
   userstatus_ = const_cast< ::PFK::Chat::UserStatus*>(&::PFK::Chat::UserStatus::default_instance());
   notification_ = const_cast< ::PFK::Chat::Notification*>(&::PFK::Chat::Notification::default_instance());
+  changeusername_ = const_cast< ::PFK::Chat::NewUsername*>(&::PFK::Chat::NewUsername::default_instance());
   immessage_ = const_cast< ::PFK::Chat::IM_Message*>(&::PFK::Chat::IM_Message::default_instance());
 }
 
@@ -2197,6 +2254,7 @@ void ServerToClient::SharedCtor() {
   userlist_ = NULL;
   userstatus_ = NULL;
   notification_ = NULL;
+  changeusername_ = NULL;
   immessage_ = NULL;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
@@ -2210,6 +2268,7 @@ void ServerToClient::SharedDtor() {
     delete userlist_;
     delete userstatus_;
     delete notification_;
+    delete changeusername_;
     delete immessage_;
   }
 }
@@ -2246,6 +2305,9 @@ void ServerToClient::Clear() {
     }
     if (has_notification()) {
       if (notification_ != NULL) notification_->::PFK::Chat::Notification::Clear();
+    }
+    if (has_changeusername()) {
+      if (changeusername_ != NULL) changeusername_->::PFK::Chat::NewUsername::Clear();
     }
     if (has_immessage()) {
       if (immessage_ != NULL) immessage_->::PFK::Chat::IM_Message::Clear();
@@ -2319,12 +2381,26 @@ bool ServerToClient::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(42)) goto parse_imMessage;
+        if (input->ExpectTag(42)) goto parse_changeUsername;
         break;
       }
 
-      // optional .PFK.Chat.IM_Message imMessage = 5;
+      // optional .PFK.Chat.NewUsername changeUsername = 5;
       case 5: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
+         parse_changeUsername:
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+               input, mutable_changeusername()));
+        } else {
+          goto handle_uninterpreted;
+        }
+        if (input->ExpectTag(50)) goto parse_imMessage;
+        break;
+      }
+
+      // optional .PFK.Chat.IM_Message imMessage = 6;
+      case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
          parse_imMessage:
@@ -2379,10 +2455,16 @@ void ServerToClient::SerializeWithCachedSizes(
       4, this->notification(), output);
   }
 
-  // optional .PFK.Chat.IM_Message imMessage = 5;
+  // optional .PFK.Chat.NewUsername changeUsername = 5;
+  if (has_changeusername()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      5, this->changeusername(), output);
+  }
+
+  // optional .PFK.Chat.IM_Message imMessage = 6;
   if (has_immessage()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5, this->immessage(), output);
+      6, this->immessage(), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -2420,11 +2502,18 @@ void ServerToClient::SerializeWithCachedSizes(
         4, this->notification(), target);
   }
 
-  // optional .PFK.Chat.IM_Message imMessage = 5;
+  // optional .PFK.Chat.NewUsername changeUsername = 5;
+  if (has_changeusername()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteMessageNoVirtualToArray(
+        5, this->changeusername(), target);
+  }
+
+  // optional .PFK.Chat.IM_Message imMessage = 6;
   if (has_immessage()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
-        5, this->immessage(), target);
+        6, this->immessage(), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -2465,7 +2554,14 @@ int ServerToClient::ByteSize() const {
           this->notification());
     }
 
-    // optional .PFK.Chat.IM_Message imMessage = 5;
+    // optional .PFK.Chat.NewUsername changeUsername = 5;
+    if (has_changeusername()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
+          this->changeusername());
+    }
+
+    // optional .PFK.Chat.IM_Message imMessage = 6;
     if (has_immessage()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
@@ -2511,6 +2607,9 @@ void ServerToClient::MergeFrom(const ServerToClient& from) {
     if (from.has_notification()) {
       mutable_notification()->::PFK::Chat::Notification::MergeFrom(from.notification());
     }
+    if (from.has_changeusername()) {
+      mutable_changeusername()->::PFK::Chat::NewUsername::MergeFrom(from.changeusername());
+    }
     if (from.has_immessage()) {
       mutable_immessage()->::PFK::Chat::IM_Message::MergeFrom(from.immessage());
     }
@@ -2539,6 +2638,9 @@ bool ServerToClient::IsInitialized() const {
   if (has_notification()) {
     if (!this->notification().IsInitialized()) return false;
   }
+  if (has_changeusername()) {
+    if (!this->changeusername().IsInitialized()) return false;
+  }
   if (has_immessage()) {
     if (!this->immessage().IsInitialized()) return false;
   }
@@ -2551,6 +2653,7 @@ void ServerToClient::Swap(ServerToClient* other) {
     std::swap(userlist_, other->userlist_);
     std::swap(userstatus_, other->userstatus_);
     std::swap(notification_, other->notification_);
+    std::swap(changeusername_, other->changeusername_);
     std::swap(immessage_, other->immessage_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);

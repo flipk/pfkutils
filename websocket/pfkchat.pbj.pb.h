@@ -70,7 +70,8 @@ enum ServerToClient_ServerToClientType {
   ServerToClient_ServerToClientType_USER_STATUS = 2,
   ServerToClient_ServerToClientType_LOGIN_NOTIFICATION = 3,
   ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION = 4,
-  ServerToClient_ServerToClientType_IM_MESSAGE = 5
+  ServerToClient_ServerToClientType_CHANGE_USERNAME = 5,
+  ServerToClient_ServerToClientType_IM_MESSAGE = 6
 };
 bool ServerToClient_ServerToClientType_IsValid(int value);
 const ServerToClient_ServerToClientType ServerToClient_ServerToClientType_ServerToClientType_MIN = ServerToClient_ServerToClientType_USER_LIST;
@@ -667,10 +668,26 @@ class UserStatus : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // required string status = 1;
+  // repeated string username = 1;
+  inline int username_size() const;
+  inline void clear_username();
+  static const int kUsernameFieldNumber = 1;
+  inline const ::std::string& username(int index) const;
+  inline ::std::string* mutable_username(int index);
+  inline void set_username(int index, const ::std::string& value);
+  inline void set_username(int index, const char* value);
+  inline void set_username(int index, const char* value, size_t size);
+  inline ::std::string* add_username();
+  inline void add_username(const ::std::string& value);
+  inline void add_username(const char* value);
+  inline void add_username(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& username() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_username();
+
+  // required string status = 2;
   inline bool has_status() const;
   inline void clear_status();
-  static const int kStatusFieldNumber = 1;
+  static const int kStatusFieldNumber = 2;
   inline const ::std::string& status() const;
   inline void set_status(const ::std::string& value);
   inline void set_status(const char* value);
@@ -686,10 +703,11 @@ class UserStatus : public ::google::protobuf::Message {
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
+  ::google::protobuf::RepeatedPtrField< ::std::string> username_;
   ::std::string* status_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(2 + 31) / 32];
 
   friend void  protobuf_AddDesc_pfkchat_2epbj();
   friend void protobuf_AssignDesc_pfkchat_2epbj();
@@ -844,6 +862,7 @@ class ServerToClient : public ::google::protobuf::Message {
   static const ServerToClientType USER_STATUS = ServerToClient_ServerToClientType_USER_STATUS;
   static const ServerToClientType LOGIN_NOTIFICATION = ServerToClient_ServerToClientType_LOGIN_NOTIFICATION;
   static const ServerToClientType LOGOUT_NOTIFICATION = ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION;
+  static const ServerToClientType CHANGE_USERNAME = ServerToClient_ServerToClientType_CHANGE_USERNAME;
   static const ServerToClientType IM_MESSAGE = ServerToClient_ServerToClientType_IM_MESSAGE;
   static inline bool ServerToClientType_IsValid(int value) {
     return ServerToClient_ServerToClientType_IsValid(value);
@@ -902,10 +921,19 @@ class ServerToClient : public ::google::protobuf::Message {
   inline ::PFK::Chat::Notification* release_notification();
   inline void set_allocated_notification(::PFK::Chat::Notification* notification);
 
-  // optional .PFK.Chat.IM_Message imMessage = 5;
+  // optional .PFK.Chat.NewUsername changeUsername = 5;
+  inline bool has_changeusername() const;
+  inline void clear_changeusername();
+  static const int kChangeUsernameFieldNumber = 5;
+  inline const ::PFK::Chat::NewUsername& changeusername() const;
+  inline ::PFK::Chat::NewUsername* mutable_changeusername();
+  inline ::PFK::Chat::NewUsername* release_changeusername();
+  inline void set_allocated_changeusername(::PFK::Chat::NewUsername* changeusername);
+
+  // optional .PFK.Chat.IM_Message imMessage = 6;
   inline bool has_immessage() const;
   inline void clear_immessage();
-  static const int kImMessageFieldNumber = 5;
+  static const int kImMessageFieldNumber = 6;
   inline const ::PFK::Chat::IM_Message& immessage() const;
   inline ::PFK::Chat::IM_Message* mutable_immessage();
   inline ::PFK::Chat::IM_Message* release_immessage();
@@ -921,6 +949,8 @@ class ServerToClient : public ::google::protobuf::Message {
   inline void clear_has_userstatus();
   inline void set_has_notification();
   inline void clear_has_notification();
+  inline void set_has_changeusername();
+  inline void clear_has_changeusername();
   inline void set_has_immessage();
   inline void clear_has_immessage();
 
@@ -929,11 +959,12 @@ class ServerToClient : public ::google::protobuf::Message {
   ::PFK::Chat::UserList* userlist_;
   ::PFK::Chat::UserStatus* userstatus_;
   ::PFK::Chat::Notification* notification_;
+  ::PFK::Chat::NewUsername* changeusername_;
   ::PFK::Chat::IM_Message* immessage_;
   int type_;
 
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(5 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(6 + 31) / 32];
 
   friend void  protobuf_AddDesc_pfkchat_2epbj();
   friend void protobuf_AssignDesc_pfkchat_2epbj();
@@ -1500,15 +1531,59 @@ UserList::mutable_username() {
 
 // UserStatus
 
-// required string status = 1;
+// repeated string username = 1;
+inline int UserStatus::username_size() const {
+  return username_.size();
+}
+inline void UserStatus::clear_username() {
+  username_.Clear();
+}
+inline const ::std::string& UserStatus::username(int index) const {
+  return username_.Get(index);
+}
+inline ::std::string* UserStatus::mutable_username(int index) {
+  return username_.Mutable(index);
+}
+inline void UserStatus::set_username(int index, const ::std::string& value) {
+  username_.Mutable(index)->assign(value);
+}
+inline void UserStatus::set_username(int index, const char* value) {
+  username_.Mutable(index)->assign(value);
+}
+inline void UserStatus::set_username(int index, const char* value, size_t size) {
+  username_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+}
+inline ::std::string* UserStatus::add_username() {
+  return username_.Add();
+}
+inline void UserStatus::add_username(const ::std::string& value) {
+  username_.Add()->assign(value);
+}
+inline void UserStatus::add_username(const char* value) {
+  username_.Add()->assign(value);
+}
+inline void UserStatus::add_username(const char* value, size_t size) {
+  username_.Add()->assign(reinterpret_cast<const char*>(value), size);
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+UserStatus::username() const {
+  return username_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+UserStatus::mutable_username() {
+  return &username_;
+}
+
+// required string status = 2;
 inline bool UserStatus::has_status() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
+  return (_has_bits_[0] & 0x00000002u) != 0;
 }
 inline void UserStatus::set_has_status() {
-  _has_bits_[0] |= 0x00000001u;
+  _has_bits_[0] |= 0x00000002u;
 }
 inline void UserStatus::clear_has_status() {
-  _has_bits_[0] &= ~0x00000001u;
+  _has_bits_[0] &= ~0x00000002u;
 }
 inline void UserStatus::clear_status() {
   if (status_ != &::google::protobuf::internal::kEmptyString) {
@@ -1785,15 +1860,53 @@ inline void ServerToClient::set_allocated_notification(::PFK::Chat::Notification
   }
 }
 
-// optional .PFK.Chat.IM_Message imMessage = 5;
-inline bool ServerToClient::has_immessage() const {
+// optional .PFK.Chat.NewUsername changeUsername = 5;
+inline bool ServerToClient::has_changeusername() const {
   return (_has_bits_[0] & 0x00000010u) != 0;
 }
-inline void ServerToClient::set_has_immessage() {
+inline void ServerToClient::set_has_changeusername() {
   _has_bits_[0] |= 0x00000010u;
 }
-inline void ServerToClient::clear_has_immessage() {
+inline void ServerToClient::clear_has_changeusername() {
   _has_bits_[0] &= ~0x00000010u;
+}
+inline void ServerToClient::clear_changeusername() {
+  if (changeusername_ != NULL) changeusername_->::PFK::Chat::NewUsername::Clear();
+  clear_has_changeusername();
+}
+inline const ::PFK::Chat::NewUsername& ServerToClient::changeusername() const {
+  return changeusername_ != NULL ? *changeusername_ : *default_instance_->changeusername_;
+}
+inline ::PFK::Chat::NewUsername* ServerToClient::mutable_changeusername() {
+  set_has_changeusername();
+  if (changeusername_ == NULL) changeusername_ = new ::PFK::Chat::NewUsername;
+  return changeusername_;
+}
+inline ::PFK::Chat::NewUsername* ServerToClient::release_changeusername() {
+  clear_has_changeusername();
+  ::PFK::Chat::NewUsername* temp = changeusername_;
+  changeusername_ = NULL;
+  return temp;
+}
+inline void ServerToClient::set_allocated_changeusername(::PFK::Chat::NewUsername* changeusername) {
+  delete changeusername_;
+  changeusername_ = changeusername;
+  if (changeusername) {
+    set_has_changeusername();
+  } else {
+    clear_has_changeusername();
+  }
+}
+
+// optional .PFK.Chat.IM_Message imMessage = 6;
+inline bool ServerToClient::has_immessage() const {
+  return (_has_bits_[0] & 0x00000020u) != 0;
+}
+inline void ServerToClient::set_has_immessage() {
+  _has_bits_[0] |= 0x00000020u;
+}
+inline void ServerToClient::clear_has_immessage() {
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void ServerToClient::clear_immessage() {
   if (immessage_ != NULL) immessage_->::PFK::Chat::IM_Message::Clear();

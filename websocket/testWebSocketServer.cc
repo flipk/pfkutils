@@ -69,6 +69,7 @@ class myWebSocketConnection : public WebSocketConnection {
     class myWebSocketConnection * next;
     class myWebSocketConnection * prev;
     char username[128];
+    void sendClientMessage(const ServerToClient &msg, bool broadcast);
 public:
     myWebSocketConnection(int _fd);
     /*virtual*/ ~myWebSocketConnection(void);
@@ -157,6 +158,51 @@ myWebSocketConnection :: onReady(void)
 }
 
 void
+myWebSocketConnection :: sendClientMessage(const ServerToClient &outmsg,
+                                           bool broadcast)
+{
+    string outmsgbinary;
+
+    outmsg.SerializeToString( &outmsgbinary );
+
+    uint8_t outb64buf[1024];
+    int inlen = outmsgbinary.length();
+    int inpos, outpos;
+    for (inpos = 0, outpos = 0; inpos < inlen; inpos += 3, outpos += 4)
+    {
+        int encodelen = inlen - inpos;
+        if (encodelen > 3)
+            encodelen = 3;
+
+        uint8_t  in3buf[3];
+        in3buf[0] = outmsgbinary[inpos+0];
+        in3buf[1] = outmsgbinary[inpos+1];
+        in3buf[2] = outmsgbinary[inpos+2];
+
+        b64_encode_quantum(in3buf, encodelen, outb64buf + outpos);
+    }
+
+    WebSocketMessage outm;
+    outm.type = WS_TYPE_TEXT;
+    outm.buf = outb64buf;
+    outm.len = outpos;
+
+    if (broadcast)
+    {
+        lock();
+        for (myWebSocketConnection * c = clientList; c; c = c->next)
+        {
+            c->sendMessage(outm);
+        }
+        unlock();
+    }
+    else
+    {
+        sendMessage(outm);
+    }
+}
+
+void
 myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 {
     int cc, inpos, outpos;
@@ -166,6 +212,9 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
     for (inpos = 0; inpos < m.len; inpos += 4)
     {
         unsigned char output[3];
+        printf("decoding %c%c%c%c\n",
+               m.buf[inpos+0], m.buf[inpos+1], 
+               m.buf[inpos+2], m.buf[inpos+3]);
         cc = b64_decode_quantum(m.buf + inpos, output);
         if (cc == 0)
         {
@@ -219,41 +268,23 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
                msg.changeusername().oldusername().c_str(),
                username);
 
-        WebSocketMessage outm;
-        outm.type = WS_TYPE_TEXT;
-        char outmbuf[1024];
-        outm.buf = (uint8_t*) outmbuf;
-        outm.len = sprintf(
-            outmbuf, "user %s changed their username to %s",
-            msg.changeusername().oldusername().c_str(),
-            username);
+        ServerToClient  outmsg;
 
-        lock();
-        for (myWebSocketConnection * c = clientList; c; c = c->next)
-        {
-            c->sendMessage(outm);
-        }
-        unlock();
+        outmsg.set_type( ServerToClient_ServerToClientType_CHANGE_USERNAME );
+        outmsg.mutable_changeusername()->CopyFrom( msg.changeusername() );
+
+        sendClientMessage( outmsg, true );
 
         break;
     }
     case ClientToServer_ClientToServerType_IM_MESSAGE:
     {
-        WebSocketMessage outm;
-        outm.type = WS_TYPE_TEXT;
-        char outmbuf[1024];
-        outm.buf = (uint8_t*) outmbuf;
-        outm.len = sprintf(
-            outmbuf, "%s:%s", 
-            msg.immessage().username().c_str(),
-            msg.immessage().msg().c_str());
+        ServerToClient  outmsg;
 
-        lock();
-        for (myWebSocketConnection * c = clientList; c; c = c->next)
-        {
-            c->sendMessage(outm);
-        }
-        unlock();
+        outmsg.set_type( ServerToClient_ServerToClientType_IM_MESSAGE );
+        outmsg.mutable_immessage()->CopyFrom( msg.immessage() );
+
+        sendClientMessage( outmsg, true );
         break;
     }
     }
