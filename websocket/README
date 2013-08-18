@@ -1,0 +1,11 @@
+
+protojs came from:
+
+https://github.com/sirikata/protojs.git
+
+this was used to generate pfkchat.pbj.js
+
+protobuf-2.5.0 came from code.google.com/p/protobuf
+
+this was used to generate pfkchat.pbj.pb.cc and .h
+

@@ -1,0 +1,50 @@
+
+package PFK.Chat;
+
+message Username {
+	required string username = 1;
+}
+message NewUsername {
+	required string oldusername = 1;
+	required string newusername = 2;
+}
+message IM_Message {
+	required string username = 1;
+	required string msg = 2;
+}
+message ClientToServer {
+	enum ClientToServerType {
+		LOGIN = 1;            // use 'login'
+		CHANGE_USERNAME = 2;  // use 'changeUsername'
+		IM_MESSAGE = 3;       // use 'imMessage'
+		PING = 4;             // no msg body
+	}
+	required ClientToServerType type = 1;
+	optional Username login = 2;
+	optional NewUsername changeUsername = 3;
+	optional IM_Message imMessage = 4;
+}
+
+message UserList {
+	repeated string username = 1;
+}
+message UserStatus {
+	required string status = 1;
+}
+message Notification {
+	required string username = 1;
+}
+message ServerToClient {
+	enum ServerToClientType {
+		USER_LIST = 1;
+		USER_STATUS = 2;
+		LOGIN_NOTIFICATION = 3;
+		LOGOUT_NOTIFICATION = 4;
+		IM_MESSAGE = 5;
+	}
+	required ServerToClientType type = 1;
+	optional UserList userList = 2;
+	optional UserStatus userStatus = 3;
+	optional Notification notification = 4;
+	optional IM_Message imMessage = 5;
+}

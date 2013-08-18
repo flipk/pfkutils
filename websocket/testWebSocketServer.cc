@@ -1,11 +1,25 @@
 #if 0
 set -e -x
-g++ -Wall -Werror -O6 -c testWebSocketServer.cc
-g++ -Wall -Werror -O6 -c WebSocketConnection.cc
-g++ -Wall -Werror -O6 -c WebSocketServer.cc
-gcc -Wall -Werror -O6 -c sha1.c
-gcc -Wall -Werror -O6 -c base64.c
-g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o sha1.o base64.o -o t -lpthread
+
+proto="/home/flipk/proj/web_servers/installed/protobuf"
+flags="-Wall -Werror -O6"
+incs="-I$proto/include"
+libs="-L$proto/lib -lprotobuf -lpthread"
+
+../../web_servers/installed/protobuf/bin/protoc --cpp_out=. pfkchat.pbj
+
+/home/flipk/proj/web_servers/protojs/pbj pfkchat.pbj pfkchat.pbj.js
+
+g++ $incs $flags -c testWebSocketServer.cc
+g++ $incs $flags -c WebSocketConnection.cc
+g++ $incs $flags -c WebSocketServer.cc
+g++ $incs $flags -c pfkchat.pbj.pb.cc
+gcc $incs $flags -c sha1.c
+gcc $incs $flags -c base64.c
+g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o pfkchat.pbj.pb.o sha1.o base64.o $libs -o t
+
+LD_LIBRARY_PATH=$proto/lib ./t
+
 exit 0
 #endif
 
@@ -16,12 +30,21 @@ exit 0
 #include <pthread.h>
 #include <string.h>
 
+#include <iostream>
+
+#include "pfkchat.pbj.pb.h"
+#include "base64.h"
+
 class myWebSocketConnectionCallback : public WebSocketConnectionCallback {
 public:
     /*virtual*/ WebSocketConnection * newConnection(int fd);
 };
 
 static void initClientList(void);
+
+using namespace std;
+using namespace PFK::Chat;
+
 
 int
 main()
@@ -136,22 +159,104 @@ myWebSocketConnection :: onReady(void)
 void
 myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 {
-    if (memcmp(m.buf, "__PINGPONG", 10) == 0)
+    int cc, inpos, outpos;
+    string binaryBuffer;
+
+    outpos = 0;
+    for (inpos = 0; inpos < m.len; inpos += 4)
     {
+        unsigned char output[3];
+        cc = b64_decode_quantum(m.buf + inpos, output);
+        if (cc == 0)
+        {
+            printf("bogus base64 decode, bailing\n");
+            return;
+        }
+//        printf("%u %u %u ", output[0], output[1], output[2]);
+        binaryBuffer.push_back(output[0]);
+        binaryBuffer.push_back(output[1]);
+        binaryBuffer.push_back(output[2]);
+        outpos += cc;
+    }
+//    printf("base64 complete with %d bytes\n", outpos);
+
+    ClientToServer   msg;
+
+    msg.ParseFromString(binaryBuffer);
+
+//    cout << "decoded message from server: " << msg.DebugString() << endl;
+
+    switch (msg.type())
+    {
+    case ClientToServer_ClientToServerType_PING:
         printf("user %s sent ping\n", username);
-        return;
-    }
-    if (memcmp(m.buf, "__USERLOGIN:", 12) == 0)
+        break;
+    case ClientToServer_ClientToServerType_LOGIN:
     {
-        memset(username, 0, sizeof(username));
-        memcpy(username, m.buf+12, m.len-12);
-        printf("username changed to %s\n", username);
-        return;
+        strcpy(username, msg.login().username().c_str());
+        printf("user %s has logged in\n", username);
+
+        WebSocketMessage outm;
+        outm.type = WS_TYPE_TEXT;
+        char outmbuf[1024];
+        outm.buf = (uint8_t*) outmbuf;
+        outm.len = sprintf(
+            outmbuf, "user %s has logged in", username);
+
+        lock();
+        for (myWebSocketConnection * c = clientList; c; c = c->next)
+        {
+            c->sendMessage(outm);
+        }
+        unlock();
+
+        break;
     }
-    lock();
-    for (myWebSocketConnection * c = clientList; c; c = c->next)
+    case ClientToServer_ClientToServerType_CHANGE_USERNAME:
     {
-        c->sendMessage(m);
+        strcpy(username, msg.changeusername().newusername().c_str());
+        printf("user %s changed their username to %s\n",
+               msg.changeusername().oldusername().c_str(),
+               username);
+
+        WebSocketMessage outm;
+        outm.type = WS_TYPE_TEXT;
+        char outmbuf[1024];
+        outm.buf = (uint8_t*) outmbuf;
+        outm.len = sprintf(
+            outmbuf, "user %s changed their username to %s",
+            msg.changeusername().oldusername().c_str(),
+            username);
+
+        lock();
+        for (myWebSocketConnection * c = clientList; c; c = c->next)
+        {
+            c->sendMessage(outm);
+        }
+        unlock();
+
+        break;
     }
-    unlock();
+    case ClientToServer_ClientToServerType_IM_MESSAGE:
+    {
+        WebSocketMessage outm;
+        outm.type = WS_TYPE_TEXT;
+        char outmbuf[1024];
+        outm.buf = (uint8_t*) outmbuf;
+        outm.len = sprintf(
+            outmbuf, "%s:%s", 
+            msg.immessage().username().c_str(),
+            msg.immessage().msg().c_str());
+
+        lock();
+        for (myWebSocketConnection * c = clientList; c; c = c->next)
+        {
+            c->sendMessage(outm);
+        }
+        unlock();
+        break;
+    }
+    }
+
+
 }
