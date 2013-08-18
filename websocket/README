@@ -1,11 +1,36 @@
 
-protojs came from:
+websocket-demo
+==============
 
-https://github.com/sirikata/protojs.git
+This code is for demo purposes only. It shows how to work a websocket.
 
-this was used to generate pfkchat.pbj.js
+There's a C++ component (WebSocketServer) for the server side.  It
+handles accepting new connections, spawning threads to handle them,
+and the parsing and generating of websocket packets.  There's a
+javascript component for passing these messages back and forth.
 
-protobuf-2.5.0 came from code.google.com/p/protobuf
+Google Protobufs are used for all encoding and decoding.  Protobufs
+(C++) are available from code.google.com/p/protobuf.  There is also a
+javascript implementation which came from
+github.com/sirikata/protojs.git.
 
-this was used to generate pfkchat.pbj.pb.cc and .h
+The messages are defined in pfkchat.pbj.  protojs was used to
+autogenerate pfkchat.pbj.js for the client side, and 'protoc' from
+protobuf-2.5.0 was used to generate pfkchat.pbj.pb.cc and .h on the
+server side.  Both the protojs and protobuf messages use the same wire
+format so they understand each other nicely.
+
+I haven't figured out how to send pure binary messages.  What I'm
+sending is base64 encoded protobuf messages.  protojs has very, very
+little documentation, and what I did was based on a very short piece
+of sample code which did base64. It seems to be pretty efficient,
+though I'd hope a pure binary implementation would be moreso.
+
+
+WARNING
+=======
+
+This code is NOT production quality! It is so full of holes you could
+drive a nigerian scammer through it. Do not deploy on a production
+server!  You will be screwed so hard! I warned you.
 
