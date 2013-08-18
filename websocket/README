@@ -34,3 +34,8 @@ This code is NOT production quality! It is so full of holes you could
 drive a nigerian scammer through it. Do not deploy on a production
 server!  You will be screwed so hard! I warned you.
 
+This code is full of unchecked return values, hard-coded maximum
+buffer sizes without size checking; there's no authentication or
+encryption support; and there's no mechanism for load-shedding if the
+server should become overloaded.  This is merely a proof-of-concept
+showing what APIs are required to use web sockets from javascript and C++.
