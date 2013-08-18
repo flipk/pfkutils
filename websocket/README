@@ -20,6 +20,17 @@ protobuf-2.5.0 was used to generate pfkchat.pbj.pb.cc and .h on the
 server side.  Both the protojs and protobuf messages use the same wire
 format so they understand each other nicely.
 
+The client-side is in test.html, test.css, and the javscript code to
+implement the client-side chat is in test.js.
+
+test.js uses services from protobuf.js and pbj.js, which both come
+from the protojs library.
+
+The WebSocket* files are intended to be a stand-alone library for
+server-side of websockets.
+
+The server-side main and chat handler code is in testWebSocketServer.cc.
+
 I haven't figured out how to send pure binary messages.  What I'm
 sending is base64 encoded protobuf messages.  protojs has very, very
 little documentation, and what I did was based on a very short piece
