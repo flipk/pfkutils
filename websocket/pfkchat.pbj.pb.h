@@ -71,11 +71,12 @@ enum ServerToClient_ServerToClientType {
   ServerToClient_ServerToClientType_LOGIN_NOTIFICATION = 3,
   ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION = 4,
   ServerToClient_ServerToClientType_CHANGE_USERNAME = 5,
-  ServerToClient_ServerToClientType_IM_MESSAGE = 6
+  ServerToClient_ServerToClientType_IM_MESSAGE = 6,
+  ServerToClient_ServerToClientType_PONG = 7
 };
 bool ServerToClient_ServerToClientType_IsValid(int value);
 const ServerToClient_ServerToClientType ServerToClient_ServerToClientType_ServerToClientType_MIN = ServerToClient_ServerToClientType_USER_LIST;
-const ServerToClient_ServerToClientType ServerToClient_ServerToClientType_ServerToClientType_MAX = ServerToClient_ServerToClientType_IM_MESSAGE;
+const ServerToClient_ServerToClientType ServerToClient_ServerToClientType_ServerToClientType_MAX = ServerToClient_ServerToClientType_PONG;
 const int ServerToClient_ServerToClientType_ServerToClientType_ARRAYSIZE = ServerToClient_ServerToClientType_ServerToClientType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ServerToClient_ServerToClientType_descriptor();
@@ -579,28 +580,28 @@ class UserList : public ::google::protobuf::Message {
 
   // accessors -------------------------------------------------------
 
-  // repeated string username = 1;
-  inline int username_size() const;
-  inline void clear_username();
-  static const int kUsernameFieldNumber = 1;
-  inline const ::std::string& username(int index) const;
-  inline ::std::string* mutable_username(int index);
-  inline void set_username(int index, const ::std::string& value);
-  inline void set_username(int index, const char* value);
-  inline void set_username(int index, const char* value, size_t size);
-  inline ::std::string* add_username();
-  inline void add_username(const ::std::string& value);
-  inline void add_username(const char* value);
-  inline void add_username(const char* value, size_t size);
-  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& username() const;
-  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_username();
+  // repeated string usernames = 1;
+  inline int usernames_size() const;
+  inline void clear_usernames();
+  static const int kUsernamesFieldNumber = 1;
+  inline const ::std::string& usernames(int index) const;
+  inline ::std::string* mutable_usernames(int index);
+  inline void set_usernames(int index, const ::std::string& value);
+  inline void set_usernames(int index, const char* value);
+  inline void set_usernames(int index, const char* value, size_t size);
+  inline ::std::string* add_usernames();
+  inline void add_usernames(const ::std::string& value);
+  inline void add_usernames(const char* value);
+  inline void add_usernames(const char* value, size_t size);
+  inline const ::google::protobuf::RepeatedPtrField< ::std::string>& usernames() const;
+  inline ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_usernames();
 
   // @@protoc_insertion_point(class_scope:PFK.Chat.UserList)
  private:
 
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
 
-  ::google::protobuf::RepeatedPtrField< ::std::string> username_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> usernames_;
 
   mutable int _cached_size_;
   ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
@@ -864,6 +865,7 @@ class ServerToClient : public ::google::protobuf::Message {
   static const ServerToClientType LOGOUT_NOTIFICATION = ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION;
   static const ServerToClientType CHANGE_USERNAME = ServerToClient_ServerToClientType_CHANGE_USERNAME;
   static const ServerToClientType IM_MESSAGE = ServerToClient_ServerToClientType_IM_MESSAGE;
+  static const ServerToClientType PONG = ServerToClient_ServerToClientType_PONG;
   static inline bool ServerToClientType_IsValid(int value) {
     return ServerToClient_ServerToClientType_IsValid(value);
   }
@@ -1483,48 +1485,48 @@ inline void ClientToServer::set_allocated_immessage(::PFK::Chat::IM_Message* imm
 
 // UserList
 
-// repeated string username = 1;
-inline int UserList::username_size() const {
-  return username_.size();
+// repeated string usernames = 1;
+inline int UserList::usernames_size() const {
+  return usernames_.size();
 }
-inline void UserList::clear_username() {
-  username_.Clear();
+inline void UserList::clear_usernames() {
+  usernames_.Clear();
 }
-inline const ::std::string& UserList::username(int index) const {
-  return username_.Get(index);
+inline const ::std::string& UserList::usernames(int index) const {
+  return usernames_.Get(index);
 }
-inline ::std::string* UserList::mutable_username(int index) {
-  return username_.Mutable(index);
+inline ::std::string* UserList::mutable_usernames(int index) {
+  return usernames_.Mutable(index);
 }
-inline void UserList::set_username(int index, const ::std::string& value) {
-  username_.Mutable(index)->assign(value);
+inline void UserList::set_usernames(int index, const ::std::string& value) {
+  usernames_.Mutable(index)->assign(value);
 }
-inline void UserList::set_username(int index, const char* value) {
-  username_.Mutable(index)->assign(value);
+inline void UserList::set_usernames(int index, const char* value) {
+  usernames_.Mutable(index)->assign(value);
 }
-inline void UserList::set_username(int index, const char* value, size_t size) {
-  username_.Mutable(index)->assign(
+inline void UserList::set_usernames(int index, const char* value, size_t size) {
+  usernames_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
 }
-inline ::std::string* UserList::add_username() {
-  return username_.Add();
+inline ::std::string* UserList::add_usernames() {
+  return usernames_.Add();
 }
-inline void UserList::add_username(const ::std::string& value) {
-  username_.Add()->assign(value);
+inline void UserList::add_usernames(const ::std::string& value) {
+  usernames_.Add()->assign(value);
 }
-inline void UserList::add_username(const char* value) {
-  username_.Add()->assign(value);
+inline void UserList::add_usernames(const char* value) {
+  usernames_.Add()->assign(value);
 }
-inline void UserList::add_username(const char* value, size_t size) {
-  username_.Add()->assign(reinterpret_cast<const char*>(value), size);
+inline void UserList::add_usernames(const char* value, size_t size) {
+  usernames_.Add()->assign(reinterpret_cast<const char*>(value), size);
 }
 inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-UserList::username() const {
-  return username_;
+UserList::usernames() const {
+  return usernames_;
 }
 inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-UserList::mutable_username() {
-  return &username_;
+UserList::mutable_usernames() {
+  return &usernames_;
 }
 
 // -------------------------------------------------------------------

@@ -67,7 +67,7 @@ PFK.Chat.ClientToServer = PROTO.Message("PFK.Chat.ClientToServer",{
 		id: 4
 	}});
 PFK.Chat.UserList = PROTO.Message("PFK.Chat.UserList",{
-	username: {
+	usernames: {
 		options: {},
 		multiplicity: PROTO.repeated,
 		type: function(){return PROTO.string;},
@@ -100,7 +100,8 @@ PFK.Chat.ServerToClient = PROTO.Message("PFK.Chat.ServerToClient",{
 		LOGIN_NOTIFICATION :3,
 		LOGOUT_NOTIFICATION :4,
 		CHANGE_USERNAME :5,
-		IM_MESSAGE :6	}),
+		IM_MESSAGE :6,
+		PONG :7	}),
 	type: {
 		options: {},
 		multiplicity: PROTO.required,

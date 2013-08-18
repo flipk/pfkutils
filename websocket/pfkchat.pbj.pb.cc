@@ -125,7 +125,7 @@ void protobuf_AssignDesc_pfkchat_2epbj() {
   ClientToServer_ClientToServerType_descriptor_ = ClientToServer_descriptor_->enum_type(0);
   UserList_descriptor_ = file->message_type(4);
   static const int UserList_offsets_[1] = {
-    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UserList, username_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(UserList, usernames_),
   };
   UserList_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -258,21 +258,21 @@ void protobuf_AddDesc_pfkchat_2epbj() {
     "ername\030\003 \001(\0132\025.PFK.Chat.NewUsername\022\'\n\ti"
     "mMessage\030\004 \001(\0132\024.PFK.Chat.IM_Message\"N\n\022"
     "ClientToServerType\022\t\n\005LOGIN\020\001\022\023\n\017CHANGE_"
-    "USERNAME\020\002\022\016\n\nIM_MESSAGE\020\003\022\010\n\004PING\020\004\"\034\n\010"
-    "UserList\022\020\n\010username\030\001 \003(\t\".\n\nUserStatus"
-    "\022\020\n\010username\030\001 \003(\t\022\016\n\006status\030\002 \002(\t\" \n\014No"
-    "tification\022\020\n\010username\030\001 \002(\t\"\256\003\n\016ServerT"
-    "oClient\0229\n\004type\030\001 \002(\0162+.PFK.Chat.ServerT"
-    "oClient.ServerToClientType\022$\n\010userList\030\002"
-    " \001(\0132\022.PFK.Chat.UserList\022(\n\nuserStatus\030\003"
-    " \001(\0132\024.PFK.Chat.UserStatus\022,\n\014notificati"
-    "on\030\004 \001(\0132\026.PFK.Chat.Notification\022-\n\016chan"
-    "geUsername\030\005 \001(\0132\025.PFK.Chat.NewUsername\022"
-    "\'\n\timMessage\030\006 \001(\0132\024.PFK.Chat.IM_Message"
-    "\"\212\001\n\022ServerToClientType\022\r\n\tUSER_LIST\020\001\022\017"
-    "\n\013USER_STATUS\020\002\022\026\n\022LOGIN_NOTIFICATION\020\003\022"
-    "\027\n\023LOGOUT_NOTIFICATION\020\004\022\023\n\017CHANGE_USERN"
-    "AME\020\005\022\016\n\nIM_MESSAGE\020\006", 981);
+    "USERNAME\020\002\022\016\n\nIM_MESSAGE\020\003\022\010\n\004PING\020\004\"\035\n\010"
+    "UserList\022\021\n\tusernames\030\001 \003(\t\".\n\nUserStatu"
+    "s\022\020\n\010username\030\001 \003(\t\022\016\n\006status\030\002 \002(\t\" \n\014N"
+    "otification\022\020\n\010username\030\001 \002(\t\"\270\003\n\016Server"
+    "ToClient\0229\n\004type\030\001 \002(\0162+.PFK.Chat.Server"
+    "ToClient.ServerToClientType\022$\n\010userList\030"
+    "\002 \001(\0132\022.PFK.Chat.UserList\022(\n\nuserStatus\030"
+    "\003 \001(\0132\024.PFK.Chat.UserStatus\022,\n\014notificat"
+    "ion\030\004 \001(\0132\026.PFK.Chat.Notification\022-\n\016cha"
+    "ngeUsername\030\005 \001(\0132\025.PFK.Chat.NewUsername"
+    "\022\'\n\timMessage\030\006 \001(\0132\024.PFK.Chat.IM_Messag"
+    "e\"\224\001\n\022ServerToClientType\022\r\n\tUSER_LIST\020\001\022"
+    "\017\n\013USER_STATUS\020\002\022\026\n\022LOGIN_NOTIFICATION\020\003"
+    "\022\027\n\023LOGOUT_NOTIFICATION\020\004\022\023\n\017CHANGE_USER"
+    "NAME\020\005\022\016\n\nIM_MESSAGE\020\006\022\010\n\004PONG\020\007", 992);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "pfkchat.pbj", &protobuf_RegisterTypes);
   Username::default_instance_ = new Username();
@@ -1480,7 +1480,7 @@ void ClientToServer::Swap(ClientToServer* other) {
 // ===================================================================
 
 #ifndef _MSC_VER
-const int UserList::kUsernameFieldNumber;
+const int UserList::kUsernamesFieldNumber;
 #endif  // !_MSC_VER
 
 UserList::UserList()
@@ -1533,7 +1533,7 @@ UserList* UserList::New() const {
 }
 
 void UserList::Clear() {
-  username_.Clear();
+  usernames_.Clear();
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
 }
@@ -1544,21 +1544,21 @@ bool UserList::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   while ((tag = input->ReadTag()) != 0) {
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated string username = 1;
+      // repeated string usernames = 1;
       case 1: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
             ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED) {
-         parse_username:
+         parse_usernames:
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->add_username()));
+                input, this->add_usernames()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-            this->username(this->username_size() - 1).data(),
-            this->username(this->username_size() - 1).length(),
+            this->usernames(this->usernames_size() - 1).data(),
+            this->usernames(this->usernames_size() - 1).length(),
             ::google::protobuf::internal::WireFormat::PARSE);
         } else {
           goto handle_uninterpreted;
         }
-        if (input->ExpectTag(10)) goto parse_username;
+        if (input->ExpectTag(10)) goto parse_usernames;
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -1581,13 +1581,13 @@ bool UserList::MergePartialFromCodedStream(
 
 void UserList::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // repeated string username = 1;
-  for (int i = 0; i < this->username_size(); i++) {
+  // repeated string usernames = 1;
+  for (int i = 0; i < this->usernames_size(); i++) {
   ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-    this->username(i).data(), this->username(i).length(),
+    this->usernames(i).data(), this->usernames(i).length(),
     ::google::protobuf::internal::WireFormat::SERIALIZE);
     ::google::protobuf::internal::WireFormatLite::WriteString(
-      1, this->username(i), output);
+      1, this->usernames(i), output);
   }
 
   if (!unknown_fields().empty()) {
@@ -1598,13 +1598,13 @@ void UserList::SerializeWithCachedSizes(
 
 ::google::protobuf::uint8* UserList::SerializeWithCachedSizesToArray(
     ::google::protobuf::uint8* target) const {
-  // repeated string username = 1;
-  for (int i = 0; i < this->username_size(); i++) {
+  // repeated string usernames = 1;
+  for (int i = 0; i < this->usernames_size(); i++) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
-      this->username(i).data(), this->username(i).length(),
+      this->usernames(i).data(), this->usernames(i).length(),
       ::google::protobuf::internal::WireFormat::SERIALIZE);
     target = ::google::protobuf::internal::WireFormatLite::
-      WriteStringToArray(1, this->username(i), target);
+      WriteStringToArray(1, this->usernames(i), target);
   }
 
   if (!unknown_fields().empty()) {
@@ -1617,11 +1617,11 @@ void UserList::SerializeWithCachedSizes(
 int UserList::ByteSize() const {
   int total_size = 0;
 
-  // repeated string username = 1;
-  total_size += 1 * this->username_size();
-  for (int i = 0; i < this->username_size(); i++) {
+  // repeated string usernames = 1;
+  total_size += 1 * this->usernames_size();
+  for (int i = 0; i < this->usernames_size(); i++) {
     total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
-      this->username(i));
+      this->usernames(i));
   }
 
   if (!unknown_fields().empty()) {
@@ -1649,7 +1649,7 @@ void UserList::MergeFrom(const ::google::protobuf::Message& from) {
 
 void UserList::MergeFrom(const UserList& from) {
   GOOGLE_CHECK_NE(&from, this);
-  username_.MergeFrom(from.username_);
+  usernames_.MergeFrom(from.usernames_);
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
 
@@ -1672,7 +1672,7 @@ bool UserList::IsInitialized() const {
 
 void UserList::Swap(UserList* other) {
   if (other != this) {
-    username_.Swap(&other->username_);
+    usernames_.Swap(&other->usernames_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
@@ -2203,6 +2203,7 @@ bool ServerToClient_ServerToClientType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
+    case 7:
       return true;
     default:
       return false;
@@ -2216,6 +2217,7 @@ const ServerToClient_ServerToClientType ServerToClient::LOGIN_NOTIFICATION;
 const ServerToClient_ServerToClientType ServerToClient::LOGOUT_NOTIFICATION;
 const ServerToClient_ServerToClientType ServerToClient::CHANGE_USERNAME;
 const ServerToClient_ServerToClientType ServerToClient::IM_MESSAGE;
+const ServerToClient_ServerToClientType ServerToClient::PONG;
 const ServerToClient_ServerToClientType ServerToClient::ServerToClientType_MIN;
 const ServerToClient_ServerToClientType ServerToClient::ServerToClientType_MAX;
 const int ServerToClient::ServerToClientType_ARRAYSIZE;

@@ -26,7 +26,7 @@ message ClientToServer {
 }
 
 message UserList {
-	repeated string username = 1;
+	repeated string usernames = 1;
 }
 message UserStatus {
 	repeated string username = 1;
@@ -37,12 +37,13 @@ message Notification {
 }
 message ServerToClient {
 	enum ServerToClientType {
-		USER_LIST = 1;           // ?
+		USER_LIST = 1;           // use 'userList'
 		USER_STATUS = 2;         // ?
 		LOGIN_NOTIFICATION = 3;  // use 'notification'
 		LOGOUT_NOTIFICATION = 4; // use 'notification'
 		CHANGE_USERNAME = 5;     // use 'changeUsername'
 		IM_MESSAGE = 6;          // use 'imMessage'
+		PONG = 7;                // no msg body
 	}
 	required ServerToClientType type = 1;
 	optional UserList userList = 2;

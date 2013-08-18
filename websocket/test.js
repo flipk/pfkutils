@@ -40,8 +40,13 @@ var makesocket = function () {
 	switch (srvToClient.type)
 	{
 	case PFK.Chat.ServerToClient.ServerToClientType.USER_LIST:
+	    message("users currently logged in:");
+	    var numusers = srvToClient.userList.usernames.length;
+	    for (var usernum = 0; usernum < numusers; usernum++)
+		message("-->" + srvToClient.userList.usernames[usernum]);
 	    break;
 	case PFK.Chat.ServerToClient.ServerToClientType.USER_STATUS:
+	    // not handled
 	    break;
 	case PFK.Chat.ServerToClient.ServerToClientType.LOGIN_NOTIFICATION:
 	    message("user " + 
@@ -64,19 +69,27 @@ var makesocket = function () {
 		    ":" +
 		    srvToClient.imMessage.msg);
 	    break;
+	case PFK.Chat.ServerToClient.ServerToClientType.PONG:
+	    message("got PONG");
+	    break;
 	}
     }
 }
 makesocket();
-//window.setInterval(
-//    function(){
-//	if (socket)
-//	    socket.send('__PINGPONG');
-//	else {
-//	    message("trying to reconnect...");
-//	    makesocket();
-//	}
-//    }, 5000);
+window.setInterval(
+    function(){
+	if (socket)
+	{
+	    var ping = new PFK.Chat.ClientToServer();
+	    ping.type = PFK.Chat.ClientToServer.ClientToServerType.PING;
+	    var pingser = new PROTO.Base64Stream;
+	    ping.SerializeToStream(pingser);
+	    socket.send(pingser.getString());
+	} else {
+	    message("trying to reconnect...");
+	    makesocket();
+	}
+    }, 10000);
 var sendMessage = function() {
     var txtbox = get( "entry" );
     var im = new PFK.Chat.ClientToServer();
@@ -86,7 +99,6 @@ var sendMessage = function() {
     im.imMessage.msg = txtbox.value;
     var imserial = new PROTO.Base64Stream;
     im.SerializeToStream(imserial);
-    console.log("sending message: " + imserial.getString());
     socket.send(imserial.getString());
     txtbox.value = "";
 }

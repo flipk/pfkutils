@@ -113,19 +113,12 @@ myWebSocketConnection :: myWebSocketConnection(int _fd)
 
 myWebSocketConnection :: ~myWebSocketConnection(void)
 {
-    WebSocketMessage outm;
-    char text[128];
-    outm.type = WS_TYPE_TEXT;
-    outm.buf = (uint8_t*)text;
+    ServerToClient  srv2cli;
 
-    outm.len = sprintf(text,"-->user %s logged out", username);
+    srv2cli.set_type( ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION );
+    srv2cli.mutable_notification()->set_username( username );
 
-    lock();
-    for (myWebSocketConnection * c = clientList; c; c = c->next)
-    {
-        c->sendMessage(outm);
-    }
-    unlock();
+    sendClientMessage( srv2cli, true );
 
     lock();
     if (prev)
@@ -134,26 +127,6 @@ myWebSocketConnection :: ~myWebSocketConnection(void)
         clientList = next;
     if (next)
         next->prev = prev;
-    unlock();
-}
-
-void
-myWebSocketConnection :: onReady(void)
-{
-    WebSocketMessage outm;
-    char text[128];
-    outm.type = WS_TYPE_TEXT;
-    outm.buf = (uint8_t*)text;
-
-    outm.len = sprintf(text,"Users logged in:");
-    sendMessage(outm);
-
-    lock();
-    for (myWebSocketConnection * c = clientList; c; c = c->next)
-    {
-        outm.len = sprintf(text,"-->%s", c->username);
-        sendMessage(outm);
-    }
     unlock();
 }
 
@@ -203,31 +176,53 @@ myWebSocketConnection :: sendClientMessage(const ServerToClient &outmsg,
 }
 
 void
+myWebSocketConnection :: onReady(void)
+{
+
+    ServerToClient  srv2cli;
+
+    srv2cli.set_type( ServerToClient_ServerToClientType_USER_LIST );
+    UserList * ul = srv2cli.mutable_userlist();
+
+    lock();
+    for (myWebSocketConnection * c = clientList; c; c = c->next)
+        if (c != this)
+            ul->add_usernames(c->username);
+    unlock();
+
+    sendClientMessage( srv2cli, false );
+}
+
+void
 myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 {
-    int cc, inpos, outpos;
+    int cc, inpos, outpos, newlen;
     string binaryBuffer;
 
+    // rewrite m.buf in place stripping \r and \n
+    for (inpos = 0, outpos = 0; inpos < m.len; inpos++)
+    {
+        uint8_t c = m.buf[inpos];
+        if (c != 13 && c != 10)
+            m.buf[outpos++] = c;
+    }
+    newlen = outpos;
+
     outpos = 0;
-    for (inpos = 0; inpos < m.len; inpos += 4)
+    for (inpos = 0; inpos < newlen; inpos += 4)
     {
         unsigned char output[3];
-        printf("decoding %c%c%c%c\n",
-               m.buf[inpos+0], m.buf[inpos+1], 
-               m.buf[inpos+2], m.buf[inpos+3]);
         cc = b64_decode_quantum(m.buf + inpos, output);
         if (cc == 0)
         {
             printf("bogus base64 decode, bailing\n");
             return;
         }
-//        printf("%u %u %u ", output[0], output[1], output[2]);
         binaryBuffer.push_back(output[0]);
         binaryBuffer.push_back(output[1]);
         binaryBuffer.push_back(output[2]);
         outpos += cc;
     }
-//    printf("base64 complete with %d bytes\n", outpos);
 
     ClientToServer   msg;
 
@@ -238,29 +233,27 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
     switch (msg.type())
     {
     case ClientToServer_ClientToServerType_PING:
+    {
         printf("user %s sent ping\n", username);
+        ServerToClient  srv2cli;
+        srv2cli.set_type( ServerToClient_ServerToClientType_PONG );
+        sendClientMessage( srv2cli, false );
         break;
+    }
+
     case ClientToServer_ClientToServerType_LOGIN:
     {
         strcpy(username, msg.login().username().c_str());
         printf("user %s has logged in\n", username);
 
-        WebSocketMessage outm;
-        outm.type = WS_TYPE_TEXT;
-        char outmbuf[1024];
-        outm.buf = (uint8_t*) outmbuf;
-        outm.len = sprintf(
-            outmbuf, "user %s has logged in", username);
-
-        lock();
-        for (myWebSocketConnection * c = clientList; c; c = c->next)
-        {
-            c->sendMessage(outm);
-        }
-        unlock();
-
+        ServerToClient  srv2cli;
+        srv2cli.set_type(
+            ServerToClient_ServerToClientType_LOGIN_NOTIFICATION );
+        srv2cli.mutable_notification()->set_username( username );
+        sendClientMessage( srv2cli, true );
         break;
     }
+
     case ClientToServer_ClientToServerType_CHANGE_USERNAME:
     {
         strcpy(username, msg.changeusername().newusername().c_str());
@@ -269,25 +262,19 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
                username);
 
         ServerToClient  outmsg;
-
         outmsg.set_type( ServerToClient_ServerToClientType_CHANGE_USERNAME );
         outmsg.mutable_changeusername()->CopyFrom( msg.changeusername() );
-
         sendClientMessage( outmsg, true );
-
         break;
     }
+
     case ClientToServer_ClientToServerType_IM_MESSAGE:
     {
         ServerToClient  outmsg;
-
         outmsg.set_type( ServerToClient_ServerToClientType_IM_MESSAGE );
         outmsg.mutable_immessage()->CopyFrom( msg.immessage() );
-
         sendClientMessage( outmsg, true );
         break;
     }
     }
-
-
 }
