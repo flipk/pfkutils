@@ -39,11 +39,15 @@ class WebSocketConnection {
     bool done;
     char * host;
     char * key;
+    char * key1;
+    char * key2;
+    uint8_t key3[8];
     char * origin;
     char * version;
     char * resource;
     bool upgrade_flag;
     bool connection_flag;
+    int protoversion; // 1=hixie-76  2=rfc6455
 public:
     WebSocketConnection(int _fd);
     virtual ~WebSocketConnection(void);

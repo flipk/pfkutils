@@ -15,8 +15,9 @@ g++ $incs $flags -c WebSocketConnection.cc
 g++ $incs $flags -c WebSocketServer.cc
 g++ $incs $flags -c pfkchat.pbj.pb.cc
 gcc $incs $flags -c sha1.c
+gcc              -c md5.c
 gcc $incs $flags -c base64.c
-g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o pfkchat.pbj.pb.o sha1.o base64.o $libs -o t
+g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o pfkchat.pbj.pb.o sha1.o base64.o md5.o $libs -o t
 
 LD_LIBRARY_PATH=$proto/lib ./t
 
@@ -228,7 +229,7 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 
     msg.ParseFromString(binaryBuffer);
 
-//    cout << "decoded message from server: " << msg.DebugString() << endl;
+    cout << "decoded message from server: " << msg.DebugString() << endl;
 
     switch (msg.type())
     {
