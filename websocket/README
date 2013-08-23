@@ -10,33 +10,28 @@ and the parsing and generating of websocket packets.  There's a
 javascript component for passing these messages back and forth.
 
 Google Protobufs are used for all encoding and decoding.  Protobufs
-(C++) are available from code.google.com/p/protobuf.  There is also a
-javascript implementation which came from
-github.com/sirikata/protojs.git.
+(C++) are available from code.google.com/p/protobuf.  The client side
+uses three projects from dcodeIO on github:
 
-The messages are defined in pfkchat.pbj.  protojs was used to
-autogenerate pfkchat.pbj.js for the client side, and 'protoc' from
-protobuf-2.5.0 was used to generate pfkchat.pbj.pb.cc and .h on the
-server side.  Both the protojs and protobuf messages use the same wire
-format so they understand each other nicely.
+https://github.com/dcodeIO/Long.js
+https://github.com/dcodeIO/ByteBuffer.js
+https://github.com/dcodeIO/ProtoBuf.js.git
+
+The messages are defined in pfkchat.proto.  'protoc' from
+protobuf-2.5.0 was used to generate pfkchat.pb.cc and .h on the server
+side.  The ProtoBuf.js client on the browser side also understands
+this file.
 
 The client-side is in test.html, test.css, and the javscript code to
 implement the client-side chat is in test.js.
 
-test.js uses services from protobuf.js and pbj.js, which both come
-from the protojs library.
+test.js uses services from ProtoBuf.js, which internally uses services
+from ByteBuffer.js and Long.js.
 
 The WebSocket* files are intended to be a stand-alone library for
 server-side of websockets.
 
 The server-side main and chat handler code is in testWebSocketServer.cc.
-
-I haven't figured out how to send pure binary messages.  What I'm
-sending is base64 encoded protobuf messages.  protojs has very, very
-little documentation, and what I did was based on a very short piece
-of sample code which did base64. It seems to be pretty efficient,
-though I'd hope a pure binary implementation would be moreso.
-
 
 WARNING
 =======

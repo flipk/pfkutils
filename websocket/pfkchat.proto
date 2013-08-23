@@ -12,13 +12,13 @@ message IM_Message {
 	required string username = 1;
 	required string msg = 2;
 }
+enum ClientToServerType {
+	CTS_LOGIN = 1;            // use 'login'
+	CTS_CHANGE_USERNAME = 2;  // use 'changeUsername'
+	CTS_IM_MESSAGE = 3;       // use 'imMessage'
+	CTS_PING = 4;             // no msg body
+}
 message ClientToServer {
-	enum ClientToServerType {
-		LOGIN = 1;            // use 'login'
-		CHANGE_USERNAME = 2;  // use 'changeUsername'
-		IM_MESSAGE = 3;       // use 'imMessage'
-		PING = 4;             // no msg body
-	}
 	required ClientToServerType type = 1;
 	optional Username login = 2;
 	optional NewUsername changeUsername = 3;
@@ -35,16 +35,16 @@ message UserStatus {
 message Notification {
 	required string username = 1;
 }
+enum ServerToClientType {
+	STC_USER_LIST = 1;           // use 'userList'
+	STC_USER_STATUS = 2;         // ?
+	STC_LOGIN_NOTIFICATION = 3;  // use 'notification'
+	STC_LOGOUT_NOTIFICATION = 4; // use 'notification'
+	STC_CHANGE_USERNAME = 5;     // use 'changeUsername'
+	STC_IM_MESSAGE = 6;          // use 'imMessage'
+	STC_PONG = 7;                // no msg body
+}
 message ServerToClient {
-	enum ServerToClientType {
-		USER_LIST = 1;           // use 'userList'
-		USER_STATUS = 2;         // ?
-		LOGIN_NOTIFICATION = 3;  // use 'notification'
-		LOGOUT_NOTIFICATION = 4; // use 'notification'
-		CHANGE_USERNAME = 5;     // use 'changeUsername'
-		IM_MESSAGE = 6;          // use 'imMessage'
-		PONG = 7;                // no msg body
-	}
 	required ServerToClientType type = 1;
 	optional UserList userList = 2;
 	optional UserStatus userStatus = 3;

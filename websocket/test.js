@@ -5,6 +5,10 @@ var get = function(id) {
 
 var username = get( "username" ).value;
 
+var pfk_chat_proto = dcodeIO.ProtoBuf.protoFromFile( "pfkchat.proto" );
+var pfk_chat = pfk_chat_proto.build("PFK.Chat");
+var stc_decoder = pfk_chat_proto.build("PFK.Chat.ServerToClient");
+
 var message = function(msg){
     var div = get( "messages" );
     div.innerHTML = div.innerHTML + msg + '\n';
@@ -26,18 +30,15 @@ var socket = null;
 var makesocket = function () {
 
     socket = new WebSocket(newuri);
-
     socket.binaryType = "arraybuffer";
 
     socket.onopen = function() {
         message('socket opened');
-        var loginMsg = new PFK.Chat.ClientToServer();
-        loginMsg.type = PFK.Chat.ClientToServer.ClientToServerType.LOGIN;
-        loginMsg.login = new PFK.Chat.Username;
+        var loginMsg = new pfk_chat.ClientToServer;
+        loginMsg.type = pfk_chat.ClientToServerType.CTS_LOGIN;
+        loginMsg.login = new pfk_chat.Username;
         loginMsg.login.username = username;
-        var serialized = new PROTO.Base64Stream;
-        loginMsg.SerializeToStream(serialized);
-        socket.send(serialized.getString());
+        socket.send(loginMsg.toArrayBuffer());
     }
 
     socket.onclose = function() {
@@ -46,43 +47,48 @@ var makesocket = function () {
     }
 
     socket.onmessage = function(msg){
-        var b64str = new PROTO.Base64Stream(msg.data);
-        var srvToClient = new PFK.Chat.ServerToClient();
-        srvToClient.ParseFromStream(b64str);
-        switch (srvToClient.type)
+
+        var stcmsg = stc_decoder.decode(msg.data);
+
+        switch (stcmsg.type)
         {
-        case PFK.Chat.ServerToClient.ServerToClientType.USER_LIST:
+        case pfk_chat.ServerToClientType.STC_USER_LIST:
             message("users currently logged in:");
-            var numusers = srvToClient.userList.usernames.length;
-            for (var usernum = 0; usernum < numusers; usernum++)
-                message("-->" + srvToClient.userList.usernames[usernum]);
+            for (var ind = 0; ind < stcmsg.userList.usernames.length; ind++)
+                message("-->" + stcmsg.userList.usernames[ind]);
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.USER_STATUS:
+
+        case pfk_chat.ServerToClientType.STC_USER_STATUS:
             // not handled
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.LOGIN_NOTIFICATION:
+
+        case pfk_chat.ServerToClientType.STC_LOGIN_NOTIFICATION:
             message("user " + 
-                    srvToClient.notification.username +
+                    stcmsg.notification.username +
                     " has logged in");
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.LOGOUT_NOTIFICATION:
+
+        case pfk_chat.ServerToClientType.STC_LOGOUT_NOTIFICATION:
             message("user " + 
-                    srvToClient.notification.username +
+                    stcmsg.notification.username +
                     " has logged out");
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.CHANGE_USERNAME:
+
+        case pfk_chat.ServerToClientType.STC_CHANGE_USERNAME:
             message("username changed " +
-                    srvToClient.changeUsername.oldusername +
+                    stcmsg.changeUsername.oldusername +
                     " to " +
-                    srvToClient.changeUsername.newusername);
+                    stcmsg.changeUsername.newusername);
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.IM_MESSAGE:
-            message(srvToClient.imMessage.username +
+
+        case pfk_chat.ServerToClientType.STC_IM_MESSAGE:
+            message(stcmsg.imMessage.username +
                     ":" +
-                    srvToClient.imMessage.msg);
+                    stcmsg.imMessage.msg);
             break;
-        case PFK.Chat.ServerToClient.ServerToClientType.PONG:
-            message("got PONG");
+
+        case pfk_chat.ServerToClientType.STC_PONG:
+            console.log("got PONG");
             break;
         }
     }
@@ -94,11 +100,9 @@ window.setInterval(
     function(){
         if (socket)
         {
-            var ping = new PFK.Chat.ClientToServer();
-            ping.type = PFK.Chat.ClientToServer.ClientToServerType.PING;
-            var pingser = new PROTO.Base64Stream;
-            ping.SerializeToStream(pingser);
-            socket.send(pingser.getString());
+            var ping = new pfk_chat.ClientToServer();
+            ping.type = pfk_chat.ClientToServerType.CTS_PING;
+            socket.send(ping.toArrayBuffer());
         } else {
             message("trying to reconnect...");
             makesocket();
@@ -107,14 +111,12 @@ window.setInterval(
 
 var sendMessage = function() {
     var txtbox = get( "entry" );
-    var im = new PFK.Chat.ClientToServer();
-    im.type = PFK.Chat.ClientToServer.ClientToServerType.IM_MESSAGE;
-    im.imMessage = new PFK.Chat.IM_Message;
+    var im = new pfk_chat.ClientToServer;
+    im.type = pfk_chat.ClientToServerType.CTS_IM_MESSAGE;
+    im.imMessage = new pfk_chat.IM_Message;
     im.imMessage.username = username;
     im.imMessage.msg = txtbox.value;
-    var imserial = new PROTO.Base64Stream;
-    im.SerializeToStream(imserial);
-    socket.send(imserial.getString());
+    socket.send(im.toArrayBuffer());
     txtbox.value = "";
 }
 
@@ -133,15 +135,12 @@ get( "username" ).onblur = function() {
     var newusername = get("username").value;
     if (socket)
     {
-        var chgMsg = new PFK.Chat.ClientToServer();
-        chgMsg.type = 
-            PFK.Chat.ClientToServer.ClientToServerType.CHANGE_USERNAME;
-        chgMsg.changeUsername = new PFK.Chat.NewUsername;
+        var chgMsg = new pfk_chat.ClientToServer;
+        chgMsg.type = pfk_chat.ClientToServerType.CTS_CHANGE_USERNAME;
+        chgMsg.changeUsername = new pfk_chat.NewUsername;
         chgMsg.changeUsername.oldusername = username;
         chgMsg.changeUsername.newusername = newusername;
-        var imserial = new PROTO.Base64Stream;
-        chgMsg.SerializeToStream(imserial);
-        socket.send(imserial.getString());
+        socket.send(chgMsg.toArrayBuffer());
     }
     username = newusername;
 }

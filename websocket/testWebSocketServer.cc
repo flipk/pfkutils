@@ -1,23 +1,21 @@
 #if 0
 set -e -x
 
-proto="/home/flipk/proj/web_servers/installed/protobuf"
+proto="/home/pknaack1/proj/obsidian/installed/protobuf"
 flags="-Wall -Werror -O6"
 incs="-I$proto/include"
 libs="-L$proto/lib -lprotobuf -lpthread"
 
-../../web_servers/installed/protobuf/bin/protoc --cpp_out=. pfkchat.pbj
-
-/home/flipk/proj/web_servers/protojs/pbj pfkchat.pbj pfkchat.pbj.js
+$proto/bin/protoc --cpp_out=. pfkchat.proto
 
 g++ $incs $flags -c testWebSocketServer.cc
 g++ $incs $flags -c WebSocketConnection.cc
 g++ $incs $flags -c WebSocketServer.cc
-g++ $incs $flags -c pfkchat.pbj.pb.cc
+g++ $incs $flags -c pfkchat.pb.cc
 gcc $incs $flags -c sha1.c
 gcc              -c md5.c
 gcc $incs $flags -c base64.c
-g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o pfkchat.pbj.pb.o sha1.o base64.o md5.o $libs -o t
+g++ testWebSocketServer.o WebSocketServer.o WebSocketConnection.o pfkchat.pb.o sha1.o base64.o md5.o $libs -o t
 
 LD_LIBRARY_PATH=$proto/lib ./t
 
@@ -33,7 +31,7 @@ exit 0
 
 #include <iostream>
 
-#include "pfkchat.pbj.pb.h"
+#include "pfkchat.pb.h"
 #include "base64.h"
 
 class myWebSocketConnectionCallback : public WebSocketConnectionCallback {
@@ -116,7 +114,7 @@ myWebSocketConnection :: ~myWebSocketConnection(void)
 {
     ServerToClient  srv2cli;
 
-    srv2cli.set_type( ServerToClient_ServerToClientType_LOGOUT_NOTIFICATION );
+    srv2cli.set_type( STC_LOGOUT_NOTIFICATION );
     srv2cli.mutable_notification()->set_username( username );
 
     sendClientMessage( srv2cli, true );
@@ -139,27 +137,10 @@ myWebSocketConnection :: sendClientMessage(const ServerToClient &outmsg,
 
     outmsg.SerializeToString( &outmsgbinary );
 
-    uint8_t outb64buf[1024];
-    int inlen = outmsgbinary.length();
-    int inpos, outpos;
-    for (inpos = 0, outpos = 0; inpos < inlen; inpos += 3, outpos += 4)
-    {
-        int encodelen = inlen - inpos;
-        if (encodelen > 3)
-            encodelen = 3;
-
-        uint8_t  in3buf[3];
-        in3buf[0] = outmsgbinary[inpos+0];
-        in3buf[1] = outmsgbinary[inpos+1];
-        in3buf[2] = outmsgbinary[inpos+2];
-
-        b64_encode_quantum(in3buf, encodelen, outb64buf + outpos);
-    }
-
     WebSocketMessage outm;
-    outm.type = WS_TYPE_TEXT;
-    outm.buf = outb64buf;
-    outm.len = outpos;
+    outm.type = WS_TYPE_BINARY;
+    outm.buf = (uint8_t*)  outmsgbinary.data();
+    outm.len = (int)       outmsgbinary.length();
 
     if (broadcast)
     {
@@ -182,7 +163,7 @@ myWebSocketConnection :: onReady(void)
 
     ServerToClient  srv2cli;
 
-    srv2cli.set_type( ServerToClient_ServerToClientType_USER_LIST );
+    srv2cli.set_type( STC_USER_LIST );
     UserList * ul = srv2cli.mutable_userlist();
 
     lock();
@@ -197,65 +178,40 @@ myWebSocketConnection :: onReady(void)
 void
 myWebSocketConnection :: onMessage(const WebSocketMessage &m)
 {
-    int cc, inpos, outpos, newlen;
-    string binaryBuffer;
-
-    // rewrite m.buf in place stripping \r and \n
-    for (inpos = 0, outpos = 0; inpos < m.len; inpos++)
-    {
-        uint8_t c = m.buf[inpos];
-        if (c != 13 && c != 10)
-            m.buf[outpos++] = c;
-    }
-    newlen = outpos;
-
-    outpos = 0;
-    for (inpos = 0; inpos < newlen; inpos += 4)
-    {
-        unsigned char output[3];
-        cc = b64_decode_quantum(m.buf + inpos, output);
-        if (cc == 0)
-        {
-            printf("bogus base64 decode, bailing\n");
-            return;
-        }
-        binaryBuffer.push_back(output[0]);
-        binaryBuffer.push_back(output[1]);
-        binaryBuffer.push_back(output[2]);
-        outpos += cc;
-    }
-
     ClientToServer   msg;
 
-    msg.ParseFromString(binaryBuffer);
+    if (msg.ParseFromString(string((char*)m.buf, (int)m.len)) == false)
+    {
+        cout << "ParseFromString failed!" << endl;
+        return;
+    }
 
     cout << "decoded message from server: " << msg.DebugString() << endl;
 
     switch (msg.type())
     {
-    case ClientToServer_ClientToServerType_PING:
+    case CTS_PING:
     {
         printf("user %s sent ping\n", username);
         ServerToClient  srv2cli;
-        srv2cli.set_type( ServerToClient_ServerToClientType_PONG );
+        srv2cli.set_type( STC_PONG );
         sendClientMessage( srv2cli, false );
         break;
     }
 
-    case ClientToServer_ClientToServerType_LOGIN:
+    case CTS_LOGIN:
     {
         strcpy(username, msg.login().username().c_str());
         printf("user %s has logged in\n", username);
 
         ServerToClient  srv2cli;
-        srv2cli.set_type(
-            ServerToClient_ServerToClientType_LOGIN_NOTIFICATION );
+        srv2cli.set_type( STC_LOGIN_NOTIFICATION );
         srv2cli.mutable_notification()->set_username( username );
         sendClientMessage( srv2cli, true );
         break;
     }
 
-    case ClientToServer_ClientToServerType_CHANGE_USERNAME:
+    case CTS_CHANGE_USERNAME:
     {
         strcpy(username, msg.changeusername().newusername().c_str());
         printf("user %s changed their username to %s\n",
@@ -263,16 +219,16 @@ myWebSocketConnection :: onMessage(const WebSocketMessage &m)
                username);
 
         ServerToClient  outmsg;
-        outmsg.set_type( ServerToClient_ServerToClientType_CHANGE_USERNAME );
+        outmsg.set_type( STC_CHANGE_USERNAME );
         outmsg.mutable_changeusername()->CopyFrom( msg.changeusername() );
         sendClientMessage( outmsg, true );
         break;
     }
 
-    case ClientToServer_ClientToServerType_IM_MESSAGE:
+    case CTS_IM_MESSAGE:
     {
         ServerToClient  outmsg;
-        outmsg.set_type( ServerToClient_ServerToClientType_IM_MESSAGE );
+        outmsg.set_type( STC_IM_MESSAGE );
         outmsg.mutable_immessage()->CopyFrom( msg.immessage() );
         sendClientMessage( outmsg, true );
         break;
