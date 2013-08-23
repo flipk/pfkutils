@@ -64,16 +64,17 @@ b64_is_valid_char( unsigned char c )
 int
 b64_encode_quantum( unsigned char * in3, int in_len, unsigned char * out4 )
 {
-    int v,val;
+    int v;
+    unsigned int val;
 
     if ( in_len > 3  || in_len < 1 )
         return 0;
 
-    /*
-     * don't have to worry about sign, since three bytes
-     * cannot reach the sign bit in a 31-bit signed number.
-     */
-    val = (int)((in3[0] << 16) + (in3[1] << 8) + in3[2]);
+    val = (in3[0] << 16);
+    if (in_len > 1)
+        val |= (in3[1] << 8);
+    if (in_len == 3)
+        val |= in3[2];
 
 #define TRY(tlen,index,shift) \
     do { \
