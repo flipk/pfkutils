@@ -32,6 +32,7 @@ exit 0
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
+#include <signal.h>
 
 #include <iostream>
 
@@ -54,6 +55,8 @@ main()
 {
     myWebSocketConnectionCallback callback;
     WebSocketServer      server;
+
+    signal( SIGPIPE, SIG_IGN );
 
     initClientList();
     if (server.start(1081, &callback) == false)
