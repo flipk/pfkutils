@@ -5,10 +5,6 @@ var get = function(id) {
 
 var username = get( "username" ).value;
 
-var pfk_chat_proto = dcodeIO.ProtoBuf.protoFromFile( "pfkchat.proto" );
-var pfk_chat = pfk_chat_proto.build("PFK.Chat");
-var stc_decoder = pfk_chat_proto.build("PFK.Chat.ServerToClient");
-
 var message = function(msg){
     var div = get( "messages" );
     div.innerHTML = div.innerHTML + msg + '\n';
@@ -34,9 +30,9 @@ var makesocket = function () {
 
     socket.onopen = function() {
         message('socket opened');
-        var loginMsg = new pfk_chat.ClientToServer;
-        loginMsg.type = pfk_chat.ClientToServerType.CTS_LOGIN;
-        loginMsg.login = new pfk_chat.Username;
+        var loginMsg = new PFK.Chat.ClientToServer;
+        loginMsg.type = PFK.Chat.ClientToServerType.CTS_LOGIN;
+        loginMsg.login = new PFK.Chat.Username;
         loginMsg.login.username = username;
         socket.send(loginMsg.toArrayBuffer());
     }
@@ -48,46 +44,46 @@ var makesocket = function () {
 
     socket.onmessage = function(msg){
 
-        var stcmsg = stc_decoder.decode(msg.data);
+        var stcmsg = PFK.Chat.ServerToClient.decode(msg.data);
 
         switch (stcmsg.type)
         {
-        case pfk_chat.ServerToClientType.STC_USER_LIST:
+        case PFK.Chat.ServerToClientType.STC_USER_LIST:
             message("users currently logged in:");
             for (var ind = 0; ind < stcmsg.userList.usernames.length; ind++)
                 message("-->" + stcmsg.userList.usernames[ind]);
             break;
 
-        case pfk_chat.ServerToClientType.STC_USER_STATUS:
+        case PFK.Chat.ServerToClientType.STC_USER_STATUS:
             // not handled
             break;
 
-        case pfk_chat.ServerToClientType.STC_LOGIN_NOTIFICATION:
+        case PFK.Chat.ServerToClientType.STC_LOGIN_NOTIFICATION:
             message("user " + 
                     stcmsg.notification.username +
                     " has logged in");
             break;
 
-        case pfk_chat.ServerToClientType.STC_LOGOUT_NOTIFICATION:
+        case PFK.Chat.ServerToClientType.STC_LOGOUT_NOTIFICATION:
             message("user " + 
                     stcmsg.notification.username +
                     " has logged out");
             break;
 
-        case pfk_chat.ServerToClientType.STC_CHANGE_USERNAME:
+        case PFK.Chat.ServerToClientType.STC_CHANGE_USERNAME:
             message("username changed " +
                     stcmsg.changeUsername.oldusername +
                     " to " +
                     stcmsg.changeUsername.newusername);
             break;
 
-        case pfk_chat.ServerToClientType.STC_IM_MESSAGE:
+        case PFK.Chat.ServerToClientType.STC_IM_MESSAGE:
             message(stcmsg.imMessage.username +
                     ":" +
                     stcmsg.imMessage.msg);
             break;
 
-        case pfk_chat.ServerToClientType.STC_PONG:
+        case PFK.Chat.ServerToClientType.STC_PONG:
             console.log("got PONG");
             break;
         }
@@ -100,8 +96,8 @@ window.setInterval(
     function(){
         if (socket)
         {
-            var ping = new pfk_chat.ClientToServer();
-            ping.type = pfk_chat.ClientToServerType.CTS_PING;
+            var ping = new PFK.Chat.ClientToServer();
+            ping.type = PFK.Chat.ClientToServerType.CTS_PING;
             socket.send(ping.toArrayBuffer());
         } else {
             message("trying to reconnect...");
@@ -111,9 +107,9 @@ window.setInterval(
 
 var sendMessage = function() {
     var txtbox = get( "entry" );
-    var im = new pfk_chat.ClientToServer;
-    im.type = pfk_chat.ClientToServerType.CTS_IM_MESSAGE;
-    im.imMessage = new pfk_chat.IM_Message;
+    var im = new PFK.Chat.ClientToServer;
+    im.type = PFK.Chat.ClientToServerType.CTS_IM_MESSAGE;
+    im.imMessage = new PFK.Chat.IM_Message;
     im.imMessage.username = username;
     im.imMessage.msg = txtbox.value;
     socket.send(im.toArrayBuffer());
@@ -135,9 +131,9 @@ get( "username" ).onblur = function() {
     var newusername = get("username").value;
     if (socket)
     {
-        var chgMsg = new pfk_chat.ClientToServer;
-        chgMsg.type = pfk_chat.ClientToServerType.CTS_CHANGE_USERNAME;
-        chgMsg.changeUsername = new pfk_chat.NewUsername;
+        var chgMsg = new PFK.Chat.ClientToServer;
+        chgMsg.type = PFK.Chat.ClientToServerType.CTS_CHANGE_USERNAME;
+        chgMsg.changeUsername = new PFK.Chat.NewUsername;
         chgMsg.changeUsername.oldusername = username;
         chgMsg.changeUsername.newusername = newusername;
         socket.send(chgMsg.toArrayBuffer());

@@ -15,18 +15,19 @@ uses three projects from dcodeIO on github:
 
 https://github.com/dcodeIO/Long.js
 https://github.com/dcodeIO/ByteBuffer.js
-https://github.com/dcodeIO/ProtoBuf.js.git
+https://github.com/dcodeIO/ProtoBuf.js
 
 The messages are defined in pfkchat.proto.  'protoc' from
 protobuf-2.5.0 was used to generate pfkchat.pb.cc and .h on the server
-side.  The ProtoBuf.js client on the browser side also understands
-this file.
+side.  'proto2js' command from the 'protobufjs' package (installable
+using 'npm') in the Node.js environment is used to convert
+pfkchat.proto to pfkchat.js.  This is then read on the client side to
+provide message definitions to the js code.
 
 The client-side is in test.html, test.css, and the javscript code to
-implement the client-side chat is in test.js.
-
-test.js uses services from ProtoBuf.js, which internally uses services
-from ByteBuffer.js and Long.js.
+implement the client-side chat is in test.js.  test.js uses services
+from ProtoBuf.js, which internally uses services from ByteBuffer.js
+and Long.js.
 
 The WebSocket* files are intended to be a stand-alone library for
 server-side of websockets.

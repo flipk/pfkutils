@@ -1,12 +1,16 @@
 #if 0
 set -e -x
 
-proto="/home/pknaack1/proj/obsidian/installed/protobuf"
+node="/home/flipk/proj/web_servers/installed/nodejs"
+proto2js="$node/lib/node_modules/protobufjs/bin/proto2js"
+proto="/home/flipk/proj/web_servers/installed/protobuf"
+protoc="$proto/bin/protoc"
 flags="-Wall -Werror -O6"
 incs="-I$proto/include"
 libs="-L$proto/lib -lprotobuf -lpthread"
 
-$proto/bin/protoc --cpp_out=. pfkchat.proto
+$protoc --cpp_out=. pfkchat.proto
+$proto2js pfkchat.proto -class > pfkchat.js
 
 g++ $incs $flags -c testWebSocketServer.cc
 g++ $incs $flags -c WebSocketConnection.cc
