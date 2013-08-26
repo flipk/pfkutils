@@ -18,7 +18,11 @@ add_size() {
     xrandr --addmode default $1x$2
 }
 
-# note windows 7 start bar is 64 wide, and title bars are 24 tall.
+# note windows 7 :
+#   start bar is 
+#      64 wide (if on side) or
+#      40 tall (if on top/bottom)
+#   and title bars are 24 tall.
 
 add_size 1440 900
 add_size 1376 876

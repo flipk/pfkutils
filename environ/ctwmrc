@@ -176,6 +176,7 @@ menu "defops"
         ""			f.nop
 	"1024x768"		f.exec "xrandr -s 1024x768&"
 	"1280x1000"		f.exec "xrandr -s 1280x1000&"
+	"1280x960"		f.exec "xrandr -s 1280x960&"
 	"1280x1024"		f.exec "xrandr -s 1280x1024&"
 	"1360x768"		f.exec "xrandr -s 1360x768&"
 	"1440x900"		f.exec "xrandr -s 1440x900&"
