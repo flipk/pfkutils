@@ -28,9 +28,9 @@ PATH=/open_source/bin-sun/gcc/bin:$PATH STRIP=true ../configure --enable-environ
 PATH=/open_source/bin-sun/gcc/bin:$PATH make
 PATH=/open_source/bin-sun/gcc/bin:$PATH make install
 
-kobukvalley:
+droid-u43:
 
-../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen --enable-ampfk
+../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak
 
 faraday:
 

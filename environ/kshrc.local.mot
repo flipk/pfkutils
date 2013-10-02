@@ -1,5 +1,5 @@
 
-# Last update: 2013-08-09.21:46:18
+# Last update: 2013-10-02.10:40:23
 
 #FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig ccdiff ccdiff2 
 
@@ -20,8 +20,8 @@ EOF
     xlsvtree $*
 }
 
-export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
-export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
+export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4 -R'
+export XLESS='-j5 -c -d -h 5 -i -M -q -x 4 -R'
 
 uname_s=`uname -s`
 for dir in /apps/public/gcc_3.3/sparc-sun-solaris2.8/lib /apps/public/gcc/sparc-sun-solaris2.9/lib ; do
@@ -89,7 +89,7 @@ sv() {
 }
 
 setvobs() {
-    export CLEARCASE_AVOBS=`grep -v ^# ~/.vobs`
+    export CLEARCASE_AVOBS=`grep -v ^# ~/.vobs | tr '\n' ':' | sed -e 's,:$,,'`
 }
 
 if __isksh ; then

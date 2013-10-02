@@ -12,6 +12,10 @@ uint32_t MAX_FILE_SIZE;
 uint32_t MAX_ITERATIONS;
 uint32_t MAX_THREADS;
 
+uint32_t seconds = 0;
+uint32_t total_files = 0;
+uint32_t total_bytes = 0;
+
 struct threadstats {
     threadstats(void) {
         init();
@@ -40,8 +44,10 @@ struct threadstats {
         deletions = other.deletions;
     }
     void print(void) {
-        printf("creations %5d validations %5d deletions %5d\n",
+        printf("%5d: f %5d b %11lld c %5lld v %5lld d %5lld\n",
+               seconds, total_files, total_bytes,
                creations, validations, deletions);
+        seconds ++;
     }
 };
 
@@ -73,6 +79,32 @@ main(int argc, char ** argv)
     MAX_FILE_SIZE = atoi(argv[2]);
     MAX_ITERATIONS = atoi(argv[3]);
     MAX_THREADS = atoi(argv[4]);
+
+#define SCALE(size,unit) \
+    if (size > 10000) { size /= 1000; unit = 'K'; } \
+    if (size > 10000) { size /= 1000; unit = 'M'; } \
+    if (size > 10000) { size /= 1000; unit = 'G'; }
+
+    {
+        uint64_t filesizeval;
+        uint64_t totalsizeval;
+        char fileunit = ' ';
+        char totalunit = ' ';
+
+        filesizeval = ((uint64_t)MAX_FILE_SIZE / 2);
+        totalsizeval = ((uint64_t)MAX_NUM_FILES * 2 / 3) * filesizeval;
+
+        SCALE(filesizeval,fileunit);
+        SCALE(totalsizeval,totalunit);
+
+        printf("%d files avgsize %lld %c total %lld %c bytes %d wraps\n",
+               MAX_NUM_FILES * 2 / 3,
+               filesizeval, fileunit,
+               totalsizeval, totalunit,
+               (MAX_THREADS * MAX_ITERATIONS) / MAX_NUM_FILES);
+    }
+
+    sleep(1);
 
     int ind;
 
@@ -124,15 +156,18 @@ main(int argc, char ** argv)
     return 0;
 }
 
+#define   lock() pthread_mutex_lock  ( &fils_mutex )
+#define unlock() pthread_mutex_unlock( &fils_mutex )
+
 void *
 worker( void * arg )
 {
     int ind, iter;
     threadstats * stats = (threadstats *) arg;
 
-    pthread_mutex_lock( &fils_mutex );
+    lock();
     running_count++;
-    pthread_mutex_unlock( &fils_mutex );
+    unlock();
 
     for (iter = 0; iter < MAX_ITERATIONS; iter++)
     {
@@ -148,12 +183,12 @@ worker( void * arg )
             f = &fils[ind];
             try_again = false;
 
-            pthread_mutex_lock( &fils_mutex );
+            lock();
             if (f->busy)
                 try_again = true;
             else
                 f->busy = true;
-            pthread_mutex_unlock( &fils_mutex );
+            unlock();
 
         } while (try_again);
 
@@ -161,6 +196,10 @@ worker( void * arg )
         {
             f->create(MAX_FILE_SIZE);
             stats->creations++;
+            lock();
+            total_files++;
+            total_bytes += f->size;
+            unlock();
         }
         else
         {
@@ -170,13 +209,17 @@ worker( void * arg )
             {
                 f->destroy();
                 stats->deletions++;
+                lock();
+                total_files--;
+                total_bytes -= f->size;
+                unlock();
             }
         }
 
         f->busy = false;
     }
 
-    pthread_mutex_lock( &fils_mutex );
+    lock();
     running_count--;
-    pthread_mutex_unlock( &fils_mutex );
+    unlock();
 }
