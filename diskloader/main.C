@@ -14,7 +14,7 @@ uint32_t MAX_THREADS;
 
 uint32_t seconds = 0;
 uint32_t total_files = 0;
-uint32_t total_bytes = 0;
+uint64_t total_bytes = 0;
 
 struct threadstats {
     threadstats(void) {
