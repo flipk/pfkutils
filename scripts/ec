@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if [ x$EMACSCLIENT_SOCKET == x ] ; then
+if [ x$EMACSCLIENT_SOCKET = x ] ; then
     socketarg=""
 else
     socketarg="-s $EMACSCLIENT_SOCKET"
