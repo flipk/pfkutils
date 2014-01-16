@@ -6,5 +6,5 @@ if [ `/bin/uname -s` = "SunOS" ] ; then
 fi
 
 if [ $SHELL = /bin/bash ] ; then
-   exec @prefix@/bin/pdksh
+   . $ENV
 fi
