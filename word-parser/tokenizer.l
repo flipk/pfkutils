@@ -2,6 +2,7 @@
 %{
 
 #include <stdio.h>
+#include <string.h>
 #include "tuple.h"
 #include "y.tab.h"
 #include "tokenizer.h"
@@ -18,7 +19,7 @@ int parser_line_number;
 
 %%
 
-[a-zA-Z0-9_]+ {
+[a-zA-Z0-9_\.\!\?\*]+ {
                  yylval.word = strvec( yytext, yyleng );
                  return WORD;
               }

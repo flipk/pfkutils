@@ -31,9 +31,9 @@ struct tuple * parser_output;
 %%
 
 LINE
-	: TUPLE_LIST
+	: LP TUPLE_LIST RP
 	{
-            parser_output = $1;
+            parser_output = $2;
 	}
 	;
 
@@ -50,7 +50,15 @@ TUPLE_LIST
 	;
 
 TUPLE
-	: WORD COLON WORD
+	: WORD
+        {
+            struct tuple * t = (struct tuple *) malloc( sizeof(struct tuple));
+            t->next = NULL;
+            t->word = $1;
+            t->type = TUPLE_TYPE_NONE;
+            $$ = t;
+        }
+        | WORD COLON WORD
         {
             struct tuple * t = (struct tuple *) malloc( sizeof(struct tuple));
             t->next = NULL;

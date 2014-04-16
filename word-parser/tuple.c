@@ -24,14 +24,19 @@ print_tuples(struct tuple * t)
 {
     while (t)
     {
-        printf("%s,", t->word);
-        if (t->type == TUPLE_TYPE_WORD)
-            printf("%s", t->u.word);
-        else
+        printf("%s", t->word);
+        switch (t->type)
         {
-            printf("{");
+        case TUPLE_TYPE_NONE:
+            break;
+        case TUPLE_TYPE_WORD:
+            printf(",%s", t->u.word);
+            break;
+        case TUPLE_TYPE_TUPLE:
+            printf(",{");
             print_tuples(t->u.tuples);
             printf("}");
+            break;
         }
         t = t->next;
         if (t)

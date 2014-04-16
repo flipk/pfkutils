@@ -7,13 +7,15 @@ YACC= yacc
 LEX= flex
 CC= gcc
 
+OPTDEBUG= -g3
+
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	gcc -o $(PROG) $(OBJS) $(LIBS)
+	gcc $(OPTDEBUG) -o $(PROG) $(OBJS) $(LIBS)
 
 .c.o:
-	$(CC) -Wall -c $*.c
+	$(CC) $(OPTDEBUG) -Wall -c $*.c
 
 y.tab.c y.tab.h: parser.y
 	$(YACC) -d parser.y

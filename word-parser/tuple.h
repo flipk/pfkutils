@@ -1,5 +1,6 @@
 
 enum tuple_type { 
+    TUPLE_TYPE_NONE,
     TUPLE_TYPE_WORD,
     TUPLE_TYPE_TUPLE
 };

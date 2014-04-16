@@ -6,7 +6,7 @@
 #include "tuple.h"
 
 char input_buf[] =
-"one:two three:(four:(five:six seven:eight) nine:ten) eleven:twelve";
+"(zero * one:two three:(four:(five:six seven:eight) nine:ten) eleven:twelve)";
 
 int
 main()
