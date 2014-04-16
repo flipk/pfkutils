@@ -1,7 +1,7 @@
 
-# Last update: 2013-10-02.10:40:23
+# Last update: 2014-04-16.14:47:09
 
-#FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig ccdiff ccdiff2 
+#FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig makepred ccdiff ccdiff2 
 
 export GIT_SSL_NO_VERIFY=true
 export http_proxy=http://wwwgate0.mot.com:1080 
@@ -43,21 +43,25 @@ fi
 unset uname_s
 
 lsv() {
-        typeset prefix
-        if [[ $# -eq 0 ]] ; then
-                prefix=${USER}_
-        else
-                prefix=$1
-        fi
-        ct lsview ${prefix}\* | cut -c3- | awk '{print $1}'
+    typeset prefix
+    if [[ $# -eq 0 ]] ; then
+        prefix=${USER}_
+    else
+        prefix=$1
+    fi
+    ct lsview ${prefix}\* | cut -c3- | awk '{print $1}'
+}
+
+lsvg() {
+    ct lsview | cut -c3- | grep $1
 }
 
 lspr() {
-    ct lsprivate | grep -v '\[checkedout\]'
+    ct lsprivate | grep -v '\[checkedout\]' | sort -r
 }
 
 lsprl() {
-    ct lsprivate | grep -v checkedout | grep $PWD | sed -e s,$PWD/,,
+    ct lsprivate | grep -v checkedout | grep $PWD | sed -e s,$PWD/,, | sort -r
 }
 
 lsprf() {
@@ -77,11 +81,11 @@ lsprfl() {
 }
 
 lsco() {
-    ct lsco -cview -avobs -short
+    ct lsco -cview -avobs -short | sort
 }
 
 lscol() {
-    ct lsco -cview -avobs -short | grep $PWD | sed -e s,$PWD/,,
+    ct lsco -cview -avobs -short | grep $PWD | sed -e s,$PWD/,, | sort
 }
 
 sv() {
@@ -117,6 +121,19 @@ makeorig() {
         rm -f $f.orig
         echo $zv
         cp $zv $f.orig
+    done
+}
+
+predversion() {
+    ct describe $1 | grep ^version | sed -e 's,^.*\" from \([^ ]*\).*$,\1,'
+}
+
+makepred() {
+    for f in $* ; do
+        pv=`predversion $f`
+        rm -f $f.orig
+        echo $f@@$pv
+        cp $f@@$pv $f.orig
     done
 }
 
