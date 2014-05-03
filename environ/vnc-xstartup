@@ -29,5 +29,6 @@ add_size 1376 876
 add_size 1440 876
 add_size 1280 1024
 add_size 1280 1000
+add_size 1920 1176
 
 exec xterm -iconic +sb -geometry 80x10+0-20 -name Console
