@@ -65,8 +65,8 @@ sudo_main( int argc, char ** argv )
         exit(1);
     }
 
-    setuid(newuid);
     setgid(newgid);
+    setuid(newuid);
 
     if (getuid() != newuid)
     {
