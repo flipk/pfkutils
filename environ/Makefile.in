@@ -223,7 +223,7 @@ top_srcdir = @top_srcdir@
 @PFK_ENVIRON_TRUE@	Xresources ctwmrc hexdump_format \
 @PFK_ENVIRON_TRUE@	screenrc xinitrc xsession vnc-xstartup
 
-@PFK_ENVIRON_TRUE@ELISP_FILES = emacs-lone.el emacs.el
+@PFK_ENVIRON_TRUE@ELISP_FILES = emacs-lone.el emacs.el go-mode.el
 @PFK_ENVIRON_TRUE@KSHRC_LOCALS = kshrc.local.mot kshrc.local.blade
 @PFK_ENVIRON_TRUE@KSHRC_LOCAL = kshrc.local.@PFK_ENVIRON@
 @PFK_ENVIRON_TRUE@SETUP_SH = setup-links-sh

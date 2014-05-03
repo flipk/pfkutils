@@ -5,7 +5,7 @@ DOT_FILES = \
 	Xresources ctwmrc hexdump_format \
 	screenrc xinitrc xsession vnc-xstartup
 
-ELISP_FILES = emacs-lone.el emacs.el
+ELISP_FILES = emacs-lone.el emacs.el go-mode.el
 
 KSHRC_LOCALS = kshrc.local.mot kshrc.local.blade
 

@@ -28,6 +28,9 @@
  '(mouse-buffer-menu-mode-mult 100)
 )
 
+(load-file (concat "/home/" (getenv "USER")
+		   "/pfk/etc/go-mode.el"))
+
 (setq mouse-buffer-menu-mode-groups
       '((".*" . "Buffers")))
 
