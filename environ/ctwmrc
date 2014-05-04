@@ -3,8 +3,8 @@ TitleFont        "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
-IconManagerFont  "-adobe-helvetica-bold-r-normal--*-120-*-*-*"
-IconManagerGeometry   "150x100+0+91"
+IconManagerFont  "-schumacher-clean-medium-r-normal--12-120-75-75-c-60-*"
+IconManagerGeometry   "830x120+126+19" 8
 
 UsePPosition "nonzero"
 
@@ -23,12 +23,12 @@ NoRaiseOnMove
 PackNewWindows
 NoShowOccupyAll
 NoRaiseOnResize
-#ShowIconManager
+ShowIconManager
 StartInMapState
 #SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
-#IconifyByUnmapping
+IconifyByUnmapping
 RestartPreviousState
 CenterFeedbackWindow
 ShortAllWindowsMenus
@@ -42,7 +42,7 @@ IconRegion "945x64+246+20"  North West  10 10  "left"   "left"     "top"
 
 AutoSqueeze { "autosqueeze" }
 
-WorkSpaceManagerGeometry "120x60+0+25" 2
+WorkSpaceManagerGeometry "120x60+0+19" 2
 WorkSpaces {
 #	space buttonbg  buttonfg  rootbg
 	"1" { "#203040" "#ffffff" }
@@ -100,8 +100,9 @@ Color
 	IconBackground "#c00000"
 	IconForeground "white"
 	IconBorderColor "gray85"
-	IconManagerBackground "#800000"
+	IconManagerBackground "#203040"
 	IconManagerForeground "white"
+	IconManagerHighlight "#ffffff"
 }
 
 MoveDelta 3
@@ -174,19 +175,7 @@ menu "defops"
 	"Twm"			f.title
 	"Pin"			f.pin
         ""			f.nop
-	"1024x768"		f.exec "xrandr -s 1024x768&"
-	"1280x1000"		f.exec "xrandr -s 1280x1000&"
-	"1280x960"		f.exec "xrandr -s 1280x960&"
-	"1280x1024"		f.exec "xrandr -s 1280x1024&"
-	"1360x768"		f.exec "xrandr -s 1360x768&"
-	"1440x900"		f.exec "xrandr -s 1440x900&"
-	"1440x876 t"		f.exec "xrandr -s 1440x876&"
-	"1376x876 sbt"		f.exec "xrandr -s 1376x876&"
-	"1600x1200"		f.exec "xrandr -s 1600x1200&"
-	"1920x1200 f"		f.exec "xrandr -s 1920x1200&"
-	"1920x1176 t"		f.exec "xrandr -s 1920x1176&"
-	"1856x1176 sb"		f.exec "xrandr -s 1856x1176&"
-	"1920x1080"		f.exec "xrandr -s 1920x1080&"
+	"Sizes"                 f.menu "sizes"
         ""			f.nop
 	"Gnome terminal" 	f.exec "gnome-terminal --disable-factory &"
         "Xterm (x)"		f.exec "x"
@@ -214,4 +203,21 @@ menu "defops"
 	"Reload Res"		!"xrdb -remove ; xrdb -load ~/.Xresources"
         "Restart (^r)"		f.restart
 	"Exit"			f.quit
+}
+
+menu "sizes"
+{
+	"1024x768"		f.exec "xrandr -s 1024x768&"
+	"1280x1000"		f.exec "xrandr -s 1280x1000&"
+	"1280x960"		f.exec "xrandr -s 1280x960&"
+	"1280x1024"		f.exec "xrandr -s 1280x1024&"
+	"1360x768"		f.exec "xrandr -s 1360x768&"
+	"1440x900"		f.exec "xrandr -s 1440x900&"
+	"1440x876 t"		f.exec "xrandr -s 1440x876&"
+	"1376x876 sbt"		f.exec "xrandr -s 1376x876&"
+	"1600x1200"		f.exec "xrandr -s 1600x1200&"
+	"1920x1200 f"		f.exec "xrandr -s 1920x1200&"
+	"1920x1176 t"		f.exec "xrandr -s 1920x1176&"
+	"1856x1176 sb"		f.exec "xrandr -s 1856x1176&"
+	"1920x1080"		f.exec "xrandr -s 1920x1080&"
 }
