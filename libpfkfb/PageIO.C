@@ -27,7 +27,7 @@
 
 The lowest layer is a derived object from PageIO.  This object knows
 only how to read and write PageCachePage objects, whose body is of
-size PageCache::PAGE_SIZE.  An example implementation of PageIO is the
+size PageCache::PC_PAGE_SIZE.  An example implementation of PageIO is the
 object PageIOFileDescriptor, which uses a file descriptor (presumably
 an open file) to read and write offsets in the file.
 

@@ -56,7 +56,7 @@ class PageCache {
     time_t last_flush;
 public:
     /** a constant indicating how big a page is. */
-    static const int PAGE_SIZE = 4096;
+    static const int PC_PAGE_SIZE = 4096;
     /** Constructor.
      * \param _io the PageIO that will be used to fetch and put pages.
      * \param _max_pages the number of pages that we will be allowed to
@@ -129,7 +129,7 @@ protected:
      *   it is assumed the caller will do that. */
     PageCachePage(int _page_number) {
         dirty = false;  page_number = _page_number;
-        ptr = new UCHAR[PageCache::PAGE_SIZE];
+        ptr = new UCHAR[PageCache::PC_PAGE_SIZE];
     }
     /** destructor frees memory for the page.
      * \note this destructor does not write the contents back to the file.

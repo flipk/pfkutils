@@ -45,8 +45,14 @@ shift
 launchers="$*"
 
 set -- `grep ^#FUNCTIONS: $KSHRC_LOCAL`
-shift
-launchers="$launchers $*"
+if [ $# -gt 0 ] ; then
+   # openbsd sh doesn't like shifting if 
+   # there's no args.
+   shift
+   launchers="$launchers $*"
+else
+   launchers=""
+fi
 
 cd $SCRIPTS_DIR
 for f in $launchers ; do
