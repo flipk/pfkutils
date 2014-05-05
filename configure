@@ -623,6 +623,8 @@ PFK_NEED_REGEX_FALSE
 PFK_NEED_REGEX_TRUE
 LIBOBJS
 pfk_have_whoami
+PFK_UNAME_PATH
+pfk_uname_path
 PFK_SHELL_PATH
 pfk_shell_path2
 pfk_shell_path1
@@ -16615,6 +16617,54 @@ fi
 PFK_SHELL_PATH=$pfk_shell_path
 
 
+# Extract the first word of "uname", so it can be a program name with args.
+set dummy uname; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_pfk_uname_path+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $pfk_uname_path in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_pfk_uname_path="$pfk_uname_path" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_pfk_uname_path="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_pfk_uname_path" && ac_cv_path_pfk_uname_path="no"
+  ;;
+esac
+fi
+pfk_uname_path=$ac_cv_path_pfk_uname_path
+if test -n "$pfk_uname_path"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pfk_uname_path" >&5
+$as_echo "$pfk_uname_path" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+if test $pfk_uname_path = "no" ; then
+  as_fn_error 1 "uname is required to build pfkutils" "$LINENO" 5
+fi
+
+PFK_UNAME_PATH=$pfk_uname_path
+
+
 # Extract the first word of "whoami", so it can be a program name with args.
 set dummy whoami; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -16656,6 +16706,7 @@ fi
 if test $pfk_have_whoami = "no" ; then
   as_fn_error 1 "whoami is required to build pfkutils" "$LINENO" 5
 fi
+
 
 # Checks for libraries.
 

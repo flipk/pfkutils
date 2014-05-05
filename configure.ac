@@ -112,10 +112,18 @@ fi
 
 AC_SUBST([PFK_SHELL_PATH], [$pfk_shell_path])
 
+AC_PATH_PROG(pfk_uname_path, uname, no)
+if test $pfk_uname_path = "no" ; then
+  AC_MSG_ERROR([uname is required to build pfkutils], [1])
+fi
+
+AC_SUBST([PFK_UNAME_PATH], [$pfk_uname_path])
+
 AC_CHECK_PROG(pfk_have_whoami, whoami, yes, no)
 if test $pfk_have_whoami = "no" ; then
   AC_MSG_ERROR([whoami is required to build pfkutils], [1])
 fi
+
 
 # Checks for libraries.
 
