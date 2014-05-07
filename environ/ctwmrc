@@ -139,10 +139,10 @@ Button2 =   : iconmgr     : f.iconify
 "2"     =   : root        : f.gotoworkspace "2"
 "3"     =   : root        : f.gotoworkspace "3"
 "4"     =   : root        : f.gotoworkspace "4"
-#"5"     =   : root        : f.gotoworkspace "5"
-#"6"     =   : root        : f.gotoworkspace "6"
-#"7"     =   : root        : f.gotoworkspace "7"
-#"8"     =   : root        : f.gotoworkspace "8"
+"5"     =   : root        : f.gotoworkspace "5"
+"6"     =   : root        : f.gotoworkspace "6"
+"7"     =   : root        : f.gotoworkspace "7"
+"8"     =   : root        : f.gotoworkspace "8"
 
 "F7"	=   : window            : f.raiselower
 
@@ -151,10 +151,10 @@ Button2 =   : iconmgr     : f.iconify
 "2"     = m : root|window|title : f.gotoworkspace "2"
 "3"     = m : root|window|title : f.gotoworkspace "3"
 "4"     = m : root|window|title : f.gotoworkspace "4"
-#"5"     = m : root|window|title : f.gotoworkspace "5"
-#"6"     = m : root|window|title : f.gotoworkspace "6"
-#"7"     = m : root|window|title : f.gotoworkspace "7"
-#"8"     = m : root|window|title : f.gotoworkspace "8"
+"5"     = m : root|window|title : f.gotoworkspace "5"
+"6"     = m : root|window|title : f.gotoworkspace "6"
+"7"     = m : root|window|title : f.gotoworkspace "7"
+"8"     = m : root|window|title : f.gotoworkspace "8"
 
 "Left"	= m : root|window|title : f.prevworkspace
 "Right"	= m : root|window|title : f.nextworkspace
