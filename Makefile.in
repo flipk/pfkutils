@@ -269,7 +269,6 @@ mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
-pfk_have_whoami = @pfk_have_whoami@
 pfk_have_xmkmf = @pfk_have_xmkmf@
 pfk_shell_path1 = @pfk_shell_path1@
 pfk_shell_path2 = @pfk_shell_path2@
