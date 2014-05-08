@@ -107,6 +107,8 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
     m_pHeader->master2slave.init();
     m_pHeader->slave2master.init();
 
+    m_pHeader->attachedFlag = false;
+
     uintptr_t  buf = m_shmemPtr + poolOffset;
 
     for (poolInd = 0;
@@ -179,6 +181,13 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
     m_shmemLimit = m_shmemPtr + m_fileSize;
     m_pHeader = (shmempipeHeader *) m_shmemPtr;
 
+    if (m_pHeader->attachedFlag == true)
+    {
+        fprintf(stderr, "shmem is already attached!\n",
+                m_filename.filename, strerror(errno));
+        return;
+    }
+
     m_myBufferList = &m_pHeader->master2slave;
     m_otherBufferList = &m_pHeader->slave2master;
 
@@ -187,6 +196,7 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
     pthread_mutex_init( &m_statsMutex, &mattr );
     pthread_mutexattr_destroy( &mattr );
     startCloserThread();
+    m_pHeader->attachedFlag = true;
     pConfig->bInitialized = true;
 }
 

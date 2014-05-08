@@ -137,6 +137,7 @@ struct shmempipeHeader {
     shmempipeBufferList  pools[shmempipePoolInfo::maxPools];
     shmempipeBufferList  master2slave;
     shmempipeBufferList  slave2master;
+    bool attachedFlag;
     // pool buffers start here
 };
 
