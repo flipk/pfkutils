@@ -1,7 +1,7 @@
 
 ###########################################################################
 #
-#      Last update: 2013-08-09.21:22:19
+#      Last update: 2014-05-07.21:22:06
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -878,7 +878,7 @@ if __isksh ; then
 	fi
 	_set_prompt "$bardisp"
 	if [[ "x$DISPLAY" != x ]] ; then
-	    bardisp="`whoami`@$HOST:$bardisp"
+	    bardisp="$USER@$HOST:$bardisp"
 	    if [[ x$I_AM_XCONSOLE == x ]] ; then
 		if [[ x$INSIDE_EMACS == x ]] ; then
 		    xtermbar "$bardisp"

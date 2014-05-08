@@ -119,12 +119,6 @@ fi
 
 AC_SUBST([PFK_UNAME_PATH], [$pfk_uname_path])
 
-AC_CHECK_PROG(pfk_have_whoami, whoami, yes, no)
-if test $pfk_have_whoami = "no" ; then
-  AC_MSG_ERROR([whoami is required to build pfkutils], [1])
-fi
-
-
 # Checks for libraries.
 
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
@@ -219,7 +213,11 @@ else
     AC_SUBST([PFK_GROUP_ID], [`id -g`])
 fi
 
-AC_SUBST([PFK_USER_NAME], [`whoami`])
+if test x$USER = x ; then
+  AC_MSG_ERROR([USER env var is required to build pfkutils], [1])
+fi
+
+AC_SUBST([PFK_USER_NAME], [$USER])
 
 AC_CONFIG_FILES([ 
     pfkutils_version.h
