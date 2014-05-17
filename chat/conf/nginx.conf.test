@@ -1,0 +1,106 @@
+
+# websites to support:
+
+#  - plain ip addr (default) : has nothing but blank
+#       html-default
+#  - 80 phillipknaack.com : redirect to www.phillipknaack.com
+#  - 80 www.phillipknaack.com : has list of services
+#  - 443 phillipknaack.com : redirect to www.phillipknaack.com
+#  - 443 www.phillipknaack.com with cert 1 : pfkchat, leviathan, etc
+#  - 80 susanknaack.com : redirect to www.susanknaack.com
+#  - 80 www.susanknaack.com : susie's stuff
+
+user  nobody;
+worker_processes  1;
+pid   logs/nginx.pid;
+#log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+#                  '$status $body_bytes_sent "$http_referer" '
+#                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+
+    # first the default servers
+    server {
+        listen       80 default_server;
+        server_name  localhost;
+        location / {
+            root   html-default;
+            index  index.html;
+        }
+        error_page  404              /404.html;
+        error_page   500 502 503 504  /50x.html;
+    }
+    server {
+        listen       443 default_server;
+        server_name  localhost;
+        ssl                  on;
+        ssl_certificate      cert/test.phillipknaack.com.crt;
+        ssl_certificate_key  cert/test.phillipknaack.com.key;
+        ssl_session_timeout  5m;
+        ssl_protocols  SSLv2 SSLv3 TLSv1;
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers   on;
+        location / {
+            root   html-default;
+            index  index.html;
+        }
+        error_page  404              /404.html;
+        error_page   500 502 503 504  /50x.html;
+    }
+
+    # now 80 and 443 test.phillipknaack.com
+    server {
+        listen       80;
+        server_name  test.phillipknaack.com;
+        location / {
+            root   html-www.phillipknaack.com;
+            index  index.html;
+        }
+        error_page  404              /404.html;
+        error_page   500 502 503 504  /50x.html;
+    }
+    server {
+        listen       443;
+        server_name  test.phillipknaack.com;
+        ssl                  on;
+        ssl_certificate      cert/test.phillipknaack.com.crt;
+        ssl_certificate_key  cert/test.phillipknaack.com.key;
+        ssl_session_timeout  5m;
+        ssl_protocols  SSLv2 SSLv3 TLSv1;
+        ssl_ciphers  HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers   on;
+        location / {
+            root   html-www.phillipknaack.com-secure;
+            index  index.html;
+        }
+        location ~ /pfkchat/ {
+            root   html-www.phillipknaack.com-secure;
+            index  index.html;
+            if (!-f /home/web/cookies/$cookie_CHATAUTHTOKEN)
+            {
+                rewrite ^/pfkchat/(.*)$ /pfkchat_login/$1 break;
+            }
+        }
+        location ~ /websocket/ {
+            proxy_pass http://127.0.0.1:1081;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+        location ~ ^/cgi-bin/.*\.cgi$ {
+            fastcgi_pass 127.0.0.1:1082;
+	    include fastcgi.conf;
+        }
+        error_page  404              /404.html;
+        error_page   500 502 503 504  /50x.html;
+    }
+
+}

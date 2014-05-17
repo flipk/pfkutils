@@ -1,0 +1,98 @@
+
+package PFK.Chat;
+
+message ProtoVersion {
+	required int32 version = 1;
+}
+message Ping {
+	optional int32 idle = 1;
+	optional int32 unread = 2;
+	optional bool forced = 3;
+}
+message Login {
+	required string username = 1;
+	optional string password = 2;
+	optional string token = 3;
+}
+//PRIVATE   message IM_Message {
+//PRIVATE   	optional string username = 1;
+//PRIVATE   	required string msg = 2;
+//PRIVATE   }
+//PRIVATE   enum TypingState {
+//PRIVATE   	STATE_EMPTY = 1;
+//PRIVATE   	STATE_TYPING = 2;
+//PRIVATE   	STATE_ENTERED_TEXT = 3;
+//PRIVATE   }
+//PRIVATE   message TypingInd {
+//PRIVATE   	required TypingState state = 1;
+//PRIVATE   }
+enum ClientToServerType {
+	CTS_PROTOVERSION = 1;     // use 'protoversion'
+	CTS_PING = 2;             // use 'ping'
+	CTS_LOGIN = 3;            // use 'login'
+	CTS_REGISTER = 4;         // use 'login'
+//PRIVATE   	CTS_LOGOUT = 5;           // no arg
+//PRIVATE   	CTS_IM_MESSAGE = 6;       // use 'im'
+//PRIVATE   	CTS_TYPING_IND = 7;       // use 'typing'
+}
+message ClientToServer {
+	required ClientToServerType type = 1;
+	optional ProtoVersion protoversion = 2;
+	optional Ping ping = 3;
+	optional Login login = 4;
+//PRIVATE   	optional IM_Message im = 5;
+//PRIVATE   	optional TypingInd typing = 6;
+}
+
+
+enum ProtoVersionResp {
+	PROTO_VERSION_MATCH = 1;
+	PROTO_VERSION_MISMATCH = 2;
+}
+enum LoginStatusValue {
+	LOGIN_ACCEPT = 1;
+	LOGIN_REJECT = 2;
+	REGISTER_ACCEPT = 3;
+	REGISTER_INVALID_USERNAME = 4;
+	REGISTER_INVALID_PASSWORD = 5;
+	REGISTER_DUPLICATE_USERNAME = 6;
+}
+message LoginStatus {
+	required LoginStatusValue status = 1;
+	optional string token = 2;
+	optional int32 id = 3;
+}
+//PRIVATE   message UserInfo {
+//PRIVATE   	required string username = 1;
+//PRIVATE   	required TypingState typing = 2;
+//PRIVATE   	required int32 idle = 3;
+//PRIVATE   	required int32 unread = 4;
+//PRIVATE   	required int32 id = 5;
+//PRIVATE   }
+//PRIVATE   message UserList {
+//PRIVATE   	repeated UserInfo users = 1;
+//PRIVATE   }
+//PRIVATE   enum UserStatusValue {
+//PRIVATE   	USER_LOGGED_IN = 1;
+//PRIVATE   	USER_LOGGED_OUT = 2;
+//PRIVATE   }
+//PRIVATE   message UserStatus {
+//PRIVATE   	required string username = 1;
+//PRIVATE   	required UserStatusValue status = 2;
+//PRIVATE   }
+enum ServerToClientType {
+	STC_PROTOVERSION_RESP = 1;  // use protoversionresp
+	STC_LOGIN_STATUS = 2;       // use loginStatus
+//PRIVATE   	STC_IM_MESSAGE = 3;         // use 'im'
+//PRIVATE   	STC_USER_LIST = 4;          // use 'userlist'
+//PRIVATE   	STC_USER_STATUS = 5;        // use 'userstatus'
+	STC_PONG = 6;               // no args
+}
+message ServerToClient {
+	required ServerToClientType type = 1;
+	optional ProtoVersionResp protoversionresp = 2;
+	optional LoginStatus loginStatus = 3;
+//PRIVATE   	optional IM_Message im = 4;
+//PRIVATE   	optional UserList userlist = 5;
+//PRIVATE   	optional UserStatus userstatus = 6;
+}

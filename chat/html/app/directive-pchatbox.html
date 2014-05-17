@@ -1,0 +1,44 @@
+<div id="pchat-box-directive" last-modified="2013/09/25  12:47:23">
+
+  <!-- for some reason, the ng-attr-style does not work in the top-
+       level div!  doesn't make sense, but it's true. -->
+
+  <div class="chatbox" ng-click="focusSelect()"
+       ng-attr-style="width:{{boxWidth}}px; height:{{boxHeight}}px;">
+
+    <div class="chatbox-title">
+      &nbsp;&nbsp;&nbsp;<span title="{{boxTitleTooltip}}">
+        {{boxTitle}} </span>
+
+      <div style="float:right">
+        <div title="Clear Messages in this box"
+             class="chatplusminusx" ng-click="clearButton()">C</div>
+        <div title="Close this private chat"
+             class="chatplusminusx" ng-click="userClosePChat(pchat.id)">X</div>
+      </div>
+
+    </div>
+    <div id="chatbox_scrollable" class="chattable-box">
+
+        this is {{pchat.status ? "an open" : "a closed"}} chat
+        with id {{pchat.id}} name {{pchat.name}} !
+
+    </div>
+    <div class="resizecornerthingy"
+         ng-mousedown="resizeDown($event)">
+    </div>
+
+  </div>
+  <!-- 
+       Local Variables:
+       mode: html
+       indent-tabs-mode: nil
+       tab-width: 8
+       eval: (add-hook 'write-file-hooks 'time-stamp)
+       time-stamp-line-limit: 5
+       time-stamp-start: "last-modified=\""
+       time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\">"
+       time-stamp-end: "$"
+         End:
+    -->
+</div>

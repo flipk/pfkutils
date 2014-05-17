@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script> var indexHtmlLastModified = {
+      file:"index.html", modified:"2013/10/12  17:16:26"
+    } </script>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="pfkchat.css" />
+    <title>PFK CHAT LOGIN</title>
+    <script src=/js/jquery.min.js> </script>
+    <script src=/js/bootstrap.min.js> </script>
+    <script src=/js/Long.min.js> </script>
+    <script src=/js/ByteBuffer.min.js> </script>
+    <script src=/js/ProtoBuf.js> </script>
+    <script src=/js/angular-snapshot/angular.js> </script>
+    <script src=/js/angular-snapshot/angular-route.js> </script>
+    <script src=/js/angular-snapshot/angular-sanitize.js></script>
+    <script src=/js/angular-snapshot/angular-scenario.js></script>
+    <script src=/js/angular-snapshot/angular-animate.js></script>
+    <script src=messages.js> </script>
+    <script src=service-data.js> </script>
+    <script src=service-websocket.js> </script>
+    <script src=controller-ws.js> </script>
+    <script src=controller-login.js> </script>
+    <script src=controller-version.js> </script>
+    <script src=pfkchat.js> </script>
+  </head>
+  <body ng-cloak ng-app="pfkChatApp">
+    <div class="pageTitle">
+      <div class="pageTitle-l">
+        <span class="pageTitle-ls"> www.phillipknaack.com/pfkchat </span>
+      </div>
+      <div class="pageTitle-r">
+        <span class="pageTitle-rs">
+          a <img src=/pfk.png class="pfkchatimg" /> site
+        </span>
+      </div>
+      <div style="clear:both">
+        Tech Junkie / Junk Techie / Administrator of Many Dinky Computers
+      </div>
+    </div>
+    <div class="wsStatus" ng-controller="wsStatusCtlr">
+      [ <span class="badge wsStatus-{{data.connectionStatusColor}}">
+        {{data.connectionStatus}}</span> ]
+    </div>
+
+    <div class="login-all" ng-controller="pfkChatLoginCtlr">
+      <table>
+        <tr>
+          <th>  <h1> LOGIN </h1> </th>
+          <th class="login-separator"> </th>
+          <th>  <h1> CREATE ACCOUNT </h1> </th>
+        </tr>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td> username: </td>
+                <td>
+                  <input ng-model="data.username" type="text" autofocus>
+                </td>
+              </tr><tr>
+                <td> password: </td>
+                <td> <input ng-model="data.password" type="password"
+                            ng-keypress="passwdKeypress($event)"> </td>
+              </tr><tr>
+                <td>  </td>
+                <td>
+                  <input ng-click="loginButton()" type="button" value="Login">
+                </td>
+              </tr><tr>
+                <td class="login-feedback" colspan=2>
+                  {{loginFeedback}}
+                </td> 
+              </tr>
+            </table>
+          </td>
+          <td> </td>
+          <td>
+            <table>
+              <tr>
+                <td> choose username: </td>
+                <td> <input ng-model="newusername" type="text"> </td>
+              </tr><tr>
+                <td> choose password: </td>
+                <td> <input ng-model="newpassword" type="password"> </td>
+              </tr><tr>
+                <td> re-type password: </td>
+                <td> <input ng-model="newpassword2" type="password"
+                            ng-keypress="regPasswdKeypress($event)"> </td>
+              </tr><tr>
+                <td>  </td>
+                <td> <input ng-click="registerButton()"
+                            type="button" value="Register"> </td>
+              </tr><tr>
+                <td class="login-feedback" colspan=2>
+                  {{createFeedback}}
+                </td> 
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <br><br>
+    <div ng-controller="pfkVersionCtlr">
+      <span id="version-table-arrow"
+            class="glyphicon glyphicon-play"
+            ng-click="button()"
+            ng-attr-style="cursor:pointer;
+                           transform:rotate({{buttonRotation}}deg);
+                           -ms-transform:rotate({{buttonRotation}}deg);
+                           -moz-transform:rotate({{buttonRotation}}deg);
+                           -webkit-transform:rotate({{buttonRotation}}deg);
+                           "></span> Versions 
+      <div id="version-table">
+        <table>
+          <tr> <th> file </th> <th> last modified </th> <tr>
+          <tr  ng-repeat="lm in lastModifieds">
+            <td> {{lm.file}} </td> <td> {{lm.modified}} </td>
+          </tr>
+          <tr>
+            <td> protoversion </td>
+            <td> {{protoversion}} </td>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!-- 
+  Local Variables:
+  mode: html
+  indent-tabs-mode: nil
+  tab-width: 8
+  eval: (add-hook 'write-file-hooks 'time-stamp)
+  time-stamp-line-limit: 5
+  time-stamp-start: "modified:\""
+  time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""
+  time-stamp-end: "$"
+  End:
+-->

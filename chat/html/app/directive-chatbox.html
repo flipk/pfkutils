@@ -1,0 +1,61 @@
+<div last-modified="2013/09/25  12:47:04">
+  <!-- for some reason, the ng-attr-style does not work in the top-
+       level div!  doesn't make sense, but it's true. -->
+  <div class="chatbox" ng-click="focusSelect()"
+       ng-attr-style="width:{{boxWidth}}px; height:{{boxHeight}}px;">
+    <div class="chatbox-title">
+      &nbsp;&nbsp;&nbsp;<span title="{{boxTitleTooltip}}">
+        {{boxTitle}} </span>
+      <div style="float:right">
+        <div title="Clear Messages in this box"
+             class="chatplusminusx" ng-click="clearbutton()">C</div>
+      </div>
+    </div>
+    <div id="chatbox_scrollable" class="chattable-box">
+      <table class="chattable">
+        <tr ng-repeat="immsg in messages">
+          <td class="chattable-username"> {{immsg.username}} </td>
+          <td class="chattable-msg"> 
+            <span ng-bind-html="trustHtml(immsg.msg)"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="chattable-username" > {{myusername}} </td>
+          <td>
+            <textarea id="chatbox_input" class="msgentrytextarea"
+                      ng-keyup="msgentrykeyup($event)"
+                      ng-model="msgentry"  ng-trim="false"  type="text"
+                      ng-attr-style="height:{{inputHeight}}px"
+                      rows=1 autofocus></textarea>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <!-- these don't work very well, because if there's lag and
+         the mouse moves outside the box before the box can move,
+         then we 'loose' the box and we have to move the mouse back
+         to the box to pick it up again. we only get mouseUp and
+         mouseMove events from the box if the mouse is IN the box.
+         so instead, resizeDown registers a window.onmousemove/up
+         hook and resizeUp removes these hooks.  registering these
+         events at the window level means we'll get them no matter
+         what happens to the mouse and the box (w.r.t. lag).
+         ng-mouseup="resizeUp($event)"
+         no-ng-mousemove="resizeMove($event)" -->
+    <div class="resizecornerthingy"
+         ng-mousedown="resizeDown($event)">
+    </div>
+  </div>
+  <!-- 
+       Local Variables:
+       mode: html
+       indent-tabs-mode: nil
+       tab-width: 8
+       eval: (add-hook 'write-file-hooks 'time-stamp)
+       time-stamp-line-limit: 5
+       time-stamp-start: "last-modified=\""
+       time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\">"
+       time-stamp-end: "$"
+         End:
+    -->
+</div>

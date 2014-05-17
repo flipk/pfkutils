@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script> var indexHtmlLastModified = {
+      file:"index.html", modified:"2013/10/12  17:18:23"
+    } </script>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="pfkchat.css" />
+    <title>PFK CHAT</title>
+    <script src=/js/jquery.min.js> </script>
+    <script src=/js/bootstrap.min.js> </script>
+    <script src=/js/Long.min.js> </script>
+    <script src=/js/ByteBuffer.min.js> </script>
+    <script src=/js/ProtoBuf.js> </script>
+    <script src=/js/angular-snapshot/angular.js> </script>
+    <script src=/js/angular-snapshot/angular-route.js> </script>
+    <script src=/js/angular-snapshot/angular-sanitize.js></script>
+    <script src=/js/angular-snapshot/angular-scenario.js></script>
+    <script src=/js/angular-snapshot/angular-animate.js></script>
+    <script src=messages.js> </script>
+    <script src=service-data.js> </script>
+    <script src=service-websocket.js> </script>
+    <script src=directive-chatbox.js> </script>
+    <script src=directive-pchatbox.js> </script>
+    <script src=controller-ws.js> </script>
+    <script src=controller-chat.js> </script>
+    <script src=controller-version.js> </script>
+    <script src=pfkchat.js> </script>
+  </head>
+
+<!-- idea :  put entire page inside a new custom directive
+     which looks at screen size and presents different views
+     depending on device. then we can put all the script tags
+     at the bottom, and the custom directive's transclude text
+     says 'loading' or somesuch. -->
+
+  <body ng-cloak ng-app="pfkChatApp">
+    <div class="pageTitle">
+      <div class="pageTitle-l">
+        <span class="pageTitle-ls"> www.phillipknaack.com/pfkchat </span>
+      </div>
+      <div class="pageTitle-r">
+        <span class="pageTitle-rs">
+          a <img src=/pfk.png class="pfkchatimg" /> site
+        </span>
+      </div>
+      <div style="clear:both">
+        Tech Junkie / Junk Techie / Administrator of Many Dinky Computers
+      </div>
+    </div>
+    <div class="wsStatus" ng-controller="wsStatusCtlr">
+      [ <span class="badge wsStatus-{{data.connectionStatusColor}}">
+        {{data.connectionStatus}}</span> | 
+      <span class="badge logout" ng-click="logoutButton()">
+        LOGOUT</span> ]
+    </div>
+    <table ng-controller="pfkChatCtlr">
+      <tr>
+        <td class="leftColumn">
+          <table class="userList">
+            <tr  class="userListHeader">
+              <th>
+                Users
+              </th> <th style="opacity:0">
+                <span class="badge">typing</span>
+              </th> <th style="opacity:0">
+                <span class="badge">20u</span>
+              </th>
+            <tr ng-repeat="user in data.userList">
+              <td class="userListName"
+                  ng-mouseenter="mouseEnterUser(user.id)"
+                  ng-mouseleave="mouseLeaveUser(user.id)">
+                {{user.name}}
+                <span title="Invite user {{user.name}} to a private chat"
+                      class="badge pfkbadges"
+                      ng-click="userClickPlus(user.id,user.name,user.pchatOpen)"
+                      ng-attr-style="opacity:{{user.plusopacity}}">+</span>
+              </td> <td>
+                <span title="{{typingIdleTitle(user)}}"
+                      class="badge pfkbadges"
+                      ng-attr-style="opacity:{{typing2opacity(user)}};"
+                      >{{typingIdle2str(user)}}</span>
+              </td> <td>
+                <span title="User {{user.name}} has {{user.unread}} unread messages"
+                      class="badge pfkbadges"
+                      ng-attr-style="opacity:{{unread2opacity(user)}};"
+                      >{{user.unread}}u</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <chatbox box-title="Public Chat"
+                   box-title-tooltip="Messages every user can see"
+                   messages="data.immsgs_bcast"
+                   myusername="data.username"
+                   msgentry="data.msgentry"
+                   clearbutton="clearButton"
+                   msgentrykeyup="msgentryKeyup"></chatbox>
+        </td>
+      </tr>
+      <tr ng-repeat="pchat in data.personalChats">
+        <td></td>
+        <td>
+          <pchatbox box-title="Private Chat with {{pchat.name}}"
+                    box-title-tooltip="Messages only {{pchat.name}} can see"
+                    myusername="data.username"
+                    pchat="pchat"></pchatbox>
+        </td>
+      </tr>
+    </table>
+
+
+    <br><br>
+    <div ng-controller="pfkVersionCtlr">
+      <span id="version-table-arrow"
+            class="glyphicon glyphicon-play"
+            ng-click="button()"
+            ng-attr-style="cursor:pointer;
+                           transform:rotate({{buttonRotation}}deg);
+                           -ms-transform:rotate({{buttonRotation}}deg);
+                           -moz-transform:rotate({{buttonRotation}}deg);
+                           -webkit-transform:rotate({{buttonRotation}}deg);
+                           "></span> Versions 
+      <div id="version-table">
+        <table>
+          <tr> <th> file </th> <th> last modified </th> <tr>
+          <tr  ng-repeat="lm in lastModifieds">
+            <td> {{lm.file}} </td> <td> {{lm.modified}} </td>
+          </tr>
+          <tr>
+            <td> protoversion </td>
+            <td> {{protoversion}} </td>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!-- 
+  Local Variables:
+  mode: html
+  indent-tabs-mode: nil
+  tab-width: 8
+  eval: (add-hook 'write-file-hooks 'time-stamp)
+  time-stamp-line-limit: 5
+  time-stamp-start: "modified:\""
+  time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""
+  time-stamp-end: "$"
+  End:
+-->
