@@ -109,7 +109,7 @@ PasswordDatabase :: sync(void)
 {
     ofstream  ofs(DB_FILE, ios::out | ios::trunc);
     list<PasswordEntry*>::iterator  it;
-    system("rm -f /home/web/cookies/*");
+    system("rm -f /home/nginx/cookies/*");
     for (it = database.begin(); it != database.end(); it++)
     {
         PasswordEntry * ent = *it;
@@ -121,7 +121,7 @@ PasswordDatabase :: sync(void)
         if (ent->token != "__INVALID__")
         {
             string  cmdstring;
-            cmdstring = "touch /home/web/cookies/";
+            cmdstring = "touch /home/nginx/cookies/";
             cmdstring += ent->token;
             system(cmdstring.c_str());
         }

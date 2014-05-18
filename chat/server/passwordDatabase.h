@@ -7,9 +7,7 @@
 #include <string>
 #include <list>
 
-#define DB_FILE "/home/web/pfkchat_password_database"
-#define HTPASSWD_CMD "/home/web/bin/htpasswd.py"
-#define PFKCHAT_HTPASSWD "/home/web/pfkchat.htpasswd"
+#define DB_FILE "/home/nginx/pfkchat_password_database"
 
 struct PasswordEntry {
     int id;
