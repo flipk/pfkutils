@@ -1,0 +1,12 @@
+pfkchat-messages.pb.cc
+pfkchat-messages.pb.h
+vers
+*.o
+*.d
+pfkchat-protoversion.h
+pfkchat-messages-full.js
+pfkchat-messages-login.js
+pfkchat-messages-login.proto
+pfkchat-messages.proto
+server_pfkchat
+xmakefile

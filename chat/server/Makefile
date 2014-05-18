@@ -1,21 +1,20 @@
 
-tools= $(HOME)/pfk
-webhtml= ../../html-www.phillipknaack.com-secure
+proto2js= /home/flipk/proj/node/installed/bin/node /home/flipk/proj/node/installed/bin/proto2js
+protobuf= /home/flipk/proj/protobuf/installed
+protoc= $(protobuf)/bin/protoc
 
-proto2js= $(tools)/bin/proto2js
-minify= $(tools)/bin/minify
-protoc= $(tools)/bin/protoc
-libs= ../libWebAppServer/libWebAppServer.a -L$(tools)/lib -lprotobuf -lpthread
-incs= -I../libWebAppServer -I$(tools)/include
+libwasdir= ../../libWebAppServer
+libwas= $(libwasdir)/libWebAppServer.a
+
+libs= $(libwas) -L$(protobuf)/lib -lprotobuf -lpthread -Wl,-R,$(protobuf)/lib
+incs= -I$(libwasdir) -I$(protobuf)/include
 flags= -Wall -Werror -g3
-jsproto_full= $(webhtml)/pfkchat/messages.js
-jsproto_login= $(webhtml)/pfkchat_login/messages.js
+jsproto_full=  pfkchat-messages-full.js
+jsproto_login= pfkchat-messages-login.js
 
 OBJS= pfkchat-messages.pb.o chatApp.o passwordDatabase.o main.o
 
 DEPS= $(OBJS:.o=.d)
-
-LIBS= ../libWebAppServer/libWebAppServer.a
 
 all: xmakefile
 	make -f xmakefile server_pfkchat
@@ -35,7 +34,7 @@ xmakefile: Makefile pfkchat-protoversion.h $(DEPS)
 .cc.d:
 	g++ $(incs) -M $*.cc > $*.d
 
-server_pfkchat: $(OBJS) ../libWebAppServer/libWebAppServer.a
+server_pfkchat: $(OBJS) $(libwas)
 	g++ $(OBJS) $(libs) -o server_pfkchat
 #	rm -f vers
 
@@ -68,4 +67,4 @@ clean:
 	rm -f *.o *.d *.pb.cc *.pb.h server_pfkchat vers *~ xmakefile
 	rm -f pfkchat-protoversion.h
 	rm -f pfkchat-messages.proto pfkchat-messages-login.proto
-	cd ../libWebAppServer && make clean
+	rm -f $(jsproto_full) $(jsproto_login)

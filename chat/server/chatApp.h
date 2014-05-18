@@ -8,7 +8,7 @@
 
 void initChatServer(void);
 
-class pfkChatAppConnection : public WebAppConnection {
+class pfkChatAppConnection : public WebAppServer::WebAppConnection {
     int id;
     std::string username;
     bool authenticated;
@@ -29,13 +29,13 @@ public:
     const int get_id(void) { return id; }
 
     /*virtual*/ ~pfkChatAppConnection(void);
-    /*virtual*/ bool onMessage(const WebAppMessage &);
+    /*virtual*/ bool onMessage(const WebAppServer::WebAppMessage &);
     /*virtual*/ bool doPoll(void);
 };
 
-class pfkChatAppConnectionCallback : public WebAppConnectionCallback {
+class pfkChatAppConnectionCallback : public WebAppServer::WebAppConnectionCallback {
 public:
-    /*virtual*/ WebAppConnection * newConnection(void)
+    /*virtual*/ WebAppServer::WebAppConnection * newConnection(void)
     {
         return new pfkChatAppConnection;
     }

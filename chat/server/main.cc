@@ -17,6 +17,7 @@
 
 using namespace std;
 using namespace PFK::Chat;
+using namespace WebAppServer;
 
 class cgiTestAppConn : public WebAppConnection {
 public:
@@ -54,7 +55,7 @@ main()
 {
     pfkChatAppConnectionCallback callback;
     WebAppServerConfig  serverConfig;
-    WebAppServer      server;
+    WebAppServer::WebAppServer  server;
 
     cgiTestAppCallback testAppCallback;
 

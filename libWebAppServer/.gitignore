@@ -1,3 +1,4 @@
-libWebAppServer.a
+*.d
+*.o
+*.a
 xmakefile
-doc

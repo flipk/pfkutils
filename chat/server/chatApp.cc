@@ -18,6 +18,7 @@
 
 using namespace std;
 using namespace PFK::Chat;
+using namespace WebAppServer;
 
 static PasswordDatabase * pwd_db;
 static list<pfkChatAppConnection*> clientList;
