@@ -35,20 +35,6 @@ struct WebAppServerConfigRecord {
 std::ostream &operator<<(std::ostream &ostr,
                              const WebAppServerConfigRecord &cr);
 
-struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord {
-    WebAppServerFastCGIConfigRecord(WebAppType _type, 
-                                    int _port,
-                                    const std::string _route,
-                                    WebAppConnectionCallback *_cb,
-                                    int _pollInterval);
-    ~WebAppServerFastCGIConfigRecord(void);
-    // ConnList key : visitorId cookie
-    typedef std::map<std::string,WebAppConnection*> ConnList_t;
-    typedef std::map<std::string,WebAppConnection*>::iterator ConnListIter_t;
-    ConnList_t conns;
-};
-
-
 class Lockable {
     pthread_mutex_t  mutex;
 public:
@@ -70,6 +56,20 @@ class Lock {
 public:
     Lock( Lockable *_obj ) : obj(_obj) { obj->lock(); }
     ~Lock(void) { obj->unlock(); }
+};
+
+struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord,
+                                         public Lockable {
+    WebAppServerFastCGIConfigRecord(WebAppType _type, 
+                                    int _port,
+                                    const std::string _route,
+                                    WebAppConnectionCallback *_cb,
+                                    int _pollInterval);
+    ~WebAppServerFastCGIConfigRecord(void);
+    // ConnList key : visitorId cookie
+    typedef std::map<std::string,WebAppConnection*> ConnList_t;
+    typedef std::map<std::string,WebAppConnection*>::iterator ConnListIter_t;
+    ConnList_t conns;
 };
 
 class WebAppConnectionDataWebsocket;

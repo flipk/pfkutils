@@ -546,21 +546,24 @@ WebFastCGIConnection :: startWac(void)
 
     WebAppServerFastCGIConfigRecord::ConnListIter_t visitorIt;
 
-    visitorIt = cgiConfig->conns.find(visitorId);
-    if (visitorIt == cgiConfig->conns.end())
     {
-        // make a new one
-        fastCgiWac = config->cb->newConnection();
-        fastCgiWac->connData = new WebAppConnectionDataFastCGI;
-        cgiConfig->conns[visitorId] = fastCgiWac;
-        if (VERBOSE)
-            cout << "made a new wac" << endl;
-    }
-    else
-    {
-        fastCgiWac = visitorIt->second;
-        if (VERBOSE)
-            cout << "found existing wac" << endl;
+        Lock lock(cgiConfig);
+        visitorIt = cgiConfig->conns.find(visitorId);
+        if (visitorIt == cgiConfig->conns.end())
+        {
+            // make a new one
+            fastCgiWac = config->cb->newConnection();
+            fastCgiWac->connData = new WebAppConnectionDataFastCGI;
+            cgiConfig->conns[visitorId] = fastCgiWac;
+            if (VERBOSE)
+                cout << "made a new wac" << endl;
+        }
+        else
+        {
+            fastCgiWac = visitorIt->second;
+            if (VERBOSE)
+                cout << "found existing wac" << endl;
+        }
     }
 
     return true;
@@ -654,8 +657,11 @@ WebFastCGIConnection :: generateNewVisitorId(
         for (int cnt = 0; cnt < visitorCookieLen; cnt++)
             visitorId.push_back(randChars[random() % numRandChars]);
         cout << "trying visitorId " << visitorId << endl;
-        if (cgiConfig->conns.find(visitorId) == cgiConfig->conns.end())
-            return;
+        {
+            Lock lock(cgiConfig);
+            if (cgiConfig->conns.find(visitorId) == cgiConfig->conns.end())
+                return;
+        }
         // generated a visitorId that already exists; go round again.
     }
 }

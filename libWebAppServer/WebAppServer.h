@@ -115,9 +115,9 @@ digraph WebAppServer {
     UserAppConnCBClass [color=blue label="User's App Connection\nCallback Class"];
     WebAppConnection [color=black label="WebAppConnection" URL="\ref WebAppConnection"];
 
-    WebAppConnectionData [color=black label="WebAppConnectionData" URL="\ref WebAppConnectionData"];
-    WebAppConnectionDataWebsocket [color=black label="WebAppConnectionDataWebsocket" URL="\ref WebAppConnectionDataWebsocket"];
-    WebAppConnectionDataFastCGI [color=black label="WebAppConnectionDataFastCGI" URL="\ref WebAppConnectionDataFastCGI"];
+    WebAppConnectionData [color=red label="WebAppConnectionData" URL="\ref WebAppConnectionData"];
+    WebAppConnectionDataWebsocket [color=red label="WebAppConnectionDataWebsocket" URL="\ref WebAppConnectionDataWebsocket"];
+    WebAppConnectionDataFastCGI [color=red label="WebAppConnectionDataFastCGI" URL="\ref WebAppConnectionDataFastCGI"];
     
     fdThreadLauncher  [color=black label="fdThreadLauncher" URL="\ref fdThreadLauncher"];
     WebFastCGIConnection [label="WebFastCGIConnection" URL="\ref WebFastCGIConnection"];
