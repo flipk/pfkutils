@@ -114,6 +114,11 @@ digraph WebAppServer {
     WebAppConnectionCallback [color=black label="WebAppConnectionCallback" URL="\ref WebAppConnectionCallback"];
     UserAppConnCBClass [color=blue label="User's App Connection\nCallback Class"];
     WebAppConnection [color=black label="WebAppConnection" URL="\ref WebAppConnection"];
+
+    WebAppConnectionData [color=black label="WebAppConnectionData" URL="\ref WebAppConnectionData"];
+    WebAppConnectionDataWebsocket [color=black label="WebAppConnectionDataWebsocket" URL="\ref WebAppConnectionDataWebsocket"];
+    WebAppConnectionDataFastCGI [color=black label="WebAppConnectionDataFastCGI" URL="\ref WebAppConnectionDataFastCGI"];
+    
     fdThreadLauncher  [color=black label="fdThreadLauncher" URL="\ref fdThreadLauncher"];
     WebFastCGIConnection [label="WebFastCGIConnection" URL="\ref WebFastCGIConnection"];
     UserAppConnClass [color=blue label="User's App\nConnection Class"];
@@ -134,7 +139,14 @@ digraph WebAppServer {
     WebAppServerFastCGIConfigRecord -> WebAppConnection [label="map<visitorId> conns"];
 
     WebAppConnection -> UserAppConnClass [style="solid" dir="back"];
-    WebAppConnection -> WebServerConnectionBase [label="connBase"];
+
+    WebAppConnection -> WebAppConnectionData [label="connData"];
+    WebAppConnectionData -> WebAppConnectionDataWebsocket [style="solid" dir="back"];
+    WebAppConnectionData -> WebAppConnectionDataFastCGI [style="solid" dir="back"];
+
+    WebAppConnectionDataWebsocket -> WebSocketConnection [label="connBase"];
+    WebAppConnectionDataFastCGI -> WebFastCGIConnection [label="waiter"];
+
     WebServerConnectionBase -> WebAppConnection [label="wac"];
     WebServerConnectionBase -> WebSocketConnection  [style="solid" dir="back"];
     WebServerConnectionBase -> WebFastCGIConnection  [style="solid" dir="back"];
