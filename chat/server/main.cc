@@ -19,37 +19,6 @@ using namespace std;
 using namespace PFK::Chat;
 using namespace WebAppServer;
 
-class cgiTestAppConn : public WebAppConnection {
-public:
-    cgiTestAppConn(void) {
-        cout << "new cgi test app connection" << endl;
-    }
-    /*virtual*/ ~cgiTestAppConn(void) {
-        cout << "cgi test app destroyed" << endl;
-    }
-    /*virtual*/ bool onMessage(const WebAppMessage &m) {
-        cout << "got msg: " << m.buf << endl;
-        return true;
-    }
-    /*virtual*/ bool doPoll(void) {
-        cout << "test app doPoll" << endl;
-        return true;
-    }
-};
-
-class cgiTestAppCallback : public WebAppConnectionCallback {
-public:
-    cgiTestAppCallback(void) {
-        cout << "cgiTestAppCallback constructor" << endl;
-    }
-    /*virtual*/ ~cgiTestAppCallback(void) {
-        cout << "cgiTestAppCallback destructor" << endl;
-    }
-    /*virtual*/ WebAppConnection * newConnection(void) {
-        return new cgiTestAppConn;
-    }
-};
-
 int
 main()
 {
@@ -57,22 +26,12 @@ main()
     WebAppServerConfig  serverConfig;
     WebAppServer::WebAppServer  server;
 
-    cgiTestAppCallback testAppCallback;
-
     signal( SIGPIPE, SIG_IGN );
 
     initChatServer();
 
     serverConfig.addWebsocket(1081, "/websocket/pfkchat", &callback, 1000);
-
-    serverConfig.addFastCGI(1082, "/cgi-bin/thingy.cgi",
-                            &testAppCallback, 1000);
-
-#if 0
-    serverConfig.addFastCGI(1082, "/cgi-bin/pfkchat.cgi", &callback);
-    serverConfig.addFastCGI(1083, "/cgi-bin/leviathan.cgi", &callback);
-    serverConfig.addFastCGI(1082, "/cgi-bin/test.cgi", &callback);
-#endif
+    serverConfig.addFastCGI(1082, "/cgi/pfkchat.cgi", &callback, 1000);
 
     if (server.start(&serverConfig) == false)
     {

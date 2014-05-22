@@ -46,7 +46,6 @@ std::ostream &operator<<(std::ostream &ostr,
             cerr << "ERROR type is cgi but object isn't of type cgi!" << endl;
             exit(1);
         }
-        // xxx
     }
     return ostr;
 }

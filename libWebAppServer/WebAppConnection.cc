@@ -20,17 +20,20 @@ namespace WebAppServer {
 
 WebAppConnection :: WebAppConnection(void)
 {
+    connData = NULL;
 }
 
 //virtual
 WebAppConnection :: ~WebAppConnection(void)
 {
+    if (connData)
+        delete connData;
 }
 
 void
-WebAppConnection :: sendMessage(const WebAppMessage &m)
+WebAppConnection::sendMessage(const WebAppMessage &m)
 {
-    connBase->sendMessage(m);
+    connData->sendMessage(m);
 }
 
 } // namespace WebAppServer

@@ -348,7 +348,7 @@ WebFastCGIConnection :: handleParams(const FastCGIRecord *rec)
         if (0)
             cout << "got zero length params, moving to INPUT state" << endl;
         state = STATE_INPUT;
-        return true;
+        return startWac();
     }
 
     if (0)
@@ -396,10 +396,9 @@ WebFastCGIConnection :: handleStdin(const FastCGIRecord *rec)
     if (contentLength == 0)
     {
         if (VERBOSE)
-            cout << "got zero length input, moving to OUTPUT state" << endl;
-        state = STATE_OUTPUT;
+            cout << "got zero length input, trying OUTPUT" << endl;
 
-        return startWac();
+        return startOutput();
     }
 
     if (VERBOSE)
@@ -451,7 +450,31 @@ WebFastCGIConnection :: sendRecord(const FastCGIRecord &rec)
 void
 WebFastCGIConnection :: sendMessage(const WebAppMessage &m)
 {
-    // TODO implement
+
+    {
+        WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
+        Lock lock(dat);
+        /** \todo base64-encode and then push that. */
+        dat->outq.push_back(m.buf);
+    }
+
+
+    /** \todo */
+    if (0 /*send queue empty*/)
+    {
+        if ( state == STATE_BLOCKED )
+        {
+            // send message now
+        }
+        else
+        {
+            // enqueue
+        }
+    }
+    else
+    {
+        // enqueue
+    }
 }
 
 bool
@@ -502,7 +525,7 @@ WebFastCGIConnection :: startWac(void)
         }
     }
 
-    std::string cookieString;
+    cookieString.clear();
 
     if (visitorId.length() == 0)
     {
@@ -528,7 +551,7 @@ WebFastCGIConnection :: startWac(void)
     {
         // make a new one
         fastCgiWac = config->cb->newConnection();
-        registerWithWebAppConn(fastCgiWac);
+        fastCgiWac->connData = new WebAppConnectionDataFastCGI;
         cgiConfig->conns[visitorId] = fastCgiWac;
         if (VERBOSE)
             cout << "made a new wac" << endl;
@@ -536,38 +559,86 @@ WebFastCGIConnection :: startWac(void)
     else
     {
         fastCgiWac = visitorIt->second;
-        registerWithWebAppConn(fastCgiWac);
         if (VERBOSE)
             cout << "found existing wac" << endl;
     }
 
-    FastCGIRecord  mimeHeaders;
-    mimeHeaders.header.version = FastCGIHeader::VERSION_1;
-    mimeHeaders.header.type = FastCGIHeader::STDOUT;
-    mimeHeaders.header.paddingLength = 0;
-    mimeHeaders.header.reserved = 0;
-    mimeHeaders.header.set_requestId(requestId);
+    return true;
+}
 
-    int len = snprintf(mimeHeaders.body.text,
-                       sizeof(mimeHeaders.body.text),
-                       "HTTP/1.1 200 OK\r\n"
-                       "Content-Type: text/ascii\r\n"
-                       "%s\r\n"
-                       "THIS IS A TEST", cookieString.c_str());
-    mimeHeaders.header.set_contentLength(  len  );
+bool
+WebFastCGIConnection :: startOutput(void)
+{
+    state = STATE_OUTPUT;
 
-    printRecord(&mimeHeaders);
-    if (sendRecord(mimeHeaders) == false)
-        return false;
+    {
+        FastCGIRecord  mimeHeaders;
+        mimeHeaders.header.version = FastCGIHeader::VERSION_1;
+        mimeHeaders.header.type = FastCGIHeader::STDOUT;
+        mimeHeaders.header.paddingLength = 0;
+        mimeHeaders.header.reserved = 0;
+        mimeHeaders.header.set_requestId(requestId);
 
-    /** \todo note that WebAppConnection base class will need an outgoing queue
-     * of messages from the client's sendMessage calls that haven't yet
-     * been shipped.
-     */
+        int len = snprintf(mimeHeaders.body.text,
+                           sizeof(mimeHeaders.body.text),
+                           "HTTP/1.1 200 OK\r\n"
+                           "Content-Type: text/ascii\r\n"
+                           "%s\r\n", cookieString.c_str());
+        mimeHeaders.header.set_contentLength(  len  );
+
+        printRecord(&mimeHeaders);
+        if (sendRecord(mimeHeaders) == false)
+            return false;
+    }
+
+    FastCGIParamsList::paramIter_t it;
+    it = cgiParams->params.find(CircularReader("REQUEST_METHOD"));
+    if (it != cgiParams->params.end())
+    {
+        FastCGIParam * qs = it->second;
+        cout << "REQUEST_METHOD value is " << qs->value << endl;
+
+        if (qs->value == "POST")
+        {
+            // we're done here, no output. there's a separate
+            // GET connection for messages going the other way.
+
+            return false;
+        }
+    }
+
+    /* if there is a message queued, send it here and return false to 
+       close the connection so the client gets it. 
+       if there is no message queued, return true. */
+
+    if (1 /*message queued*/)  /** \todo */
+    {
+        //test
+        {
+            FastCGIRecord  mimeHeaders;
+            mimeHeaders.header.version = FastCGIHeader::VERSION_1;
+            mimeHeaders.header.type = FastCGIHeader::STDOUT;
+            mimeHeaders.header.paddingLength = 0;
+            mimeHeaders.header.reserved = 0;
+            mimeHeaders.header.set_requestId(requestId);
+            int len = snprintf(mimeHeaders.body.text,
+                               sizeof(mimeHeaders.body.text),
+                               "THIS IS A TEST");
+            mimeHeaders.header.set_contentLength(  len  );
+            printRecord(&mimeHeaders);
+            if (sendRecord(mimeHeaders) == false)
+                return false;
+        }
+    }
+    else
+    {
+        // queue is empty
+        state = STATE_BLOCKED;
+        return true;
+    }
 
     return false;
 }
-
 
 void
 WebFastCGIConnection :: generateNewVisitorId(
@@ -587,6 +658,12 @@ WebFastCGIConnection :: generateNewVisitorId(
             return;
         // generated a visitorId that already exists; go round again.
     }
+}
+
+void
+WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
+{ 
+    /** \todo xxx */
 }
 
 WebAppServerFastCGIConfigRecord :: WebAppServerFastCGIConfigRecord(

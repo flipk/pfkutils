@@ -34,13 +34,6 @@ WebServerConnectionBase :: ~WebServerConnectionBase(void)
     wac = NULL;
 }
 
-void
-WebServerConnectionBase :: registerWithWebAppConn(WebAppConnection * wac)
-{
-    wac->registerConnectionObj(this);
-}
-
-
 //virtual
 bool
 WebServerConnectionBase :: doSelect(bool *forRead, bool *forWrite)

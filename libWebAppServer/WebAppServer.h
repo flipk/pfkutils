@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <stdint.h>
+#include <pthread.h>
 #include <string>
 #include <list>
 #include <map>
@@ -26,13 +27,9 @@ struct WebAppMessage {
 };
 
 class WebServerConnectionBase;
+class WebAppConnectionData;
 class WebAppConnection {
     friend class WebServerConnectionBase;
-    WebServerConnectionBase *connBase;
-    void registerConnectionObj( WebServerConnectionBase *_connBase ) {
-        connBase = _connBase;
-    }
-    // xxx cookie functions
 public:
     WebAppConnection(void);
     virtual ~WebAppConnection(void);
@@ -40,6 +37,7 @@ public:
     virtual bool onMessage(const WebAppMessage &m) = 0;
     virtual bool doPoll(void) = 0;
     void sendMessage(const WebAppMessage &m);
+    WebAppConnectionData * connData;
 };
 
 class WebAppConnectionCallback {
@@ -52,7 +50,6 @@ struct WebAppServerConfigRecord;
 class WebAppServerConfig {
     std::list<WebAppServerConfigRecord*>  records;
     void clear(void);
-    /** \todo provide a way to lock this object once WebAppServer starts */
 public:
     WebAppServerConfig(void);
     ~WebAppServerConfig(void);
@@ -69,6 +66,7 @@ public:
         return records.end();
     }
 };
+
 
 class serverPorts;
 class WebAppServer {

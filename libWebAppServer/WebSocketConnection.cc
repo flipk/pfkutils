@@ -97,8 +97,8 @@ WebSocketConnection :: handle_header(void)
                     // don't keep trying to process text headers, 
                     // at this point we're switching to binary encoding.
                     wac = config->cb->newConnection();
+                    wac->connData = new WebAppConnectionDataWebsocket(this);
                     setPollInterval(config->pollInterval);
-                    registerWithWebAppConn(wac);
                     return true;
                 }
 
@@ -443,6 +443,12 @@ WebSocketConnection :: sendMessage(const WebAppMessage &m)
     }
 
     write(fd, buf, len);
+}
+
+void
+WebAppConnectionDataWebsocket :: sendMessage(const WebAppMessage &m)
+{
+    connBase->sendMessage(m);
 }
 
 } // namespace WebAppServer

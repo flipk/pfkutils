@@ -110,7 +110,6 @@ fdThreadLauncher :: _threadEntry(void *arg)
     return NULL;
 }
 
-//static
 void
 fdThreadLauncher :: threadEntry(void)
 {
