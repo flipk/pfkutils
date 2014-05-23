@@ -2,20 +2,10 @@
 
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
-#include "md5.h"
 #include "sha1.h"
 #include "base64.h"
+//#include "md5.h"  // if i ever fix hixie-76
 
-#include <stdio.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include <iostream>
 #include <sstream>
 
 #define VERBOSE 0
@@ -69,7 +59,7 @@ WebSocketConnection :: handle_header(void)
 {
     while (1)
     {
-        size_t newline_pos = readbuf.find("\r\n");
+        int newline_pos = readbuf.find("\r\n");
         if (newline_pos == CircularReader::npos)
             // not enough present to find a line.
             break;
@@ -125,7 +115,7 @@ WebSocketConnection :: handle_header_line(
 
     if (headerLine.compare(0,"GET "))
     {
-        size_t secondSpacePos = headerLine.find_first_of(' ', 4);
+        int secondSpacePos = headerLine.find_first_of(' ', 4);
         if (secondSpacePos == CircularReader::npos)
         {
             cerr << "bogus GET line, bailing" << endl;
@@ -137,7 +127,7 @@ WebSocketConnection :: handle_header_line(
     }
     else
     {
-        size_t colonPos = headerLine.find(": ");
+        int colonPos = headerLine.find(": ");
         if (colonPos == CircularReader::npos)
         {
             cerr << "no colon: bailing out" << endl;
@@ -293,7 +283,7 @@ WebSocketConnection :: handle_message(void)
             char printbuf[sz];
             readbuf.copyOut(printbuf,0,sz);
             printf("got msg : ");
-            for (uint32_t c = 0; c < sz; c++)
+            for (uint32_t c = 0; (int)c < sz; c++)
                 printf("%02x ", printbuf[c]);
             printf("\n");
         }

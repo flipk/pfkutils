@@ -2,19 +2,6 @@
 
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
-#include "sha1.h"
-#include "base64.h"
-#include "md5.h"
-
-#include <stdio.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
 
 namespace WebAppServer {
 

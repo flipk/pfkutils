@@ -10,5 +10,5 @@ libWebAppServer_a_SOURCES = base64.cc md5.cc sha1.cc \
 libWebAppServer_a_HEADERS = base64.h md5.h sha1.h \
 	WebAppServer.h WebAppServerInternal.h
 
-libWebAppServer_a_CXXFLAGS = -g3
-libWebAppServer_a_CFLAGS = -g3
+libWebAppServer_a_CXXFLAGS = -g3 -Wall -Werror
+libWebAppServer_a_CFLAGS = -g3 -Wall -Werror

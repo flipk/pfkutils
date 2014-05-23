@@ -2,18 +2,8 @@
 
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
-#include "sha1.h"
-#include "base64.h"
-#include "myTimeval.h"
 #include "serverPorts.h"
 
-#include <stdio.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdlib.h>
 
 using namespace std;

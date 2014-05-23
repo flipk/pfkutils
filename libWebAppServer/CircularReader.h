@@ -4,9 +4,7 @@
 #define __CIRCULAR_READER_H__
 
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <iostream>
 
 namespace WebAppServer {
 

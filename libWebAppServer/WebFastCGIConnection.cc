@@ -2,20 +2,8 @@
 
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
-#include "md5.h"
-#include "sha1.h"
-#include "base64.h"
 
-#include <stdio.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <errno.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include <iostream>
 
 using namespace std;
 
@@ -515,7 +503,7 @@ WebFastCGIConnection :: startWac(void)
         if (VERBOSE)
             cout << "cookie: " << p->value << endl;
 
-        int visitorIdNamePos = p->value.find("visitorId=");
+        size_t visitorIdNamePos = p->value.find("visitorId=");
         if (visitorIdNamePos != string::npos)
         {
             visitorIdNamePos += 10; // length of "visitorId="

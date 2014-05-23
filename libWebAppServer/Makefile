@@ -2,8 +2,8 @@ noinst_LIBRARIES = libWebAppServer.a
 
 libWebAppServer_a_CC = $(CC)
 libWebAppServer_a_CXX = $(CXX)
-libWebAppServer_a_CFLAGS = -g3
-libWebAppServer_a_CXXFLAGS = -g3
+libWebAppServer_a_CFLAGS = -g3 -Wall -Werror
+libWebAppServer_a_CXXFLAGS = -g3 -Wall -Werror
 srcdir = /home/flipk/proj/pfkutils/libWebAppServer
 builddir = /home/flipk/proj/pfkutils/libWebAppServer
 CPPFLAGS = -I$(srcdir)

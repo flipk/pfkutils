@@ -3,9 +3,6 @@
 #ifndef __WEBAPPSERVERINTERNAL_H__
 #define __WEBAPPSERVERINTERNAL_H__
 
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <iostream>
 #include <map>
 
 #include "FastCGI.h"

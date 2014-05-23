@@ -2,6 +2,8 @@
 #ifndef __SERVER_PORTS_H__
 #define __SERVER_PORTS_H__
 
+#include <map>
+
 namespace WebAppServer {
 
 enum WebAppType { APP_TYPE_WEBSOCKET, APP_TYPE_FASTCGI };

@@ -4,11 +4,8 @@
 #define __WEBAPPSERVER_H_
 
 #include <unistd.h>
-#include <stdint.h>
-#include <pthread.h>
-#include <string>
 #include <list>
-#include <map>
+#include <string>
 
 namespace WebAppServer {
 

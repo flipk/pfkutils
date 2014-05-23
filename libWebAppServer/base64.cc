@@ -28,7 +28,7 @@ value_to_b64( int v )
 {
     static unsigned char table[] = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    if ( v >= sizeof(table)   ||   v < 0 )
+    if ( v >= (int)sizeof(table)   ||   v < 0 )
         return -1;
     return table[ v ];
 }
