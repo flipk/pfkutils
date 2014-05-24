@@ -112,8 +112,15 @@ void
 WebFastCGIConnection :: done(void)
 {
     // wac is not deleted because it lives beyond
-    // this ephemeral connection.
-    wac = NULL;
+    // this ephemeral connection. we do however deregister ourselves
+    // from the wac's "waiter" pointer.
+    if (wac && registeredWaiter)
+    {
+        WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
+        Lock lock(dat);
+        dat->waiter = NULL;
+        wac = NULL;
+    }
     deleteMe = true;
 }
 
