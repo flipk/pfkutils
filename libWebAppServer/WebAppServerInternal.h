@@ -107,7 +107,7 @@ public:
     static const int maxIdleTime = 30; // in seconds
     time_t lastCall;
     // object should be locked when calling this.
-    void sendFrontMessage(void);
+    void sendFrontMessage(WebFastCGIConnection * _waiter);
 };
 
 inline WebAppConnectionDataWebsocket * WebAppConnectionData::ws(void)

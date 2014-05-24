@@ -99,8 +99,6 @@ WebFastCGIConnection :: doPoll(void)
 
     int idleTime = now - lastCall;
 
-    printf("FastCGI Connection idle time : %d\n", idleTime);
-
     if (idleTime > maxIdleTime)
         return false;
 
@@ -684,7 +682,7 @@ WebFastCGIConnection :: startOutput(void)
 
     if (dat->outq.size() > 0)
     {
-        dat->sendFrontMessage();
+        dat->sendFrontMessage(this);
     }
     else
     {
@@ -752,17 +750,19 @@ WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
     outq.push_back(b64_str);
 
     if (waiter)
-        sendFrontMessage();
+    {
+        sendFrontMessage(waiter);
+        waiter = NULL;
+    }
 }
 
 // this object should be locked before calling this.
 void
-WebAppConnectionDataFastCGI :: sendFrontMessage(void)
+WebAppConnectionDataFastCGI :: sendFrontMessage(
+    WebFastCGIConnection * _waiter)
 {
-    if (waiter == NULL)
-        return;
     const WebAppMessage m(WS_TYPE_BINARY, outq.front());
-    waiter->sendMessage(m);
+    _waiter->sendMessage(m);
     outq.pop_front();
 }
 
@@ -834,7 +834,6 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
             else
             {
                 int idleTime = now - wac->connData->fcgi()->lastCall;
-                printf("wac fcgi idle time is %d\n", idleTime);
                 if (idleTime > WebAppConnectionDataFastCGI::maxIdleTime)
                     nukeIt = true;
             }
