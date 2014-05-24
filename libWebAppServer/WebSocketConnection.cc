@@ -28,6 +28,9 @@ WebSocketConnection :: WebSocketConnection(
 
 WebSocketConnection :: ~WebSocketConnection(void)
 {
+    if (wac != NULL)
+        delete wac;
+    wac = NULL;
 }
 
 //virtual
@@ -50,6 +53,16 @@ WebSocketConnection :: doPoll(void)
     if (wac)
         return wac->doPoll();
     return true;
+}
+
+//virtual
+void
+WebSocketConnection :: done(void)
+{
+    if (wac)
+        delete wac;
+    wac = NULL;
+    deleteMe = true;
 }
 
 static const char websocket_guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";

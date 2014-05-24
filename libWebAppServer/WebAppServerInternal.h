@@ -62,11 +62,16 @@ struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord,
                                     const std::string _route,
                                     WebAppConnectionCallback *_cb,
                                     int _pollInterval);
-    ~WebAppServerFastCGIConfigRecord(void);
+    /*virtual*/ ~WebAppServerFastCGIConfigRecord(void);
     // ConnList key : visitorId cookie
     typedef std::map<std::string,WebAppConnection*> ConnList_t;
     typedef std::map<std::string,WebAppConnection*>::iterator ConnListIter_t;
     ConnList_t conns;
+private:
+    static void * _thread_entry(void *_this);
+    void thread_entry(void);
+    int closePipe[2];
+    pthread_t thread_id;
 };
 
 class WebAppConnectionDataWebsocket;
@@ -99,6 +104,8 @@ public:
     /*virtual*/ void sendMessage(const WebAppMessage &m);
     std::list<std::string> outq; //base64
     WebFastCGIConnection * waiter;
+    // object should be locked when calling this.
+    void sendFrontMessage(void);
 };
 
 inline WebAppConnectionDataWebsocket * WebAppConnectionData::ws(void)
@@ -126,7 +133,7 @@ protected:
     /*virtual*/ bool handleWriteSelect(int serverFd);
     /*virtual*/ bool handleReadSelect(int serverFd);
     // doPoll is left to the derived obj
-    /*virtual*/ void done(void);
+    // done is left to the derived
     virtual bool handleSomeData(void) = 0; // derived must implement
 public:
     WebServerConnectionBase(serverPort::ConfigRecList_t &_configs, int _fd);
@@ -138,6 +145,7 @@ class WebSocketConnection : public WebServerConnectionBase {
     // return false to close
     /*virtual*/ bool handleSomeData(void);
     /*virtual*/ bool doPoll(void);
+    /*virtual*/ void done(void);
     ~WebSocketConnection(void);
 
     enum {
@@ -176,9 +184,13 @@ class WebFastCGIConnection : public WebServerConnectionBase {
     // return false to close
     /*virtual*/ bool handleSomeData(void);
     /*virtual*/ bool doPoll(void);
+    /*virtual*/ void done(void);
     ~WebFastCGIConnection(void);
     
     static const int visitorCookieLen = 30;
+
+    /** \todo what is the best maxIdleTime for fast CGI? */
+    static const int maxIdleTime = 600; // in seconds
 
     enum {
         STATE_BEGIN, // waiting for begin
@@ -191,14 +203,12 @@ class WebFastCGIConnection : public WebServerConnectionBase {
     uint16_t requestId;
     FastCGIParamsList * cgiParams;
     FastCGIParamsList * queryStringParams;
-    // we want our own because we don't want the base class
-    // calling delete on it-- these objects persist attached
-    // to the configrec.
-    WebAppConnection * fastCgiWac;
-
     WebAppServerFastCGIConfigRecord * cgiConfig;
 
+    time_t lastCall;
+
     std::string cookieString;
+    std::string stdinBuffer;
 
     bool handleRecord(const FastCGIRecord *rec);
     bool handleBegin(const FastCGIRecord *rec);
@@ -208,6 +218,7 @@ class WebFastCGIConnection : public WebServerConnectionBase {
     bool sendRecord(const FastCGIRecord &rec);
     void generateNewVisitorId(std::string &visitorId);
     bool startWac(void);
+    bool decodeInput(void);
     bool startOutput(void);
 
 public:
