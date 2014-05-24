@@ -15,20 +15,43 @@ else
     console.log('no cookie is found');
 }
 
-$("#testButton").click( function() {
+var testDiv = document.getElementById("testDiv");
 
-    console.log("issuing thingy request");
+var cgiuri = "/cgi/test.cgi";
 
-    $.ajax("/cgi-bin/thingy.cgi", 
-	   {
-	       data : "ONE=fart%2bknocker&TWO=whatsitstuff&THREE=stuff",
-	       type : "GET",
-	       complete:function(jqxhr, status) {
-		   console.log("ajax completed with status " + status);
-	       },
-	       success:function(data,status,jqxhr) {
-		   console.log("got response: ", data);
-	       }
+var xreq = null;
+
+var sendMessage = function (data) {
+    var config = {
+               dataType : 'text',
+               data : data, // xxx  base64
+               type : "POST",
+               complete : function(jqxhr, status) {
+		   console.log("POST completed with status " + status);
+               },
 	   }
-	  );
+    $.ajax(cgiuri, config);
+}
+
+$("#sendmessage").click( function () {
+    sendMessage( "abcdefg=" );
 });
+
+(function getNextMsg () {
+    console.log("starting new GET ajax");
+    $.ajax( {
+	url : cgiuri,
+	success : function(data) {
+	    console.log("GET success callback called with data:", data);
+	    // xxx base64
+	},
+	dataType : 'text',
+	data : 'GETMSG',
+	type : 'GET',
+	complete : function() {
+	    console.log("GET complete callback sleeping before restarting");
+	    setTimeout(getNextMsg, 250);
+	},
+	timeout : 30000
+    });
+})();
