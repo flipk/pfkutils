@@ -104,6 +104,8 @@ public:
     /*virtual*/ void sendMessage(const WebAppMessage &m);
     std::list<std::string> outq; //base64
     WebFastCGIConnection * waiter;
+    static const int maxIdleTime = 30; // in seconds
+    time_t lastCall;
     // object should be locked when calling this.
     void sendFrontMessage(void);
 };
@@ -187,10 +189,9 @@ class WebFastCGIConnection : public WebServerConnectionBase {
     /*virtual*/ void done(void);
     ~WebFastCGIConnection(void);
     
-    static const int visitorCookieLen = 30;
+    static const int visitorCookieLen = 40;
 
-    /** \todo what is the best maxIdleTime for fast CGI? */
-    static const int maxIdleTime = 600; // in seconds
+    static const int maxIdleTime = 30; // in seconds
 
     enum {
         STATE_BEGIN, // waiting for begin

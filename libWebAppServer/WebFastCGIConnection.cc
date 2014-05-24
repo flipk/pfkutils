@@ -26,7 +26,7 @@ WebFastCGIConnection :: WebFastCGIConnection(
     // i wanted to startFdThread in WebServerConnectionBase, but i can't
     // because it would call pure virtual methods that aren't set up until
     // this derived contructor is complete. so.. bummer.
-    startFdThread(_fd);
+    startFdThread(_fd, 1000);
 }
 
 WebFastCGIConnection :: ~WebFastCGIConnection(void)
@@ -97,7 +97,11 @@ WebFastCGIConnection :: doPoll(void)
 {
     time_t now = time(NULL);
 
-    if ((now - lastCall) > maxIdleTime)
+    int idleTime = now - lastCall;
+
+    printf("FastCGI Connection idle time : %d\n", idleTime);
+
+    if (idleTime > maxIdleTime)
         return false;
 
     return true;
@@ -360,6 +364,7 @@ WebFastCGIConnection :: handleParams(const FastCGIRecord *rec)
         if (0)
             cout << "got zero length params, moving to INPUT state" << endl;
         state = STATE_INPUT;
+        stdinBuffer.clear();
         return startWac();
     }
 
@@ -474,16 +479,22 @@ WebFastCGIConnection :: sendMessage(const WebAppMessage &m)
     mimeHeaders.header.paddingLength = 0;
     mimeHeaders.header.reserved = 0;
     mimeHeaders.header.set_requestId(requestId);
-    /** \todo bounds check */
-    memcpy(mimeHeaders.body.text, m.buf.c_str(),
-           m.buf.length());
-    mimeHeaders.header.set_contentLength( m.buf.length() );
-    printRecord(&mimeHeaders);
-    // we really don't care about return value, because
-    // in either case we're returning 'false' from the sender
-    // to close the connection and complete the transaction
-    // to the browser.
-    (void) sendRecord(mimeHeaders);
+    if (m.buf.length() > sizeof(mimeHeaders.body.text))
+    {
+        cout << "WebFastCGIConnection :: sendMessage : BOUNDS CHECK" << endl;
+    }
+    else
+    {
+        memcpy(mimeHeaders.body.text, m.buf.c_str(),
+               m.buf.length());
+        mimeHeaders.header.set_contentLength( m.buf.length() );
+        printRecord(&mimeHeaders);
+        // we really don't care about return value, because
+        // in either case we're returning 'false' from the sender
+        // to close the connection and complete the transaction
+        // to the browser.
+        (void) sendRecord(mimeHeaders);
+    }
     stopFdThread();
 }
 
@@ -574,6 +585,8 @@ WebFastCGIConnection :: startWac(void)
             if (VERBOSE)
                 cout << "found existing wac" << endl;
         }
+        // timestamp it for idle detection
+        wac->connData->fcgi()->lastCall = time(NULL);
     }
 
     return true;
@@ -582,16 +595,34 @@ WebFastCGIConnection :: startWac(void)
 bool
 WebFastCGIConnection :: decodeInput(void)
 {
-    std::string decodeBuf;
+    int left = stdinBuffer.length();
+    if (left < 4)
+    {
+        cout << "WebFastCGIConnection :: decodeInput : len " 
+             << left << " too short" << endl;
+        return false;
+    }
 
-    /** \todo */
-    decodeBuf += "43210";
-    // base64 decode
+    unsigned char * inbuf = (unsigned char *) stdinBuffer.c_str();
+
+    std::string decodeBuf;
+    int inpos = 0;
+    for (inpos = 0; left >= 4; left -= 4, inpos += 4)
+    {
+        unsigned char out3[3];
+        int decodeLen = b64_decode_quantum(inbuf + inpos,
+                                           out3);
+        if (decodeLen < 0)
+        {
+            cout << "bogus base64 data" << endl;
+            return false;
+        }
+        decodeBuf.append((char*)out3, decodeLen);
+    }
 
     const WebAppMessage m(WS_TYPE_BINARY, decodeBuf);
-    if (wac->onMessage(m) == false) // \todo mutex
+    if (wac->onMessage(m) == false)
         return false;
-
     return true;
 }
 
@@ -703,7 +734,7 @@ WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
     unsigned char * inbuf = (unsigned char *) m.buf.c_str();
     unsigned char * outbuf = (unsigned char *) b64_str.c_str();
 
-    for (quant = 0; left <= 0; quant++, left -= 3)
+    for (quant = 0; left > 0; quant++, left -= 3)
     {
         b64_encode_quantum(inbuf + (quant*3),
                            (left >= 3) ? 3 : left, 
@@ -751,6 +782,7 @@ WebAppServerFastCGIConfigRecord :: ~WebAppServerFastCGIConfigRecord(void)
 {
     if (pollInterval > 0)
     {
+        lock();
         close(closePipe[1]);
         void * dummy;
         pthread_join(thread_id, &dummy);
@@ -782,15 +814,26 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
         if (select(closePipe[0]+1, &rfds, NULL, NULL, &tv) > 0)
             break;
 
+        time_t now = time(NULL);
         Lock lock(this);
 
         ConnListIter_t it;
         for (it = conns.begin(); it != conns.end(); it++)
         {
             WebAppConnection * wac = it->second;
+            bool nukeIt = false;
             if (wac->doPoll() == false)
+                nukeIt = true;
+            else
             {
-    /** \todo mutex interactions with wac */
+                int idleTime = now - wac->connData->fcgi()->lastCall;
+                printf("wac fcgi idle time is %d\n", idleTime);
+                if (idleTime > WebAppConnectionDataFastCGI::maxIdleTime)
+                    nukeIt = true;
+            }
+            if (nukeIt)
+            {
+                wac->connData->fcgi()->lock();
                 delete wac;
                 conns.erase(it);
             }
