@@ -3,8 +3,8 @@ set -e -x
 cd /home/flipk/proj/pfkutils/libWebAppServer
 make -j 8
 cd /home/flipk/proj/pfkutils/chat/test
-g++ -c test.cc -I ../../libWebAppServer/
-g++ test.o ../../libWebAppServer/libWebAppServer.a -lpthread -o t
+g++ -g3 -c test.cc -I ../../libWebAppServer/
+g++ -g3 test.o ../../libWebAppServer/libWebAppServer.a -lpthread -o t
 exit 0
 #endif
 
@@ -28,9 +28,12 @@ public:
     }
     /*virtual*/ bool onMessage(const WebAppServer::WebAppMessage &msg) {
         cout << "test.cc: testcallback msg" << endl;
+        sendMessage(msg);
+        return true;
     }
     /*virtual*/ bool doPoll(void) {
         cout  << "test.cc: testCallback poll" << endl;
+        return true;
     }
 
 };

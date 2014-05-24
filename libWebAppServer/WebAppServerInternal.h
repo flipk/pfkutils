@@ -210,6 +210,8 @@ class WebFastCGIConnection : public WebServerConnectionBase {
     std::string cookieString;
     std::string stdinBuffer;
 
+    bool registeredWaiter;
+
     bool handleRecord(const FastCGIRecord *rec);
     bool handleBegin(const FastCGIRecord *rec);
     bool handleStdin(const FastCGIRecord *rec);

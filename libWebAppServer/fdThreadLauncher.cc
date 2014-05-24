@@ -56,6 +56,12 @@ fdThreadLauncher :: ~fdThreadLauncher(void)
     if (state == RUNNING)
     {
         stopFdThread();
+        int count = 10;
+        while (state == STOPPING && count > 0)
+        {
+            count--;
+            sleep(1);
+        }
     }
 }
 
@@ -75,16 +81,6 @@ fdThreadLauncher :: stopFdThread(void)
     state = STOPPING;
     char c = CMD_CLOSE;
     (void) ::write(cmdFds[1], &c, 1);
-    int count = 1000;
-    while (state == STOPPING && count > 0)
-    {
-        count--;
-        usleep(10000);
-    }
-    if (state != DEAD)
-    {
-        cerr << "thread failed to die properly: " << state << endl;
-    }
 }
 
 //static
@@ -105,7 +101,7 @@ fdThreadLauncher :: _threadEntry(void *arg)
     obj->fd = -1;
     obj->cmdFds[0] = -1;
     obj->cmdFds[1] = -1;
-    obj->state = STOPPING;
+    obj->state = DEAD;
     obj->done();
     return NULL;
 }

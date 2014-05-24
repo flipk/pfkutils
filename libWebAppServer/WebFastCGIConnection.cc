@@ -21,6 +21,7 @@ WebFastCGIConnection :: WebFastCGIConnection(
     queryStringParams = NULL;
     cgiConfig = NULL;
     time(&lastCall);
+    registeredWaiter = false;
 
     // i wanted to startFdThread in WebServerConnectionBase, but i can't
     // because it would call pure virtual methods that aren't set up until
@@ -30,7 +31,7 @@ WebFastCGIConnection :: WebFastCGIConnection(
 
 WebFastCGIConnection :: ~WebFastCGIConnection(void)
 {
-    if (wac)
+    if (wac && registeredWaiter)
     {
         WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
         Lock lock(dat);
@@ -409,8 +410,9 @@ WebFastCGIConnection :: handleStdin(const FastCGIRecord *rec)
         if (VERBOSE)
             cout << "got end of input, decoding" << endl;
 
-        if (decodeInput() == false)
-            return false;
+        if (stdinBuffer.length() > 0)
+            if (decodeInput() == false)
+                return false;
 
         if (VERBOSE)
             cout << "switching to OUTPUT" << endl;
@@ -583,7 +585,7 @@ WebFastCGIConnection :: decodeInput(void)
     std::string decodeBuf;
 
     /** \todo */
-
+    decodeBuf += "43210";
     // base64 decode
 
     const WebAppMessage m(WS_TYPE_BINARY, decodeBuf);
@@ -650,6 +652,7 @@ WebFastCGIConnection :: startOutput(void)
     {
         // queue is empty
         state = STATE_BLOCKED;
+        registeredWaiter = true;
         dat->waiter = this;
         return true;
     }
@@ -718,6 +721,8 @@ WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
 void
 WebAppConnectionDataFastCGI :: sendFrontMessage(void)
 {
+    if (waiter == NULL)
+        return;
     const WebAppMessage m(WS_TYPE_BINARY, outq.front());
     waiter->sendMessage(m);
     outq.pop_front();
