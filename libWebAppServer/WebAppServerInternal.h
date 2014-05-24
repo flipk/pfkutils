@@ -104,7 +104,7 @@ public:
     /*virtual*/ void sendMessage(const WebAppMessage &m);
     std::list<std::string> outq; //base64
     WebFastCGIConnection * waiter;
-    static const int maxIdleTime = 30; // in seconds
+    static const int maxIdleTime = 4; // in seconds
     time_t lastCall;
     // object should be locked when calling this.
     void sendFrontMessage(WebFastCGIConnection * _waiter);

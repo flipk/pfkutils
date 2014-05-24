@@ -97,6 +97,13 @@ WebFastCGIConnection :: doPoll(void)
 {
     time_t now = time(NULL);
 
+    if (wac &&
+        wac->connData &&
+        wac->connData->fcgi())
+    {
+        wac->connData->fcgi()->lastCall = now;
+    }
+
     int idleTime = now - lastCall;
 
     if (idleTime > maxIdleTime)
