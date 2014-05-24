@@ -26,9 +26,8 @@ WebServerConnectionBase :: WebServerConnectionBase(
 WebServerConnectionBase :: ~WebServerConnectionBase(void)
 {
     stopFdThread();
-    if (wac != NULL)
-        delete wac;
-    wac = NULL;
+    // it is the derived object's responsibility to clean
+    // up the wac.  websocket will delete it, fastcgi will not.
 }
 
 //virtual
@@ -71,16 +70,6 @@ WebServerConnectionBase :: handleReadSelect(int fd)
         return false;
 
     return handleSomeData();
-}
-
-//virtual
-void
-WebServerConnectionBase :: done(void)
-{
-    if (wac)
-        delete wac;
-    wac = NULL;
-    deleteMe = true;
 }
 
 bool
