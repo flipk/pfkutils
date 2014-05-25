@@ -1,5 +1,10 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*-  */
 
+/**
+ * \file WebAppServer.h
+ * \brief All definitions relevant to a user of libWebAppServer
+ */
+
 #ifndef __WEBAPPSERVER_H_
 #define __WEBAPPSERVER_H_
 
@@ -9,50 +14,159 @@
 
 namespace WebAppServer {
 
-enum WebAppMessageType { 
-    WS_TYPE_INVALID,
-    WS_TYPE_TEXT,
-    WS_TYPE_BINARY,
-    WS_TYPE_CLOSE
-};
+/** message types. \note FastCGI supports only BINARY at present. */
+typedef enum { 
+    WS_TYPE_INVALID,  //!< initialization value
+    WS_TYPE_TEXT,     //!< text mode (websocket only)
+    WS_TYPE_BINARY,   //!< binary mode
+    WS_TYPE_CLOSE     //!< close request (websocket only)
+} WebAppMessageType;
 
+/** message container passed between libWebAppServer and
+ * your WebAppConnection. */
 struct WebAppMessage {
+    /** constructor.
+     * \param _type  specify the type of the message
+     * \param _buf   a std::string buffer containing the message body.
+     * \note most messages should probably be WS_TYPE_BINARY, as
+     *      WS_TYPE_TEXT messages are limited in the character sets
+     *      they can pass. */
     WebAppMessage(WebAppMessageType _type, 
                   const std::string &_buf) : type(_type), buf(_buf) { }
+    /** the message type */
     WebAppMessageType type;
+    /** the message contents */
     const std::string &buf;
 };
 
 class WebServerConnectionBase;
 class WebAppConnectionData;
+/** base class for a user application connection. these are created
+ * as browser clients connect, and are deleted when the browser goes
+ * away. these objects are created by the user's supplied 
+ * \ref WebAppConnectionCallback -derived object. */
 class WebAppConnection {
     friend class WebServerConnectionBase;
 public:
+    /** user may implement a constructor for the derived object 
+     * which will initialize the application's context, if desired.
+     * this method may optionally take arguments, which
+     * WebAppConnectionCallback::newConnection must understand. */
     WebAppConnection(void);
+    /** user may have a destructor for the derived object which will
+     * clean up the application's context for this connection, if 
+     * desired. */
     virtual ~WebAppConnection(void);
-    // return false to close
+    /** handler for incoming message.  when the application in the browser
+     * has sent a message to us, libWebAppServer will call this method
+     * in your object. note that upon return, the message is freed, thus
+     * the application must not retain references or pointers to this
+     * object.
+     * \param m the message just received.
+     * \return  the application handler should return true if the connection
+     *      should remain open, or false if libWebAppServer should close it.
+     */
     virtual bool onMessage(const WebAppMessage &m) = 0;
+    /** periodic poll for audit/mainenance purposes. in 
+     * \ref WebAppServerConfig::addWebsocket and \ref
+     * WebAppServerConfig::addFastCGI, the user may specify a
+     * pollInterval. if specified, this method will be called on that
+     * interval. the user's handler for this may do anything desired,
+     * such as implementing timeouts or other maintenance activities.
+     * \return  the application handler should return true if the connection
+     *      should remain open, or false if libWebAppServer should close it.
+     */
     virtual bool doPoll(void) = 0;
+    /** send a message to the browser.  the application code may call
+     * this to send a message to the browser.  this is thread-safe so any
+     * thread in the application may call it without worry of interference
+     * with onMessage or doPoll.
+     * \param  m  the message to send. */
     void sendMessage(const WebAppMessage &m);
     WebAppConnectionData * connData;
 };
 
+/** base class for user new-connection callback. when a new browser
+ * connection is estalished, libWebAppServer needs to know what 
+ * \ref WebAppConnection -derived object to create. The user should supply
+ * one of these for each \ref WebAppServerConfig record. */
 class WebAppConnectionCallback {
 public:
     virtual ~WebAppConnectionCallback(void) { /*placeholder*/ }
+    /** user must provide an implementation of this function. when a new
+     * browser connection is formed, the user's implementation of this
+     * function must create a \ref WebAppConnectionCallback -derived object
+     * to handle that connection. the user's implementation of this function
+     * may optionally pass arguments to the newly constructed object,
+     * to provide application context if required. */
     virtual WebAppConnection * newConnection(void) = 0;
 };
 
 struct WebAppServerConfigRecord;
+/** configuration for a web server. this must be constructed and
+ * initialized with services to support before a WebAppServer may 
+ * be started. 
+ * \note This object must live on for the duration of the WebAppServer.
+ *      WebAppServer takes a reference, so don't free it. */
 class WebAppServerConfig {
     std::list<WebAppServerConfigRecord*>  records;
     void clear(void);
 public:
     WebAppServerConfig(void);
     ~WebAppServerConfig(void);
+    /** add a websocket application.  
+     * \param port the TCP port to listen for websocket connections. 
+     *         this may be connected directly by a browser, or via 
+     *         a proxy connection from the web server process.
+     * \param route the URI path to this application, e.g.
+     *        "/websocket/MYPROGRAM".  multiple websocket applications
+     *        may be registered on the same TCP port as long as they
+     *        have different routes.  this translates into a URL such
+     *        as  "ws://ip_or_host:port/websocket/MYPROGRAM".
+     * \param cb  a pointer to a user's WebAppConnectionCallback -derived
+     *       object, which will be used to construct new user
+     *       WebAppConnection -derived objects on new connections.
+     * \param pollInterval  a number of milliseconds between calls to
+     *       the user's WebAppConnection::doPoll method.  a value of -1
+     *       means do not call doPoll at all.  this is the default value
+     *       if this parameter is not specified.
+     * \note the same TCP port cannot host both websocket and fastcgi 
+     *       connections. once a port has been specified as websocket,
+     *       then all future services added with that port must also be
+     *       websocket.
+     * \note this service does not support "wss://" protocol (SSL). if
+     *       you wish to use SSL, you will need to proxy to this service
+     *       using a web browser that supports secure websocket proxying
+     *       (such as NGINX).
+     */
     void addWebsocket(int port, const std::string route,
                       WebAppConnectionCallback *cb,
                       int pollInterval = -1);
+    /** add a FastCGI application.
+     * \param port the TCP port to listen for AJAX-style connections. 
+     *         this is ONLY supported using a web server proxy which
+     *         supports the FastCGI standard (as the name implies).
+     * \param route the URI path to this application, e.g.
+     *        "/cgi/MYPROGRAM.cgi".  multiple AJAX-style applications
+     *        may be registered on the same TCP port as long as they
+     *        have different routes.  this translates into a URL such
+     *        as  "http://ip_or_host:port/cgi/MYPROGRAM.cgi".
+     * \param cb  a pointer to a user's WebAppConnectionCallback -derived
+     *       object, which will be used to construct new user
+     *       WebAppConnection -derived objects on new connections.
+     * \param pollInterval  a number of milliseconds between calls to
+     *       the user's WebAppConnection::doPoll method.  a value of -1
+     *       means do not call doPoll at all.  this is the default value
+     *       if this parameter is not specified.
+     * \note the same TCP port cannot host both websocket and FastCGI 
+     *       connections. once a port has been specified as FastCGI,
+     *       then all future services added with that port must also be
+     *       FastCGI.
+     * \note this service does not support "https://" protocol (SSL). if
+     *       you wish to use SSL, you will need to proxy to this service
+     *       using a web browser that supports secure proxying
+     *       (such as NGINX).
+     */
     void addFastCGI(int port, const std::string route,
                     WebAppConnectionCallback *cb,
                     int pollInterval = -1);
@@ -66,32 +180,137 @@ public:
 
 
 class serverPorts;
+/** a web server. create a WebAppServerConfig and then call
+ * start(config). your main thread should then call sleep in a 
+ * while-loop or something to keep the process alive. */
 class WebAppServer {
     const WebAppServerConfig *config;
     serverPorts * ports;
 public:
     WebAppServer(void);
     ~WebAppServer(void);
-    // return false if failure to start
+    /** start a web server. this can only be called once.
+     * \param config  the websocket/fastcgi configuration to use.
+     * \return false if there was an error in starting (such as a
+     *     problem with the config object, or TCP ports already in
+     *     use) or true if the web server is now alive and listening
+     *     for requests.
+     * \note WebAppServer takes a reference to your WebAppServerConfig
+     *    object, so don't free it or make it a function-local variable
+     *    which goes away. Bad Mojo. */
     bool start(const WebAppServerConfig *config);
+    /** stop the web server.  all ports are closed and all open
+     * connection objects are destroyed.  or you could just exit main. */
     void stop(void);
 };
-
-} // namespace WebAppServer
 
 #endif /* __WEBAPPSERVER_H_ */
 
 /** \mainpage WebAppServer
 
+\section Overview Overview
+
+This is a server for handling WebSocket or FastCGI (Ajax long-polling) 
+backend of a web application.
+
+For a quick start, look at the \ref SampleCode and \ref SampleXHRCode.
+
+\section InterestingDataStructures Interesting Data Structures
+
+Here are some interesting data structures you should look at (referenced
+in the sample code):
+
 <ul>
-<li> \ref ClassDiagram
-<li> \ref SampleCode
-<li> \ref OperationalDescription
+<li> \ref WebAppMessage
+<li> \ref WebAppConnection
+<li> \ref WebAppConnectionCallback
+<li> \ref WebAppServerConfig
+<li> \ref WebAppServer::WebAppServer
 </ul>
+
+\section HowTo How To
+
+Everything begins with a WebAppServer.  In order to use WebAppServer,
+it must be provided with a configuration, in the form of a
+WebAppServerConfig. 
+\note The WebAppServerConfig object you supply must exist at least as
+      long as the WebAppServer exists.  The WebAppServer grabs a pointer
+      to your WebAppServerConfig object and references it while running.
+
+The WebAppServerConfig object must be provided a set of configurations
+for applications to serve.  This is done via the
+WebAppServerConfig::addWebsocket and WebAppServerConfig::addFastCGI
+methods.
+
+These methods must be supplied a TCP port number.  For WebSockets, it
+is assumed this the port number specified in either the web server
+config (if e.g. NGINX is using a WebSocket proxy) or provided directly
+in the JavaScript client in the browser.  For FastCGI, it is the port
+number specified in the web server config.  Multiple applications may
+be attached to the same TCP port number, however their types cannot be
+mixed (i.e. a TCP port must be either all FastCGI or all WebSocket).
+
+Multiple applications on the same port must be distinguished using
+different routes. (A 'route' in this context is referring to the
+portion of the URL after the hostname, also known as the document
+URI.)
+
+The user must also supply a WebAppConnectionCallback for each
+application to be served through the server. This object has only one
+responsibility: to construct a new application object (a user's object
+derived from the WebAppConnection base class) when a new unique
+visitor connects to the server.
+
+\section DefnUniqueVisitor Definition of Unique Visitor
+
+<ul>
+<li> WebSockets : A 'new unique visitor' for WebSockets means a 'new
+      WebSocket' connection from a browser. The user's
+      WebAppConnection -derived object exists as long as that
+      JavaScript WebSocket object exists in the browser, and is
+      deleted when that WebSocket is closed.
+</ul>
+<ul>
+<li> FastCGI : A 'new unique visitor' for FastCGI means the first XHR
+      (XMLHttpRequest) (or in jQuery, "$.ajax", or in Angular,
+      "$http") connection from a host with no "visitorId" cookie set
+      or an unknown visitorId cookie. The user's WebAppConnection
+      -derived continues to exist beyond the closure of that XHR
+      connection for a period of time, to wait for the next XHR
+      connection (since XHR connections will come and go for every
+      message). When a new XHR connection arrives with the same
+      visitorId cookie, it is attached to an existing WebAppConnection
+      object if possible. The user's WebAppConnection object will be
+      deleted if a period of time passes with no XHR connection
+      attached to it.
+</ul>
+
+\section XHRNotes  XHR Usage notes
+
+To use XHR with this library, there are a couple of rules. First, use
+GET methods in a long-polling technique to retrieve messages (server
+to browser), but do NOT use GET to send messages
+browser-to-server. Second, use POST to send browser-to-server, and do
+not expect the server to include any server-to-browser messages in the
+response.
+
+Here is some \ref SampleXHRCode.
+
+\cond INTERNAL
+
+\section Internals
+
+If you're interested in the internals of how this library works, read
+\ref InternalsPage.
+
+\endcond
 
 */
 
-/** \page ClassDiagram Class Diagram for libWebAppServer
+/**
+\cond INTERNAL
+
+ \page ClassDiagram Class Diagram for libWebAppServer
 
 \dot
 
@@ -168,9 +387,11 @@ digraph WebAppServer {
 
 \enddot
 
+\endcond
+
 */
 
-/** \page SampleCode Sample code snippets
+/** \page SampleCode Sample C++ code
 
 sample code to set up a server:
 
@@ -241,52 +462,84 @@ main()
 
  */
 
-/** \page OperationalDescription Description of Operation
+/** \page SampleXHRCode Sample XHR Javascript code
 
-This page describes the internal operation of libWebAppServer.
+HTML code:
 
-\section OperationSetup  Setup
+\code
+  <input type=button value="Send Message" id=sendmessage>
+  <script src=/js/jquery.js> </script>
+  <script src=test.js> </script>
+\endcode
 
-Everything begins with a WebAppServer.  In order to use WebAppServer,
-it must be provided with a configuration, in the form of a
-WebAppServerConfig. 
-\note The WebAppServerConfig object you supply must exist at least as
-      long as the WebAppServer exists.  The WebAppServer grabs a pointer
-      to your WebAppServerConfig object and references it while running.
+Javascript code:
 
-The WebAppServerConfig object must be provided a set of configurations
-for applications to serve.  This is done via the
-WebAppServerConfig::addWebsocket and WebAppServerConfig::addFastCGI
-methods.
+\code
 
-These methods must be supplied a TCP port number.  For WebSockets, it
-is assumed this the port number specified in either the web server
-config (if e.g. NGINX is using a WebSocket proxy) or provided directly
-in the JavaScript client in the browser.  For FastCGI, it is the port
-number specified in the web server config.  Multiple applications may
-be attached to the same TCP port number, however their types cannot be
-mixed (i.e. a TCP port must be either all FastCGI or all WebSocket).
+var cgiuri = "/cgi/test.cgi";
 
-Multiple applications on the same port must be distinguished using
-different routes. (A 'route' in this context is referring to the
-portion of the URL after the hostname, also known as the document
-URI.)
+function sendMessage (data) {
+    var config = {
+               dataType : 'text',
+               data : data, // xxx  base64
+               type : "POST",
+               complete : function(jqxhr, status) {
+		   console.log("POST completed with status " + status);
+               },
+	   }
+    $.ajax(cgiuri, config);
+}
 
-The user must also supply a WebAppConnectionCallback for each
-application to be served through the server. This object has only one
-responsibility: to construct a new application object (a user's object
-derived from the WebAppConnection base class) when a new unique
-visitor connects to the server. (See below for definition of a 'new
-unique visitor'.)
+$("#sendmessage").click( function () {
+    sendMessage( "abcdefg=" );
+});
+
+(function getNextMsg () {
+    console.log("starting new GET ajax");
+    $.ajax( {
+	url : cgiuri,
+	success : function(data) {
+	    console.log("GET success callback called with data:", data);
+	    // xxx base64
+	},
+	dataType : 'text',
+	data : 'GETMSG', // dummy, not used
+	type : 'GET',
+	complete : function() {
+	    console.log("GET complete callback sleeping before restarting");
+	    setTimeout(getNextMsg, 250);
+	},
+	timeout : 30000
+    });
+})();
+
+\endcode
+
+
+ */
+
+/** 
+
+\cond INTERNAL
+
+\page InternalsPage Internal Workings
+
+There is a nice \ref ClassDiagram that is a good place to start. Best
+to open this in another tab, as the text below will make frequent
+references to it.
+
+Setting up a server involves building a WebAppServerConfig
+object by adding WebAppServerConfigRecord objects to it.
 
 Each call to WebAppServerConfig::addWebsocket and
-WebAppServerConfig::addFastCGI adds a new WebAppServerConfigRecord to
-the config object.  Each config record describes one unique route.
+WebAppServerConfig::addFastCGI adds a new
+WebAppServerConfigRecord to the config object.  Each config record
+describes one unique route.
 
 \note FastCGI connections actually get a WebAppServerFastCGIConfigRecord
       object, which is derived from WebAppServerConfigRecord.  This is
       because FastCGI connections need to store a little extra data about
-      unique visitorId cookies.
+      unique visitorId cookies (WebAppServerFastCGIConfigRecord::conns).
 
 \section OperationStartup Startup
 
@@ -310,60 +563,157 @@ of a new object results in a new thread as well. This thread handles all
 incoming traffic through a WebServerConnectionBase::handleSomeData virtual
 method.
 
-Once the WebFastCGIConnection or WebSocketConnection is created, it handles
-the HTTP MIME headers and data passing using a CircularReader object.
-Once the headers have been parsed, cookies and resource paths are parsed
-out, and an attachment is formed to an appropriate WebAppConnection object
-(which is created by the user's WebAppConnectionCallback, which was attached
-to a WebAppServerConfigRecord describing the user's routes).
+\section NewConn New Connection
 
-\section OperationConnection The Web*Connection objects
+A new connection causes fdThreadLauncher::threadEntry to leave select and
+call the fdThreadLauncher::handleReadSelect virtual method, which in this
+case is serverPort::handleReadSelect.  This method accepts a new connection
+and then creates either a WebFastCGIConnection or WebSocketConnection 
+(depending on the configuration of this serverPort).
+
+WebFastCGIConnection and WebSocketConnection are both derived from a 
+base class WebServerConnectionBase, which includes fdThreadLauncher to
+handle the data motion.  Data arriving on the connection triggers
+WebServerConnectionBase::handleReadSelect method, which uses a
+CircularReader object to gather data fragments into messages.  When
+some data has arrived, it then calls a virtual method
+WebServerConnectionBase::handleSomeData which vectors to the corresponding
+method in either the WebFastCGIConnection or WebSocketConnection derived
+object.
+
+MIME headers and message contents are parsed by those objects.  Both types
+search for resource (URI) paths in the MIME headers.  The URI paths are
+then used to search the "routes" in the various config records attached
+to the serverPort.  Once a matching config record is found, the user's
+WebAppConnectionCallback -derived object is used to create or locate
+the correct WebAppConnection -derived object to attach to.  A pointer
+to the WebAppConnection is stored in WebServerConnectionBase::wac.
+
+\section wacOpaque WebAppConnection opaque extra data
+
+A WebAppConnection contains another object which is opaque to the user.
+WebAppConnection::connData is a pointer to either a
+WebAppConnectionDataWebsocket or a WebAppConnectionDataFastCGI.
+
+A WebAppConnectionDataWebsocket contains very little data.
+
+A WebAppConnectionDataFastCGI helps deal with the fact that Ajax polling
+connections are ephemeral with respect to a WebAppConnection, that is to
+say, a WebAppConnection must survive longer than a single Ajax connection,
+and WebAppConnectionDataFastCGI helps maintain that relationship.  More
+on that below.
+
+\section WebSocketConn A WebSocketConnection
 
 When WebSocketConnection discovers a route, it follows the configs
 list given to it by the serverPort to find a matching route.  When a
 matching route is found, the WebAppConnectionCallback provided by the
 user is used to construct a new user's WebAppConnection -derived
-object. This object will live as long as this TCP
-connection. WebSocket messages will be passed in both directions over
-this connection for as long as this connection exists.  If the browser
+object. This object will live as long as this TCP connection.
+WebSocket messages will be passed in both directions over this
+connection for as long as this connection exists.  If the browser
 closes the WebSocket object, this WebServerConnectionBase thread will
 exit and the corresponding WebAppConnection will also be destroyed.
 
-FastCGI connections do not work this way. A new XHR (XMLHttpRequest) 
-connection is established for each message.  An XHR connection follows
-the following state diagram:
+The sequence for a server-to-browser message is as follows:
+
+<ul>
+<li> The user's application (in a WebAppConnection -derived object) 
+     calls WebAppConnection::sendMessage.
+<li> WebAppConnection::sendMessage routes the data to the connData
+     member, in this case WebAppConnectionDataWebsocket::sendMessage.
+<li> since there is always a 1-to-1 mapping between a WebAppConnection
+     and a WebSocketConnection, DataWebsocket has an easy job. It simply
+     routes the data to WebSocketConnection::sendMessage, which encodes
+     the data in a WebSocket packet, and sends it.
+<li> the WebSocket class in the browser delivers it to the Javascript
+     application's registered "onmessage" callback function.
+</ul> 
+
+The sequence for a browser-to-server message is as follows.
+
+<ul>
+<li> The Javascript application in the browser calls the "send" method
+     on the WebSocket object.
+<li> fdThreadLauncher::threadEntry returns from select and calls
+     fdThreadLauncher::handleReadSelect virtual method, which is actually
+     WebServerConnectionBase::handleReadSelect.
+<li> That method uses a CircularReader to read data.  It then calls
+     WebServerConnectionBase::handleSomeData virtual method, which is
+     actually (in this case) WebSocketConnection::handleSomeData.
+<li> That method has a small state machine to handle either MIME headers
+     or message bodies. In this case it routes to 
+     WebSocketConnection::handle_message.
+<li> handle_message parses a message body, builds a WebAppMessage, and
+     (using WebServerConnectionBase::wac) calls the user's virtual method
+     attached through WebAppConnection::onMessage.
+</ul>
+
+\section FastCGIConn WebFastCGIConnection
+
+FastCGI connections work differently from WebSockets. A new XHR
+(XMLHttpRequest) connection is established for each message.  An XHR
+connection follows the following state diagram:
 
 \dot
 
 digraph XHRStates {
-	layout = "dot";
-        overlap = "false";
-        mode = "maxent";
+    layout = "dot";
+    overlap = "false";
+    mode = "maxent";
 
     node [fontname=Helvetica, fontsize=10];
     edge [len=1.5];
 
-        NoConnection [label="No Connection"];
-        B2SMime [label="Browser to\nserver MIME\nheaders"];
-        B2SMsg  [label="Browser to\nserver messages"];
-        S2BMime [label="Server to\nbrowser MIME\nheaders"];
-        S2BMsg [label="Server to\nbrowser messages"];
+    aNoConnection [label="No Connection"];
+    aB2SMime [label="GET: Browser to\nserver MIME\nheaders"];
+    aS2BMime [label="Server to\nbrowser MIME\nheaders"];
+    aS2BMsg [label="Server to\nbrowser messages"];
 
-        NoConnection -> B2SMime;
-        B2SMime -> B2SMsg;
-        B2SMsg -> S2BMime;
-        S2BMime -> S2BMsg;
-        S2BMsg -> NoConnection;
+    bNoConnection [label="No Connection"];
+    bB2SMime [label="POST: Browser to\nserver MIME\nheaders"];
+    bB2SMsg  [label="Browser to\nserver messages"];
+    bS2BMime [label="Server to\nbrowser MIME\nheaders"];
+
+    aNoConnection -> aB2SMime;
+    aB2SMime -> aS2BMime;
+    aS2BMime -> aS2BMsg;
+    aS2BMsg -> aNoConnection;
+
+    bNoConnection -> bB2SMime;
+    bB2SMime -> bB2SMsg;
+    bB2SMsg -> bS2BMime;
+    bS2BMime -> bNoConnection;
 }
 
 \enddot
 
-When there are no messages to send, the connection spends most of its
-time in the "Server to browser messages" state. The server sends the
-MIME headers but does not send any message data until there is
-actually a message to send. If the browser decides it needs to send a
-message, it has two choices: (1) open a new XHR connection, or (2)
-abort this connection and start a new one.
+There are two types of HTTP requests that can be performed on an
+XHR request: a GET, or a POST.  This library assumes a GET is for polling
+for server-to-browser messages, and a POST is for browser-to-server.
+
+(This seems to correspond to various documentation found around the web.)
+
+A GET transaction proceeds to the final state and then waits there. If
+the server has a message to send, it is sent and the connection
+closed. If however the server has no message to send, the connection
+freezes here and waits. It will wait for as long as the "timeout"
+parameter to the AJAX configuration in the Javascript code, and then
+timeout. If a message is created during that time, it will be sent and
+the connection closes.  If no message is created during that time, the
+connection is closed without data and a new one opened.
+
+This means there should be, at all times, one GET connection
+open. Each time a GET completes (with or without a message) a new one
+should be immediately started by the Javascript application.
+
+A POST transaction is only created by the Javascript code when a
+message to send has been created.  A POST transaction may run in
+parallel with a GET transaction. It will not carry any
+server-to-browser messages, only browser-to-server messages.  It will
+run through the above states as quickly as possible and return to the
+No Connection state, waiting for the next message generated by the
+Javascript code.
 
 \note XHR connections come and go frequently, basically for every
       message sent. Thus it doesn't make sense for a WebAppConnection
@@ -382,14 +732,14 @@ are then examined to find if there is a visitorId cookie set.
     <li> A brand-new unique visitorId cookie is created. </li>
     <li> The user's WebAppConnectionCallback -derived object is used to
          create a new user's WebAppConnection -derived object. This object
-         is inserted into the WebAppServerFastCGIConfigRecord "conns"
+         is inserted into the WebAppServerFastCGIConfigRecord::conns
          map, with the new cookie used as the key to the map. </li>
     <li> This new WebAppConnection is given to the WebServerConnectionBase
          for future message exchange. </li>
     </ul> </li>
 <li> If a cookie is set:
     <ul> 
-    <li> The WebAppServerFastCGIConfigRecord "conns" map is searched for the
+    <li> The WebAppServerFastCGIConfigRecord::conns map is searched for the
          visitorId cookie.
        <ul>
        <li> If the cookie is not found, create a new object as above. </li>
@@ -398,25 +748,75 @@ are then examined to find if there is a visitorId cookie set.
     </ul> </li>
 </ul>
 
-\section OperationUserConnection User's WebAppConnection -derived object
+The sequence for a server-to-browser message is as follows:
 
-\note A 'new unique visitor' for WebSockets means a 'new WebSocket' 
-      connection from a browser. The user's WebAppConnection -derived
-      object exists as long as that JavaScript WebSocket object exists
-      in the browser, and is deleted when that WebSocket is closed.
+<ul>
+<li> The user's application (in a WebAppConnection -derived object) 
+     calls WebAppConnection::sendMessage.
+<li> WebAppConnection::sendMessage routes the data to the connData
+     member, in this case WebAppConnectionDataFastCGI::sendMessage.
+<li> This method converts the data to a base64 stream using 
+     b64_encode_quantum. The result is then pushed to the list
+     WebAppConnectionDataFastCGI::outq. 
+<li> If there is currently an Ajax GET transaction in progress, there
+     would be an open WebFastCGIConnection currently in the BLOCKING state,
+     and it would have installed a pointer to itself in
+     WebAppConnectionDataFastCGI::waiter.  Otherwise waiter is null.
+<li> If WebAppConnectionDataFastCGI::waiter is currently null (no Ajax
+     GET transaction is currently in progress):
+    <ul>
+    <li> The base64-encoded message is left on the outq.
+    <li> On the next Ajax GET request, during
+          WebFastCGIConnection::startOutput, the outq is consulted.
+    <li> A message is found on outq, so
+         WebAppConnectionDataFastCGI::sendFrontMessage is called.
+    </ul>
+<li> If WebAppConnectionDataFastCGI::waiter is currently not null (an 
+     Ajax GET is currently open and in the BLOCKED state):
+    <ul>
+    <li> WebAppConnectionDataFastCGI::sendFrontMessage is immediately called.
+    </ul>
+<li> in either case, sendFrontMessage builds a WebAppMessage and calls
+     WebFastCGIConnection::sendMessage.
+<li> This method builds a FastCGIRecord and sends it to the web server,
+     and then invokes fdThreadLauncher::stopFdThread to close the 
+     connection.
+<li> The web server sends it on to the browser and closes the GET
+     transaction.
+<li> The Javascript code invokes the success callback for the Ajax
+     transaction and consumes the data (base64 decoding, etc).
+</ul>
 
-\note A 'new unique visitor' for FastCGI means the first XHR
-      (XMLHttpRequest) (or in jQuery, "$.ajax", or in Angular,
-      "$http") connection from a host with no "visitorId" cookie set
-      or an unknown visitorId cookie. The user's WebAppConnection
-      -derived continues to exist beyond the closure of that XHR
-      connection for a period of time, to wait for the next XHR
-      connection (since XHR connections will come and go for every
-      message). When a new XHR connection arrives with the same visitorId
-      cookie, it is attached to an existing WebAppConnection object if
-      possible. The user's WebAppConnection object will be deleted if
-      a period of time passes with no XHR connection attached to it.
+The sequence for a browser-to-server message is as follows:
 
+<ul>
+<li> the Javascript code creates an Ajax transaction (usually
+     XMLHttpRequest) and packs up the base64-encoded message data
+     for it.
+<li> The web server process opens a new FastCGI connection to the
+     corresponding serverPort. 
+<li> in fdThreadLauncher::threadEntry, select returns and calls the 
+     virtual method serverPort::handleReadSelect.
+<li> This method constructs a new WebFastCGIConnection.
+<li> WebFastCGIConnection reads the FastCGIRecord messages streaming
+     from the web server, and locates and parses the URI path, query
+     string, query type, and cookie.
+<li> WebFastCGIConnection::startWac calls
+     WebServerConnectionBase::findResource to
+     locate a matching WebAppServerConfigRecord (matched on the 'route')
+     which is then dynamic_cast to WebAppConnectionDataFastCGI.
+<li> The WebAppConnectionDataFastCGI::conns map is searched for a matching
+     cookie. If one is found, then a WebAppConnection object has been 
+     located.  If not, the user's WebAppConnectionCallback -derived object
+     is invoked to make a new WebAppConnection -derived object.
+<li> Later, during WebFastCGIConnection::decodeInput, the FastCGIRecord
+     data from the web server is base64-decoded.  A WebAppMessage is
+     constructed, and the user's WebAppConnection::onMessage virtual 
+     method is called.
+</ul>
 
+\endcond
 
  */
+
+} // namespace WebAppServer
