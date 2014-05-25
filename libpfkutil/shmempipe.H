@@ -28,12 +28,18 @@
 
 #include "pfkutils_config.h"
 
+/** information about what pools should be included in the shared mem */
 struct shmempipePoolInfo {
+    /** limit to how many unique pools can be created */
     static const int maxPools = 64;
     uint8_t numPools;
     uint32_t bufSizes[maxPools]; // specify in increasing order.
     uint32_t numBufs[maxPools];
     inline shmempipePoolInfo(void);
+    /** helper function to add a pool.
+     * \param numBuf  the number of buffers to add
+     * \param bufSize  the size of each buffer to add
+     * \return true of okay, or false if failure (i.e. reached max) */
     inline bool addPool(uint32_t numBuf, uint32_t bufSize);
 };
 
@@ -41,41 +47,62 @@ struct shmempipePoolInfo {
 #define SHMEMPIPE_M2SPATH_FMT "/tmp/p2p.%s.m2s"
 #define SHMEMPIPE_S2MPATH_FMT "/tmp/p2p.%s.s2m"
 
+/** information about where the memory and pipe files are put */
 struct shmempipeFilename {
+    /** max length of a full path */
     static const int FILENAMEMAX = 512;
     char filename[FILENAMEMAX];
     char m2sname[FILENAMEMAX];
     char s2mname[FILENAMEMAX];
     inline shmempipeFilename(void);
+    /** helper function to set path, i.e. "MYPIPENAME" */
     inline void setPipeName(const char * _pipename);
 };
 
 class shmempipe;
 struct shmempipeMessage;
 
+/** a user's function for handling connection and disconnection
+ * should follow this signature. */
 typedef void (*shmempipeConnectionHandlerFunc)(shmempipe *, void *arg);
+/** a user's function for handling a message should follow this
+ * signature. */
 typedef void (*shmempipeMessageHandlerFunc)(shmempipe *, void *arg,
                                          shmempipeMessage * pMsg);
 
+/** information about all registered callbacks: connection,
+ * disconnection, and message arrival, and extra data to pass along */
 struct shmempipeCallbacks {
+    /** pointer to user's connection callback goes here */
     shmempipeConnectionHandlerFunc connectCallback;
+    /** pointer to user's disconnection callback goes here */
     shmempipeConnectionHandlerFunc disconnectCallback;
+    /** pointer to user's message handler function goes here */
     shmempipeMessageHandlerFunc messageCallback;
+    /** any data the user wants passed to the callback goes here */
     void * arg;
 };
 
+/** master configuration object, create one of these and construct
+ * a shmempipe to create a pipe. */
 struct shmempipeMasterConfig :
     public shmempipeFilename, shmempipeCallbacks, shmempipePoolInfo
 {
+    /** check this value after shmempipe constructor has returned to
+     * see if the pipe construction was successful. */
     bool bInitialized;
 };
 
+/** slave configuration object, create one of these and construct
+ * a shmempipe to attach to an existing pipe. */
 struct shmempipeSlaveConfig :
     public shmempipeFilename, shmempipeCallbacks
 {
+    /** check this value to see if constructor succeeded. */
     bool bInitialized;
 };
 
+/** base class for all user messages, no user-servicable parts inside. */
 struct shmempipeMessage {
     friend class shmempipeBufferList;
 private:
@@ -91,15 +118,16 @@ private:
     friend class shmempipe;
 };
 
+/** statistics that you can retrieve. */
 struct shmempipeStats {
-    uint64_t sent_bytes;
-    uint64_t sent_packets;
-    uint64_t sent_signals;
-    uint64_t rcvd_bytes;
-    uint64_t rcvd_packets;
-    uint64_t rcvd_signals;
-    uint64_t alloc_fails;
-    uint64_t free_buffers;
+    uint64_t sent_bytes;       //!< how many bytes sent
+    uint64_t sent_packets;     //!< how many packet sent
+    uint64_t sent_signals;     //!< how many wakeup signals sent
+    uint64_t rcvd_bytes;       //!< how many bytes of data received
+    uint64_t rcvd_packets;     //!< how many packets received
+    uint64_t rcvd_signals;     //!< how many wakeup signals received
+    uint64_t alloc_fails;      //!< how many times has alloc failed
+    uint64_t free_buffers;     //!< number of free buffers in pools
     inline shmempipeStats(void);
     inline void init(void);
 };
@@ -141,6 +169,7 @@ struct shmempipeHeader {
     // pool buffers start here
 };
 
+/** the actual pipe itself */
 class shmempipe {
     bool m_bMaster;
     bool m_bConnected;
@@ -184,13 +213,32 @@ class shmempipe {
     void readerThread(void);
 
 public:
+    /** constructor that creates a pipe */
     shmempipe( shmempipeMasterConfig * pConfig );
+    /** constructor that attaches to an existing pipe */
     shmempipe( shmempipeSlaveConfig * pConfig );
     ~shmempipe( void );
+    /** allocate a message buffer from pools by specifying size you want.
+     * \param size   the size of buffer you want
+     * \param bWait  if no buffers available, should i wait or return NULL?
+     * \return a message pointer or NULL if no buffers available. */
     inline shmempipeMessage * allocSize(uint32_t size, bool bWait=false);
+    /** allocate a message buffer from pools by specifying which pool.
+     * \param poolInd   the id of the pool you want.
+     * \param bWait  if no buffers available, should i wait or return NULL?
+     * \return a message pointer or NULL if no buffers available. */
     inline shmempipeMessage * allocPool(uint32_t poolInd, bool bWait=false);
+    /** release a buffer back to the pipe's pools.
+     * \param pBuf pointer to the buffer
+     * \return false if something screwed up */
     inline bool release(shmempipeMessage * pBuf);
+    /** send a buffer through to the peer.
+     * \param pBuf pointer to the buffer
+     * \return false if something screwed up */
     inline bool send(shmempipeMessage * pBuf);
+    /** fetch stats about performance of this buffer.
+     * \param pStats pointer to user's object to fill out
+     * \param zero should i reset stats after collecting? */
     void getStats(shmempipeStats * pStats, bool zero=false);
 };
 
@@ -447,3 +495,178 @@ shmempipe :: send(shmempipeMessage * pBuf)
     unlockStats();
     return true;
 }
+
+/** \mainpage shmempipe API user's manual
+
+This is the user's manual for the shmempipe API.
+
+Interesting data structures are:
+
+<ul>
+<li> \ref shmempipeMessage
+<li> \ref shmempipeMasterConfig  (contains \ref shmempipeFilename,
+      \ref shmempipeCallbacks, \ref shmempipePoolInfo)
+<li> \ref shmempipeSlaveConfig (contains \ref shmempipeFilename,
+      \ref shmempipeCallbacks)
+<li> \ref shmempipe
+</ul>
+
+sample code
+
+\code
+
+#define SHMEMFILE "SHMEMPIPE"
+#define FIFOMASTERSLAVE "FIFOMASTERSLAVE"
+#define FIFOSLAVEMASTER "FIFOSLAVEMASTER"
+
+struct MyTestMsg : public shmempipeMessage
+{
+    static MyTestMsg * allocSize(shmempipe * pPipe) {
+        MyTestMsg * ret;
+        ret = (MyTestMsg *) pPipe->allocSize(sizeof(MyTestMsg), -1);
+        ret->messageSize = sizeof(MyTestMsg);
+        return ret;
+    }
+    static const int max_size = 184;
+    int seqno;
+    char data[max_size];
+};
+
+\endcode
+
+\code
+
+bool connected = false;
+int count = 0;
+
+void connect(shmempipe *pPipe, void *arg)
+{
+    printf("got connect\n");
+    connected = true;
+}
+void disconnect(shmempipe *pPipe, void *arg)
+{
+    printf("got disconnect\n");
+    connected = false;
+}
+void message(shmempipe * pPipe, void *arg, shmempipeMessage * _pMsg)
+{
+    MyTestMsg * pMsg = (MyTestMsg *) _pMsg;
+    pPipe->release(pMsg);
+    pMsg = MyTestMsg::allocSize(pPipe);
+    if (pMsg)
+    {
+        pMsg->seqno = 8;
+        pPipe->send(pMsg);
+    }
+    count ++;
+}
+int
+main()
+{
+    shmempipeMasterConfig  CONFIG;
+    shmempipe * pPipe;
+    CONFIG.setPipeName( "shmempipe_test" );
+    CONFIG.addPool(500, sizeof(MyTestMsg));
+    CONFIG.connectCallback = &connect;
+    CONFIG.disconnectCallback = &disconnect;
+    CONFIG.messageCallback = &message;
+    CONFIG.arg = NULL;
+    pPipe = new shmempipe( &CONFIG );
+    if (!CONFIG.bInitialized)
+    {
+        printf("error constructing shmempipe\n");
+        return 1;
+    }
+    while (!connected)
+        usleep(1);
+    do {
+        shmempipeStats stats;
+        pPipe->getStats(&stats,true);
+        printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
+               "af %lld fb %lld\n",
+               stats.sent_bytes, stats.sent_packets, stats.sent_signals,
+               stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
+               stats.alloc_fails, stats.free_buffers);
+        usleep(100000);
+    } while (connected);
+    delete pPipe;
+    return 0;
+}
+
+\endcode
+
+\code
+
+bool connected = false;
+int count=0;
+bool done = false;
+
+void connect(shmempipe *pPipe, void *arg)
+{
+    printf("got connect\n");
+    connected = true;
+}
+void disconnect(shmempipe *pPipe, void *arg)
+{
+    printf("got disconnect\n");
+    connected = false;
+}
+void message(shmempipe * pPipe, void *arg, shmempipeMessage * _pMsg)
+{
+    MyTestMsg * pMsg = (MyTestMsg *) _pMsg;
+    pPipe->release(pMsg);
+    if (!done)
+    {
+        pMsg = MyTestMsg::allocSize(pPipe);
+        if (pMsg)
+        {
+            pMsg->seqno = 8;
+            pPipe->send(pMsg);
+        }
+    }
+    count++;
+    if (count >= 10000000)
+        done=true;
+}
+int
+main()
+{
+    shmempipeSlaveConfig CONFIG;
+    shmempipe * pPipe;
+    CONFIG.setPipeName( "shmempipe_test" );
+    CONFIG.connectCallback = &connect;
+    CONFIG.disconnectCallback = &disconnect;
+    CONFIG.messageCallback = &message;
+    CONFIG.arg = NULL;
+    pPipe = new shmempipe( &CONFIG );
+    if (!CONFIG.bInitialized)
+    {
+        printf("error constructing shmempipe\n");
+        return 1;
+    }
+    while (!connected)
+        usleep(1);
+    for (int counter=0; counter < 50; counter++)
+    {
+        MyTestMsg * pMsg = MyTestMsg::allocSize(pPipe);
+        pMsg->seqno = 1;
+        pPipe->send(pMsg);
+    }
+    do {
+        shmempipeStats stats;
+        pPipe->getStats(&stats,true);
+        printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
+               "af %lld fb %lld\n",
+               stats.sent_bytes, stats.sent_packets, stats.sent_signals,
+               stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
+               stats.alloc_fails, stats.free_buffers);
+        usleep(100000);
+    } while (connected && !done);
+    delete pPipe;
+    return 0;
+}
+
+\endcode
+
+ */

@@ -38,6 +38,8 @@ public:
     bool take(struct timespec * expire);
 };
 
+/** base class for all user messages to go through thread_slinger,
+ * no user-servicable parts inside */
 struct thread_slinger_message
 {
     thread_slinger_message * next;
@@ -73,16 +75,37 @@ protected:
         int *which_queue=NULL);
 };
 
+/** a message queue of user objects, declare a derived type from
+ * thread_slinger_message and specify that as T.
+ * \param  T  the type to send through the queue, derived
+ *          from thread_slinger_message base type */
 template <class T>
 class thread_slinger_queue : public _thread_slinger_queue
 {
 public:
+    /** send a message to the receiver.
+     * \param msg a user's message derived from thread_slinger_message */
     void enqueue(T * msg) { _enqueue(msg); }
+    /** fetch a message from the sender.
+     * \param uSecs  if >0, wait for that time and return NULL if no
+     *         message; if <0, wait forever for a message; if 0,
+     *         return NULL immediately if no message.
+     * \return NULL if timeout, or a message pointer */
     T * dequeue(int uSecs=0) { return (T *) _dequeue(uSecs); }
+    /** find out how many messages are currently queued */
     int get_count(void) { return _get_count(); }
-    // the priority of the queues relative to each other
-    // is specified by the order of the queues array. first
-    // queue is highest priority, etc.
+    /** dequeue from a set of queues in priority order.
+     * \param queues  the list of queues to check, the priority is
+     *      specified by the order in this list (first queue in this
+     *      list is checked first).
+     * \param num_queues  the dimension of the queues array
+     * \param uSecs  the time to wait for a message: >0 wait up to
+     *       that many usecs; <0 wait forever; ==0 return NULL
+     *       immediately if all queues empty.
+     * \param which_queue  an optional pointer to an integer, which
+     *       on return of a valid message pointer will indicate which
+     *       queue this message came from (an index in queues array)
+     * \return a message pointer or NULL if timeout */
     static T * dequeue(thread_slinger_queue<T> * queues[],
                        int num_queues,
                        int uSecs, int *which_queue=NULL) {
@@ -91,6 +114,11 @@ public:
     }
 };
 
+/** a convenient buffer pool for storing objects of any kind.
+ * \param T   the type of object being stored in the queue,
+ *          derived from thread_slinger_message.
+ * \param count  the number of objects to initially allocate
+ *      when the pool is created. */
 template <class T, int count>
 class thread_slinger_pool
 {
@@ -105,7 +133,104 @@ public:
     ~thread_slinger_pool(void) {
         delete[] array;
     }
+    /** allocate a buffer from the pool.
+     * \param uSecs  how long to wait if the pool is empty:
+     *          <0 means wait forever, ==0 means return NULL 
+     *          immediately, >0 means wait that number of usecs.
+     * \param grow   if true, allocate new buffers if pool is empty.
+     * \return a buffer pointer, or NULL if empty and timeout */
     T * alloc(int uSecs=0, bool grow=false) { return q.dequeue(uSecs); }
+    /** release a buffer pack into the pool
+     * \param buf  the buffer pointer to release */
     void release(T * buf) { q.enqueue(buf); }
+    /** fetch number of buffers currently in the pool */
     int get_count(void) { return q.get_count(); }
 };
+
+/** \mainpage threadslinger user's API documentation
+
+This is the user's manual for the threadslinger API.
+
+Interesting classes:
+
+<ul>
+<li> \ref thread_slinger_message
+<li> \ref thread_slinger_queue
+<li> \ref thread_slinger_pool
+</ul>
+
+\code
+
+struct myMessage : public thread_slinger_message
+{
+    int a; // some field
+    int b; // some other field
+};
+
+thread_slinger_pool<myMessage,5>  p;
+
+typedef thread_slinger_queue<myMessage> myMsgQ;
+
+myMsgQ q;
+myMsgQ q2;
+
+void * t3( void * dummy ) {
+    uintptr_t  val = (uintptr_t) dummy;
+    while (1) {
+        myMessage * m = p.alloc(random()%5000);
+        if (m) {
+            if (val == 0)
+                q.enqueue(m);
+            else
+                q2.enqueue(m);
+            if (val == 0)
+                printf("+");
+            else
+                printf("=");
+        } else {
+            if (val == 0)
+                printf("-");
+            else
+                printf("_");
+        }
+        fflush(stdout);
+        usleep(random()%30000);
+    }
+    return NULL;
+}
+
+void * t4(void * dummy) {
+    myMsgQ * qs[2];
+    qs[0] = &q;
+    qs[1] = &q2;
+    while (1) {
+        int which;
+        myMessage * m = myMsgQ::dequeue(qs,2,(int)(random()%1000),&which);
+        if (m) {
+            if (which == 0)
+                printf(".");
+            else
+                printf(",");
+            p.release(m);
+        } else {
+            printf("!");
+        }
+        fflush(stdout);
+        usleep(random()%10000);
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t id;
+    pthread_create( &id, NULL, t3, (void*) 0 );
+    pthread_create( &id, NULL, t3, (void*) 1 );
+    pthread_create( &id, NULL, t4, (void*) 0 );
+    pthread_join(id,NULL);
+    return 0;
+}
+
+\endcode
+
+
+*/
