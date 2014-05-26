@@ -694,6 +694,18 @@ WebFastCGIConnection :: startOutput(void)
     else
     {
         // queue is empty
+
+        // last question. did we set a cookie? if so, better
+        // let that complete immediately. we can't have that
+        // timing out at the client and being ignored.
+
+        if (cookieString.size() > 0)
+        {
+            cout << "ending GET with zero data in order to set cookie"
+                 << endl;
+            return false;
+        }
+
         state = STATE_BLOCKED;
         registeredWaiter = true;
         dat->waiter = this;
