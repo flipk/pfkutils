@@ -228,6 +228,11 @@ in the sample code):
 <li> \ref WebAppServer::WebAppServer
 </ul>
 
+\bug A user's WebAppConnection needs a way to deal with cookies. Some
+kind of method interface needs to be added whereby an application can
+add or delete cookies, and have cookies presented by the browser 
+presented to the application (a virtual callback perhaps).
+
 \section HowTo How To
 
 Everything begins with a WebAppServer.  In order to use WebAppServer,
