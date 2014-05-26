@@ -233,6 +233,13 @@ kind of method interface needs to be added whereby an application can
 add or delete cookies, and have cookies presented by the browser 
 presented to the application (a virtual callback perhaps).
 
+\bug The FastCGI interface needs to be able to pass more than one
+message thru at a time. Perhaps by chaining multiple messages back to
+back with a size-delimiter between them. The reason for this is
+performance: any application which needs to pass a significant amount
+of data needs to be able to optimize its use of the link (think
+uploads and downloads).
+
 \section HowTo How To
 
 Everything begins with a WebAppServer.  In order to use WebAppServer,

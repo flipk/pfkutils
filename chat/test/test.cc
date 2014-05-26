@@ -1,13 +1,3 @@
-#if 0
-set -e -x
-cd /home/flipk/proj/pfkutils/libWebAppServer
-make -j 8
-cd /home/flipk/proj/pfkutils/chat/test
-g++ -g3 -c msgs.pb.cc -I/home/flipk/proj/protobuf/installed/include/
-g++ -g3 -c test.cc -I ../../libWebAppServer -I/home/flipk/proj/protobuf/installed/include/
-g++ -g3 msgs.pb.o test.o ../../libWebAppServer/libWebAppServer.a /home/flipk/proj/protobuf/installed/lib/libprotobuf.a -lpthread -o t
-exit 0
-#endif
 
 #include "WebAppServer.h"
 #include "base64.h"
@@ -54,7 +44,8 @@ main()
     WebAppServer::WebAppServerConfig  serverConfig;
     WebAppServer::WebAppServer  server;
 
-    serverConfig.addFastCGI(1083, "/cgi/test.cgi", &callback, 1000);
+    serverConfig.addFastCGI  (1083, "/cgi/test.cgi",   &callback, 1000);
+    serverConfig.addWebsocket(1084, "/websocket/test", &callback, 1000);
 
     server.start(&serverConfig);
 

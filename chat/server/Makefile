@@ -4,7 +4,7 @@ protobuf= /home/flipk/proj/protobuf/installed
 protoc= $(protobuf)/bin/protoc
 
 libwasdir= ../../libWebAppServer
-libwas= $(libwasdir)/libWebAppServer.a
+libwas= $(libwasdir)/build/libWebAppServer.a
 
 libs= $(libwas) -L$(protobuf)/lib -lprotobuf -lpthread -Wl,-R,$(protobuf)/lib
 incs= -I$(libwasdir) -I$(protobuf)/include
