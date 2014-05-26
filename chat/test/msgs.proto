@@ -1,0 +1,29 @@
+
+package PFK.TestMsgs;
+
+enum CommandType {
+     COMMAND_ADD = 1;
+}
+
+message CommandAdd_m {
+	required int32 a = 1;
+	required int32 b = 2;
+}
+
+message Command_m {
+	required CommandType  type   = 1;
+	optional CommandAdd_m  add   = 2;
+}
+
+enum ResponseType {
+     RESPONSE_ADD = 1;
+}
+
+message ResponseAdd_m {
+	required int32 sum = 1;
+}
+
+message Response_m {
+	required ResponseType type = 1;
+	optional ResponseAdd_m  add = 2;
+}
