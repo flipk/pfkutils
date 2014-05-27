@@ -215,6 +215,8 @@ backend of a web application.
 
 For a quick start, look at the \ref SampleCode and \ref SampleXHRCode.
 
+For the brave, there is also \ref SampleWebAppClient.
+
 \section InterestingDataStructures Interesting Data Structures
 
 Here are some interesting data structures you should look at (referenced
@@ -234,11 +236,11 @@ add or delete cookies, and have cookies presented by the browser
 presented to the application (a virtual callback perhaps).
 
 \bug The FastCGI interface needs to be able to pass more than one
-message thru at a time. Perhaps by chaining multiple messages back to
-back with a size-delimiter between them. The reason for this is
-performance: any application which needs to pass a significant amount
-of data needs to be able to optimize its use of the link (think
-uploads and downloads).
+message thru per GET or POST request, perhaps by chaining multiple
+base64-encoded messages back to back with a size-delimiter between
+them. The reason for this is performance: any application which needs
+to pass a significant amount of data needs to be able to optimize its
+use of the link (think uploads and downloads).
 
 \section HowTo How To
 
@@ -527,6 +529,177 @@ $("#sendmessage").click( function () {
 
 \endcode
 
+
+ */
+
+/** \page SampleWebAppClient a simple WebAppClient library
+
+Here is a library for interfacing to libWebAppServer in a generic fashion:
+
+\code
+
+// the argument to onMessage is a protobuf based on a msg type
+function WebAppClient(wsurl, cgiurl, pbRcvMsg,
+		      onMessage, onOpen, onClose) {
+    this.CGIMODE = 1;
+    this.WSMODE = 2;
+    if (this.isWebSocketSupported())
+    {
+	// start websocket 
+	this.mode = this.WSMODE;
+	this.wsurl = wsurl;
+	this.wsock = new WebSocket(wsurl);
+	this.wsock.binaryType = 'arraybuffer';
+	this.wsock.onopen = function() {
+	    onOpen();
+	};
+	this.wsock.onclose = function() {
+	    onClose();
+	};
+	this.wsock.onmessage = function(msg) {
+	    onMessage(pbRcvMsg.decode(msg.data));
+	};
+    }
+    else
+    {
+	// start fastcgi
+	this.mode = this.CGIMODE;
+	this.CGIcontinue = true;
+	this.restartDelay = 250;
+	this.getTimeout = 30000;
+	this.cgiurl = cgiurl;
+	this.CGIgetNextMsg();
+	this.onClose = onClose;
+	this.onMessage = onMessage;
+	this.pbRcvMsg = pbRcvMsg;
+	onOpen();
+    }
+}
+
+WebAppClient.prototype.isWebSocketSupported = function () {
+    // there could be more to this, like detecting the
+    // old hixie-76 websocket (which we dont want to use)
+    // but i dont yet know how to detect that.
+    if ('WebSocket' in window)
+	return true;
+    return false;
+}
+
+WebAppClient.prototype.CGIgetNextMsg = function () {
+    console.log("starting new GET ajax");
+    var wac = this;
+    $.ajax( {
+	url : wac.cgiurl,
+	success : function(data) {
+	    if (data.length == 0)
+		console.log("GET success got zero-length data, server "+
+			    "may have set cookie");
+	    else
+	    {
+		if (wac.CGIcontinue)
+		{
+		    console.log("GET success callback called with data:",
+				data);
+		    wac.onMessage(wac.pbRcvMsg.decode64(data));
+		} else {
+		    console.log("ignoring new msg that just arrived " +
+				"because closed");
+		}
+	    }
+	},
+	dataType : 'text',
+	type : 'GET',
+	complete : function() {
+	    if (wac.CGIcontinue)
+	    {
+		console.log("GET complete callback sleeping " +
+			    "before restarting");
+		setTimeout(function() { wac.CGIgetNextMsg(); },
+			   wac.restartDelay);
+	    } else {
+		console.log("terminating WebAppClient object");
+	    }
+	},
+	timeout : wac.getTimeout
+    });
+}
+
+WebAppClient.prototype.close = function() {
+    if (this.mode == this.CGIMODE)
+    {
+	this.CGIcontinue = false;
+	this.onClose();
+    }
+    else if (this.mode == this.WSMODE)
+    {
+	// onClose will be called through wsock's callbacks above
+	this.wsock.close();
+	this.wsock = null;
+    }
+}
+
+// msg is a protobuf obj
+WebAppClient.prototype.send = function(msg) {
+    if (this.mode == this.CGIMODE)
+    {
+	var config = {
+            dataType : 'text',
+            data : msg.encode64(),
+            type : "POST",
+            complete : function(jqxhr, status) {
+		console.log("POST completed with status " + status);
+            },
+	}
+	$.ajax(this.cgiurl, config);
+    }
+    else if (this.mode == this.WSMODE)
+    {
+	this.wsock.send(msg.toArrayBuffer());
+    }
+}
+
+\endcode
+
+Here is a sample app which uses the above library:
+
+\code
+
+var wsurl = "wss://host:port/websocket/test";
+var cgiurl = "http://host:port/cgi/test.cgi";
+
+var socket = new WebAppClient(wsurl, cgiurl,
+			      PFK.TestMsgs.Response_m,
+			      myMsgHandler, myOpenHandler, myCloseHandler);
+
+function myOpenHandler() {
+    console.log("wac opened");
+}
+
+function myCloseHandler() {
+    console.log("wac closed");
+}
+
+function myMsgHandler(responseMsg) {
+    console.log("decoded reponse: ", responseMsg);
+    if (responseMsg.type ==
+	PFK.TestMsgs.ResponseType.RESPONSE_ADD)
+    {
+	var str = "the sum is " + responseMsg.add.sum + "<br>";
+	testDiv.innerHTML += str;
+    }
+}
+
+$("#do_add").click( function() {
+    var cmdMsg = new PFK.TestMsgs.Command_m;
+    cmdMsg.type = PFK.TestMsgs.CommandType.COMMAND_ADD;
+    cmdMsg.add = new PFK.TestMsgs.CommandAdd_m;
+    cmdMsg.add.a = parseInt($("#value_a").val());
+    cmdMsg.add.b = parseInt($("#value_b").val());
+    socket.send(cmdMsg);
+    console.log('performing add, sent request:', cmdMsg);
+});
+
+\endcode
 
  */
 
