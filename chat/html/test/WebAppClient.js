@@ -26,14 +26,15 @@ function WebAppClient(wsurl, cgiurl, pbRcvMsg,
 	// start fastcgi
 	this.mode = this.CGIMODE;
 	this.CGIcontinue = true;
-	this.restartDelay = 250;
+	this.restartDelay = 5;
 	this.getTimeout = 30000;
 	this.cgiurl = cgiurl;
-	this.CGIgetNextMsg();
+	this.onOpen = onOpen;
 	this.onClose = onClose;
 	this.onMessage = onMessage;
 	this.pbRcvMsg = pbRcvMsg;
-	onOpen();
+	this.CGIgetNextMsg();
+	window.setTimeout( function() { onOpen(); }, 200 );
     }
 }
 
@@ -67,6 +68,9 @@ WebAppClient.prototype.CGIgetNextMsg = function () {
 				"because closed");
 		}
 	    }
+	},
+	error : function() {
+//xxx
 	},
 	dataType : 'text',
 	type : 'GET',

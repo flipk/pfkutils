@@ -1,6 +1,6 @@
 
 var webSocketServiceLastModified = {
-    file:"service-websocket.js", modified:"2013/10/28  13:29:59"
+    file:"service-websocket.js", modified:"2014/05/26  23:21:13"
 };
 
 var webSocketService = function($rootScope, data) {
@@ -26,6 +26,7 @@ var webSocketService = function($rootScope, data) {
         newuri += myuri.host.substring(0,colon);
     newuri += "/websocket/pfkchat";
     ret.wsuri = newuri;
+    ret.cgiuri = "/cgi/pfkchat.cgi";
 
     ret.handlers[PFK.Chat.ServerToClientType.STC_PROTOVERSION_RESP] =
         function(stc) {
@@ -50,7 +51,7 @@ var webSocketService = function($rootScope, data) {
                     cts.login.username = data.username;
                     cts.login.token = data.token;
                     if (ret.socket)
-                        ret.socket.send(cts.toArrayBuffer());
+                        ret.socket.send(cts);
                 }
             }
         };
@@ -190,29 +191,37 @@ var webSocketService = function($rootScope, data) {
     ret.makesocket = function() {
         if (ret.newsocket)
             return;
-        ret.newsocket = new WebSocket(ret.wsuri);
-        ret.newsocket.binaryType = "arraybuffer";
-        ret.newsocket.onopen = function() {
+
+        ret.webappOnmessage = function(stc) {
+console.log("got new wac msg : ", stc);
+            if (stc.type in ret.handlers)
+                $rootScope.$apply(function() {
+                    ret.handlers[stc.type](stc);
+                });
+        };
+        ret.webappOnOpen = function() {
             var cts = new PFK.Chat.ClientToServer;
             cts.type = PFK.Chat.ClientToServerType.CTS_PROTOVERSION;
             cts.protoversion = new PFK.Chat.ProtoVersion;
             cts.protoversion.version = PFK.Chat.CurrentProtoVersion;
-            ret.newsocket.send(cts.toArrayBuffer());
+            ret.newsocket.send(cts);
         };
-        ret.newsocket.onclose = function() {
+        ret.webappOnClose = function() {
             if (ret.newsocket)
                 ret.newsocket.close();
             ret.socket = null;
             ret.newsocket = null;
             $rootScope.$apply(data.setStatus('DISCONNECTED','red'));
         };
-        ret.newsocket.onmessage = function(msg){
-            var stc = PFK.Chat.ServerToClient.decode(msg.data);
-            if (stc.type in ret.handlers)
-                $rootScope.$apply(function() {
-                    ret.handlers[stc.type](stc);
-                });
-        };
+        ret.newsocket = new WebAppClient(ret.wsuri,
+                                         ret.cgiuri,
+                                         PFK.Chat.ServerToClient,
+                                         ret.webappOnmessage,
+                                         ret.webappOnOpen,
+                                         ret.webappOnClose);
+
+
+
     };
 
     $rootScope.$on('send_IM', function(scope,msg) {
@@ -221,7 +230,7 @@ var webSocketService = function($rootScope, data) {
         cts.im = new PFK.Chat.IM_Message;
         cts.im.msg = msg;
         if (ret.socket)
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
     });
 
     $rootScope.$on('sendTypingInd', function(scope,state) {
@@ -230,7 +239,7 @@ var webSocketService = function($rootScope, data) {
         cts.typing = new PFK.Chat.TypingInd;
         cts.typing.state = state;
         if (ret.socket)
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
     });
 
     $rootScope.$on('sendLogin', function(scope,username,password) {
@@ -240,7 +249,7 @@ var webSocketService = function($rootScope, data) {
         cts.login.username = username;
         cts.login.password = password;
         if (ret.socket)
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
     });
 
     $rootScope.$on('sendRegister', function(scope,username,password) {
@@ -250,14 +259,14 @@ var webSocketService = function($rootScope, data) {
         cts.login.username = username;
         cts.login.password = password;
         if (ret.socket)
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
     });
 
     $rootScope.$on('sendLogout', function(scope) {
         var cts = new PFK.Chat.ClientToServer;
         cts.type = PFK.Chat.ClientToServerType.CTS_LOGOUT;
         if (ret.socket)
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
         data.token = "";
         data.id = -1;
         data.setStatus('CONNECTED','white');
@@ -272,7 +281,7 @@ var webSocketService = function($rootScope, data) {
             cts.ping.idle = data.idleTime;
             cts.ping.unread = data.unreadCount;
             cts.ping.forced = forced;
-            ret.socket.send(cts.toArrayBuffer());
+            ret.socket.send(cts);
             lastPingSent = Date.now();
         }
     }

@@ -25,6 +25,7 @@ install:
 	cd html && \
 		rm -rf $(DEST)/img && \
 		tar cf - img | tar -C $(DEST) -xf -
+	cp html/test/WebAppClient.js $(DEST)/js/ 
 	cd server && cp pfkchat-messages-full.js $(DEST)/chat/messages.js
 	cd server && cp pfkchat-messages-login.js $(DEST)/chat_login/messages.js
 
