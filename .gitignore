@@ -1,3 +1,7 @@
-BUILD-*
+BUILD*
 /config.h.in
 autom4te.cache
+*.o
+*.Po
+*.a
+*~
