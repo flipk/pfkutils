@@ -1,9 +1,7 @@
 #if 0
 set -e -x
-g++ -Wall -Werror -O6 -S newlist_test.cc
-g++ -Wall -Werror -O6 newlist_test.cc -o nlt -lpthread
+g++ -Wall -Werror -O6 dll3_test.cc -o nlt -lpthread
 ./nlt
-c++filt < newlist_test.s > newlist_test.2.s
 exit 0
 #endif
 
