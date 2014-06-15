@@ -8,7 +8,7 @@
 
 #include <string>
 #include "automake_parser.H"
-#include "parser.h"
+#include "parser.hh"
 #include "condition.H"
 
 using namespace std;

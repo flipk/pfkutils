@@ -5,6 +5,10 @@ m4_define([PFKUTILS_MINOR_VERSION], 13)
 AC_INIT([pfkutils],
         [PFKUTILS_MAJOR_VERSION.PFKUTILS_MINOR_VERSION],
         [pknaack1@netscape.net])
+
+m4_pattern_allow([AM_PROG_AR])
+AM_PROG_AR
+
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 AC_CONFIG_SRCDIR([main/main.C])
