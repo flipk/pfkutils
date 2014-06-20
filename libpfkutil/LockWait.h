@@ -8,12 +8,13 @@
 
 class Lockable {
     friend class Waiter;
+    friend class Lock;
     pthread_mutex_t  mutex;
+    void   lock(void);
+    void unlock(void);
 public:
     Lockable(void);
     ~Lockable(void);
-    void   lock(void);
-    void unlock(void);
 };
 
 class Lock {
