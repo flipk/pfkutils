@@ -1,5 +1,23 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+const std::string HSMError::errStrings[__NUMERRS] = {
+    "user states should not handle HSM_PROBE",
+    "bogus action type value",
+    "initial function must return TRANS",
+    "state entry handler must return HANDLED",
+    "state exit handler must return HANDLED"
+};
+
+const std::string
+HSMError::Format(void) const
+{
+    std::string ret = "HSM ERROR: ";
+    ret += errStrings[type];
+    ret += " at:\n";
+    ret += BackTraceFormat();
+    return ret;
+}
+
 template <class T>
 const std::string HSM<T>::ActTypeNames[HSM<T>::NUMACTS] = 
 { "HANDLED", "TRANS", "SUPER", "TOP" };
@@ -42,7 +60,7 @@ char const * HSM<T>::stateName(HSM<T>::State state,
     {
     case ACT_HANDLED:
     case ACT_TRANS:
-        throw HSMError(HSMErrorHandleProbe);
+        throw HSMError(HSMError::HSMErrorHandleProbe);
     case ACT_TOP:
         if (top != NULL)
             *top = true;
@@ -53,7 +71,7 @@ char const * HSM<T>::stateName(HSM<T>::State state,
         return a.name;
     default:
     {
-        HSMError  err(HSMErrorBogusAct);
+        HSMError  err(HSMError::HSMErrorBogusAct);
         std::ostringstream ostr;
         ostr << "bogus act " << (int) a.act;
         err.str = ostr.str();
@@ -108,7 +126,7 @@ void HSM<T>::HSMInit(void)
     T * derived = dynamic_cast<T*>(this);
     Action a = initial();
     if (a.act != ACT_TRANS)
-        throw HSMError(HSMErrorInitialTrans);
+        throw HSMError(HSMError::HSMErrorInitialTrans);
     currentState = a.state;
     currentTrace = &trace1;
     oldTrace = &trace2;
@@ -172,7 +190,7 @@ void HSM<T>::dispatch(HSMEvent const * evt)
             break;
         default:
         {
-            HSMError  err(HSMErrorBogusAct);
+            HSMError  err(HSMError::HSMErrorBogusAct);
             std::ostringstream ostr;
             ostr << "bogus act " << (int) a.act;
             err.str = ostr.str();
@@ -200,14 +218,14 @@ void HSM<T>::dispatch(HSMEvent const * evt)
                 break;
             Action a = (derived->*((*currentTrace)[ind].state))(&exitEvt);
             if (a.act != ACT_HANDLED)
-                throw HSMError(HSMErrorExitHandler);
+                throw HSMError(HSMError::HSMErrorExitHandler);
         }
         ind++;
         for (; ind < newTrace->size(); ind++)
         {
             Action a = (derived->*((*newTrace)[ind].state))(&entryEvt);
             if (a.act != ACT_HANDLED)
-                throw HSMError(HSMErrorEntryHandler);
+                throw HSMError(HSMError::HSMErrorEntryHandler);
         }
         currentState = newState;
         oldTrace = currentTrace;
@@ -226,11 +244,15 @@ inline HSMScheduler::~HSMScheduler(void)
 void
 HSMScheduler::registerHSM(ActiveHSMBase *sm)
 {
+    PFK::Lock lock(&active_hsms);
+    active_hsms.add_tail(sm);
 }
 
 void
 HSMScheduler::deregisterHSM(ActiveHSMBase *sm)
 {
+    PFK::Lock lock(&active_hsms);
+    active_hsms.remove(sm);
 }
 
 void

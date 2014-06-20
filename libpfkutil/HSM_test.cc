@@ -1,7 +1,7 @@
 #if 0
 set -e -x
 g++ -Wall -Werror -g3 -c HSM_test.cc
-g++ -g3 HSM_test.o -o HSM_test
+g++ -g3 HSM_test.o -rdynamic -o HSM_test -lpthread
 exit 0
 ;
 #endif
@@ -162,21 +162,33 @@ public:
 int
 main()
 {
-    PFKHSM::HSMScheduler  sched;
+    try {
+        PFKHSM::HSMScheduler  sched;
 
-    MyTestApp::myStateMachine1  myHsm(&sched, true);
+        MyTestApp::myStateMachine1  myHsm(&sched, true);
 
-    myHsm.HSMInit();
-    MyTestApp::myConfigEvt config;
-    myHsm.dispatch(&config);
-    MyTestApp::myConnectEvt connect;
-    myHsm.dispatch(&connect);
-    MyTestApp::myAuthEvt auth;
-    myHsm.dispatch(&auth);
-    MyTestApp::myDisconEvt discon;
-    myHsm.dispatch(&discon);
-    MyTestApp::myDummyEvt dummy;
-    myHsm.dispatch(&dummy);
+        myHsm.HSMInit();
+        MyTestApp::myConfigEvt config;
+        myHsm.dispatch(&config);
+        MyTestApp::myConnectEvt connect;
+        myHsm.dispatch(&connect);
+        MyTestApp::myAuthEvt auth;
+        myHsm.dispatch(&auth);
+        MyTestApp::myDisconEvt discon;
+        myHsm.dispatch(&discon);
+        MyTestApp::myDummyEvt dummy;
+        myHsm.dispatch(&dummy);
+    }
+    catch (PFKHSM::HSMError  err)
+    {
+        std::cout << "caught HSM error:\n"
+                  << err.Format();
+    }
+    catch (DLL3::ListError le)
+    {
+        std::cout << "caught DLL3 error:\n"
+                  << le.Format();
+    }
 
     return 0;
 }

@@ -6,19 +6,23 @@
 #include <pthread.h>
 
 #include "LockWait.h"
+#include "throwBacktrace.h"
 
 namespace DLL3 {
 
-struct ListError {
+struct ListError : PFK::ThrowBackTrace {
     enum ListErrValue {
         ITEM_NOT_VALID,
         ALREADY_ON_LIST,
         STILL_ON_A_LIST,
         LIST_NOT_EMPTY,
         LIST_NOT_LOCKED,
-        NOT_ON_THIS_LIST
+        NOT_ON_THIS_LIST,
+        __NUMERRS
     } err;
+    static const std::string errStrings[__NUMERRS];
     ListError(ListErrValue _e) : err(_e) { }
+    const std::string Format(void) const;
 };
 
 #define LIST List<T,uniqueIdentifer,lockWarn,validate>
@@ -63,6 +67,25 @@ public:
 };
 
 // TCC impl below this line
+
+const std::string ListError::errStrings[__NUMERRS] = {
+    "item not valid",
+    "item already on list",
+    "item still on a list",
+    "list not empty",
+    "list not locked",
+    "item not on this list"
+};
+
+inline const std::string
+ListError::Format(void) const
+{
+    std::string ret = "LIST ERROR: ";
+    ret += errStrings[err];
+    ret += " at:\n";
+    ret += BackTraceFormat();
+    return ret;
+}
 
 template <LIST_TEMPL>
 LIST::Links::Links(void) throw ()

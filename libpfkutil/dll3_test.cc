@@ -1,6 +1,6 @@
 #if 0
 set -e -x
-g++ -Wall -Werror -g3 dll3_test.cc -o nlt -lpthread
+g++ -Wall -Werror -g3 dll3_test.cc -o nlt -rdynamic -lpthread
 ./nlt
 exit 0
 #endif
@@ -46,6 +46,7 @@ main()
     myItemList2_t  lst2;
     myItem * i, * ni;
 
+    try {
     {
         PFK::Lock lck1(&lst1);
         PFK::Lock lck2(&lst2);
@@ -71,6 +72,12 @@ main()
             std::cout << "lst2 item : " << i << std::endl;
             delete i;
         }
+    }
+    }
+    catch (DLL3::ListError le)
+    {
+        std::cout << "got ListError:\n"
+                  << le.Format();
     }
 
     return 0;

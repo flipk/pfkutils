@@ -13,20 +13,24 @@
 #include <sstream>
 #include <iostream>
 
+#include "dll3.H"
+#include "throwBacktrace.h"
+
 namespace PFKHSM {
 
-enum HSMErrorType {
-    HSMErrorHandleProbe,
-    HSMErrorBogusAct,
-    HSMErrorInitialTrans,
-    HSMErrorEntryHandler,
-    HSMErrorExitHandler
-};
-
-struct HSMError {
-    HSMErrorType type;
+struct HSMError : PFK::ThrowBackTrace {
+    enum HSMErrorType {
+        HSMErrorHandleProbe,
+        HSMErrorBogusAct,
+        HSMErrorInitialTrans,
+        HSMErrorEntryHandler,
+        HSMErrorExitHandler,
+        __NUMERRS
+    } type;
+    static const std::string errStrings[__NUMERRS];
     std::string str;
     HSMError(HSMErrorType t) : type(t) { }
+    const std::string Format(void) const;
 };
 
 enum HSMEventType {
@@ -91,7 +95,10 @@ public:
 
 class ActiveHSMBase;
 
+typedef DLL3::List<ActiveHSMBase,1> ActiveHSMList_t;
+
 class HSMScheduler {
+    ActiveHSMList_t  active_hsms;
 public:
     HSMScheduler(void);
     ~HSMScheduler(void);
@@ -106,7 +113,7 @@ public:
 // xxx messages come from pool and are garbage-collected
 // xxx pools and messages from thread_slinger
 
-class ActiveHSMBase
+class ActiveHSMBase : public ActiveHSMList_t::Links
 {
 protected:
     HSMScheduler * sched;
