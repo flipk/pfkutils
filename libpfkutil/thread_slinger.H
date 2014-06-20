@@ -21,14 +21,11 @@
 #include <pthread.h>
 #include <inttypes.h>
 
-class thread_slinger_semaphore
+#include "LockWait.h"
+
+class thread_slinger_semaphore : public Lockable, public Waitable
 {
-    // a cheezy implementation of a counting semaphore.
-    pthread_mutex_t  mutex;
-    pthread_cond_t  waiter;
     int value;
-    void   lock( void ) { pthread_mutex_lock  ( &mutex ); }
-    void unlock( void ) { pthread_mutex_unlock( &mutex ); }
 public:
     thread_slinger_semaphore(void);
     ~thread_slinger_semaphore(void);

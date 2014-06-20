@@ -26,50 +26,39 @@
 
 thread_slinger_semaphore :: thread_slinger_semaphore(void)
 {
-    pthread_mutexattr_t  mattr;
-    pthread_condattr_t   cattr;
-    pthread_mutexattr_init( &mattr );
-    pthread_mutex_init( &mutex, &mattr );
-    pthread_mutexattr_destroy( &mattr );
-    pthread_condattr_init( &cattr );
-    pthread_cond_init( &waiter, &cattr );
-    pthread_condattr_destroy( &cattr );
     value = 0;
 }
 
 thread_slinger_semaphore :: ~thread_slinger_semaphore(void)
 {
-    pthread_mutex_destroy( &mutex );
-    pthread_cond_destroy( &waiter );
 }
 
 void
 thread_slinger_semaphore :: give(void)
 {
-    lock();
-    value ++;
-    unlock();
-    pthread_cond_signal(&waiter);
+    {
+        Lock  lock(this);
+        value ++;
+    }
+    waiterSignal();
 }
 
 // return false if timeout; if expire==NULL, wait forever.
 bool
 thread_slinger_semaphore :: take(struct timespec * expire)
 {
-    lock();
+    Waiter waiter(this,this);
     while (value <= 0)
     {
-        int ret = expire ?
-            pthread_cond_timedwait( &waiter, &mutex, expire ) :
-            pthread_cond_wait( &waiter, &mutex );
-        if (ret != 0)
+        if (expire)
         {
-            unlock();
-            return false;
+            if (waiter.wait(expire) == false)
+                return false;
         }
+        else
+            waiter.wait();
     }
     value --;
-    unlock();
     return true;
 }
 
