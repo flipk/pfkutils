@@ -1,7 +1,9 @@
 #if 0
 set -e -x
+g++ -Wall -Werror -g3 -c HSM.cc
+g++ -Wall -Werror -g3 -c dll3.cc
 g++ -Wall -Werror -g3 -c HSM_test.cc
-g++ -g3 HSM_test.o -rdynamic -o HSM_test -lpthread
+g++ -g3 HSM_test.o HSM.o dll3.o -rdynamic -o HSM_test -lpthread
 exit 0
 ;
 #endif

@@ -1,24 +1,5 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-const std::string ListError::errStrings[__NUMERRS] = {
-    "item not valid",
-    "item already on list",
-    "item still on a list",
-    "list not empty",
-    "list not locked",
-    "item not on this list"
-};
-
-inline const std::string
-ListError::Format(void) const
-{
-    std::string ret = "LIST ERROR: ";
-    ret += errStrings[err];
-    ret += " at:\n";
-    ret += BackTraceFormat();
-    return ret;
-}
-
 template <LIST_TEMPL>
 LIST::Links::Links(void) throw ()
 {

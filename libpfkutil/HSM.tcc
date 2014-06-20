@@ -1,23 +1,5 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-const std::string HSMError::errStrings[__NUMERRS] = {
-    "user states should not handle HSM_PROBE",
-    "bogus action type value",
-    "initial function must return TRANS",
-    "state entry handler must return HANDLED",
-    "state exit handler must return HANDLED"
-};
-
-const std::string
-HSMError::Format(void) const
-{
-    std::string ret = "HSM ERROR: ";
-    ret += errStrings[type];
-    ret += " at:\n";
-    ret += BackTraceFormat();
-    return ret;
-}
-
 template <class T>
 const std::string HSM<T>::ActTypeNames[HSM<T>::NUMACTS] = 
 { "HANDLED", "TRANS", "SUPER", "TOP" };
@@ -232,51 +214,6 @@ void HSM<T>::dispatch(HSMEvent const * evt)
         currentTrace = newTrace;
     }
 }
-
-inline HSMScheduler::HSMScheduler(void)
-{
-}
-
-inline HSMScheduler::~HSMScheduler(void)
-{
-}
-
-void
-HSMScheduler::registerHSM(ActiveHSMBase *sm)
-{
-    PFK::Lock lock(&active_hsms);
-    active_hsms.add_tail(sm);
-}
-
-void
-HSMScheduler::deregisterHSM(ActiveHSMBase *sm)
-{
-    PFK::Lock lock(&active_hsms);
-    active_hsms.remove(sm);
-}
-
-void
-HSMScheduler::subscribe(ActiveHSMBase *sm, int type)
-{
-}
-
-void
-HSMScheduler::publish(HSMEvent const * evt)
-{
-}
-
-ActiveHSMBase::ActiveHSMBase(HSMScheduler * _sched)
-    : sched(_sched)
-{
-    sched->registerHSM(this);
-}
-
-//virtual
-ActiveHSMBase::~ActiveHSMBase(void)
-{
-    sched->deregisterHSM(this);
-}
-
 template <class T>
 ActiveHSM<T>::ActiveHSM( HSMScheduler * __sched, bool __debug /*=false*/ )
     : ActiveHSMBase(__sched),
