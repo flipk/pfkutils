@@ -19,9 +19,12 @@ public:
 class Lock {
     friend class Waiter;
     Lockable *lobj;
+    bool iLocked;
 public:
-    Lock( Lockable *_lobj );
+    Lock( Lockable *_lobj, bool dolock=true );
     ~Lock(void);
+    void lock(void);
+    void unlock(void);
 };
 
 class Waitable {
@@ -38,7 +41,7 @@ class Waiter : public Lock {
     Waitable * wobj;
 public:
     Waiter(Lockable * _lobj, Waitable * _wobj);
-    ~Waiter(void) { }
+    ~Waiter(void);
     void wait(void);
     // return false if timeout, true if signaled
     bool wait(struct timespec *expire);
@@ -73,14 +76,31 @@ Lockable::unlock(void)
     pthread_mutex_unlock(&mutex);
 }
 
-inline Lock::Lock( Lockable *_lobj )
+inline Lock::Lock( Lockable *_lobj, bool dolock /*=true*/ )
     : lobj(_lobj)
 {
-    lobj->lock();
+    if (dolock)
+        lobj->lock();
+    iLocked = dolock;
 }
 
 inline Lock::~Lock(void)
 {
+    if (iLocked)
+        lobj->unlock();
+}
+
+inline void
+Lock::lock(void)
+{
+    lobj->lock();
+    iLocked = true;
+}
+
+inline void
+Lock::unlock(void)
+{
+    iLocked = false;
     lobj->unlock();
 }
 
@@ -111,6 +131,10 @@ Waitable::waiterBroadcast(void)
 
 inline Waiter::Waiter(Lockable * _lobj, Waitable * _wobj)
     : Lock(_lobj), wobj(_wobj)
+{
+}
+
+inline Waiter::~Waiter(void)
 {
 }
 
