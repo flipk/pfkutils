@@ -5,7 +5,7 @@ g++ -Wall -Werror -g3 dll3_test.cc -o nlt -rdynamic -lpthread
 exit 0
 #endif
 
-#include "dll3.H"
+#include "dll3.h"
 
 #include <stdio.h>
 #include <iostream>

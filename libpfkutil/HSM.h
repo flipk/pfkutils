@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-#include "dll3.H"
+#include "dll3.h"
 #include "throwBacktrace.h"
 
 namespace PFKHSM {
