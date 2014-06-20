@@ -1,6 +1,8 @@
 
-#define LIST List<T,unique_v,lockWarn,validate>
-#define LIST_TEMPL class T, int unique_v, bool lockWarn, bool validate
+#ifndef __DLL3_LIST_H__
+#define __DLL3_LIST_H__
+
+namespace DLL3 {
 
 struct ListError {
     enum ListErrValue {
@@ -14,9 +16,11 @@ struct ListError {
     ListError(ListErrValue _e) : err(_e) { }
 };
 
-#define LISTERR(e) ListError(ListError::e)
+#define LIST List<T,uniqueIdentifer,lockWarn,validate>
+#define LIST_TEMPL class T, int uniqueIdentifer, bool lockWarn, bool validate
+#define LISTERR(e) throw ListError(ListError::e)
 
-template <class T, int unique_v=0,
+template <class T, int uniqueIdentifer,
           bool lockWarn=true, bool validate=true>
 class List : public Lockable {
 public:
@@ -53,6 +57,8 @@ public:
     void remove(Links * item) throw (ListError);
 };
 
+// TCC impl below this line
+
 template <LIST_TEMPL>
 LIST::Links::Links(void) throw ()
 {
@@ -65,7 +71,7 @@ template <LIST_TEMPL>
 LIST::Links::~Links(void) throw (ListError)
 {
     if (validate && lst != NULL)
-        throw LISTERR(STILL_ON_A_LIST);
+        LISTERR(STILL_ON_A_LIST);
     magic = 0;
 }
 
@@ -73,7 +79,7 @@ template <LIST_TEMPL>
 void LIST::Links::checkvalid(void) throw (ListError)
 {
     if (validate && (magic != MAGIC))
-        throw LISTERR(ITEM_NOT_VALID);
+        LISTERR(ITEM_NOT_VALID);
 }
 
 template <LIST_TEMPL>
@@ -87,14 +93,14 @@ template <LIST_TEMPL>
 LIST::~List(void) throw (ListError)
 {
     if (validate && head != NULL)
-        throw LISTERR(LIST_NOT_EMPTY);
+        LISTERR(LIST_NOT_EMPTY);
 }
 
 template <LIST_TEMPL>
 void LIST::lockwarn(void) throw (ListError)
 {
     if (lockWarn == true && isLocked() == false)
-        throw LISTERR(LIST_NOT_LOCKED);
+        LISTERR(LIST_NOT_LOCKED);
 }
 
 template <LIST_TEMPL>
@@ -103,7 +109,7 @@ void LIST::add_head(Links * item) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != NULL)
-        throw LISTERR(ALREADY_ON_LIST);
+        LISTERR(ALREADY_ON_LIST);
     item->next = head;
     item->prev = NULL;
     if (head)
@@ -121,7 +127,7 @@ void LIST::add_tail(Links * item) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != NULL)
-        throw LISTERR(ALREADY_ON_LIST);
+        LISTERR(ALREADY_ON_LIST);
     item->next = NULL;
     item->prev = tail;
     if (tail)
@@ -139,9 +145,9 @@ void LIST::add_before(Links * item, Links * existing) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != NULL)
-        throw LISTERR(ALREADY_ON_LIST);
+        LISTERR(ALREADY_ON_LIST);
     if (validate && existing->lst != this)
-        throw LISTERR(NOT_ON_THIS_LIST);
+        LISTERR(NOT_ON_THIS_LIST);
     item->prev = existing->prev;
     item->next = existing;
     existing->prev = item;
@@ -173,7 +179,7 @@ T * LIST::get_next(Links * item) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != this)
-        throw LISTERR(NOT_ON_THIS_LIST);
+        LISTERR(NOT_ON_THIS_LIST);
     return static_cast<T*>(item->next);
 }
 
@@ -183,7 +189,7 @@ T * LIST::get_prev(Links * item) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != this)
-        throw LISTERR(NOT_ON_THIS_LIST);
+        LISTERR(NOT_ON_THIS_LIST);
     return static_cast<T*>(item->prev);
 }
 
@@ -209,7 +215,7 @@ void LIST::remove(Links * item) throw (ListError)
     lockwarn();
     item->checkvalid();
     if (validate && item->lst != this)
-        throw LISTERR(NOT_ON_THIS_LIST);
+        LISTERR(NOT_ON_THIS_LIST);
     _remove(item);
 }
 
@@ -236,3 +242,7 @@ T * LIST::dequeue_tail(void) throw (ListError)
 #undef  LIST
 #undef  LIST_TEMPL
 #undef  LISTERR
+
+}; // namespace DLL3
+
+#endif /* __DLL3_LIST_H__ */
