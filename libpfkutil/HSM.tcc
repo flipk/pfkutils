@@ -214,3 +214,72 @@ void HSM<T>::dispatch(HSMEvent const * evt)
         currentTrace = newTrace;
     }
 }
+
+inline HSMScheduler::HSMScheduler(void)
+{
+}
+
+inline HSMScheduler::~HSMScheduler(void)
+{
+}
+
+void
+HSMScheduler::registerHSM(ActiveHSMBase *sm)
+{
+}
+
+void
+HSMScheduler::deregisterHSM(ActiveHSMBase *sm)
+{
+}
+
+void
+HSMScheduler::subscribe(ActiveHSMBase *sm, int type)
+{
+}
+
+void
+HSMScheduler::publish(HSMEvent const * evt)
+{
+}
+
+ActiveHSMBase::ActiveHSMBase(HSMScheduler * _sched)
+    : sched(_sched)
+{
+    sched->registerHSM(this);
+}
+
+//virtual
+ActiveHSMBase::~ActiveHSMBase(void)
+{
+    sched->deregisterHSM(this);
+}
+
+template <class T>
+ActiveHSM<T>::ActiveHSM( HSMScheduler * __sched, bool __debug /*=false*/ )
+    : ActiveHSMBase(__sched),
+      HSM<T>(__debug)
+{
+    // xxx
+}
+
+//virtual
+template <class T>
+ActiveHSM<T>::~ActiveHSM(void)
+{
+    // xxx
+}
+
+template <class T>
+void
+ActiveHSM<T>::subscribe(int type)
+{
+    sched->subscribe(this,type);
+}
+
+template <class T>
+void
+ActiveHSM<T>::publish(HSMEvent const * event)
+{
+    sched->publish(this,event);
+}

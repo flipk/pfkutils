@@ -51,19 +51,19 @@ struct myDummyEvt : HSMEvent
     const std::string evtName(void) const { return "myDummyEvt"; }
 };
 
-class myStateMachine : public HSM<myStateMachine>
+class myStateMachine1 : public ActiveHSM<myStateMachine1>
 {
 public:
-    myStateMachine(bool __debug = false)
-        : HSM<myStateMachine>(__debug)
+    myStateMachine1(HSMScheduler * _sched, bool __debug = false)
+        : ActiveHSM<myStateMachine1>(_sched, __debug)
     {
     }
-    virtual ~myStateMachine(void)
+    virtual ~myStateMachine1(void)
     {
     }
     /*virtual*/ Action initial(void)
     {
-        return TRANS(&myStateMachine::unconfigured);
+        return TRANS(&myStateMachine1::unconfigured);
     }
     Action top(HSMEvent const * ev)
     {
@@ -90,9 +90,9 @@ public:
             return HANDLED();
         case CONFIG:
             printf("got CONFIG in top.unconfigured\n");
-            return TRANS(&myStateMachine::init);
+            return TRANS(&myStateMachine1::init);
         }
-        return SUPER(&myStateMachine::top, "unconfigured");
+        return SUPER(&myStateMachine1::top, "unconfigured");
     }
     Action configured(HSMEvent const * ev)
     {
@@ -106,12 +106,12 @@ public:
             return HANDLED();
         case CONNECT:
             printf("got CONNECT in top.configured.init\n");
-            return TRANS(&myStateMachine::connected);
+            return TRANS(&myStateMachine1::connected);
         case DISCON:
             printf("got DISCON in top.configured.auth\n");
-            return TRANS(&myStateMachine::unconfigured);
+            return TRANS(&myStateMachine1::unconfigured);
         }
-        return SUPER(&myStateMachine::top, "configured");
+        return SUPER(&myStateMachine1::top, "configured");
     }
     Action init(HSMEvent const * ev)
     {
@@ -124,7 +124,7 @@ public:
             printf("EXIT: top.configured.init\n");
             return HANDLED();
         }
-        return SUPER(&myStateMachine::configured, "init");
+        return SUPER(&myStateMachine1::configured, "init");
     }
     Action connected(HSMEvent const * ev)
     {
@@ -138,9 +138,9 @@ public:
             return HANDLED();
         case AUTH:
             printf("got AUTH in top.configured.connected\n");
-            return TRANS(&myStateMachine::auth);
+            return TRANS(&myStateMachine1::auth);
         }
-        return SUPER(&myStateMachine::configured, "connected");
+        return SUPER(&myStateMachine1::configured, "connected");
     }
     Action auth(HSMEvent const * ev)
     {
@@ -153,7 +153,7 @@ public:
             printf("EXIT: top.configured.auth\n");
             return HANDLED();
         }
-        return SUPER(&myStateMachine::configured, "auth");
+        return SUPER(&myStateMachine1::configured, "auth");
     }
 };
 
@@ -162,7 +162,9 @@ public:
 int
 main()
 {
-    MyTestApp::myStateMachine  myHsm(true);
+    PFKHSM::HSMScheduler  sched;
+
+    MyTestApp::myStateMachine1  myHsm(&sched, true);
 
     myHsm.HSMInit();
     MyTestApp::myConfigEvt config;

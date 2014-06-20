@@ -89,8 +89,6 @@ public:
     void dispatch(HSMEvent const * evt);
 };
 
-#include "HSM.tcc"
-
 class ActiveHSMBase;
 
 class HSMScheduler {
@@ -100,49 +98,36 @@ public:
     void registerHSM(ActiveHSMBase *);
     void deregisterHSM(ActiveHSMBase *);
     void subscribe(ActiveHSMBase *, int type);
+    void publish(HSMEvent const * evt);
 };
 
 // xxx rendevous object that manages subscriptions and queues
 // xxx message pool objects
 // xxx messages come from pool and are garbage-collected
 // xxx pools and messages from thread_slinger
-// xxx make HSM<T> methods into TCC 
 
 class ActiveHSMBase
 {
 protected:
     HSMScheduler * sched;
 public:
-    ActiveHSMBase(HSMScheduler * _sched)
-        : sched(_sched)
-    {
-        sched->registerHSM(this);
-    }
-    virtual ~ActiveHSMBase(void)
-    {
-        sched->deregisterHSM(this);
-    }
+    ActiveHSMBase(HSMScheduler * _sched);
+    virtual ~ActiveHSMBase(void);
 };
 
 template <class T>
 class ActiveHSM : public ActiveHSMBase, public HSM<T>
 {
-protected:
-    void subscribe(int type) { sched->subscribe(this,type); }
-    void publish(HSMEvent const * event);
 public:
-    ActiveHSM( HSMScheduler * __sched, bool __debug = false )
-        : ActiveHSMBase(__sched),
-          HSM<T>(__debug)
-    {
-        // xxx
-    }
-    virtual ~ActiveHSM(void)
-    {
-        // xxx
-    }
+    ActiveHSM( HSMScheduler * __sched, bool __debug = false );
+    virtual ~ActiveHSM(void);
+protected:
+    void subscribe(int type);
+    void publish(HSMEvent const * event);
 };
 
-};
+#include "HSM.tcc"
+
+}; // namespace PFKHSM
 
 #endif /* __PFK_HSM_H__ */
