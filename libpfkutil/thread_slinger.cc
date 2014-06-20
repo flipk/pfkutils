@@ -37,7 +37,7 @@ void
 thread_slinger_semaphore :: give(void)
 {
     {
-        Lock  lock(this);
+        PFK::Lock  lock(this);
         value ++;
     }
     waiterSignal();
@@ -47,7 +47,7 @@ thread_slinger_semaphore :: give(void)
 bool
 thread_slinger_semaphore :: take(struct timespec * expire)
 {
-    Waiter waiter(this);
+    PFK::Waiter waiter(this);
     while (value <= 0)
     {
         if (expire)

@@ -6,26 +6,40 @@
 #include <pthread.h>
 #include <time.h>
 
+namespace PFK {
+
+struct LockableError {
+    enum LockableErrValue {
+        MUTEX_LOCKED_IN_DESTRUCTOR,
+        RECURSION_ERROR
+    } err;
+    LockableError(LockableErrValue _e) : err(_e) { }
+};
+
+#define LOCKABLERR(e) throw LockableError(LockableError::e)
+
 class Lockable {
     friend class Waiter;
     friend class Lock;
     pthread_mutex_t  lockableMutex;
-    void   lock(void);
-    void unlock(void);
+    bool   locked;
+    void   lock(void) throw ();
+    void unlock(void) throw ();
 public:
-    Lockable(void);
-    ~Lockable(void);
+    Lockable(void) throw ();
+    ~Lockable(void) throw (LockableError);
+    bool isLocked() throw ();
 };
 
 class Lock {
     friend class Waiter;
     Lockable *lobj;
-    bool iLocked;
+    int lockCount;
 public:
     Lock( Lockable *_lobj, bool dolock=true );
     ~Lock(void);
-    void lock(void);
-    void unlock(void);
+    void lock(void) throw ();
+    void unlock(void) throw (LockableError);
 };
 
 // since a waitable IS a lockable, don't derive from both.
@@ -53,57 +67,73 @@ public:
 
 // inline impl below this line
 
-inline Lockable::Lockable(void)
+inline Lockable::Lockable(void) throw ()
 {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutex_init(&lockableMutex, &attr);
     pthread_mutexattr_destroy(&attr);
+    locked = false;
 }
 
-inline Lockable::~Lockable(void)
+inline Lockable::~Lockable(void) throw (LockableError)
 {
+    if (locked)
+        LOCKABLERR(MUTEX_LOCKED_IN_DESTRUCTOR);
     pthread_mutex_destroy(&lockableMutex);
 }
 
 inline void
-Lockable::lock(void)
+Lockable::lock(void) throw ()
 {
     pthread_mutex_lock  (&lockableMutex);
+    locked = true;
 }
 
 inline void
-Lockable::unlock(void)
+Lockable::unlock(void) throw ()
 {
+    locked = false;
     pthread_mutex_unlock(&lockableMutex);
+}
+
+inline bool
+Lockable::isLocked(void) throw ()
+{
+    return locked;
 }
 
 inline Lock::Lock( Lockable *_lobj, bool dolock /*=true*/ )
     : lobj(_lobj)
 {
+    lockCount = 0;
     if (dolock)
+    {
+        lockCount++;
         lobj->lock();
-    iLocked = dolock;
+    }
 }
 
 inline Lock::~Lock(void)
 {
-    if (iLocked)
+    if (lockCount > 0)
         lobj->unlock();
 }
 
 inline void
-Lock::lock(void)
+Lock::lock(void) throw ()
 {
-    lobj->lock();
-    iLocked = true;
+    if (lockCount++ == 0)
+        lobj->lock();
 }
 
 inline void
-Lock::unlock(void)
+Lock::unlock(void) throw (LockableError)
 {
-    iLocked = false;
-    lobj->unlock();
+    if (lockCount <= 0)
+        LOCKABLERR(RECURSION_ERROR);
+    if (--lockCount == 0)
+        lobj->unlock();
 }
 
 inline Waitable::Waitable(void)
@@ -177,5 +207,9 @@ Waiter::wait(int sec, int nsec)
     }
     return wait(&expire);
 }
+
+#undef   LOCKABLERR
+
+}; // namespace PFK
 
 #endif /* __LOCKABLE_H__ */

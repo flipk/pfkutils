@@ -1,6 +1,11 @@
 
-#ifndef __DLL3_LIST_H__
-#define __DLL3_LIST_H__
+#ifndef __DLL3_H__
+#define __DLL3_H__
+
+#include <iostream>
+#include <pthread.h>
+
+#include "LockWait.h"
 
 namespace DLL3 {
 
@@ -22,7 +27,7 @@ struct ListError {
 
 template <class T, int uniqueIdentifer,
           bool lockWarn=true, bool validate=true>
-class List : public Lockable {
+class List : public PFK::Lockable {
 public:
     class Links {
         friend class LIST;
@@ -245,4 +250,4 @@ T * LIST::dequeue_tail(void) throw (ListError)
 
 }; // namespace DLL3
 
-#endif /* __DLL3_LIST_H__ */
+#endif /* __DLL3_H__ */

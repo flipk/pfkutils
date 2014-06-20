@@ -20,7 +20,7 @@ public:
     virtual void job(void) = 0;
 };
 
-class prioWorkQ : public Waitable {
+class prioWorkQ : public PFK::Waitable {
 public:
     static const int NUM_PRIOS = 32;
 private:

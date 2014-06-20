@@ -23,7 +23,7 @@
 
 #include "LockWait.h"
 
-class thread_slinger_semaphore : public Waitable
+class thread_slinger_semaphore : public PFK::Waitable
 {
     int value;
 public:

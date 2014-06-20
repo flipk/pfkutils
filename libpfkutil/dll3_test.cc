@@ -47,15 +47,15 @@ main()
     myItem * i, * ni;
 
     {
-        DLL3::Lock lck1(&lst1);
-        DLL3::Lock lck2(&lst2);
+        PFK::Lock lck1(&lst1);
+        PFK::Lock lck2(&lst2);
         i = new myItem(4,1); lst1.add_tail(i); lst2.add_head(i);
         i = new myItem(5,2); lst1.add_tail(i); lst2.add_head(i);
         i = new myItem(6,3); lst1.add_tail(i); lst2.add_head(i);
     }
 
     {
-        DLL3::Lock lck1(&lst1);
+        PFK::Lock lck1(&lst1);
         for (i = lst1.get_head(); i; i = ni)
         {
             ni = lst1.get_next(i);
@@ -65,7 +65,7 @@ main()
     }
 
     {
-        DLL3::Lock lck1(&lst2);
+        PFK::Lock lck1(&lst2);
         while ((i = lst2.dequeue_head()) != NULL)
         {
             std::cout << "lst2 item : " << i << std::endl;
