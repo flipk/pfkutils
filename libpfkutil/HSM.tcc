@@ -195,7 +195,8 @@ void HSM<T>::dispatch(HSMEvent const * evt)
         size_t ind;
         for (ind = currentTrace->size()-1; ind >= 0; ind--)
         {
-            if ((*currentTrace)[ind].state == (*newTrace)[ind].state)
+            if (ind < newTrace->size() &&
+                (*currentTrace)[ind].state == (*newTrace)[ind].state)
                 break;
             Action a = (derived->*((*currentTrace)[ind].state))(&exitEvt);
             if (a.act != ACT_HANDLED)
