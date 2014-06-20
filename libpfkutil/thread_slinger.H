@@ -23,7 +23,7 @@
 
 #include "LockWait.h"
 
-class thread_slinger_semaphore : public Lockable, public Waitable
+class thread_slinger_semaphore : public Waitable
 {
     int value;
 public:

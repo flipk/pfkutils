@@ -47,7 +47,7 @@ thread_slinger_semaphore :: give(void)
 bool
 thread_slinger_semaphore :: take(struct timespec * expire)
 {
-    Waiter waiter(this,this);
+    Waiter waiter(this);
     while (value <= 0)
     {
         if (expire)

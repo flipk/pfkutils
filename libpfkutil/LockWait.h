@@ -9,7 +9,7 @@
 class Lockable {
     friend class Waiter;
     friend class Lock;
-    pthread_mutex_t  mutex;
+    pthread_mutex_t  lockableMutex;
     void   lock(void);
     void unlock(void);
 public:
@@ -28,9 +28,10 @@ public:
     void unlock(void);
 };
 
-class Waitable {
+// since a waitable IS a lockable, don't derive from both.
+class Waitable : public Lockable {
     friend class Waiter;
-    pthread_cond_t  cond;
+    pthread_cond_t  waitableCond;
 public:
     Waitable(void);
     ~Waitable(void);
@@ -41,7 +42,7 @@ public:
 class Waiter : public Lock {
     Waitable * wobj;
 public:
-    Waiter(Lockable * _lobj, Waitable * _wobj);
+    Waiter(Waitable * _wobj);
     ~Waiter(void);
     void wait(void);
     // return false if timeout, true if signaled
@@ -56,25 +57,25 @@ inline Lockable::Lockable(void)
 {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
-    pthread_mutex_init(&mutex, &attr);
+    pthread_mutex_init(&lockableMutex, &attr);
     pthread_mutexattr_destroy(&attr);
 }
 
 inline Lockable::~Lockable(void)
 {
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&lockableMutex);
 }
 
 inline void
 Lockable::lock(void)
 {
-    pthread_mutex_lock  (&mutex);
+    pthread_mutex_lock  (&lockableMutex);
 }
 
 inline void
 Lockable::unlock(void)
 {
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&lockableMutex);
 }
 
 inline Lock::Lock( Lockable *_lobj, bool dolock /*=true*/ )
@@ -109,29 +110,29 @@ inline Waitable::Waitable(void)
 {
     pthread_condattr_t   cattr;
     pthread_condattr_init( &cattr );
-    pthread_cond_init( &cond, &cattr );
+    pthread_cond_init( &waitableCond, &cattr );
     pthread_condattr_destroy( &cattr );
 }
 
 inline Waitable::~Waitable(void)
 {
-    pthread_cond_destroy( &cond );
+    pthread_cond_destroy( &waitableCond );
 }
 
 inline void
 Waitable::waiterSignal(void)
 {
-    pthread_cond_signal(&cond);
+    pthread_cond_signal(&waitableCond);
 }
 
 inline void
 Waitable::waiterBroadcast(void)
 {
-    pthread_cond_broadcast(&cond);
+    pthread_cond_broadcast(&waitableCond);
 }
 
-inline Waiter::Waiter(Lockable * _lobj, Waitable * _wobj)
-    : Lock(_lobj), wobj(_wobj)
+inline Waiter::Waiter(Waitable * _wobj)
+    : Lock(_wobj), wobj(_wobj)
 {
 }
 
@@ -142,14 +143,15 @@ inline Waiter::~Waiter(void)
 inline void
 Waiter::wait(void)
 {
-    pthread_cond_wait(&wobj->cond, &lobj->mutex);
+    pthread_cond_wait(&wobj->waitableCond, &lobj->lockableMutex);
 }
 
 // return false if timeout, true if signaled
 inline bool
 Waiter::wait(struct timespec *expire)
 {
-    int ret = pthread_cond_timedwait(&wobj->cond, &lobj->mutex, expire);
+    int ret = pthread_cond_timedwait(&wobj->waitableCond,
+                                     &lobj->lockableMutex, expire);
     if (ret != 0)
         return false;
     return true;
