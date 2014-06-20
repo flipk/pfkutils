@@ -20,7 +20,7 @@ public:
     virtual void job(void) = 0;
 };
 
-class prioWorkQ : public Lockable, public Waitable {
+class prioWorkQ : public Waitable {
 public:
     static const int NUM_PRIOS = 32;
 private:

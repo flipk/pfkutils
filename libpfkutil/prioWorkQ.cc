@@ -49,7 +49,7 @@ prioWorkQ :: push(prioWorkQJob * job)
 bool
 prioWorkQ :: runOne(bool wait)
 {
-    Waiter waiter(this,this);
+    Waiter waiter(this);
     while (1)
     {
         for (int prio = 0; prio < NUM_PRIOS; prio++)
