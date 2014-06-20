@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include <pthread.h>
 
+#include "LockWait.h"
+
 class prioWorkQJob {
     friend class prioWorkQ;
     prioWorkQJob * next;
@@ -18,16 +20,12 @@ public:
     virtual void job(void) = 0;
 };
 
-class prioWorkQ {
+class prioWorkQ : public Lockable, public Waitable {
 public:
     static const int NUM_PRIOS = 32;
 private:
     prioWorkQJob * prioQueue_heads[NUM_PRIOS];
     prioWorkQJob * prioQueue_tails[NUM_PRIOS];
-    pthread_mutex_t mutex;
-    pthread_cond_t  cond;
-    void   lock(void) { pthread_mutex_lock  ( &mutex ); }
-    void unlock(void) { pthread_mutex_unlock( &mutex ); }
 public:
     prioWorkQ(void);
     ~prioWorkQ(void);
