@@ -81,7 +81,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = shmempipe_test_master$(EXEEXT) \
-	shmempipe_test_slave$(EXEEXT) thread_slinger_test$(EXEEXT)
+	shmempipe_test_slave$(EXEEXT) thread_slinger_test$(EXEEXT) \
+	HSM_test$(EXEEXT) dll3_test$(EXEEXT) hsmthread_test$(EXEEXT)
 @PFK_NEED_REGEX_TRUE@am__append_1 = regex.h
 @PFK_NEED_REGEX_TRUE@am__append_2 = regex.c
 subdir = libpfkutil
@@ -131,16 +132,28 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libpfkutil_la_LIBADD =
 am__libpfkutil_la_SOURCES_DIST = pk-md5.c m.c fd_mgr.C base64.c \
-	inet_aton.c thread_slinger.cc shmempipe.cc regex.c
+	inet_aton.c thread_slinger.cc shmempipe.cc HSM.cc dll3.cc \
+	hsmthread.cc LockWait.cc prioWorkQ.cc regex.c
 @PFK_NEED_REGEX_TRUE@am__objects_1 = regex.lo
 am_libpfkutil_la_OBJECTS = pk-md5.lo m.lo fd_mgr.lo base64.lo \
-	inet_aton.lo thread_slinger.lo shmempipe.lo $(am__objects_1)
+	inet_aton.lo thread_slinger.lo shmempipe.lo HSM.lo dll3.lo \
+	hsmthread.lo LockWait.lo prioWorkQ.lo regex.lo \
+	$(am__objects_1)
 libpfkutil_la_OBJECTS = $(am_libpfkutil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
 PROGRAMS = $(noinst_PROGRAMS)
+am_HSM_test_OBJECTS = HSM_test.$(OBJEXT)
+HSM_test_OBJECTS = $(am_HSM_test_OBJECTS)
+HSM_test_DEPENDENCIES = libpfkutil.la
+am_dll3_test_OBJECTS = dll3_test.$(OBJEXT)
+dll3_test_OBJECTS = $(am_dll3_test_OBJECTS)
+dll3_test_DEPENDENCIES = libpfkutil.la
+am_hsmthread_test_OBJECTS = hsmthread_test.$(OBJEXT)
+hsmthread_test_OBJECTS = $(am_hsmthread_test_OBJECTS)
+hsmthread_test_DEPENDENCIES = libpfkutil.la
 am_shmempipe_test_master_OBJECTS = shmempipe_test_master.$(OBJEXT)
 shmempipe_test_master_OBJECTS = $(am_shmempipe_test_master_OBJECTS)
 shmempipe_test_master_DEPENDENCIES = libpfkutil.la
@@ -202,9 +215,12 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libpfkutil_la_SOURCES) $(shmempipe_test_master_SOURCES) \
+SOURCES = $(libpfkutil_la_SOURCES) $(HSM_test_SOURCES) \
+	$(dll3_test_SOURCES) $(hsmthread_test_SOURCES) \
+	$(shmempipe_test_master_SOURCES) \
 	$(shmempipe_test_slave_SOURCES) $(thread_slinger_test_SOURCES)
-DIST_SOURCES = $(am__libpfkutil_la_SOURCES_DIST) \
+DIST_SOURCES = $(am__libpfkutil_la_SOURCES_DIST) $(HSM_test_SOURCES) \
+	$(dll3_test_SOURCES) $(hsmthread_test_SOURCES) \
 	$(shmempipe_test_master_SOURCES) \
 	$(shmempipe_test_slave_SOURCES) $(thread_slinger_test_SOURCES)
 am__can_run_installinfo = \
@@ -213,7 +229,8 @@ am__can_run_installinfo = \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 am__libpfkutil_la_HEADERS_DIST = pk-md5.h types.H bst.H m.h fd_mgr.H \
-	base64.h inet_aton.h thread_slinger.H shmempipe.H regex.h
+	base64.h inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
+	hsmthread.h LockWait.h prioWorkQ.h regex.h
 HEADERS = $(libpfkutil_la_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -387,15 +404,23 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libpfkutil.la
 libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = pk-md5.h types.H bst.H m.h fd_mgr.H base64.h \
-	inet_aton.h thread_slinger.H shmempipe.H $(am__append_1)
+	inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
+	hsmthread.h LockWait.h prioWorkQ.h regex.h $(am__append_1)
 libpfkutil_la_SOURCES = pk-md5.c m.c fd_mgr.C base64.c inet_aton.c \
-	thread_slinger.cc shmempipe.cc $(am__append_2)
+	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
+	LockWait.cc prioWorkQ.cc regex.c $(am__append_2)
 shmempipe_test_master_SOURCES = shmempipe_test_master.cc
 shmempipe_test_master_LDADD = libpfkutil.la
 shmempipe_test_slave_SOURCES = shmempipe_test_slave.cc
 shmempipe_test_slave_LDADD = libpfkutil.la
 thread_slinger_test_SOURCES = thread_slinger_test.cc
 thread_slinger_test_LDADD = libpfkutil.la
+HSM_test_SOURCES = HSM_test.cc
+HSM_test_LDADD = libpfkutil.la
+dll3_test_SOURCES = dll3_test.cc
+dll3_test_LDADD = libpfkutil.la
+hsmthread_test_SOURCES = hsmthread_test.cc
+hsmthread_test_LDADD = libpfkutil.la
 AM_CPPFLAGS = -I$(top_srcdir)/libpfkdll2
 htmldestdir = $(DESTDIR)$(datarootdir)/html/utils
 all: all-am
@@ -482,6 +507,18 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
+HSM_test$(EXEEXT): $(HSM_test_OBJECTS) $(HSM_test_DEPENDENCIES) $(EXTRA_HSM_test_DEPENDENCIES) 
+	@rm -f HSM_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(HSM_test_OBJECTS) $(HSM_test_LDADD) $(LIBS)
+
+dll3_test$(EXEEXT): $(dll3_test_OBJECTS) $(dll3_test_DEPENDENCIES) $(EXTRA_dll3_test_DEPENDENCIES) 
+	@rm -f dll3_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(dll3_test_OBJECTS) $(dll3_test_LDADD) $(LIBS)
+
+hsmthread_test$(EXEEXT): $(hsmthread_test_OBJECTS) $(hsmthread_test_DEPENDENCIES) $(EXTRA_hsmthread_test_DEPENDENCIES) 
+	@rm -f hsmthread_test$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(hsmthread_test_OBJECTS) $(hsmthread_test_LDADD) $(LIBS)
+
 shmempipe_test_master$(EXEEXT): $(shmempipe_test_master_OBJECTS) $(shmempipe_test_master_DEPENDENCIES) $(EXTRA_shmempipe_test_master_DEPENDENCIES) 
 	@rm -f shmempipe_test_master$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(shmempipe_test_master_OBJECTS) $(shmempipe_test_master_LDADD) $(LIBS)
@@ -500,11 +537,19 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HSM.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HSM_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LockWait.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base64.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fd_mgr.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hsmthread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hsmthread_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/inet_aton.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pk-md5.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prioWorkQ.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shmempipe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shmempipe_test_master.Po@am__quote@

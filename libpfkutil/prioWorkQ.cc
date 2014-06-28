@@ -32,7 +32,7 @@ prioWorkQ :: push(prioWorkQJob * job)
     int prio = job->prio;
     job->next = NULL;
     {
-        PFK::Lock lock(this);
+        WaitUtil::Lock lock(this);
         if (prioQueue_tails[prio] == NULL)
         {
             prioQueue_heads[prio] = prioQueue_tails[prio] = job;
@@ -49,7 +49,7 @@ prioWorkQ :: push(prioWorkQJob * job)
 bool
 prioWorkQ :: runOne(bool wait)
 {
-    PFK::Waiter waiter(this);
+    WaitUtil::Waiter waiter(this);
     while (1)
     {
         for (int prio = 0; prio < NUM_PRIOS; prio++)

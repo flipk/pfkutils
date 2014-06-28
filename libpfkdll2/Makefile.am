@@ -4,8 +4,7 @@
 lib_LTLIBRARIES = libpfkdll2.la
 
 libpfkdll2_ladir = ${includedir}/dll2
-libpfkdll2_la_HEADERS = dll2.H dll2_btree.H dll2_c.h \
-	dll3.H dll3_list.H dll3_lockable.H
+libpfkdll2_la_HEADERS = dll2.H dll2_btree.H dll2_c.h
 libpfkdll2_la_SOURCES = dll2_hash.C
 
 noinst_PROGRAMS = test_btree test_hash
