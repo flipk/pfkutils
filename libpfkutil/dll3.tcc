@@ -179,3 +179,83 @@ T * LIST::dequeue_tail(void) throw (ListError)
         _remove(item);
     return static_cast<T*>(item);
 }
+
+
+template <HASH_TEMPL>
+void HASH::lockwarn(void) throw (ListError)
+{
+    if (lockWarn == true && isLocked() == false)
+        LISTERR(LIST_NOT_LOCKED);
+}
+
+template <HASH_TEMPL>
+HASH::Links::Links(void) throw ()
+{
+    magic = MAGIC;
+}
+
+template <HASH_TEMPL>
+void HASH::Links::checkvalid(void) throw (ListError)
+{
+    if (validate && (magic != MAGIC))
+        LISTERR(ITEM_NOT_VALID);
+}
+
+template <HASH_TEMPL>
+HASH::Links::~Links(void) throw (ListError)
+{
+    if (validate && hsh != NULL)
+        LISTERR(LIST_NOT_EMPTY);
+    magic = 0;
+}
+
+template <HASH_TEMPL>
+HASH :: Hash(void) throw ()
+{
+    hashsize = dll3_hash_primes[0];
+    hash.reserve(hashsize);
+}
+
+template <HASH_TEMPL>
+HASH :: ~Hash(void) throw (ListError)
+{
+}
+
+template <HASH_TEMPL>
+void HASH :: add(Links * item) throw (ListError)
+{
+    lockwarn();
+    item->checkvalid();
+    T * derived = dynamic_cast<T*>(item);
+    item->h = HashT::obj2hash(*derived) % hashsize;
+    hash[item->h].add_tail(derived);
+    item->hsh = this;
+    // xxx rehashing 
+}
+
+template <HASH_TEMPL>
+void HASH :: remove(Links * item) throw (ListError)
+{
+    lockwarn();
+    item->checkvalid();
+    T * derived = dynamic_cast<T*>(item);
+    hash[item->h].remove(derived);
+    item->hsh = NULL;
+    // xxx rehashing
+}
+
+template <HASH_TEMPL>
+T * HASH :: find(const KeyT &key) throw (ListError)
+{
+    lockwarn();
+    uint32_t h = HashT::key2hash(key) % hashsize;
+    theHash &lst = hash[h];
+    for (T * item = lst.get_head();
+         item != NULL;
+         item = lst.get_next(item))
+    {
+        if (HashT::hashMatch(*item,key))
+            return item;
+    }
+    return NULL;
+}

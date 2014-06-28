@@ -22,44 +22,25 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "thread_slinger.H"
+#include "thread_slinger.h"
 
-thread_slinger_semaphore :: thread_slinger_semaphore(void)
-{
-    value = 0;
-}
+using namespace ThreadSlinger;
 
-thread_slinger_semaphore :: ~thread_slinger_semaphore(void)
-{
-}
+const std::string
+ThreadSlingerError::errStrings[__NUMERRS] = {
+    "message still on list in destructor",
+    "message not from this pool",
+    "dereference hit 0 but pool is null"
+};
 
-void
-thread_slinger_semaphore :: give(void)
+const std::string
+ThreadSlingerError::Format(void) const
 {
-    {
-        PFK::Lock  lock(this);
-        value ++;
-    }
-    waiterSignal();
-}
-
-// return false if timeout; if expire==NULL, wait forever.
-bool
-thread_slinger_semaphore :: take(struct timespec * expire)
-{
-    PFK::Waiter waiter(this);
-    while (value <= 0)
-    {
-        if (expire)
-        {
-            if (waiter.wait(expire) == false)
-                return false;
-        }
-        else
-            waiter.wait();
-    }
-    value --;
-    return true;
+    std::string ret = "ThreadSlingerError: ";
+    ret += errStrings[err];
+    ret += " at:\n";
+    ret += BackTraceFormat();
+    return ret;
 }
 
 //
@@ -111,10 +92,10 @@ _thread_slinger_queue :: __dequeue(void)
     if (head != NULL)
     {
         pMsg = head;
-        head = head->next;
+        head = head->_slinger_next;
         if (head == NULL)
             tail = NULL;
-        pMsg->next = NULL;
+        pMsg->_slinger_next = NULL;
         count--;
     }
     return pMsg;
@@ -123,18 +104,18 @@ _thread_slinger_queue :: __dequeue(void)
 void 
 _thread_slinger_queue :: _enqueue(thread_slinger_message * pMsg)
 {
-    pMsg->next = NULL;
+    pMsg->_slinger_next = NULL;
     lock();
     if (tail)
     {
-        tail->next = pMsg;
+        tail->_slinger_next = pMsg;
         tail = pMsg;
     }
     else
         head = tail = pMsg;
     count++;
     pthread_cond_t * w = waiter;
-    thread_slinger_semaphore * sem = waiter_sem;
+    WaitUtil::Semaphore * sem = waiter_sem;
     unlock();
     // a given queue will have a non-null waiter 
     // iff the receiver thread is blocked in the single-queue
@@ -193,7 +174,7 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
                                   int *which_queue)
 {
     thread_slinger_message * pMsg = NULL;
-    thread_slinger_semaphore * sem = &queues[0]->_waiter_sem;
+    WaitUtil::Semaphore * sem = &queues[0]->_waiter_sem;
     int ind;
     struct timespec abstime;
     struct timespec * pTime = setup_abstime(uSecs, &abstime);
@@ -223,4 +204,40 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
     for (ind = 0; ind < num_queues; ind++)
         queues[ind]->waiter_sem = NULL;
     return pMsg;
+}
+
+poolList_t thread_slinger_pools::lst;
+
+//static
+void
+thread_slinger_pools::register_pool(thread_slinger_pool_base * p)
+{
+    WaitUtil::Lock  lock(&lst);
+    lst.add_tail(p);
+}
+
+//static
+void
+thread_slinger_pools::unregister_pool(thread_slinger_pool_base * p)
+{
+    WaitUtil::Lock  lock(&lst);
+    lst.remove(p);
+}
+
+//static
+void
+thread_slinger_pools::report_pools(poolReportList_t &report)
+{
+    report.clear();
+    WaitUtil::Lock  lock(&lst);
+    for (thread_slinger_pool_base * p = lst.get_head();
+         p != NULL;
+         p = lst.get_next(p))
+    {
+        poolReport  r;
+        p->getCounts(r.usedCount,
+                     r.freeCount,
+                     r.name);
+        report.push_back(r);
+    }
 }

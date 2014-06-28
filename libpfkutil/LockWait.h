@@ -6,14 +6,19 @@
 #include <pthread.h>
 #include <time.h>
 
-namespace PFK {
+#include "throwBacktrace.h"
 
-struct LockableError {
+namespace WaitUtil {
+
+struct LockableError : ThrowUtil::ThrowBackTrace {
     enum LockableErrValue {
         MUTEX_LOCKED_IN_DESTRUCTOR,
-        RECURSION_ERROR
+        RECURSION_ERROR,
+        __NUMERRS
     } err;
+    static const std::string errStrings[__NUMERRS];
     LockableError(LockableErrValue _e) : err(_e) { }
+    const std::string Format(void) const;
 };
 
 #define LOCKABLERR(e) throw LockableError(LockableError::e)
@@ -63,6 +68,18 @@ public:
     bool wait(struct timespec *expire);
     // return false if timeout, true if signaled
     bool wait(int sec, int nsec);
+};
+
+class Semaphore {
+    int value;
+    Waitable semawait;
+public:
+    Semaphore(void);
+    ~Semaphore(void);
+    void init(int init_val);
+    void give(void);
+    bool take(struct timespec * expire); //return false if timeout
+    bool take(void) { return take(NULL); }
 };
 
 // inline impl below this line
@@ -208,8 +225,51 @@ Waiter::wait(int sec, int nsec)
     return wait(&expire);
 }
 
+inline Semaphore::Semaphore(void)
+{
+    value = 0;
+}
+
+inline Semaphore::~Semaphore(void)
+{
+}
+
+inline void
+Semaphore::init(int init_val)
+{
+    value = init_val;
+}
+
+inline void
+Semaphore::give(void)
+{
+    {
+        Lock  lock(&semawait);
+        value++;
+    }
+    semawait.waiterSignal();
+}
+
+inline bool
+Semaphore::take(struct timespec * expire)
+{
+    Waiter  waiter(&semawait);
+    while (value <= 0)
+    {
+        if (expire)
+        {
+            if (waiter.wait(expire) == false)
+                return false;
+        }
+        else
+            waiter.wait();
+    }
+    value--;
+    return true;
+}
+
 #undef   LOCKABLERR
 
-}; // namespace PFK
+}; // namespace HSMWait
 
 #endif /* __LOCKABLE_H__ */

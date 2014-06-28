@@ -1,3 +1,5 @@
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
+
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
@@ -20,26 +22,51 @@
 
 #include <pthread.h>
 #include <inttypes.h>
+#include <vector>
 
 #include "LockWait.h"
+#include "dll3.h"
 
-class thread_slinger_semaphore : public PFK::Waitable
-{
-    int value;
+namespace ThreadSlinger {
+
+struct ThreadSlingerError : ThrowUtil::ThrowBackTrace {
+    enum errValue {
+        MessageOnListDestructor,
+        MessageNotFromThisPool,
+        DerefNoPool,
+        __NUMERRS
+    } err;
+    static const std::string errStrings[__NUMERRS];
+    ThreadSlingerError(errValue _e) : err(_e) { }
+    const std::string Format(void) const;
+};
+
+class thread_slinger_pool_base;
+typedef DLL3::List<thread_slinger_pool_base,1>  poolList_t;
+
+class thread_slinger_message;
+
+class thread_slinger_pool_base : public poolList_t::Links {
 public:
-    thread_slinger_semaphore(void);
-    ~thread_slinger_semaphore(void);
-    void init(int init_val) { value = init_val; }
-    void give(void);
-    // return false if timeout
-    bool take(struct timespec * expire);
+    virtual ~thread_slinger_pool_base(void) { }
+    virtual void release(thread_slinger_message * m) = 0;
+    virtual void getCounts(int &used, int &free, std::string &name) = 0;
 };
 
 /** base class for all user messages to go through thread_slinger,
  * no user-servicable parts inside */
-struct thread_slinger_message
+class thread_slinger_message
 {
-    thread_slinger_message * next;
+    int refcount;
+    WaitUtil::Lockable refcountlock;
+public:
+    thread_slinger_message * _slinger_next;
+    thread_slinger_pool_base * _slinger_pool;
+    thread_slinger_message(void);
+    virtual ~thread_slinger_message(void);
+    virtual const std::string msgName(void) { return "thread_slinger_message"; }
+    void ref(void);
+    void deref(void);
 };
 
 class _thread_slinger_queue
@@ -52,8 +79,8 @@ class _thread_slinger_queue
     // of _dequeue, only one of the semaphores is used. however,
     // this is cheaper IMHO than creating and destroying a semaphore
     // every time you enter and leave _dequeue(), which is the alternative.
-    thread_slinger_semaphore  _waiter_sem;
-    thread_slinger_semaphore * waiter_sem;
+    WaitUtil::Semaphore   _waiter_sem;
+    WaitUtil::Semaphore *  waiter_sem;
     thread_slinger_message * head;
     thread_slinger_message * tail;
     int count;
@@ -82,15 +109,15 @@ class thread_slinger_queue : public _thread_slinger_queue
 public:
     /** send a message to the receiver.
      * \param msg a user's message derived from thread_slinger_message */
-    void enqueue(T * msg) { _enqueue(msg); }
+    void enqueue(T * msg);
     /** fetch a message from the sender.
      * \param uSecs  if >0, wait for that time and return NULL if no
      *         message; if <0, wait forever for a message; if 0,
      *         return NULL immediately if no message.
      * \return NULL if timeout, or a message pointer */
-    T * dequeue(int uSecs=0) { return (T *) _dequeue(uSecs); }
+    T * dequeue(int uSecs=0);
     /** find out how many messages are currently queued */
-    int get_count(void) { return _get_count(); }
+    int get_count(void);
     /** dequeue from a set of queues in priority order.
      * \param queues  the list of queues to check, the priority is
      *      specified by the order in this list (first queue in this
@@ -105,44 +132,59 @@ public:
      * \return a message pointer or NULL if timeout */
     static T * dequeue(thread_slinger_queue<T> * queues[],
                        int num_queues,
-                       int uSecs, int *which_queue=NULL) {
-        return (T *) _dequeue((_thread_slinger_queue **) queues,
-                              num_queues, uSecs, which_queue);
-    }
+                       int uSecs, int *which_queue=NULL);
+};
+
+struct poolReport {
+    int usedCount;
+    int freeCount;
+    std::string name;
+};
+typedef std::vector<poolReport> poolReportList_t;
+
+class thread_slinger_pools
+{
+    static poolList_t  lst;
+public:
+    static void register_pool(thread_slinger_pool_base * p);
+    static void unregister_pool(thread_slinger_pool_base * p);
+    static void report_pools(poolReportList_t &);
 };
 
 /** a convenient buffer pool for storing objects of any kind.
  * \param T   the type of object being stored in the queue,
- *          derived from thread_slinger_message.
- * \param count  the number of objects to initially allocate
- *      when the pool is created. */
-template <class T, int count>
-class thread_slinger_pool
+ *          derived from thread_slinger_message. */
+template <class T>
+class thread_slinger_pool : public thread_slinger_pool_base
 {
     thread_slinger_queue<T>  q;
-    T * array;
+    /*virtual*/ void release(thread_slinger_message *);
+    WaitUtil::Lockable  statsLockable;
+    int usedCount;
+    int freeCount;
+    bool nameSet;
+    std::string msgName;
 public:
-    thread_slinger_pool(void) {
-        array = new T[count];
-        for (int i = 0; i < count; i++)
-            release(array + i);
-    }
-    ~thread_slinger_pool(void) {
-        delete[] array;
-    }
+    thread_slinger_pool(void);
+    virtual ~thread_slinger_pool(void);
+    void add(int items);
     /** allocate a buffer from the pool.
      * \param uSecs  how long to wait if the pool is empty:
      *          <0 means wait forever, ==0 means return NULL 
      *          immediately, >0 means wait that number of usecs.
      * \param grow   if true, allocate new buffers if pool is empty.
      * \return a buffer pointer, or NULL if empty and timeout */
-    T * alloc(int uSecs=0, bool grow=false) { return q.dequeue(uSecs); }
+    T * alloc(int uSecs=0, bool grow=false);
     /** release a buffer pack into the pool
      * \param buf  the buffer pointer to release */
-    void release(T * buf) { q.enqueue(buf); }
+    void release(T * buf);
     /** fetch number of buffers currently in the pool */
-    int get_count(void) { return q.get_count(); }
+    void getCounts(int &used, int &free, std::string &name);
 };
+
+#include "thread_slinger.tcc"
+
+}; // namespace
 
 /** \mainpage threadslinger user's API documentation
 

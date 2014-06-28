@@ -1,63 +1,34 @@
-#if 0
-set -e -x
-g++ -Wall -Werror -g3 -c HSM.cc
-g++ -Wall -Werror -g3 -c dll3.cc
-g++ -Wall -Werror -g3 -c HSM_test.cc
-g++ -g3 HSM_test.o HSM.o dll3.o -rdynamic -o HSM_test -lpthread
-exit 0
-;
-#endif
 
 #include "HSM.h"
 
-using namespace PFKHSM;
+using namespace HSM;
 
 namespace MyTestApp {
 
 enum MyHSMEVENTTYPE {
-    CONFIG = HSM_USER_START,
+    KICKOFF = HSM_USER_START,
+    CONFIG,
     CONNECT,
     DISCON,
     AUTH,
     DUMMY
 };
 
-struct myConfigEvt : HSMEvent
-{
-    myConfigEvt(void) : HSMEvent(CONFIG) { }
-    ~myConfigEvt(void) { }
-    const std::string evtName(void) const { return "myConfigEvt"; }
-};
-struct myConnectEvt : HSMEvent
-{
-    myConnectEvt(void) : HSMEvent(CONNECT) { }
-    ~myConnectEvt(void) { }
-    const std::string evtName(void) const { return "myConnectEvt"; }
-};
-struct myDisconEvt : HSMEvent
-{
-    myDisconEvt(void) : HSMEvent(DISCON) { }
-    ~myDisconEvt(void) { }
-    const std::string evtName(void) const { return "myDisconEvt"; }
-};
-struct myAuthEvt : HSMEvent
-{
-    myAuthEvt(void) : HSMEvent(AUTH) { }
-    ~myAuthEvt(void) { }
-    const std::string evtName(void) const { return "myAuthEvt"; }
-};
-struct myDummyEvt : HSMEvent
-{
-    myDummyEvt(void) : HSMEvent(DUMMY) { }
-    ~myDummyEvt(void) { }
-    const std::string evtName(void) const { return "myDummyEvt"; }
-};
+HSM_EVENT_DECLARE(myKickoffEvt,KICKOFF,);
+HSM_EVENT_DECLARE(myConfigEvt,CONFIG,
+                  int value1;
+                  int value2;
+    );
+HSM_EVENT_DECLARE(myConnectEvt,CONNECT,);
+HSM_EVENT_DECLARE(myDisconEvt,DISCON,);
+HSM_EVENT_DECLARE(myAuthEvt,AUTH,);
+HSM_EVENT_DECLARE(myDummyEvt,DUMMY,);
 
-class myStateMachine1 : public ActiveHSM<myStateMachine1>
+ACTIVE_HSM_DECLARE(myStateMachine1)
 {
 public:
     myStateMachine1(HSMScheduler * _sched, bool __debug = false)
-        : ActiveHSM<myStateMachine1>(_sched, __debug)
+        : ACTIVE_HSM_BASE(myStateMachine1)(_sched, "machine1", __debug)
     {
     }
     virtual ~myStateMachine1(void)
@@ -65,17 +36,29 @@ public:
     }
     /*virtual*/ Action initial(void)
     {
+        subscribe(CONFIG);
+        subscribe(CONNECT);
+        subscribe(DISCON);
+        subscribe(AUTH);
+        subscribe(DUMMY);
         return TRANS(&myStateMachine1::unconfigured);
     }
+    // here is the state heirarchy:
+    //   top
+    //      unconfigured
+    //      configured
+    //         init
+    //         connected
+    //         auth
     Action top(HSMEvent const * ev)
     {
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top\n");
+            printf("ENTER 1: top\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top\n");
+            printf("EXIT 1: top\n");
             return HANDLED();
         }
         return TOP();
@@ -85,10 +68,10 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top.unconfigured\n");
+            printf("ENTER 1: top.unconfigured\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top.unconfigured\n");
+            printf("EXIT 1: top.unconfigured\n");
             return HANDLED();
         case CONFIG:
             printf("got CONFIG in top.unconfigured\n");
@@ -101,10 +84,10 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top.configured\n");
+            printf("ENTER 1: top.configured\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top.configured\n");
+            printf("EXIT 1: top.configured\n");
             return HANDLED();
         case CONNECT:
             printf("got CONNECT in top.configured.init\n");
@@ -120,10 +103,10 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top.configured.init\n");
+            printf("ENTER 1: top.configured.init\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top.configured.init\n");
+            printf("EXIT 1: top.configured.init\n");
             return HANDLED();
         }
         return SUPER(&myStateMachine1::configured, "init");
@@ -133,10 +116,10 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top.configured.connected\n");
+            printf("ENTER 1: top.configured.connected\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top.configured.connected\n");
+            printf("EXIT 1: top.configured.connected\n");
             return HANDLED();
         case AUTH:
             printf("got AUTH in top.configured.connected\n");
@@ -149,39 +132,127 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER: top.configured.auth\n");
+            printf("ENTER 1: top.configured.auth\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT: top.configured.auth\n");
+            printf("EXIT 1: top.configured.auth\n");
             return HANDLED();
         }
         return SUPER(&myStateMachine1::configured, "auth");
     }
 };
 
+bool done = false;
+
+ACTIVE_HSM_DECLARE(myStateMachine2)
+{
+public:
+    myStateMachine2(HSMScheduler * _sched, bool __debug = false)
+        : ACTIVE_HSM_BASE(myStateMachine2)(_sched, "machine2", __debug)
+    {
+    }
+    virtual ~myStateMachine2(void)
+    {
+    }
+    /*virtual*/ Action initial(void)
+    {
+        subscribe(KICKOFF);
+        return TRANS(&myStateMachine2::top);
+    }
+    Action top(HSMEvent const * ev)
+    {
+        switch (ev->type)
+        {
+        case HSM_ENTRY:
+            printf("ENTER 2: top\n");
+            return HANDLED();
+        case HSM_EXIT:
+            printf("EXIT 2: top\n");
+            return HANDLED();
+
+        case KICKOFF:
+            printf("sm2 got KICKOFF in top\n");
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            printf("sm2 sending config\n");
+            publish(myConfigEvt::alloc());
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            printf("sm2 sending connect\n");
+            publish(myConnectEvt::alloc());
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            printf("sm2 sending auth\n");
+            publish(myAuthEvt::alloc());
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            printf("sm2 sending discon\n");
+            publish(myDisconEvt::alloc());
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            printf("sm2 sending dummy\n");
+            publish(myDummyEvt::alloc());
+
+            printf("sm2 sleeping\n");
+            sleep(1);
+            done = true;
+
+            return HANDLED();
+        }
+        return TOP();
+    }
+};
+
 }; // namespace MyTestApp
+
+using namespace MyTestApp;
+
+#define DO_TRY 1
 
 int
 main()
 {
+#if DO_TRY
     try {
-        PFKHSM::HSMScheduler  sched;
+#endif
+        HSMScheduler  sched;
 
-        MyTestApp::myStateMachine1  myHsm(&sched, true);
+        MyTestApp::myStateMachine1  myHsm1(&sched, true);
+        MyTestApp::myStateMachine2  myHsm2(&sched, true);
 
-        myHsm.HSMInit();
-        MyTestApp::myConfigEvt config;
-        myHsm.dispatch(&config);
-        MyTestApp::myConnectEvt connect;
-        myHsm.dispatch(&connect);
-        MyTestApp::myAuthEvt auth;
-        myHsm.dispatch(&auth);
-        MyTestApp::myDisconEvt discon;
-        myHsm.dispatch(&discon);
-        MyTestApp::myDummyEvt dummy;
-        myHsm.dispatch(&dummy);
+        sched.start();
+
+        sched.publish(MyTestApp::myKickoffEvt::alloc());
+
+        while (MyTestApp::done == false)
+            sleep(1);
+
+        sched.stop();
+
+        ThreadSlinger::poolReportList_t report;
+        ThreadSlinger::thread_slinger_pools::report_pools(report);
+
+        std::cout << "pool report:\n";
+        for (size_t ind = 0; ind < report.size(); ind++)
+        {
+            const ThreadSlinger::poolReport &r = report[ind];
+            std::cout << "    pool "
+                      << r.name
+                      << " : "
+                      << r.usedCount
+                      << " used "
+                      << r.freeCount
+                      << " free\n";
+        }
+
+#if DO_TRY
     }
-    catch (PFKHSM::HSMError  err)
+    catch (HSMError  err)
     {
         std::cout << "caught HSM error:\n"
                   << err.Format();
@@ -191,6 +262,12 @@ main()
         std::cout << "caught DLL3 error:\n"
                   << le.Format();
     }
+    catch (ThreadSlinger::ThreadSlingerError tse)
+    {
+        std::cout << "caught slinger error:\n"
+                  << tse.Format();
+    }
+#endif
 
     return 0;
 }

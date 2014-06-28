@@ -6,7 +6,7 @@
 #include <string>
 #include <execinfo.h>
 
-namespace PFK {
+namespace ThrowUtil {
 
 struct ThrowBackTrace {
     static const int MAX_ADDRESSES = 20;
@@ -35,6 +35,6 @@ ThrowBackTrace::BackTraceFormat(void) const
     return ret;
 }
 
-}; // namespace PFK
+}; // namespace HSM
 
 #endif /* __THROWBACKTRACE_H__ */

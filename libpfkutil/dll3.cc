@@ -22,3 +22,11 @@ ListError::Format(void) const
     return ret;
 }
 
+const int DLL3::dll3_hash_primes[dll3_num_hash_primes] = {
+    97,     251,     499,
+    997,    1999,    4999,
+    9973,   24989,   49999,
+    99991,  249989,  499979,
+    999983, 2499997, 4999999,
+    9999991
+};

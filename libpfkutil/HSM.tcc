@@ -1,5 +1,12 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+template <class T, int type>
+T * HSMEventT<T,type>::alloc(void)
+{
+    static ThreadSlinger::thread_slinger_pool<T> pool;
+    return pool.alloc(0,true);
+}
+
 template <class T>
 const std::string HSM<T>::ActTypeNames[HSM<T>::NUMACTS] = 
 { "HANDLED", "TRANS", "SUPER", "TOP" };
@@ -36,7 +43,6 @@ char const * HSM<T>::stateName(HSM<T>::State state,
     if (state == NULL)
         return "";
     T * derived = dynamic_cast<T*>(this);
-    HSMEvent  probeEvt(__HSM_PROBE);
     Action a = (derived->*state)(&probeEvt);
     switch (a.act)
     {
@@ -95,7 +101,10 @@ std::string HSM<T>::trace2str(HSM<T>::StateTrace *trace)
 
 template <class T>
 HSM<T>::HSM( bool _debug /*= false*/ )
-    : debug(_debug)
+    : debug(_debug),
+      exitEvt(HSM_EXIT),
+      entryEvt(HSM_ENTRY),
+      probeEvt(__HSM_PROBE)
 {
     currentState = NULL;
     currentTrace = NULL;
@@ -113,9 +122,8 @@ void HSM<T>::HSMInit(void)
     currentTrace = &trace1;
     oldTrace = &trace2;
     backtrace(currentTrace, currentState);
-    HSMEvent  entry(HSM_ENTRY);
     for (size_t ind = 0; ind < currentTrace->size(); ind++)
-        (derived->*((*currentTrace)[ind].state))(&entry);
+        (derived->*((*currentTrace)[ind].state))(&entryEvt);
     if (debug)
         std::cout << "after init, current state: "
                   << trace2str(currentTrace)
@@ -129,6 +137,18 @@ void HSM<T>::dispatch(HSMEvent const * evt)
     State newState = NULL;
     State state = currentState;
     bool done = true;
+    int ind;
+    if (evt->type == HSM_TERMINATE)
+    {
+        // issue exit to all states.
+        for (ind = currentTrace->size()-1; ind >= 0; ind--)
+        {
+            Action a = (derived->*((*currentTrace)[ind].state))(&exitEvt);
+            if (a.act != ACT_HANDLED)
+                throw HSMError(HSMError::HSMErrorExitHandler);
+        }
+        return;
+    }
     if (debug)
         std::cout << "dispatching event " 
                   << evt->evtName()
@@ -182,8 +202,6 @@ void HSM<T>::dispatch(HSMEvent const * evt)
     } while(done == false);
     if (newState != NULL && newState != currentState)
     {
-        HSMEvent  exitEvt(HSM_EXIT);
-        HSMEvent  entryEvt(HSM_ENTRY);
         StateTrace * newTrace = oldTrace;
         backtrace(newTrace, newState);
         if (debug)
@@ -192,7 +210,6 @@ void HSM<T>::dispatch(HSMEvent const * evt)
                       << " to "
                       << trace2str(newTrace)
                       << std::endl;
-        size_t ind;
         for (ind = currentTrace->size()-1; ind >= 0; ind--)
         {
             if (ind < newTrace->size() &&
@@ -214,31 +231,44 @@ void HSM<T>::dispatch(HSMEvent const * evt)
         currentTrace = newTrace;
     }
 }
+
 template <class T>
-ActiveHSM<T>::ActiveHSM( HSMScheduler * __sched, bool __debug /*=false*/ )
-    : ActiveHSMBase(__sched),
+ActiveHSM<T>::ActiveHSM( HSMScheduler * __sched, 
+                         const std::string &name,
+                         bool __debug /*=false*/ )
+    : ActiveHSMBase(__sched, name),
       HSM<T>(__debug)
 {
-    // xxx
+    // ?
 }
 
 //virtual
 template <class T>
 ActiveHSM<T>::~ActiveHSM(void)
 {
-    // xxx
+    // ?
 }
 
 template <class T>
-void
-ActiveHSM<T>::subscribe(int type)
+void ActiveHSM<T>::init(void)
 {
-    sched->subscribe(this,type);
+    HSM<T>::HSMInit();
 }
 
 template <class T>
-void
-ActiveHSM<T>::publish(HSMEvent const * event)
+void ActiveHSM<T>::AHSMdispatch(HSMEvent const * evt)
 {
-    sched->publish(this,event);
+    HSM<T>::dispatch(evt);
+}
+
+template <class T>
+void ActiveHSM<T>::subscribe(int type)
+{
+    sched->subscribe(this,(HSMEventType)type);
+}
+
+template <class T>
+void ActiveHSM<T>::publish(HSMEvent * evt)
+{
+    sched->publish(evt);
 }

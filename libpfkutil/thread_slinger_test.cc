@@ -31,25 +31,25 @@ exit 0
 
 #define TEST 2
 
-#include "thread_slinger.H"
+#include "thread_slinger.h"
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 
-struct myMessage : public thread_slinger_message
+struct myMessage : public ThreadSlinger::thread_slinger_message
 {
     int a; // some field
     int b; // some other field
 };
 
 #if TEST==1
-thread_slinger_pool<myMessage,2>  p;
+ThreadSlinger::thread_slinger_pool<myMessage>  p;
 #elif TEST==2
-thread_slinger_pool<myMessage,5>  p;
+ThreadSlinger::thread_slinger_pool<myMessage>  p;
 #endif
 
-typedef thread_slinger_queue<myMessage> myMsgQ;
+typedef ThreadSlinger::thread_slinger_queue<myMessage> myMsgQ;
 
 myMsgQ q;
 myMsgQ q2;
@@ -62,6 +62,7 @@ void * t1( void * dummy )
         myMessage * m = p.alloc(random()%5000);
         if (m)
         {
+            m->ref();
             q.enqueue(m);
             if (val == 0)
                 printf("+");
@@ -93,7 +94,7 @@ void * t2( void * dummy )
                 printf(".");
             else
                 printf(",");
-            p.release(m);
+            m->deref(); //p.release(m);
         }
         else
         {
@@ -116,6 +117,7 @@ void * t3( void * dummy )
         myMessage * m = p.alloc(random()%5000);
         if (m)
         {
+            m->ref();
             if (val == 0)
                 q.enqueue(m);
             else
@@ -155,7 +157,7 @@ void * t4(void * dummy)
                 printf(".");
             else
                 printf(",");
-            p.release(m);
+            m->deref(); //p.release(m);
         }
         else
         {
@@ -173,12 +175,14 @@ main()
 {
     pthread_t id;
 #if TEST==1
+    p.add(2);
     pthread_create( &id, NULL, t1, (void*) 0 );
     pthread_create( &id, NULL, t1, (void*) 1 );
     pthread_create( &id, NULL, t2, (void*) 0 );
     pthread_create( &id, NULL, t2, (void*) 1 );
     pthread_join(id,NULL);
 #elif TEST==2
+    p.add(1);
     pthread_create( &id, NULL, t3, (void*) 0 );
     pthread_create( &id, NULL, t3, (void*) 1 );
     pthread_create( &id, NULL, t4, (void*) 0 );
