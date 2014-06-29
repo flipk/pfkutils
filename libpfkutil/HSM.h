@@ -337,13 +337,6 @@ event into that state machine.  You manage the memory on the event
 objects and there is no threading.  The dispatch method simply returns
 once your state transition function has completed.
 
-An HSM::ActiveHSM is more complex.  It is a thread plus a subscription-
-management system.  Multiple ActiveHSMs may be created, and each
-may subscribe to a set of HSM::HSMEvent::Type types it is interested in
-receiving.  An HSM::HSMScheduler object must be created, and the ActiveHSMs
-are registered with it.  HSMScheduler performs subscription management and
-reference-counting on the events.
-
 An example of declaring and using a simple HSM::HSM state machine follows:
 
 \code
@@ -439,12 +432,18 @@ causes a TRANS to state2.  Since state2 also has a SUPER to "top", this means
 "top" is not exited.  So an EXIT is sent to state1, and ENTRY is sent to
 state2.  We are now in the "top.state2" state.
 
+An HSM::ActiveHSM is more complex.  It is a thread plus a subscription-
+management system.  Multiple ActiveHSMs may be created, and each
+may subscribe to a set of HSM::HSMEvent::Type types it is interested in
+receiving.  An HSM::HSMScheduler object must be created, and the ActiveHSMs
+are registered with it.  HSMScheduler performs subscription management and
+reference-counting on the events.
+
 The following example shows how to use an ActiveHSM, and also demonstrates
 both ways to declare an ActiveHSM.
 
 \code
 
-ACTIVE_HSM_DECLARE(myStateMachine1)
 class myStateMachine1 : public ActiveHSM<myStateMachine1>
 {
     myStateMachine1(HSMScheduler * _sched, bool __debug = false)
