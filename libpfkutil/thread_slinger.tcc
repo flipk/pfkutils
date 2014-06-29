@@ -43,6 +43,7 @@ void thread_slinger_queue<T>::enqueue(T * msg)
 {
     _enqueue(msg);
 }
+
 template <class T>
 T * thread_slinger_queue<T>::dequeue(int uSecs /*=0*/)
 {

@@ -1,5 +1,7 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+/** \file HSM.tcc */
+
 template <class T, int type>
 T * HSMEventT<T,type>::alloc(void)
 {
@@ -102,9 +104,9 @@ std::string HSM<T>::trace2str(HSM<T>::StateTrace *trace)
 template <class T>
 HSM<T>::HSM( bool _debug /*= false*/ )
     : debug(_debug),
-      exitEvt(HSM_EXIT),
-      entryEvt(HSM_ENTRY),
-      probeEvt(__HSM_PROBE)
+      exitEvt(HSMEvent::HSM_EXIT),
+      entryEvt(HSMEvent::HSM_ENTRY),
+      probeEvt(HSMEvent::__HSM_PROBE)
 {
     currentState = NULL;
     currentTrace = NULL;
@@ -138,7 +140,7 @@ void HSM<T>::dispatch(HSMEvent const * evt)
     State state = currentState;
     bool done = true;
     int ind;
-    if (evt->type == HSM_TERMINATE)
+    if (evt->type == HSMEvent::HSM_TERMINATE)
     {
         // issue exit to all states.
         for (ind = currentTrace->size()-1; ind >= 0; ind--)
@@ -264,7 +266,7 @@ void ActiveHSM<T>::AHSMdispatch(HSMEvent const * evt)
 template <class T>
 void ActiveHSM<T>::subscribe(int type)
 {
-    sched->subscribe(this,(HSMEventType)type);
+    sched->subscribe(this,(HSMEvent::Type)type);
 }
 
 template <class T>

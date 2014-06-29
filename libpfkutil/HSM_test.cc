@@ -6,7 +6,7 @@ using namespace HSM;
 namespace MyTestApp {
 
 enum MyHSMEVENTTYPE {
-    KICKOFF = HSM_USER_START,
+    KICKOFF = HSMEvent::HSM_USER_START,
     CONFIG,
     CONNECT,
     DISCON,
@@ -49,7 +49,7 @@ public:
     //      configured
     //         init
     //         connected
-    //         auth
+    //            auth
     Action top(HSMEvent const * ev)
     {
         switch (ev->type)
@@ -93,7 +93,7 @@ public:
             printf("got CONNECT in top.configured.init\n");
             return TRANS(&myStateMachine1::connected);
         case DISCON:
-            printf("got DISCON in top.configured.auth\n");
+            printf("got DISCON in top.configured\n");
             return TRANS(&myStateMachine1::unconfigured);
         }
         return SUPER(&myStateMachine1::top, "configured");
@@ -132,13 +132,13 @@ public:
         switch (ev->type)
         {
         case HSM_ENTRY:
-            printf("ENTER 1: top.configured.auth\n");
+            printf("ENTER 1: top.configured.connected.auth\n");
             return HANDLED();
         case HSM_EXIT:
-            printf("EXIT 1: top.configured.auth\n");
+            printf("EXIT 1: top.configured.connected.auth\n");
             return HANDLED();
         }
-        return SUPER(&myStateMachine1::configured, "auth");
+        return SUPER(&myStateMachine1::connected, "auth");
     }
 };
 

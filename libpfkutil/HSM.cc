@@ -1,4 +1,6 @@
 
+/** \file HSM.cc */
+
 #include "HSM.h"
 
 using namespace HSM;
@@ -44,7 +46,7 @@ HSMScheduler::deregisterHSM(ActiveHSMBase *sm)
 }
 
 void
-HSMScheduler::subscribe(ActiveHSMBase *sm, HSMEventType type)
+HSMScheduler::subscribe(ActiveHSMBase *sm, HSMEvent::Type type)
 {
     WaitUtil::Lock lock(&subHash);
     HSMSubEntry * se;
@@ -61,7 +63,7 @@ void
 HSMScheduler::publish(HSMEvent * evt)
 {
     WaitUtil::Lock lock(&subHash);
-    HSMSubEntry * se = subHash.find((HSMEventType)evt->type);
+    HSMSubEntry * se = subHash.find((HSMEvent::Type)evt->type);
     if (se == NULL)
     {
         lock.unlock();
@@ -117,7 +119,7 @@ ActiveHSMBase::ActiveHSMBase(HSMScheduler * _sched,
                              const std::string &name)
     : Thread(name),
       sched(_sched),
-      termEvent(HSM_TERMINATE)
+      termEvent(HSMEvent::HSM_TERMINATE)
 {
     sched->registerHSM(this);
 }
@@ -136,7 +138,7 @@ ActiveHSMBase::entry(void)
     {
         HSMEventEnvelope * env = eventQueue.dequeue(-1);
         AHSMdispatch(env->evt);
-        if (env->evt->type == HSM_TERMINATE)
+        if (env->evt->type == HSMEvent::HSM_TERMINATE)
             done = true;
         env->evt->deref();
         sched->releaseEnv(env);

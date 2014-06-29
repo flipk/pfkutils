@@ -1,5 +1,8 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+#ifndef __THREADSLINGER_H__
+#define __THREADSLINGER_H__
+
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
@@ -29,15 +32,18 @@
 
 namespace ThreadSlinger {
 
+/** exception object for errors from this library */
 struct ThreadSlingerError : ThrowUtil::ThrowBackTrace {
+    /** errors that this library may throw */
     enum errValue {
-        MessageOnListDestructor,
-        MessageNotFromThisPool,
-        DerefNoPool,
+        MessageOnListDestructor, //!< message still on a list during destructor
+        MessageNotFromThisPool,  //!< message freed to wrong pool
+        DerefNoPool,             //!< refcount down to zero but poolptr is null
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
     ThreadSlingerError(errValue _e) : err(_e) { }
+    /** handy utility function for printing error and stack backtrace */
     const std::string Format(void) const;
 };
 
@@ -53,8 +59,7 @@ public:
     virtual void getCounts(int &used, int &free, std::string &name) = 0;
 };
 
-/** base class for all user messages to go through thread_slinger,
- * no user-servicable parts inside */
+/** base class for all user messages to go through thread_slinger */
 class thread_slinger_message
 {
     int refcount;
@@ -64,8 +69,12 @@ public:
     thread_slinger_pool_base * _slinger_pool;
     thread_slinger_message(void);
     virtual ~thread_slinger_message(void);
+    /** return the message's name, user of this class may override this */
     virtual const std::string msgName(void) { return "thread_slinger_message"; }
+    /** increase reference count */
     void ref(void);
+    /** decrease reference count; if it hits zero, this buffer will be
+     * automatically returned to the pool */
     void deref(void);
 };
 
@@ -135,19 +144,24 @@ public:
                        int uSecs, int *which_queue=NULL);
 };
 
+/** data for a pool, retrieved from thread_slinger_pools::report_pools */
 struct poolReport {
-    int usedCount;
-    int freeCount;
-    std::string name;
+    int usedCount;   //!< number of buffers currently used by application
+    int freeCount;   //!< number of buffers free in the pool
+    std::string name;  //!< name of the pool according to
+                       //!< thread_slinger_message::msgName
 };
+/** data for all pools from thread_slinger_pools::report_pools */
 typedef std::vector<poolReport> poolReportList_t;
 
+/** a static class which manages list of all known pools */
 class thread_slinger_pools
 {
     static poolList_t  lst;
 public:
     static void register_pool(thread_slinger_pool_base * p);
     static void unregister_pool(thread_slinger_pool_base * p);
+    /** retrieve stats about all pools */
     static void report_pools(poolReportList_t &);
 };
 
@@ -167,6 +181,7 @@ class thread_slinger_pool : public thread_slinger_pool_base
 public:
     thread_slinger_pool(void);
     virtual ~thread_slinger_pool(void);
+    /** add more items to this pool. */
     void add(int items);
     /** allocate a buffer from the pool.
      * \param uSecs  how long to wait if the pool is empty:
@@ -175,7 +190,7 @@ public:
      * \param grow   if true, allocate new buffers if pool is empty.
      * \return a buffer pointer, or NULL if empty and timeout */
     T * alloc(int uSecs=0, bool grow=false);
-    /** release a buffer pack into the pool
+    /** release a buffer into the pool
      * \param buf  the buffer pointer to release */
     void release(T * buf);
     /** fetch number of buffers currently in the pool */
@@ -183,8 +198,6 @@ public:
 };
 
 #include "thread_slinger.tcc"
-
-}; // namespace
 
 /** \mainpage threadslinger user's API documentation
 
@@ -196,6 +209,7 @@ Interesting classes:
 <li> \ref thread_slinger_message
 <li> \ref thread_slinger_queue
 <li> \ref thread_slinger_pool
+<li> \ref ThreadSlingerError
 </ul>
 
 \code
@@ -273,3 +287,7 @@ int main() {
 
 
 */
+
+}; // namespace
+
+#endif /* __THREADSLINGER_H__ */

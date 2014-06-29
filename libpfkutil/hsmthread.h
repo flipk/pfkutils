@@ -11,16 +11,19 @@
 
 namespace HSMThread {
 
+/** thread-related errors that may be encountered */
 struct ThreadError : public ThrowUtil::ThrowBackTrace
 {
+    /** list of thread-related errors that might be thrown */
     enum ThreadErrorValue {
-        RunningInDestructor,
-        ThreadStartAlreadyStarted,
-        ThreadsStartAlreadyStarted,
+        RunningInDestructor,        //!< destructor, but thread is still running
+        ThreadStartAlreadyStarted,  //!< Thread::start called twice
+        ThreadsStartAlreadyStarted, //!< Threads::start called twice
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
     ThreadError(ThreadErrorValue _e) : err(_e) { }
+    /** utility function to format printable string of error and backtrace */
     const std::string Format(void) const;
 };
 
