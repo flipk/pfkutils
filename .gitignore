@@ -5,3 +5,4 @@ autom4te.cache
 *.Po
 *.a
 *~
+cscope.out
