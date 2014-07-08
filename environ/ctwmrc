@@ -169,6 +169,7 @@ Button2 =   : iconmgr     : f.iconify
 
 LeftTitleButton  ":xpm:dot"    = f.iconify
 LeftTitleButton  ":xpm:bar"    = f.squeeze
+LeftTitleButton  ":xpm:cross"  = f.delete
 RightTitleButton ":xpm:resize" = f.resize
 
 menu "defops"
