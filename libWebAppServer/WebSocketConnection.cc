@@ -318,11 +318,8 @@ WebSocketConnection :: handle_message(void)
         decoded_length = readbuf[1] & 0x7F;
         pos=2;
 
-        // length is size of payload, add 2 for header.
-        // note bufsize needs to be rechecked if this is actually an
-        // extended-length frame. this logic works for those cases
-        // because if we're using 2 or 4 bytes for extended length,
-        // then at least 126 needs to be present anyway.
+        // check if there's enough for a full message
+        // given what we know so far.
         if (readbuf_len < (decoded_length+header_len))
             // not enough yet.
             return true;
