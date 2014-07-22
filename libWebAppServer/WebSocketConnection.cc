@@ -285,8 +285,9 @@ WebSocketConnection :: handle_message(void)
     while (1)
     {
         uint32_t readbuf_len = readbuf.size();
+        uint32_t header_len = 2;
 
-        if (readbuf_len < 2)
+        if (readbuf_len < header_len)
             // not enough yet.
             return true;
 
@@ -321,7 +322,7 @@ WebSocketConnection :: handle_message(void)
         // extended-length frame. this logic works for those cases
         // because if we're using 2 or 4 bytes for extended length,
         // then at least 126 needs to be present anyway.
-        if (readbuf_len < (decoded_length+2))
+        if (readbuf_len < (decoded_length+header_len))
             // not enough yet.
             return true;
 
@@ -329,6 +330,7 @@ WebSocketConnection :: handle_message(void)
         {
             decoded_length = (readbuf[pos] << 8) + readbuf[pos+1];
             pos += 2;
+            header_len += 2;
         }
         else if (decoded_length == 127)
         {
@@ -347,9 +349,10 @@ WebSocketConnection :: handle_message(void)
                 (readbuf[pos+0] << 24) + (readbuf[pos+1] << 16) +
                 (readbuf[pos+2] <<  8) +  readbuf[pos+3];
             pos += 4;
+            header_len += 8;
         }
 
-        if (readbuf_len < (decoded_length+2))
+        if (readbuf_len < (decoded_length+header_len))
             // still not enough
             return true;
 
