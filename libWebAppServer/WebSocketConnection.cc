@@ -313,6 +313,7 @@ WebSocketConnection :: handle_message(void)
             cerr << "MASK=0 found, illegal for client->server" << endl;
             return false;
         }
+        header_len += 4; // account for mask
 
         decoded_length = readbuf[1] & 0x7F;
         pos=2;
