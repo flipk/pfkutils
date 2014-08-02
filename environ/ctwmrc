@@ -6,12 +6,17 @@ IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 IconManagerFont  "-schumacher-clean-medium-r-normal--12-120-75-75-c-60-*"
 IconManagerGeometry   "830x120+126+19" 8
 
-UsePPosition "nonzero"
+UsePPosition "on"
 
 OpenWindowTimeout    1
 MaxIconTitleWidth  150
 MoveOffResistance   20
 BorderWidth          3
+
+UseThreeDMenus
+UseThreeDTitles
+UseThreeDBorders
+ThreeDBorderWidth 2
 
 OpaqueMove
 NoDefaults
