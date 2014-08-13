@@ -9,6 +9,7 @@
 #include "CircularReader.h"
 #include "fdThreadLauncher.h"
 #include "serverPorts.h"
+#include "LockWait.h"
 
 namespace WebAppServer {
 
@@ -32,31 +33,8 @@ struct WebAppServerConfigRecord {
 std::ostream &operator<<(std::ostream &ostr,
                              const WebAppServerConfigRecord &cr);
 
-class Lockable {
-    pthread_mutex_t  mutex;
-public:
-    Lockable(void) {
-        pthread_mutexattr_t attr;
-        pthread_mutexattr_init(&attr);
-        pthread_mutex_init(&mutex, &attr);
-        pthread_mutexattr_destroy(&attr);
-    }
-    ~Lockable(void) {
-        pthread_mutex_destroy(&mutex);
-    }
-    void   lock(void) { pthread_mutex_lock  (&mutex); }
-    void unlock(void) { pthread_mutex_unlock(&mutex); }
-};
-
-class Lock {
-    Lockable *obj;
-public:
-    Lock( Lockable *_obj ) : obj(_obj) { obj->lock(); }
-    ~Lock(void) { obj->unlock(); }
-};
-
 struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord,
-                                         public Lockable {
+                                         public WaitUtil::Lockable {
     WebAppServerFastCGIConfigRecord(WebAppType _type, 
                                     int _port,
                                     const std::string _route,
@@ -97,7 +75,7 @@ public:
 
 class WebFastCGIConnection;
 class WebAppConnectionDataFastCGI : public WebAppConnectionData,
-                                    public Lockable {
+                                    public WaitUtil::Lockable {
 public:
     WebAppConnectionDataFastCGI(void) { waiter = NULL; }
     virtual ~WebAppConnectionDataFastCGI(void) { }

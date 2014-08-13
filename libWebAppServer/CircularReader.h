@@ -5,6 +5,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+
+#include <string>
+#include <iostream>
 
 namespace WebAppServer {
 

@@ -3,3 +3,6 @@
 *.a
 xmakefile
 build
+t
+wsClientTest
+wsServerTest

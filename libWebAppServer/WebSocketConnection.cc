@@ -65,7 +65,7 @@ WebSocketConnection :: done(void)
     deleteMe = true;
 }
 
-static const char websocket_guid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+const std::string websocket_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 bool
 WebSocketConnection :: handle_header(void)
@@ -147,8 +147,8 @@ WebSocketConnection :: handle_header_line(
             return false;
         }
 
-        const CircularReaderSubstr headerName = headerLine.substr(0,colonPos);
-        const CircularReaderSubstr headerValue = headerLine.substr(colonPos+2);
+        const CircularReaderSubstr &headerName = headerLine.substr(0,colonPos);
+        const CircularReaderSubstr &headerValue = headerLine.substr(colonPos+2);
 
         if (VERBOSE)
             cout << "checking header '" << headerName
@@ -426,6 +426,10 @@ WebSocketConnection :: sendMessage(const WebAppMessage &m)
     else
     {
         msg += (char) 127;
+        msg += (char) 0;
+        msg += (char) 0;
+        msg += (char) 0;
+        msg += (char) 0;
         msg += (char) ((len >> 24) & 0xFF);
         msg += (char) ((len >> 16) & 0xFF);
         msg += (char) ((len >>  8) & 0xFF);

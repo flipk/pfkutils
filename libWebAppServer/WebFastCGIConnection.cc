@@ -34,7 +34,7 @@ WebFastCGIConnection :: ~WebFastCGIConnection(void)
     if (wac && registeredWaiter)
     {
         WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
-        Lock lock(dat);
+        WaitUtil::Lock lock(dat);
         dat->waiter = NULL;
         wac = NULL;
     }
@@ -122,7 +122,7 @@ WebFastCGIConnection :: done(void)
     if (wac && registeredWaiter)
     {
         WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
-        Lock lock(dat);
+        WaitUtil::Lock lock(dat);
         dat->waiter = NULL;
         wac = NULL;
     }
@@ -580,7 +580,7 @@ WebFastCGIConnection :: startWac(void)
     WebAppServerFastCGIConfigRecord::ConnListIter_t visitorIt;
 
     {
-        Lock lock(cgiConfig);
+        WaitUtil::Lock lock(cgiConfig);
         visitorIt = cgiConfig->conns.find(visitorId);
         if (visitorIt == cgiConfig->conns.end())
         {
@@ -685,7 +685,7 @@ WebFastCGIConnection :: startOutput(void)
        if there is no message queued, return true. */
 
     WebAppConnectionDataFastCGI * dat = wac->connData->fcgi();
-    Lock lock(dat);
+    WaitUtil::Lock lock(dat);
 
     if (dat->outq.size() > 0)
     {
@@ -730,7 +730,7 @@ WebFastCGIConnection :: generateNewVisitorId(
             visitorId.push_back(randChars[random() % numRandChars]);
         cout << "trying visitorId " << visitorId << endl;
         {
-            Lock lock(cgiConfig);
+            WaitUtil::Lock lock(cgiConfig);
             if (cgiConfig->conns.find(visitorId) == cgiConfig->conns.end())
                 return;
         }
@@ -765,7 +765,7 @@ WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
                            outbuf + (quant*4));
     }
 
-    Lock  lock(this);
+    WaitUtil::Lock  lock(this);
     outq.push_back(b64_str);
 
     if (waiter)
@@ -808,7 +808,7 @@ WebAppServerFastCGIConfigRecord :: ~WebAppServerFastCGIConfigRecord(void)
 {
     if (pollInterval > 0)
     {
-        lock();
+        WaitUtil::Lock lock(this);
         close(closePipe[1]);
         void * dummy;
         pthread_join(thread_id, &dummy);
@@ -841,7 +841,7 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
             break;
 
         time_t now = time(NULL);
-        Lock lock(this);
+        WaitUtil::Lock lock(this);
 
         ConnListIter_t it;
         for (it = conns.begin(); it != conns.end(); it++)
@@ -858,7 +858,7 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
             }
             if (nukeIt)
             {
-                wac->connData->fcgi()->lock();
+// private                wac->connData->fcgi()->lock();
                 delete wac;
                 conns.erase(it);
             }
