@@ -1,6 +1,10 @@
 
 package proxyTcp;
 
+enum ProxyProtoVer {
+     PMT_PROTO_VERSION_NUMBER = 1;
+}
+
 enum ProxyMsgType {
      PMT_PROTOVERSION = 1;
 
@@ -12,6 +16,6 @@ message ProtoVersionMsg {
 
 message ProxyMsg {
 	required ProxyMsgType  type = 1;
-	optional ProtoVersionMsg  proto = 2; // type == PMT_PROTOVERSION
+	optional ProtoVersionMsg  protover = 2; // type == PMT_PROTOVERSION
 
 }
