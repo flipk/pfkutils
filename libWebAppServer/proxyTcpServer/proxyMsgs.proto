@@ -1,0 +1,17 @@
+
+package proxyTcp;
+
+enum ProxyMsgType {
+     PMT_PROTOVERSION = 1;
+
+}
+
+message ProtoVersionMsg {
+	required int32 version = 1;
+}
+
+message ProxyMsg {
+	required ProxyMsgType  type = 1;
+	optional ProtoVersionMsg  proto = 2; // type == PMT_PROTOVERSION
+
+}

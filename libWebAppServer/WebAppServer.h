@@ -181,8 +181,6 @@ public:
     void stop(void);
 };
 
-#endif /* __WEBAPPSERVER_H_ */
-
 /** \mainpage WebAppServer
 
 \section Overview Overview
@@ -982,3 +980,5 @@ The sequence for a browser-to-server message is as follows:
  */
 
 } // namespace WebAppServer
+
+#endif /* __WEBAPPSERVER_H_ */

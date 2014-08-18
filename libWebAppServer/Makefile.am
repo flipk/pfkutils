@@ -1,12 +1,11 @@
 
 CC=gcc
 CXX=g++
+AR=ar
 
 noinst_LIBRARIES = libWebAppServer.a
 
 noinst_PROGRAMS = wsServerTest wsClientTest
-
-wsClientTest: libWebAppServer.a
 
 libWebAppServer_a_SOURCES = base64.cc md5.cc sha1.cc \
 	fdThreadLauncher.cc serverPorts.cc \
