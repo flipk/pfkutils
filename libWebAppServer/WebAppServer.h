@@ -28,12 +28,19 @@ public:
     /** user may implement a constructor for the derived object 
      * which will initialize the application's context, if desired.
      * this method may optionally take arguments, which
-     * WebAppConnectionCallback::newConnection must understand. */
+     * WebAppConnectionCallback::newConnection must understand.
+     * Do not send messages from this constructor -- the back pointer
+     * to the ConnectionData is not set up yet. you may send messages
+     * from onConnect, though. */
     WebAppConnection(void);
     /** user may have a destructor for the derived object which will
      * clean up the application's context for this connection, if 
      * desired. */
     virtual ~WebAppConnection(void);
+    /** handle connection */
+    virtual void onConnect(void) { }
+    /** handle disconnection */
+    virtual void onDisconnect(void) { }
     /** handler for incoming message.  when the application in the browser
      * has sent a message to us, libWebAppServer will call this method
      * in your object. note that upon return, the message is freed, thus

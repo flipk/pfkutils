@@ -162,15 +162,15 @@ WebSocketClient :: init_common(const string &proxy,
     sa.sin_port = htons(destPort);
     sa.sin_addr = destAddr;
 
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0)
+    int newfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (newfd < 0)
     {
         throw WSClientError(WSClientError::ERR_SOCKET);
     }
 
-    if (connect(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+    if (connect(newfd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
-        close(fd);
+        close(newfd);
         throw WSClientError(WSClientError::ERR_CONNREFUSED);
     }
 
@@ -188,10 +188,10 @@ WebSocketClient :: init_common(const string &proxy,
     }
 
     const string &hdrstr = hdrs.str();
-    ::write(fd, hdrstr.c_str(), hdrstr.length());
+    ::write(newfd, hdrstr.c_str(), hdrstr.length());
 
     got_flags = GOT_NONE;
-    startFdThread( fd );
+    startFdThread( newfd );
 }
 
 WebSocketClient :: ~WebSocketClient(void)
@@ -470,6 +470,9 @@ WebSocketClient :: handle_message(void)
         uint32_t readbuf_len = readbuf.size();
         uint32_t header_len = 2;
 
+        if (VERBOSE)
+            cout << "handle_message readbuflen " << readbuf_len << endl;
+
         if (readbuf_len < header_len)
             // not enough yet.
             return true;
@@ -492,8 +495,12 @@ WebSocketClient :: handle_message(void)
         // check if there's enough for a full message
         // given what we know so far.
         if (readbuf_len < (decoded_length+header_len))
+        {
+            if (VERBOSE)
+                cout << "bail out case 1" << endl;
             // not enough yet.
             return true;
+        }
 
         if (decoded_length == 126)
         {
@@ -522,8 +529,12 @@ WebSocketClient :: handle_message(void)
         }
 
         if (readbuf_len < (decoded_length+header_len))
+        {
+            if (VERBOSE)
+                cout << "bail out case 2" << endl;
             // still not enough
             return true;
+        }
 
         WebAppMessageType msgType = WS_TYPE_INVALID;
         switch (readbuf[0] & 0xf)
@@ -551,6 +562,8 @@ WebSocketClient :: handle_message(void)
         pos += decoded_length;
         readbuf.erase0(pos);
     }
+    if (VERBOSE)
+        cout << "return case 3" << endl;
     return true;
 }
 
@@ -643,8 +656,17 @@ WebSocketClient :: sendMessage(const WebAppMessage &m)
     msg += m.buf;
 
     for (size_t counter = 0; counter < m.buf.size(); counter++)
-        msg[pos + counter] =
-            msg[pos + counter] ^ mask[counter&3];
+        msg[pos + counter] = msg[pos + counter] ^ mask[counter&3];
+
+    if (VERBOSE)
+    {
+        uint8_t * buf = (uint8_t *) msg.c_str();
+        int len = (int) msg.size();
+        printf("** write buffer : ");
+        for (int ctr = 0; ctr < len; ctr++)
+            printf("%02x ", buf[ctr]);
+        printf("\n");
+    }
 
     WaitUtil::Lock   lock(this);
     ::write(fd, msg.c_str(), msg.size());

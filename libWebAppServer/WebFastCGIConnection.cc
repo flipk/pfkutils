@@ -587,6 +587,7 @@ WebFastCGIConnection :: startWac(void)
             // make a new one
             wac = config->cb->newConnection();
             wac->connData = new WebAppConnectionDataFastCGI;
+            wac->onConnect();
             cgiConfig->conns[visitorId] = wac;
             if (VERBOSE)
                 cout << "made a new wac" << endl;
@@ -859,6 +860,7 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
             if (nukeIt)
             {
 // private                wac->connData->fcgi()->lock();
+                wac->onDisconnect();
                 delete wac;
                 conns.erase(it);
             }

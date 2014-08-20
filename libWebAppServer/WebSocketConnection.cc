@@ -29,7 +29,10 @@ WebSocketConnection :: WebSocketConnection(
 WebSocketConnection :: ~WebSocketConnection(void)
 {
     if (wac != NULL)
+    {
+        wac->onDisconnect();
         delete wac;
+    }
     wac = NULL;
 }
 
@@ -60,7 +63,10 @@ void
 WebSocketConnection :: done(void)
 {
     if (wac)
+    {
+        wac->onDisconnect();
         delete wac;
+    }
     wac = NULL;
     deleteMe = true;
 }
@@ -102,6 +108,7 @@ WebSocketConnection :: handle_header(void)
                     wac = config->cb->newConnection();
                     wac->connData = new WebAppConnectionDataWebsocket(this);
                     setPollInterval(config->pollInterval);
+                    wac->onConnect();
                     return true;
                 }
 
@@ -243,11 +250,7 @@ WebSocketConnection :: send_handshake_response(void)
     if (VERBOSE)
         cout << "writing headers: " << out_frame << endl;
 
-// i could implement sockets on top of ios, a la 
-//   http://users.utu.fi/lanurm/socket++/
-// but why?
-
-    write(fd, out_frame.c_str(), out_frame.size());
+    ::write(fd, out_frame.c_str(), out_frame.size());
 }
 
 //
@@ -294,8 +297,8 @@ WebSocketConnection :: handle_message(void)
         if (VERBOSE)
         {
             int sz = readbuf.size();
-            char printbuf[sz];
-            readbuf.copyOut(printbuf,0,sz);
+            uint8_t printbuf[sz];
+            readbuf.copyOut((char*)printbuf,0,sz);
             printf("got msg : ");
             for (uint32_t c = 0; (int)c < sz; c++)
                 printf("%02x ", printbuf[c]);
@@ -450,7 +453,7 @@ WebSocketConnection :: sendMessage(const WebAppMessage &m)
         printf("\n");
     }
 
-    write(fd, buf, len);
+    ::write(fd, buf, len);
 }
 
 void
