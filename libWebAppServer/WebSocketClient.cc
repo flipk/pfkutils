@@ -13,7 +13,7 @@
 #include "sha1.h"
 #include "base64.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 using namespace std;
 using namespace WebAppServer;

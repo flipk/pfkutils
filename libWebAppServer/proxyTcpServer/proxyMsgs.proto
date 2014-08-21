@@ -7,15 +7,21 @@ enum ProxyProtoVer {
 
 enum ProxyMsgType {
      PMT_PROTOVERSION = 1;
-
+     PMT_CLOSING = 2;
+     // remote conn indication?
+     // connection data
 }
 
 message ProtoVersionMsg {
 	required int32 version = 1;
 }
 
-message ProxyMsg {
-	required ProxyMsgType  type = 1;
-	optional ProtoVersionMsg  protover = 2; // type == PMT_PROTOVERSION
+message ClosingMsg {
+	required string reason = 1;
+}
 
+message ProxyMsg {
+	required ProxyMsgType     type     = 1;
+	optional ProtoVersionMsg  protover = 2; // type == PMT_PROTOVERSION
+	optional ClosingMsg       closing  = 3; // type == PMT_CLOSING
 }
