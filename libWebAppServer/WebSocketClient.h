@@ -58,6 +58,7 @@ class WebSocketClient : WebAppServer::fdThreadLauncher,
     static const int  GOT_ACCEPT             = 8;
     static const int  GOT_ALL                = 15; // all combined
     int got_flags;
+    bool bUserConnCallback;
     bool bProxy;
     bool bProxyWsWithConnect;
     std::string proxyHost, proxyIp, urlHost, urlIp, urlPath;

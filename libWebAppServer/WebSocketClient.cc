@@ -73,6 +73,7 @@ WebSocketClient :: init_common(const string &proxy,
     finished = false;
     proxyPort = 1080; //assume
     urlPort = 80; //assume
+    bUserConnCallback = false;
 
 #define MATCH(n) (matches[(n)].rm_so != -1)
 #define MATCHSTR(str,n) \
@@ -303,8 +304,6 @@ WebSocketClient :: handleReadSelect(int fd)
     }
     if (cc <= 0)
     {
-        WaitUtil::Lock   lock(this);
-        onDisconnect();
         return false;
     }
 
@@ -454,6 +453,7 @@ WebSocketClient :: handle_wsheader(const CircularReaderSubstr &hdr)
             state = STATE_CONNECTED;
             WaitUtil::Lock   lock(this);
             onConnect();
+            bUserConnCallback = true;
         }
     }
     return true;
@@ -587,6 +587,12 @@ WebSocketClient :: doPoll(void)
 void
 WebSocketClient :: done(void)
 {
+    if (bUserConnCallback)
+    {
+        WaitUtil::Lock   lock(this);
+        onDisconnect();
+        bUserConnCallback = false;
+    }
     finished = true;
 }
 
