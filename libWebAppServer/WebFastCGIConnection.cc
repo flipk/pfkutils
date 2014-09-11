@@ -56,7 +56,7 @@ WebFastCGIConnection :: handleSomeData(void)
 
         FastCGIRecord rec;
 
-        readbuf.copyOut((char*)&rec.header, 0, sizeof(FastCGIHeader));
+        readbuf.copyOut((uint8_t*)&rec.header, 0, sizeof(FastCGIHeader));
         if (rec.header.version != FastCGIHeader::VERSION_1)
         {
             cerr << "Fast CGI proto version error" << endl;
@@ -79,7 +79,7 @@ WebFastCGIConnection :: handleSomeData(void)
             return false;
         }
 
-        readbuf.copyOut((char*)&rec.body,
+        readbuf.copyOut((uint8_t*)&rec.body,
                         sizeof(FastCGIHeader), contLen);
 
         if (handleRecord(&rec) == false)
@@ -257,7 +257,7 @@ FastCGIParams :: getParams(uint16_t length) const
     FastCGIParamsList * ret = new FastCGIParamsList;
 
     CircularReader &data = ret->paramBuffer;
-    data.assign((char*)rawdata, (int)length);
+    data.assign((uint8_t*)rawdata, (int)length);
     int pos = 0;
     int remaining = (int)length;
 

@@ -9,7 +9,8 @@ class proxyClientTcpAcceptor : public fd_interface
     std::string url;
     bool proxyConnect;
 public:
-    proxyClientTcpAcceptor(short port);
+    proxyClientTcpAcceptor(short listenPort, std::string _proxy,
+                           bool _proxyConnect, std::string _url);
     /*virtual*/ ~proxyClientTcpAcceptor(void);
     /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *mgr, bool * do_read, bool * do_write );

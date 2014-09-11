@@ -11,7 +11,11 @@ public:
     proxyClientConn(const std::string &proxy, const std::string &url,
                     bool withConnect, int new_fd);
 private:
+    static const int READ_BUFFER_SIZE = 4096;
+
     /*virtual*/ ~proxyClientConn(void);
+    bool allowReads;
+    int sequence;
     proxyTcp::ProxyMsg  pm_in;
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;

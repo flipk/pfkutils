@@ -2,3 +2,5 @@ proxyClient
 proxyServer
 proxyMsgs.pb.cc
 proxyMsgs.pb.h
+client
+server

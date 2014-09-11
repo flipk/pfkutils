@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <netdb.h>
 
 using namespace std;
 
@@ -193,6 +194,15 @@ fdThreadLauncher :: threadEntry(void)
 }
 
 int
+fdThreadLauncher :: acceptConnection(void)
+{
+    struct sockaddr_in sa;
+    socklen_t  salen = sizeof(sa);
+    return accept(fd, (struct sockaddr *)&sa, &salen);
+}
+
+// static
+int
 fdThreadLauncher :: makeListeningSocket(int port)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -217,12 +227,47 @@ fdThreadLauncher :: makeListeningSocket(int port)
     return fd;
 }
 
+// static
 int
-fdThreadLauncher :: acceptConnection(void)
+fdThreadLauncher :: makeConnectingSocket(uint32_t ip, int port)
 {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        fprintf(stderr, "socket : %s\n", strerror(errno));
+        exit(1);
+    }
     struct sockaddr_in sa;
-    socklen_t  salen = sizeof(sa);
-    return accept(fd, (struct sockaddr *)&sa, &salen);
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons((short)port);
+    sa.sin_addr.s_addr = htonl(ip);
+    int cc = connect(fd, (struct sockaddr *)&sa, sizeof(sa));
+    if (cc < 0)
+    {
+        cerr << "connect : " << strerror(errno) << endl;
+        ::close(fd);
+        return -1;
+    }
+    return fd;
+}
+
+// static
+int
+fdThreadLauncher :: makeConnectingSocket(const std::string &host, int port)
+{
+    uint32_t ip = -1;
+    if (!inet_aton(host.c_str(), (in_addr*) &ip))
+    {
+        struct hostent * he;
+        if ((he = gethostbyname(host.c_str())) == NULL)
+        {
+            cerr << "lookup of host '" << host << "': "
+                 << strerror( errno ) << endl;
+            return -1;
+        }
+        memcpy( &ip, he->h_addr, sizeof(ip));
+    }
+    return makeConnectingSocket(ntohl(ip),port);
 }
 
 std::ostream &operator<<(std::ostream &ostr,

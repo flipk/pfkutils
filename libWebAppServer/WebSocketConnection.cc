@@ -298,7 +298,7 @@ WebSocketConnection :: handle_message(void)
         {
             int sz = readbuf.size();
             uint8_t printbuf[sz];
-            readbuf.copyOut((char*)printbuf,0,sz);
+            readbuf.copyOut(printbuf,0,sz);
             printf("got msg : ");
             for (uint32_t c = 0; (int)c < sz; c++)
                 printf("%02x ", printbuf[c]);

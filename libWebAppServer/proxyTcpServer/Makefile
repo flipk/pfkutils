@@ -16,8 +16,8 @@ CPPFLAGS= -g3
 PROGS= proxyServer proxyClient
 
 all: xmakefile
-	cd ../BUILD && make
-	make -f xmakefile $(PROGS)
+	+cd ../BUILD && make
+	+make -f xmakefile $(PROGS)
 
 xmakefile: proxyMsgs.pb.h Makefile $(SRCS)
 	rm -f tmp

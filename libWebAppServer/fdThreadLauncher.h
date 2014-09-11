@@ -4,6 +4,7 @@
 #define __FDTHREADLAUNCHER_H__
 
 #include <iostream>
+#include <inttypes.h>
 
 namespace WebAppServer {
 
@@ -34,8 +35,10 @@ public:
     void startFdThread(int _fd, int _pollInterval = -1);
     void stopFdThread(void);
     void setPollInterval(int _pollInterval);
-    int makeListeningSocket(int port);
     int acceptConnection(void);
+    static int makeListeningSocket(int port);
+    static int makeConnectingSocket(uint32_t ip, int port);
+    static int makeConnectingSocket(const std::string &host, int port);
 };
 std::ostream &operator<<(std::ostream &ostr,
                          const fdThreadLauncher::fdThreadState state);

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include <string>
 #include <iostream>
@@ -19,7 +20,7 @@ public:
 
 class CircularReaderSubstr {
 protected:
-    char * buf;
+    uint8_t * buf;
     int bufsz;
     int startPos;
     int len;
@@ -29,14 +30,14 @@ protected:
 public:
     CircularReaderSubstr(void);
     CircularReaderSubstr(const CircularReaderSubstr &other);
-    CircularReaderSubstr(char * _buf, int _bufsz,
+    CircularReaderSubstr(uint8_t * _buf, int _bufsz,
                          int _startPos = 0, int _len = 0);
     ~CircularReaderSubstr(void);
     static const int npos = 0xFFFFFFF;
     int size(void) const;
     int remaining(void) const;
-    char &operator[] (int pos);
-    const char& operator[] (int pos) const;
+    uint8_t &operator[] (int pos);
+    const uint8_t& operator[] (int pos) const;
     CircularReaderSubstr substr(int _pos, int _len = npos) const;
     int find_first_of(char c, int pos=0) const;
     int find(const char *patt, int pos=0) const;
@@ -48,7 +49,7 @@ public:
     void erase(int erasePos,int eraseLen = npos);
     // npos is not an option for wantLen, because the user must
     // specify the max size of outBuffer. returns length copied.
-    int copyOut(char * outBuffer, int wantPos, int wantLen) const;
+    int copyOut(uint8_t * outBuffer, int wantPos, int wantLen) const;
     std::string toString(int wantPos = 0, int wantLen = npos) const;
 };
 
@@ -59,7 +60,7 @@ public:
     CircularReader(int _maxSize);
     CircularReader(const std::string &);
     ~CircularReader(void);
-    void assign(const char *initBuf, int initLen);
+    void assign(const uint8_t *initBuf, int initLen);
     void operator=(const CircularReaderSubstr &other);
     void operator=(const std::string &);
     int readFd(int fd);
@@ -110,7 +111,7 @@ CircularReaderSubstr :: CircularReaderSubstr(void)
 
 inline
 CircularReaderSubstr :: CircularReaderSubstr(
-    char * _buf, int _bufsz,
+    uint8_t * _buf, int _bufsz,
     int _startPos /*= 0*/, int _len /*= 0*/)
     : buf(_buf), bufsz(_bufsz), startPos(_startPos), len(_len)
 {
@@ -130,8 +131,8 @@ CircularReaderSubstr :: operator<(const CircularReaderSubstr &other) const
     {
         if (pos >= otherSize)
             return true;
-        char a = buf[realPos(pos,false)];
-        char b = other[pos];
+        uint8_t a = buf[realPos(pos,false)];
+        uint8_t b = other[pos];
         if (a < b)
             return true;
         if (a > b)
@@ -157,13 +158,13 @@ CircularReaderSubstr :: remaining(void) const
     return bufsz - len;
 }
 
-inline const char&
+inline const uint8_t&
 CircularReaderSubstr :: operator[] (int _pos) const
 {
     return buf[realPos(_pos)];
 }
 
-inline char &
+inline uint8_t &
 CircularReaderSubstr :: operator[] (int _pos)
 {
     return buf[realPos(_pos)];
@@ -282,7 +283,7 @@ CircularReaderSubstr :: erase(int _erasePos, int _eraseLen /*= npos*/)
 // npos is not an option for wantLen, because the user must
 // specify the max size of outBuffer. return length copied.
 inline int
-CircularReaderSubstr :: copyOut(char * _outBuffer,
+CircularReaderSubstr :: copyOut(uint8_t * _outBuffer,
                                 int _wantPos, int _wantLen) const
 {
     if (_wantPos >= len || _wantLen == 0)
@@ -320,10 +321,10 @@ CircularReaderSubstr :: toString(int _wantPos /*= 0*/,
     if (realEnd >= bufsz)
         realEnd -= bufsz;
     if (realEnd > realStart)
-        return std::string(buf + realStart, _wantLen);
+        return std::string((char*)(buf + realStart), _wantLen);
     //else
-    return std::string(buf + realStart,
-                       bufsz - realStart).append(buf, realEnd);
+    return std::string((char*)(buf + realStart),
+                       bufsz - realStart).append((char*)buf, realEnd);
 }
 
 inline
@@ -335,7 +336,7 @@ CircularReader :: CircularReader(void)
 
 inline
 CircularReader :: CircularReader(int _maxSize)
-    : CircularReaderSubstr(new char[_maxSize], _maxSize)
+    : CircularReaderSubstr(new uint8_t[_maxSize], _maxSize)
 {
 }
 
@@ -353,13 +354,13 @@ CircularReader :: ~CircularReader(void)
 }
 
 inline void
-CircularReader :: assign(const char *initBuf, int initLen)
+CircularReader :: assign(const uint8_t *initBuf, int initLen)
 {
     if (buf != NULL)
         delete[] buf;
     startPos = 0;
     bufsz = len = initLen;
-    buf = new char[len];
+    buf = new uint8_t[len];
     memcpy(buf, initBuf, len);
 }
 
@@ -370,7 +371,7 @@ CircularReader :: operator=(const CircularReaderSubstr &other)
         delete[] buf;
     startPos = 0;
     bufsz = len = other.size();
-    buf = new char[len];
+    buf = new uint8_t[len];
     other.copyOut(buf,0,len);
 }
 
@@ -381,7 +382,7 @@ CircularReader :: operator=(const std::string &initStr)
         delete[] buf;
     startPos = 0;
     bufsz = len = initStr.size();
-    buf = new char[len];
+    buf = new uint8_t[len];
     memcpy(buf, initStr.c_str(), len);
 }
 
@@ -391,7 +392,7 @@ CircularReader :: readFd(int _fd)
     int readMax = maxContigWritable();
     if (readMax == 0)
         throw CircularReaderError("read: full buffer");
-    char * readPos = buf + realPos(len,false);
+    uint8_t * readPos = buf + realPos(len,false);
     int cc = ::read(_fd, readPos, readMax);
     if (cc > 0)
         len += cc;
