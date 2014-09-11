@@ -19,7 +19,7 @@ proxyClientTcpAcceptor :: proxyClientTcpAcceptor(short listenPort,
                                                  std::string _url)
 {
     proxy = _proxy;
-    proxyConnect = proxyConnect;
+    proxyConnect = _proxyConnect;
     url = _url;
 
     fd = WebAppServer::fdThreadLauncher::makeListeningSocket( listenPort );
