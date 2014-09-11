@@ -40,19 +40,19 @@ std::ostream &operator<<(std::ostream &ostr,
     return ostr;
 }
 
-WebAppServer :: WebAppServer(void)
+WebAppServerServer :: WebAppServerServer(void)
 {
     ports = NULL;
 }
 
-WebAppServer :: ~WebAppServer(void)
+WebAppServerServer :: ~WebAppServerServer(void)
 {
     if (ports)
         delete ports;
 }
 
 bool
-WebAppServer :: start(const WebAppServerConfig *_config)
+WebAppServerServer :: start(const WebAppServerConfig *_config)
 {
     serverPort::ConfigRecListIterC_t cit;
     serverPorts::portIter_t pit;
@@ -77,7 +77,7 @@ WebAppServer :: start(const WebAppServerConfig *_config)
 }
 
 void
-WebAppServer :: stop(void)
+WebAppServerServer :: stop(void)
 {
     if (ports)
     {

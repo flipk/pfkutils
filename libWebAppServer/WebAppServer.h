@@ -167,12 +167,12 @@ class serverPorts;
 /** a web server. create a WebAppServerConfig and then call
  * start(config). your main thread should then call sleep in a 
  * while-loop or something to keep the process alive. */
-class WebAppServer {
+class WebAppServerServer {
     const WebAppServerConfig *config;
     serverPorts * ports;
 public:
-    WebAppServer(void);
-    ~WebAppServer(void);
+    WebAppServerServer(void);
+    ~WebAppServerServer(void);
     /** start a web server. this can only be called once.
      * \param config  the websocket/fastcgi configuration to use.
      * \return false if there was an error in starting (such as a
