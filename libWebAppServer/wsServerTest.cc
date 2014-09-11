@@ -53,7 +53,7 @@ main()
 {
     WebAppServer::WebAppServerConfig   serverConfig;
     myAppCallback                      appCallback;
-    WebAppServer::WebAppServer         server;
+    WebAppServer::WebAppServerServer   server;
 
 
     serverConfig.addWebsocket(1081, "/websocket/test",

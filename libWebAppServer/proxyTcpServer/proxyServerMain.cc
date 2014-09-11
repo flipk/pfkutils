@@ -4,7 +4,6 @@
 #include <stdlib.h>
 
 using namespace std;
-using namespace WebAppServer;
 
 int
 main()
@@ -23,9 +22,9 @@ main()
         return 1;
     }
 
-    WebAppServerConfig  serverConfig;
+    WebAppServer::WebAppServerConfig  serverConfig;
     proxyServerConnCB   proxyCB(destHostStr, atoi(destPortStr));
-    WebAppServer::WebAppServer        server;
+    WebAppServer::WebAppServerServer        server;
 
     char * portNumEnv = getenv("PROXY_WS_PORT");
     int portNum = 1081;

@@ -66,6 +66,7 @@ void
 proxyServerConn :: onDisconnect(void)
 {
     cout << "PFK wac onDisconnect" << endl;
+    //xxx
 }
 
 /*virtual*/
@@ -159,7 +160,7 @@ proxyServerConn :: wacDoPoll(void)
 bool
 proxyServerConn :: doSelect(bool *forRead, bool *forWrite)
 {
-    *forRead = true; // xxx but not if remote hasn't replied yet
+    *forRead = true;
     *forWrite = false;
     return true;
 }
