@@ -41,7 +41,6 @@ proxyServerConn :: sendProxyMsg(void)
     pm_out.set_sequence(sequence++);
     pm_out.SerializeToString(&buf);
     const WebAppMessage wamPM(WS_TYPE_BINARY, buf);
-    WaitUtil::Lock  lock(&sendLock);
     sendMessage(wamPM);
 }
 
@@ -55,6 +54,7 @@ proxyServerConn :: onConnect(void)
 {
     cout << "PFK wac onConnect" << endl;
 
+    WaitUtil::Lock  lock(&sendLock);
     pm_out.Clear();
     pm_out.set_type(PMT_PROTOVERSION);
     pm_out.mutable_protover()->set_version(PMT_PROTO_VERSION_NUMBER);
@@ -87,6 +87,7 @@ proxyServerConn :: onMessage(const WebAppServer::WebAppMessage &m)
     if (pm_in.ParseFromString(m.buf) == false)
     {
         cout << "pm parse failed" << endl;
+        WaitUtil::Lock  lock(&sendLock);
         pm_out.Clear();
         pm_out.set_type(PMT_CLOSING);
         pm_out.mutable_closing()->set_reason("pm parse failed");
@@ -104,6 +105,7 @@ proxyServerConn :: onMessage(const WebAppServer::WebAppMessage &m)
         if (pm_in.protover().version() != PMT_PROTO_VERSION_NUMBER)
         {
             cerr << "protocol version mismatch!" << endl;
+            WaitUtil::Lock  lock(&sendLock);
             pm_out.Clear();
             pm_out.set_type(PMT_CLOSING);
             pm_out.mutable_closing()->set_reason("protocol version mismatch");
@@ -139,6 +141,16 @@ proxyServerConn :: onMessage(const WebAppServer::WebAppMessage &m)
             ret = false;
         break;
     }
+
+    case PMT_PING:
+    {
+        WaitUtil::Lock  lock(&sendLock);
+        pm_out.Clear();
+        pm_out.set_type(PMT_PING);
+        pm_out.mutable_ping()->CopyFrom(pm_in.ping());
+        sendProxyMsg();
+        break;
+    }
     }
 
     return ret;
@@ -171,6 +183,7 @@ proxyServerConn :: handleReadSelect(int fd)
 {
     char buf[READ_BUFFER_SIZE];
     int cc = ::read(fd, buf, sizeof(buf));
+    WaitUtil::Lock  lock(&sendLock);
     pm_out.Clear();
     if (cc <= 0)
     {

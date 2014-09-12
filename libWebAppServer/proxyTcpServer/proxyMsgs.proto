@@ -9,6 +9,7 @@ enum ProxyMsgType {
      PMT_PROTOVERSION = 1;
      PMT_CLOSING = 2;
      PMT_DATA = 3;
+     PMT_PING = 4;
 }
 
 message ProtoVersionMsg {
@@ -23,10 +24,16 @@ message DataMsg {
 	required bytes data = 1;
 }
 
+message PingMsg {
+	required uint32 time_sec = 1;
+	required uint32 time_usec = 2;
+}
+
 message ProxyMsg {
 	required ProxyMsgType     type     = 1;
 	required int32            sequence = 2;
 	optional ProtoVersionMsg  protover = 3; // type == PMT_PROTOVERSION
 	optional ClosingMsg       closing  = 4; // type == PMT_CLOSING
 	optional DataMsg          data     = 5; // type == PMT_DATA
+	optional PingMsg          ping     = 6; // type == PMT_PING
 }

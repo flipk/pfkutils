@@ -52,8 +52,25 @@ proxyClientConn :: read ( fd_mgr *_mgr )
 void
 proxyClientConn :: select_rw ( fd_mgr *_mgr, bool * do_read, bool * do_write )
 {
-    *do_read = allowReads; // xxx maybe not if remote hasn't conn'd yet
+    *do_read = allowReads;
     *do_write = false;
+
+    if (allowReads)
+    {
+        myTimeval  now, diff;
+        gettimeofday(&now, NULL);
+        diff = now - lastPing;
+        if (diff.tv_sec > 10)
+        {
+            lastPing = now;
+            WaitUtil::Lock  lock(&sendLock);
+            pm_out.Clear();
+            pm_out.set_type(PMT_PING);
+            pm_out.mutable_ping()->set_time_sec( now.tv_sec );
+            pm_out.mutable_ping()->set_time_usec( now.tv_usec );
+            sendProxyMsg();
+        }
+    }
 }
 
 void
@@ -63,7 +80,6 @@ proxyClientConn :: sendProxyMsg(void)
     pm_out.set_sequence(sequence++);
     pm_out.SerializeToString(&buf);
     const WebAppMessage wamPM(WS_TYPE_BINARY, buf);
-    WaitUtil::Lock  lock(&sendLock);
     sendMessage(wamPM);
 }
 
@@ -74,10 +90,10 @@ proxyClientConn :: onConnect(void)
 
     printf("PFK client onConnect\n");
 
+    WaitUtil::Lock  lock(&sendLock);
     pm_out.Clear();
     pm_out.set_type(PMT_PROTOVERSION);
     pm_out.mutable_protover()->set_version(PMT_PROTO_VERSION_NUMBER);
-
     sendProxyMsg();
 }
 
@@ -106,6 +122,7 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
     if (pm_in.ParseFromString(m.buf) == false)
     {
         cout << "pm parse failed" << endl;
+        WaitUtil::Lock  lock(&sendLock);
         pm_out.Clear();
         pm_out.set_type(PMT_CLOSING);
         pm_out.mutable_closing()->set_reason("pm parse failed");
@@ -122,6 +139,7 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
         if (pm_in.protover().version() != PMT_PROTO_VERSION_NUMBER)
         {
             cerr << "protocol version mismatch!" << endl;
+            WaitUtil::Lock  lock(&sendLock);
             pm_out.Clear();
             pm_out.set_type(PMT_CLOSING);
             pm_out.mutable_closing()->set_reason("protocol version mismatch");
@@ -129,7 +147,10 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
             ret = false;
         }
         else
+        {
             allowReads = true;
+            gettimeofday(&lastPing, NULL);
+        }
         break;
 
     case PMT_CLOSING:
@@ -152,6 +173,18 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
         }
         if (cc <= 0)
             ret = false;
+        break;
+    }
+
+    case PMT_PING:
+    {
+        myTimeval  now, then, diff;
+        gettimeofday(&now, NULL);
+        then.tv_sec = pm_in.ping().time_sec();
+        then.tv_usec = pm_in.ping().time_usec();
+        diff = now - then;
+        printf("ping round trip delay = %u.%06u\n",
+               diff.tv_sec, diff.tv_usec);
         break;
     }
     }

@@ -2,7 +2,9 @@
 
 #include "WebSocketClient.h"
 #include "fd_mgr.H"
+#include "myTimeval.h"
 #include "proxyMsgs.pb.h"
+#include <sys/time.h>
 
 class proxyClientConn : public fd_interface,
                         public WebAppClient::WebSocketClient
@@ -16,6 +18,7 @@ private:
     /*virtual*/ ~proxyClientConn(void);
     bool allowReads;
     int sequence;
+    WebAppServer::myTimeval lastPing;
     proxyTcp::ProxyMsg  pm_in;
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;
