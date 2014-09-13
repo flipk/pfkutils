@@ -1,0 +1,11 @@
+#!/bin/sh
+
+desthost=127.0.0.1
+destport=6001
+wsport=1081
+wspath=/websocket/proxy
+
+./wsProxyServer destHost=$desthost destPort=$destport \
+        wsPort=$wsport wsPath=$wspath
+
+exit 0

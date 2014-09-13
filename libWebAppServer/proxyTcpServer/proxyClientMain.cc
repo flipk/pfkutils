@@ -1,44 +1,49 @@
 
-/*
-PROXY_CONNECT=1
-PROXY=wwwgate0.mot.com:1080
-PROXY=10.0.0.15:1080
-URL=ws://10.0.0.3:1081/websocket/proxy
-URL=ws://leviathan.phillipknaack.com/websocket/levproto
-LISTEN_PORT=2222
-*/
+// wsProxyClient proxyConn proxy=wwwgate0.mot.com:1080 \
+//   url=ws://leviathan.phillipknaack.com/websocket/levproto listenPort=2222
 
 #include "proxyClientConn.h"
 #include "proxyClientTcpAcceptor.h"
-
-#define DEFAULT_LISTEN_PORT 2222
-#define DEFAULT_URL "ws://leviathan.phillipknaack.com/websocket/levproto"
 
 using namespace std;
 using namespace WebAppServer;
 using namespace WebAppClient;
 
-int
-main()
+int usage(void)
 {
-    fd_mgr   mgr(false);
+    cerr << "usage: wsProxyClient [proxyConn] [proxy=<host>:<port>]\n"
+         << "              url=ws://<host>[:<port>]/websocket/<wsname> \n"
+         << "              listenPort=<portnumber>\n";
+    return 1;
+}
 
-    int listenPort = DEFAULT_LISTEN_PORT;
-    char * listenPortStr = getenv("LISTEN_PORT");
-    if (listenPortStr != NULL)
-        listenPort = atoi(listenPortStr);
-
+int
+main(int argc, char ** argv)
+{
+    int listenPort = -1;
     bool proxyConnect = false;
-    if (getenv("PROXY_CONNECT"))
-        proxyConnect = true;
-    std::string proxy = "";
-    char * proxyStr = getenv("PROXY");
-    if (proxyStr != NULL)
-        proxy = proxyStr;
-    std::string url = DEFAULT_URL;
-    char * urlStr = getenv("URL");
-    if (urlStr != NULL)
-        url = urlStr;
+    string proxy = "";
+    string url = "";
+
+    for (int argN = 1; argN < argc; argN++)
+    {
+        string arg(argv[argN]);
+        if (arg == "proxyConn")
+            proxyConnect = true;
+        else if (arg.compare(0,6,"proxy=") == 0)
+            proxy = arg.substr(6);
+        else if (arg.compare(0,4,"url=") == 0)
+            url = arg.substr(4);
+        else if (arg.compare(0,11,"listenPort=") == 0)
+            listenPort = atoi(arg.substr(11).c_str());
+        else
+            return usage();
+    }
+
+    if (listenPort <= 0  ||  url == "")
+        return usage();
+
+    fd_mgr   mgr(false);
 
     mgr.register_fd(new proxyClientTcpAcceptor(listenPort, proxy,
                                                proxyConnect, url));

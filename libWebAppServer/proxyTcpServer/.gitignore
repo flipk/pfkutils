@@ -1,6 +1,4 @@
-proxyClient
-proxyServer
+wsProxyClient
+wsProxyServer
 proxyMsgs.pb.cc
 proxyMsgs.pb.h
-client
-server

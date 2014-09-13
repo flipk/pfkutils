@@ -1,41 +1,51 @@
 
+// wsProxyServer destHost=blade.phillipknaack.com destPort=22 \
+//   wsPort=1081 wsPath=/websocket/levproto
+
 #include "WebAppServer.h"
 #include "proxyServerConn.h"
 #include <stdlib.h>
 
 using namespace std;
 
-int
-main()
+int usage(void)
 {
-    char * destHostStr = getenv("DEST_HOST");
-    if (destHostStr == NULL)
+    cerr << "usage: wsProxyServer destHost=<host> destPort=<port> \n"
+         << "       wsPort=<port> wsPath=<path> \n";
+    return 1;
+}
+
+int
+main(int argc, char ** argv)
+{
+    string destHost = "";
+    int destPort = -1;
+    int wsPort = -1;
+    string wsPath = "";
+
+    for (int argN = 1; argN < argc; argN++)
     {
-        cerr << "please set DEST_HOST" << endl;
-        return 1;
+        string arg(argv[argN]);
+        if (arg.compare(0,9,"destHost=") == 0)
+            destHost = arg.substr(9);
+        else if (arg.compare(0,9,"destPort=") == 0)
+            destPort = atoi(arg.substr(9).c_str());
+        else if (arg.compare(0,7,"wsPort=") == 0)
+            wsPort = atoi(arg.substr(7).c_str());
+        else if (arg.compare(0,7,"wsPath=") == 0)
+            wsPath = arg.substr(7);
+        else
+            return usage();
     }
 
-    char * destPortStr = getenv("DEST_PORT");
-    if (destPortStr == NULL)
-    {
-        cerr << "please set DEST_PORT" << endl;
-        return 1;
-    }
+    if (destHost == "" || destPort <= 0 || wsPort <= 0 || wsPath == "")
+        return usage();
 
     WebAppServer::WebAppServerConfig  serverConfig;
-    proxyServerConnCB   proxyCB(destHostStr, atoi(destPortStr));
+    proxyServerConnCB   proxyCB(destHost, destPort);
     WebAppServer::WebAppServerServer        server;
 
-    char * portNumEnv = getenv("PROXY_WS_PORT");
-    int portNum = 1081;
-    if (portNumEnv)
-        portNum = atoi(portNumEnv);
-
-    const char * proxyPathEnv = getenv("PROXY_WS_PATH");
-    if (proxyPathEnv == NULL)
-        proxyPathEnv = "/websocket/proxy";
-
-    serverConfig.addWebsocket(portNum, proxyPathEnv,
+    serverConfig.addWebsocket(wsPort, wsPath,
                               &proxyCB, /*poll*/ -1);
 
     server.start(&serverConfig);

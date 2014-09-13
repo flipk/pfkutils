@@ -13,7 +13,7 @@ LIBS= ../BUILD/libWebAppServer.a -lprotobuf -lpthread
 
 CPPFLAGS= -g3
 
-PROGS= proxyServer proxyClient
+PROGS= wsProxyServer wsProxyClient
 
 all: xmakefile
 	+cd ../BUILD && make
@@ -29,11 +29,11 @@ xmakefile: proxyMsgs.pb.h Makefile $(SRCS)
 proxyMsgs.pb.h proxyMsgs.pb.cc : proxyMsgs.proto
 	protoc --cpp_out=. proxyMsgs.proto
 
-proxyServer: $(SERVER_OBJS) $(LIBDEP)
-	g++ $(SERVER_OBJS) $(LIBS) -o proxyServer
+wsProxyServer: $(SERVER_OBJS) $(LIBDEP)
+	g++ $(SERVER_OBJS) $(LIBS) -o wsProxyServer
 
-proxyClient: $(CLIENT_OBJS) $(LIBDEP)
-	g++ $(CLIENT_OBJS) $(LIBS) -o proxyClient
+wsProxyClient: $(CLIENT_OBJS) $(LIBDEP)
+	g++ $(CLIENT_OBJS) $(LIBS) -o wsProxyClient
 
 .cc.o:
 	g++ $(CPPFLAGS) -c $(INCS) $*.cc

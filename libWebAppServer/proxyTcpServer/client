@@ -1,0 +1,13 @@
+#!/bin/sh
+
+#proxyconn=proxyConn
+#proxy=proxy=wwwgate0.mot.com:1080
+#url=ws://leviathan.phillipknaack.com/websocket/levproto
+#listenport=2222
+
+url=ws://10.0.0.3:1081/websocket/proxy
+listenport=6002
+
+./wsProxyClient $proxyconn $proxy url=$url listenPort=$listenport
+
+exit 0
