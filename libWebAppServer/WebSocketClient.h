@@ -30,7 +30,7 @@ struct WSClientError
     WSClientError(err _e) : e(_e) { }
 };
 
-class WebSocketClient : WebAppServer::fdThreadLauncher,
+class WebSocketClient : fdThreadLauncher,
                         public WaitUtil::Lockable
 {
     bool finished;

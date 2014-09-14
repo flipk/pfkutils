@@ -133,12 +133,13 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libpfkutil_la_LIBADD =
 am__libpfkutil_la_SOURCES_DIST = pk-md5.c m.c fd_mgr.C base64.c \
 	inet_aton.c thread_slinger.cc shmempipe.cc HSM.cc dll3.cc \
-	hsmthread.cc LockWait.cc prioWorkQ.cc regex.c
+	hsmthread.cc LockWait.cc prioWorkQ.cc regex.c \
+	fdThreadLauncher.cc sha1.cc
 @PFK_NEED_REGEX_TRUE@am__objects_1 = regex.lo
 am_libpfkutil_la_OBJECTS = pk-md5.lo m.lo fd_mgr.lo base64.lo \
 	inet_aton.lo thread_slinger.lo shmempipe.lo HSM.lo dll3.lo \
 	hsmthread.lo LockWait.lo prioWorkQ.lo regex.lo \
-	$(am__objects_1)
+	fdThreadLauncher.lo sha1.lo $(am__objects_1)
 libpfkutil_la_OBJECTS = $(am_libpfkutil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -230,7 +231,8 @@ am__can_run_installinfo = \
   esac
 am__libpfkutil_la_HEADERS_DIST = pk-md5.h types.H bst.H m.h fd_mgr.H \
 	base64.h inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
-	hsmthread.h LockWait.h prioWorkQ.h regex.h
+	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
+	sha1.h
 HEADERS = $(libpfkutil_la_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -330,6 +332,7 @@ PFK_BUILD_runrxvt = @PFK_BUILD_runrxvt@
 PFK_BUILD_sudo = @PFK_BUILD_sudo@
 PFK_BUILD_syslog = @PFK_BUILD_syslog@
 PFK_BUILD_treescan = @PFK_BUILD_treescan@
+PFK_BUILD_webappserver = @PFK_BUILD_webappserver@
 PFK_ENVIRON = @PFK_ENVIRON@
 PFK_GROUP_ID = @PFK_GROUP_ID@
 PFK_SHELL_PATH = @PFK_SHELL_PATH@
@@ -405,10 +408,12 @@ lib_LTLIBRARIES = libpfkutil.la
 libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = pk-md5.h types.H bst.H m.h fd_mgr.H base64.h \
 	inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
-	hsmthread.h LockWait.h prioWorkQ.h regex.h $(am__append_1)
+	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
+	sha1.h $(am__append_1)
 libpfkutil_la_SOURCES = pk-md5.c m.c fd_mgr.C base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
-	LockWait.cc prioWorkQ.cc regex.c $(am__append_2)
+	LockWait.cc prioWorkQ.cc regex.c fdThreadLauncher.cc sha1.cc \
+	$(am__append_2)
 shmempipe_test_master_SOURCES = shmempipe_test_master.cc
 shmempipe_test_master_LDADD = libpfkutil.la
 shmempipe_test_slave_SOURCES = shmempipe_test_slave.cc
@@ -543,6 +548,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fdThreadLauncher.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fd_mgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hsmthread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hsmthread_test.Po@am__quote@
@@ -551,6 +557,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pk-md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prioWorkQ.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sha1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shmempipe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shmempipe_test_master.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shmempipe_test_slave.Po@am__quote@

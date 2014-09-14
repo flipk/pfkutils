@@ -3,8 +3,6 @@
 #ifndef __MYTIMEVAL_H__
 #define __MYTIMEVAL_H__
 
-namespace WebAppServer {
-
 struct myTimeval : public timeval
 {
     myTimeval(void) { tv_sec = 0; tv_usec = 0; }
@@ -72,7 +70,5 @@ static inline bool operator>(const myTimeval &lhs, const myTimeval &other) {
       return false;
    return lhs.tv_usec > other.tv_usec;
 }
-
-} // namespace WebAppServer
 
 #endif /* __MYTIMEVAL_H__ */

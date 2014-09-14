@@ -16,11 +16,11 @@ make install
 
 blade:
 
-../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk
+../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk --enable-webappserver
 
 hertz & adler:
 
-../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-ampfk
+../configure --enable-environ=mot --enable-ctwm --enable-pdksh --enable-cscope --enable-ampfk --enable-webappserver
 
 bohr:
 

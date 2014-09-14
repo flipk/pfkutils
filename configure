@@ -718,6 +718,9 @@ PFK_BUILD_treescan
 PFK_AM_BUILD_checksize_FALSE
 PFK_AM_BUILD_checksize_TRUE
 PFK_BUILD_checksize
+PFK_AM_BUILD_webappserver_FALSE
+PFK_AM_BUILD_webappserver_TRUE
+PFK_BUILD_webappserver
 PFK_AM_BUILD_syslog_FALSE
 PFK_AM_BUILD_syslog_TRUE
 PFK_BUILD_syslog
@@ -825,6 +828,7 @@ enable_environ
 enable_etg
 enable_pfkbak
 enable_syslog
+enable_webappserver
 enable_checksize
 enable_treescan
 enable_ampfk
@@ -1487,6 +1491,7 @@ Optional Features:
   --enable-etg            build encrypted telnet gate tools
   --enable-pfkbak            build backup server
   --enable-syslog            build my syslog tools
+  --enable-webappserver            build libWebAppServer
   --enable-checksize            build checksize tool
   --enable-treescan            build treescan tool
   --enable-ampfk            build pfk automake
@@ -4720,6 +4725,43 @@ fi
 else
   PFK_AM_BUILD_syslog_TRUE='#'
   PFK_AM_BUILD_syslog_FALSE=
+fi
+
+
+
+
+  # Check whether --enable-webappserver was given.
+if test "${enable_webappserver+set}" = set; then :
+  enableval=$enable_webappserver;
+     pfk_build_desc_webappserver="build libWebAppServer"
+     case $enableval in
+      yes)
+        pfk_build_webappserver=yes
+        PFK_BUILD=1
+        ;;
+      no)
+        pfk_build_webappserver=no
+	PFK_BUILD=0
+        ;;
+      *)
+        as_fn_error $? "valid args: --enable-webappserver or --disable-webappserver" "$LINENO" 5
+        ;;
+     esac
+else
+
+     pfk_build_webappserver=no
+     PFK_BUILD=0
+
+fi
+
+  PFK_BUILD_webappserver=$PFK_BUILD
+
+   if test $pfk_build_webappserver = "yes"; then
+  PFK_AM_BUILD_webappserver_TRUE=
+  PFK_AM_BUILD_webappserver_FALSE='#'
+else
+  PFK_AM_BUILD_webappserver_TRUE='#'
+  PFK_AM_BUILD_webappserver_FALSE=
 fi
 
 
@@ -18989,7 +19031,7 @@ fi
 PFK_USER_NAME=$USER
 
 
-ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile i2/Makefile syslog/Makefile backup/Makefile teld/Makefile enctelgate/Makefile ampfk/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
+ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile libWebAppServer/Makefile i2/Makefile syslog/Makefile backup/Makefile teld/Makefile enctelgate/Makefile ampfk/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: build encrypted telnet gate tools: $pfk_build_etg" >&5
@@ -18998,6 +19040,8 @@ $as_echo "$as_me: build encrypted telnet gate tools: $pfk_build_etg" >&6;}
 $as_echo "$as_me: build backup server: $pfk_build_pfkbak" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build my syslog tools: $pfk_build_syslog" >&5
 $as_echo "$as_me: build my syslog tools: $pfk_build_syslog" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: build libWebAppServer: $pfk_build_webappserver" >&5
+$as_echo "$as_me: build libWebAppServer: $pfk_build_webappserver" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build checksize tool: $pfk_build_checksize" >&5
 $as_echo "$as_me: build checksize tool: $pfk_build_checksize" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build treescan tool: $pfk_build_treescan" >&5
@@ -19170,6 +19214,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_syslog_TRUE}" && test -z "${PFK_AM_BUILD_syslog_FALSE}"; then
   as_fn_error $? "conditional \"PFK_AM_BUILD_syslog\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PFK_AM_BUILD_webappserver_TRUE}" && test -z "${PFK_AM_BUILD_webappserver_FALSE}"; then
+  as_fn_error $? "conditional \"PFK_AM_BUILD_webappserver\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_checksize_TRUE}" && test -z "${PFK_AM_BUILD_checksize_FALSE}"; then
@@ -20201,6 +20249,7 @@ do
     "libpfkthread/Doxyfile") CONFIG_FILES="$CONFIG_FILES libpfkthread/Doxyfile" ;;
     "libpfkutil/Makefile") CONFIG_FILES="$CONFIG_FILES libpfkutil/Makefile" ;;
     "libpfkutil/Doxyfile") CONFIG_FILES="$CONFIG_FILES libpfkutil/Doxyfile" ;;
+    "libWebAppServer/Makefile") CONFIG_FILES="$CONFIG_FILES libWebAppServer/Makefile" ;;
     "i2/Makefile") CONFIG_FILES="$CONFIG_FILES i2/Makefile" ;;
     "syslog/Makefile") CONFIG_FILES="$CONFIG_FILES syslog/Makefile" ;;
     "backup/Makefile") CONFIG_FILES="$CONFIG_FILES backup/Makefile" ;;

@@ -6,8 +6,6 @@
 #include <iostream>
 #include <inttypes.h>
 
-namespace WebAppServer {
-
 class fdThreadLauncher {
 public:
     enum fdThreadState {
@@ -42,7 +40,5 @@ public:
 };
 std::ostream &operator<<(std::ostream &ostr,
                          const fdThreadLauncher::fdThreadState state);
-
-} // namespace WebAppServer
 
 #endif /* __FDTHREADLAUNCHER_H__ */

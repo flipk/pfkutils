@@ -16,7 +16,7 @@ private:
     /*virtual*/ bool doPoll(void) { return wacDoPoll(); }
 };
 
-class proxyServerConnfdtlShim : public WebAppServer::fdThreadLauncher
+class proxyServerConnfdtlShim : public fdThreadLauncher
 {
 public:
     virtual bool fdtlDoPoll(void) = 0;

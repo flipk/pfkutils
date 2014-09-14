@@ -15,8 +15,6 @@
 
 using namespace std;
 
-namespace WebAppServer {
-
 fdThreadLauncher :: fdThreadLauncher(void)
 {
     fd = -1;
@@ -284,5 +282,3 @@ std::ostream &operator<<(std::ostream &ostr,
     }
     return ostr;
 }
-
-} // namespace WebAppServer

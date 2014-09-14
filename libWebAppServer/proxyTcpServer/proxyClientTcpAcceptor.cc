@@ -22,7 +22,7 @@ proxyClientTcpAcceptor :: proxyClientTcpAcceptor(short listenPort,
     proxyConnect = _proxyConnect;
     url = _url;
 
-    fd = WebAppServer::fdThreadLauncher::makeListeningSocket( listenPort );
+    fd = fdThreadLauncher::makeListeningSocket( listenPort );
 
     make_nonblocking();
 }

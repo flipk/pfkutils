@@ -26,7 +26,7 @@ value_to_b64( int v )
 {
     static unsigned char table[] = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    if ( v >= sizeof(table)   ||   v < 0 )
+    if ( v >= (int)sizeof(table)   ||   v < 0 )
         return -1;
     return table[ v ];
 }
@@ -62,7 +62,8 @@ b64_is_valid_char( unsigned char c )
 
 /* return 4 if ok, 0 if not ok */
 int
-b64_encode_quantum( unsigned char * in3, int in_len, unsigned char * out4 )
+b64_encode_quantum( const unsigned char * in3, int in_len,
+                    unsigned char * out4 )
 {
     int v;
     unsigned int val;
@@ -102,7 +103,7 @@ b64_encode_quantum( unsigned char * in3, int in_len, unsigned char * out4 )
 
 /* return length of bytes decoded, or 0 if not ok */
 int
-b64_decode_quantum( unsigned char * in4, unsigned char * out3 )
+b64_decode_quantum( const unsigned char * in4, unsigned char * out3 )
 {
     int val=0,v;
     int ret;

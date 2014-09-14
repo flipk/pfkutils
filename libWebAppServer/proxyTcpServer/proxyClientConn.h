@@ -18,7 +18,7 @@ private:
     /*virtual*/ ~proxyClientConn(void);
     bool allowReads;
     int sequence;
-    WebAppServer::myTimeval lastPing;
+    myTimeval lastPing;
     proxyTcp::ProxyMsg  pm_in;
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;
