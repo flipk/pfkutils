@@ -7,7 +7,9 @@ SRCS= proxyServerConn.cc proxyClientTcpAcceptor.cc \
 SERVER_OBJS= proxyServerMain.o proxyServerConn.o proxyMsgs.pb.o
 CLIENT_OBJS= proxyClientMain.o proxyClientConn.o proxyMsgs.pb.o \
 	proxyClientTcpAcceptor.o
-LIBS= -L$(HOME)/pfk/$(PFKARCH)/lib -lWebAppServer -lpfkutil -lprotobuf -lpthread
+LIBS= -L$(HOME)/pfk/$(PFKARCH)/lib -lWebAppServer -lpfkutil \
+	-Wl,-rpath -Wl,$(HOME)/pfk/$(PFKARCH)/lib \
+	-lprotobuf -lpthread 
 
 CPPFLAGS= -O3
 
