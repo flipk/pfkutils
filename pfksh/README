@@ -1,0 +1,59 @@
+
+This is PFKSH.  It is based on pdksh-5.2.14.  That shell has not been
+updated since June of 1999, so I decided to fork it.  I have also done
+a great deal of cleanup.  Compilers and OSs have changed greatly since
+1999.
+
+- updated to recent automake
+
+- quieted many compiler warnings (recent gcc hates some of those old
+  coding styles, e.g. "if else if else if else" without curlies.  so
+  many, many places with missing curlies....).
+
+- strings passed to shf_vfprintf have chars interleaved with CHAR
+  tokens.  oops. this was making 'jobs' output print like crap, every
+  other char was a nonprintable garbage char.
+
+- I have removed vi-mode because who the heck uses that.
+
+- made x_cols resizing when we get TIOCGWINSZ.
+
+- made many features mandatory that used to be optional (history, job
+  control, emacs mode, ksh, edit, sharpbang, brace expand)
+
+- removed useless ksh frontends to common unix apis (ksh_times, etc)
+
+- remove useless 'register' keyword from all over the source
+
+- ifdef HAVE_PROTOTYPES?  we've had that for decades.   DUP2_BROKEN?
+  EEXIST?  EISDIR?  MEMMOVE BCOPY MEMSET LIONS TIGERS BEARS
+
+- nobody gets unix-style mail anymore. removed /var/mail support.
+
+- quite a few bits of code where 'if 0' because they didn't work or
+  something?
+
+- in many cases, undid K&R function prototypes
+
+- I have removed a lot of code for very old platforms that no longer
+  make sense (OS2, CRAY*, SYSV, SWTCH, CYGWIN, HPUX, MINIX, NeXT, SCO).
+     - as a side comment, the OS2 support really screwed up
+       a lot of crap.
+
+- I have cleaned up emacs-mode.
+
+- tab-completion can take ESC-number to autocomplete from numbered
+  expansions output.
+
+- and yes, KSH_VERSION says "PFK KSH v0.0.1" now... sorry.
+
+TODO
+
+( search for 'PFK BUG' in the source )
+
+- make tab-completion understand filenames with spaces.
+
+- xtree !!!  this could be really cool.
+
+- "j_async: bad nzombie" is seen all the time on ubunutu 10
+

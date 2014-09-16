@@ -14,6 +14,10 @@ if PFK_AM_BUILD_pfkbak
 SUBDIRS += backup
 endif
 
+if PFK_AM_BUILD_pfksh
+SUBDIRS += pfksh
+endif
+
 if PFK_AM_BUILD_syslog
 SUBDIRS += syslog
 endif

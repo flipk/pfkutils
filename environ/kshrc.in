@@ -1,24 +1,24 @@
 
 ###########################################################################
 #
-#      Last update: 2014-05-07.21:22:06
+#      Last update: 2014-09-16.00:17:31
 #
 #  ATTENTION READER OF THIS FILE
 #
 #  I do something funny.  ITS does not have the shell I like to use.
-#  I like to use pdksh, which is ksh plus useful features, such as
+#  I like to use pfksh, which is ksh plus useful features, such as
 #  the command history and tab completion you expect in a shell, but
 #  with all the nifty 'sh' or 'ksh' features like functions and
 #  file-descriptor numbers specified for redirects.
 #
-#  I have therefore built pdksh in my own directory. But I cannot just
+#  I have therefore built pfksh in my own directory. But I cannot just
 #  change my account's login shell to point to a file in my homedir,
 #  because if it turns out that my nfs fileserver for my homedir is down,
 #  then I can't login.
 #
 #  So I do something funny. My login shell is /bin/ksh which is present
 #  on all ITS machines if nfs servers are up or down. This script then
-#  attempts to locate my pdksh binary and if it is found, it is then exec'd.
+#  attempts to locate my pfksh binary and if it is found, it is then exec'd.
 #  From that point on on that machine, $SHELL points to my home dir.
 #
 #  But this is really gross, so if you're going to take things from this
@@ -750,13 +750,13 @@ fi
 unset __MYSHELL_LAUNCHER
 
 #
-# now try to ensure that we're running pdksh.
-# if we can find a pdksh, copy it to $TMPDIR
+# now try to ensure that we're running pfksh.
+# if we can find a pfksh, copy it to $TMPDIR
 # and then exec. otherwise continue running
 # what we have.
 #
 
-ksh_new=@prefix@/$PFKARCH/bin/pdksh
+ksh_new=@prefix@/$PFKARCH/bin/pfksh
 
 if [ $0 = "/bin/ksh" ] ; then
     SHELL=/bin/ksh
@@ -817,7 +817,7 @@ __verbose running correct shell, finishing setup
 
 unset ksh_new ksh_final
 
-# set up keybindings that pdksh understands.
+# set up keybindings that pfksh understands.
 
 if __isksh ; then
    if [[ x$TERM != "dumb" ]] ; then

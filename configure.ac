@@ -76,7 +76,7 @@ PFK_ARG_ENABLE([sudo],       [build my version of sudo])
 PFK_ARG_ENABLE([runemacs],   [build cygwin runemacs])
 PFK_ARG_ENABLE([runrxvt],    [build cygwin runrxvt])
 PFK_ARG_ENABLE([ctwm],       [build claude's tab window manager])
-PFK_ARG_ENABLE([pdksh],      [build public domain korn shell])
+PFK_ARG_ENABLE([pfksh],      [build public domain pfk korn shell])
 PFK_ARG_ENABLE([cscope],     [build cscope])
 PFK_ARG_ENABLE([doxygen],    [build doxygen documentation])
 
@@ -239,6 +239,7 @@ AC_CONFIG_FILES([
     i2/Makefile
     syslog/Makefile
     backup/Makefile
+    pfksh/Makefile
     teld/Makefile
     enctelgate/Makefile
     ampfk/Makefile

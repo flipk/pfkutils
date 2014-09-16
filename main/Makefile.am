@@ -16,6 +16,10 @@ if PFK_AM_BUILD_pfkbak
 pfkutils_new_LDADD += ../backup/libbackup.a
 endif
 
+if PFK_AM_BUILD_pfksh
+pfkutils_new_LDADD += ../pfksh/libpfksh.a
+endif
+
 if PFK_AM_BUILD_sudo
 pfkutils_new_SOURCES += sudo.c sudo.h
 endif

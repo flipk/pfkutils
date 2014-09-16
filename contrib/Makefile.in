@@ -182,8 +182,8 @@ PFK_BUILD_cscope = @PFK_BUILD_cscope@
 PFK_BUILD_ctwm = @PFK_BUILD_ctwm@
 PFK_BUILD_doxygen = @PFK_BUILD_doxygen@
 PFK_BUILD_etg = @PFK_BUILD_etg@
-PFK_BUILD_pdksh = @PFK_BUILD_pdksh@
 PFK_BUILD_pfkbak = @PFK_BUILD_pfkbak@
+PFK_BUILD_pfksh = @PFK_BUILD_pfksh@
 PFK_BUILD_runemacs = @PFK_BUILD_runemacs@
 PFK_BUILD_runrxvt = @PFK_BUILD_runrxvt@
 PFK_BUILD_sudo = @PFK_BUILD_sudo@
@@ -262,7 +262,6 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 CSCOPE = cscope-15.7a
-PDKSH = pdksh-5.2.14
 CTWM = ctwm-3.8a
 all: all-am
 
@@ -467,16 +466,6 @@ all-local:
 @PFK_AM_BUILD_cscope_TRUE@		cd $(builddir)/$(CSCOPE) && $(abs_srcdir)/$(CSCOPE)/configure --prefix=$(exec_prefix) ; \
 @PFK_AM_BUILD_cscope_TRUE@	fi
 @PFK_AM_BUILD_cscope_TRUE@	cd $(builddir)/$(CSCOPE) ; make all
-@PFK_AM_BUILD_pdksh_TRUE@	if [ ! -f $(builddir)/$(PDKSH)/Makefile ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		touch $(abs_srcdir)/$(PDKSH)/configure ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	if [ ! -d $(builddir)/$(PDKSH) ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		mkdir $(builddir)/$(PDKSH) ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	set -e ; if [ ! -f $(PDKSH)/Makefile ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		cd $(builddir)/$(PDKSH) && $(abs_srcdir)/$(PDKSH)/configure --prefix=$(exec_prefix) ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	cd $(builddir)/$(PDKSH) ; make all
 @PFK_AM_BUILD_ctwm_TRUE@	if [ ! -d $(builddir)/$(CTWM) ] ; then \
 @PFK_AM_BUILD_ctwm_TRUE@		cd $(abs_srcdir) ; \
 @PFK_AM_BUILD_ctwm_TRUE@		dirs=`find $(CTWM) -type d -print` ; \
@@ -504,15 +493,6 @@ install-exec-local:
 @PFK_AM_BUILD_cscope_TRUE@	fi
 @PFK_AM_BUILD_cscope_TRUE@	mv $(DESTDIR)$(bindir)/cscope.new $(DESTDIR)$(bindir)/cscope
 @PFK_AM_BUILD_cscope_TRUE@	rm -f $(DESTDIR)$(bindir)/cscope.old
-@PFK_AM_BUILD_pdksh_TRUE@	cp $(PDKSH)/ksh $(DESTDIR)$(bindir)/ksh.new
-@PFK_AM_BUILD_pdksh_TRUE@	chmod 755 $(DESTDIR)$(bindir)/ksh.new
-@PFK_AM_BUILD_pdksh_TRUE@	$(STRIP) $(DESTDIR)$(bindir)/ksh.new
-@PFK_AM_BUILD_pdksh_TRUE@	if [ -f $(DESTDIR)$(bindir)/ksh ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		mv $(DESTDIR)$(bindir)/ksh $(DESTDIR)$(bindir)/ksh.old ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	mv $(DESTDIR)$(bindir)/ksh.new $(DESTDIR)$(bindir)/ksh
-@PFK_AM_BUILD_pdksh_TRUE@	rm -f $(DESTDIR)$(bindir)/ksh.old
-@PFK_AM_BUILD_pdksh_TRUE@	cd $(DESTDIR)$(bindir) && rm -f pdksh && ln ksh pdksh
 @PFK_AM_BUILD_ctwm_TRUE@	cp $(CTWM)/ctwm $(DESTDIR)$(bindir)/ctwm.new
 @PFK_AM_BUILD_ctwm_TRUE@	chmod 755 $(DESTDIR)$(bindir)/ctwm.new
 @PFK_AM_BUILD_ctwm_TRUE@	$(STRIP) $(DESTDIR)$(bindir)/ctwm.new
@@ -526,9 +506,6 @@ clean-local:
 @PFK_AM_BUILD_cscope_TRUE@	set -e ; if [ -f $(CSCOPE)/Makefile ] ; then \
 @PFK_AM_BUILD_cscope_TRUE@		cd $(CSCOPE) ; make clean ; \
 @PFK_AM_BUILD_cscope_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		cd $(PDKSH) ; make clean ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
 @PFK_AM_BUILD_ctwm_TRUE@	set -e ; if [ -f $(CTWM)/Makefile ] ; then \
 @PFK_AM_BUILD_ctwm_TRUE@		cd $(CTWM) ; make clean ; \
 @PFK_AM_BUILD_ctwm_TRUE@	fi
@@ -538,9 +515,6 @@ distclean-local:
 @PFK_AM_BUILD_cscope_TRUE@	set -e ; if [ -f $(CSCOPE)/Makefile ] ; then \
 @PFK_AM_BUILD_cscope_TRUE@		cd $(CSCOPE) ; make distclean ; \
 @PFK_AM_BUILD_cscope_TRUE@	fi
-@PFK_AM_BUILD_pdksh_TRUE@	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-@PFK_AM_BUILD_pdksh_TRUE@		cd $(PDKSH) ; make distclean ; \
-@PFK_AM_BUILD_pdksh_TRUE@	fi
 @PFK_AM_BUILD_ctwm_TRUE@	set -e ; if [ -f $(CTWM)/Makefile ] ; then \
 @PFK_AM_BUILD_ctwm_TRUE@		cd $(CTWM) ; make clean ; \
 @PFK_AM_BUILD_ctwm_TRUE@	fi

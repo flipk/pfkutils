@@ -694,9 +694,9 @@ PFK_BUILD_doxygen
 PFK_AM_BUILD_cscope_FALSE
 PFK_AM_BUILD_cscope_TRUE
 PFK_BUILD_cscope
-PFK_AM_BUILD_pdksh_FALSE
-PFK_AM_BUILD_pdksh_TRUE
-PFK_BUILD_pdksh
+PFK_AM_BUILD_pfksh_FALSE
+PFK_AM_BUILD_pfksh_TRUE
+PFK_BUILD_pfksh
 PFK_AM_BUILD_ctwm_FALSE
 PFK_AM_BUILD_ctwm_TRUE
 PFK_BUILD_ctwm
@@ -836,7 +836,7 @@ enable_sudo
 enable_runemacs
 enable_runrxvt
 enable_ctwm
-enable_pdksh
+enable_pfksh
 enable_cscope
 enable_doxygen
 enable_shared
@@ -1499,7 +1499,7 @@ Optional Features:
   --enable-runemacs            build cygwin runemacs
   --enable-runrxvt            build cygwin runrxvt
   --enable-ctwm            build claude's tab window manager
-  --enable-pdksh            build public domain korn shell
+  --enable-pfksh            build public domain pfk korn shell
   --enable-cscope            build cscope
   --enable-doxygen            build doxygen documentation
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -5026,38 +5026,38 @@ fi
 
 
 
-  # Check whether --enable-pdksh was given.
-if test "${enable_pdksh+set}" = set; then :
-  enableval=$enable_pdksh;
-     pfk_build_desc_pdksh="build public domain korn shell"
+  # Check whether --enable-pfksh was given.
+if test "${enable_pfksh+set}" = set; then :
+  enableval=$enable_pfksh;
+     pfk_build_desc_pfksh="build public domain pfk korn shell"
      case $enableval in
       yes)
-        pfk_build_pdksh=yes
+        pfk_build_pfksh=yes
         PFK_BUILD=1
         ;;
       no)
-        pfk_build_pdksh=no
+        pfk_build_pfksh=no
 	PFK_BUILD=0
         ;;
       *)
-        as_fn_error $? "valid args: --enable-pdksh or --disable-pdksh" "$LINENO" 5
+        as_fn_error $? "valid args: --enable-pfksh or --disable-pfksh" "$LINENO" 5
         ;;
      esac
 else
 
-     pfk_build_pdksh=no
+     pfk_build_pfksh=no
      PFK_BUILD=0
 
 fi
 
-  PFK_BUILD_pdksh=$PFK_BUILD
+  PFK_BUILD_pfksh=$PFK_BUILD
 
-   if test $pfk_build_pdksh = "yes"; then
-  PFK_AM_BUILD_pdksh_TRUE=
-  PFK_AM_BUILD_pdksh_FALSE='#'
+   if test $pfk_build_pfksh = "yes"; then
+  PFK_AM_BUILD_pfksh_TRUE=
+  PFK_AM_BUILD_pfksh_FALSE='#'
 else
-  PFK_AM_BUILD_pdksh_TRUE='#'
-  PFK_AM_BUILD_pdksh_FALSE=
+  PFK_AM_BUILD_pfksh_TRUE='#'
+  PFK_AM_BUILD_pfksh_FALSE=
 fi
 
 
@@ -19031,7 +19031,7 @@ fi
 PFK_USER_NAME=$USER
 
 
-ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile libWebAppServer/Makefile i2/Makefile syslog/Makefile backup/Makefile teld/Makefile enctelgate/Makefile ampfk/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
+ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile libWebAppServer/Makefile i2/Makefile syslog/Makefile backup/Makefile pfksh/Makefile teld/Makefile enctelgate/Makefile ampfk/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: build encrypted telnet gate tools: $pfk_build_etg" >&5
@@ -19056,8 +19056,8 @@ $as_echo "$as_me: build cygwin runemacs: $pfk_build_runemacs" >&6;}
 $as_echo "$as_me: build cygwin runrxvt: $pfk_build_runrxvt" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build claude's tab window manager: $pfk_build_ctwm" >&5
 $as_echo "$as_me: build claude's tab window manager: $pfk_build_ctwm" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: build public domain korn shell: $pfk_build_pdksh" >&5
-$as_echo "$as_me: build public domain korn shell: $pfk_build_pdksh" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: build public domain pfk korn shell: $pfk_build_pfksh" >&5
+$as_echo "$as_me: build public domain pfk korn shell: $pfk_build_pfksh" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build cscope: $pfk_build_cscope" >&5
 $as_echo "$as_me: build cscope: $pfk_build_cscope" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build doxygen documentation: $pfk_build_doxygen" >&5
@@ -19248,8 +19248,8 @@ if test -z "${PFK_AM_BUILD_ctwm_TRUE}" && test -z "${PFK_AM_BUILD_ctwm_FALSE}"; 
   as_fn_error $? "conditional \"PFK_AM_BUILD_ctwm\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${PFK_AM_BUILD_pdksh_TRUE}" && test -z "${PFK_AM_BUILD_pdksh_FALSE}"; then
-  as_fn_error $? "conditional \"PFK_AM_BUILD_pdksh\" was never defined.
+if test -z "${PFK_AM_BUILD_pfksh_TRUE}" && test -z "${PFK_AM_BUILD_pfksh_FALSE}"; then
+  as_fn_error $? "conditional \"PFK_AM_BUILD_pfksh\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_cscope_TRUE}" && test -z "${PFK_AM_BUILD_cscope_FALSE}"; then
@@ -20253,6 +20253,7 @@ do
     "i2/Makefile") CONFIG_FILES="$CONFIG_FILES i2/Makefile" ;;
     "syslog/Makefile") CONFIG_FILES="$CONFIG_FILES syslog/Makefile" ;;
     "backup/Makefile") CONFIG_FILES="$CONFIG_FILES backup/Makefile" ;;
+    "pfksh/Makefile") CONFIG_FILES="$CONFIG_FILES pfksh/Makefile" ;;
     "teld/Makefile") CONFIG_FILES="$CONFIG_FILES teld/Makefile" ;;
     "enctelgate/Makefile") CONFIG_FILES="$CONFIG_FILES enctelgate/Makefile" ;;
     "ampfk/Makefile") CONFIG_FILES="$CONFIG_FILES ampfk/Makefile" ;;

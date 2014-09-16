@@ -1,6 +1,5 @@
 
 CSCOPE= cscope-15.7a
-PDKSH= pdksh-5.2.14
 CTWM= ctwm-3.8a
 
 all-local:
@@ -15,18 +14,6 @@ if PFK_AM_BUILD_cscope
 		cd $(builddir)/$(CSCOPE) && $(abs_srcdir)/$(CSCOPE)/configure --prefix=$(exec_prefix) ; \
 	fi
 	cd $(builddir)/$(CSCOPE) ; make all
-endif
-if PFK_AM_BUILD_pdksh
-	if [ ! -f $(builddir)/$(PDKSH)/Makefile ] ; then \
-		touch $(abs_srcdir)/$(PDKSH)/configure ; \
-	fi
-	if [ ! -d $(builddir)/$(PDKSH) ] ; then \
-		mkdir $(builddir)/$(PDKSH) ; \
-	fi
-	set -e ; if [ ! -f $(PDKSH)/Makefile ] ; then \
-		cd $(builddir)/$(PDKSH) && $(abs_srcdir)/$(PDKSH)/configure --prefix=$(exec_prefix) ; \
-	fi
-	cd $(builddir)/$(PDKSH) ; make all
 endif
 if PFK_AM_BUILD_ctwm
 	if [ ! -d $(builddir)/$(CTWM) ] ; then \
@@ -59,17 +46,6 @@ if PFK_AM_BUILD_cscope
 	mv $(DESTDIR)$(bindir)/cscope.new $(DESTDIR)$(bindir)/cscope
 	rm -f $(DESTDIR)$(bindir)/cscope.old
 endif
-if PFK_AM_BUILD_pdksh
-	cp $(PDKSH)/ksh $(DESTDIR)$(bindir)/ksh.new
-	chmod 755 $(DESTDIR)$(bindir)/ksh.new
-	$(STRIP) $(DESTDIR)$(bindir)/ksh.new
-	if [ -f $(DESTDIR)$(bindir)/ksh ] ; then \
-		mv $(DESTDIR)$(bindir)/ksh $(DESTDIR)$(bindir)/ksh.old ; \
-	fi
-	mv $(DESTDIR)$(bindir)/ksh.new $(DESTDIR)$(bindir)/ksh
-	rm -f $(DESTDIR)$(bindir)/ksh.old
-	cd $(DESTDIR)$(bindir) && rm -f pdksh && ln ksh pdksh
-endif
 if PFK_AM_BUILD_ctwm
 	cp $(CTWM)/ctwm $(DESTDIR)$(bindir)/ctwm.new
 	chmod 755 $(DESTDIR)$(bindir)/ctwm.new
@@ -87,11 +63,6 @@ if PFK_AM_BUILD_cscope
 		cd $(CSCOPE) ; make clean ; \
 	fi
 endif
-if PFK_AM_BUILD_pdksh
-	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-		cd $(PDKSH) ; make clean ; \
-	fi
-endif
 if PFK_AM_BUILD_ctwm
 	set -e ; if [ -f $(CTWM)/Makefile ] ; then \
 		cd $(CTWM) ; make clean ; \
@@ -103,11 +74,6 @@ distclean-local:
 if PFK_AM_BUILD_cscope
 	set -e ; if [ -f $(CSCOPE)/Makefile ] ; then \
 		cd $(CSCOPE) ; make distclean ; \
-	fi
-endif
-if PFK_AM_BUILD_pdksh
-	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-		cd $(PDKSH) ; make distclean ; \
 	fi
 endif
 if PFK_AM_BUILD_ctwm
