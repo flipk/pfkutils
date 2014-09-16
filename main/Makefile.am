@@ -3,7 +3,7 @@ bin_PROGRAMS = pfkutils.new
 
 pfkutils_new_SOURCES = \
 	crnl.c he.c random-hex.c \
-	rmstar.C fmtsdiff.c \
+	rmstar_new.cc fmtsdiff.c \
 	genpw.c xtermbar.c waitpid.c \
 	pfkstat.c \
 	main.C programs.h
