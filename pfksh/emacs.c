@@ -1544,6 +1544,29 @@ x_noop(c)
 	return KSTD;
 }
 
+static char *
+x_quotify(const char *in, int len)
+{
+	struct shf shf;
+	const char * w = in;
+	char c;
+
+	shf_sopen((char*) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+
+	if (len == 0)
+		len = strlen(in);
+
+	while (len-- > 0) {
+		c = *w++;
+		if (ctype(c, C_QUOTE)) {
+			shf_putchar('\\', &shf);
+		}
+		shf_putchar(c, &shf);
+	}
+
+	return shf_sclose(&shf);
+}
+
 /*
  *	File/command name completion routines
  */
@@ -1642,19 +1665,13 @@ do_complete(flags, type)
 	int do_glob = 1;
 	Comp_type t = type;
 	char *comp_word = (char *) 0;
+	int olen;
+	int nlen;
+	char *qtmp;
 
 	if (type == CT_COMPLIST) {
 		do_glob = 0;
 		/* decide what we will do */
-
-
-// PFK BUG : make sure this works on filenames with spaces in them,
-//           if the user put backslash-space.
-
-
-// PFK BUG : if we complete on a filename with a space, make sure the
-//           space gets escaped with a backslash before x_ins / x_do_ins.
-
 
 		nwords = x_cf_glob(flags,
 			xbuf, xep - xbuf, xcp - xbuf,
@@ -1693,65 +1710,67 @@ do_complete(flags, type)
 		x_e_putc(BEL);
 		return;
 	}
-	switch (type) {
-	  case CT_LIST:
-          if (x_arg_defaulted) {
-              x_print_expansions(nwords, words, is_command);
-              x_redraw(0);
-          } else {
-              if (x_arg > nwords)
-                  x_e_putc(BEL);
-              else
-              {
-                  x_goto(xbuf + start);
-                  x_delete(end - start, FALSE);
-                  x_ins(words[x_arg-1]);
-              } 
-          }
-		break;
 
-	  case CT_COMPLIST:
-		/* Only get here if nwords > 1 && comp_word is set */
-		{
-			int olen = end - start;
-			int nlen = strlen(comp_word);
-
-            if (x_arg_defaulted) {
-                x_print_expansions(nwords, words, is_command);
-                xcp = xbuf + end;
-                x_do_ins(comp_word + olen, nlen - olen);
-                x_redraw(0);
-            } else {
-                if (x_arg > nwords)
-                    x_e_putc(BEL);
-                else
-                {
-                    x_goto(xbuf + start);
-                    x_delete(end - start, FALSE);
-                    x_ins(words[x_arg-1]);
-                }
-            }
-		}
-		break;
-
-	  case CT_COMPLETE:
-		{
-			int nlen = x_longest_prefix(nwords, words);
-
-			if (nlen > 0) {
+	switch (type)
+	{
+	case CT_LIST:
+		if (x_arg_defaulted) {
+			x_print_expansions(nwords, words, is_command);
+			x_redraw(0);
+		} else {
+			if (x_arg > nwords)
+				x_e_putc(BEL);
+			else {
 				x_goto(xbuf + start);
 				x_delete(end - start, FALSE);
-				words[0][nlen] = '\0';
-				x_ins(words[0]);
-				/* If single match is not a directory, add a
-				 * space to the end...
-				 */
-				if (nwords == 1
-				    && !ISDIRSEP(words[0][nlen - 1]))
-					x_ins(space);
-			} else
-				x_e_putc(BEL);
+				qtmp = x_quotify(words[x_arg-1],0);
+				x_ins(qtmp);
+				afree(qtmp, ATEMP);
+			}
 		}
+		break;
+
+	case CT_COMPLIST:
+		/* Only get here if nwords > 1 && comp_word is set */
+		olen = end - start;
+		nlen = strlen(comp_word);
+		if (x_arg_defaulted) {
+			x_print_expansions(nwords, words, is_command);
+			xcp = xbuf + end;
+			qtmp = x_quotify(comp_word + olen, nlen - olen);
+			x_do_ins(qtmp, strlen(qtmp));
+			afree(qtmp, ATEMP);
+			x_redraw(0);
+		} else {
+			if (x_arg > nwords)
+				x_e_putc(BEL);
+			else {
+				x_goto(xbuf + start);
+				x_delete(end - start, FALSE);
+				qtmp = x_quotify(words[x_arg-1], 0);
+				x_ins(qtmp);
+				afree(qtmp, ATEMP);
+			}
+		}
+		break;
+
+	case CT_COMPLETE:
+		nlen = x_longest_prefix(nwords, words);
+		if (nlen > 0) {
+			x_goto(xbuf + start);
+			x_delete(end - start, FALSE);
+			words[0][nlen] = '\0';
+			qtmp = x_quotify(words[0], 0);
+			x_ins(qtmp);
+			afree(qtmp, ATEMP);
+			/* If single match is not a directory, add a
+			 * space to the end...
+			 */
+			if (nwords == 1
+			    && !ISDIRSEP(words[0][nlen - 1]))
+				x_ins(space);
+		} else
+			x_e_putc(BEL);
 		break;
 	}
 }

@@ -1,0 +1,20 @@
+
+PROG= pfksh
+
+SRCS= alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c exec.c expr.c history.c io.c jobs.c lex.c main.c misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c version.c
+
+OBJS= $(SRCS:.c=.o)
+
+DEFS= -Dpfksh_main=main
+OPTS= -g3
+
+all: $(PROG)
+
+$(PROG): $(OBJS)
+	gcc $(OBJS) -o $(PROG)
+
+.c.o:
+	gcc $(DEFS) $(OPTS) -c $*.c
+
+clean:
+	rm -f $(PROG) $(OBJS)

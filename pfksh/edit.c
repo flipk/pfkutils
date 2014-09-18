@@ -677,10 +677,13 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 	/* Keep going backwards to start of word (has effect of allowing
 	 * one blank after the end of a word)
 	 */
-	for (; start > 0 && IS_WORDC(buf[start - 1]); start--)
+	for (; (start > 0 && IS_WORDC(buf[start - 1])) ||
+		     (start > 1 && buf[start - 2] == '\\'); start--)
 		;
 	/* Go forwards to end of word */
-	for (end = start; end < buflen && IS_WORDC(buf[end]); end++)
+	for (end = start;
+	     (end < buflen && IS_WORDC(buf[end])) || (buf[end-1] == '\\');
+	     end++)
 		;
 
 	if (is_commandp) {
@@ -723,6 +726,9 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	int nwords;
 	char **words;
 	int is_command;
+	struct shf shf;
+	char * wp;
+	int wplen;
 
 	len = x_locate_word(buf, buflen, pos, startp, &is_command);
 	if (!(flags & XCF_COMMAND))
@@ -734,8 +740,23 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	if (len == 0 && is_command)
 		return 0;
 
+	char * unquoted = NULL;
+	wp = (char*)buf + *startp;
+	wplen = len;
+	shf_sopen((char*) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+	while (wplen-- > 0)
+	{
+		if (*wp != '\\')
+			shf_putchar(*wp, &shf);
+		wp++;
+	}
+	unquoted = shf_sclose(&shf);
+
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
-				    buf + *startp, len, &words);
+			     unquoted, strlen(unquoted), &words);
+
+	afree(unquoted, ATEMP);
+
 	if (nwords == 0) {
 		*wordsp = (char **) 0;
 		return 0;
