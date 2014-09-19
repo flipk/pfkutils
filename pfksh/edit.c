@@ -726,7 +726,6 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	int nwords;
 	char **words;
 	int is_command;
-	struct shf shf;
 	char * wp;
 	int wplen;
 
@@ -740,22 +739,20 @@ x_cf_glob(flags, buf, buflen, pos, startp, endp, wordsp, is_commandp)
 	if (len == 0 && is_command)
 		return 0;
 
-	char * unquoted = NULL;
+	char unquoted[2048];
+	int unqpos = 0;
 	wp = (char*)buf + *startp;
 	wplen = len;
-	shf_sopen((char*) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
 	while (wplen-- > 0)
 	{
 		if (*wp != '\\')
-			shf_putchar(*wp, &shf);
+			unquoted[unqpos++] = *wp;
 		wp++;
 	}
-	unquoted = shf_sclose(&shf);
+	unquoted[unqpos] = 0;
 
 	nwords = (is_command ? x_command_glob : x_file_glob)(flags,
-			     unquoted, strlen(unquoted), &words);
-
-	afree(unquoted, ATEMP);
+			     unquoted, unqpos, &words);
 
 	if (nwords == 0) {
 		*wordsp = (char **) 0;

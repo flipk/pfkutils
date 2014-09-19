@@ -1547,11 +1547,10 @@ x_noop(c)
 static char *
 x_quotify(const char *in, int len)
 {
-	struct shf shf;
 	const char * w = in;
 	char c;
-
-	shf_sopen((char*) 0, 32, SHF_WR | SHF_DYNAMIC, &shf);
+        char * ret = (char*) malloc(2048);
+        int retpos = 0;
 
 	if (len == 0)
 		len = strlen(in);
@@ -1559,12 +1558,13 @@ x_quotify(const char *in, int len)
 	while (len-- > 0) {
 		c = *w++;
 		if (ctype(c, C_QUOTE)) {
-			shf_putchar('\\', &shf);
+			ret[retpos++] = '\\';
 		}
-		shf_putchar(c, &shf);
+                ret[retpos++] = c;
 	}
+        ret[retpos] = 0;
 
-	return shf_sclose(&shf);
+	return ret;
 }
 
 /*
@@ -1725,7 +1725,7 @@ do_complete(flags, type)
 				x_delete(end - start, FALSE);
 				qtmp = x_quotify(words[x_arg-1],0);
 				x_ins(qtmp);
-				afree(qtmp, ATEMP);
+				free(qtmp);
 			}
 		}
 		break;
@@ -1739,7 +1739,7 @@ do_complete(flags, type)
 			xcp = xbuf + end;
 			qtmp = x_quotify(comp_word + olen, nlen - olen);
 			x_do_ins(qtmp, strlen(qtmp));
-			afree(qtmp, ATEMP);
+			free(qtmp);
 			x_redraw(0);
 		} else {
 			if (x_arg > nwords)
@@ -1749,7 +1749,7 @@ do_complete(flags, type)
 				x_delete(end - start, FALSE);
 				qtmp = x_quotify(words[x_arg-1], 0);
 				x_ins(qtmp);
-				afree(qtmp, ATEMP);
+				free(qtmp);
 			}
 		}
 		break;
@@ -1762,7 +1762,7 @@ do_complete(flags, type)
 			words[0][nlen] = '\0';
 			qtmp = x_quotify(words[0], 0);
 			x_ins(qtmp);
-			afree(qtmp, ATEMP);
+			free(qtmp);
 			/* If single match is not a directory, add a
 			 * space to the end...
 			 */
