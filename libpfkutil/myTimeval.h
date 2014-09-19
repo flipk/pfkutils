@@ -3,6 +3,8 @@
 #ifndef __MYTIMEVAL_H__
 #define __MYTIMEVAL_H__
 
+#include <sys/time.h>
+
 struct myTimeval : public timeval
 {
     myTimeval(void) { tv_sec = 0; tv_usec = 0; }
