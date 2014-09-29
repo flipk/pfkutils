@@ -116,7 +116,9 @@ static int x_fold_upper ARGS((int c));
 static int x_set_arg ARGS((int c));
 #define XFUNC_comment 55
 static int x_comment ARGS((int c));
+#define XFUNC_xtree 56
+static int x_xtree ARGS((int c));
 #ifdef DEBUG
-#define XFUNC_debug_info 56
+#define XFUNC_debug_info 57
 static int x_debug_info ARGS((int c));
 #endif

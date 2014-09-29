@@ -198,6 +198,7 @@ static const struct x_ftab x_ftab[] = {
     { x_fold_upper       , "upcase-word"               ,     XF_ARG },
     { x_set_arg          , "set-arg"                   ,  XF_NOBIND },
     { x_comment          , "comment"                   ,          0 },
+    { x_xtree            , "xtree"                     ,          0 },
 #ifdef DEBUG
     { x_debug_info       , "debug-info"                ,          0 },
 #endif
@@ -233,7 +234,7 @@ static  struct x_defbindings const x_defbindings[] = {
     { XFUNC_mv_begin           , 0 ,  CTRL('A') },
     { XFUNC_draw_line          , 0 ,  CTRL('L') },
     { XFUNC_meta1              , 0 ,  CTRL('[') },
-    { XFUNC_meta2              , 0 ,  CTRL('X') },
+    { XFUNC_xtree              , 0 ,  CTRL('X') },
     { XFUNC_kill               , 0 ,  CTRL('K') },
     { XFUNC_yank               , 0 ,  CTRL('Y') },
     { XFUNC_meta_yank          , 1 ,        'y' },
@@ -1135,6 +1136,44 @@ x_meta2(c)
 	return KSTD;
 }
 
+static char *
+x_quotify(const char *in, int len)
+{
+	const char * w = in;
+	char c;
+        char * ret = (char*) malloc(2048);
+        int retpos = 0;
+
+	if (len == 0)
+		len = strlen(in);
+
+	while (len-- > 0) {
+		c = *w++;
+		if (ctype(c, C_QUOTE)) {
+			ret[retpos++] = '\\';
+		}
+                ret[retpos++] = c;
+	}
+        ret[retpos] = 0;
+
+	return ret;
+}
+
+extern char * xtree_get_selection(void);
+
+static int
+x_xtree(c)
+    int c;
+{
+    char * sel = xtree_get_selection();
+    char * qsel = x_quotify(sel,0);
+    x_ins(qsel);
+    free(qsel);
+    free(sel);
+    x_redraw(-1);
+    return KSTD;
+}
+
 static int
 x_kill(c)
 	int c;
@@ -1542,29 +1581,6 @@ x_noop(c)
 	int c;
 {
 	return KSTD;
-}
-
-static char *
-x_quotify(const char *in, int len)
-{
-	const char * w = in;
-	char c;
-        char * ret = (char*) malloc(2048);
-        int retpos = 0;
-
-	if (len == 0)
-		len = strlen(in);
-
-	while (len-- > 0) {
-		c = *w++;
-		if (ctype(c, C_QUOTE)) {
-			ret[retpos++] = '\\';
-		}
-                ret[retpos++] = c;
-	}
-        ret[retpos] = 0;
-
-	return ret;
 }
 
 /*
