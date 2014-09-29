@@ -685,31 +685,30 @@ private:
             done = handle_char(c);
         } while (!done);
     }
-    string getSelected(void)
+    vector<string> getSelected(void)
     {
-        string ret;
+        vector<string> ret;
         dirMap::iterator it;
-        bool first = true;
         for (it = selected.begin(); it != selected.end(); it++)
         {
-            if (!first)
-                ret += " ";
+            string ret1;
             if (it->second->fullPath.compare(0,
                                              startingDir.length(),
                                              startingDir) == 0)
             {
-                ret += it->second->fullPath.substr(startingDir.length()+1);
+                ret.push_back(
+                    it->second->fullPath.substr(startingDir.length()+1));
             }
             else
             {
-                ret += it->second->fullPath;
+                ret.push_back(
+                    it->second->fullPath);
             }
-            first = false;
         }
         return ret;
     }
 public:
-    static string run(void)
+    static vector<string> run(void)
     {
         xtreeWindow win;
         win.eventLoop();
@@ -718,12 +717,18 @@ public:
 };
 
 extern "C"
-char *
-xtree_get_selection(void)
+char **
+xtree_get_selection(int *num)
 {
-    string sel = xtreeWindow::run();
-    int len = sel.length() + 1;
-    char * ret = (char*) malloc(len);
-    memcpy(ret, sel.c_str(), len);
+    vector<string> sel = xtreeWindow::run();
+    int selsize = (int) sel.size();
+    *num = selsize;
+    char ** ret = (char**) malloc( sizeof(char*) * selsize );
+    for (int ind = 0; ind < selsize; ind++)
+    {
+        int len = sel[ind].length() + 1;
+        ret[ind] = (char*) malloc(len);
+        memcpy(ret[ind], sel[ind].c_str(), len);
+    }
     return ret;
 }

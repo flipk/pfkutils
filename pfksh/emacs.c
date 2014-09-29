@@ -1159,16 +1159,22 @@ x_quotify(const char *in, int len)
 	return ret;
 }
 
-extern char * xtree_get_selection(void);
+extern char ** xtree_get_selection(int *num);
 
 static int
 x_xtree(c)
     int c;
 {
-    char * sel = xtree_get_selection();
-    char * qsel = x_quotify(sel,0);
-    x_ins(qsel);
-    free(qsel);
+    int num;
+    char ** sel = xtree_get_selection(&num);
+    int ind;
+    for (ind = 0; ind < num; ind++)
+    {
+        char * qsel = x_quotify(sel[ind],0);
+        x_ins(qsel);
+        free(qsel);
+        x_ins(" ");
+    }
     free(sel);
     x_redraw(-1);
     return KSTD;
