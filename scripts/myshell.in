@@ -5,4 +5,4 @@ ENV=$HOME/.kshrc
 
 export HOME ENV
 
-exec @prefix@/bin/pdksh "$@"
+exec @prefix@/bin/pfksh "$@"
