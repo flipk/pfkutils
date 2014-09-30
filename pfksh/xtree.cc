@@ -191,7 +191,8 @@ private:
     dirVec files; // what's displayed in right panel
     dirMap  allKnown; // official owner of all dirItem memory
     dirMap  selected; // all items user has selected.
-    string matchPattern;
+    string dirMatchPattern;
+    string fileMatchPattern;
     static const int max_spaces = 200;
     char _spaces[max_spaces];
     xtreeWindow(void)
@@ -266,6 +267,8 @@ private:
         dirStartPos = 0;
         currentFile = 0;
         fileStartPos = 0;
+        dot.fullPath = currentRoot;
+        dotdot.fullPath = currentRoot + "/..";
         selectDir();
     }
     char * spaces(int num)
@@ -276,11 +279,15 @@ private:
         _spaces[num] = 0;
         return _spaces;
     }
-    bool doMatchPattern(const string &fname)
+    bool doMatchPattern(const string &fname, bool doDir)
     {
-        if (matchPattern.size() == 0)
+        const string * whichPattern =
+            doDir ? &dirMatchPattern : &fileMatchPattern;
+        if (whichPattern->size() == 0)
             return true;
-        int m = fnmatch(matchPattern.c_str(), fname.c_str(), 0);
+        string realPattern;
+        realPattern = "*" + *whichPattern + "*";
+        int m = fnmatch(realPattern.c_str(), fname.c_str(), 0);
         if (m == FNM_NOMATCH)
             return false;
         if (m == 0)
@@ -306,7 +313,7 @@ private:
             {
                 dirItem *di2 = di->contents[diInd];
                 if (!di2->isDir)
-                    if (doMatchPattern(di2->filePart))
+                    if (doMatchPattern(di2->filePart,false))
                         files.push_back(di2);
             }
         }
@@ -331,12 +338,19 @@ private:
         int linepos = 0;
         int pos;
         int startX = (whichPanel == MODE_DIRS) ? 2 : COLS/2+2;
+        int lastPosDisplayed = 0;
         for (pos = startPos; linepos < numFileWinLines; pos++)
         {
             mvprintw(fileWinLine+linepos,startX-1,"%s",spaces(COLS/2-2));
             if (pos < (int)vec.size())
             {
                 const dirItem *di = vec[pos];
+                if (whichPanel == MODE_DIRS && pos > 1)
+                {
+                    bool matched = doMatchPattern(di->filePart,true);
+                    if (matched == false)
+                        continue; // xxx what does this break
+                }
                 if (mode == whichPanel && pos == current)
                 {
                     finalCursorPosY = fileWinLine+linepos;
@@ -354,6 +368,7 @@ private:
                 printw("%s", di->filePart.substr(0,COLS/2-3).c_str());
                 if (di->selected)
                     attroff(A_REVERSE);
+                lastPosDisplayed = pos;
             }
             linepos++;
         }
@@ -411,11 +426,18 @@ private:
         mvprintw(LINES-4,2,"%s",spaces(COLS-3));
         if (statItem)
             mvprintw(LINES-4,2,"%s",statItem->sbToString().c_str());
-        if (matchPattern.size() > 0)
+        if (dirMatchPattern.size() > 0 ||
+            fileMatchPattern.size() > 0)
         {
-            int width = (int) matchPattern.size();
-            mvprintw(LINES-4,COLS-1-width, "%s", matchPattern.c_str());
-            move(LINES-4,COLS-2-width);
+            int filewidth = (int) fileMatchPattern.size();
+            int dirwidth = (int) dirMatchPattern.size();
+            mvprintw(LINES-4,COLS-1-filewidth, "%s",
+                     fileMatchPattern.c_str());
+            move(LINES-4,COLS-2-filewidth);
+            vline(0,1);
+            mvprintw(LINES-4,COLS-2-filewidth-dirwidth, "%s",
+                     dirMatchPattern.c_str());
+            move(LINES-4,COLS-3-filewidth-dirwidth);
             vline(0,1);
         }
         refresh();
@@ -443,8 +465,23 @@ private:
     {
         if (valid_file_char(c))
         {
-            matchPattern += (char) c;
-            selectDir();
+            if (mode == MODE_DIRS)
+            {
+                dirMatchPattern += (char) c;
+                // if current dir pos doesn't match pattern,
+                // then we need to move currentDir up until it does.
+                while (currentDir > 1 &&
+                       doMatchPattern(dirs[currentDir]->filePart,
+                                      true) == false)
+                {
+                    currentDir--;
+                }
+            }
+            else
+            {
+                fileMatchPattern += (char) c;
+                selectDir();
+            }
             return false;
         }
         int *startpos = (mode == MODE_DIRS) ? &dirStartPos : &fileStartPos;
@@ -454,14 +491,25 @@ private:
         {
         case 8: // backspace (^H)
         case 127: // backspace (del, rubout)
-            if (matchPattern.size() > 0)
+            if (mode == MODE_DIRS)
             {
-                matchPattern.resize(matchPattern.size()-1);
-                selectDir();
+                if (dirMatchPattern.size() > 0)
+                {
+                    dirMatchPattern.resize(dirMatchPattern.size()-1);
+                }
+            }
+            else
+            {
+                if (fileMatchPattern.size() > 0)
+                {
+                    fileMatchPattern.resize(fileMatchPattern.size()-1);
+                    selectDir();
+                }
             }
             break;
         case 21: // control U
-            matchPattern = "";
+            fileMatchPattern = "";
+            dirMatchPattern = "";
             selectDir();
             break;
         case 24: // control X
@@ -503,6 +551,7 @@ private:
                     pathRelRoot = selPath;
                 newRoot = currentRoot + "/" + pathRelRoot;
             }
+            dirMatchPattern = "";
             updateRootDir(newRoot);
             break;
         }
@@ -512,8 +561,27 @@ private:
                 (*current) ++;
                 if (finalCursorPosY == (fileWinLine+numFileWinLines-1))
                     (*startpos) ++ ;
-                if (mode == MODE_DIRS)
-                    selectDir();
+            }
+            if (mode == MODE_DIRS)
+            {
+                // if current dir pattern doesn't match,
+                // keep moving down until we find one that does.
+                while (currentDir < (dirs.size()-1) &&
+                       doMatchPattern(dirs[currentDir]->filePart,
+                                      true) == false)
+                {
+                    if (dirs[currentDir]->filePart == ".")
+                        break;
+                    currentDir++;
+                }
+                // if we hit bottom, go back up 
+                while (currentDir > 1 &&
+                       doMatchPattern(dirs[currentDir]->filePart,
+                                      true) == false)
+                {
+                    currentDir--;
+                }
+                selectDir();
             }
             break;
         case KEY_UP:
@@ -522,8 +590,18 @@ private:
                 (*current) --;
                 if (finalCursorPosY == fileWinLine)
                     (*startpos) --;
-                if (mode == MODE_DIRS)
-                    selectDir();
+            }
+            if (mode == MODE_DIRS)
+            {
+                // if current dir pattern doesn't match,
+                // move up until we find one that does.
+                while (currentDir > 1 &&
+                       doMatchPattern(dirs[currentDir]->filePart,
+                                      true) == false)
+                {
+                    currentDir--;
+                }
+                selectDir();
             }
             break;
         case KEY_NPAGE:
