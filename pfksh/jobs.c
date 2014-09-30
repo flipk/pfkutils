@@ -210,6 +210,11 @@ j_init(mflagset)
 {
 	child_max = CHILD_MAX; /* so syscon() isn't always being called */
 
+        // sysconf can return -1 (ubuntu 10 i'm lookin at you),
+        // in that case, just pick something.
+        if (child_max == -1)
+            child_max = 10;
+
 	sigemptyset(&sm_default);
 	sigprocmask(SIG_SETMASK, &sm_default, (sigset_t *) 0);
 
@@ -1014,7 +1019,6 @@ j_set_async(j)
 		if (!oldest) {
 			/* XXX debugging */
 			if (!(async_job->flags & JF_ZOMBIE) || nzombie != 1) {
-//PFK why do we see this on ubuntu 10 at work ?
 				internal_errorf(0, "j_async: bad nzombie (%d)", nzombie);
 				nzombie = 0;
 			}

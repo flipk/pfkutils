@@ -1,20 +1,24 @@
 
 PROG= pfksh
 
-SRCS= alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c exec.c expr.c history.c io.c jobs.c lex.c main.c misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c version.c
+SRCS= alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c exec.c expr.c history.c io.c jobs.c lex.c main.c misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c version.c xtree.cc
 
 OBJS= $(SRCS:.c=.o)
 
+LIBS= -lcurses
 DEFS= -Dpfksh_main=main
 OPTS= -g3
 
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	gcc $(OBJS) -o $(PROG)
+	g++ $(OBJS) $(LIBS) -o $(PROG)
 
 .c.o:
 	gcc $(DEFS) $(OPTS) -c $*.c
+
+.cc.o:
+	g++ $(DEFS) $(OPTS) -c $*.cc
 
 clean:
 	rm -f $(PROG) $(OBJS)
