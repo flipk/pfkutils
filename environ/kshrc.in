@@ -1,7 +1,6 @@
-
 ###########################################################################
 #
-#      Last update: 2014-09-16.00:17:31
+#      Last update: 2014-09-30.10:07:56
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -308,6 +307,7 @@ alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
 alias pfkman='MANPATH=$HOME/pfk/share/man man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
+alias gitlog='git log --decorate=full --parents --graph'
 
 #FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
 
