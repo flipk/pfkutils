@@ -81,6 +81,7 @@
 #include <X11/Intrinsic.h>
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
+#include <X11/extensions/Xrandr.h>
 #include <X11/Xfuncs.h>
 #endif
 #include "types.h"
@@ -496,6 +497,7 @@ extern char *display_name;
 extern XtAppContext appContext;
 extern Window ResizeWindow;	/* the window we are resizing */
 extern int HasShape;		/* this server supports Shape extension */
+extern int HasXrandr;
 
 extern int PreviousScreen;
 

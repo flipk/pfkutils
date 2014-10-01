@@ -145,7 +145,9 @@ int MultiScreen = TRUE;		/* try for more than one screen? */
 int Monochrome  = FALSE;	/* Force monochrome, for testing purpose */
 int NumScreens;			/* number of screens in ScreenList */
 int HasShape;			/* server supports shape extension? */
+int HasXrandr;
 int ShapeEventBase, ShapeErrorBase;
+int XrandrEventBase, XrandrErrorBase;
 ScreenInfo **ScreenList;	/* structures for each screen */
 ScreenInfo *Scr = NULL;		/* the cur and prev screens */
 int PreviousScreen;		/* last screen that we were on */
@@ -433,6 +435,7 @@ int main(int argc, char **argv, char **environ)
 #endif
     if (restore_filename) ReadWinConfigFile (restore_filename);
     HasShape = XShapeQueryExtension (dpy, &ShapeEventBase, &ShapeErrorBase);
+    HasXrandr = XRRQueryExtension (dpy, &XrandrEventBase, &XrandrErrorBase);
     TwmContext = XUniqueContext();
     MenuContext = XUniqueContext();
     IconManagerContext = XUniqueContext();
@@ -507,6 +510,9 @@ int main(int argc, char **argv, char **environ)
 	XSelectInput (dpy, croot, attrmask);
 	XSync(dpy, 0);
 	XSetErrorHandler(TwmErrorHandler);
+
+        if (HasXrandr)
+            XRRSelectInput(dpy, croot, RRScreenChangeNotifyMask);
 
 	if (RedirectError && cfgchk==0)
 	{

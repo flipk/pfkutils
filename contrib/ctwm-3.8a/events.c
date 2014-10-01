@@ -172,9 +172,10 @@ int Cancel = FALSE;
 
 void HandleCreateNotify(void);
 void HandleShapeNotify (void);
+void HandleScreenChangeNotify (void);
 void HandleFocusChange (void);
 extern int ShapeEventBase, ShapeErrorBase;
-
+extern int XrandrEventBase, XrandrErrorBase;
 extern Window lowerontop;
 
 #ifdef GNOME
@@ -298,6 +299,8 @@ void InitEvents(void)
     EventHandler[FocusOut] = HandleFocusChange;
     if (HasShape)
 	EventHandler[ShapeEventBase+ShapeNotify] = HandleShapeNotify;
+    if (HasXrandr)
+        EventHandler[XrandrEventBase+RRScreenChangeNotify] = HandleScreenChangeNotify;
 }
 
 
@@ -3978,6 +3981,18 @@ void HandleShapeNotify (void)
     }
     Tmp_win->wShaped = sev->shaped;
     SetFrameShape (Tmp_win);
+}
+
+
+
+void HandleScreenChangeNotify (void)
+{
+    XRRScreenChangeNotifyEvent * cev = (XRRScreenChangeNotifyEvent *) &Event;
+
+    printf("SCREEN CHANGE NOTIFY %d %d %d %d\n",
+           cev->width, cev->height, cev->mwidth, cev->mheight);
+
+    RestartFlag = 1;
 }
 
 
