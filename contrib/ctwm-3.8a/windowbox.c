@@ -37,9 +37,6 @@ name_list **addWindowBox (char *boxname, char *geometry)
 {
     WindowBox *winbox;
 
-#if 0
-    printf ("addWindowBox : name = %s, geometry = %s\n", boxname, geometry);
-#endif
     winbox = (WindowBox*) malloc (sizeof (WindowBox));
     winbox->next     = NULL;
     winbox->name     = strdup (boxname);

@@ -1131,9 +1131,6 @@ void MoveToNextWorkSpaceAndFollow (virtualScreen *vs, TwmWindow *twm_win)
 
     MoveToNextWorkSpace(vs, twm_win);
     GotoNextWorkSpace(vs);
-#if 0
-    RaiseWindow(twm_win);	/* XXX really do this? */
-#endif
 }
 
 
@@ -1165,9 +1162,6 @@ void MoveToPrevWorkSpaceAndFollow (virtualScreen *vs, TwmWindow *twm_win)
 
     MoveToPrevWorkSpace(vs, twm_win);
     GotoPrevWorkSpace(vs);
-#if 0
-    RaiseWindow(twm_win);		/* XXX really do this? */
-#endif
 }
 
 static WorkSpace *GetWorkspace (char *wname)

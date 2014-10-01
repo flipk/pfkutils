@@ -2962,18 +2962,6 @@ int ExecuteFunction(int func, char *action, Window w, TwmWindow *tmp_win,
 	    ButtonMotionMask | PointerMotionMask, /* PointerMotionHintMask */
 	    GrabModeAsync, GrabModeAsync, grabwin, Scr->MoveCursor, CurrentTime);
 
-#if 0	/* what's this for ? */
-	if (! tmp_win->icon || w != tmp_win->icon->w)
-	{
-	    XTranslateCoordinates(dpy, w, tmp_win->frame,
-		eventp->xbutton.x, 
-		eventp->xbutton.y, 
-		&DragX, &DragY, &JunkChild);
-
-	    w = tmp_win->frame;
-	}
-#endif
-
 	DragWindow = None;
 
 	XGetGeometry(dpy, tmp_win->title_w, &JunkRoot, &origDragX, &origDragY,

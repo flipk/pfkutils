@@ -119,10 +119,6 @@ void PaintTitleButtons (TwmWindow *tmp_win);
 void adoptWindow (void);
 void DebugTrace (char *file);
 void SetBorderCursor (TwmWindow *tmp_win, int x, int y);
-#if 0 /* These aren't implemented anywhere! */
-void ChangeFocusGrab ();
-Cursor CalculateBorderCursor ();
-#endif
 
 extern int HotX, HotY;
 

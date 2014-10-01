@@ -261,9 +261,6 @@ extern void WarpToWindow (TwmWindow *t);
 extern void DisplayPosition (TwmWindow *tmp_win, int x, int y);
 extern void packwindow (TwmWindow *tmp_win, char *direction);
 extern void fillwindow (TwmWindow *tmp_win, char *direction);
-#if 0 /* Not implemented!!! */
-extern Boolean TryNotToMoveOff ();
-#endif
 extern void AutoSqueeze (TwmWindow *tmp_win);
 extern void Squeeze(TwmWindow *tmp_win);
 

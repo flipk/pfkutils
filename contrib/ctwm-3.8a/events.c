@@ -2654,15 +2654,6 @@ void HandleButtonRelease(void)
 
 	/* CCC equivalent code for auto lower not needed? */
 
-#if 0
-	if (Scr->NumAutoLowers) {
-	    leave_flag = TRUE;
-	    leave_win = NULL;
-	    lower_win = ((DragWindow == Tmp_win->frame)
-			 ? Tmp_win : NULL);
-	}
-#endif
-
 	DragWindow = (Window) 0;
 	ConstMove = FALSE;
     }

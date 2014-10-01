@@ -78,10 +78,6 @@ extern int MappedNotOverride(Window w);
 extern void AddDefaultBindings (void);
 extern void GrabButtons(TwmWindow *tmp_win);
 extern void GrabKeys(TwmWindow *tmp_win);
-#if 0 /* Not implemented! */
-extern void UngrabButtons();
-extern void UngrabKeys();
-#endif
 extern void GetWindowSizeHints(TwmWindow *tmp_win);
 extern void AnimateButton (TBWindow *tbw);
 extern void AnimateHighlight (TwmWindow *t);

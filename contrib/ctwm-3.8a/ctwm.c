@@ -1160,13 +1160,6 @@ void RestoreWithdrawnLocation (TwmWindow *tmp)
 	    mask |= CWBorderWidth;
 	}
 
-#if 0
-	if (tmp->vs) {
-	  xwc.x += tmp->vs->x;
-	  xwc.y += tmp->vs->y;
-	}
-#endif
-
 	if (tmp->winbox && tmp->winbox->twmwin && tmp->frame) {
 	  int xbox, ybox;
 	  if (XGetGeometry (dpy, tmp->frame, &JunkRoot, &xbox, &ybox, 

@@ -101,10 +101,6 @@ extern void twmrc_error_prefix(void);
  ***********************************************************************
  */
 
-#if 0				/* appears not to be used anywhere */
-static int is_pattern (char *p);
-#endif
-
 void AddToList(name_list **list_head, char *name, char *ptr)
 {
     name_list *nptr;
@@ -311,23 +307,6 @@ int match (pattern, string)
 
 int regex_match (char *p, char *t);
 int regex_match_after_star (char *p, char *t);
-
-#if 0				/* appears not to be used anywhere */
-static int is_pattern (char *p)
-{
-    while ( *p ) {
-	switch ( *p++ ) {
-	    case '?':
-	    case '*':
-	    case '[':
-		return TRUE;
-	    case '\\':
-		if ( !*p++ ) return FALSE;
-	}
-    }
-    return FALSE;
-}
-#endif
 
 #define ABORT 2
 
