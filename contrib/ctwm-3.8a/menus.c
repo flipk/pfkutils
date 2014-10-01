@@ -67,24 +67,12 @@
  *
  ***********************************************************************/
 
-#if defined(USE_SIGNALS) && defined(__sgi)
-#  define _BSD_SIGNALS
-#endif
-
 #include <stdio.h>
 #include <signal.h>
 
-#ifdef VMS
-#include <stdlib.h>
-#include <string.h>
-#include <unixio.h>
-#include <file.h>
-#include <decw$include/Xos.h>
-#include <decw$include/Xatom.h>
-#else
 #include <X11/Xos.h>
 #include <X11/Xatom.h>
-#endif
+
 #include "twm.h"
 #include "ctwm.h"
 #include "gc.h"
@@ -104,29 +92,12 @@
 #ifdef SOUNDS
 #  include "sound.h"
 #endif
-#ifdef VMS
-#  include <X11Xmu/CharSet.h>
-#  include <decw$bitmaps/menu12.xbm>
-#  include <X11SM/SMlib.h>
-#  include "vms_cmd_services.h"
-#  include <lib$routines.h>
-#else
-#  include <X11/Xmu/CharSet.h>
-#  include <X11/SM/SMlib.h>
-#endif
+#include <X11/Xmu/CharSet.h>
+#include <X11/SM/SMlib.h>
 #include "version.h"
 
-#if defined(MACH) || defined(__MACH__) || defined(sony_news) || defined(NeXT)
-#define lrand48 random
-#endif
-#if defined(VMS) || defined(__DARWIN__)
-#define lrand48 rand
-#endif
-
-#ifndef VMS
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
 #define ABS(x) ((x)<0?-(x):(x))
 
 extern XEvent Event;
@@ -3347,11 +3318,7 @@ int ExecuteFunction(int func, char *action, Window w, TwmWindow *tmp_win,
 		XFree (ptr);
 		ptr = ExpandFilename(tmp);
 		if (ptr) {
-#ifdef VMS
-		    fd = open (ptr, O_RDONLY, 0);
-#else
 		    fd = open (ptr, 0);
-#endif
 		    if (fd >= 0) {
 			count = read (fd, buff, MAX_FILE_SIZE - 1);
 			if (count > 0) XStoreBytes (dpy, buff, count);
@@ -3525,11 +3492,7 @@ int ExecuteFunction(int func, char *action, Window w, TwmWindow *tmp_win,
 
     case F_FILE:
 	action = ExpandFilename(action);
-#ifdef VMS
-	fd = open (action, O_RDONLY, 0);
-#else
 	fd = open(action, 0);
-#endif
 	if (fd >= 0)
 	{
 	    count = read(fd, buff, MAX_FILE_SIZE - 1);
@@ -3788,9 +3751,6 @@ int NeedToDefer(MenuRoot *root)
 
 void Execute(char *s)
 {
-#ifdef VMS
-    createProcess(s);
-#else
     static char buf[256];
     char *ds = DisplayString (dpy);
     char *colon, *dot1;
@@ -3859,24 +3819,13 @@ void Execute(char *s)
 	free (name);
 	replace = True;
     }
-#ifdef USE_SIGNALS
-  {
-    SigProc	sig;
-
-    sig = signal (SIGALRM, SIG_IGN);
     (void) system (s);
-    signal (SIGALRM, sig);
-  }
-#else  /* USE_SIGNALS */
-    (void) system (s);
-#endif  /* USE_SIGNALS */
 
     if (restorevar) {		/* why bother? */
 	(void) sprintf (buf, "DISPLAY=%s", oldDisplay);
 	putenv (buf);
     }
     if (replace) free (s);
-#endif
 }
 
 
@@ -5086,15 +5035,11 @@ void SweepWindow (TwmWindow *tmp_win, Window	blanket)
 
 void waitamoment (float timeout)
 {
-#ifdef VMS
-  lib$wait (&timeout);
-#else
   struct timeval timeoutstruct;
   int usec = timeout * 1000000;
   timeoutstruct.tv_usec = usec % (unsigned long) 1000000;
   timeoutstruct.tv_sec  = usec / (unsigned long) 1000000;
   select (0, (void *) 0, (void *) 0, (void *) 0, &timeoutstruct);
-#endif
 }
 
 void packwindow (TwmWindow *tmp_win, char *direction)

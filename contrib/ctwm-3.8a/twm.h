@@ -68,14 +68,6 @@
 #include <dmalloc.h>
 #endif
 
-#ifdef VMS
-#include <decw$include/Xlib.h>
-#include <decw$include/Xutil.h>
-#include <decw$include/Intrinsic.h>
-#include <decw$include/cursorfont.h>
-#include <decw$include/shape.h>
-#include <decw$include/Xfuncs.h>
-#else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>
@@ -83,7 +75,6 @@
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/Xfuncs.h>
-#endif
 #include "types.h"
 #include "list.h"
 
@@ -104,10 +95,6 @@
 #endif
 
 typedef SIGNAL_T (*SigProc)(int); /* type of function returned by signal() */
-
-#if defined(USE_SIGNALS) && defined(SVR4) && !defined(__sgi)
-#define signal sigset
-#endif /* SVR4 */
 
 #define BW 2			/* border width */
 #define BW2 4			/* border width  * 2 */
@@ -468,20 +455,12 @@ struct TWMWinConfigEntry
 #define TBPM_3DBAR ":xpm:bar"
 #define TBPM_3DVBAR ":xpm:vbar"
 
-#ifdef VMS
-#    include <decw$include/Xosdefs.h>
-#else
-#    include <X11/Xosdefs.h>
-#endif
+#include <X11/Xosdefs.h>
 #ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-#ifdef VMS
 #include <stdlib.h>
 #else
 extern char *malloc(), *calloc(), *realloc(), *getenv();
 extern void free();
-#endif
 #endif
 extern void Reborder(Time tim);
 extern SIGNAL_T Done(int signum);
@@ -532,9 +511,7 @@ extern unsigned int InfoWidth,InfoHeight;
 extern char Info[][INFO_SIZE];
 extern int Argc;
 extern char **Argv;
-#ifndef VMS
 extern char **Environ;
-#endif
 
 extern Bool ErrorOccurred;
 extern XErrorEvent LastErrorEvent;

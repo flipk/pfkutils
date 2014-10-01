@@ -57,15 +57,9 @@
 #ifndef _SCREEN_
 #define _SCREEN_
 
-#ifdef VMS
-#include <decw$include/Xlib.h>
-#include <decw$include/Xutil.h>
-#include <decw$include/cursorfont.h>
-#else
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#endif
 
 #ifdef GNOME
 #  include "gnome.h"

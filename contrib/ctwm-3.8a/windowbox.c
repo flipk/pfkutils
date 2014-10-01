@@ -27,11 +27,7 @@
 
 #include <stdio.h>
 #include "twm.h"
-#ifdef VMS
-#include <decw$include/Xatom.h>
-#else
 #include <X11/Xatom.h>
-#endif
 #include "screen.h"
 #include "add_window.h"
 #include "resize.h"

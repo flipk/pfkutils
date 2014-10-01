@@ -69,20 +69,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifndef VMS
 #include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#if defined(AIXV3) || defined(_SYSTYPE_SVR4) || defined(ibm) || defined __QNX__
-#include <sys/select.h>
-#endif
+
 #include "twm.h"
-#ifdef VMS
-#include <decw$include/Xatom.h>
-#else
 #include <X11/Xatom.h>
-#endif
 #include "add_window.h"
 #include "windowbox.h"
 #include "util.h"
@@ -220,11 +210,9 @@ TwmWindow *AddWindow(Window w, int iconm, IconMgr *iconp)
     int saved_occupation; /* <== [ Matthew McNeill Feb 1997 ] == */
     Bool        random_placed = False;
     int		found = 0;
-#ifndef VMS
     fd_set	mask;
     int		fd;
     struct timeval timeout;
-#endif
     XRectangle ink_rect;
     XRectangle logical_rect;
     WindowBox *winbox;
@@ -883,7 +871,6 @@ TwmWindow *AddWindow(Window w, int iconm, IconMgr *iconp)
 	    /*SetFocus ((TwmWindow *) NULL, CurrentTime);*/
 	    while (TRUE)
 		{
-#ifndef VMS			/* I'll try to implement this later.  RL */
 		if (Scr->OpenWindowTimeout) {
 		    fd = ConnectionNumber (dpy);
 		    while (!XCheckMaskEvent (dpy, ButtonMotionMask | ButtonPressMask, &event)) {
@@ -896,9 +883,6 @@ TwmWindow *AddWindow(Window w, int iconm, IconMgr *iconp)
 		    }
 		    if (found == 0) break;
 		} else {
-#else
-		{
-#endif
 		    found = 1;
 		    XMaskEvent(dpy, ButtonPressMask | PointerMotionMask, &event);
 		}
@@ -2022,13 +2006,9 @@ static void CreateWindowTitlebarButtons (TwmWindow *tmp_win)
 
 void SetHighlightPixmap (char *filename)
 {
-#ifdef VMS
     char *ftemp;
     ftemp = (char *) malloc((strlen(filename)+1)*sizeof(char));
     Scr->HighlightPixmapName = strcpy (ftemp,filename);
-#else
-    Scr->HighlightPixmapName = (char*) strdup (filename);
-#endif
 }
 
 

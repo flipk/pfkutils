@@ -69,20 +69,11 @@
 
 #include <stdio.h>
 #include <errno.h>
-#ifndef VMS
 #include <sys/time.h>
-#endif
-#if defined(AIXV3) || defined(_SYSTYPE_SVR4) || defined(ibm) || defined __QNX__
-#include <sys/select.h>
-#endif
 #include <ctype.h>
 
 #include "twm.h"
-#ifdef VMS
-#include <decw$include/Xatom.h>
-#else
 #include <X11/Xatom.h>
-#endif
 #include "add_window.h"
 #include "clicktofocus.h"
 #include "menus.h"
@@ -96,15 +87,8 @@
 #include "iconmgr.h"
 #include "version.h"
 
-#ifdef VMS
-#include <starlet.h>
-#include <ssdef.h>
-#include <lib$routines.h>
-#define USE_SIGNALS
-#else
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
 #define ABS(x) ((x)<0?-(x):(x))
 
 extern int iconifybox_width, iconifybox_height;
@@ -114,11 +98,7 @@ extern char *CurrentSelectedWorkspace;
 
 extern int captive;
 
-#ifdef USE_SIGNALS
-extern Bool AnimationPending;
-#else /* USE_SIGNALS */
 extern struct timeval AnimateTimeout;
-#endif /* USE_SIGNALS */
 extern int  AnimationSpeed;
 extern Bool AnimationActive;
 extern Bool MaybeAnimate;
@@ -552,31 +532,10 @@ void HandleEvents(void)
 
 #define nextEvent(event) XtAppNextEvent(appContext, event);
 
-#ifdef VMS
-extern unsigned long timefe;
-#endif
-
 static void CtwmNextEvent (Display *display, XEvent  *event)
 {
     int animate = (AnimationActive && MaybeAnimate);
 
-#ifdef VMS
-    if (QLength (display) != 0) {
-	nextEvent (event);
-	return;
-    }
-    if (animate && AnimationPending) Animate ();
-    while (1) {
-       sys$waitfr(timefe);
-       sys$clref(timefe);
-
-       if (animate && AnimationPending) Animate ();
-       if (QLength (display) != 0) {
-	  nextEvent (event);
-	  return;
-       }
-    }
-#else /* VMS */
     int		found;
     fd_set	mask;
     int		fd;
@@ -590,28 +549,6 @@ static void CtwmNextEvent (Display *display, XEvent  *event)
     }
     fd = ConnectionNumber (display);
 
-#ifdef USE_SIGNALS
-    if (animate && AnimationPending) Animate ();
-    while (1) {
-	FD_ZERO (&mask);
-	FD_SET  (fd, &mask);
-	found = select (fd + 1, (FDSET)&mask, (FDSET) 0, (FDSET) 0, 0);
-	if (RestartFlag)
-	    DoRestart(CurrentTime);
-	if (found < 0) {
-	    if (errno == EINTR) {
-		if (animate)
-		    Animate ();
-	    }
-	    else perror ("select");
-	    continue;
-	}
-	if (FD_ISSET (fd, &mask)) {
-	    nextEvent (event);
-	    return;
-	}
-    }
-#else /* USE_SIGNALS */
     if (animate) TryToAnimate ();
     if (RestartFlag)
 	DoRestart(CurrentTime);
@@ -648,8 +585,6 @@ static void CtwmNextEvent (Display *display, XEvent  *event)
 	    continue;
 	}
     }
-#endif /* USE_SIGNALS */
-#endif /* VMS */
 }
 
 
@@ -3397,11 +3332,7 @@ void HandleEnterNotify(void)
 	    if (Tmp_win && Tmp_win->auto_raise
 		&& (!Tmp_win->list || Tmp_win->list->w != ewp->window)) {
 		ColormapWindow *cwin;
-#ifdef VMS
-		float timeout = 0.0125;
-#else
 		static struct timeval tout, timeout = {0,12500};
-#endif
 
 		if (XFindContext(dpy, Tmp_win->w, ColormapContext,
 				 (XPointer *)&cwin) == XCNOENT) {
@@ -3423,12 +3354,9 @@ void HandleEnterNotify(void)
 		     * entered.
 		     */
 		    for (i = 25; i < RaiseDelay; i += 25) {
-#ifdef VMS
-			lib$wait(&timeout);
-#else
 			tout = timeout;
 			select(0, 0, 0, 0, &tout);
-#endif
+
 			/* Did we leave this window already? */
 			scanArgs.w = ewp->window;
 			scanArgs.leaves = scanArgs.enters = False;

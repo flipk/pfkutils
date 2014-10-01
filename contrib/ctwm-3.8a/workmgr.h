@@ -171,9 +171,6 @@ void AllocateOthersIconManagers (void);
 void ChangeOccupation (TwmWindow *tmp_win, int newoccupation);
 void WmgrRedoOccupation (TwmWindow *win);
 void WMgrRemoveFromCurrentWorkSpace (virtualScreen *vs, TwmWindow *win);
-#ifdef VMS /* Because that name is longer than 31 characters */
-#define WMgrAddToCurrentWorkSpaceAndWarp WMgrAddToCurrWorkSpaceAndWarp
-#endif
 void WMgrAddToCurrentWorkSpaceAndWarp (virtualScreen *vs, char *winname);
 void WMgrHandleExposeEvent (virtualScreen *vs, XEvent *event);
 void PaintWorkSpaceManager (virtualScreen *vs);
