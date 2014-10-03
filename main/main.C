@@ -35,13 +35,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static char * argv_zero;
+#include <string>
+#include <iostream>
+#include <iomanip>
+
+using namespace std;
 
 struct prog_table {
-    const char * program;
+    string  program;
     int (*mainfunc)( int argc, char ** argv );
     int priv;
-    const char * help;
+    string  help;
 };
 
 #define PROG(priv,name,help) \
@@ -55,7 +59,7 @@ static struct prog_table prog_table[] = {
 #include "programs.h"
 #undef PROG
 
-    { NULL, NULL, 0 }
+    { "", NULL, 0, "" }
 };
 
 static void
@@ -63,6 +67,8 @@ unlink_all_links( void )
 {
     DIR * d;
     struct dirent * de;
+    char p[ 1024 ];
+    int count;
 
     d = opendir( "." );
     if ( d == NULL )
@@ -73,10 +79,7 @@ unlink_all_links( void )
 
     while (( de = readdir( d )) != NULL )
     {
-        char p[ 1024 ];
-        int count;
-
-        count = readlink( de->d_name, p, 1023 );
+        count = readlink( de->d_name, p, sizeof(p)-1 );
         if ( count < 0 )
             continue;
 
@@ -100,9 +103,11 @@ remove_privs( void )
 static int
 handle_admin( int argc, char ** argv )
 {
+    string arg0(argc > 0 ? argv[0] : "");
+    struct stat sb;
+
     printf("version: %s\n", PACKAGE_STRING);
-    if ( argc == 0 || 
-         strcmp( argv[0], "-help" ) == 0 )
+    if ( argc == 0 || arg0 == "-help" )
     {
     usage:
         printf( "usage: pfkutils [-dellinks] [-makelinks] "
@@ -110,26 +115,26 @@ handle_admin( int argc, char ** argv )
         return -2;
     }
 
-    if ( strcmp( argv[0], "-dellinks" ) == 0 )
+    if ( arg0 == "-dellinks" )
     {
         unlink_all_links();
         return 0;
     }
 
-    if ( strcmp( argv[0], "-makelinks" ) == 0 )
+    if ( arg0 == "-makelinks" )
     {
-        struct prog_table * pt;
-        struct stat sb;
-
         unlink_all_links();
 
-        for ( pt = prog_table; pt->program != NULL; pt++ )
+        for ( struct prog_table * pt = prog_table;
+              pt->mainfunc != NULL;
+              pt++ )
         {
-            if ( symlink( PACKAGE_NAME, pt->program ) < 0 )
+            if ( symlink( PACKAGE_NAME, pt->program.c_str() ) < 0 )
             {
-                printf( "symlink %s -> %s failed (%s)\n",
-                        PACKAGE_NAME, pt->program,
-                        strerror( errno ));
+                cout << "symlink " << PACKAGE_NAME
+                     << " -> " << pt->program 
+                     << " failed (" << strerror( errno )
+                     << ")" << endl;
             }
         }
 
@@ -142,20 +147,27 @@ handle_admin( int argc, char ** argv )
 int
 main( int argc, char ** argv )
 {
+    string arg0(argv[0]);
+    string prog;
     struct prog_table * pt;
-    char * prog;
     int doerr = 1;
+    size_t slashpos;
 
-    argv_zero = argv[0];
-
-    if ((prog = rindex( argv[0], '/' )) != NULL)
-        prog++;
+    slashpos = arg0.find_last_of('/');
+    if (slashpos == string::npos)
+        prog = arg0;
     else
-        prog = argv[0];
+        prog = arg0.substr(slashpos+1);
 
-    for ( pt = prog_table; pt->program != NULL; pt++ )
+    // pfksh may be invoked as a login shell, in which case
+    // argv[0] actually starts with a dash '-'.
+
+    for ( pt = prog_table; pt->mainfunc != NULL; pt++ )
     {
-        if ( strcmp( prog, pt->program ) == 0 )
+        if ( prog == pt->program ||
+             ( prog[0] == '-' && 
+               prog.compare(1, string::npos,
+                            pt->program) == 0 ))
         {
             if ( pt->priv == 0 )
                 remove_privs();
@@ -165,7 +177,7 @@ main( int argc, char ** argv )
 
     remove_privs();
 
-    if ( strncmp( prog, PACKAGE_NAME, strlen(PACKAGE_NAME) ) == 0 )
+    if ( prog == PACKAGE_NAME )
     {
         int r = handle_admin( argc-1, argv+1 );
         if ( r != -2 )
@@ -175,40 +187,18 @@ main( int argc, char ** argv )
     }
 
     if ( doerr == 1 )
-        printf( "\nunknown program '%s'; known programs:\n",
-                prog );
+        cout << endl << "unknown program '"
+             << prog << "'; known programs:" << endl;
     else
-        printf( "\nknown programs:\n" );
+        cout << endl << "known programs:" << endl;
 
-    printf( "\n    " );
-
-    for ( pt = prog_table; pt->program != NULL; pt++ )
+    for ( pt = prog_table; pt->mainfunc != NULL; pt++ )
     {
-        const char * p;
-        const char * h;
-
-        p = pt->program;
-        h = pt->help;
-
-        printf( "%12s - %s\n    ", p, h );
+        cout << setw(18) << pt->program
+             << " - " << pt->help << endl;
     }
 
-    printf( "\n\n" );
+    cout << endl << endl;
 
     return 0;
-
 }
-
-#if defined(sparc)
-int
-arc4random( void )
-{
-    static int arc4randinitted = 0;
-    if ( arc4randinitted == 0 )
-    {
-        srandom( time( NULL ) * getpid() );
-        arc4randinitted = 1;
-    }
-    return random();
-}
-#endif
