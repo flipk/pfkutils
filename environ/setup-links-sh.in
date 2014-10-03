@@ -50,8 +50,6 @@ if [ $# -gt 0 ] ; then
    # there's no args.
    shift
    launchers="$launchers $*"
-else
-   launchers=""
 fi
 
 cd $SCRIPTS_DIR
