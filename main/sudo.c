@@ -87,7 +87,7 @@ sudo_main( int argc, char ** argv )
     putenv( envstr );
 
     if (argc == 1) 
-        execl(getenv("SHELL"), "sh", NULL);
+        execl(getenv("SHELL"), getenv("SHELL"), NULL);
     else
         execvp(argv[1], argv+1);
 

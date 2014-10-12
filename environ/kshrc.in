@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2014-09-30.10:07:56
+#      Last update: 2014-10-11.22:04:14
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -35,6 +35,7 @@
 #
 
 USER=@PFK_USER_NAME@
+REALUSER=`id -u -n`
 HOME=/home/$USER
 ENV=$HOME/.kshrc
 HOST=`hostname`
@@ -50,7 +51,7 @@ if [ ! -d $TMP ] ; then
     chmod 700 $TMP
 fi
 
-export USER HOME ENV HOST TMP TMPDIR TEMP
+export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER
  
 if [ -f $HOME/.verbose ] ; then
        __verbose() {
@@ -227,7 +228,7 @@ if __isksh ; then
 	    _ps="${_ps}[7m$1[m
 "
 	fi
-	_ps="${_ps}$USER@$HOST"
+	_ps="${_ps}$REALUSER@$HOST"
 	if [[ x$CLEARCASE_ROOT != x ]] ; then
 	    _ps="${_ps} in CMBP"
 	fi
@@ -885,6 +886,10 @@ if __isksh ; then
 		fi
 	    fi
 	fi
+        if [[ "x$TMUX" != x ]] ; then
+            bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
+            xtermbar $bardisp
+        fi
 	CDPATH=.:$ti/src:$cpe/src:$HOME
 	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
     }
