@@ -712,7 +712,11 @@ if __isksh ; then
     fi
     if [[ x$__sed != x ]] ; then
         dir() {
-            ls -l $* | $__sed 's, ->.*, @,'
+            if [[ x"$*" == x ]] ; then
+                ls -l | $__sed 's, ->.*, @,'
+            else
+                ls -l "$*" | $__sed 's, ->.*, @,'
+            fi
         }
     fi
 fi
