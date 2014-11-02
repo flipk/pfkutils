@@ -39,7 +39,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(cursor ((t (:background "white" :foreground "black"))))
+ '(cursor ((t (:background "white" :foreground "red"))))
  '(menu ((((type x-toolkit)) (:background "grey85" :foreground "black"))))
  '(mouse ((t (:background "white" :foreground "black"))))
  '(scroll-bar ((t (:background "grey85" :foreground "red")))))
@@ -65,8 +65,8 @@
     (select-frame frame)
     (my-set-frame-attrs)))
 
-(my-set-frame-attrs)
-(add-hook 'after-make-frame-functions 'my-set-frame-attrs-hook)
+;(my-set-frame-attrs)
+;(add-hook 'after-make-frame-functions 'my-set-frame-attrs-hook)
 
 (line-number-mode 1)
 (column-number-mode 1)
@@ -77,7 +77,10 @@
 	 (let ((desktop (getenv "EMACS_NUMBER")))
 	   (let ((minibuftitle (concat "Emacs Minibuffer" desktop)))
 	     (setq
-	      default-frame-alist '((minibuffer . nil))
+	      default-frame-alist '((minibuffer . nil)
+	    (font . "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
+				    (width . 81)
+				    (cursor-color . "red"))
 	      initial-frame-alist 'nil
 	      minibuffer-frame-alist
 	      (cons (cons 'title minibuftitle)
