@@ -44,7 +44,7 @@ struct threadstats {
         deletions = other.deletions;
     }
     void print(void) {
-        printf("%5d: f %5d b %11lld c %5lld v %5lld d %5lld\n",
+        printf("%5d: f %8d b %11lld c %5lld v %5lld d %5lld\n",
                seconds, total_files, total_bytes,
                creations, validations, deletions);
         seconds ++;

@@ -11,9 +11,9 @@ xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
     cat > ~/.xclearcase << EOF
 Vtree.width: 1169
-Vtree.height: 979
+Vtree.height: 970
 Vtree.x: 1
-Vtree.y: 1
+Vtree.y: 25
 EOF
     cat ~/zzz.xclearcase >>  ~/.xclearcase
     rm -f ~/zzz.xclearcase
