@@ -35,7 +35,7 @@
 #include "database_elements.H"
 #include "protos.H"
 
-#define SEPARATE_DATA_FILE 1
+#define SEPARATE_DATA_FILE 0
 #define META_CACHE_SIZE (256*1024*1024)
 #define DATA_CACHE_SIZE ( 16*1024*1024)
 #define BTREE_ORDER  15

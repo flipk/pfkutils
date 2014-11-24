@@ -444,7 +444,7 @@ struct BST_STRING : public BST {
         };
         return false;
     }
-    void set(char * str) {
+    void set(const char * str) {
         if (string)
             delete[] string;
         int len = strlen(str) + 1;

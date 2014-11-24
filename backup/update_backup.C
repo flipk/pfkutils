@@ -165,11 +165,11 @@ walk_file( file_state state,
         file_info->data.size. v = fef->size;
         file_info->data.mtime.v = fef->mtime;
 
-        fd = open(fef->path, O_RDONLY);
+        fd = open(fef->path.c_str(), O_RDONLY);
         if ( fd < 0 )
         {
             fprintf(stderr, "ERROR : modified but cannot open: %s: %s\n",
-                    fef->path, strerror(errno));
+                    fef->path.c_str(), strerror(errno));
             fd = -1;
             // pretend the file was not modified in this case.
             state = STATE_UNMODIFIED;
@@ -196,7 +196,7 @@ walk_file( file_state state,
             {
                 int err = errno;
                 fprintf(stderr, "ERROR : reading %s: %s\n",
-                        fef->path, strerror(err));
+                        fef->path.c_str(), strerror(err));
                 // stupid windows, or cygwin, or whatever. if you don't
                 // have permission to READ the file, you should never
                 // have been able to OPEN it in the first place. sigh.
@@ -545,7 +545,7 @@ pfkbak_update_backup ( UINT32 baknum )
 
                 if (pfkbak_verb == VERB_2)
                 {
-                    printf("%s", fe.fef->path);
+                    printf("%s", fe.fef->path.c_str());
                     fflush(stdout);
                 }
 
@@ -608,7 +608,7 @@ pfkbak_update_backup ( UINT32 baknum )
 
         if (pfkbak_verb == VERB_2)
         {
-            printf("%s", fe.fef->path);
+            printf("%s", fe.fef->path.c_str());
             fflush(stdout);
         }
 
@@ -629,7 +629,7 @@ pfkbak_update_backup ( UINT32 baknum )
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
 
-        file_info.data.file_path.set(fe.fe->path);
+        file_info.data.file_path.set(fe.fe->path.c_str());
         file_info.data.mode.v = fe.fef->mode;
         file_info.data.size.v = fe.fef->size;
         file_info.data.generations.alloc(1);

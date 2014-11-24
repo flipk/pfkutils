@@ -30,17 +30,20 @@
 
 #define TRASH_DIR    "TREESYNC_TRASH"
 
+using namespace std;
+
 static int
 qsortTSFileEntryCompare(const void * _a, const void * _b)
 {
     TSFileEntry * a = *(TSFileEntry**)_a;
     TSFileEntry * b = *(TSFileEntry**)_b;
 
-    return -strcmp(a->path, b->path);
+// xxx is this < or > ?
+    return a->path < b->path;
 }
 
 TSFileEntryList * 
-treesync_generate_file_list(const char *root_dir)
+treesync_generate_file_list(const string &root_dir)
 {
     TSFileEntryList * file_list;
     TSFileEntryList   work_list;
@@ -48,9 +51,9 @@ treesync_generate_file_list(const char *root_dir)
     struct dirent * de;
     DIR           * dir;
     struct stat     sb;
-    char            temp_path[1024];
-    char            _rel_path[1024];
-    char          * rel_path;
+    string          temp_path;
+    string          _rel_path;
+    string          rel_path;
     int             cc;
     bool            first_dir = true;
 
@@ -61,21 +64,18 @@ treesync_generate_file_list(const char *root_dir)
 
     while ((current = work_list.dequeue_head()) != NULL)
     {
-        cc = snprintf(temp_path, sizeof(temp_path)-1,
-                      "%s/%s", root_dir, current->path);
-        temp_path[cc] = 0;
-
-        if (strcmp(current->path, TRASH_DIR) == 0)
+        if (current->path == TRASH_DIR)
         {
             delete current;
             continue;
         }
+        temp_path = root_dir + "/" + current->path;
 
-        dir = opendir(temp_path);
+        dir = opendir(temp_path.c_str());
         if (!dir)
         {
             fprintf(stderr, "unable to open directory: %s: %s\n",
-                    temp_path, strerror(errno));
+                    temp_path.c_str(), strerror(errno));
             delete current;
             if (first_dir)
             {
@@ -88,10 +88,10 @@ treesync_generate_file_list(const char *root_dir)
 
         first_dir = false;
 
-        if (stat(temp_path, &sb) < 0)
+        if (stat(temp_path.c_str(), &sb) < 0)
         {
             fprintf(stderr, "unable to stat %s: %s\n",
-                    temp_path, strerror(errno));
+                    temp_path.c_str(), strerror(errno));
             closedir(dir);
             delete current;
             continue;
@@ -108,21 +108,19 @@ treesync_generate_file_list(const char *root_dir)
                 continue;
             }
 
-            cc = snprintf(temp_path, sizeof(temp_path)-1,
-                          "%s/%s/%s", root_dir, current->path, de->d_name);
-            temp_path[cc] = 0;
-            cc = snprintf(_rel_path, sizeof(_rel_path)-1,
-                          "%s/%s", current->path, de->d_name);
-            _rel_path[cc] = 0;
+            string d_name(de->d_name);
+
+            temp_path = root_dir + "/" + current->path + "/" + d_name;
+            _rel_path = current->path + "/" + d_name;
             if (_rel_path[0] == '.' && _rel_path[1] == '/')
-                rel_path = _rel_path + 2;
+                rel_path = _rel_path.substr(2);
             else
                 rel_path = _rel_path;
 
-            if (lstat(temp_path, &sb) < 0)
+            if (lstat(temp_path.c_str(), &sb) < 0)
             {
                 fprintf(stderr, "unable to stat %s: %s\n",
-                        temp_path, strerror(errno));
+                        temp_path.c_str(), strerror(errno));
             }
             else if (S_ISDIR(sb.st_mode))
             {
@@ -141,9 +139,11 @@ treesync_generate_file_list(const char *root_dir)
             else if (S_ISLNK(sb.st_mode))
             {
                 TSFileEntryLink * fel = new TSFileEntryLink(rel_path);
-                cc = readlink(temp_path, _rel_path, sizeof(_rel_path)-1);
-                _rel_path[cc] = 0;
-                fel->set_target(_rel_path);
+                fel->link_target.resize(4096);
+                cc = readlink(temp_path.c_str(),
+                              const_cast<char*>(fel->link_target.c_str()),
+                              fel->link_target.length());
+                fel->link_target.resize(cc);
                 file_list->add(fel);
             }
             else

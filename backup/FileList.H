@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string>
 
 #include <pk-md5.h>
 
@@ -37,18 +38,12 @@ enum TsFileEntryLists {
 
 class TSFileEntry {
 public:
-    TSFileEntry(const char * _path) {
-        int plen = strlen(_path);
-        path = new char[plen + 1];
-        memcpy(path, _path, plen+1);
-    }
-    virtual ~TSFileEntry(void) {
-        if (path)
-            delete[] path;
-    }
+    TSFileEntry(const std::string &_path)
+        : path(_path) {}
+    virtual ~TSFileEntry(void) {}
     LListLinks <TSFileEntry>  links[ FILE_ENTRY_NUM_LISTS ];
     enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
-    char * path; // relative to root dir
+    const std::string path;  // relative to root dir
 };
 
 class TSFileEntryHashComparator {
@@ -56,30 +51,33 @@ public:
     static int hash_key( TSFileEntry * item ) {
         return hash_key(item->path);
     }
-    static int hash_key( char * path ) {
+    static int hash_key( const std::string &path ) {
         // thank you Daniel Julius Bernstein.
         int hash = 5381;
+        std::string::const_iterator it;
         int c;
-        while ((c = *path++) != 0)
+        for (it = path.begin(); it != path.end(); it++)
+        {
+            c = *it;
             hash = ((hash << 5) + hash) + c;
+        }
         return hash;
     }
-    static bool hash_key_compare( TSFileEntry * item, char *path ) {
-        if (strcmp(item->path, path) == 0)
-            return true;
-        return false;
+    static bool hash_key_compare( const TSFileEntry * item,
+                                  const std::string &path ) {
+        return (item->path == path);
     }
 };
 
 typedef LList <TSFileEntry,FILE_ENTRY_LIST> TSFileEntryList;
-typedef LListHash <TSFileEntry, char*, 
+typedef LListHash <TSFileEntry, const std::string, 
                    TSFileEntryHashComparator,
                    FILE_ENTRY_HASH> TSFileEntryHash;
 typedef LList <TSFileEntry,FILE_ENTRY_QUEUE> TSFileEntryQueue;
 
 class TSFileEntryFile : public TSFileEntry {
 public:
-    TSFileEntryFile(const char * _path)
+    TSFileEntryFile(const std::string &_path)
         : TSFileEntry(_path)
     {
         type = TYPE_FILE;
@@ -94,7 +92,7 @@ public:
 
 class TSFileEntryDir : public TSFileEntry {
 public:
-    TSFileEntryDir(const char * _path)
+    TSFileEntryDir(const std::string &_path)
         : TSFileEntry(_path)
     {
         type = TYPE_DIR;
@@ -104,19 +102,16 @@ public:
 
 class TSFileEntryLink : public TSFileEntry {
 public:
-    TSFileEntryLink(const char * _path) 
+    TSFileEntryLink(const std::string &_path) 
         : TSFileEntry(_path)
     {
-        link_target = NULL;
         type = TYPE_LINK;
     }
-    void set_target(const char * _target) {
-        int tlen = strlen(_target);
-        link_target = new char[tlen+1];
-        memcpy(link_target, _target, tlen+1);
+    void set_target(const std::string &_target) {
+        link_target = _target;
     }
-    ~TSFileEntryLink(void) { if (link_target) delete[] link_target; }
-    char * link_target;
+    ~TSFileEntryLink(void) {}
+    std::string link_target;
 };
 
-TSFileEntryList * treesync_generate_file_list(const char *root_dir);
+TSFileEntryList * treesync_generate_file_list(const std::string &root_dir);
