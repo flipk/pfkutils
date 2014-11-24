@@ -29,7 +29,7 @@
 
 /** a DLL2 link index for PageCachePage */
 enum PAGE_CACHE_LIST_INDICES {
-    PAGE_LIST, PAGE_HASH, PAGE_LRU_LOCK, NUM_PAGE_LISTS };
+    PAGE_LIST, PAGE_HASH, PAGE_LRU_LOCK, PAGE_DIRTY, NUM_PAGE_LISTS };
 
 /** Internal representation of a PageCachePage
  *
@@ -99,6 +99,7 @@ class PageCachePageList {
     /** A linked list of all locked objects,
      * \see PAGE_CACHE_LIST_INDICES */
     LList     <PCPInt,                  PAGE_LRU_LOCK>  locklist;
+    LList     <PCPInt,                     PAGE_DIRTY>  dirty;
 public:
     /** @name Statistics */
     // @{
@@ -131,6 +132,12 @@ public:
     /** return the oldest item in the least-recently-used list.
      * \return the oldest item in the least-recently-used list. */
     PCPInt * get_oldest(void      ) { return lru.get_oldest( ); }
+
+
+    int      get_dirty_cnt(void) { return dirty.get_cnt(); }
+    PCPInt * get_dirty_head(void) { return dirty.get_head(); }
+    PCPInt * get_dirty_next(PCPInt * i) { return dirty.get_next(i); }
+
     // @}
     /** @name Manipulation */
     // @{
@@ -148,8 +155,11 @@ public:
                 fprintf(stderr, "PageCachePageList::add: inconsistent lock!\n");
                 exit( 1 );
             }
-        } else
+        } else {
             lru.add(p);
+        }
+        if (p->is_dirty() && !dirty.onthislist(p))
+            dirty.add(p);
     }
     /** remove a PageCachePage from the container.
      * \param p the PageCachePage to remove */
@@ -160,6 +170,8 @@ public:
             locklist.remove(p);
         else
             lru.remove(p);
+        if (dirty.onthislist(p))
+            dirty.remove(p);
     }
     /** mark a PageCachePage as referenced.
      * \param p the PageCachePage to reference
@@ -183,5 +195,9 @@ public:
             locklist.remove(p);
             lru.add(p);
         }
+        if (p->is_dirty() && !dirty.onthislist(p))
+            dirty.add(p);
+        if (!p->is_dirty() && dirty.onthislist(p))
+            dirty.remove(p);
     }
 };

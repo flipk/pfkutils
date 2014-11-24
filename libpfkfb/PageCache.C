@@ -212,20 +212,24 @@ PageCache :: flush(void)
     PCPInt * p;
     int i, count;
 
-    count = pgs->get_cnt();
+    count = pgs->get_dirty_cnt();
+    if (count == 0)
+        return;
+
     PCPInt * pages[count];
     i = 0;
-    for (p = pgs->get_head(); p; p = pgs->get_next(p))
-        if (p->dirty)
-            pages[i++] = p;
-    count = i;
+    for (p = pgs->get_dirty_head(); p; p = pgs->get_dirty_next(p))
+        pages[i++] = p;
 
     qsort( pages, count, sizeof(PCPInt*),
            (int(*)(const void *, const void *))page_compare );
 
+    printf("flushing %d pages\n", count);
+
     for (i = 0; i < count; i++)
     {
         p = pages[i];
+        pgs->ref(p);
         if (!io->put_page(p))
         {
             fprintf(stderr, "error putting page %d\n", p->page_number);
@@ -233,5 +237,6 @@ PageCache :: flush(void)
         }
         // the page is now synced with the file.
         p->dirty = false;
+        pgs->deref(p);
     }
 }

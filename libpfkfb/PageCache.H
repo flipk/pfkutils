@@ -144,6 +144,7 @@ public:
     UCHAR * get_ptr(void) { return ptr; }
     /** user must call this if he has modified the page data. */
     void mark_dirty(void) { dirty = true; }
+    bool is_dirty(void) { return dirty; }
 };
 
 #endif /* __PAGE_CACHE_H__ */
