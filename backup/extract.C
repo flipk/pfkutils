@@ -123,6 +123,7 @@ pfkbak_extract       ( UINT32 baknum,
 
     (void) umask( 000 );
 
+#if 0
     if (mkdir( back_info.data.name.string, 0700 ) < 0)
     {
         fprintf(stderr, "unable to create directory '%s': %s\n",
@@ -131,6 +132,7 @@ pfkbak_extract       ( UINT32 baknum,
         return;
     }
     (void) chdir( back_info.data.name.string );
+#endif
 
     UINT32 num_files = back_info.data.file_count.v;
     UINT32 file_number;
