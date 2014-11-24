@@ -840,7 +840,7 @@ if __isksh ; then
         xsetroot -solid \#203040
         cd $HOME
         xrdb -load .Xresources
-        ctwm -W&
+        fluxbox&
         xtermbar Console
 	xconsole_hook
         SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,console
