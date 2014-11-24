@@ -36,9 +36,8 @@
 #include "protos.H"
 
 #define SEPARATE_DATA_FILE 0
-#define META_CACHE_SIZE (256*1024*1024)
-#define DATA_CACHE_SIZE ( 16*1024*1024)
-#define BTREE_ORDER  15
+#define CACHE_SIZE (512*1024*1024)
+#define BTREE_ORDER  25
 
 /** the btree key for the database info uses this string constant.
  */
@@ -163,11 +162,7 @@ pfkbak_main(int argc, char ** argv)
     Btree * bt = NULL;
     FileBlockInterface * fbi = NULL;
 
-#if SEPARATE_DATA_FILE
-    int bt_cache_size = META_CACHE_SIZE;
-#else
-    int bt_cache_size = DATA_CACHE_SIZE;
-#endif
+    int bt_cache_size = CACHE_SIZE;
 
     // create or open btree file
     if (pfkbak_op == BAK_CREATE_FILE)
