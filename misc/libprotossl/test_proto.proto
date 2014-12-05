@@ -1,0 +1,30 @@
+
+package PFK.Test;
+
+// common messages first
+
+message ProtoVersion {
+	required int32 version = 1;
+}
+
+// server to client
+
+enum ServerToClientType {
+     STC_PROTO_VERSION = 1;
+}
+
+message ServerToClient {
+	required ServerToClientType type = 1;
+	optional ProtoVersion  proto_version = 2;
+}
+
+// client to server
+
+enum ClientToServerType {
+     CTS_PROTO_VERSION = 1;
+}
+
+message ClientToServer {
+	required ClientToServerType type = 1;
+	optional ProtoVersion  proto_version = 2;
+}
