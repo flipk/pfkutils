@@ -82,7 +82,9 @@ build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = shmempipe_test_master$(EXEEXT) \
 	shmempipe_test_slave$(EXEEXT) thread_slinger_test$(EXEEXT) \
-	HSM_test$(EXEEXT) dll3_test$(EXEEXT) hsmthread_test$(EXEEXT)
+	HSM_test$(EXEEXT) dll3_test$(EXEEXT) hsmthread_test$(EXEEXT) \
+	msgr-test-msg$(EXEEXT) msgr-test-svr$(EXEEXT) \
+	msgr-test-clnt$(EXEEXT)
 @PFK_NEED_REGEX_TRUE@am__append_1 = regex.h
 @PFK_NEED_REGEX_TRUE@am__append_2 = regex.c
 subdir = libpfkutil
@@ -134,12 +136,12 @@ libpfkutil_la_LIBADD =
 am__libpfkutil_la_SOURCES_DIST = pk-md5.c m.c fd_mgr.C base64.c \
 	inet_aton.c thread_slinger.cc shmempipe.cc HSM.cc dll3.cc \
 	hsmthread.cc LockWait.cc prioWorkQ.cc regex.c \
-	fdThreadLauncher.cc sha1.cc
+	fdThreadLauncher.cc sha1.cc msgr.cc
 @PFK_NEED_REGEX_TRUE@am__objects_1 = regex.lo
 am_libpfkutil_la_OBJECTS = pk-md5.lo m.lo fd_mgr.lo base64.lo \
 	inet_aton.lo thread_slinger.lo shmempipe.lo HSM.lo dll3.lo \
 	hsmthread.lo LockWait.lo prioWorkQ.lo regex.lo \
-	fdThreadLauncher.lo sha1.lo $(am__objects_1)
+	fdThreadLauncher.lo sha1.lo msgr.lo $(am__objects_1)
 libpfkutil_la_OBJECTS = $(am_libpfkutil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -155,6 +157,15 @@ dll3_test_DEPENDENCIES = libpfkutil.la
 am_hsmthread_test_OBJECTS = hsmthread_test.$(OBJEXT)
 hsmthread_test_OBJECTS = $(am_hsmthread_test_OBJECTS)
 hsmthread_test_DEPENDENCIES = libpfkutil.la
+am_msgr_test_clnt_OBJECTS = msgr-test-clnt.$(OBJEXT)
+msgr_test_clnt_OBJECTS = $(am_msgr_test_clnt_OBJECTS)
+msgr_test_clnt_DEPENDENCIES = libpfkutil.la
+am_msgr_test_msg_OBJECTS = msgr-test-msg.$(OBJEXT)
+msgr_test_msg_OBJECTS = $(am_msgr_test_msg_OBJECTS)
+msgr_test_msg_DEPENDENCIES = libpfkutil.la
+am_msgr_test_svr_OBJECTS = msgr-test-svr.$(OBJEXT)
+msgr_test_svr_OBJECTS = $(am_msgr_test_svr_OBJECTS)
+msgr_test_svr_DEPENDENCIES = libpfkutil.la
 am_shmempipe_test_master_OBJECTS = shmempipe_test_master.$(OBJEXT)
 shmempipe_test_master_OBJECTS = $(am_shmempipe_test_master_OBJECTS)
 shmempipe_test_master_DEPENDENCIES = libpfkutil.la
@@ -218,11 +229,13 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libpfkutil_la_SOURCES) $(HSM_test_SOURCES) \
 	$(dll3_test_SOURCES) $(hsmthread_test_SOURCES) \
-	$(shmempipe_test_master_SOURCES) \
+	$(msgr_test_clnt_SOURCES) $(msgr_test_msg_SOURCES) \
+	$(msgr_test_svr_SOURCES) $(shmempipe_test_master_SOURCES) \
 	$(shmempipe_test_slave_SOURCES) $(thread_slinger_test_SOURCES)
 DIST_SOURCES = $(am__libpfkutil_la_SOURCES_DIST) $(HSM_test_SOURCES) \
 	$(dll3_test_SOURCES) $(hsmthread_test_SOURCES) \
-	$(shmempipe_test_master_SOURCES) \
+	$(msgr_test_clnt_SOURCES) $(msgr_test_msg_SOURCES) \
+	$(msgr_test_svr_SOURCES) $(shmempipe_test_master_SOURCES) \
 	$(shmempipe_test_slave_SOURCES) $(thread_slinger_test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -232,7 +245,7 @@ am__can_run_installinfo = \
 am__libpfkutil_la_HEADERS_DIST = pk-md5.h types.H bst.H m.h fd_mgr.H \
 	base64.h inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
 	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
-	sha1.h
+	sha1.h msgr.h
 HEADERS = $(libpfkutil_la_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -409,17 +422,23 @@ libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = pk-md5.h types.H bst.H m.h fd_mgr.H base64.h \
 	inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
 	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
-	sha1.h $(am__append_1)
+	sha1.h msgr.h $(am__append_1)
 libpfkutil_la_SOURCES = pk-md5.c m.c fd_mgr.C base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
 	LockWait.cc prioWorkQ.cc regex.c fdThreadLauncher.cc sha1.cc \
-	$(am__append_2)
+	msgr.cc $(am__append_2)
 shmempipe_test_master_SOURCES = shmempipe_test_master.cc
 shmempipe_test_master_LDADD = libpfkutil.la
 shmempipe_test_slave_SOURCES = shmempipe_test_slave.cc
 shmempipe_test_slave_LDADD = libpfkutil.la
 thread_slinger_test_SOURCES = thread_slinger_test.cc
 thread_slinger_test_LDADD = libpfkutil.la
+msgr_test_msg_SOURCES = msgr-test-msg.cc
+msgr_test_msg_LDADD = libpfkutil.la
+msgr_test_svr_SOURCES = msgr-test-svr.cc
+msgr_test_svr_LDADD = libpfkutil.la
+msgr_test_clnt_SOURCES = msgr-test-clnt.cc
+msgr_test_clnt_LDADD = libpfkutil.la
 HSM_test_SOURCES = HSM_test.cc
 HSM_test_LDADD = libpfkutil.la
 dll3_test_SOURCES = dll3_test.cc
@@ -524,6 +543,18 @@ hsmthread_test$(EXEEXT): $(hsmthread_test_OBJECTS) $(hsmthread_test_DEPENDENCIES
 	@rm -f hsmthread_test$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(hsmthread_test_OBJECTS) $(hsmthread_test_LDADD) $(LIBS)
 
+msgr-test-clnt$(EXEEXT): $(msgr_test_clnt_OBJECTS) $(msgr_test_clnt_DEPENDENCIES) $(EXTRA_msgr_test_clnt_DEPENDENCIES) 
+	@rm -f msgr-test-clnt$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgr_test_clnt_OBJECTS) $(msgr_test_clnt_LDADD) $(LIBS)
+
+msgr-test-msg$(EXEEXT): $(msgr_test_msg_OBJECTS) $(msgr_test_msg_DEPENDENCIES) $(EXTRA_msgr_test_msg_DEPENDENCIES) 
+	@rm -f msgr-test-msg$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgr_test_msg_OBJECTS) $(msgr_test_msg_LDADD) $(LIBS)
+
+msgr-test-svr$(EXEEXT): $(msgr_test_svr_OBJECTS) $(msgr_test_svr_DEPENDENCIES) $(EXTRA_msgr_test_svr_DEPENDENCIES) 
+	@rm -f msgr-test-svr$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(msgr_test_svr_OBJECTS) $(msgr_test_svr_LDADD) $(LIBS)
+
 shmempipe_test_master$(EXEEXT): $(shmempipe_test_master_OBJECTS) $(shmempipe_test_master_DEPENDENCIES) $(EXTRA_shmempipe_test_master_DEPENDENCIES) 
 	@rm -f shmempipe_test_master$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(shmempipe_test_master_OBJECTS) $(shmempipe_test_master_LDADD) $(LIBS)
@@ -554,6 +585,10 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hsmthread_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/inet_aton.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/m.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgr-test-clnt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgr-test-msg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgr-test-svr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/msgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pk-md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/prioWorkQ.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/regex.Plo@am__quote@

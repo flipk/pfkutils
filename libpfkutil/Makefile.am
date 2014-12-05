@@ -5,15 +5,18 @@ libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = \
 	pk-md5.h types.H bst.H m.h fd_mgr.H base64.h inet_aton.h \
 	thread_slinger.h  shmempipe.H  HSM.h  dll3.h  hsmthread.h \
-	LockWait.h  prioWorkQ.h  regex.h fdThreadLauncher.h sha1.h
+	LockWait.h  prioWorkQ.h  regex.h fdThreadLauncher.h sha1.h \
+	msgr.h
 libpfkutil_la_SOURCES = \
 	pk-md5.c               m.c fd_mgr.C base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
-	LockWait.cc prioWorkQ.cc regex.c fdThreadLauncher.cc sha1.cc
+	LockWait.cc prioWorkQ.cc regex.c fdThreadLauncher.cc sha1.cc \
+	msgr.cc
 
 noinst_PROGRAMS = \
 	shmempipe_test_master shmempipe_test_slave \
-	thread_slinger_test HSM_test dll3_test hsmthread_test
+	thread_slinger_test HSM_test dll3_test hsmthread_test \
+	msgr-test-msg msgr-test-svr msgr-test-clnt
 
 shmempipe_test_master_SOURCES = shmempipe_test_master.cc
 shmempipe_test_master_LDADD   = libpfkutil.la
@@ -23,6 +26,15 @@ shmempipe_test_slave_LDADD   = libpfkutil.la
 
 thread_slinger_test_SOURCES = thread_slinger_test.cc
 thread_slinger_test_LDADD   = libpfkutil.la
+
+msgr_test_msg_SOURCES = msgr-test-msg.cc
+msgr_test_msg_LDADD   = libpfkutil.la
+
+msgr_test_svr_SOURCES = msgr-test-svr.cc
+msgr_test_svr_LDADD   = libpfkutil.la
+
+msgr_test_clnt_SOURCES = msgr-test-clnt.cc
+msgr_test_clnt_LDADD   = libpfkutil.la
 
 HSM_test_SOURCES = HSM_test.cc
 HSM_test_LDADD   = libpfkutil.la
