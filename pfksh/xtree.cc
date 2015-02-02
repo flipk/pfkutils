@@ -1,4 +1,6 @@
 
+#include <pfkutils_config.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,8 +17,21 @@
 #include <pwd.h>
 #include <grp.h>
 #include <math.h>
-#include <ncurses/curses.h>
 #include <fnmatch.h>
+
+#if HAVE_CURSES_H
+# include <curses.h>
+#else
+# if HAVE_NCURSES_CURSES_H
+#  include <ncurses/curses.h>
+# else
+#  if HAVE_NCURSES_H
+#   include <ncurses.h>
+#  else
+#   error need ncurses header file
+#  endif
+# endif
+#endif
 
 using namespace std;
 
