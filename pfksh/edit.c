@@ -648,10 +648,6 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-// PFK BUG : if a filename has a space and we put blackslash-space,
-//           this should keep going backwards, and extracting the
-//           filename for globbing should strip the backslash.
-
 #define IS_WORDC(c)	!(ctype(c, C_LEX1) || (c) == '\'' || (c) == '"')
 
 static int

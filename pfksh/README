@@ -46,14 +46,3 @@ a great deal of cleanup.  Compilers and OSs have changed greatly since
   expansions output.
 
 - and yes, KSH_VERSION says "PFK KSH v0.0.1" now... sorry.
-
-TODO
-
-( search for 'PFK BUG' in the source )
-
-- make tab-completion understand filenames with spaces.
-
-- xtree !!!  this could be really cool.
-
-- "j_async: bad nzombie" is seen all the time on ubunutu 10
-
