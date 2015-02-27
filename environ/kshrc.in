@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2014-10-11.22:04:14
+#      Last update: 2015-02-26.22:04:13
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -375,8 +375,16 @@ make_file_part() {
 
 }
 
-gt() {
-    gnome-terminal --disable-factory $* &
+emacsn() {
+    if [ $# -lt 1 ] ; then
+        echo usage: emacsn NUMBER files
+        return
+    fi
+    export EMACS_NUMBER=$1
+    export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
+    shift
+    emacs $* &
+    return
 }
 
 echodate() {
@@ -654,24 +662,6 @@ d2() {
 }
 d3() {
     DISPLAY=${DISPLAY%%:*}:3.0 $* &
-}
-
-myemacs() {
-    typeset started
-
-    INSIDE_EMACS=yes
-    export INSIDE_EMACS
-
-    started=no
-    ps xc | grep -q emacsserver && started=yes
-
-    if [ $started = yes ] ; then
-	emacsclient --no-wait display:$DISPLAY
-    else
-        emacs -geometry 80x33+0+125 &
-    fi
-
-    unset INSIDE_EMACS
 }
 
 fp() {

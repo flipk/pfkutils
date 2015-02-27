@@ -1,13 +1,13 @@
 
-# Last update: 2013-08-09.21:22:40
+# Last update: 2015-02-26.21:38:21
 
 xconsole_hook() {
-	# disable that disgusting mouse acceleration
-	xset m 0
+    # disable that disgusting mouse acceleration
+    xset m 0
 }
 
 tty=`tty`
-if [[ $tty != ${tty#/dev/ttyv} ]] ; then
+if [[ $tty != ${tty#/dev/tty} ]] ; then
     unset -f x
     x() {
         clear
