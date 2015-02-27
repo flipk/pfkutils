@@ -27,26 +27,27 @@ struct ListError : ThrowUtil::ThrowBackTrace {
     ListError(ListErrValue _e) : err(_e) { }
     const std::string Format(void) const;
 };
+#define __DLL3_LISTERR(e) throw ListError(ListError::e)
 
-#define LIST List<T,uniqueIdentifier,lockWarn,validate>
-#define LIST_TEMPL class T, int uniqueIdentifier, bool lockWarn, bool validate
-#define LISTERR(e) throw ListError(ListError::e)
+#define __DLL3_LIST List<T,uniqueIdentifier,lockWarn,validate>
+#define __DLL3_LIST_TEMPL class T, int uniqueIdentifier, \
+                           bool lockWarn, bool validate
 
 template <class T, int uniqueIdentifier,
           bool lockWarn=true, bool validate=true>
 class List : public WaitUtil::Lockable {
 public:
     class Links {
-        friend class LIST;
+        friend class __DLL3_LIST;
         static const int MAGIC = 0x5e061ed;
         int magic;
         Links * next;
         Links * prev;
-        LIST * lst;
+        __DLL3_LIST * lst;
     public:
         Links(void) throw ();
         ~Links(void) throw (ListError);
-        void checkvalid(void) throw (ListError);
+        void checkvalid(__DLL3_LIST * _lst) throw (ListError);
     };
 private:
     Links * head;
@@ -69,8 +70,8 @@ public:
     void remove(Links * item) throw (ListError);
 };
 
-#define HASH Hash<T,KeyT,HashT,uniqueIdentifier,lockWarn,validate>
-#define HASH_TEMPL class T, class KeyT, class HashT, int uniqueIdentifier, bool lockWarn, bool validate
+#define __DLL3_HASH Hash<T,KeyT,HashT,uniqueIdentifier,lockWarn,validate>
+#define __DLL3_HASH_TEMPL class T, class KeyT, class HashT, int uniqueIdentifier, bool lockWarn, bool validate
 
 static const int dll3_num_hash_primes = 16;
 extern const int dll3_hash_primes[dll3_num_hash_primes];
@@ -88,17 +89,21 @@ template <class T, class KeyT, class HashT, int uniqueIdentifier,
           bool lockWarn=true, bool validate=true>
 class Hash : public WaitUtil::Lockable {
     typedef List<T,uniqueIdentifier,false,true> theHash;
-    std::vector<theHash> hash;
+    std::vector<theHash> * hash;
+    int hashorder;
     int hashsize;
+    int count;
     void lockwarn(void) throw (ListError);
+    void _rehash(int newOrder);
+    void rehash(void) throw (ListError);
 public:
     class Links : public List<T,uniqueIdentifier,false,true>::Links {
-        friend class HASH;
+        friend class __DLL3_HASH;
         static const int MAGIC = 0x68ddd8d;
         int magic;
-        HASH * hsh;
+        __DLL3_HASH * hsh;
         uint32_t h;
-        void checkvalid(void) throw (ListError);
+        void checkvalid(__DLL3_HASH * _hsh) throw (ListError);
     public:
         Links(void) throw ();
         virtual ~Links(void) throw (ListError);
@@ -110,13 +115,48 @@ public:
     T * find(const KeyT &key) throw (ListError);
 };
 
+#define __DLL3_HASHLRU HashLRU<T,KeyT,HashT,uniqueIdentifier1, \
+                               uniqueIdentifier2,lockWarn,validate>
+#define __DLL3_HASHLRU_TEMPL class T, class KeyT, class HashT, \
+                     int uniqueIdentifier1, int uniqueIdentifier2, \
+                     bool lockWarn, bool validate
+
+template <class T, class KeyT, class HashT,
+          int uniqueIdentifier1, int uniqueIdentifier2,
+          bool lockWarn=true, bool validate=true>
+class HashLRU : public WaitUtil::Lockable {
+    List<T,uniqueIdentifier1,false,true> list;
+    Hash<T,KeyT,HashT,uniqueIdentifier2,false,true> hash;
+    void lockwarn(void) throw (ListError);
+public:
+    class Links : public List<T,uniqueIdentifier1,false,true>::Links,
+                  public Hash<T,KeyT,HashT,uniqueIdentifier2,
+                              false,true>::Links {
+        friend class __DLL3_HASHLRU;
+        static const int MAGIC = 0x2cbee2a;
+        int magic;
+        __DLL3_HASHLRU * hlru;
+        void checkvalid(__DLL3_HASHLRU * _hlru) throw (ListError);
+    public:
+        Links(void) throw ();
+        virtual ~Links(void) throw (ListError);
+    };
+    HashLRU(void) throw ();
+    ~HashLRU(void) throw (ListError);
+    void add(Links * item) throw (ListError);
+    void remove(Links * item) throw (ListError);
+    void promote(Links * item) throw (ListError);
+    T * find(const KeyT &key) throw (ListError);
+    T * get_oldest(void) throw (ListError);
+};
+
 #include "dll3.tcc"
 
-#undef  HASH
-#undef  HASH_TEMPL
-#undef  LIST
-#undef  LIST_TEMPL
-#undef  LISTERR
+#undef  __DLL3_HASH
+#undef  __DLL3_HASH_TEMPL
+#undef  __DLL3_LIST
+#undef  __DLL3_LIST_TEMPL
+#undef  __DLL3_LISTERR
 
 }; // namespace DLL3
 
