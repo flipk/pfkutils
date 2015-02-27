@@ -1,0 +1,24 @@
+[begin] (Fluxbox-1.3.4)
+  [encoding] {UTF-8}
+    [exec] (pfkterm) {pfkterm} </usr/share/icons/gnome-colors-common/32x32/apps/gnome-terminal.xpm>
+    [exec]   (emacs) {emacs} </usr/share/icons/gnome-colors-common/32x32/apps/gedit-icon.xpm>
+    [exec]   (xload) {xload}
+    [exec]   (xclock) {xclock}
+    [exec]   (xmag) {xmag}
+    [exec] (Reload resources) {xrdb -remove; xrdb -load $HOME/.Xresources}
+    [separator]
+    [config] (Configure)
+    [submenu] (System Styles) {Choose a style...}
+      [stylesdir] (/home/flipk/pfk/Linux-3.11.10-301.fc20.x86_64/fluxbox/share/fluxbox/styles)
+    [end]
+    [submenu] (User Styles) {Choose a style...}
+      [stylesdir] (~/.fluxbox/styles)
+    [end]
+    [workspaces] (Workspace List)
+    [commanddialog] (Fluxbox Command)
+    [reconfig] (Reload config)
+    [restart] (Restart)
+    [separator]
+    [exit] (Exit)
+  [endencoding]
+[end]
