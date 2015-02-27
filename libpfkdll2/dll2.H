@@ -739,27 +739,6 @@ public:
 /** \defgroup dll2config DLL2 Configurable Items */
 /** \defgroup dll2listtypes DLL2 list types */
 
-#ifndef DLL2_CHECKSUMS
-/** enable use of checksum in linked list protection
- * \ingroup dll2config
- */
-#define DLL2_CHECKSUMS      1
-#endif
-
-#ifndef DLL2_INCLUDE_BTREE
-/** enable inclusion of btree definition
- * \ingroup dll2config
- */
-#define DLL2_INCLUDE_BTREE  0
-#endif
-
-#ifndef DLL2_STRICT_WALKING
-/** enable strict checking of linked list pointers
- * \ingroup dll2config
- */
-#define DLL2_STRICT_WALKING 1
-#endif
-
 #ifndef DLL2BAIL
 #include <stdio.h>
 /** how to handle a validation failure
@@ -775,7 +754,9 @@ public:
 #include <sys/types.h>
 #include <signal.h>
 
-template <class T, int instance> class LList;
+template <class T, int instance,
+          bool strict_walking = true,
+          bool use_checksum = true> class LList;
 
 /** link pointers placed in any item which is to live on 1 or more lists.
  * include in your data type like so:
@@ -783,32 +764,32 @@ template <class T, int instance> class LList;
  * \ingroup dll2listtypes
  * \param T the type of the item this link is stored in.
  */
-template <class T>
+template <class T, bool strict_walking=true, bool use_checksum=true>
 class LListLinks
 {
 private:
-    friend class LList<T,0>;  // hack! hack! hack! --bill the cat
-    friend class LList<T,1>;
-    friend class LList<T,2>;
-    friend class LList<T,3>;
+    // hack! hack! hack! --bill the cat
+    friend class LList<T,0,strict_walking,use_checksum>;
+    friend class LList<T,1,strict_walking,use_checksum>;
+    friend class LList<T,2,strict_walking,use_checksum>;
+    friend class LList<T,3,strict_walking,use_checksum>;
     T * next;
     T * prev;
     void * onlist;
-#if DLL2_CHECKSUMS
     unsigned long checksum;
     unsigned long calc_checksum(void) const {
         return 0xb09d3086U + (unsigned long) next +
             (unsigned long) prev + (unsigned long) onlist;
     }
     void validate(void) const {
-        if ( checksum != calc_checksum())
-            DLL2BAIL(( "CHECKSUM ERROR IN DLL2 ELEMENT\n" ));
+        if (use_checksum)
+            if ( checksum != calc_checksum())
+                DLL2BAIL(( "CHECKSUM ERROR IN DLL2 ELEMENT\n" ));
     }
-    void recalc(void) { checksum = calc_checksum(); }
-#else
-    void validate(void) const {}
-    void recalc(void) {}
-#endif
+    void recalc(void) {
+        if (use_checksum)
+            checksum = calc_checksum();
+    }
 public:
     /** constructor, initializes links and checksum */
     LListLinks( void ) {
@@ -820,9 +801,7 @@ public:
     ~LListLinks( void ) {
         if ( onlist != 0 )
             DLL2BAIL(( "ERROR LLIST ITEM DELETED BUT STILL ON A LIST!\n" ));
-#if DLL2_CHECKSUMS
         checksum = 0;
-#endif
     }
     /** retrieves pointer to LList object this item is on */
     void * get_onlist( void ) const { return onlist; }
@@ -835,27 +814,27 @@ public:
  * \param T the type of the items to store in the list
  * \param instance the list instance number, basically the LListLinks index
  */
-template <class T, int instance>
+template <class T, int instance,
+          bool strict_walking, bool use_checksum>
 class LList
 {
     T * head;
     T * tail;
     int cnt;
-#if DLL2_CHECKSUMS
     unsigned long checksum;
     unsigned long calc_checksum(void) const {
         return 0x2df692f8U + (unsigned long) head +
             (unsigned long) tail + (unsigned long) cnt;
     }
     void validate(void) const {
-        if ( checksum != calc_checksum())
-            DLL2BAIL(( "CHECKSUM ERROR IN DLL2 LLIST\n" ));
+        if (use_checksum)
+            if ( checksum != calc_checksum())
+                DLL2BAIL(( "CHECKSUM ERROR IN DLL2 LLIST\n" ));
     }
-    void recalc(void) { checksum = calc_checksum(); }
-#else
-    void validate(void) const { }
-    void recalc(void) const { }
-#endif
+    void recalc(void) {
+        if (use_checksum)
+            checksum = calc_checksum();
+    }
 public:
     /** constructor, initializes head, tail, and checksum */
     LList( void ) { head = tail = NULL;  cnt = 0; recalc(); }
@@ -864,9 +843,7 @@ public:
         validate();
         if ( head || tail || cnt )
             DLL2BAIL(( "LLIST DELETED BUT NOT EMPTY\n" ));
-#if DLL2_CHECKSUMS
         checksum = 0;
-#endif
     }
     /** add an item of type T to tail of list */
     void add( T * x ) {
@@ -1019,10 +996,9 @@ public:
      *       not currently on this list. */
     T * get_next( T * x ) const {
         validate();
-#if DLL2_STRICT_WALKING
-        if ( !onthislist( x ))
-            DLL2BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
-#endif
+        if (strict_walking)
+            if ( !onthislist( x ))
+                DLL2BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
         x->links[instance].validate();
         return x->links[instance].next;
     }
@@ -1032,10 +1008,9 @@ public:
      *       not currently on this list. */
     T * get_prev( T * x ) const {
         validate();
-#if DLL2_STRICT_WALKING
-        if ( !onthislist( x ))
-            DLL2BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
-#endif
+        if (strict_walking)
+            if ( !onthislist( x ))
+                DLL2BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
         x->links[instance].validate();
         return x->links[instance].prev;
     }
@@ -1067,13 +1042,15 @@ extern const int dll2_hash_primes[DLL2_NUM_HASH_PRIMES];
  * \param instance the list instance number, basically the LListLinks index
  */
 template <class T, class Hash_Key_Type,
-          class Hash_Key_Comparator, int instance>
+          class Hash_Key_Comparator, int instance,
+          bool strict_walking = true,
+          bool use_checksum = true>
 class LListHash {
 private:
     short hashorder;
     short rehash_inprog;
     int hashsize;
-    typedef LList <T,instance>  theLListHash;
+    typedef LList <T,instance, strict_walking, use_checksum>  theLListHash;
     theLListHash * hash;
     static int hashv ( int key, int hs ) { return key % hs; }
     int count;
@@ -1175,10 +1152,12 @@ public:
  * \param T the type of the items to store in the list
  * \param instance the list instance number, basically the LListLinks index
  */
-template <class T, int instance>
+template <class T, int instance,
+          bool strict_walking = true,
+          bool use_checksum = true>
 class LListLRU {
 private:
-    LList <T,instance> list;
+    LList <T,instance, strict_walking, use_checksum> list;
 public:
     /** return the number of items currently on this list */
     int get_cnt( void ) const { return list.get_cnt(); }
@@ -1249,11 +1228,14 @@ public:
  */
 template <class T, 
           class Hash_Key_Type, class Hash_Key_Comparator,
-          int hash_instance, int lru_instance>
+          int hash_instance, int lru_instance,
+          bool strict_walking = true,
+          bool use_checksum = true>
 class LListHashLRU {
 private:
-    LListHash <T, Hash_Key_Type, Hash_Key_Comparator, hash_instance> hash;
-    LListLRU  <T, lru_instance > lru;
+    LListHash <T, Hash_Key_Type, Hash_Key_Comparator, hash_instance,
+               strict_walking, use_checksum> hash;
+    LListLRU  <T, lru_instance, strict_walking, use_checksum> lru;
 public:
     ~LListHashLRU( void ) { }
     /** search the hash portion of this object */
@@ -1316,10 +1298,12 @@ public:
  * \param T the type of the items to store in the list
  * \param instance the list instance number, basically the LListLinks index
  */
-template <class T, int instance>
+template <class T, int instance,
+          bool strict_walking = true,
+          bool use_checksum = true>
 class LListOrderedQ {
 private:
-    LList <T,instance> oq;
+    LList <T,instance,strict_walking,use_checksum> oq;
 public:
     int get_cnt( void ) const { return oq.get_cnt(); }
     void add( T * t, int new_oq_key ) {
@@ -1354,9 +1338,5 @@ public:
     bool onlist( const T * t ) const { return oq.onlist( t ); }
     bool onthislist( const T * t ) const { return oq.onthislist( t ); }
 };
-
-#if DLL2_INCLUDE_BTREE
-#include "dll2_btree.H"
-#endif
 
 #endif /* __DLL2_H_ */

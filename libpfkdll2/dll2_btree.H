@@ -23,9 +23,11 @@
 
 // this is an internal type used by LListBTREE
 
-template <class T, int ORDER>
+template <class T, int ORDER,
+          bool strict_walking = true,
+          bool use_checksum = true>
 struct LListBTREENode {
-    LListLinks<LListBTREENode> links[1];
+    LListLinks<LListBTREENode,strict_walking,use_checksum> links[1];
     char numkeys;
     char cur;
     bool leaf;
@@ -57,21 +59,23 @@ struct LListBTREENode {
 // greator than key.
 
 template <class T, class BTREE_Key_Type,
-          class BTREE_Key_Comparator, int instance, int ORDER>
+          class BTREE_Key_Comparator, int instance, int ORDER,
+          bool strict_walking = true,
+          bool use_checksum = true>
 class LListBTREE {
     static const int HALF_ORDER = ORDER / 2;
     static const int ORDER_MO   = ORDER - 1;
     static const int ORDER_MT   = ORDER - 2;
 
-    typedef LListBTREENode <T,ORDER>  NODE;
-    typedef LList          <NODE,0>   NODESTORE;
+    typedef LListBTREENode <T,ORDER,strict_walking,use_checksum>  NODE;
+    typedef LList          <NODE,0,strict_walking,use_checksum>   NODESTORE;
 
     NODE * root;
     int numnodes;
     int numitems;
     int depth;
 
-    LList <T,instance>  items;
+    LList <T,instance,strict_walking,use_checksum>  items;
 
     void empty_store( NODESTORE * store )
     {
