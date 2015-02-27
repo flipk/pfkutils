@@ -12,7 +12,7 @@ PFK_SCRIPT_FILES = \
 	ec6 \
 	ec7 \
 	ec8 \
-	emacsn \
+	pfkterm \
 	make_linux_cscope \
 	mcs \
 	myemacs-checkout-helper \

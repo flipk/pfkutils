@@ -243,9 +243,9 @@ nEnter c-mode-tabwidth value (4 or 8):")
 ; display should be nil (don't update output window)
 
 (defun cscope-window ()
-  "open cscope in an xterm"
+  "open cscope in a pfkterm"
   (interactive)
-  (call-process "xterm" nil 0 nil
+  (call-process "pfkterm" nil 0 nil
 		"-g" "185x70+20+20"
 		"-e" 
 		(concat "/home/" (getenv "USER")
@@ -254,7 +254,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (defun cscope-rebuild ()
   "rebuild cscope database"
   (interactive)
-  (call-process "xterm" nil 0 nil
+  (call-process "pfkterm" nil 0 nil
 		"-g" "80x10+200+200"
 		"-e" 
 		(concat "/home/" (getenv "USER")
@@ -268,7 +268,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 	(progn
 	  (toggle-read-only)
 	  (message "About to checkout file %s..." fname)
-	  (call-process "xterm" nil 0 nil
+	  (call-process "pfkterm" nil 0 nil
 			"-g" "80x10+200+200" "-e"
 			(concat "/home/"
 				(getenv "USER")
