@@ -2,8 +2,7 @@ style.name:                          Blue Night v2
 style.author:                        mack@incise.org
 style.date:                          Mon Dec 31 2001
 style.credits:
-style.comments:                      Modified/tweaked by skypher
-
+style.comments:                      Modified/tweaked by skypher, then by pfk
 
 ! background: tiled
 ! background.pixmap: /home/flipk/Dropbox/Public/pics/grid3.png
@@ -136,5 +135,4 @@ handleWidth:                         3
 frameWidth:                          0
 bevelWidth:                          1
 borderWidth:                         1
-borderColor:                         #000000
-
+borderColor:                         #404040
