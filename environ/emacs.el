@@ -8,8 +8,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(blink-matching-paren-distance nil)
+ '(column-number-mode t)
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
+ '(display-time-mode t)
  '(file-precious-flag t)
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
@@ -18,15 +20,14 @@
  '(menu-bar-mode nil)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
+ '(mouse-buffer-menu-maxlen 100)
+ '(mouse-buffer-menu-mode-mult 100)
  '(speedbar-show-unknown-files t)
  '(tool-bar-mode nil nil (tool-bar))
  '(verilog-auto-delete-trailing-whitespace t)
  '(verilog-auto-inst-column 10)
  '(verilog-auto-newline nil)
- '(verilog-indent-begin-after-if nil)
- '(mouse-buffer-menu-maxlen 100)
- '(mouse-buffer-menu-mode-mult 100)
-)
+ '(verilog-indent-begin-after-if nil))
 
 (load-file (concat "/home/" (getenv "USER")
 		   "/pfk/etc/go-mode.el"))
@@ -44,33 +45,38 @@
  '(mouse ((t (:background "white" :foreground "black"))))
  '(scroll-bar ((t (:background "grey85" :foreground "red")))))
 
-(setq pfk-small-font
-      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
-
-(setq pfk-big-font
-      "-misc-*-medium-r-normal-*-20-200-*-*-*-*-iso8859-1")
-
-(defun my-set-frame-attrs ()
+(defun my-init-hook ()
   ""
   (progn
-    (set-frame-font pfk-small-font)
-    (set-foreground-color "yellow")
-    (set-background-color "black")
-    (set-cursor-color "red")))
+;    (message "my-init-hook was run")
+    ))
 
-(defun my-set-frame-attrs-hook (frame)
+(add-hook 'after-init-hook 'my-init-hook)
+
+(setq pfk-small-font "Source Code Pro Medium-9")
+(setq pfk-big-font   "Source Code Pro Medium-14")
+
+(defun my-fix-minibuffer ()
+  ""
+  (progn
+    (select-frame default-minibuffer-frame)
+    (set-frame-font "Source Code Pro Medium-10")
+    ))
+
+(run-at-time 1 nil 'my-fix-minibuffer)
+
+(defun my-make-frame-hook (frame)
   ""
   (interactive)
   (progn
     (select-frame frame)
-    (my-set-frame-attrs)))
+    (set-frame-font pfk-small-font)
+    (set-foreground-color "yellow")
+    (set-background-color "black")
+    (set-cursor-color "red")
+    ))
 
-;(my-set-frame-attrs)
-;(add-hook 'after-make-frame-functions 'my-set-frame-attrs-hook)
-
-(line-number-mode 1)
-(column-number-mode 1)
-(display-time)
+(add-hook 'after-make-frame-functions 'my-make-frame-hook)
 
 (cond (window-system
        (progn
@@ -78,7 +84,6 @@
 	   (let ((minibuftitle (concat "Emacs Minibuffer" desktop)))
 	     (setq
 	      default-frame-alist '((minibuffer . nil)
-	    (font . "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
 				    (width . 81)
 				    (cursor-color . "red"))
 	      initial-frame-alist 'nil
@@ -88,8 +93,7 @@
 		      (auto-raise . t) (minibuffer-lines . 1)
 		      (vertical-scroll-bars . nil)
 		      (name . "Emacs Minibuffer")))
-	      special-display-buffer-names
-	      '("*compilation*" "*shell*")
+;	      special-display-buffer-names '("*compilation*" "*shell*")
 	      hilit-mode-enable-list  '(not text-mode)
 	      hilit-background-mode   'dark
 	      hilit-inhibit-hooks     nil
