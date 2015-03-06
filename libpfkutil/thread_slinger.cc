@@ -39,7 +39,7 @@ ThreadSlingerError::Format(void) const
     std::string ret = "ThreadSlingerError: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTraceFormat();
+    ret += BackTrace::Format();
     return ret;
 }
 

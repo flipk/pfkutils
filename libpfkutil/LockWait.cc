@@ -15,6 +15,6 @@ LockableError::Format(void) const
     std::string ret = "LOCKABLE ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTraceFormat();
+    ret += BackTrace::Format();
     return ret;
 }

@@ -6,13 +6,13 @@
 #include <pthread.h>
 #include <string>
 
-#include "throwBacktrace.h"
+#include "BackTrace.h"
 #include  "dll3.h"
 
 namespace HSMThread {
 
 /** thread-related errors that may be encountered */
-struct ThreadError : public ThrowUtil::ThrowBackTrace
+struct ThreadError : public BackTraceUtil::BackTrace
 {
     /** list of thread-related errors that might be thrown */
     enum ThreadErrorValue {

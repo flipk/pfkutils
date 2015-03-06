@@ -33,7 +33,7 @@
 namespace ThreadSlinger {
 
 /** exception object for errors from this library */
-struct ThreadSlingerError : ThrowUtil::ThrowBackTrace {
+struct ThreadSlingerError : BackTraceUtil::BackTrace {
     /** errors that this library may throw */
     enum errValue {
         MessageOnListDestructor, //!< message still on a list during destructor

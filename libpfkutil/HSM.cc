@@ -19,7 +19,7 @@ HSMError::Format(void) const
     std::string ret = "HSM ERROR: ";
     ret += errStrings[type];
     ret += " at:\n";
-    ret += BackTraceFormat();
+    ret += BackTrace::Format();
     return ret;
 }
 

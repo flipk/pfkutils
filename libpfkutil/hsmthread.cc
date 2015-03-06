@@ -22,7 +22,7 @@ ThreadError::Format(void) const
     std::string ret = "THREAD ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTraceFormat();
+    ret += BackTrace::Format();
     return ret;
 }
 

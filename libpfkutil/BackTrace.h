@@ -1,28 +1,28 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-#ifndef __THROWBACKTRACE_H__
-#define __THROWBACKTRACE_H__
+#ifndef __BACKTRACE_H__
+#define __BACKTRACE_H__
 
 #include <string>
 #include <execinfo.h>
 
-namespace ThrowUtil {
+namespace BackTraceUtil {
 
-struct ThrowBackTrace {
+struct BackTrace {
     static const int MAX_ADDRESSES = 20;
     void * traceAddresses[MAX_ADDRESSES];
     size_t  numAddresses;
-    ThrowBackTrace(void);
-    const std::string BackTraceFormat(void) const;
+    BackTrace(void);
+    const std::string Format(void) const;
 };
 
-inline ThrowBackTrace::ThrowBackTrace(void)
+inline BackTrace::BackTrace(void)
 {
     numAddresses = backtrace(traceAddresses, MAX_ADDRESSES);
 }
 
 inline const std::string
-ThrowBackTrace::BackTraceFormat(void) const
+BackTrace::Format(void) const
 {
     std::string ret;
     char ** symbols = backtrace_symbols(traceAddresses,
@@ -37,4 +37,4 @@ ThrowBackTrace::BackTraceFormat(void) const
 
 }; // namespace HSM
 
-#endif /* __THROWBACKTRACE_H__ */
+#endif /* __BACKTRACE_H__ */

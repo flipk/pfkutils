@@ -9,11 +9,11 @@
 #include <inttypes.h>
 
 #include "LockWait.h"
-#include "throwBacktrace.h"
+#include "BackTrace.h"
 
 namespace DLL3 {
 
-struct ListError : ThrowUtil::ThrowBackTrace {
+struct ListError : BackTraceUtil::BackTrace {
     enum ListErrValue {
         ITEM_NOT_VALID,
         ALREADY_ON_LIST,

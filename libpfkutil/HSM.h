@@ -16,14 +16,14 @@
 #include <iostream>
 
 #include "dll3.h"
-#include "throwBacktrace.h"
+#include "BackTrace.h"
 #include "hsmthread.h"
 #include "thread_slinger.h"
 
 namespace HSM {
 
 /** HSM-related errors that may be encountered */
-struct HSMError : ThrowUtil::ThrowBackTrace {
+struct HSMError : BackTraceUtil::BackTrace {
     /** list of HSM-related errors that might be thrown */
     enum HSMErrorType {
         HSMErrorHandleProbe,  //!< states must NOT handle __HSM_PROBE

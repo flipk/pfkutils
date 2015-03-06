@@ -6,11 +6,11 @@
 #include <pthread.h>
 #include <time.h>
 
-#include "throwBacktrace.h"
+#include "BackTrace.h"
 
 namespace WaitUtil {
 
-struct LockableError : ThrowUtil::ThrowBackTrace {
+struct LockableError : BackTraceUtil::BackTrace {
     enum LockableErrValue {
         MUTEX_LOCKED_IN_DESTRUCTOR,
         RECURSION_ERROR,
