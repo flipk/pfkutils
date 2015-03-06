@@ -1,5 +1,15 @@
 *background:                  gray
 
+URxvt.scrollstyle: rxvt
+URxvt.scrollTtyOutput: false
+URxvt.scrollTtyKeypress: true
+URxvt.saveLines: 1000
+URxvt.foreground: green
+URxvt.background: black
+URxvt.highlightColor: blue
+URxvt.highlightTextColor: yellow
+URxvt.fading: 40
+
 XTerm*termName: vt100
 XTerm*jumpScroll:             true
 XTerm*visualBell:             false

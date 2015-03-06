@@ -13,7 +13,11 @@ srch() {
     return 1
 }
 
-if srch xfce4-terminal ; then
+if srch urxvt ; then
+    exec urxvt
+if srch rxvt ; then
+    exec rxvt
+elif srch xfce4-terminal ; then
     exec xfce4-terminal  --disable-server "$@" > /dev/null 2>&1
 elif srch gnome-terminal ; then
     exec gnome-terminal  --disable-factory "$@" > /dev/null 2>&1

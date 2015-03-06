@@ -53,14 +53,21 @@
 
 (add-hook 'after-init-hook 'my-init-hook)
 
-(setq pfk-small-font "Source Code Pro Medium-9")
-(setq pfk-big-font   "Source Code Pro Medium-14")
+(setq pfk-small-font
+      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
+(setq pfk-minibuf-font
+      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
+(setq pfk-big-font
+      "-misc-*-medium-r-normal-*-20-200-*-*-*-*-iso8859-1")
+;(setq pfk-small-font "Source Code Pro Medium-9")
+;(setq pfk-minibuf-font "Source Code Pro Medium-10")
+;(setq pfk-big-font   "Source Code Pro Medium-14")
 
 (defun my-fix-minibuffer ()
   ""
   (progn
     (select-frame default-minibuffer-frame)
-    (set-frame-font "Source Code Pro Medium-10")
+    (set-frame-font pfk-minibuf-font)
     ))
 
 (run-at-time 1 nil 'my-fix-minibuffer)
