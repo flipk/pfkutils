@@ -192,7 +192,6 @@ __ProtoSSLMsgs::handShakeCommon(void)
 bool
 __ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
 {
-    std::string outBuf;
     int ret;
 
     if (!good)
@@ -201,7 +200,7 @@ __ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
         return false;
     }
 
-    if (msg.SerializeToString(&outBuf) == false)
+    if (msg.SerializeToString(&outbuf) == false)
     {
         std::cout << "_sendMessage failed to serialize\n";
         // error?
@@ -210,9 +209,11 @@ __ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
 
     do {
         ret = ssl_write( &sslctx, reinterpret_cast<const unsigned char *>(
-                             outBuf.c_str()), outBuf.length() );
+                             outbuf.c_str()), outbuf.length() );
     } while (ret == POLARSSL_ERR_NET_WANT_READ ||
              ret == POLARSSL_ERR_NET_WANT_WRITE);
+
+    outbuf.clear();
 
     if (ret < 0)
         std::cout << "ssl_write returned " << std::hex << -ret << std::endl;

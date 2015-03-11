@@ -61,6 +61,7 @@ class __ProtoSSLMsgs {
     int listen_fd;
     int fd;
     std::string rcvbuf;
+    std::string outbuf;
     google::protobuf::Message * rcvdMsg;
     bool initCommon(void);
     bool loadCertificates(const ProtoSSLCertParams &params);
