@@ -283,8 +283,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 			"-g" "80x10+200+200" "-e"
 			(concat "/home/"
 				(getenv "USER")
-				"/pfk/bin/myemacs-checkout-helper "
-				(buffer-file-name)))
+				"/pfk/bin/myemacs-checkout-helper")
+			(buffer-file-name))
 	  (message "Checked out file %s." fname))
       (message "File is already checked out?"))))
 
