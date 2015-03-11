@@ -3,12 +3,25 @@
 URxvt.scrollstyle: rxvt
 URxvt.scrollTtyOutput: false
 URxvt.scrollTtyKeypress: true
-URxvt.saveLines: 1000
+URxvt.scrollWithBuffer: true
+URxvt.scrollColor: #0000c0
+URxvt.troughColor: #600000
+URxvt.saveLines: 5000
 URxvt.foreground: green
 URxvt.background: black
 URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
-URxvt.fading: 40
+URxvt.fading: 30
+URxvt.font: fixed
+! URxvt.lineSpace: 
+! URxvt.letterSpace: 
+URxvt.keysym.M-C-1: command:\033]710;5x7\007\033]711;5x7\007
+URxvt.keysym.M-C-2: command:\033]710;fixed\007\033]711;fixed\007
+URxvt.keysym.M-C-3: command:\033]710;10x20\007\033]711;10x20\007
+URxvt.keysym.M-C-8: command:\033[8;25;80t
+URxvt.keysym.M-C-9: command:\033[8;40;80t
+
+! 10x20
 
 XTerm*termName: vt100
 XTerm*jumpScroll:             true

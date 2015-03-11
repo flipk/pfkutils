@@ -14,9 +14,9 @@ srch() {
 }
 
 if srch urxvt ; then
-    exec urxvt
+    exec urxvt "$@"
 elif srch rxvt ; then
-    exec rxvt
+    exec rxvt "$@"
 elif srch xfce4-terminal ; then
     exec xfce4-terminal  --disable-server "$@" > /dev/null 2>&1
 elif srch gnome-terminal ; then
