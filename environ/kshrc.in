@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-02-26.22:04:13
+#      Last update: 2015-03-12.17:37:21
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -691,6 +691,46 @@ gettree() {
         return 1
     fi
     i2 -v $1 | tar xf -
+}
+
+__aesenc() {
+    if [ $# -ne 2 ] ; then
+        echo usage : aesenc pass file
+    else
+        pass=$1
+        infile=$2
+        outfile=$2.enc
+        openssl aes-256-cbc -e -salt -in $infile -out $outfile -pass pass:$pass
+        ls -l $infile $outfile
+    fi
+}
+
+aesenc() {
+    pass=$1
+    shift
+    for f in $* ; do
+        __aesenc $pass $f
+    done
+}
+
+__aesdec() {
+    if [ $# -ne 2 ] ; then
+        echo usage : aesdec pass file
+    else
+        pass=$1
+        infile=$2
+        outfile=${2%.enc}
+        openssl aes-256-cbc -d -in $infile -out $outfile -pass pass:$pass
+        ls -l $infile $outfile
+    fi
+}
+
+aesdec() {
+    pass=$1
+    shift
+    for f in $* ; do
+        __aesdec $pass $f
+    done
 }
 
 if __isksh ; then
