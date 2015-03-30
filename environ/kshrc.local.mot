@@ -1,5 +1,5 @@
 
-# Last update: 2014-04-16.14:47:09
+# Last update: 2015-03-30.12:06:41
 
 #FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig makepred ccdiff ccdiff2 
 
@@ -12,7 +12,7 @@ xvt() {
     cat > ~/.xclearcase << EOF
 Vtree.width: 1169
 Vtree.height: 970
-Vtree.x: 1
+Vtree.x: 25
 Vtree.y: 25
 EOF
     cat ~/zzz.xclearcase >>  ~/.xclearcase
