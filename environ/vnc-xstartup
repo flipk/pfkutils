@@ -1,6 +1,7 @@
 #!/bin/sh
 
 cd $HOME
+xrdb -load .Xresources
 
 # inform the .profile inside the xterm that this is the xconsole.
 # it will start the window manager there, so that all processes
