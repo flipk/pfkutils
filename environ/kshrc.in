@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-03-12.17:37:21
+#      Last update: 2015-03-30.12:20:08
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -90,18 +90,18 @@ esac
 
 if [ -z "$KSH_VERSION" ] ; then
     __isksh() {
-	return 1
+        return 1
     }
 else
     __isksh() {
-	return 0
+        return 0
     }
 fi
 
 if __isksh ; then
     if [[ x$LAST_HOST != x$HOST ]] ; then
-	__verbose from $LAST_HOST to $HOST, regen ENV
-	unset ENV_SET
+        __verbose from $LAST_HOST to $HOST, regen ENV
+        unset ENV_SET
     fi
     if [[ x$LOGIN_LOGGED == x ]] ; then
         REMOTE_HOST=${SSH_CONNECTION%% *}
@@ -111,8 +111,8 @@ if __isksh ; then
     fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
-	__verbose from $LAST_HOST to $HOST, regen ENV
-	unset ENV_SET
+        __verbose from $LAST_HOST to $HOST, regen ENV
+        unset ENV_SET
     fi
 fi
 
@@ -121,8 +121,8 @@ export LAST_HOST
 
 if __isksh ; then
     if [[ x$PFKARCH == x ]] ; then
-	PFKARCH=`@prefix@/bin/architecture`
-	export PFKARCH
+        PFKARCH=`@prefix@/bin/architecture`
+        export PFKARCH
     fi
 else
     PFKARCH=`@prefix@/bin/architecture`
@@ -166,7 +166,7 @@ case x$ENV_SET in
         __extend_path ~/bin
         __extend_path /usr/bin/X11
         __extend_path /usr/misc/X11/bin
-	__extend_path /usr/misc/GNU/bin
+        __extend_path /usr/misc/GNU/bin
         __extend_path /opt/site/bin
         __extend_path /opt/local/bin
         __extend_path /opt/gnu/bin
@@ -175,19 +175,19 @@ case x$ENV_SET in
         __extend_path /opt/X11R6.4/bin
         __extend_path /usr/misc/bin
         __extend_path /usr/vendor/bin
-	__extend_path /usr/atria/bin
+        __extend_path /usr/atria/bin
         __extend_path /usr/mot/bin
-	__extend_path /apps/public/bin
+        __extend_path /apps/public/bin
         __extend_path /usr/local/bin
-	__extend_path /usr/local/wmplayer
-	__extend_path /usr/local/X11
+        __extend_path /usr/local/wmplayer
+        __extend_path /usr/local/X11
         __extend_path /usr/ucb
         __extend_path /usr/etc
         __extend_path /usr/dt/bin
-	__extend_path /usr/ccs/bin
+        __extend_path /usr/ccs/bin
         __extend_path /bin
         __extend_path /usr/bin
-	__extend_path /usr/lib
+        __extend_path /usr/lib
         __extend_path /sbin
         __extend_path /usr/sbin
         __extend_path /share/scripts
@@ -222,38 +222,38 @@ if __isksh ; then
     TTY=${TTY#/dev/}
 
     _set_prompt() {
-	typeset _ps
-	_ps=''
-	if [[ "x$1" != x ]] ; then
-	    _ps="${_ps}[7m$1[m
+        typeset _ps
+        _ps=''
+        if [[ "x$1" != x ]] ; then
+            _ps="${_ps}[7m$1[m
 "
-	fi
-	_ps="${_ps}$REALUSER@$HOST"
-	if [[ x$CLEARCASE_ROOT != x ]] ; then
-	    _ps="${_ps} in CMBP"
-	fi
+        fi
+        _ps="${_ps}$REALUSER@$HOST"
+        if [[ x$CLEARCASE_ROOT != x ]] ; then
+            _ps="${_ps} in CMBP"
+        fi
         if [[ "x$WIND_BASE" != x ]] ; then
             _ps="${_ps} in ${WIND_BASE##*/}"
         fi
         _ps="${_ps} pid $$ on $TTY"
-	if [[ x$WINDOW != x ]] ; then
-	    _ps="${_ps}, scr $STY-$WINDOW"
-	fi
-	if [[ $_set_prompt_first_time -eq 1 ]] ; then
-	    _ps="${_ps}
+        if [[ x$WINDOW != x ]] ; then
+            _ps="${_ps}, scr $STY-$WINDOW"
+        fi
+        if [[ $_set_prompt_first_time -eq 1 ]] ; then
+            _ps="${_ps}
  % "
-	    _set_prompt_first_time=0
-	else
-	    _ps="${_ps}
+            _set_prompt_first_time=0
+        else
+            _ps="${_ps}
  [7m%[m "
-	fi
-	export PS1="$_ps"
+        fi
+        export PS1="$_ps"
     }
 
 else
 
     _set_prompt() {
-	export PS1="$1 % "
+        export PS1="$1 % "
     }
 
 fi
@@ -597,15 +597,15 @@ ediff() {
     lisp=$HOME/ediff.$$
 
     cat << EOF > $lisp
-    	(custom-set-variables
-	  '(ediff-split-window-function 'split-window-horizontally)
-	  '(blink-matching-paren-distance nil)
-	  '(inhibit-startup-buffer-menu t)
- 	  '(inhibit-startup-echo-area-message (getenv "USER"))
- 	  '(inhibit-startup-screen t)
- 	  '(menu-bar-mode nil)
- 	  '(tool-bar-mode nil)
-	  )
+        (custom-set-variables
+          '(ediff-split-window-function 'split-window-horizontally)
+          '(blink-matching-paren-distance nil)
+          '(inhibit-startup-buffer-menu t)
+          '(inhibit-startup-echo-area-message (getenv "USER"))
+          '(inhibit-startup-screen t)
+          '(menu-bar-mode nil)
+          '(tool-bar-mode nil)
+          )
         (ediff "$1" "$2")
 EOF
 
@@ -618,8 +618,8 @@ merge3() {
     typeset lisp
 
     if [ $# -ne 4 ] ; then
-	echo usage : file-A file-B common-ancestor output
-	return
+        echo usage : file-A file-B common-ancestor output
+        return
     fi
 
     lisp=$HOME/merge3.$$
@@ -638,8 +638,8 @@ merge2() {
     typeset lisp
 
     if [ $# -ne 3 ] ; then
-	echo usage : file-A file-B output
-	return
+        echo usage : file-A file-B output
+        return
     fi
 
     lisp=$HOME/merge3.$$
@@ -763,7 +763,7 @@ if __isksh ; then
         . $HOME/.kshrc.local
         __verbose DONE sourcing kshrc.local
     else
-	__verbose no kshrc.local
+        __verbose no kshrc.local
     fi
 fi
 
@@ -795,45 +795,45 @@ fi
 
 if __isksh ; then
     if [[ x$GOOD_SHELL = x ]] ; then
-	if [[ -x $ksh_new ]] ; then
-	    ksh_final=$ksh_new
-	elif [[ -x /bin/ksh ]] ; then
-	    ksh_final=/bin/ksh
-	elif [[ -x /usr/local/bin/ksh ]] ; then
-	    ksh_final=/usr/local/bin/ksh
-	else
-	    print 'WARNING: USING /bin/sh!'
-	    ksh_final=/bin/sh
-	fi
-	if [[ $SHELL != $ksh_final ]] ; then
-	    __verbose switching shells, $SHELL to $ksh_final
-	    GOOD_SHELL=yes
-	    export GOOD_SHELL
-	    SHELL=$ksh_final
-	    export SHELL
-	    exec $ksh_final
-	fi
+        if [[ -x $ksh_new ]] ; then
+            ksh_final=$ksh_new
+        elif [[ -x /bin/ksh ]] ; then
+            ksh_final=/bin/ksh
+        elif [[ -x /usr/local/bin/ksh ]] ; then
+            ksh_final=/usr/local/bin/ksh
+        else
+            print 'WARNING: USING /bin/sh!'
+            ksh_final=/bin/sh
+        fi
+        if [[ $SHELL != $ksh_final ]] ; then
+            __verbose switching shells, $SHELL to $ksh_final
+            GOOD_SHELL=yes
+            export GOOD_SHELL
+            SHELL=$ksh_final
+            export SHELL
+            exec $ksh_final
+        fi
     fi
 else
     if [ x$GOOD_SHELL = x ] ; then
-	if [ -x $ksh_new ] ; then
-	    ksh_final=$ksh_new
-	elif [ -x /bin/ksh ] ; then
-	    ksh_final=/bin/ksh
-	elif [ -x /usr/local/bin/ksh ] ; then
-	    ksh_final=/usr/local/bin/ksh
-	else
-	    echo 'WARNING: USING /bin/sh!'
-	    ksh_final=/bin/sh
-	fi
-	if [ $SHELL != $ksh_final ] ; then
-	    __verbose switching shells, $SHELL to $ksh_final
-	    GOOD_SHELL=yes
-	    export GOOD_SHELL
-	    SHELL=$ksh_final
-	    export SHELL
-	    exec $ksh_final
-	fi
+        if [ -x $ksh_new ] ; then
+            ksh_final=$ksh_new
+        elif [ -x /bin/ksh ] ; then
+            ksh_final=/bin/ksh
+        elif [ -x /usr/local/bin/ksh ] ; then
+            ksh_final=/usr/local/bin/ksh
+        else
+            echo 'WARNING: USING /bin/sh!'
+            ksh_final=/bin/sh
+        fi
+        if [ $SHELL != $ksh_final ] ; then
+            __verbose switching shells, $SHELL to $ksh_final
+            GOOD_SHELL=yes
+            export GOOD_SHELL
+            SHELL=$ksh_final
+            export SHELL
+            exec $ksh_final
+        fi
     fi
 fi
 
@@ -866,13 +866,13 @@ __verbose bindings complete
 if __isksh ; then
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
-	I_AM_XCONSOLE=yes
+        I_AM_XCONSOLE=yes
         xsetroot -solid \#203040
         cd $HOME
         xrdb -load .Xresources
         fluxbox&
         xtermbar Console
-	xconsole_hook
+        xconsole_hook
         SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,console
     else
         if [[ x$WINDOW = x ]] ; then
@@ -885,50 +885,50 @@ if __isksh ; then
     trap "rm -f $SHELLFILE         "          EXIT
     trap "rm -f $SHELLFILE ; exit 0" HUP TERM EXIT
     cd() {
-	if [[ $# -eq 0 ]] ; then
-	    command cd
-	else
-	    command cd "$*"
-	fi
+        if [[ $# -eq 0 ]] ; then
+            command cd
+        else
+            command cd "$*"
+        fi
         if [[ x$INSIDE_EMACS != x ]] ; then
             echo SHELL_CWD_BEGIN:$PWD:SHELL_CWD_END
         fi
-	typeset file_part bardisp
-	if [[ "x$SHELLFILESPECIAL" != x ]] ; then
-	    bardisp="$SHELLFILESPECIAL:"
-	else
-	    bardisp=""
-	fi 
-	eval `make_file_part "$PWD" file_part`
-	if [[ "x$CLEARCASE_ROOT" == x || "x$CLEARCASE_ROOT" == x/view/gsdStart ]] ; then
-	    bardisp="$bardisp$file_part"
-	else
-	    typeset viewname
-	    viewname="${CLEARCASE_ROOT#/view/}"
-	    bardisp="$bardisp[$viewname]:$file_part"
-	fi
-	_set_prompt "$bardisp"
-	if [[ "x$DISPLAY" != x ]] ; then
-	    bardisp="$USER@$HOST:$bardisp"
-	    if [[ x$I_AM_XCONSOLE == x ]] ; then
-		if [[ x$INSIDE_EMACS == x ]] ; then
-		    xtermbar "$bardisp"
-		fi
-	    fi
-	fi
+        typeset file_part bardisp
+        if [[ "x$SHELLFILESPECIAL" != x ]] ; then
+            bardisp="$SHELLFILESPECIAL:"
+        else
+            bardisp=""
+        fi 
+        eval `make_file_part "$PWD" file_part`
+        if [[ "x$CLEARCASE_ROOT" == x || "x$CLEARCASE_ROOT" == x/view/gsdStart ]] ; then
+            bardisp="$bardisp$file_part"
+        else
+            typeset viewname
+            viewname="${CLEARCASE_ROOT#/view/}"
+            bardisp="$bardisp[$viewname]:$file_part"
+        fi
+        _set_prompt "$bardisp"
+        if [[ "x$DISPLAY" != x ]] ; then
+            bardisp="$USER@$HOST:$bardisp"
+            if [[ x$I_AM_XCONSOLE == x ]] ; then
+                if [[ x$INSIDE_EMACS == x ]] ; then
+                    xtermbar "$bardisp"
+                fi
+            fi
+        fi
         if [[ "x$TMUX" != x ]] ; then
             bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
             xtermbar $bardisp
         fi
-	CDPATH=.:$ti/src:$cpe/src:$HOME
-	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
+        CDPATH=.:$ti/src:$cpe/src:$HOME
+        echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
     }
     shellstring() {
         SHELLFILESPECIAL=$1
         cd .
     }
     shells() {
-	cat $HOME/.y.*
+        cat $HOME/.y.*
     }
 
     # update xterm title
