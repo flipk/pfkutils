@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# TODO : parse a "-g" (geometry) cmdline arg and a "-e" (execute)
+#        cmd line arg and translate to the respective program's
+#        favorite syntax
+
 IFS=":"
 result=""
 
