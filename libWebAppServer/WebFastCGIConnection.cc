@@ -5,6 +5,7 @@
 #include "base64.h"
 
 #include <stdlib.h>
+#include <errno.h>
 
 using namespace std;
 
@@ -796,12 +797,21 @@ WebAppServerFastCGIConfigRecord :: WebAppServerFastCGIConfigRecord(
 {
     if (pollInterval > 0)
     {
-        pipe(closePipe);
-        pthread_attr_t  attr;
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-        pthread_create(&thread_id, &attr, &_thread_entry, (void*) this);
-        pthread_attr_destroy(&attr);
+        if (pipe(closePipe) < 0)
+        {
+            fprintf(stderr, "WebAppServerFastCGIConfigRecord: "
+                    "unable to create closePipe: %d (%s)\n",
+                    errno, strerror(errno));
+            // should probably do something else here
+        }
+        else
+        {
+            pthread_attr_t  attr;
+            pthread_attr_init(&attr);
+            pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+            pthread_create(&thread_id, &attr, &_thread_entry, (void*) this);
+            pthread_attr_destroy(&attr);
+        }
     }
 }
 

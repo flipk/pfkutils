@@ -7,6 +7,7 @@
 //#include "md5.h"  // if i ever fix hixie-76
 
 #include <sstream>
+#include <errno.h>
 
 #define VERBOSE 0
 
@@ -250,7 +251,11 @@ WebSocketConnection :: send_handshake_response(void)
     if (VERBOSE)
         cout << "writing headers: " << out_frame << endl;
 
-    ::write(fd, out_frame.c_str(), out_frame.size());
+    if (::write(fd, out_frame.c_str(), out_frame.size()) < 0)
+    {
+        fprintf(stderr, "send_handshake_response: write failed: %d (%s)\n",
+                errno, strerror(errno));
+    }
 }
 
 //
@@ -453,7 +458,11 @@ WebSocketConnection :: sendMessage(const WebAppMessage &m)
         printf("\n");
     }
 
-    ::write(fd, buf, len);
+    if (::write(fd, buf, len) != len)
+    {
+        fprintf(stderr, "sendMessage: write failed: %d (%s)\n",
+                errno, strerror(errno));
+    }
 }
 
 void

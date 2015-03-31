@@ -189,7 +189,14 @@ WebSocketClient :: init_common(const string &proxy,
     }
 
     const string &hdrstr = hdrs.str();
-    ::write(newfd, hdrstr.c_str(), hdrstr.length());
+    int writeLen = hdrstr.length();
+    int cc = ::write(newfd, hdrstr.c_str(), writeLen);
+    if (cc != writeLen)
+    {
+        fprintf(stderr, "WebSocketClient :: init_common: "
+                "write %d returned %d (err %d: %s)\n",
+                writeLen, cc, errno, strerror(errno));
+    }
 
     got_flags = GOT_NONE;
     startFdThread( newfd );
@@ -379,7 +386,14 @@ WebSocketClient :: handle_proxyresp(
         generateWsHeaders(hdrs);
         state = STATE_HEADERS;
         const string &hdrstr = hdrs.str();
-        ::write(fd, hdrstr.c_str(), hdrstr.length());
+        int writeLen = hdrstr.length();
+        int cc = ::write(fd, hdrstr.c_str(), writeLen);
+        if (cc != writeLen)
+        {
+            fprintf(stderr, "WebSocketClient :: handle_proxyresp: "
+                    "write %d returned %d (err %d: %s)\n",
+                    writeLen, cc, errno, strerror(errno));
+        }
     }
     return true;
 }
@@ -675,7 +689,14 @@ WebSocketClient :: sendMessage(const WebAppMessage &m)
     }
 
     WaitUtil::Lock   lock(this);
-    ::write(fd, msg.c_str(), msg.size());
+    int writeLen = msg.size();
+    int cc = ::write(fd, msg.c_str(), writeLen);
+    if (cc != writeLen)
+    {
+        fprintf(stderr, "WebSocketClient :: sendMessage: "
+                "write %d returned %d (err %d: %s)\n",
+                writeLen, cc, errno, strerror(errno));
+    }
 
     return true;
 }
