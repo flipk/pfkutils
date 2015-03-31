@@ -6,6 +6,7 @@ pfkutils_new_SOURCES = \
 	rmstar_new.cc fmtsdiff.c \
 	genpw.c xtermbar.c waitpid.c \
 	pfkstat.c \
+	deduplifier.cc \
 	main.C programs.h
 
 # treescan.c

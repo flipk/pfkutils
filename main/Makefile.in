@@ -105,18 +105,18 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__pfkutils_new_SOURCES_DIST = crnl.c he.c random-hex.c rmstar_new.cc \
-	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c main.C \
-	programs.h sudo.c sudo.h checksize.c treescan.c btdump.C \
-	fbcompact.C fbdump.C
+	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
+	deduplifier.cc main.C programs.h sudo.c sudo.h checksize.c \
+	treescan.c btdump.C fbcompact.C fbdump.C
 @PFK_AM_BUILD_sudo_TRUE@am__objects_1 = sudo.$(OBJEXT)
 @PFK_AM_BUILD_checksize_TRUE@am__objects_2 = checksize.$(OBJEXT)
 @PFK_AM_BUILD_treescan_TRUE@am__objects_3 = treescan.$(OBJEXT)
 am_pfkutils_new_OBJECTS = crnl.$(OBJEXT) he.$(OBJEXT) \
 	random-hex.$(OBJEXT) rmstar_new.$(OBJEXT) fmtsdiff.$(OBJEXT) \
 	genpw.$(OBJEXT) xtermbar.$(OBJEXT) waitpid.$(OBJEXT) \
-	pfkstat.$(OBJEXT) main.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2) $(am__objects_3) btdump.$(OBJEXT) \
-	fbcompact.$(OBJEXT) fbdump.$(OBJEXT)
+	pfkstat.$(OBJEXT) deduplifier.$(OBJEXT) main.$(OBJEXT) \
+	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
+	btdump.$(OBJEXT) fbcompact.$(OBJEXT) fbdump.$(OBJEXT)
 pfkutils_new_OBJECTS = $(am_pfkutils_new_OBJECTS)
 pfkutils_new_DEPENDENCIES = $(am__append_1) $(am__append_2) \
 	$(am__append_6) $(am__append_7) $(am__append_8) ../i2/libi2.a \
@@ -356,9 +356,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pfkutils_new_SOURCES = crnl.c he.c random-hex.c rmstar_new.cc \
-	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c main.C \
-	programs.h $(am__append_3) $(am__append_4) $(am__append_5) \
-	btdump.C fbcompact.C fbdump.C
+	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
+	deduplifier.cc main.C programs.h $(am__append_3) \
+	$(am__append_4) $(am__append_5) btdump.C fbcompact.C fbdump.C
 
 # treescan.c
 pfkutils_new_LDADD = $(am__append_1) $(am__append_2) $(am__append_6) \
@@ -471,6 +471,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/btdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/checksize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crnl.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/deduplifier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fbcompact.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fbdump.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmtsdiff.Po@am__quote@
