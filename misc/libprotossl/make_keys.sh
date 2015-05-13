@@ -1,5 +1,14 @@
 #!/bin/sh
 
+#cd /etc/ssl/certs
+#openssl dhparam -out dhparam.pem 4096
+
+# nginx.conf:
+#ssl_ciphers 'AES128+EECDH:AES128+EDH';
+#ssl_prefer_server_ciphers on;
+#ssl_session_cache shared:SSL:10m;
+#ssl_dhparam /etc/ssl/certs/dhparam.pem;
+
 pass=`random_text 10`
 echo $pass > ca.password
 openssl genrsa -out ca.key.enc -passout pass:$pass -aes256 2048
