@@ -279,7 +279,7 @@ export HISTSIZE=250
 #
 
 case $TERM in
-    xterm|xterms|linux|screen|rmhost-*)
+    xterm|xterms|linux|screen|rxvt*|rmhost-*)
         TERM=vt100
         ;;
     cygwin)
