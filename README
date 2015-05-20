@@ -20,7 +20,7 @@ blade:
 
 hertz & adler:
 
-../configure --enable-environ=mot --enable-ctwm --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver
+../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver
 
 bohr:
 
@@ -30,7 +30,7 @@ PATH=/open_source/bin-sun/gcc/bin:$PATH make install
 
 droid-u43:
 
-../configure --enable-environ=mot --enable-ctwm --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak
+../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak --enable-webappserver
 
 faraday:
 

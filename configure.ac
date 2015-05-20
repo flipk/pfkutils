@@ -4,7 +4,7 @@ m4_define([PFKUTILS_MINOR_VERSION], 19)
 
 AC_INIT([pfkutils],
         [PFKUTILS_MAJOR_VERSION.PFKUTILS_MINOR_VERSION],
-        [pknaack1@netscape.net])
+        [pfk@pfk.org])
 
 m4_pattern_allow([AM_PROG_AR])
 AM_PROG_AR
@@ -65,7 +65,6 @@ AC_DEFUN([PFK_ARG_ENABLE],
   m4_divert_text(PFK_NOTICES_DIVERSION, AC_MSG_NOTICE([$2: $pfk_build_$1]))
 ])
 
-PFK_ARG_ENABLE([etg],        [build encrypted telnet gate tools])
 PFK_ARG_ENABLE([pfkbak],     [build backup server])
 PFK_ARG_ENABLE([syslog],     [build my syslog tools])
 PFK_ARG_ENABLE([webappserver],  [build libWebAppServer])
@@ -240,8 +239,6 @@ AC_CONFIG_FILES([
     syslog/Makefile
     backup/Makefile
     pfksh/Makefile
-    teld/Makefile
-    enctelgate/Makefile
     ampfk/Makefile
     main/Makefile
     main/programs.h

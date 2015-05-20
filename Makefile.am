@@ -22,10 +22,6 @@ if PFK_AM_BUILD_syslog
 SUBDIRS += syslog
 endif
 
-if PFK_AM_BUILD_etg
-SUBDIRS += teld enctelgate
-endif
-
 if PFK_AM_BUILD_ampfk
 SUBDIRS += ampfk
 endif

@@ -39,10 +39,6 @@ if PFK_AM_BUILD_syslog
 pfkutils_new_LDADD += ../syslog/libsyslog.a
 endif
 
-if PFK_AM_BUILD_etg
-pfkutils_new_LDADD += ../teld/libteld.a ../enctelgate/libetg.a
-endif
-
 if PFK_AM_BUILD_ampfk
 pfkutils_new_LDADD += ../ampfk/libampfk.a
 endif
