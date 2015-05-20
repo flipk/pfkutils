@@ -184,6 +184,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (add-hook 'shell-mode-hook 'add-mode-line-dirtrack)
 
+(add-to-list 'auto-mode-alist ("\\.scss\\'" . css-mode))
+
 ;
 
 (defun fix-verilog-buffer-my-way ()
