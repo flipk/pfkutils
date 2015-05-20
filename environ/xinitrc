@@ -11,4 +11,4 @@ XCONSOLE=yes
 ENV=$HOME/.kshrc
 export XCONSOLE ENV
 
-exec pfkterm
+exec ssh-agent pfkterm

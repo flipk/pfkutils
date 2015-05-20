@@ -11,25 +11,26 @@ XCONSOLE=yes
 ENV=$HOME/.kshrc
 export XCONSOLE ENV
 
-eval `ssh-agent`
-
-add_size() {
-    modeline=$( cvt $1 $2 | awk '/^Modeline/ { $1=""; $2=""; print }' )
-    xrandr --newmode $1x$2 $modeline
-    xrandr --addmode default $1x$2
-}
-
+# this xrandr stuff is no longer relevant.
+#   - i use tigervnc at home, which does auto desk resizing.
+#   - at work i'm forced to use realvnc which doesn't even support
+#     xrandr --newmode anyway, you need to use .vnc/config* files
+#     to add resolutions.
+#add_size() {
+#    modeline=$( cvt $1 $2 | awk '/^Modeline/ { $1=""; $2=""; print }' )
+#    xrandr --newmode $1x$2 $modeline
+#    xrandr --addmode default $1x$2
+#}
 # note windows 7 :
 #   start bar is 
 #      64 wide (if on side) or
 #      40 tall (if on top/bottom)
 #   and title bars are 24 tall.
+#add_size 1440 900
+#add_size 1376 876
+#add_size 1440 876
+#add_size 1280 1024
+#add_size 1280 1000
+#add_size 1920 1176
 
-add_size 1440 900
-add_size 1376 876
-add_size 1440 876
-add_size 1280 1024
-add_size 1280 1000
-add_size 1920 1176
-
-exec pfkterm
+exec ssh-agent pfkterm
