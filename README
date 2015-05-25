@@ -39,3 +39,18 @@ faraday:
 sunlogin1:
 
 STRIP=true ../configure --enable-environ=mot --enable-pfksh
+
+
+
+
+fluxbox branch pfk-1_3_7
+
+./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7
+
+rxvt-unicode branch pfk-2015-0411 (in file 00-PFK-CONFIGURE)
+
+./configure --prefix=$HOME/pfk/$PFKARCH/urxvt-9.21 \
+  --enable-xft --enable-font-styles --disable-perl --disable-iso14755 \
+  --enable-selectionscrolling --enable-mousewheel \
+  --disable-utmp --disable-wtmp --disable-lastlog \
+  --with-term=vt100

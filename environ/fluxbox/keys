@@ -20,7 +20,8 @@ OnLeftGrip Move1 :StartResizing bottomleft
 OnRightGrip Move1 :StartResizing bottomright
 
 # alt + middle click to lower the window
-OnWindow Mod1 Mouse2 :Lower
+# disable this because urxvt uses alt+mouse2 for paste CLIPBOARD
+# OnWindow Mod1 Mouse2 :Lower
 
 # control-click a window's titlebar and drag to attach windows
 OnTitlebar Control Mouse1 :StartTabbing
