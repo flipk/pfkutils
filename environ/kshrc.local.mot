@@ -53,7 +53,12 @@ lsv() {
 }
 
 lsvg() {
-    ct lsview | cut -c3- | grep $1
+    if [[ -z "$1" ]] ; then
+        pattern=${USER}
+    else
+        pattern="$1"
+    fi
+    ct lsview | cut -c3- | grep "$pattern" | awk '{print $1}'
 }
 
 lspr() {
@@ -90,6 +95,13 @@ lscol() {
 
 sv() {
     ct setview $1
+}
+
+ssv() {
+    select view in `lsvg $1` ; do
+        sv $view
+        break;
+    done
 }
 
 setvobs() {
