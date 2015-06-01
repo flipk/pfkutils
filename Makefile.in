@@ -81,7 +81,8 @@ host_triplet = @host@
 @PFK_AM_BUILD_pfksh_TRUE@am__append_2 = pfksh
 @PFK_AM_BUILD_syslog_TRUE@am__append_3 = syslog
 @PFK_AM_BUILD_ampfk_TRUE@am__append_4 = ampfk
-@PFK_AM_BUILD_webappserver_TRUE@am__append_5 = libWebAppServer
+@PFK_AM_BUILD_pfkscript_TRUE@am__append_5 = pfkscript
+@PFK_AM_BUILD_webappserver_TRUE@am__append_6 = libWebAppServer
 subdir = .
 DIST_COMMON = INSTALL NEWS README AUTHORS ChangeLog \
 	$(srcdir)/Makefile.in $(srcdir)/Makefile.am \
@@ -159,7 +160,8 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = contrib libpfkdll2 libpfkutil libpfkfb libpfkthread i2 \
-	backup pfksh syslog ampfk libWebAppServer main environ scripts
+	backup pfksh syslog ampfk pfkscript libWebAppServer main \
+	environ scripts
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -273,6 +275,7 @@ PFK_BUILD_cscope = @PFK_BUILD_cscope@
 PFK_BUILD_ctwm = @PFK_BUILD_ctwm@
 PFK_BUILD_doxygen = @PFK_BUILD_doxygen@
 PFK_BUILD_pfkbak = @PFK_BUILD_pfkbak@
+PFK_BUILD_pfkscript = @PFK_BUILD_pfkscript@
 PFK_BUILD_pfksh = @PFK_BUILD_pfksh@
 PFK_BUILD_runemacs = @PFK_BUILD_runemacs@
 PFK_BUILD_runrxvt = @PFK_BUILD_runrxvt@
@@ -354,7 +357,8 @@ top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = contrib libpfkdll2 libpfkutil libpfkfb libpfkthread i2 \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) main environ scripts
+	$(am__append_4) $(am__append_5) $(am__append_6) main environ \
+	scripts
 CONFIG_HDR_DEST = $(DESTDIR)$(exec_prefix)/include
 CONFIG_LOG_DEST = $(DESTDIR)$(exec_prefix)/share/pfkutils
 CVSTAR = pfkutils_cvs-`date +%Y-%m%d`.tar.bz2

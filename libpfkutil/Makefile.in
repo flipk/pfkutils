@@ -136,12 +136,13 @@ libpfkutil_la_LIBADD =
 am__libpfkutil_la_SOURCES_DIST = pk-md5.c m.c fd_mgr.C base64.c \
 	inet_aton.c thread_slinger.cc shmempipe.cc HSM.cc dll3.cc \
 	hsmthread.cc LockWait.cc prioWorkQ.cc regex.c \
-	fdThreadLauncher.cc sha1.cc msgr.cc
+	fdThreadLauncher.cc sha1.cc msgr.cc childprocessmanager.cc
 @PFK_NEED_REGEX_TRUE@am__objects_1 = regex.lo
 am_libpfkutil_la_OBJECTS = pk-md5.lo m.lo fd_mgr.lo base64.lo \
 	inet_aton.lo thread_slinger.lo shmempipe.lo HSM.lo dll3.lo \
 	hsmthread.lo LockWait.lo prioWorkQ.lo regex.lo \
-	fdThreadLauncher.lo sha1.lo msgr.lo $(am__objects_1)
+	fdThreadLauncher.lo sha1.lo msgr.lo childprocessmanager.lo \
+	$(am__objects_1)
 libpfkutil_la_OBJECTS = $(am_libpfkutil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -245,7 +246,7 @@ am__can_run_installinfo = \
 am__libpfkutil_la_HEADERS_DIST = pk-md5.h types.H bst.H m.h fd_mgr.H \
 	base64.h inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
 	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
-	sha1.h msgr.h
+	sha1.h msgr.h childprocessmanager.h bufprintf.h
 HEADERS = $(libpfkutil_la_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -338,6 +339,7 @@ PFK_BUILD_cscope = @PFK_BUILD_cscope@
 PFK_BUILD_ctwm = @PFK_BUILD_ctwm@
 PFK_BUILD_doxygen = @PFK_BUILD_doxygen@
 PFK_BUILD_pfkbak = @PFK_BUILD_pfkbak@
+PFK_BUILD_pfkscript = @PFK_BUILD_pfkscript@
 PFK_BUILD_pfksh = @PFK_BUILD_pfksh@
 PFK_BUILD_runemacs = @PFK_BUILD_runemacs@
 PFK_BUILD_runrxvt = @PFK_BUILD_runrxvt@
@@ -421,11 +423,12 @@ libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = pk-md5.h types.H bst.H m.h fd_mgr.H base64.h \
 	inet_aton.h thread_slinger.h shmempipe.H HSM.h dll3.h \
 	hsmthread.h LockWait.h prioWorkQ.h regex.h fdThreadLauncher.h \
-	sha1.h msgr.h $(am__append_1)
+	sha1.h msgr.h childprocessmanager.h bufprintf.h \
+	$(am__append_1)
 libpfkutil_la_SOURCES = pk-md5.c m.c fd_mgr.C base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
 	LockWait.cc prioWorkQ.cc regex.c fdThreadLauncher.cc sha1.cc \
-	msgr.cc $(am__append_2)
+	msgr.cc childprocessmanager.cc $(am__append_2)
 shmempipe_test_master_SOURCES = shmempipe_test_master.cc
 shmempipe_test_master_LDADD = libpfkutil.la
 shmempipe_test_slave_SOURCES = shmempipe_test_slave.cc
@@ -576,6 +579,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HSM_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/LockWait.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/base64.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/childprocessmanager.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dll3_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fdThreadLauncher.Plo@am__quote@

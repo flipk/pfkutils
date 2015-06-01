@@ -79,7 +79,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = myscript
+subdir = pfkscript
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp $(noinst_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -99,11 +99,11 @@ AM_V_AR = $(am__v_AR_@AM_V@)
 am__v_AR_ = $(am__v_AR_@AM_DEFAULT_V@)
 am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
-libmyscript_a_AR = $(AR) $(ARFLAGS)
-libmyscript_a_LIBADD =
-am_libmyscript_a_OBJECTS = libmyscript_a-logfile.$(OBJEXT) \
-	libmyscript_a-options.$(OBJEXT) libmyscript_a-main.$(OBJEXT)
-libmyscript_a_OBJECTS = $(am_libmyscript_a_OBJECTS)
+libpfkscript_a_AR = $(AR) $(ARFLAGS)
+libpfkscript_a_LIBADD =
+am_libpfkscript_a_OBJECTS = libpfkscript_a-logfile.$(OBJEXT) \
+	libpfkscript_a-options.$(OBJEXT) libpfkscript_a-main.$(OBJEXT)
+libpfkscript_a_OBJECTS = $(am_libpfkscript_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -142,8 +142,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libmyscript_a_SOURCES)
-DIST_SOURCES = $(libmyscript_a_SOURCES)
+SOURCES = $(libpfkscript_a_SOURCES)
+DIST_SOURCES = $(libpfkscript_a_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -240,8 +240,8 @@ PFK_BUILD_checksize = @PFK_BUILD_checksize@
 PFK_BUILD_cscope = @PFK_BUILD_cscope@
 PFK_BUILD_ctwm = @PFK_BUILD_ctwm@
 PFK_BUILD_doxygen = @PFK_BUILD_doxygen@
-PFK_BUILD_myscript = @PFK_BUILD_myscript@
 PFK_BUILD_pfkbak = @PFK_BUILD_pfkbak@
+PFK_BUILD_pfkscript = @PFK_BUILD_pfkscript@
 PFK_BUILD_pfksh = @PFK_BUILD_pfksh@
 PFK_BUILD_runemacs = @PFK_BUILD_runemacs@
 PFK_BUILD_runrxvt = @PFK_BUILD_runrxvt@
@@ -320,10 +320,10 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-noinst_LIBRARIES = libmyscript.a
+noinst_LIBRARIES = libpfkscript.a
 noinst_HEADERS = logfile.h options.h
-libmyscript_a_SOURCES = logfile.cc options.cc main.cc
-libmyscript_a_CPPFLAGS = -I$(top_srcdir)/libpfkutil
+libpfkscript_a_SOURCES = logfile.cc options.cc main.cc
+libpfkscript_a_CPPFLAGS = -I$(top_srcdir)/libpfkutil
 all: all-am
 
 .SUFFIXES:
@@ -337,9 +337,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu myscript/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu pfkscript/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu myscript/Makefile
+	  $(AUTOMAKE) --gnu pfkscript/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -362,10 +362,10 @@ $(am__aclocal_m4_deps):
 clean-noinstLIBRARIES:
 	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
 
-libmyscript.a: $(libmyscript_a_OBJECTS) $(libmyscript_a_DEPENDENCIES) $(EXTRA_libmyscript_a_DEPENDENCIES) 
-	$(AM_V_at)-rm -f libmyscript.a
-	$(AM_V_AR)$(libmyscript_a_AR) libmyscript.a $(libmyscript_a_OBJECTS) $(libmyscript_a_LIBADD)
-	$(AM_V_at)$(RANLIB) libmyscript.a
+libpfkscript.a: $(libpfkscript_a_OBJECTS) $(libpfkscript_a_DEPENDENCIES) $(EXTRA_libpfkscript_a_DEPENDENCIES) 
+	$(AM_V_at)-rm -f libpfkscript.a
+	$(AM_V_AR)$(libpfkscript_a_AR) libpfkscript.a $(libpfkscript_a_OBJECTS) $(libpfkscript_a_LIBADD)
+	$(AM_V_at)$(RANLIB) libpfkscript.a
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -373,9 +373,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmyscript_a-logfile.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmyscript_a-main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libmyscript_a-options.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libpfkscript_a-logfile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libpfkscript_a-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libpfkscript_a-options.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -398,47 +398,47 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
-libmyscript_a-logfile.o: logfile.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-logfile.o -MD -MP -MF $(DEPDIR)/libmyscript_a-logfile.Tpo -c -o libmyscript_a-logfile.o `test -f 'logfile.cc' || echo '$(srcdir)/'`logfile.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-logfile.Tpo $(DEPDIR)/libmyscript_a-logfile.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='logfile.cc' object='libmyscript_a-logfile.o' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-logfile.o: logfile.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-logfile.o -MD -MP -MF $(DEPDIR)/libpfkscript_a-logfile.Tpo -c -o libpfkscript_a-logfile.o `test -f 'logfile.cc' || echo '$(srcdir)/'`logfile.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-logfile.Tpo $(DEPDIR)/libpfkscript_a-logfile.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='logfile.cc' object='libpfkscript_a-logfile.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-logfile.o `test -f 'logfile.cc' || echo '$(srcdir)/'`logfile.cc
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-logfile.o `test -f 'logfile.cc' || echo '$(srcdir)/'`logfile.cc
 
-libmyscript_a-logfile.obj: logfile.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-logfile.obj -MD -MP -MF $(DEPDIR)/libmyscript_a-logfile.Tpo -c -o libmyscript_a-logfile.obj `if test -f 'logfile.cc'; then $(CYGPATH_W) 'logfile.cc'; else $(CYGPATH_W) '$(srcdir)/logfile.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-logfile.Tpo $(DEPDIR)/libmyscript_a-logfile.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='logfile.cc' object='libmyscript_a-logfile.obj' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-logfile.obj: logfile.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-logfile.obj -MD -MP -MF $(DEPDIR)/libpfkscript_a-logfile.Tpo -c -o libpfkscript_a-logfile.obj `if test -f 'logfile.cc'; then $(CYGPATH_W) 'logfile.cc'; else $(CYGPATH_W) '$(srcdir)/logfile.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-logfile.Tpo $(DEPDIR)/libpfkscript_a-logfile.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='logfile.cc' object='libpfkscript_a-logfile.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-logfile.obj `if test -f 'logfile.cc'; then $(CYGPATH_W) 'logfile.cc'; else $(CYGPATH_W) '$(srcdir)/logfile.cc'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-logfile.obj `if test -f 'logfile.cc'; then $(CYGPATH_W) 'logfile.cc'; else $(CYGPATH_W) '$(srcdir)/logfile.cc'; fi`
 
-libmyscript_a-options.o: options.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-options.o -MD -MP -MF $(DEPDIR)/libmyscript_a-options.Tpo -c -o libmyscript_a-options.o `test -f 'options.cc' || echo '$(srcdir)/'`options.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-options.Tpo $(DEPDIR)/libmyscript_a-options.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='options.cc' object='libmyscript_a-options.o' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-options.o: options.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-options.o -MD -MP -MF $(DEPDIR)/libpfkscript_a-options.Tpo -c -o libpfkscript_a-options.o `test -f 'options.cc' || echo '$(srcdir)/'`options.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-options.Tpo $(DEPDIR)/libpfkscript_a-options.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='options.cc' object='libpfkscript_a-options.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-options.o `test -f 'options.cc' || echo '$(srcdir)/'`options.cc
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-options.o `test -f 'options.cc' || echo '$(srcdir)/'`options.cc
 
-libmyscript_a-options.obj: options.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-options.obj -MD -MP -MF $(DEPDIR)/libmyscript_a-options.Tpo -c -o libmyscript_a-options.obj `if test -f 'options.cc'; then $(CYGPATH_W) 'options.cc'; else $(CYGPATH_W) '$(srcdir)/options.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-options.Tpo $(DEPDIR)/libmyscript_a-options.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='options.cc' object='libmyscript_a-options.obj' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-options.obj: options.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-options.obj -MD -MP -MF $(DEPDIR)/libpfkscript_a-options.Tpo -c -o libpfkscript_a-options.obj `if test -f 'options.cc'; then $(CYGPATH_W) 'options.cc'; else $(CYGPATH_W) '$(srcdir)/options.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-options.Tpo $(DEPDIR)/libpfkscript_a-options.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='options.cc' object='libpfkscript_a-options.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-options.obj `if test -f 'options.cc'; then $(CYGPATH_W) 'options.cc'; else $(CYGPATH_W) '$(srcdir)/options.cc'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-options.obj `if test -f 'options.cc'; then $(CYGPATH_W) 'options.cc'; else $(CYGPATH_W) '$(srcdir)/options.cc'; fi`
 
-libmyscript_a-main.o: main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-main.o -MD -MP -MF $(DEPDIR)/libmyscript_a-main.Tpo -c -o libmyscript_a-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-main.Tpo $(DEPDIR)/libmyscript_a-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='libmyscript_a-main.o' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-main.o: main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-main.o -MD -MP -MF $(DEPDIR)/libpfkscript_a-main.Tpo -c -o libpfkscript_a-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-main.Tpo $(DEPDIR)/libpfkscript_a-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='libpfkscript_a-main.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-main.o `test -f 'main.cc' || echo '$(srcdir)/'`main.cc
 
-libmyscript_a-main.obj: main.cc
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libmyscript_a-main.obj -MD -MP -MF $(DEPDIR)/libmyscript_a-main.Tpo -c -o libmyscript_a-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libmyscript_a-main.Tpo $(DEPDIR)/libmyscript_a-main.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='libmyscript_a-main.obj' libtool=no @AMDEPBACKSLASH@
+libpfkscript_a-main.obj: main.cc
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT libpfkscript_a-main.obj -MD -MP -MF $(DEPDIR)/libpfkscript_a-main.Tpo -c -o libpfkscript_a-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libpfkscript_a-main.Tpo $(DEPDIR)/libpfkscript_a-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='main.cc' object='libpfkscript_a-main.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libmyscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libmyscript_a-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libpfkscript_a_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o libpfkscript_a-main.obj `if test -f 'main.cc'; then $(CYGPATH_W) 'main.cc'; else $(CYGPATH_W) '$(srcdir)/main.cc'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

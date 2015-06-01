@@ -720,6 +720,9 @@ PFK_BUILD_checksize
 PFK_AM_BUILD_webappserver_FALSE
 PFK_AM_BUILD_webappserver_TRUE
 PFK_BUILD_webappserver
+PFK_AM_BUILD_pfkscript_FALSE
+PFK_AM_BUILD_pfkscript_TRUE
+PFK_BUILD_pfkscript
 PFK_AM_BUILD_syslog_FALSE
 PFK_AM_BUILD_syslog_TRUE
 PFK_BUILD_syslog
@@ -823,6 +826,7 @@ enable_silent_rules
 enable_environ
 enable_pfkbak
 enable_syslog
+enable_pfkscript
 enable_webappserver
 enable_checksize
 enable_treescan
@@ -1485,6 +1489,7 @@ Optional Features:
   --enable-environ=ENV   set ENV to blade, mot, or none
   --enable-pfkbak            build backup server
   --enable-syslog            build my syslog tools
+  --enable-pfkscript            build my script
   --enable-webappserver            build libWebAppServer
   --enable-checksize            build checksize tool
   --enable-treescan            build treescan tool
@@ -4682,6 +4687,43 @@ fi
 else
   PFK_AM_BUILD_syslog_TRUE='#'
   PFK_AM_BUILD_syslog_FALSE=
+fi
+
+
+
+
+  # Check whether --enable-pfkscript was given.
+if test "${enable_pfkscript+set}" = set; then :
+  enableval=$enable_pfkscript;
+     pfk_build_desc_pfkscript="build my script"
+     case $enableval in
+      yes)
+        pfk_build_pfkscript=yes
+        PFK_BUILD=1
+        ;;
+      no)
+        pfk_build_pfkscript=no
+	PFK_BUILD=0
+        ;;
+      *)
+        as_fn_error $? "valid args: --enable-pfkscript or --disable-pfkscript" "$LINENO" 5
+        ;;
+     esac
+else
+
+     pfk_build_pfkscript=no
+     PFK_BUILD=0
+
+fi
+
+  PFK_BUILD_pfkscript=$PFK_BUILD
+
+   if test $pfk_build_pfkscript = "yes"; then
+  PFK_AM_BUILD_pfkscript_TRUE=
+  PFK_AM_BUILD_pfkscript_FALSE='#'
+else
+  PFK_AM_BUILD_pfkscript_TRUE='#'
+  PFK_AM_BUILD_pfkscript_FALSE=
 fi
 
 
@@ -18035,6 +18077,118 @@ if test "$ac_res" != no; then :
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing login_tty" >&5
+$as_echo_n "checking for library containing login_tty... " >&6; }
+if ${ac_cv_search_login_tty+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char login_tty ();
+int
+main ()
+{
+return login_tty ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' util; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_login_tty=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_login_tty+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_login_tty+:} false; then :
+
+else
+  ac_cv_search_login_tty=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_login_tty" >&5
+$as_echo "$ac_cv_search_login_tty" >&6; }
+ac_res=$ac_cv_search_login_tty
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing openpty" >&5
+$as_echo_n "checking for library containing openpty... " >&6; }
+if ${ac_cv_search_openpty+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char openpty ();
+int
+main ()
+{
+return openpty ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' util; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_openpty=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_openpty+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_openpty+:} false; then :
+
+else
+  ac_cv_search_openpty=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_openpty" >&5
+$as_echo "$ac_cv_search_openpty" >&6; }
+ac_res=$ac_cv_search_openpty
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
 
 # Checks for header files.
 
@@ -18988,13 +19142,15 @@ fi
 PFK_USER_NAME=$USER
 
 
-ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile libWebAppServer/Makefile i2/Makefile syslog/Makefile backup/Makefile pfksh/Makefile ampfk/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
+ac_config_files="$ac_config_files pfkutils_version.h Makefile libpfkdll2/Makefile libpfkdll2/Doxyfile libpfkfb/Makefile libpfkfb/Doxyfile libpfkthread/Makefile libpfkthread/Doxyfile libpfkutil/Makefile libpfkutil/Doxyfile libWebAppServer/Makefile i2/Makefile syslog/Makefile backup/Makefile pfksh/Makefile ampfk/Makefile pfkscript/Makefile main/Makefile main/programs.h main/sudo.h contrib/Makefile environ/profile environ/kshrc environ/Makefile scripts/emacs-lone scripts/myshell-launcher scripts/cs scripts/myemacs-cscope-helper scripts/myshell scripts/pf_frontend scripts/Makefile"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: build backup server: $pfk_build_pfkbak" >&5
 $as_echo "$as_me: build backup server: $pfk_build_pfkbak" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build my syslog tools: $pfk_build_syslog" >&5
 $as_echo "$as_me: build my syslog tools: $pfk_build_syslog" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: build my script: $pfk_build_pfkscript" >&5
+$as_echo "$as_me: build my script: $pfk_build_pfkscript" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build libWebAppServer: $pfk_build_webappserver" >&5
 $as_echo "$as_me: build libWebAppServer: $pfk_build_webappserver" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build checksize tool: $pfk_build_checksize" >&5
@@ -19165,6 +19321,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_syslog_TRUE}" && test -z "${PFK_AM_BUILD_syslog_FALSE}"; then
   as_fn_error $? "conditional \"PFK_AM_BUILD_syslog\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PFK_AM_BUILD_pfkscript_TRUE}" && test -z "${PFK_AM_BUILD_pfkscript_FALSE}"; then
+  as_fn_error $? "conditional \"PFK_AM_BUILD_pfkscript\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_webappserver_TRUE}" && test -z "${PFK_AM_BUILD_webappserver_FALSE}"; then
@@ -20206,6 +20366,7 @@ do
     "backup/Makefile") CONFIG_FILES="$CONFIG_FILES backup/Makefile" ;;
     "pfksh/Makefile") CONFIG_FILES="$CONFIG_FILES pfksh/Makefile" ;;
     "ampfk/Makefile") CONFIG_FILES="$CONFIG_FILES ampfk/Makefile" ;;
+    "pfkscript/Makefile") CONFIG_FILES="$CONFIG_FILES pfkscript/Makefile" ;;
     "main/Makefile") CONFIG_FILES="$CONFIG_FILES main/Makefile" ;;
     "main/programs.h") CONFIG_FILES="$CONFIG_FILES main/programs.h" ;;
     "main/sudo.h") CONFIG_FILES="$CONFIG_FILES main/sudo.h" ;;

@@ -6,6 +6,7 @@
 #define PFK_BUILD_TREESCAN   @PFK_BUILD_treescan@
 #define PFK_BUILD_SUDO       @PFK_BUILD_sudo@
 #define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
+#define PFK_BUILD_PFKSCRIPT  @PFK_BUILD_pfkscript@
 
 #if PFK_BUILD_PFKBAK
 PROG(0,pfkbak,"Incremental and full-history backup tool")
@@ -13,6 +14,10 @@ PROG(0,pfkbak,"Incremental and full-history backup tool")
 
 #if PFK_BUILD_PFKSH
 PROG(0,pfksh,"public domain pdksh-based shell")
+#endif
+
+#if PFK_BUILD_PFKSCRIPT
+PROG(0,pfkscript,"my script replacement that does more stuff")
 #endif
 
 #if PFK_BUILD_SYSLOG

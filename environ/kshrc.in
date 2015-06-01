@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-03-30.12:09:37
+#      Last update: 2015-05-30.18:55:06
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -906,6 +906,9 @@ if __isksh ; then
             typeset viewname
             viewname="${CLEARCASE_ROOT#/view/}"
             bardisp="$bardisp[$viewname]:$file_part"
+        fi
+        if [[ "x$IN_PFKSCRIPT" != x ]] ; then
+            bardisp="PFKSCRIPT:$IN_PFKSCRIPT:$bardisp"
         fi
         _set_prompt "$bardisp"
         if [[ "x$DISPLAY" != x ]] ; then
