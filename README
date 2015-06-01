@@ -43,6 +43,11 @@ STRIP=true ../configure --enable-environ=mot --enable-pfksh
 
 
 
+* regen cscop.files
+
+find . -name '*.c' -o -name '*.C' -o -name '*.cc' -o -name '*.h' -o -name '*.H' | grep -v BUILD | sort > cscope.files
+
+
 fluxbox branch pfk-1_3_7
 
 ./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7
