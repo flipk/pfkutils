@@ -21,6 +21,10 @@ if PFK_AM_BUILD_pfksh
 pfkutils_new_LDADD += ../pfksh/libpfksh.a
 endif
 
+if PFK_AM_BUILD_pfkscript
+pfkutils_new_LDADD += ../pfkscript/libpfkscript.a
+endif
+
 if PFK_AM_BUILD_sudo
 pfkutils_new_SOURCES += sudo.c sudo.h
 endif
@@ -55,7 +59,6 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir)/libpfkutil \
 	-I$(top_srcdir)/libpfkdll2 \
 	-I$(top_srcdir)/libpfkfb
-
 
 install-exec-hook:
 	cd $(DESTDIR)$(bindir) && \

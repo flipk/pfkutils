@@ -67,6 +67,7 @@ AC_DEFUN([PFK_ARG_ENABLE],
 
 PFK_ARG_ENABLE([pfkbak],     [build backup server])
 PFK_ARG_ENABLE([syslog],     [build my syslog tools])
+PFK_ARG_ENABLE([pfkscript],  [build my script])
 PFK_ARG_ENABLE([webappserver],  [build libWebAppServer])
 PFK_ARG_ENABLE([checksize],  [build checksize tool])
 PFK_ARG_ENABLE([treescan],   [build treescan tool])
@@ -139,6 +140,8 @@ AC_SEARCH_LIBS([listen], [nsl socket], [], [], [])
 AC_SEARCH_LIBS([setsockopt], [nsl socket], [], [], [])
 AC_SEARCH_LIBS([bind], [nsl socket], [], [], [])
 AC_SEARCH_LIBS([gethostbyname], [nsl], [], [], [])
+AC_SEARCH_LIBS([login_tty], [util], [], [], [])
+AC_SEARCH_LIBS([openpty], [util], [], [], [])
 
 # Checks for header files.
 
@@ -240,6 +243,7 @@ AC_CONFIG_FILES([
     backup/Makefile
     pfksh/Makefile
     ampfk/Makefile
+    pfkscript/Makefile
     main/Makefile
     main/programs.h
     main/sudo.h

@@ -26,6 +26,10 @@ if PFK_AM_BUILD_ampfk
 SUBDIRS += ampfk
 endif
 
+if PFK_AM_BUILD_pfkscript
+SUBDIRS += pfkscript
+endif
+
 if PFK_AM_BUILD_webappserver
 SUBDIRS += libWebAppServer
 endif
