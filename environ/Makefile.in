@@ -263,7 +263,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 @PFK_ENVIRON_TRUE@DOT_FILES = \
-@PFK_ENVIRON_TRUE@	Xresources ctwmrc hexdump_format \
+@PFK_ENVIRON_TRUE@	Xresources ctwmrc twmrc hexdump_format \
 @PFK_ENVIRON_TRUE@	screenrc xinitrc xsession vnc-xstartup
 
 @PFK_ENVIRON_TRUE@ELISP_FILES = emacs-lone.el emacs.el go-mode.el

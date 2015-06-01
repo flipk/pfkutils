@@ -2,7 +2,7 @@
 if PFK_ENVIRON
 
 DOT_FILES = \
-	Xresources ctwmrc hexdump_format \
+	Xresources ctwmrc twmrc hexdump_format \
 	screenrc xinitrc xsession vnc-xstartup
 
 ELISP_FILES = emacs-lone.el emacs.el go-mode.el
