@@ -127,7 +127,6 @@ ChildProcessManager :: createChild(ChildProcessHandle *handle)
         dup2(handle->toChildPipe[0], 0);
         dup2(handle->fromChildPipe[1], 1);
         dup2(handle->fromChildPipe[1], 2);
-        dup2(forkErrorPipe[1], 3);
 
         // don't allow the child to inhert any
         // "interesting" file descriptors.
