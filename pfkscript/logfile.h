@@ -12,7 +12,7 @@
 
 void printError(const std::string &func);
 
-class ZipProcessHandle : public ChildProcessHandle {
+class ZipProcessHandle : public ChildProcessManager::Handle {
     const Options &opts;
     const std::string fname;
     /*virtual*/ void handleOutput(const char *buffer, size_t len);

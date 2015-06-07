@@ -12,18 +12,22 @@
 
 #include "LockWait.h"
 
+namespace ChildProcessManager {
+
 typedef std::vector<const char*> commandVector;
 
-class ChildProcessHandle {
-    friend class ChildProcessManager;
+class Manager;
+
+class Handle {
+    friend class Manager;
     int fromChildPipe[2];
     int toChildPipe[2];
     pid_t pid;
     bool open;
     int fds[2];
 protected:
-    ChildProcessHandle(void);
-    virtual ~ChildProcessHandle(void);
+    Handle(void);
+    virtual ~Handle(void);
 public:
     commandVector cmd; // user initializes this please
     pid_t getPid(void) { if (!open) return -1; return pid; }
@@ -46,13 +50,13 @@ public:
     virtual void processExited(int status) = 0;
 };
 
-class ChildProcessManager {
-    static ChildProcessManager * _instance;
-    ChildProcessManager(void);
-    ~ChildProcessManager(void);
+class Manager {
+    static Manager * _instance;
+    Manager(void);
+    ~Manager(void);
     struct sigaction sigChildOact;
     static void sigChildHandler(int);
-    typedef std::map<pid_t,ChildProcessHandle*> HandleMap;
+    typedef std::map<pid_t,Handle*> HandleMap;
     HandleMap openHandles;
     WaitUtil::Lockable handleLock;
     int signalFds[2];
@@ -65,11 +69,13 @@ class ChildProcessManager {
     static void * notifyThread(void *arg);
     void _notifyThread(void);
 public:
-    static ChildProcessManager * instance(void);
+    static Manager * instance(void);
     static void cleanup(void);
     // return false if failure
-    bool createChild(ChildProcessHandle *handle);
+    bool createChild(Handle *handle);
     
 };
+
+}; /* namespace ChildProcessManager */
 
 #endif /* __childprocessmanager_h__ */

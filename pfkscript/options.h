@@ -33,7 +33,7 @@ public:
     bool backgroundSpecified;
     std::string pidFile;
     bool commandSpecified;
-    commandVector command;
+    ChildProcessManager::commandVector command;
 };
 
 #endif /* __options_h__ */

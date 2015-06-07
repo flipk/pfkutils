@@ -22,9 +22,11 @@ exit 0
 
 using namespace std;
 
-/************************ ChildProcessHandle ******************************/
+namespace ChildProcessManager {
 
-ChildProcessHandle :: ChildProcessHandle(void)
+/************************ Handle ******************************/
+
+Handle :: Handle(void)
 {
     pipe(fromChildPipe);
     pipe(toChildPipe);
@@ -33,7 +35,7 @@ ChildProcessHandle :: ChildProcessHandle(void)
     fds[1] = toChildPipe[1];
 }
 
-ChildProcessHandle :: ~ChildProcessHandle(void)
+Handle :: ~Handle(void)
 {
     open = false;
 #define CLOSEFD(fd) if (fd != -1) { close(fd); fd = -1; }
@@ -44,24 +46,24 @@ ChildProcessHandle :: ~ChildProcessHandle(void)
 }
 
 bool
-ChildProcessHandle :: createChild(void)
+Handle :: createChild(void)
 {
-    return ChildProcessManager::instance()->createChild(this);
+    return Manager::instance()->createChild(this);
 }
 
-/************************ ChildProcessManager ******************************/
+/************************ Manager ******************************/
 
-ChildProcessManager * ChildProcessManager::_instance = NULL;
+Manager * Manager::_instance = NULL;
 
-ChildProcessManager * ChildProcessManager::instance(void)
+Manager * Manager::instance(void)
 {
     if (_instance == NULL)
-        _instance = new ChildProcessManager();
+        _instance = new Manager();
     return _instance;
 }
 
 void
-ChildProcessManager :: cleanup(void)
+Manager :: cleanup(void)
 {
     if (_instance != NULL)
     {
@@ -70,10 +72,10 @@ ChildProcessManager :: cleanup(void)
     }
 }
 
-ChildProcessManager :: ChildProcessManager(void)
+Manager :: Manager(void)
 {
     struct sigaction sa;
-    sa.sa_handler = &ChildProcessManager::sigChildHandler;
+    sa.sa_handler = &Manager::sigChildHandler;
     sigfillset(&sa.sa_mask);
     sa.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     sigaction(SIGCHLD, &sa, &sigChildOact);
@@ -83,11 +85,11 @@ ChildProcessManager :: ChildProcessManager(void)
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_create(&notifyThreadId, &attr,
-                   &ChildProcessManager::notifyThread, (void*) this);
+                   &Manager::notifyThread, (void*) this);
     pthread_attr_destroy(&attr);
 }
 
-ChildProcessManager :: ~ChildProcessManager(void)
+Manager :: ~Manager(void)
 {
     char dummy = 2; // code 2 means die
     write(rebuildFds[1], &dummy, 1);
@@ -99,7 +101,7 @@ ChildProcessManager :: ~ChildProcessManager(void)
 }
 
 bool
-ChildProcessManager :: createChild(ChildProcessHandle *handle)
+Manager :: createChild(Handle *handle)
 {
     int forkErrorPipe[2];
     pipe(forkErrorPipe);
@@ -193,7 +195,7 @@ ChildProcessManager :: createChild(ChildProcessHandle *handle)
 
 //static
 void
-ChildProcessManager :: sigChildHandler(int s)
+Manager :: sigChildHandler(int s)
 {
     struct signalMsg msg;
     do {
@@ -224,24 +226,24 @@ ChildProcessManager :: sigChildHandler(int s)
 
 //static
 void *
-ChildProcessManager :: notifyThread(void *arg)
+Manager :: notifyThread(void *arg)
 {
-    ChildProcessManager * mgr = (ChildProcessManager *) arg;
+    Manager * mgr = (Manager *) arg;
     mgr->_notifyThread();
     return NULL;
 }
 
 void
-ChildProcessManager :: _notifyThread(void)
+Manager :: _notifyThread(void)
 {
     bool done = false;
-    std::vector<ChildProcessHandle*> handles;
+    std::vector<Handle*> handles;
     char buffer[4096];
     int cc;
     fd_set rfds;
     int maxfd;
     HandleMap::iterator it;
-    ChildProcessHandle * h;
+    Handle * h;
     struct signalMsg msg;
     char dummy;
 
@@ -346,9 +348,11 @@ ChildProcessManager :: _notifyThread(void)
     }
 }
 
+}; /* namespace ChildProcessManager */
+
 #ifdef CHILDPROCESSMANAGERTESTMAIN
 
-class TestHandle : public ChildProcessHandle {
+class TestHandle : public ChildProcessManager::Handle {
     int inst;
 public:
     TestHandle(int _inst) : inst(_inst) {
@@ -393,7 +397,7 @@ main()
     sigaction(SIGPIPE, &sa, NULL);
 
     cout << "my pid is " << getpid() << endl;
-    ChildProcessManager::instance();
+    ChildProcessManager::Manager::instance();
     {
         TestHandle hdl1(1);
         TestHandle hdl2(2);
@@ -417,7 +421,7 @@ main()
         while (hdl1.getOpen() && hdl2.getOpen())
             usleep(1);
     }
-    ChildProcessManager::cleanup();
+    ChildProcessManager::Manager::cleanup();
     return 0;
 }
 
