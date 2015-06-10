@@ -22,7 +22,7 @@ install-data-local:
 			$(DESTDIR)$(sysconfdir)
 	cd $(abs_builddir) && cp kshrc profile $(DESTDIR)$(sysconfdir)
 	cd $(DESTDIR)$(sysconfdir) && \
-		chmod 644 $(DOT_FILES) $(ELISP_FILES) $(KSHRC_LOCALS)
+		chmod 744 $(DOT_FILES) $(ELISP_FILES) $(KSHRC_LOCALS)
 	cd $(abs_builddir) && cp setup-links-sh $(DESTDIR)$(bindir)
 	chmod 744 $(DESTDIR)$(bindir)/setup-links-sh
 

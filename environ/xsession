@@ -7,8 +7,13 @@ xrdb -load .Xresources
 # it will start the window manager there, so that all processes
 # started from the window manager will have a tty console.
 
+# since this script is started by lightdm or gdm/xdm, my environment
+# will not be set. i need a few basic things, like PFKARCH and SHELL.
+
+PFKARCH=`$HOME/pfk/bin/architecture`
+SHELL=$HOME/pfk/$PFKARCH/bin/pfksh
 XCONSOLE=yes
 ENV=$HOME/.kshrc
-export XCONSOLE ENV
+export XCONSOLE ENV PFKARCH SHELL
 
 exec ssh-agent pfkterm

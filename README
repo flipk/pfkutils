@@ -41,7 +41,9 @@ sunlogin1:
 STRIP=true ../configure --enable-environ=mot --enable-pfksh
 
 
+* cleaning
 
+git status --p --ignored | awk '/??/ {print $2} /!!/ {print $2}'
 
 * regen cscop.files
 
