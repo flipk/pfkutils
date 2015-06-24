@@ -328,6 +328,11 @@ PfkMsgr :: thread_main(void)
                 }
             }
             close(dataFd);
+            dataFd = -1;
+            {
+                WaitUtil::Lock key(&lock);
+                unsent_portion.clear();
+            }
             handle_disconnected();
         }
         else
@@ -360,8 +365,12 @@ PfkMsgr :: send_buf(const void *_buf, int len)
 {
     const char * buf = (const char *) _buf;
     int writecc, e;
+    WaitUtil::Lock key(&lock);
     if (dataFd < 0)
+    {
+        unsent_portion.clear();
         return false;
+    }
     while (unsent_portion.length() > 0)
     {
         writecc = write(dataFd,

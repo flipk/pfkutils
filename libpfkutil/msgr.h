@@ -8,6 +8,8 @@
 #include <string>
 #include <netinet/in.h>
 
+#include "LockWait.h"
+
 class PfkMsg {
 public:
     static const uint32_t MAX_FIELDS = 1000;
@@ -67,6 +69,7 @@ class PfkMsgr {
     uint8_t rcvBuffer[RCV_BUFFER_SIZE];
     uint32_t rcvBufferSize;
     std::string unsent_portion;
+    WaitUtil::Lockable lock;
 protected:
     virtual void handle_connected(void) = 0;
     virtual void handle_disconnected(void) = 0;
