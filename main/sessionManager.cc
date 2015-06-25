@@ -1,0 +1,292 @@
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <signal.h>
+#include <vector>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+
+using namespace std;
+
+#define ENV_VAR_NAME "PFK_SESSION_MANAGER_PID"
+
+void
+usage(void)
+{
+    cout << 
+"pfkSessionMgr -s 'child 1 command string' 'child 2 command string' [etc]\n"
+"pfkSessionMgr [-p pid] -c [stop | restart]\n"
+        ;
+}
+
+struct Command {
+    string cmd;
+    vector<const char *> args;
+    pid_t startedPid;
+    pid_t pid;
+    int status;
+    Command(const string &_cmd);
+    void start(void);
+    void kill(void);
+};
+
+typedef vector<Command*> CommandList;
+
+static void startProcesses(void);
+
+static CommandList commands;
+
+extern "C" int
+pfkSessionMgr_main(int argc, char ** argv)
+{
+    string homedir(getenv("HOME"));
+    pid_t pid = -1;
+    bool badArgs = false;
+    enum { OP_NONE, OP_BAD, OP_START, OP_STOP, OP_RESTART } op = OP_NONE;
+
+    char * pidVar = getenv(ENV_VAR_NAME);
+    if (pidVar != NULL)
+        pid = strtol(pidVar, NULL, 10);
+
+    int argCtr = 1;
+    while (argCtr < argc && op != OP_BAD)
+    {
+        string arg(argv[argCtr++]);
+        if (arg == "-p")
+        {
+            if (argCtr == argc)
+                op = OP_BAD;
+            else
+                pid = strtol(argv[argCtr++], NULL, 10);
+        }
+        else if (arg == "-s")
+        {
+            if (op != OP_NONE || argCtr == argc)
+                op = OP_BAD;
+            else
+            {
+                op = OP_START;
+                while (argCtr != argc)
+                    commands.push_back(new Command(string(argv[argCtr++])));
+            }
+        }
+        else if (arg == "-c")
+        {
+            if (op != OP_NONE || argCtr == argc)
+                op = OP_BAD;
+            else
+            {
+                string cmd(argv[argCtr++]);
+                if (cmd == "stop")
+                    op = OP_STOP;
+                else if (cmd == "restart")
+                    op = OP_RESTART;
+                else
+                    op = OP_BAD;
+            }
+        }
+    }
+
+    switch (op)
+    {
+    case OP_START:
+        if (pid != -1)
+            op = OP_BAD;
+        break;
+    case OP_STOP:
+    case OP_RESTART:
+        if (pid == -1)
+            op = OP_BAD;
+        break;
+    default:
+        ;//no compiler warning
+    }
+
+    {
+        ostringstream setEnv;
+        setEnv << getpid();
+        setenv(ENV_VAR_NAME, setEnv.str().c_str(), 1);
+    }
+
+    switch (op)
+    {
+    case OP_START:
+        startProcesses();
+        break;
+    case OP_STOP:
+        kill(pid, SIGUSR1);
+        break;
+    case OP_RESTART:
+        kill(pid, SIGUSR2);
+        break;
+    default:
+        usage();
+        return 1;
+    }
+
+    return 0;
+}
+
+bool doStop = false;
+bool doRestart = false;
+
+// USR1 is for stop
+// USR2 is for restart
+static void sighand(int s)
+{
+    pid_t pid = -1;
+    int status;
+    switch (s)
+    {
+    case SIGUSR1:
+        doStop = true;
+        break;
+    case SIGUSR2:
+        doRestart = true;
+        break;
+    case SIGCHLD:
+        do {
+            pid = waitpid(/*wait for any child*/-1, &status, WNOHANG);
+            if (pid > 0)
+            {
+                for (int ind = 0; ind < commands.size(); ind++)
+                {
+                    Command * cmd = commands[ind];
+                    if (cmd->pid == pid)
+                    {
+                        cmd->pid = -1;
+                        cmd->status = status;
+                        break;
+                    }
+                }
+            }
+        } while (pid > 0);
+        break;
+    }
+}
+
+Command :: Command(const string &_cmd)
+    : cmd("exec "),
+      startedPid(-1),
+      pid(-1),
+      status(-1)
+{
+    cmd += _cmd;
+    char * shell = getenv("SHELL");
+    args.push_back(shell);
+    args.push_back("-c");
+    args.push_back(cmd.c_str());
+    args.push_back(NULL);
+}
+
+void
+Command :: start(void)
+{
+    startedPid = pid = vfork();
+    if (pid < 0)
+    {
+        int e = errno;
+        cerr << "fork: " << e << ": " << strerror(errno) << endl;
+        return;
+    }
+    if (pid == 0)
+    {
+        // child
+
+        // don't allow the child to inhert any
+        // "interesting" file descriptors.
+        for (int i = 3; i < sysconf(_SC_OPEN_MAX); i++)
+            close(i);
+
+        execvp(args[0], (char *const*)args.data());
+
+        cout << "FAIL TO EXEC error " << errno << endl;
+
+        // call _exit because it isn't correct for a vforked
+        // child to call the atexit handlers, that can screw
+        // up crap in the parent.
+        _exit(99);
+    }
+    //parent
+    cout << "started pid " << pid << ": " << cmd << endl;
+}
+
+void
+Command :: kill(void)
+{
+    int count = 0;
+    if (pid <= 0)
+        return;
+    while (pid > 0)
+    {
+        if (count == 0)
+        {
+            cout << "sending SIGTERM to pid " << pid << endl;
+            ::kill(pid, SIGTERM);
+        }
+        if (count == 20) // 2 seconds
+        {
+            cout << "sending SIGKILL to pid " << pid << endl;
+            ::kill(pid, SIGKILL);
+        }
+        if (count == 30) // 3 seconds
+        {
+            cout << "giving up on pid " << pid << endl;
+            break; // give up
+        }
+        usleep( 100000 );
+        count++;
+    }
+    cout << "pid " << startedPid << " wait status " << status << endl;
+}
+
+static void
+startProcesses(void)
+{
+    struct sigaction sa;
+    sa.sa_handler = &sighand;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+
+    sigaction(SIGUSR1, &sa, NULL);
+    sigaction(SIGUSR2, &sa, NULL);
+    sigaction(SIGCHLD, &sa, NULL);
+
+    int ind;
+    while (doStop == false && doRestart == false)
+    {
+        for (ind = 0; ind < commands.size(); ind++)
+            commands[ind]->start();
+
+        while (doStop == false && doRestart == false)
+        {
+            for (ind = 0; ind < commands.size(); ind++)
+            {
+                Command * cmd = commands[ind];
+                if (cmd->pid == -1)
+                {
+                    cout << "pid " << cmd->startedPid << " died!\n";
+                    // it died! restart
+                    cmd->start();
+                }
+            }
+            // neat thing about this sleep is a SIGCHLD
+            // or SIGUSRx will interrupt it, causing near
+            // immediate response to the signal.
+            sleep(5);
+        }
+
+        for (ind = 0; ind < commands.size(); ind++)
+            commands[ind]->kill();
+
+        if (doRestart)
+            // ready to go round another loop
+            doRestart = false;
+    }
+}

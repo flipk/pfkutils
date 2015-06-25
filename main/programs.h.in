@@ -57,6 +57,7 @@ PROG(0,pfkstat,"My own stat/ls command")
 PROG(0,fbdump,"FileBlock dumper")
 PROG(0,fbcompact,"FileBlock compacter")
 PROG(0,btdump,"FileBlock Btree dumper")
+PROG(0,pfkSessionMgr,"session manager")
 
 #if 0 // TODO
 PROG(0,pkstgen,"phil knaack's state machine generator")

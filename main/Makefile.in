@@ -114,17 +114,18 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am__pfkutils_new_SOURCES_DIST = crnl.c he.c random-hex.c rmstar_new.cc \
 	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
-	deduplifier.cc main.C programs.h sudo.c sudo.h checksize.c \
-	treescan.c btdump.C fbcompact.C fbdump.C
+	sessionManager.cc deduplifier.cc main.C programs.h sudo.c \
+	sudo.h checksize.c treescan.c btdump.C fbcompact.C fbdump.C
 @PFK_AM_BUILD_sudo_TRUE@am__objects_1 = sudo.$(OBJEXT)
 @PFK_AM_BUILD_checksize_TRUE@am__objects_2 = checksize.$(OBJEXT)
 @PFK_AM_BUILD_treescan_TRUE@am__objects_3 = treescan.$(OBJEXT)
 am_pfkutils_new_OBJECTS = crnl.$(OBJEXT) he.$(OBJEXT) \
 	random-hex.$(OBJEXT) rmstar_new.$(OBJEXT) fmtsdiff.$(OBJEXT) \
 	genpw.$(OBJEXT) xtermbar.$(OBJEXT) waitpid.$(OBJEXT) \
-	pfkstat.$(OBJEXT) deduplifier.$(OBJEXT) main.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	btdump.$(OBJEXT) fbcompact.$(OBJEXT) fbdump.$(OBJEXT)
+	pfkstat.$(OBJEXT) sessionManager.$(OBJEXT) \
+	deduplifier.$(OBJEXT) main.$(OBJEXT) $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) btdump.$(OBJEXT) \
+	fbcompact.$(OBJEXT) fbdump.$(OBJEXT)
 pfkutils_new_OBJECTS = $(am_pfkutils_new_OBJECTS)
 pfkutils_new_DEPENDENCIES = $(am__append_1) $(am__append_2) \
 	$(am__append_3) $(am__append_7) $(am__append_8) ../i2/libi2.a \
@@ -367,8 +368,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pfkutils_new_SOURCES = crnl.c he.c random-hex.c rmstar_new.cc \
 	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
-	deduplifier.cc main.C programs.h $(am__append_4) \
-	$(am__append_5) $(am__append_6) btdump.C fbcompact.C fbdump.C
+	sessionManager.cc deduplifier.cc main.C programs.h \
+	$(am__append_4) $(am__append_5) $(am__append_6) btdump.C \
+	fbcompact.C fbdump.C
 
 # treescan.c
 pfkutils_new_LDADD = $(am__append_1) $(am__append_2) $(am__append_3) \
@@ -490,6 +492,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pfkstat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random-hex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rmstar_new.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sessionManager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sudo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/treescan.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/waitpid.Po@am__quote@

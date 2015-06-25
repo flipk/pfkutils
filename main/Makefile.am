@@ -5,7 +5,7 @@ pfkutils_new_SOURCES = \
 	crnl.c he.c random-hex.c \
 	rmstar_new.cc fmtsdiff.c \
 	genpw.c xtermbar.c waitpid.c \
-	pfkstat.c \
+	pfkstat.c sessionManager.cc \
 	deduplifier.cc \
 	main.C programs.h
 
