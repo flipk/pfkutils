@@ -8,7 +8,7 @@
     [separator]
     [config] (Configure)
     [submenu] (System Styles) {Choose a style...}
-      [stylesdir] (~/pfk/Linux-3.11.10-301.fc20.x86_64/fluxbox_1.3.7/share/fluxbox/styles)
+      [stylesdir] (~/pfk/share/fluxbox/styles)
     [end]
     [submenu] (User Styles) {Choose a style...}
       [stylesdir] (~/.fluxbox/styles)
@@ -17,7 +17,8 @@
     [commanddialog] (Fluxbox Command)
     [separator]
     [reconfig] (Reload config)
-    [exec] (Restart) {pfkSessionMgr -c restart}
+    [exec] (Set Background) {$HOME/pfk/bin/set-background.sh&}
+    [exec] (Restart) {$HOME/pfk/bin/set-background.sh&pfkSessionMgr -c restart&}
     [exec] (Logout) {pfkSessionMgr -c stop}
     [exit] (Exit)
   [endencoding]

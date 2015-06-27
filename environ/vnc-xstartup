@@ -1,16 +1,5 @@
 #!/bin/sh
 
-cd $HOME
-xrdb -load .Xresources
-xsetroot -solid \#203040
-
-# inform the .profile inside the xterm that this is the xconsole.
-# it will start the window manager there, so that all processes
-# started from the window manager will have a tty console.
-
-ENV=$HOME/.kshrc
-export ENV
-
 # this xrandr stuff is no longer relevant.
 #   - i use tigervnc at home, which does auto desk resizing.
 #   - at work i'm forced to use realvnc which doesn't even support
@@ -33,9 +22,12 @@ export ENV
 #add_size 1280 1000
 #add_size 1920 1176
 
-# xsri --tile=/home/flipk/Dropbox/Public/pics/grid3.png
-feh --bg-tile /home/flipk/tmp/grid3.png
-
+cd $HOME
+ENV=$HOME/.kshrc
+export ENV
+xrdb -load .Xresources
+$HOME/pfk/bin/set-background.sh
 ssh-agent pfkSessionMgr -s fluxbox
+# when the user "logs out" (pfkSessionMgr -c stop) the vnc will be killed.
 vncserver -kill $DISPLAY
 exit 0

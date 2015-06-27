@@ -1,22 +1,14 @@
 #!/bin/sh
 
-cd $HOME
-xrdb -load .Xresources
-xsetroot -solid \#203040
-
-# inform the .profile inside the term that this is the xconsole.
-# it will start the window manager there, so that all processes
-# started from the window manager will have a tty console.
-
 # since this script is started by lightdm or gdm/xdm, my environment
 # will not be set. i need a few basic things, like PFKARCH and SHELL.
 
+cd $HOME
 PFKARCH=`$HOME/pfk/bin/architecture`
 SHELL=$HOME/pfk/$PFKARCH/bin/pfksh
-XCONSOLE=yes
 ENV=$HOME/.kshrc
-export XCONSOLE ENV PFKARCH SHELL
+export ENV PFKARCH SHELL
 
-feh --bg-tile /home/flipk/tmp/grid3.png
-
+xrdb -load .Xresources
+$HOME/pfk/bin/set-background.sh
 exec ssh-agent pfkSessionMgr -s fluxbox

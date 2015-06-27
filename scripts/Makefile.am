@@ -18,6 +18,7 @@ PFK_SCRIPT_FILES = \
 	myemacs-checkout-helper \
 	myemacs-cscope-rebuild-helper \
 	git-diff-helper.sh \
+	set-background.sh \
 	refresh
 
 PFK_SCRIPT_FILES_GENERATED = \

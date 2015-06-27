@@ -239,6 +239,10 @@ Command :: kill(void)
             cout << "giving up on pid " << pid << endl;
             break; // give up
         }
+        // if the child dies while we're waiting, the SIGCHLD
+        // will actually interrupt and shorten this
+        // sleep, so we won't actually wait the whole
+        // 0.1 seconds. the response will be nearly instant.
         usleep( 100000 );
         count++;
     }
@@ -258,11 +262,12 @@ startProcesses(void)
     sigaction(SIGCHLD, &sa, NULL);
 
     int ind;
-    while (doStop == false && doRestart == false)
+    while (doStop == false)
     {
         for (ind = 0; ind < commands.size(); ind++)
             commands[ind]->start();
 
+        doRestart = false;
         while (doStop == false && doRestart == false)
         {
             for (ind = 0; ind < commands.size(); ind++)
@@ -275,6 +280,8 @@ startProcesses(void)
                     cmd->start();
                 }
             }
+            // a 5 second poll interval may seem like a long
+            // time to wait to discover a process has died; but the
             // neat thing about this sleep is a SIGCHLD
             // or SIGUSRx will interrupt it, causing near
             // immediate response to the signal.
@@ -283,9 +290,5 @@ startProcesses(void)
 
         for (ind = 0; ind < commands.size(); ind++)
             commands[ind]->kill();
-
-        if (doRestart)
-            // ready to go round another loop
-            doRestart = false;
     }
 }

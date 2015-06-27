@@ -1,17 +1,9 @@
 #!/bin/sh
 
 cd $HOME
-xrdb -load .Xresources
-xsetroot -solid \#203040
-
-# inform the .profile inside the term that this is the xconsole.
-# it will start the window manager there, so that all processes
-# started from the window manager will have a tty console.
-
-XCONSOLE=yes
 ENV=$HOME/.kshrc
-export XCONSOLE ENV
+export ENV
 
-feh --bg-tile /home/flipk/tmp/grid3.png
-
+xrdb -load .Xresources
+$HOME/pfk/bin/set-background.sh
 exec ssh-agent pfkSessionMgr -s fluxbox 
