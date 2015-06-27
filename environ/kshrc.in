@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-06-25.21:24:05
+#      Last update: 2015-06-26.23:20:19
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -269,7 +269,6 @@ export  LESS='-j5 -c -d -h 5 -i -M -q -S -n -e -R'
 export XLESS='-j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
-export GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh
 
 # for some reason setting HISTSIZE resets the set -o emacs option!
 
@@ -310,7 +309,7 @@ alias cdc='cd $HOME;clear'
 alias pfkman='MANPATH=$HOME/pfk/share/man man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
-alias gitdiff='git --no-pager diff'
+alias gitdiff='GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh git --no-pager diff'
 
 #FUNCTIONS: make_file_part x xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
 
