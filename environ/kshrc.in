@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-05-30.18:55:06
+#      Last update: 2015-06-25.21:24:05
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -269,6 +269,7 @@ export  LESS='-j5 -c -d -h 5 -i -M -q -S -n -e -R'
 export XLESS='-j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
+export GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh
 
 # for some reason setting HISTSIZE resets the set -o emacs option!
 
@@ -309,8 +310,9 @@ alias cdc='cd $HOME;clear'
 alias pfkman='MANPATH=$HOME/pfk/share/man man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
+alias gitdiff='git --no-pager diff'
 
-#FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
+#FUNCTIONS: make_file_part x xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
 
 make_file_part() {
     typeset try dir_part file_part fp load
@@ -397,44 +399,20 @@ echodate() {
 
 x() {
     if [[ $# -eq 0 ]] ; then
-        xterm &
+        pfkterm &
     else
-        xterm -e $* &
-    fi
-}
-
-xr() {
-    if [[ $# -eq 0 ]] ; then
-        xterm -name knaack_xterm &
-    else
-        xterm -name knaack_xterm -e $* &
-    fi
-}
-
-xs() {
-    if [[ $# -eq 0 ]] ; then
-        xterm -name XTermScreen &
-    else
-        xterm -name XTermScreen -e $* &
-    fi
-}
-
-xrs() {
-    if [[ $# -eq 0 ]] ; then
-        xterm -name knaack_xterm_screen &
-    else
-        xterm -name knaack_xterm_screen -e $* &
+        pfkterm -e $* &
     fi
 }
 
 diffheight=50
 
 xsd() {
-    xterm +sb -title NoTitle -g 190x${diffheight}+25+20 -e $SHELL -c "sd $1 $2" &
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd $1 $2" &
 }
 
 xsd2() {
-    xterm +sb -title NoTitle -g 190x${diffheight}+25+20 -e $SHELL -c "sd2 $1 $2" &
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd2 $1 $2" &
 }
 
 d() {
@@ -506,7 +484,7 @@ xless() {
     LESS="$XLESS"
     export LESS
 
-    xterm -title "+ ${file##*/}" -name XLESS +sb -g 80x45 -e less $args &
+    pfkterm -g 80x45 -e less $args &
 
     LESS="$OLDLESS"
     cd $olddir
