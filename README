@@ -52,7 +52,7 @@ find . -name '*.c' -o -name '*.C' -o -name '*.cc' -o -name '*.h' -o -name '*.H' 
 
 fluxbox branch pfk-1_3_7
 
-./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7
+./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7 --disable-xrandr
 
 rxvt-unicode branch pfk-2015-0411 (in file 00-PFK-CONFIGURE)
 

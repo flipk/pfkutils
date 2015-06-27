@@ -2,6 +2,7 @@
 
 cd $HOME
 xrdb -load .Xresources
+xsetroot -solid \#203040
 
 # inform the .profile inside the term that this is the xconsole.
 # it will start the window manager there, so that all processes
@@ -16,4 +17,6 @@ XCONSOLE=yes
 ENV=$HOME/.kshrc
 export XCONSOLE ENV PFKARCH SHELL
 
-exec ssh-agent pfkterm
+feh --bg-tile /home/flipk/tmp/grid3.png
+
+exec ssh-agent pfkSessionMgr -s fluxbox

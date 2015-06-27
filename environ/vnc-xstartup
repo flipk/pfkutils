@@ -2,14 +2,14 @@
 
 cd $HOME
 xrdb -load .Xresources
+xsetroot -solid \#203040
 
 # inform the .profile inside the xterm that this is the xconsole.
 # it will start the window manager there, so that all processes
 # started from the window manager will have a tty console.
 
-XCONSOLE=yes
 ENV=$HOME/.kshrc
-export XCONSOLE ENV
+export ENV
 
 # this xrandr stuff is no longer relevant.
 #   - i use tigervnc at home, which does auto desk resizing.
@@ -33,4 +33,9 @@ export XCONSOLE ENV
 #add_size 1280 1000
 #add_size 1920 1176
 
-exec ssh-agent pfkterm
+# xsri --tile=/home/flipk/Dropbox/Public/pics/grid3.png
+feh --bg-tile /home/flipk/tmp/grid3.png
+
+ssh-agent pfkSessionMgr -s fluxbox
+vncserver -kill $DISPLAY
+exit 0

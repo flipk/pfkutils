@@ -45,7 +45,6 @@ static CommandList commands;
 extern "C" int
 pfkSessionMgr_main(int argc, char ** argv)
 {
-    string homedir(getenv("HOME"));
     pid_t pid = -1;
     bool badArgs = false;
     enum { OP_NONE, OP_BAD, OP_START, OP_STOP, OP_RESTART } op = OP_NONE;

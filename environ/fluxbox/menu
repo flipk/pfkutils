@@ -15,9 +15,10 @@
     [end]
     [workspaces] (Workspace List)
     [commanddialog] (Fluxbox Command)
-    [reconfig] (Reload config)
-    [restart] (Restart)
     [separator]
+    [reconfig] (Reload config)
+    [exec] (Restart) {pfkSessionMgr -c restart}
+    [exec] (Logout) {pfkSessionMgr -c stop}
     [exit] (Exit)
   [endencoding]
 [end]
