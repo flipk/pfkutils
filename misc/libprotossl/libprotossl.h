@@ -44,8 +44,8 @@ struct ProtoSSLCertParams {
 class __ProtoSSLMsgs {
     entropy_context entropy;
     ctr_drbg_context ctr_drbg;
-    x509_cert cacert, mycert;
-    rsa_context mykey;
+    x509_crt cacert, mycert;
+    pk_context   mykey;
     ssl_context  sslctx;
     std::string  otherCommonName;
     std::string  remoteHost;

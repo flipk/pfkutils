@@ -81,9 +81,10 @@ __ProtoSSLMsgs::initCommon(void)
         return false;
     }
 
-    memset( &mycert, 0, sizeof( x509_cert ) );
-    memset( &cacert, 0, sizeof( x509_cert ) );
-    rsa_init( &mykey, RSA_PKCS_V15, 0 );
+    memset( &mycert, 0, sizeof( x509_crt ) );
+    memset( &cacert, 0, sizeof( x509_crt ) );
+
+    pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
 
     if ((ret = ssl_init( &sslctx )) != 0)
     {
@@ -114,9 +115,24 @@ __ProtoSSLMsgs::~__ProtoSSLMsgs(void)
         net_close(listen_fd);
 
     ssl_free( &sslctx );
-    rsa_free( &mykey );
-    x509_free( &mycert );
-    x509_free( &cacert );
+    pk_free( &mykey );
+    x509_crt_free( &mycert );
+    x509_crt_free( &cacert );
+}
+static inline int x509parse_keyfile( rsa_context *rsa, const char *path,
+                              const char *pwd ) {
+    int ret;
+    pk_context pk;
+    pk_init( &pk );
+    ret = pk_parse_keyfile( &pk, path, pwd );
+    if( ret == 0 && ! pk_can_do( &pk, POLARSSL_PK_RSA ) )
+        ret = POLARSSL_ERR_PK_TYPE_MISMATCH;
+    if( ret == 0 )
+        rsa_copy( rsa, pk_rsa( pk ) );
+    else
+        rsa_free( rsa );
+    pk_free( &pk );
+    return( ret );
 }
 
 //private
@@ -126,24 +142,25 @@ bool __ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
 
     otherCommonName = params.otherCommonName;
 
-    if ((ret = x509parse_crtfile( &cacert, params.caCertFile.c_str())) != 0)
+    if ((ret = x509_crt_parse_file( &cacert, params.caCertFile.c_str())) != 0)
     {
         printf( " 1 x509parse_crt returned -0x%x\n\n", -ret );
         return false;
     }
 
-    if ((ret = x509parse_crtfile( &mycert, params.myCertFile.c_str() )) != 0)
+    if ((ret = x509_crt_parse_file( &mycert, params.myCertFile.c_str() )) != 0)
     {
         printf( " 2 x509parse_crt returned -0x%x\n\n", -ret );
         return false;
     }
 
-    if ((ret = x509parse_keyfile(
-             &mykey, params.myKeyFile.c_str(),
-             (params.myKeyPassword == "") ? NULL :
-             params.myKeyPassword.c_str() )) != 0)
+    ret = pk_parse_keyfile( &mykey, 
+                            params.myKeyFile.c_str(),
+                            (params.myKeyPassword == "") ? NULL :
+                            params.myKeyPassword.c_str() );
+    if (ret != 0)
     {
-        printf( " 3 x509parse_key returned -0x%x\n\n", -ret );
+        printf( " 3 pk_parse_keyfile returned -0x%x\n\n", -ret );
         return false;
     }
 

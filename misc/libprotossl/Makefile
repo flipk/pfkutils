@@ -19,7 +19,7 @@ libprotossl.a: libprotossl.o
 	ar cq libprotossl.a libprotossl.o
 
 t: libprotossl.a test_proto.pb.o test.o 
-	g++ test_proto.pb.o test.o libprotossl.a -o t -lprotobuf -lpolarssl
+	g++ test_proto.pb.o test.o libprotossl.a -o t -lprotobuf -lmbedtls
 
 test.o: test.cc
 
