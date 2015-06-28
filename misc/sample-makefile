@@ -1,0 +1,50 @@
+
+LIB= libWebAppServer.a
+HDRS= $(shell echo *.h)
+CSRCS= $(shell echo *.c)
+CXXSRCS= $(shell echo *.cc)
+
+CXX=g++
+CC=gcc
+DEFS=
+INCS=
+CCOPTS= -O3 -Wall -Werror
+CXXOPTS= -O3 -Wall -Werror
+AR=ar
+RANLIB=ranlib
+
+OBJDIR= obj
+CXXOBJS= $(CXXSRCS:%.cc=$(OBJDIR)/%.o)
+COBJS= $(CSRCS:%.c=$(OBJDIR)/%.o)
+OBJS= $(COBJS) $(CXXOBJS)
+
+all: xmakefile
+	+make -f xmakefile _all
+
+xmakefile: Makefile
+	rm -f xmakefile
+	cat Makefile > x
+	echo '' >> x
+	$(CC) $(INCS) $(DEFS) -M $(CSRCS) >> x
+	$(CXX) $(INCS) $(DEFS) -M $(CXXSRCS) >> x
+	mv x xmakefile
+	mkdir -p $(OBJDIR)
+
+_all: $(LIB)
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	$(AR) cq $(LIB) $(OBJS)
+	$(RANLIB) $(LIB)
+
+$(CXXOBJS): $(OBJDIR)/%.o: %.cc
+	$(CXX) $(DEFS) $(INCS) $(CXXOPTS) -c $< -o $@
+
+$(COBJS): $(OBJDIR)/%.o: %.c
+	$(CC) $(DEFS) $(INCS) $(CCOPTS) -c $< -o $@
+
+echo:
+	@echo $(OBJS)
+
+clean:
+	rm -rf $(LIB) $(OBJDIR) xmakefile x *~
