@@ -280,6 +280,7 @@ PFK_BUILD_sudo = @PFK_BUILD_sudo@
 PFK_BUILD_syslog = @PFK_BUILD_syslog@
 PFK_BUILD_treescan = @PFK_BUILD_treescan@
 PFK_BUILD_webappserver = @PFK_BUILD_webappserver@
+PFK_BUILD_xrandr = @PFK_BUILD_xrandr@
 PFK_ENVIRON = @PFK_ENVIRON@
 PFK_GROUP_ID = @PFK_GROUP_ID@
 PFK_SHELL_PATH = @PFK_SHELL_PATH@

@@ -20,4 +20,11 @@ if [ $bg != "none" ] ; then
     feh --bg-tile $bg
 fi
 
+if [ x$1 = xwait ] ; then
+    sleep 3600&
+    sleeppid=$!
+    trap 'kill $sleeppid' TERM
+    wait
+fi
+
 exit 0

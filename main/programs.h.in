@@ -7,6 +7,7 @@
 #define PFK_BUILD_SUDO       @PFK_BUILD_sudo@
 #define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
 #define PFK_BUILD_PFKSCRIPT  @PFK_BUILD_pfkscript@
+#define PFK_BUILD_XRANDR     @PFK_BUILD_xrandr@
 
 #if PFK_BUILD_PFKBAK
 PROG(0,pfkbak,"Incremental and full-history backup tool")
@@ -58,6 +59,10 @@ PROG(0,fbdump,"FileBlock dumper")
 PROG(0,fbcompact,"FileBlock compacter")
 PROG(0,btdump,"FileBlock Btree dumper")
 PROG(0,pfkSessionMgr,"session manager")
+
+#if PFK_BUILD_XRANDR
+PROG(0,pfkSessionXrandr,"xrandr event monitor")
+#endif
 
 #if 0 // TODO
 PROG(0,pkstgen,"phil knaack's state machine generator")

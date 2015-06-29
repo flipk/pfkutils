@@ -16,11 +16,11 @@ make install
 
 blade:
 
-../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pfksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk --enable-webappserver --enable-pfkscript
+../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pfksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
 
 hertz & adler:
 
-../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver --enable-pfkscript
+../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
 
 bohr:
 
@@ -30,11 +30,7 @@ PATH=/open_source/bin-sun/gcc/bin:$PATH make install
 
 droid-u43:
 
-../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak --enable-webappserver --enable-pfkscript
-
-faraday:
-
-../configure --enable-environ=mot --enable-pfksh --enable-ampfk
+../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak --enable-webappserver --enable-pfkscript --enable-xrandr
 
 sunlogin1:
 

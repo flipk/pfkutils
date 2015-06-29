@@ -47,6 +47,11 @@ if PFK_AM_BUILD_ampfk
 pfkutils_new_LDADD += ../ampfk/libampfk.a
 endif
 
+if PFK_AM_BUILD_xrandr
+pfkutils_new_SOURCES += sessionXrandr.cc
+pfkutils_new_LDADD += -lXrandr -lX11
+endif
+
 pfkutils_new_LDADD += ../i2/libi2.a
 
 pfkutils_new_LDADD += \

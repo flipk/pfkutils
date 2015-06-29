@@ -12,9 +12,9 @@
 #include <errno.h>
 #include <stdio.h>
 
-using namespace std;
+#include "sessionManager.h"
 
-#define ENV_VAR_NAME "PFK_SESSION_MANAGER_PID"
+using namespace std;
 
 void
 usage(void)
@@ -49,7 +49,7 @@ pfkSessionMgr_main(int argc, char ** argv)
     bool badArgs = false;
     enum { OP_NONE, OP_BAD, OP_START, OP_STOP, OP_RESTART } op = OP_NONE;
 
-    char * pidVar = getenv(ENV_VAR_NAME);
+    char * pidVar = getenv(PFK_SESS_MGR_ENV_VAR_NAME);
     if (pidVar != NULL)
         pid = strtol(pidVar, NULL, 10);
 
@@ -110,7 +110,8 @@ pfkSessionMgr_main(int argc, char ** argv)
     {
         ostringstream setEnv;
         setEnv << getpid();
-        setenv(ENV_VAR_NAME, setEnv.str().c_str(), 1);
+        setenv(PFK_SESS_MGR_ENV_VAR_NAME,
+               setEnv.str().c_str(), 1);
     }
 
     switch (op)
@@ -119,10 +120,10 @@ pfkSessionMgr_main(int argc, char ** argv)
         startProcesses();
         break;
     case OP_STOP:
-        kill(pid, SIGUSR1);
+        kill(pid, PFK_SESS_MGR_STOP_SIG);
         break;
     case OP_RESTART:
-        kill(pid, SIGUSR2);
+        kill(pid, PFK_SESS_MGR_RESTART_SIG);
         break;
     default:
         usage();
@@ -135,18 +136,16 @@ pfkSessionMgr_main(int argc, char ** argv)
 bool doStop = false;
 bool doRestart = false;
 
-// USR1 is for stop
-// USR2 is for restart
 static void sighand(int s)
 {
     pid_t pid = -1;
     int status;
     switch (s)
     {
-    case SIGUSR1:
+    case PFK_SESS_MGR_STOP_SIG:
         doStop = true;
         break;
-    case SIGUSR2:
+    case PFK_SESS_MGR_RESTART_SIG:
         doRestart = true;
         break;
     case SIGCHLD:
@@ -257,8 +256,8 @@ startProcesses(void)
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
 
-    sigaction(SIGUSR1, &sa, NULL);
-    sigaction(SIGUSR2, &sa, NULL);
+    sigaction(PFK_SESS_MGR_STOP_SIG,    &sa, NULL);
+    sigaction(PFK_SESS_MGR_RESTART_SIG, &sa, NULL);
     sigaction(SIGCHLD, &sa, NULL);
 
     int ind;

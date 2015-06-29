@@ -119,21 +119,6 @@ __ProtoSSLMsgs::~__ProtoSSLMsgs(void)
     x509_crt_free( &mycert );
     x509_crt_free( &cacert );
 }
-static inline int x509parse_keyfile( rsa_context *rsa, const char *path,
-                              const char *pwd ) {
-    int ret;
-    pk_context pk;
-    pk_init( &pk );
-    ret = pk_parse_keyfile( &pk, path, pwd );
-    if( ret == 0 && ! pk_can_do( &pk, POLARSSL_PK_RSA ) )
-        ret = POLARSSL_ERR_PK_TYPE_MISMATCH;
-    if( ret == 0 )
-        rsa_copy( rsa, pk_rsa( pk ) );
-    else
-        rsa_free( rsa );
-    pk_free( &pk );
-    return( ret );
-}
 
 //private
 bool __ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)

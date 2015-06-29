@@ -687,6 +687,9 @@ CXXDEPMODE
 ac_ct_CXX
 CXXFLAGS
 CXX
+PFK_AM_BUILD_xrandr_FALSE
+PFK_AM_BUILD_xrandr_TRUE
+PFK_BUILD_xrandr
 PFK_AM_BUILD_doxygen_FALSE
 PFK_AM_BUILD_doxygen_TRUE
 PFK_BUILD_doxygen
@@ -838,6 +841,7 @@ enable_ctwm
 enable_pfksh
 enable_cscope
 enable_doxygen
+enable_xrandr
 enable_shared
 enable_static
 with_pic
@@ -1501,6 +1505,7 @@ Optional Features:
   --enable-pfksh            build public domain pfk korn shell
   --enable-cscope            build cscope
   --enable-doxygen            build doxygen documentation
+  --enable-xrandr            build xrandr session detector
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -5243,6 +5248,43 @@ fi
 else
   PFK_AM_BUILD_doxygen_TRUE='#'
   PFK_AM_BUILD_doxygen_FALSE=
+fi
+
+
+
+
+  # Check whether --enable-xrandr was given.
+if test "${enable_xrandr+set}" = set; then :
+  enableval=$enable_xrandr;
+     pfk_build_desc_xrandr="build xrandr session detector"
+     case $enableval in
+      yes)
+        pfk_build_xrandr=yes
+        PFK_BUILD=1
+        ;;
+      no)
+        pfk_build_xrandr=no
+	PFK_BUILD=0
+        ;;
+      *)
+        as_fn_error $? "valid args: --enable-xrandr or --disable-xrandr" "$LINENO" 5
+        ;;
+     esac
+else
+
+     pfk_build_xrandr=no
+     PFK_BUILD=0
+
+fi
+
+  PFK_BUILD_xrandr=$PFK_BUILD
+
+   if test $pfk_build_xrandr = "yes"; then
+  PFK_AM_BUILD_xrandr_TRUE=
+  PFK_AM_BUILD_xrandr_FALSE='#'
+else
+  PFK_AM_BUILD_xrandr_TRUE='#'
+  PFK_AM_BUILD_xrandr_FALSE=
 fi
 
 
@@ -19344,6 +19386,8 @@ $as_echo "$as_me: build public domain pfk korn shell: $pfk_build_pfksh" >&6;}
 $as_echo "$as_me: build cscope: $pfk_build_cscope" >&6;}
 { $as_echo "$as_me:${as_lineno-$LINENO}: build doxygen documentation: $pfk_build_doxygen" >&5
 $as_echo "$as_me: build doxygen documentation: $pfk_build_doxygen" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: build xrandr session detector: $pfk_build_xrandr" >&5
+$as_echo "$as_me: build xrandr session detector: $pfk_build_xrandr" >&6;}
 
 
 # custom commands added to config.status
@@ -19540,6 +19584,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PFK_AM_BUILD_doxygen_TRUE}" && test -z "${PFK_AM_BUILD_doxygen_FALSE}"; then
   as_fn_error $? "conditional \"PFK_AM_BUILD_doxygen\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PFK_AM_BUILD_xrandr_TRUE}" && test -z "${PFK_AM_BUILD_xrandr_FALSE}"; then
+  as_fn_error $? "conditional \"PFK_AM_BUILD_xrandr\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then

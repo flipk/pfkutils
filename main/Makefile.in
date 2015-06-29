@@ -97,6 +97,8 @@ bin_PROGRAMS = pfkutils.new$(EXEEXT)
 @PFK_AM_BUILD_treescan_TRUE@am__append_6 = treescan.c
 @PFK_AM_BUILD_syslog_TRUE@am__append_7 = ../syslog/libsyslog.a
 @PFK_AM_BUILD_ampfk_TRUE@am__append_8 = ../ampfk/libampfk.a
+@PFK_AM_BUILD_xrandr_TRUE@am__append_9 = sessionXrandr.cc
+@PFK_AM_BUILD_xrandr_TRUE@am__append_10 = -lXrandr -lX11
 subdir = main
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -115,20 +117,24 @@ PROGRAMS = $(bin_PROGRAMS)
 am__pfkutils_new_SOURCES_DIST = crnl.c he.c random-hex.c rmstar_new.cc \
 	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
 	sessionManager.cc deduplifier.cc main.C programs.h sudo.c \
-	sudo.h checksize.c treescan.c btdump.C fbcompact.C fbdump.C
+	sudo.h checksize.c treescan.c btdump.C fbcompact.C fbdump.C \
+	sessionXrandr.cc
 @PFK_AM_BUILD_sudo_TRUE@am__objects_1 = sudo.$(OBJEXT)
 @PFK_AM_BUILD_checksize_TRUE@am__objects_2 = checksize.$(OBJEXT)
 @PFK_AM_BUILD_treescan_TRUE@am__objects_3 = treescan.$(OBJEXT)
+@PFK_AM_BUILD_xrandr_TRUE@am__objects_4 = sessionXrandr.$(OBJEXT)
 am_pfkutils_new_OBJECTS = crnl.$(OBJEXT) he.$(OBJEXT) \
 	random-hex.$(OBJEXT) rmstar_new.$(OBJEXT) fmtsdiff.$(OBJEXT) \
 	genpw.$(OBJEXT) xtermbar.$(OBJEXT) waitpid.$(OBJEXT) \
 	pfkstat.$(OBJEXT) sessionManager.$(OBJEXT) \
 	deduplifier.$(OBJEXT) main.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) btdump.$(OBJEXT) \
-	fbcompact.$(OBJEXT) fbdump.$(OBJEXT)
+	fbcompact.$(OBJEXT) fbdump.$(OBJEXT) $(am__objects_4)
 pfkutils_new_OBJECTS = $(am_pfkutils_new_OBJECTS)
+am__DEPENDENCIES_1 =
 pfkutils_new_DEPENDENCIES = $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_7) $(am__append_8) ../i2/libi2.a \
+	$(am__append_3) $(am__append_7) $(am__append_8) \
+	$(am__DEPENDENCIES_1) ../i2/libi2.a \
 	../libpfkutil/libpfkutil.la ../libpfkfb/libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la ../libpfkthread/libpfkthread.la
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -295,6 +301,7 @@ PFK_BUILD_sudo = @PFK_BUILD_sudo@
 PFK_BUILD_syslog = @PFK_BUILD_syslog@
 PFK_BUILD_treescan = @PFK_BUILD_treescan@
 PFK_BUILD_webappserver = @PFK_BUILD_webappserver@
+PFK_BUILD_xrandr = @PFK_BUILD_xrandr@
 PFK_ENVIRON = @PFK_ENVIRON@
 PFK_GROUP_ID = @PFK_GROUP_ID@
 PFK_SHELL_PATH = @PFK_SHELL_PATH@
@@ -370,11 +377,11 @@ pfkutils_new_SOURCES = crnl.c he.c random-hex.c rmstar_new.cc \
 	fmtsdiff.c genpw.c xtermbar.c waitpid.c pfkstat.c \
 	sessionManager.cc deduplifier.cc main.C programs.h \
 	$(am__append_4) $(am__append_5) $(am__append_6) btdump.C \
-	fbcompact.C fbdump.C
+	fbcompact.C fbdump.C $(am__append_9)
 
 # treescan.c
 pfkutils_new_LDADD = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_7) $(am__append_8) ../i2/libi2.a \
+	$(am__append_7) $(am__append_8) $(am__append_10) ../i2/libi2.a \
 	../libpfkutil/libpfkutil.la ../libpfkfb/libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la ../libpfkthread/libpfkthread.la
 AM_CPPFLAGS = \
@@ -493,6 +500,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/random-hex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rmstar_new.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sessionManager.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sessionXrandr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sudo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/treescan.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/waitpid.Po@am__quote@

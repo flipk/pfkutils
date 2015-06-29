@@ -79,6 +79,7 @@ PFK_ARG_ENABLE([ctwm],       [build claude's tab window manager])
 PFK_ARG_ENABLE([pfksh],      [build public domain pfk korn shell])
 PFK_ARG_ENABLE([cscope],     [build cscope])
 PFK_ARG_ENABLE([doxygen],    [build doxygen documentation])
+PFK_ARG_ENABLE([xrandr],     [build xrandr session detector])
 
 # AC_USE_SYSTEM_EXTENSIONS
 

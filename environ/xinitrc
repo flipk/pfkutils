@@ -5,5 +5,4 @@ ENV=$HOME/.kshrc
 export ENV
 
 xrdb -load .Xresources
-$HOME/pfk/bin/set-background.sh
-exec ssh-agent pfkSessionMgr -s fluxbox 
+exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'

@@ -17,8 +17,7 @@
     [commanddialog] (Fluxbox Command)
     [separator]
     [reconfig] (Reload config)
-    [exec] (Set Background) {$HOME/pfk/bin/set-background.sh&}
-    [exec] (Restart) {$HOME/pfk/bin/set-background.sh&pfkSessionMgr -c restart&}
+    [exec] (Restart) {pfkSessionMgr -c restart}
     [exec] (Logout) {pfkSessionMgr -c stop}
     [exit] (Exit)
   [endencoding]
