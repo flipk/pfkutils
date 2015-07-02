@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-06-26.23:20:19
+#      Last update: 2015-06-28.21:53:51
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -306,12 +306,12 @@ alias p='rm -f *~'
 alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
-alias pfkman='MANPATH=$HOME/pfk/share/man man'
+alias pfkman='MANPATH=`find $HOME/pfk -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh git --no-pager diff'
 
-#FUNCTIONS: make_file_part x xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
+#FUNCTIONS: make_file_part x xsd xsd2 sd sd2 xless z ediff merge3
 
 make_file_part() {
     typeset try dir_part file_part fp load
@@ -427,11 +427,6 @@ sd() {
         xtermbar "sd $1 $2"
         diff -bdNsyw --width $cols $* 2>&1 | l
     fi
-}
-
-cvsd2() {
-    width=`stty size | awk '{print $2}'`
-    cvs diff -btyW $width $* | fmtsdiff $width | less '+/%[<>|]%'
 }
 
 sd2() {
@@ -629,16 +624,6 @@ EOF
     emacs -g 162x54+25+5 --no-init-file --load $lisp
 
     rm -f $lisp
-}
-
-d1() {
-    DISPLAY=${DISPLAY%%:*}:1.0 $* &
-}
-d2() {
-    DISPLAY=${DISPLAY%%:*}:2.0 $* &
-}
-d3() {
-    DISPLAY=${DISPLAY%%:*}:3.0 $* &
 }
 
 fp() {
