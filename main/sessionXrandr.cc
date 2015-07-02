@@ -4,6 +4,7 @@ g++ sessionXrandr.cc -lXrandr -lX11 -o sxr
 exit 0
 #endif
 
+#include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include <iostream>
 #include <stdlib.h>
