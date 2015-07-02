@@ -6,7 +6,8 @@ libpfkutil_la_HEADERS = \
 	pk-md5.h types.H bst.H m.h fd_mgr.H base64.h inet_aton.h \
 	thread_slinger.h  shmempipe.H  HSM.h  dll3.h  hsmthread.h \
 	LockWait.h  prioWorkQ.h  regex.h fdThreadLauncher.h sha1.h \
-	msgr.h childprocessmanager.h bufprintf.h
+	msgr.h childprocessmanager.h bufprintf.h BackTrace.h myTimeval.h \
+	circular_buffer.H
 libpfkutil_la_SOURCES = \
 	pk-md5.c               m.c fd_mgr.C base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \

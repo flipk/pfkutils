@@ -6,7 +6,8 @@ noinst_PROGRAMS = wsServerTest wsClientTest
 libWebAppServer_ladir = ${includedir}/webappserver
 
 libWebAppServer_la_HEADERS = \
-	WebAppServer.h WebSocketClient.h WebAppMessage.h
+	WebAppServer.h WebSocketClient.h WebAppMessage.h \
+	CircularReader.h 
 
 libWebAppServer_la_SOURCES = serverPorts.cc \
 	WebAppConnection.cc WebAppServer.cc WebAppServerConfig.cc \
