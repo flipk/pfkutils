@@ -2,10 +2,10 @@
 /**
  * \file pk_messages_ext_link_tcp.cc
  * \brief implementation of external messaging link over TCP
- * \author Phillip F Knaack <pknaack1@netscape.net>
+ * \author Phillip F Knaack <pfk@pfk.org>
 
     This file is part of the "pfkutils" tools written by Phil Knaack
-    (pknaack1@netscape.net).
+    (pfk@pfk.org).
     Copyright (C) 2008  Phillip F Knaack
 
     This program is free software; you can redistribute it and/or modify

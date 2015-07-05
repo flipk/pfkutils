@@ -143,15 +143,3 @@ XDaliClock*memory:        High
 XDaliClock*mode:          24
 XDaliClock*seconds:       no
 XDaliClock*geometry:      80x18+126+64
-
-xlock*username: this terminal in use by phil knaack
-xlock*password: pknaack1@gmail.com, 224-377-9735
-xlock*info: phil knaack
-
-xlock*invalid: Password verification failed.
-xlock*validate: Checking password, please wait.
-xlock*echokeys: False
-
-xlock*foreground: red
-xlock*background: black
-

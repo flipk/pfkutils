@@ -1,7 +1,7 @@
 
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
-    (pknaack1@netscape.net).
+    (pfk@pfk.org).
     Copyright (C) 2008  Phillip F Knaack
 
     This program is free software; you can redistribute it and/or modify
@@ -105,11 +105,11 @@ digraph FileMGTStructure {
 </ul>
 
 
-Author: Phillip F Knaack <pknaack1@netscape.net>
+Author: Phillip F Knaack <pfk@pfk.org>
 
 <pre>
     This file is part of the "pfkutils" tools written by Phil Knaack
-    (pknaack1@netscape.net).
+    (pfk@pfk.org).
     Copyright (C) 2008  Phillip F Knaack
 
     This program is free software; you can redistribute it and/or modify

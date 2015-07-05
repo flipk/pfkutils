@@ -1,7 +1,7 @@
 
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
-    (pknaack1@netscape.net).
+    (pfk@pfk.org).
     Copyright (C) 2008  Phillip F Knaack
 
     This program is free software; you can redistribute it and/or modify
@@ -75,7 +75,7 @@ static char command_help_string[] =
 "   to perform commands;\n"
 "   see the program 'itsfsriw' to mount filesystems.\n"
 "\n"
-"   this program written by Phillip F Knaack <pknaack1@email.mot.com>.\n"
+"   this program written by Phillip F Knaack <pfk@pfk.org>.\n"
 "\n";
 
 static void
