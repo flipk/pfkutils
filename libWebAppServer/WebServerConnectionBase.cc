@@ -34,7 +34,10 @@ WebServerConnectionBase :: ~WebServerConnectionBase(void)
 bool
 WebServerConnectionBase :: doSelect(bool *forRead, bool *forWrite)
 {
-    *forRead = true;
+    if (readbuf.remaining() == 0)
+        *forRead = false;
+    else
+        *forRead = true;
     *forWrite = false;
     return true;
 }
