@@ -79,7 +79,7 @@ struct HSMEventT : public HSMEvent {
  * \param __typeValue  a type value from an enum starting at HSM_USER_START
  * \param __body   optionally define contents of the event */
 #define HSM_EVENT_DECLARE(__className,__typeValue,__body) \
-struct __className : HSMEventT<__className,__typeValue>     \
+struct __className : ::HSM::HSMEventT<__className,__typeValue>      \
 { \
     const std::string evtName(void) const { return #__className; } \
     __body \
@@ -218,7 +218,7 @@ protected:
     void publish(HSMEvent * evt);
 };
 
-#define ACTIVE_HSM_BASE(__className)  ActiveHSM<__className>
+#define ACTIVE_HSM_BASE(__className)  ::HSM::ActiveHSM<__className>
 /** a user should use this to declare an Active HSM thread.
  * \param __className  the name of the class to declare */
 #define ACTIVE_HSM_DECLARE(__className) \
