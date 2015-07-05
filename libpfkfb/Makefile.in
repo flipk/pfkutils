@@ -394,26 +394,26 @@ top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libpfkfb.la
 libpfkfb_ladir = ${includedir}/fb
 libpfkfb_la_HEADERS = \
-	BlockCache.H Btree.H BtreeDbClasses.H FileBlockLocal.H \
-	FileBlock_iface.H PageCache.H PageIO.H
+	BlockCache.h Btree.h BtreeDbClasses.h FileBlockLocal.h \
+	FileBlock_iface.h PageCache.h PageIO.h
 
 libpfkfb_la_SOURCES = \
-	BlockCache.C Btree.C BtreeNode.C \
-	FileBlockLocal.C FileBlockLocalAllocFree.C \
-	FileBlockLocalAuid.C FileBlockLocalAun.C FileBlockLocalBucket.C \
-	FileBlockLocalCompact.C FileBlockLocalDIB.C FileBlockLocalGetRel.C \
-	FileBlockLocalValidate.C FileBlock_iface.C \
-	PageCache.C PageIO.C PageIOFileDescriptor.C PageIONetworkTCPServer.C \
-	PageCache_internal.H BlockCache_internal.H Btree_internal.H
+	BlockCache.cc Btree.cc BtreeNode.cc \
+	FileBlockLocal.cc FileBlockLocalAllocFree.cc \
+	FileBlockLocalAuid.cc FileBlockLocalAun.cc FileBlockLocalBucket.cc \
+	FileBlockLocalCompact.cc FileBlockLocalDIB.cc FileBlockLocalGetRel.cc \
+	FileBlockLocalValidate.cc FileBlock_iface.cc \
+	PageCache.cc PageIO.cc PageIOFileDescriptor.cc PageIONetworkTCPServer.cc \
+	PageCache_internal.h BlockCache_internal.h Btree_internal.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/libpfkdll2 -I$(top_srcdir)/libpfkutil
-testBtree_SOURCES = testBtree.C
+testBtree_SOURCES = testBtree.cc
 testBtree_LDADD = \
 	libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la \
 	../libpfkutil/libpfkutil.la
 
-testFileBlock_SOURCES = testFileBlock.C
+testFileBlock_SOURCES = testFileBlock.cc
 testFileBlock_LDADD = \
 	libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la \
@@ -423,7 +423,7 @@ htmldestdir = $(DESTDIR)$(datarootdir)/html/fb
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .C .lo .o .obj
+.SUFFIXES: .cc .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -537,21 +537,21 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testBtree.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testFileBlock.Po@am__quote@
 
-.C.o:
+.cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
 
-.C.obj:
+.cc.obj:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
-.C.lo:
+.cc.lo:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@

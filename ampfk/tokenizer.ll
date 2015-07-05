@@ -7,9 +7,9 @@
 %{
 
 #include <string>
-#include "automake_parser.H"
+#include "automake_parser.h"
 #include "parser.hh"
-#include "condition.H"
+#include "condition.h"
 
 using namespace std;
 

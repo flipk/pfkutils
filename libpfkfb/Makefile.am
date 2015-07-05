@@ -3,27 +3,27 @@ lib_LTLIBRARIES = libpfkfb.la
 
 libpfkfb_ladir = ${includedir}/fb
 libpfkfb_la_HEADERS = \
-	BlockCache.H Btree.H BtreeDbClasses.H FileBlockLocal.H \
-	FileBlock_iface.H PageCache.H PageIO.H
+	BlockCache.h Btree.h BtreeDbClasses.h FileBlockLocal.h \
+	FileBlock_iface.h PageCache.h PageIO.h
 libpfkfb_la_SOURCES = \
-	BlockCache.C Btree.C BtreeNode.C \
-	FileBlockLocal.C FileBlockLocalAllocFree.C \
-	FileBlockLocalAuid.C FileBlockLocalAun.C FileBlockLocalBucket.C \
-	FileBlockLocalCompact.C FileBlockLocalDIB.C FileBlockLocalGetRel.C \
-	FileBlockLocalValidate.C FileBlock_iface.C \
-	PageCache.C PageIO.C PageIOFileDescriptor.C PageIONetworkTCPServer.C \
-	PageCache_internal.H BlockCache_internal.H Btree_internal.H
+	BlockCache.cc Btree.cc BtreeNode.cc \
+	FileBlockLocal.cc FileBlockLocalAllocFree.cc \
+	FileBlockLocalAuid.cc FileBlockLocalAun.cc FileBlockLocalBucket.cc \
+	FileBlockLocalCompact.cc FileBlockLocalDIB.cc FileBlockLocalGetRel.cc \
+	FileBlockLocalValidate.cc FileBlock_iface.cc \
+	PageCache.cc PageIO.cc PageIOFileDescriptor.cc PageIONetworkTCPServer.cc \
+	PageCache_internal.h BlockCache_internal.h Btree_internal.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/libpfkdll2 -I$(top_srcdir)/libpfkutil
 
 noinst_PROGRAMS = testBtree testFileBlock
 
-testBtree_SOURCES = testBtree.C
+testBtree_SOURCES = testBtree.cc
 testBtree_LDADD = \
 	libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la \
 	../libpfkutil/libpfkutil.la
-testFileBlock_SOURCES = testFileBlock.C
+testFileBlock_SOURCES = testFileBlock.cc
 testFileBlock_LDADD = \
 	libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la \

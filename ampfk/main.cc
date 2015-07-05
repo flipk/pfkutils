@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <iostream>
 
-#include "condition.H"
-#include "automake_parser.H"
+#include "condition.h"
+#include "automake_parser.h"
 
 using namespace std;
 

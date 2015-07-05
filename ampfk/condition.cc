@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "condition.H"
+#include "condition.h"
 
 using namespace std;
 

@@ -594,7 +594,7 @@ PACKAGE_STRING='pfkutils 3.19'
 PACKAGE_BUGREPORT='pfk@pfk.org'
 PACKAGE_URL=''
 
-ac_unique_file="main/main.C"
+ac_unique_file="main/main.cc"
 ac_default_prefix=$HOME/pfk
 # Factoring default headers for most tests.
 ac_includes_default="\

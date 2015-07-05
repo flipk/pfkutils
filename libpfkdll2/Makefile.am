@@ -1,16 +1,16 @@
 
-# nobase_include_HEADERS = dll2.H dll2_btree.H
+# nobase_include_HEADERS = dll2.h dll2_btree.h
 
 lib_LTLIBRARIES = libpfkdll2.la
 
 libpfkdll2_ladir = ${includedir}/dll2
-libpfkdll2_la_HEADERS = dll2.H dll2_btree.H dll2_c.h
-libpfkdll2_la_SOURCES = dll2_hash.C
+libpfkdll2_la_HEADERS = dll2.h dll2_btree.h dll2_c.h
+libpfkdll2_la_SOURCES = dll2_hash.cc
 
 noinst_PROGRAMS = test_btree test_hash
 
-test_btree_SOURCES = test_btree.C
-test_hash_SOURCES = test_hash.C test_hash_add.C test_hash_del.C
+test_btree_SOURCES = test_btree.cc
+test_hash_SOURCES = test_hash.cc test_hash_add.cc test_hash_del.cc
 test_hash_LDADD = libpfkdll2.la
 
 htmldestdir = $(DESTDIR)$(datarootdir)/html/dll2

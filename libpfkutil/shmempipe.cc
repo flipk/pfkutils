@@ -33,7 +33,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
-#include "shmempipe.H"
+#include "shmempipe.h"
 
 shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
 {

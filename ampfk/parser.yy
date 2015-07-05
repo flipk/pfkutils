@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string>
 #include <iostream>
-#include "tokenizer.H"
-#include "automake_parser.H"
+#include "tokenizer.h"
+#include "automake_parser.h"
 
 extern int yylex( void );
 extern void yyerror( const std::string e );

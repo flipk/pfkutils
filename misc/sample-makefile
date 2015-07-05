@@ -17,25 +17,36 @@ OBJDIR= obj
 CXXOBJS= $(CXXSRCS:%.cc=$(OBJDIR)/%.o)
 COBJS= $(CSRCS:%.c=$(OBJDIR)/%.o)
 OBJS= $(COBJS) $(CXXOBJS)
+_LIB= $(OBJDIR)/$(LIB)
 
-all: xmakefile
-	+make -f xmakefile _all
+all: $(OBJDIR)/xmakefile
+	+make -f $(OBJDIR)/xmakefile _all
 
-xmakefile: Makefile
-	rm -f xmakefile
-	cat Makefile > x
-	echo '' >> x
-	$(CC) $(INCS) $(DEFS) -M $(CSRCS) >> x
-	$(CXX) $(INCS) $(DEFS) -M $(CXXSRCS) >> x
-	mv x xmakefile
+$(OBJDIR)/xmakefile: Makefile $(CSRCS) $(HDRS) $(CXXSRCS)
 	mkdir -p $(OBJDIR)
+	rm -f $(OBJDIR)/xmakefile
+	cat Makefile > $(OBJDIR)/x
+	echo '' >> $(OBJDIR)/x
+	for f in $(CSRCS) ; do \
+		$(CC) $(INCS) $(DEFS) -M $$f \
+			-MT $(OBJDIR)/$${f%.c}.o -MF $(OBJDIR)/xdeps ; \
+		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
+		rm -f $(OBJDIR)/xdeps ; \
+	done
+	for f in $(CXXSRCS) ; do \
+		$(CC) $(INCS) $(DEFS) -M $$f \
+			-MT $(OBJDIR)/$${f%.cc}.o -MF $(OBJDIR)/xdeps ; \
+		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
+		rm -f $(OBJDIR)/xdeps ; \
+	done
+	mv $(OBJDIR)/x $(OBJDIR)/xmakefile
 
-_all: $(LIB)
+_all: $(_LIB)
 
-$(LIB): $(OBJS)
-	rm -f $(LIB)
-	$(AR) cq $(LIB) $(OBJS)
-	$(RANLIB) $(LIB)
+$(_LIB): $(OBJS)
+	rm -f $(_LIB)
+	$(AR) cq $(_LIB) $(OBJS)
+	$(RANLIB) $(_LIB)
 
 $(CXXOBJS): $(OBJDIR)/%.o: %.cc
 	$(CXX) $(DEFS) $(INCS) $(CXXOPTS) -c $< -o $@
@@ -43,8 +54,5 @@ $(CXXOBJS): $(OBJDIR)/%.o: %.cc
 $(COBJS): $(OBJDIR)/%.o: %.c
 	$(CC) $(DEFS) $(INCS) $(CCOPTS) -c $< -o $@
 
-echo:
-	@echo $(OBJS)
-
 clean:
-	rm -rf $(LIB) $(OBJDIR) xmakefile x *~
+	rm -rf $(LIB) $(OBJDIR)

@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "automake_parser.H"
-#include "tokenizer.H"
+#include "automake_parser.h"
+#include "tokenizer.h"
 
 using namespace std;
 

@@ -5,22 +5,22 @@ libpfkthread_ladir = ${includedir}/thread
 
 
 libpfkthread_la_HEADERS = \
-	h/pk_filedescs.H \
-	h/pk_messages.H \
-	h/pk_messages_ext.H \
-	h/pk_semaphores.H \
-	h/pk_threads.H \
-	h/pk_timers.H \
-	h/stringhash.H
+	h/pk_filedescs.h \
+	h/pk_messages.h \
+	h/pk_messages_ext.h \
+	h/pk_semaphores.h \
+	h/pk_threads.h \
+	h/pk_timers.h \
+	h/stringhash.h
 
 libpfkthread_la_SOURCES = \
-	pk_filedescs.C pk_filedescs_thread.C \
-	pk_messages.C pk_messages_ext.C pk_messages_ext_link_tcp.C \
-	pk_semaphores.C pk_threads.C pk_timers.C stringhash.C \
-	int/pk_filedescs_internal.H \
-	int/pk_messages_internal.H \
-	int/pk_threads_internal.H \
-	int/pk_timers_internal.H
+	pk_filedescs.cc pk_filedescs_thread.cc \
+	pk_messages.cc pk_messages_ext.cc pk_messages_ext_link_tcp.cc \
+	pk_semaphores.cc pk_threads.cc pk_timers.cc stringhash.cc \
+	int/pk_filedescs_internal.h \
+	int/pk_messages_internal.h \
+	int/pk_threads_internal.h \
+	int/pk_timers_internal.h
 
 AM_CPPFLAGS = \
 	-I$(srcdir)/h \
@@ -30,16 +30,16 @@ AM_CPPFLAGS = \
 
 noinst_PROGRAMS = test-1 test-2 test-3 test-4
 
-test_1_SOURCES = test-1.C
+test_1_SOURCES = test-1.cc
 test_1_LDADD = \
 	libpfkthread.la ../libpfkdll2/libpfkdll2.la ../libpfkutil/libpfkutil.la
-test_2_SOURCES = test-2.C
+test_2_SOURCES = test-2.cc
 test_2_LDADD = \
 	libpfkthread.la ../libpfkdll2/libpfkdll2.la ../libpfkutil/libpfkutil.la
-test_3_SOURCES = test-3.C
+test_3_SOURCES = test-3.cc
 test_3_LDADD = \
 	libpfkthread.la ../libpfkdll2/libpfkdll2.la ../libpfkutil/libpfkutil.la
-test_4_SOURCES = test-4.C
+test_4_SOURCES = test-4.cc
 test_4_LDADD = \
 	libpfkthread.la ../libpfkdll2/libpfkdll2.la ../libpfkutil/libpfkutil.la
 

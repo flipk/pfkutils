@@ -1,13 +1,13 @@
 
 noinst_LIBRARIES = libbackup.a
 libbackup_a_SOURCES = \
-	FileList.C FileList.H \
-	create_backup.C create_file.C update_backup.C \
-	database_elements.H params.H protos.H \
-	delete_backup.C delete_gen.C delete_gens.C \
-	extract.C extract_list.C \
-	find_backup.C get_info.C list_backups.C list_files.C \
-	md5buffer.C main.C
+	FileList.cc FileList.h \
+	create_backup.cc create_file.cc update_backup.cc \
+	database_elements.h params.h protos.h \
+	delete_backup.cc delete_gen.cc delete_gens.cc \
+	extract.cc extract_list.cc \
+	find_backup.cc get_info.cc list_backups.cc list_files.cc \
+	md5buffer.cc main.cc
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/libpfkdll2 \

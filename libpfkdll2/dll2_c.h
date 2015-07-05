@@ -1,3 +1,4 @@
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack

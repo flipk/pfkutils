@@ -32,8 +32,8 @@ exit 0
 #include <stdio.h>
 #include <unistd.h>
 
-#include "shmempipe.H"
-#include "shmempipe_test_msg.H"
+#include "shmempipe.h"
+#include "shmempipe_test_msg.h"
 
 bool connected = false;
 int count = 0;

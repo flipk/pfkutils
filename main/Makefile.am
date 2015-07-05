@@ -7,7 +7,7 @@ pfkutils_new_SOURCES = \
 	genpw.c xtermbar.c waitpid.c \
 	pfkstat.c sessionManager.cc \
 	deduplifier.cc \
-	main.C programs.h
+	main.cc programs.h
 
 # treescan.c
 
@@ -37,7 +37,7 @@ if PFK_AM_BUILD_treescan
 pfkutils_new_SOURCES += treescan.c
 endif
 
-pfkutils_new_SOURCES += btdump.C fbcompact.C fbdump.C
+pfkutils_new_SOURCES += btdump.cc fbcompact.cc fbdump.cc
 
 if PFK_AM_BUILD_syslog
 pfkutils_new_LDADD += ../syslog/libsyslog.a
