@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-06-28.21:53:51
+#      Last update: 2015-07-08.20:54:25
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -581,7 +581,8 @@ ediff() {
         (ediff "$1" "$2")
 EOF
 
-    emacs -g 162x70+25+5 --no-init-file --load $lisp
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x70+25+5 --no-init-file --load $lisp
 
     rm -f $lisp
 }
@@ -601,7 +602,8 @@ merge3() {
         (ediff-merge-files-with-ancestor "$1" "$2" "$3" nil "$4")
 EOF
 
-    emacs -g 162x54+25+5 --no-init-file --load $lisp
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x54+25+5 --no-init-file --load $lisp
 
     rm -f $lisp
 }
@@ -621,7 +623,8 @@ merge2() {
         (ediff-merge-files "$1" "$2" nil "$3")
 EOF
 
-    emacs -g 162x54+25+5 --no-init-file --load $lisp
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x54+25+5 --no-init-file --load $lisp
 
     rm -f $lisp
 }
