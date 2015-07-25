@@ -1,3 +1,8 @@
+#if 0
+set -e -x
+g++ -DpfkSessionMgr_main=main sessionManager.cc -o pfkSessionMgr
+exit 0
+#endif
 
 #include <iostream>
 #include <sstream>
