@@ -26,6 +26,12 @@ PFKLIBDIR= $(HOME)/pfk/$(PFKARCH)/lib
 LIBS= -Wl,-rpath,$(PFKLIBDIR) -L$(PFKLIBDIR) \
 	-lWebAppServer -lpfkutil -lprotobuf -lpthread 
 
+ifeq ($(GOOGLE_PROTOBUF_DIR),)
+else
+INCS +=  -I$(GOOGLE_PROTOBUF_DIR)/include
+LIBS +=  -L$(GOOGLE_PROTOBUF_DIR)/lib
+endif
+
 CFLAGS= -O3
 
 ifeq ($(VERBOSE),)
