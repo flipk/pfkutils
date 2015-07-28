@@ -4,10 +4,10 @@ lib_LTLIBRARIES = libpfkutil.la
 libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = \
 	pk-md5.h types.h bst.h m.h fd_mgr.h  base64.h inet_aton.h \
-	thread_slinger.h  shmempipe.h  HSM.h dll3.h dll3.tcc hsmthread.h \
-	LockWait.h  prioWorkQ.h  regex.h fdThreadLauncher.h sha1.h \
-	msgr.h childprocessmanager.h bufprintf.h BackTrace.h myTimeval.h \
-	circular_buffer.h
+	thread_slinger.h thread_slinger.tcc shmempipe.h HSM.h HSM.tcc dll3.h \
+	dll3.tcc hsmthread.h LockWait.h  prioWorkQ.h  regex.h \
+	fdThreadLauncher.h sha1.h msgr.h childprocessmanager.h bufprintf.h \
+	BackTrace.h myTimeval.h circular_buffer.h
 libpfkutil_la_SOURCES = \
 	pk-md5.c               m.c fd_mgr.cc base64.c inet_aton.c \
 	thread_slinger.cc shmempipe.cc HSM.cc dll3.cc hsmthread.cc \
