@@ -1,6 +1,6 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*-  */
 
-#include "fd_mgr.H"
+#include "fd_mgr.h"
 #include <string>
 
 class proxyClientTcpAcceptor : public fd_interface

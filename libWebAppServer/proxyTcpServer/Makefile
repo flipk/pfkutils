@@ -1,46 +1,75 @@
 
-INCS= -I.. -I../../libpfkutil -I../../libpfkdll2
+SERVER_PROG= wsProxyServer
+SERVER_SRCS= proxyServerMain.cc proxyServerConn.cc
 
-SRCS= proxyServerConn.cc proxyClientTcpAcceptor.cc \
-	proxyServerMain.cc proxyClientMain.cc
+CLIENT_PROG= wsProxyClient
+CLIENT_SRCS= proxyClientMain.cc proxyClientConn.cc proxyClientTcpAcceptor.cc
 
-SERVER_OBJS= proxyServerMain.o proxyServerConn.o proxyMsgs.pb.o
-CLIENT_OBJS= proxyClientMain.o proxyClientConn.o proxyMsgs.pb.o \
-	proxyClientTcpAcceptor.o
-LIBS= -L$(HOME)/pfk/$(PFKARCH)/lib -lWebAppServer -lpfkutil \
-	-Wl,-rpath -Wl,$(HOME)/pfk/$(PFKARCH)/lib \
-	-lprotobuf -lpthread 
+PROTOS= proxyMsgs.proto
 
-CPPFLAGS= -O3
+#
 
-PROGS= wsProxyServer wsProxyClient
+OBJDIR= objs
+PROGS= $(OBJDIR)/$(SERVER_PROG) $(OBJDIR)/$(CLIENT_PROG)
+INCS= -I.. -I../../libpfkutil -I../../libpfkdll2 -I$(OBJDIR)
 
-all: xmakefile
-	+make -f xmakefile $(PROGS)
+GENSRCS= $(PROTOS:%.proto=$(OBJDIR)/%.pb.cc)
+GENHDRS= $(PROTOS:%.proto=$(OBJDIR)/%.pb.h)
+GENOBJS= $(GENSRCS:.cc=.o)
 
-xmakefile: proxyMsgs.pb.h Makefile $(SRCS)
-	rm -f tmp
-	cat Makefile > tmp
-	echo '' >> tmp
-	g++ $(INCS) -M $(SRCS) >> tmp
-	mv tmp xmakefile
+SRCS= $(SERVER_SRCS) $(CLIENT_SRCS)
+SERVER_OBJS= $(SERVER_SRCS:%.cc=$(OBJDIR)/%.o)
+CLIENT_OBJS= $(CLIENT_SRCS:%.cc=$(OBJDIR)/%.o)
 
-proxyMsgs.pb.h proxyMsgs.pb.cc : proxyMsgs.proto
-	protoc --cpp_out=. proxyMsgs.proto
+PFKLIBDIR= $(HOME)/pfk/$(PFKARCH)/lib
 
-wsProxyServer: $(SERVER_OBJS)
-	g++ $(SERVER_OBJS) $(LIBS) -o wsProxyServer
+LIBS= -Wl,-rpath,$(PFKLIBDIR) -L$(PFKLIBDIR) \
+	-lWebAppServer -lpfkutil -lprotobuf -lpthread 
 
-wsProxyClient: $(CLIENT_OBJS)
-	g++ $(CLIENT_OBJS) $(LIBS) -o wsProxyClient
+CFLAGS= -O3
 
-.cc.o:
-	g++ $(CPPFLAGS) -c $(INCS) $*.cc
+all: $(OBJDIR) $(OBJDIR)/xmakefile
+	+make -f $(OBJDIR)/xmakefile $(PROGS)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(OBJDIR)/xmakefile: Makefile $(PROTOS) $(SRCS) $(GENSRCS)
+	rm -f $(OBJDIR)/xmakefile $(OBJDIR)/x
+	cat Makefile > $(OBJDIR)/x
+	for f in $(SRCS) ; do \
+		g++ -M $$f $(INCS) \
+			-MT $(OBJDIR)/$${f%.cc}.o \
+			-MF $(OBJDIR)/xdeps ; \
+		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
+		rm -f $(OBJDIR)/xdeps ; \
+	done
+	for f in $(GENSRCS) ; do \
+		g++ -M $$f $(INCS) \
+			-MT $${f%.cc}.o \
+			-MF $(OBJDIR)/xdeps ; \
+		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
+		rm -f $(OBJDIR)/xdeps ; \
+	done
+	mv $(OBJDIR)/x $(OBJDIR)/xmakefile
+
+$(GENSRCS): $(OBJDIR)/%.pb.cc: %.proto
+	protoc --cpp_out=$(OBJDIR) $<
+
+$(GENOBJS): %.o: %.cc
+	g++ -c $(INCS) $< -o $@
+
+$(SERVER_OBJS) $(CLIENT_OBJS): $(OBJDIR)/%.o: %.cc
+	g++ -c $(INCS) $< -o $@
+
+$(OBJDIR)/$(SERVER_PROG): $(SERVER_OBJS) $(GENOBJS)
+	g++ $(SERVER_OBJS) $(GENOBJS) $(LIBS) -o $@
+
+$(OBJDIR)/$(CLIENT_PROG): $(CLIENT_OBJS) $(GENOBJS)
+	g++ $(CLIENT_OBJS) $(GENOBJS) $(LIBS) -o $@
 
 install:
 	cp $(PROGS) $(HOME)/pfk/$(PFKARCH)/bin
 
 clean:
-	rm -f proxyMsgs.pb.h proxyMsgs.pb.cc xmakefile
-	rm -f $(SERVER_OBJS) $(CLIENT_OBJS) $(PROGS)
-
+	rm -rf $(OBJDIR)
