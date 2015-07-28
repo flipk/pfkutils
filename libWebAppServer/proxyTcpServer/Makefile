@@ -38,11 +38,11 @@ all: $(OBJDIR) $(OBJDIR)/xmakefile
 	$(Q)+make -f $(OBJDIR)/xmakefile $(PROGS)
 
 $(OBJDIR):
-	$(Q)echo making OBJDIR=$(OBJDIR)
+	@echo making OBJDIR=$(OBJDIR)
 	$(Q)mkdir -p $(OBJDIR)
 
 $(OBJDIR)/xmakefile: Makefile $(PROTOS) $(SRCS) $(GENSRCS)
-	$(Q)echo depending
+	@echo depending
 	$(Q)rm -f $(OBJDIR)/xmakefile $(OBJDIR)/x
 	$(Q)cat Makefile > $(OBJDIR)/x
 	$(Q)($(foreach f,   $(SRCS),g++ -M $(f) $(INCS) \
@@ -52,28 +52,28 @@ $(OBJDIR)/xmakefile: Makefile $(PROTOS) $(SRCS) $(GENSRCS)
 	$(Q)mv $(OBJDIR)/x $(OBJDIR)/xmakefile
 
 $(GENSRCS): $(OBJDIR)/%.pb.cc: %.proto
-	$(Q)echo making protobuf c++
+	@echo making $@
 	$(Q)protoc --cpp_out=$(OBJDIR) $<
 
 $(GENOBJS): %.o: %.cc
-	$(Q)echo compiling $@
-	$(Q)g++ -c $(INCS) $< -o $@
+	@echo compiling $@
+	$(Q)g++ -c $(INCS) $(CFLAGS) $< -o $@
 
 $(SERVER_OBJS) $(CLIENT_OBJS): $(OBJDIR)/%.o: %.cc
-	$(Q)echo compiling $@
-	$(Q)g++ -c $(INCS) $< -o $@
+	@echo compiling $@
+	$(Q)g++ -c $(INCS) $(CFLAGS) $< -o $@
 
 $(OBJDIR)/$(SERVER_PROG): $(GENOBJS) $(SERVER_OBJS)
-	$(Q)echo linking $@
+	@echo linking $@
 	$(Q)g++ $(SERVER_OBJS) $(GENOBJS) $(LIBS) -o $@
 
 $(OBJDIR)/$(CLIENT_PROG): $(GENOBJS) $(CLIENT_OBJS)
-	$(Q)echo linking $@
+	@echo linking $@
 	$(Q)g++ $(CLIENT_OBJS) $(GENOBJS) $(LIBS) -o $@
 
 install:
 	cp $(PROGS) $(HOME)/pfk/$(PFKARCH)/bin
 
 clean:
-	$(Q)echo cleaning
+	@echo cleaning
 	$(Q)rm -rf $(OBJDIR)
