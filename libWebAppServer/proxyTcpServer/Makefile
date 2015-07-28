@@ -28,48 +28,52 @@ LIBS= -Wl,-rpath,$(PFKLIBDIR) -L$(PFKLIBDIR) \
 
 CFLAGS= -O3
 
+ifeq ($(VERBOSE),)
+Q=@
+else
+Q=
+endif
+
 all: $(OBJDIR) $(OBJDIR)/xmakefile
-	+make -f $(OBJDIR)/xmakefile $(PROGS)
+	$(Q)+make -f $(OBJDIR)/xmakefile $(PROGS)
 
 $(OBJDIR):
-	mkdir -p $(OBJDIR)
+	$(Q)echo making OBJDIR=$(OBJDIR)
+	$(Q)mkdir -p $(OBJDIR)
 
 $(OBJDIR)/xmakefile: Makefile $(PROTOS) $(SRCS) $(GENSRCS)
-	rm -f $(OBJDIR)/xmakefile $(OBJDIR)/x
-	cat Makefile > $(OBJDIR)/x
-	for f in $(SRCS) ; do \
-		g++ -M $$f $(INCS) \
-			-MT $(OBJDIR)/$${f%.cc}.o \
-			-MF $(OBJDIR)/xdeps ; \
-		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
-		rm -f $(OBJDIR)/xdeps ; \
-	done
-	for f in $(GENSRCS) ; do \
-		g++ -M $$f $(INCS) \
-			-MT $${f%.cc}.o \
-			-MF $(OBJDIR)/xdeps ; \
-		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
-		rm -f $(OBJDIR)/xdeps ; \
-	done
-	mv $(OBJDIR)/x $(OBJDIR)/xmakefile
+	$(Q)echo depending
+	$(Q)rm -f $(OBJDIR)/xmakefile $(OBJDIR)/x
+	$(Q)cat Makefile > $(OBJDIR)/x
+	$(Q)($(foreach f,   $(SRCS),g++ -M $(f) $(INCS) \
+		-MT $(OBJDIR)/$(f:.cc=.o);)) >> $(OBJDIR)/x
+	$(Q)($(foreach f,$(GENSRCS),g++ -M $(f) $(INCS) \
+		-MT           $(f:.cc=.o);)) >> $(OBJDIR)/x
+	$(Q)mv $(OBJDIR)/x $(OBJDIR)/xmakefile
 
 $(GENSRCS): $(OBJDIR)/%.pb.cc: %.proto
-	protoc --cpp_out=$(OBJDIR) $<
+	$(Q)echo making protobuf c++
+	$(Q)protoc --cpp_out=$(OBJDIR) $<
 
 $(GENOBJS): %.o: %.cc
-	g++ -c $(INCS) $< -o $@
+	$(Q)echo compiling $@
+	$(Q)g++ -c $(INCS) $< -o $@
 
 $(SERVER_OBJS) $(CLIENT_OBJS): $(OBJDIR)/%.o: %.cc
-	g++ -c $(INCS) $< -o $@
+	$(Q)echo compiling $@
+	$(Q)g++ -c $(INCS) $< -o $@
 
-$(OBJDIR)/$(SERVER_PROG): $(SERVER_OBJS) $(GENOBJS)
-	g++ $(SERVER_OBJS) $(GENOBJS) $(LIBS) -o $@
+$(OBJDIR)/$(SERVER_PROG): $(GENOBJS) $(SERVER_OBJS)
+	$(Q)echo linking $@
+	$(Q)g++ $(SERVER_OBJS) $(GENOBJS) $(LIBS) -o $@
 
-$(OBJDIR)/$(CLIENT_PROG): $(CLIENT_OBJS) $(GENOBJS)
-	g++ $(CLIENT_OBJS) $(GENOBJS) $(LIBS) -o $@
+$(OBJDIR)/$(CLIENT_PROG): $(GENOBJS) $(CLIENT_OBJS)
+	$(Q)echo linking $@
+	$(Q)g++ $(CLIENT_OBJS) $(GENOBJS) $(LIBS) -o $@
 
 install:
 	cp $(PROGS) $(HOME)/pfk/$(PFKARCH)/bin
 
 clean:
-	rm -rf $(OBJDIR)
+	$(Q)echo cleaning
+	$(Q)rm -rf $(OBJDIR)
