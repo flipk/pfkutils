@@ -77,7 +77,7 @@ void HSM<T>::backtrace(HSM<T>::StateTrace *traceret,
     StateTrace trace;
     bool done = false;
     do {
-        State nextState;
+        State nextState = NULL;
         char const * name = stateName(state,&nextState,&done);
         trace.push_back(StateTraceEntry(state, name));
         state = nextState;
@@ -139,7 +139,7 @@ void HSM<T>::dispatch(HSMEvent const * evt)
     State newState = NULL;
     State state = currentState;
     bool done = true;
-    int ind;
+    size_t ind;
     if (evt->type == HSMEvent::HSM_TERMINATE)
     {
         // issue exit to all states.
