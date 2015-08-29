@@ -207,7 +207,7 @@ fdThreadLauncher :: makeListeningSocket(int port)
     if (fd < 0)
     {
         fprintf(stderr, "socket : %s\n", strerror(errno));
-        exit(1);
+        return -1;
     }
     int v = 1;
     setsockopt( fd, SOL_SOCKET, SO_REUSEADDR,
@@ -219,7 +219,8 @@ fdThreadLauncher :: makeListeningSocket(int port)
     if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
         fprintf(stderr, "bind : %s\n", strerror(errno));
-        exit(1);
+        ::close(fd);
+        return -1;
     }
     listen(fd, 1);
     return fd;
@@ -233,7 +234,7 @@ fdThreadLauncher :: makeConnectingSocket(uint32_t ip, int port)
     if (fd < 0)
     {
         fprintf(stderr, "socket : %s\n", strerror(errno));
-        exit(1);
+        return -1;
     }
     struct sockaddr_in sa;
     sa.sin_family = AF_INET;
