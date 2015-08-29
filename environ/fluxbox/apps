@@ -4,5 +4,4 @@
 [end]
 [app] (name=Emacs_Minibuffer) (class=Emacs)
   [Position]	(UPPERLEFT)	{0% 0%}
-  [Sticky]	{yes}
 [end]
