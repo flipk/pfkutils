@@ -224,7 +224,7 @@ PageCache :: flush(void)
     qsort( pages, count, sizeof(PCPInt*),
            (int(*)(const void *, const void *))page_compare );
 
-    printf("flushing %d pages\n", count);
+    //printf("flushing %d pages\n", count);
 
     for (i = 0; i < count; i++)
     {
