@@ -1,41 +1,48 @@
+#!/bin/sh
 
-This is a set of tools that pfk finds useful.  It also contains 
-bits and pieces and snippets of code that pfk often imports into other
-projects.  It is also pfk's entire home dir setup (shell, dot files,
-emacs config, and a ~/pfk intall prefix for installing tools, libs,
-headers, and man pages.
+# This is a set of tools that pfk finds useful.  It also contains 
+# bits and pieces and snippets of code that pfk often imports into other
+# projects.  It is also pfk's entire home dir setup (shell, dot files,
+# emacs config, and a ~/pfk intall prefix for installing tools, libs,
+# headers, and man pages.
 
-----
+# ----
 
-BUILDING
+# BUILDING
 
-configure --enable-environ=? --enable-<tool>
-make
-make diffdotfiles
-make install
+# configure --enable-environ=? --enable-<tool>
+# make
+# make diffdotfiles
+# make install
 
-blade:
+if [ x$1 = "xblade" ] ; then
 
-../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pfksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
+    ../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pfksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
 
-hertz & adler:
+elif [ x$1 = "xadler" ] ; then
 
-../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
+    ../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-ampfk --enable-webappserver --enable-pfkscript --enable-xrandr
 
-bohr:
+elif [ x$1 = "xbohr" ] ; then
 
-PATH=/open_source/bin-sun/gcc/bin:$PATH STRIP=true ../configure --enable-environ=mot --enable-pfksh
-PATH=/open_source/bin-sun/gcc/bin:$PATH make
-PATH=/open_source/bin-sun/gcc/bin:$PATH make install
+    PATH=/open_source/bin-sun/gcc/bin:$PATH STRIP=true ../configure --enable-environ=mot --enable-pfksh
+    echo 'PATH=/open_source/bin-sun/gcc/bin:$PATH make'
 
-droid-u43:
+elif [ x$1 = "xdroid" ] ; then
 
-../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak --enable-webappserver --enable-pfkscript --enable-xrandr
+    ../configure --enable-environ=mot --enable-pfksh --enable-cscope --enable-doxygen --enable-ampfk --enable-pfkbak --enable-webappserver --enable-pfkscript --enable-xrandr
 
-sunlogin1:
+elif [ x$1 = "xsunlogin" ] ; then
 
-STRIP=true ../configure --enable-environ=mot --enable-pfksh
+    STRIP=true ../configure --enable-environ=mot --enable-pfksh
 
+else
+
+    echo dunno
+    exit 1
+
+fi
+exit 0
 
 * cleaning
 
