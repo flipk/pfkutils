@@ -1,7 +1,7 @@
 
-# Last update: 2015-03-30.12:06:41
+# Last update: 2015-09-14.20:52:18
 
-#FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig makepred ccdiff ccdiff2 
+#FUNCTIONS: xvt lsv lsvg lsco lscol lspr lsprl lsprf lsprfl sv ssv zeroversion makeorig makepred predversion myscript ccdiff ccdiff2
 
 export GIT_SSL_NO_VERIFY=true
 export http_proxy=http://wwwgate0.mot.com:1080 

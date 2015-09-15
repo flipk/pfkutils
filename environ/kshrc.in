@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-07-08.20:54:25
+#      Last update: 2015-09-14.20:47:46
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -102,12 +102,6 @@ if __isksh ; then
     if [[ x$LAST_HOST != x$HOST ]] ; then
         __verbose from $LAST_HOST to $HOST, regen ENV
         unset ENV_SET
-    fi
-    if [[ x$LOGIN_LOGGED == x ]] ; then
-        REMOTE_HOST=${SSH_CONNECTION%% *}
-        __verbose logging REMOTE_HOST=$REMOTE_HOST to lastlog
-        echo `hostname` `date` pid $$ term $TERM from $REMOTE_HOST >> .lastlog
-        export LOGIN_LOGGED=yes REMOTE_HOST
     fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
@@ -311,7 +305,7 @@ alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh git --no-pager diff'
 
-#FUNCTIONS: make_file_part x xsd xsd2 sd sd2 xless z ediff merge3
+#FUNCTIONS: make_file_part emacsn x xsd xsd2 d sd sd2 xless ediff merge3 merge2 sendtree gettree aesenc aesdec
 
 make_file_part() {
     typeset try dir_part file_part fp load
