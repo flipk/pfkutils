@@ -24,6 +24,16 @@ int parser_line_number;
                  return WORD;
               }
 
+#[0-9a-fA-F]+ {
+                 yylval.word = strvec( yytext+1, yyleng-1 );
+                 return HEXVALUE;
+              }
+
+\"[^\"]*\"    {
+                 yylval.word = strvec( yytext+1, yyleng-2 );
+                 return STRING;
+              }
+
 :             { return COLON; }
 
 \(            { return LP; }

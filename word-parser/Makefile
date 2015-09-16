@@ -3,11 +3,11 @@ PROG= t
 OBJS= lex.yy.o y.tab.o tuple.o main.o
 LIBS=
 
-YACC= yacc
+YACC= bison -y
 LEX= flex
 CC= gcc
 
-OPTDEBUG= -g3
+OPTDEBUG= -g3 -DYYDEBUG
 
 all: $(PROG)
 
