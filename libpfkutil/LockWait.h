@@ -8,21 +8,28 @@
 
 #include "BackTrace.h"
 
+/** a collection of mutex locks and waiter/semaphore abstractions */
 namespace WaitUtil {
 
+/** errors that might be thrown during certain operations */
 struct LockableError : BackTraceUtil::BackTrace {
+    /** the possible errors that might get thrown */
     enum LockableErrValue {
-        MUTEX_LOCKED_IN_DESTRUCTOR,
-        RECURSION_ERROR,
+        MUTEX_LOCKED_IN_DESTRUCTOR,  //!< dont destroy a lock while its locked
+        RECURSION_ERROR,             //!< this sucks
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
     LockableError(LockableErrValue _e) : err(_e) { }
+    /** returns a descriptive string for the error
+     * \return a descriptive string matching the err */
     const std::string Format(void) const;
 };
 
 #define LOCKABLERR(e) throw LockableError(LockableError::e)
 
+/** a mutex container. you can either derive from this or
+ * instantiate it on its own. */
 class Lockable {
     friend class Waiter;
     friend class Lock;
@@ -31,54 +38,112 @@ class Lockable {
     void   lock(void) throw ();
     void unlock(void) throw ();
 public:
+    /** constructor initializes the mutex to an unlocked state */
     Lockable(void) throw ();
+    /** destructor checks that the mutex is not locked.
+     * \throw may throw LockableError if the mutex is locked. */
     ~Lockable(void) throw (LockableError);
+    /** indicates if the lock is held or not. 
+     * \return true if the mutex is currently locked.
+     * \note this is itself not protected so its only advisory;
+     *     by the time you do something based on this return value,
+     *     it may have changed. really only useful for catching errors
+     *     like not locking something that should be locked. */
     bool isLocked() throw ();
 };
 
+/** an instance of a lock (a critical region) should be framed
+ * by this object's lock. all occurrances protecting some shared
+ * data must reference the same Lockable object associated with
+ * that shared data. */
 class Lock {
     friend class Waiter;
     Lockable *lobj;
     int lockCount;
 public:
+    /** constructor; by default, the constructor locks the 
+     * referenced mutex.
+     * \param _lobj the Lockable that we are locking.
+     * \param dolock indicates whether constructor should do the
+     *   locking (implies destructor will guarantee an unlock). 
+     *   defaults to true. */
     Lock( Lockable *_lobj, bool dolock=true );
+    /** destructor makes sure the Lockable is unlocked before returning */
     ~Lock(void);
+    /** a lock may be locked at any time if it is currently unlocked. */
     void lock(void) throw ();
+    /** a lock may be unlocked at any time if it is currently locked. */
     void unlock(void) throw (LockableError);
 };
 
-// since a waitable IS a lockable, don't derive from both.
+/** an object which can be waited for by a waiter. you can either
+ * derive from this or instantiate it on its own.
+ * \note since a Waitable IS a Lockable, don't derive from both. */
 class Waitable : public Lockable {
     friend class Waiter;
     pthread_cond_t  waitableCond;
 public:
     Waitable(void);
     ~Waitable(void);
+    /** if anyone is waiting on this object, signal one of them to wake up.
+     * \note there's no control over which one wakes up; it is up to the
+     *     operating system to pick one of the waiters */
     void waiterSignal(void);
+    /** if anyone is waiting on this object, signal all of them to wake up. */
     void waiterBroadcast(void);
 };
 
+/** when someone wants to wait for a Waitable, use this to do the waiting. */
 class Waiter : public Lock {
     Waitable * wobj;
 public:
+    /** constructor must reference the Waitable.
+     * \param _wobj the Waitable to wait for.
+     *   \note nothing is done to the Waitable yet. */
     Waiter(Waitable * _wobj);
     ~Waiter(void);
+    /** wait until signal, no conditions. */
     void wait(void);
-    // return false if timeout, true if signaled
+    /** wait until the given time for a wakeup signal.
+     * \param expire the absolute clock time of the expiry (i.e.
+     *     clock_gettime plus relative amount of time).
+     * \return false if timeout, true if signaled. */
     bool wait(struct timespec *expire);
-    // return false if timeout, true if signaled
+    /** wait for a specific amount of time using int sec/int nanosec.
+     * \param sec the amount of time to wait in seconds
+     * \param nsec the amount of time to wait in nanoseconds
+     * \return false if timeout, true if signaled. */
     bool wait(int sec, int nsec);
 };
 
+/** a classical counting semaphore, like P and V from school */
 class Semaphore {
     int value;
     Waitable semawait;
 public:
+    /** constructor initializes semaphore value to 0 */
     Semaphore(void);
     ~Semaphore(void);
+    /** the value can be reinitialized at any time; note the 
+     * behavior of anyone blocked in take is undefined.
+     * \param init_val the value to set the semaphore counter to */
     void init(int init_val);
+    /** give one count; if someone is blocked in take (value is 0),
+     * wake them up. otherwise, value is incremented by one. */
     void give(void);
-    bool take(struct timespec * expire); //return false if timeout
+    /** try to take one count; if value is greator than 0, it will
+     * be decremented by 1 and this will return immediately. otherwise
+     * the thread will block until the specified absolute time waiting
+     * for a give.
+     * \param expire the absolute time at which to give up waiting
+     *     (i.e. clock_gettime plus a relative amount of time). if this
+     *     param is NULL, wait forever.
+     * \return true if the give occurred, false if the expire time
+     *      was reached. */
+    bool take(struct timespec * expire);
+    /** the same as take(NULL).
+     * \return true if the give occurred, false if the expire time
+     *      was reached. */
     bool take(void) { return take(NULL); }
 };
 

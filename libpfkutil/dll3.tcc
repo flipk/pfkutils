@@ -213,7 +213,7 @@ __DLL3_HASH :: Hash(void) throw ()
     hashsize = dll3_hash_primes[hashorder];
     hash = new std::vector<theHash>;
     hash->reserve(hashsize);
-    count = 0;
+    cnt = 0;
 }
 
 template <__DLL3_HASH_TEMPL>
@@ -231,7 +231,7 @@ void __DLL3_HASH :: add(Links * item) throw (ListError)
     item->h = HashT::obj2hash(*derived) % hashsize;
     (*hash)[item->h].add_tail(derived);
     item->hsh = this;
-    count++;
+    cnt++;
     rehash();
 }
 
@@ -243,7 +243,7 @@ void __DLL3_HASH :: remove(Links * item) throw (ListError)
     T * derived = dynamic_cast<T*>(item);
     (*hash)[item->h].remove(derived);
     item->hsh = NULL;
-    count--;
+    cnt--;
     rehash();
 }
 
@@ -266,7 +266,7 @@ T * __DLL3_HASH :: find(const KeyT &key) throw (ListError)
 template <__DLL3_HASH_TEMPL>
 void __DLL3_HASH :: rehash(void) throw (ListError)
 {
-    int average = count / hashsize;
+    int average = cnt / hashsize;
     if (average  > 5 && hashorder < dll3_num_hash_primes)
         _rehash(hashorder+1);
     if (average == 0 && hashorder > 0)

@@ -6,15 +6,27 @@
 #include <string>
 #include <execinfo.h>
 
+/** handy utilities for throwing exceptions and getting
+ * function backtraces of them */
 namespace BackTraceUtil {
 
+/** base class for errors you can throw. constructor
+ * takes a snapshot of the stack and the Format method
+ * prints out the symbol names. derive all your throwable
+ * errors from this base class. */
 struct BackTrace {
     static const int MAX_ADDRESSES = 20;
     void * traceAddresses[MAX_ADDRESSES];
     size_t  numAddresses;
+    /** constructor takes a stack snapshot */
     BackTrace(void);
+    /** look up the symbols associated with the stack trace
+     * and return a multi-line string listing them.
+     * \return multi-line string containing the stack backtrace. */
     const std::string Format(void) const;
 };
+
+// inline impls below this line
 
 inline BackTrace::BackTrace(void)
 {
