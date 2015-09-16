@@ -39,7 +39,8 @@ next_debug_file_name( void )
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp,
                                     ipipe_rollover * _rollover,
-                                    bool _outdisc, bool _inrand )
+                                    bool _outdisc, bool _inrand,
+                                    int _pausing_bytes, int _pausing_delay )
 {
     fd            = _fd;
     doread        = _doread;
@@ -49,6 +50,8 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     rollover      = _rollover;
     outdisc       = _outdisc;
     inrand        = _inrand;
+    pausing_bytes = _pausing_bytes;
+    pausing_delay = _pausing_delay;
     reader_done   = false;
     writer_done   = false;
     reader        = NULL;
@@ -186,6 +189,12 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     int len = writer->contig_write_space_remaining();
     int cc;
 
+    if (pausing_bytes > 0  &&
+        len > pausing_bytes)
+    {
+        len = pausing_bytes;
+    }
+
     if ( inrand )
     {
         for ( cc = 0; cc < len; cc++ )
@@ -228,7 +237,11 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     }
 
     if ( cc > 0 )
+    {
         i2_add_md5_recv( bufptr, cc );
+        if (cc == pausing_bytes)
+            usleep(pausing_delay);
+    }
 
     stats_add( cc, 0 );
     bytes_read += cc;

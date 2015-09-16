@@ -44,6 +44,9 @@ class ipipe_forwarder : public fd_interface {
     bool outdisc;
     bool inrand;
 
+    int pausing_bytes;
+    int pausing_delay;
+
     bool reader_done;
     bool writer_done;
 
@@ -73,7 +76,8 @@ public:
     ipipe_forwarder( int _fd, bool doread, bool dowrite,
                      bool dowuncomp, bool dowcomp,
                      ipipe_rollover * _rollover,
-                     bool _outdisc, bool _inrand );
+                     bool _outdisc, bool _inrand,
+                     int _pausing_bytes, int _pausing_delay );
 
     void register_others( ipipe_forwarder * _w, ipipe_forwarder * _r ) {
         writer = _w;  reader = _r;

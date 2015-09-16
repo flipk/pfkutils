@@ -29,13 +29,16 @@
 
 ipipe_forwarder_factory :: ipipe_forwarder_factory
 ( bool _dowuncomp, bool _dowcomp, ipipe_rollover * _rollover,
-  bool _outdisc, bool _inrand )
+  bool _outdisc, bool _inrand,
+  int _pausing_bytes, int _pausing_delay )
 {
     dowuncomp  = _dowuncomp ;
     dowcomp    = _dowcomp   ;
     rollover   = _rollover  ;
     outdisc    = _outdisc   ;
     inrand     = _inrand    ;
+    pausing_bytes = _pausing_bytes;
+    pausing_delay = _pausing_delay;
 }
 
 //virtual
@@ -45,16 +48,16 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
     ipipe_forwarder * ifn, * if0, * if1;
 
     //  fd      read   write  w_uncomp   w_comp   rollover
-    //  outdisc  inrand
+    //  outdisc  inrand  pausing_bytes  pausing_delay
     if0 = new ipipe_forwarder( 
         0,      true,  false, false,     false,   NULL,
-        false,   inrand );
+        false,   inrand, pausing_bytes, pausing_delay );
     ifn = new ipipe_forwarder(
         new_fd, true,  true,  false,     dowcomp, NULL,
-        false,   false  );
+        false,   false , pausing_bytes, pausing_delay );
     if1 = new ipipe_forwarder(
         1,      false, true,  dowuncomp, false,   rollover,
-        outdisc, false  );
+        outdisc, false , pausing_bytes, pausing_delay );
 
     //                   writer reader
     if0->register_others(  ifn, NULL );
@@ -72,10 +75,13 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
 
 //////////// ipipe_proxy_factory
 
-ipipe_proxy_factory :: ipipe_proxy_factory( struct sockaddr_in * _sa )
+ipipe_proxy_factory :: ipipe_proxy_factory( struct sockaddr_in * _sa,
+                                            int pause_bytes, int pause_delay )
 {
     sa = new sockaddr_in;
     *sa = *_sa;
+    pausing_bytes = pause_bytes;
+    pausing_delay = pause_delay;
 }
 
 //virtual
@@ -88,7 +94,9 @@ ipipe_proxy_factory :: ~ipipe_proxy_factory( void )
 ipipe_new_connection :: new_conn_response
 ipipe_proxy_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
-    ipipe_new_connection * inc = new ipipe_proxy2_factory( new_fd );
+    ipipe_new_connection * inc = new ipipe_proxy2_factory( new_fd,
+                                                           pausing_bytes,
+                                                           pausing_delay );
 
     fd_interface * fdi = new ipipe_connector( sa, inc );
 
@@ -99,9 +107,12 @@ ipipe_proxy_factory :: new_conn( fd_mgr * mgr, int new_fd )
 
 //////////// ipipe_proxy2_factory
 
-ipipe_proxy2_factory :: ipipe_proxy2_factory( int _fda )
+ipipe_proxy2_factory :: ipipe_proxy2_factory( int _fda,
+                                              int pause_bytes, int pause_delay )
 {
     fda = _fda;
+    pausing_bytes = pause_bytes;
+    pausing_delay = pause_delay;
 }
 
 //virtual
@@ -111,9 +122,11 @@ ipipe_proxy2_factory :: new_conn( fd_mgr * mgr, int new_fd )
     ipipe_forwarder * ifa, * ifb;
 
     ifa = new ipipe_forwarder( fda,     true, true, false, false,
-                               NULL, false, false );
+                               NULL, false, false,
+                               pausing_bytes, pausing_delay );
     ifb = new ipipe_forwarder( new_fd,  true, true, false, false,
-                               NULL, false, false );
+                               NULL, false, false,
+                               pausing_bytes, pausing_delay );
 
     ifa->register_others(  ifb, ifb );
     ifb->register_others(  ifa, ifa );

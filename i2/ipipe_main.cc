@@ -52,6 +52,7 @@ const char * help_msg =
 "    -m: max output file size in bytes\n"
 "    -n: do not read from stdin\n"
 "    -s: display stats of transfer at end\n"
+"    -p: pause every x bytes and delay y microseconds\n"
 "    -v: verbose stats during transfer (0.5 second updates), implies -s\n"
 "   -zr: uncompress any data received from network\n"
 "   -zt: compress any data transmitted to network\n"
@@ -61,9 +62,8 @@ const char * help_msg =
 "    -f: forward local port to remote host/port\n"
 ;
 /*
-"    -p: use ping-ack method to lower network impact (must use on both ends)\n"
+"    -P: use ping-ack method to lower network impact (must use on both ends)\n"
 "    -e: echo a hex dump of the transfer in each dir to stderr\n"
-"    -d: delete 0x00's and 0x0D's from the input stream (for GDBP)\n"
 */
 
 static void
@@ -132,6 +132,9 @@ i2_main( int argc,  char ** argv )
     bool debug    = false;
     bool inrand   = false;
     bool outdisc  = false;
+    bool pausing  = false;
+    int pausing_bytes = 0;
+    int pausing_delay = 0;
     char * inp_file = NULL;
     char * out_file = NULL;
     char * zarg     = NULL;
@@ -159,7 +162,7 @@ i2_main( int argc,  char ** argv )
         return 1;
     }
 
-    while (( ch = getopt( argc, argv, "svnfdDOz:i:I:o:m:" )) != -1 )
+    while (( ch = getopt( argc, argv, "svnfdDOz:i:I:o:m:p:" )) != -1 )
     {
         switch ( ch )
         {
@@ -174,6 +177,20 @@ i2_main( int argc,  char ** argv )
         case 'I':  Iarg     = optarg;      break;
         case 'o':  out_file = optarg;      break;
         case 'O':  outdisc  = true;        break;
+        case 'p':
+        {
+            char * comma;
+            pausing = true;
+            pausing_bytes = atoi(optarg);
+            comma = strchr(optarg,',');
+            if (comma == NULL)
+            {
+                printf("-p needs value,value\n");
+                return 1;
+            }
+            pausing_delay = atoi(comma+1);
+            break;
+        }
         case 'm':
         {
             int result;
@@ -339,7 +356,9 @@ i2_main( int argc,  char ** argv )
 
             hostname_to_ipaddr( host, &sa.sin_addr );
 
-            ipipe_new_connection * inc = new ipipe_proxy_factory( &sa );
+            ipipe_new_connection * inc = new ipipe_proxy_factory(
+                &sa,
+                pausing_bytes, pausing_delay );
             fdi = new ipipe_acceptor( listen_port, inc );
 
             mgr.register_fd( fdi );
@@ -355,7 +374,8 @@ i2_main( int argc,  char ** argv )
             int port = atoi( argv[0] );
             ipipe_new_connection * inc =
                 new ipipe_forwarder_factory( rcvunz, txz, rollover,
-                                             outdisc, inrand );
+                                             outdisc, inrand,
+                                             pausing_bytes, pausing_delay );
             fdi = new ipipe_acceptor( port, inc );
             mgr.register_fd( fdi );
         }
@@ -372,7 +392,8 @@ i2_main( int argc,  char ** argv )
 
             ipipe_new_connection * inc =
                 new ipipe_forwarder_factory( rcvunz, txz, rollover,
-                                             outdisc, inrand );
+                                             outdisc, inrand,
+                                             pausing_bytes, pausing_delay );
             fdi = new ipipe_connector( &sa, inc );
             mgr.register_fd( fdi );
         }
