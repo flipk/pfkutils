@@ -44,15 +44,15 @@
 const char * help_msg =
 "i2 [-svnd] [-I[r|z]] [-i file] [-O] [-o file] [-m size] [-z[r|t]] port\n"
 "i2 [-svnd] [-I[r|z]] [-i file] [-O] [-o file] [-m size] [-z[r|t]] host port\n"
-"    -i: redirect fd 0 to input file\n"
-"    -o: redirect fd 1 to output file\n"
+"    -i filename: redirect fd 0 to input file\n"
+"    -o filename: redirect fd 1 to output file\n"
 "   -Ir: input is random data (implies -n)\n"
 "   -Iz: input is zero data (implies -n)\n"
 "    -O: discard output data\n"
-"    -m: max output file size in bytes\n"
+"    -m number: max output file size in bytes (rollover to new file)\n"
 "    -n: do not read from stdin\n"
 "    -s: display stats of transfer at end\n"
-"    -p: pause every x bytes and delay y microseconds\n"
+"    -p number,number: pause every x bytes and delay y microseconds\n"
 "    -v: verbose stats during transfer (0.5 second updates), implies -s\n"
 "   -zr: uncompress any data received from network\n"
 "   -zt: compress any data transmitted to network\n"
@@ -61,10 +61,6 @@ const char * help_msg =
 "    -D: log data transferred\n"
 "    -f: forward local port to remote host/port\n"
 ;
-/*
-"    -P: use ping-ack method to lower network impact (must use on both ends)\n"
-"    -e: echo a hex dump of the transfer in each dir to stderr\n"
-*/
 
 static void
 hostname_to_ipaddr( char * host, void * addr )
@@ -132,7 +128,6 @@ i2_main( int argc,  char ** argv )
     bool debug    = false;
     bool inrand   = false;
     bool outdisc  = false;
-    bool pausing  = false;
     int pausing_bytes = 0;
     int pausing_delay = 0;
     char * inp_file = NULL;
@@ -180,7 +175,6 @@ i2_main( int argc,  char ** argv )
         case 'p':
         {
             char * comma;
-            pausing = true;
             pausing_bytes = atoi(optarg);
             comma = strchr(optarg,',');
             if (comma == NULL)
