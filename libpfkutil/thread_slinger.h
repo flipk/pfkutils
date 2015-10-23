@@ -106,6 +106,7 @@ protected:
         _thread_slinger_queue ** queues,
         int num_queues, int uSecs,
         int *which_queue=NULL);
+    void * _get_head(void) { return head; }
 };
 
 /** a message queue of user objects, declare a derived type from
@@ -142,6 +143,7 @@ public:
     static T * dequeue(thread_slinger_queue<T> * queues[],
                        int num_queues,
                        int uSecs, int *which_queue=NULL);
+    T * get_head(void) { return (T*) _get_head(); }
 };
 
 /** data for a pool, retrieved from thread_slinger_pools::report_pools */
