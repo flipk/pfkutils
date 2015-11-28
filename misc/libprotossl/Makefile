@@ -2,7 +2,7 @@
 SRCS= libprotossl.cc test.cc
 
 all: xmakefile
-	+make -f xmakefile libprotossl.a t
+	+make -f xmakefile libprotossl.a t dist.tar
 
 xmakefile: test_proto.pb.h Makefile $(SRCS)
 	rm -f tmp
@@ -24,6 +24,9 @@ t: libprotossl.a test_proto.pb.o test.o
 test.o: test.cc
 
 test_proto.pb.o: test_proto.pb.cc
+
+dist.tar: t
+	tar cf dist.tar t keys/
 
 .cc.o:
 	g++ -I../../libpfkutil -c -Wall -Werror $*.cc

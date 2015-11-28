@@ -3,28 +3,42 @@ package PFK.Test;
 
 // common messages first
 
+enum ProtocolVersion {
+  PROTOCOL_VERSION = 3;
+}
+
 message ProtoVersion {
-	required int32 version = 1;
+  required int32 version = 1;
+}
+
+message PingInfo {
+  required uint32 seq = 2;
+  required uint32 time_seconds = 9;
+  required uint32 time_useconds = 10;
 }
 
 // server to client
 
 enum ServerToClientType {
-     STC_PROTO_VERSION = 1;
+  STC_PROTO_VERSION = 1;
+  STC_PING_ACK = 2;
 }
 
 message ServerToClient {
-	required ServerToClientType type = 1;
-	optional ProtoVersion  proto_version = 2;
+  required ServerToClientType type = 3;
+  optional ProtoVersion  proto_version = 4;
+  optional PingInfo  ping = 5;
 }
 
 // client to server
 
 enum ClientToServerType {
-     CTS_PROTO_VERSION = 1;
+  CTS_PROTO_VERSION = 3;
+  CTS_PING = 4;
 }
 
 message ClientToServer {
-	required ClientToServerType type = 1;
-	optional ProtoVersion  proto_version = 2;
+  required ClientToServerType type = 6;
+  optional ProtoVersion  proto_version = 7;
+  optional PingInfo  ping = 8;
 }

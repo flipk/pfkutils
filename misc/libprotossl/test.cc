@@ -1,11 +1,26 @@
 
 #include "libprotossl.h"
 #include "test_proto.pb.h"
+#include "myTimeval.h"
 
 #include <unistd.h>
 
 using namespace ProtoSSL;
 using namespace PFK::Test;
+
+void
+timeval_to_PingInfo(PingInfo &pi, const myTimeval &tv)
+{
+    pi.set_time_seconds(tv.tv_sec);
+    pi.set_time_useconds(tv.tv_usec);
+}
+
+void
+PingInfo_to_timeval(myTimeval &tv, const PingInfo &pi)
+{
+    tv.tv_sec = pi.time_seconds();
+    tv.tv_usec = pi.time_useconds();
+}
 
 //
 // server
@@ -23,17 +38,30 @@ public:
     void handleConnect(void)  {
         printf("myConnServer::handleConnect\n");
         outMessage().set_type(STC_PROTO_VERSION);
-        outMessage().mutable_proto_version()->set_version(1);
+        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION);
         sendMessage();
     }
     bool messageHandler(const ClientToServer &inMsg) {
-        printf("myConnServer::messageHandler\n");
         switch (inMsg.type())
         {
         case CTS_PROTO_VERSION:
             printf("server got proto version %d from client\n",
                    inMsg.proto_version().version());
             break;
+        case CTS_PING:
+        {
+            myTimeval ts;
+            uint32_t seq = inMsg.ping().seq();
+            PingInfo_to_timeval(ts, inMsg.ping());
+            outMessage().set_type(STC_PING_ACK);
+            outMessage().mutable_ping()->set_seq(seq);
+            timeval_to_PingInfo(*outMessage().mutable_ping(),ts);
+            sendMessage();
+            break;
+        }
+        default:
+            printf("server got unknown message %d\n",
+                   inMsg.type());
         }
         return true;
     }
@@ -65,21 +93,56 @@ public:
     void handleConnect(void)  {
         printf("myConnClient::handleConnect\n");
         outMessage().set_type(CTS_PROTO_VERSION);
-        outMessage().mutable_proto_version()->set_version(1);
+        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION);
         sendMessage();
     }
     bool messageHandler(const ServerToClient &inMsg) {
-        printf("myConnClient::messageHandler\n");
+        bool done = false;
         switch (inMsg.type())
         {
         case STC_PROTO_VERSION:
+        {
+            myTimeval now;
             printf("client got proto version %d from server\n",
                    inMsg.proto_version().version());
+            now.getNow();
+            outMessage().set_type(CTS_PING);
+            outMessage().mutable_ping()->set_seq(1);
+            timeval_to_PingInfo(*outMessage().mutable_ping(), now);
+            sendMessage();
             break;
         }
-        sleep(1);
-        stopMsgs();
-        return false;
+        case STC_PING_ACK:
+        {
+            myTimeval ts, now, diff;
+            uint32_t seq = inMsg.ping().seq();
+            now.getNow();
+            PingInfo_to_timeval(ts, inMsg.ping());
+            diff = now - ts;
+            printf("client got PING_ACK seq %d delay %u.%06u\n",
+                   seq,
+                   (unsigned int) diff.tv_sec,
+                   (unsigned int) diff.tv_usec);
+            if (seq < 100)
+            {
+                outMessage().set_type(CTS_PING);
+                outMessage().mutable_ping()->set_seq(seq+1);
+                timeval_to_PingInfo(*outMessage().mutable_ping(), now);
+                sendMessage();
+            }
+            else
+            {
+                printf("successful test\n");
+                stopMsgs();
+                done = true;
+            }
+            break;
+        }
+        default:
+            printf("client got unknown message %d\n",
+                   inMsg.type());
+        }
+        return !done;
     }
 };
 

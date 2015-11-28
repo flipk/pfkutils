@@ -31,6 +31,9 @@ struct myTimeval : public timeval
         }
         return *this;
     }
+    void getNow(void) {
+        gettimeofday(this, NULL);
+    }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
                                        const myTimeval &rhs)
