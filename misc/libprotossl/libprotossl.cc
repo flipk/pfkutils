@@ -1,90 +1,46 @@
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 #include "libprotossl.h"
-
-#include <sys/select.h>
+#include <unistd.h>
 #include <iostream>
 
 namespace ProtoSSL {
 
-__ProtoSSLMsgs::__ProtoSSLMsgs(const ProtoSSLCertParams &params,
-                               int listeningPort)
+//
+// _ProtoSSLConn
+//
+
+_ProtoSSLConn::_ProtoSSLConn(MESSAGE &_rcvdMessage)
+    : fd(-1), rcvdMessage(_rcvdMessage), msgs(NULL)
 {
-    int ret;
-    port = listeningPort;
-    isServer = true;
-    good = true;
-
-    if (initCommon() == false)
-    {
-        std::cout << "initCommon failed\n";
-        good = false;
-    }
-
-    if (good)
-        if (loadCertificates(params) == false)
-        {
-            std::cout << "loadCertificates failed\n";
-            good = false;
-        }
-
-    state = WAIT_FOR_CONN;
-
-    if (good)
-        if ((ret = net_bind(&listen_fd, NULL, port)) != 0)
-        {
-            printf(" net_bind failed error -0x%x\n", -ret);
-            good = false;
-        }
+    fd = -1;
+    thread_running = false;
+    exitPipe[0] = exitPipe[1] = -1;
 }
 
-__ProtoSSLMsgs::__ProtoSSLMsgs(const ProtoSSLCertParams &params,
-                               const std::string &_remoteHost,
-                               int remotePort)
+//virtual
+_ProtoSSLConn::~_ProtoSSLConn(void)
 {
-    remoteHost = _remoteHost;
-    port = remotePort;
-    isServer = false;
-    good = true;
-
-    if (initCommon() == false)
+    if (exitPipe[0] != -1)
     {
-        std::cout << "initCommon failed\n";
-        good = false;
+        close(exitPipe[0]);
+        close(exitPipe[1]);
     }
-
-    if (good)
-        if (loadCertificates(params) == false)
-        {
-            std::cout << "loadCertificates failed\n";
-            good = false;
-        }
-
-    state = TRY_CONN;
-
-    if (good)
-        ssl_set_hostname( &sslctx, otherCommonName.c_str() );
+    if (fd > 0)
+    {
+        net_close(fd);
+        msgs->deregisterConn(fd,this);
+        ssl_free(&sslctx);
+    }
 }
 
 bool
-__ProtoSSLMsgs::initCommon(void)
+_ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
 {
     int ret;
-    static const char * pers = "ProtoSSLDRBG";
 
-    entropy_init( &entropy );
-
-    if( ( ret = ctr_drbg_init( &ctr_drbg, entropy_func, &entropy,
-                               (const unsigned char *) pers,
-                               strlen( pers ) ) ) != 0 )
-    {
-        printf( " ctr_drbg_init returned -0x%x\n", -ret );
-        return false;
-    }
-
-    memset( &mycert, 0, sizeof( x509_crt ) );
-    memset( &cacert, 0, sizeof( x509_crt ) );
-
-    pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
+    msgs = _msgs;
+    fd = _fd;
 
     if ((ret = ssl_init( &sslctx )) != 0)
     {
@@ -93,73 +49,52 @@ __ProtoSSLMsgs::initCommon(void)
     }
 
     ssl_set_authmode( &sslctx, SSL_VERIFY_REQUIRED );
-    ssl_set_rng( &sslctx, ctr_drbg_random, &ctr_drbg );
+    ssl_set_rng( &sslctx, ctr_drbg_random, &msgs->ctr_drbg );
 
     if (isServer)
         ssl_set_endpoint( &sslctx, SSL_IS_SERVER );
     else
         ssl_set_endpoint( &sslctx, SSL_IS_CLIENT );
 
-    fd = -1;
-    listen_fd = -1;
-
-    return true;
-}
-
-//virtual
-__ProtoSSLMsgs::~__ProtoSSLMsgs(void)
-{
-    if (fd != -1)
-        net_close(fd);
-    if (listen_fd != -1)
-        net_close(listen_fd);
-
-    ssl_free( &sslctx );
-    pk_free( &mykey );
-    x509_crt_free( &mycert );
-    x509_crt_free( &cacert );
-}
-
-//private
-bool __ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
-{
-    int ret;
-
-    otherCommonName = params.otherCommonName;
-
-    if ((ret = x509_crt_parse_file( &cacert, params.caCertFile.c_str())) != 0)
-    {
-        printf( " 1 x509parse_crt returned -0x%x\n\n", -ret );
-        return false;
-    }
-
-    if ((ret = x509_crt_parse_file( &mycert, params.myCertFile.c_str() )) != 0)
-    {
-        printf( " 2 x509parse_crt returned -0x%x\n\n", -ret );
-        return false;
-    }
-
-    ret = pk_parse_keyfile( &mykey, 
-                            params.myKeyFile.c_str(),
-                            (params.myKeyPassword == "") ? NULL :
-                            params.myKeyPassword.c_str() );
-    if (ret != 0)
-    {
-        printf( " 3 pk_parse_keyfile returned -0x%x\n\n", -ret );
-        return false;
-    }
-
     // this string below is the srv.crt Common Name field
-    ssl_set_ca_chain( &sslctx, &cacert, NULL, otherCommonName.c_str());
-    ssl_set_own_cert( &sslctx, &mycert, &mykey );
+    ssl_set_ca_chain( &sslctx, &msgs->cacert,
+                      NULL, msgs->otherCommonName.c_str());
+    ssl_set_own_cert( &sslctx, &msgs->mycert, &msgs->mykey );
+
+    ssl_set_bio( &sslctx, net_recv, &fd, net_send, &fd );
+
+    pipe(exitPipe);
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&thread_id, &attr,
+                   &_ProtoSSLConn::threadMain, (void*) this);
+    pthread_attr_destroy(&attr);
 
     return true;
 }
 
-bool
-__ProtoSSLMsgs::handShakeCommon(void)
+//static
+void *
+_ProtoSSLConn::threadMain(void *arg)
+{
+    _ProtoSSLConn * conn = (_ProtoSSLConn *) arg;
+    conn->thread_running = true;
+    conn->_threadMain();
+    conn->thread_running = false;
+    delete conn;
+    return NULL;
+}
+
+void
+_ProtoSSLConn::_threadMain(void)
 {
     int ret;
+    int maxfd;
+    fd_set rfds, rfds_proto;
+    bool done = false;
+    bool send_close_notify = false;
 
     while ((ret = ssl_handshake( &sslctx )) != 0)
     {
@@ -167,7 +102,7 @@ __ProtoSSLMsgs::handShakeCommon(void)
             ret != POLARSSL_ERR_NET_WANT_WRITE )
         {
             printf( " failed\n  ! ssl_handshake returned -0x%x\n\n", -ret );
-            return false;
+            goto bail;
         }
     }
 
@@ -184,23 +119,76 @@ __ProtoSSLMsgs::handShakeCommon(void)
         if( ( ret & BADCERT_NOT_TRUSTED ) != 0 )
             printf( "  ! self-signed or not signed by a trusted CA\n" );
         printf( "\n" );
-        return false;
+        goto bail;
     }
 
-    return true;
+    handleConnect();
+
+    maxfd = fd;
+    FD_ZERO(&rfds_proto);
+    FD_SET(fd, &rfds_proto);
+    if (fd < exitPipe[0])
+        maxfd = exitPipe[0];
+    FD_SET(exitPipe[0], &rfds_proto);
+
+    while (!done)
+    {
+        rfds = rfds_proto;
+        select(maxfd, &rfds, NULL, NULL, NULL);
+        if (FD_ISSET(fd, &rfds))
+        {
+            rcvbuf.resize(SSL_MAX_CONTENT_LEN);
+            ret = ssl_read( &sslctx,
+                            (unsigned char*) rcvbuf.c_str(),
+                            SSL_MAX_CONTENT_LEN );
+            if (ret > 0)
+            {
+                rcvbuf.resize(ret);
+                rcvdMessage.Clear();
+                if (rcvdMessage.ParseFromString(rcvbuf) == true)
+                {
+                    if (_messageHandler() == false)
+                    {
+                        send_close_notify = true;
+                        done = true;
+                    }
+                }
+                else
+                {
+                    std::cout << "message parsing failed\n";
+                    send_close_notify = true;
+                    done = true;
+                }
+            }
+// if (ret == POLARSSL_ERR_NET_WANT_READ ||
+//     ret == POLARSSL_ERR_NET_WANT_WRITE) { }
+            if (ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY ||
+                ret == 0)
+            {
+                net_close(fd);
+                fd = -1;
+                if (ret == 0)
+                    std::cout << "remote disconnect unclean\n";
+                ssl_session_reset( &sslctx );
+                done = true;
+            }
+        }
+        if (FD_ISSET(exitPipe[0], &rfds))
+        {
+            done = true;
+        }
+    }
+
+bail:
+    if (send_close_notify)
+        ssl_close_notify( &sslctx );
 }
 
-//protected
 bool
-__ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
+_ProtoSSLConn::_sendMessage(MESSAGE &msg)
 {
     int ret;
-
-    if (!good)
-    {
-        std::cout << "_sendMessage: good is false\n";
-        return false;
-    }
+    WaitUtil::Lock   lck(&fdLock);
 
     if (msg.SerializeToString(&outbuf) == false)
     {
@@ -215,6 +203,7 @@ __ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
     } while (ret == POLARSSL_ERR_NET_WANT_READ ||
              ret == POLARSSL_ERR_NET_WANT_WRITE);
 
+    msg.Clear();
     outbuf.clear();
 
     if (ret < 0)
@@ -226,96 +215,265 @@ __ProtoSSLMsgs::_sendMessage(const google::protobuf::Message& msg)
         return false;
     }
 
+    return false;
+}
+
+//
+// ProtoSSLMsgs
+//
+
+ProtoSSLMsgs::ProtoSSLMsgs(void)
+{
+    entropy_init( &entropy );
+    memset( &mycert, 0, sizeof( x509_crt ) );
+    memset( &cacert, 0, sizeof( x509_crt ) );
+    pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
+    pipe(exitPipe);
+}
+
+ProtoSSLMsgs::~ProtoSSLMsgs(void)
+{
+    // TODO pop servers list and clean
+    // TODO pop connMap and clean
+    pk_free( &mykey);
+    x509_crt_free( &mycert );
+    x509_crt_free( &cacert );
+    close(exitPipe[0]);
+    close(exitPipe[1]);
+}
+
+bool
+ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
+{
+    int ret;
+    static const char * pers = "ProtoSSLDRBG";
+
+    if( ( ret = ctr_drbg_init( &ctr_drbg, entropy_func, &entropy,
+                               (const unsigned char *) pers,
+                               strlen( pers ) ) ) != 0 )
+    {
+        printf( " ctr_drbg_init returned -0x%x\n", -ret );
+        return false;
+    }
+
+    otherCommonName = params.otherCommonName;
+
+    if (params.caCert.compare(0,5,"file:") == 0)
+        ret = x509_crt_parse_file( &cacert,
+                                   params.caCert.c_str() + 5);
+    else
+        ret = x509_crt_parse( &cacert,
+                              (const unsigned char *) params.caCert.c_str(),
+                              params.caCert.size());
+    if (ret != 0)
+    {
+        printf( " 1 x509parse_crt returned -0x%x\n\n", -ret );
+        return false;
+    }
+
+    if (params.myCert.compare(0,5,"file:") == 0)
+        ret = x509_crt_parse_file( &mycert,
+                                   params.myCert.c_str()+5);
+    else
+        ret = x509_crt_parse( &mycert,
+                              (const unsigned char *) params.myCert.c_str(),
+                              params.myCert.size());
+    if (ret != 0)
+    {
+        printf( " 2 x509parse_crt returned -0x%x\n\n", -ret );
+        return false;
+    }
+
+    const char *keyPassword = NULL;
+    int keyPasswordLen = 0;
+    if (params.myKeyPassword != "")
+    {
+        keyPassword = params.myKeyPassword.c_str();
+        keyPasswordLen = params.myKeyPassword.size();
+    }
+
+    if (params.myKey.compare(0,5,"file:") == 0)
+        ret = pk_parse_keyfile( &mykey, 
+                                params.myKey.c_str() + 5,
+                                keyPassword);
+    else
+        ret = pk_parse_key( &mykey, 
+                            (const unsigned char *) params.myKey.c_str(),
+                            params.myKey.size(),
+                            (const unsigned char *) keyPassword,
+                            keyPasswordLen);
+    if (ret != 0)
+    {
+        printf( " 3 pk_parse_keyfile returned -0x%x\n\n", -ret );
+        return false;
+    }
+
     return true;
 }
 
-//protected
-ProtoSSLEventType
-__ProtoSSLMsgs::_getEvent(int &connectionId, int timeoutMs)
+void
+ProtoSSLMsgs::deregisterConn(int fd,_ProtoSSLConn *conn)
 {
-    int ret;
-    struct timeval tv;
-    fd_set rfds;
-    tv.tv_sec = timeoutMs / 1000;
-    tv.tv_usec = (timeoutMs % 1000) * 1000;
-    FD_ZERO(&rfds);
-    if (!good)
+    WaitUtil::Lock  lck(&connLock);
+    connMap::iterator it = conns.find(fd);
+    if (it != conns.end())
     {
-        std::cout << "_getEvent: good is false\n";
-        return PROTOSSL_RETRY;
+        conns.erase(it);
     }
-    switch (state)
+}
+
+bool
+ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
+                          int listeningPort)
+{
+    int ret, fd;
+
+    ret = net_bind(&fd, NULL, listeningPort);
+    if (ret != 0)
     {
-    case WAIT_FOR_CONN:
-        FD_SET(listen_fd, &rfds);
-        if (select(listen_fd+1,&rfds,NULL,NULL,&tv) <= 0)
-            return PROTOSSL_TIMEOUT;
-        if ((ret = net_accept(listen_fd, &fd, NULL)) != 0)
-        {
-            printf(" net_accept failed error -0x%x\n", -ret);
-            return PROTOSSL_RETRY;
-        }
-        ssl_set_bio( &sslctx, net_recv, &fd, net_send, &fd );
-        if (handShakeCommon() == false)
-            return PROTOSSL_RETRY;
-        state = SERVER_CONNECTED;
-        return PROTOSSL_CONNECT;
+        printf("net bind returned -0x%x\n", -ret);
+        return false;
+    }
 
-    case TRY_CONN:
-        if ((ret = net_connect(&fd, remoteHost.c_str(), port)) != 0)
-        {
-            printf("net_connect failed with error -0x%x\n", -ret);
-            return PROTOSSL_RETRY;
-        }
-        ssl_set_bio( &sslctx, net_recv, &fd, net_send, &fd );
-        if (handShakeCommon() == false)
-            return PROTOSSL_RETRY;
-        state = CLIENT_CONNECTED;
-        return PROTOSSL_CONNECT;
+    WaitUtil::Lock lck(&connLock);
+    serverInfo & si = servers[fd]; // note this creates new entry
 
-    case SERVER_CONNECTED:
-    case CLIENT_CONNECTED:
-        FD_SET(fd, &rfds);
-        if (select(fd+1, &rfds, NULL, NULL, &tv) <= 0)
-            return PROTOSSL_TIMEOUT;
-        rcvbuf.resize(SSL_MAX_CONTENT_LEN);
-        ret = ssl_read( &sslctx,
-                            (unsigned char*) rcvbuf.c_str(),
-                            SSL_MAX_CONTENT_LEN );
-        if (ret > 0)
+    si.fd = fd;
+    si.msgs = this;
+    pipe(si.exitPipe);
+    si.factory = &factory;
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&si.thread_id, &attr,
+                   &ProtoSSLMsgs::serverThread, (void*) &si);
+    pthread_attr_destroy(&attr);
+
+    return true;
+}
+
+//static
+void *
+ProtoSSLMsgs::serverThread(void * arg)
+{
+    serverInfo * si = (serverInfo *) arg;
+    ProtoSSLMsgs * obj = si->msgs;
+    obj->_serverThread(si);
+    return NULL;
+}
+
+void
+ProtoSSLMsgs::_serverThread(serverInfo * si)
+{
+    fd_set  rfds, rfds_proto;
+    int maxfd = si->fd;
+    int ret, fd;
+
+    FD_ZERO(&rfds_proto);
+    FD_SET(si->fd, &rfds_proto);
+    FD_SET(si->exitPipe[0], &rfds_proto);
+    if (si->exitPipe[0] > maxfd)
+        maxfd = si->exitPipe[0];
+
+    while (1)
+    {
+        rfds = rfds_proto;
+        select(maxfd ,&rfds, NULL, NULL, NULL);
+        if (FD_ISSET(si->fd, &rfds))
         {
-            rcvbuf.resize(ret);
-            rcvdMsg->Clear();
-            if (rcvdMsg->ParseFromString(rcvbuf) == true)
-                return PROTOSSL_MESSAGE;
-            std::cout << "message parsing failed\n";
-            return PROTOSSL_RETRY;
-        }
-        if (ret == POLARSSL_ERR_NET_WANT_READ ||
-            ret == POLARSSL_ERR_NET_WANT_WRITE)
-            return PROTOSSL_RETRY;
-        if (ret == POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY ||
-            ret == 0)
-        {
-            net_close(fd);
-            fd = -1;
-            if (state == SERVER_CONNECTED)
-                state = WAIT_FOR_CONN;
+            if ((ret = net_accept(si->fd, &fd, NULL)) == 0)
+            {
+                _ProtoSSLConn * c = si->factory->newConnection();
+                {
+                    WaitUtil::Lock lck(&connLock);
+                    conns[fd] = c;
+                } // lock released here
+                if (c->_startThread(this, true, fd) == false)
+                {
+                    printf("start thread failed\n");
+                    net_close(fd);
+                }
+            }
             else
-                state = TRY_CONN;
-            if (ret == 0)
-                std::cout << "remote disconnect unclean\n";
-            ssl_session_reset( &sslctx );
-            return PROTOSSL_DISCONNECT;
+            {
+                printf("accept returned shit\n");
+            }
         }
-        std::cout << "ssl read returns " << ret << std::endl;
-        return PROTOSSL_RETRY;
-
-    default:
-        std::cerr << "unknown state " << state << std::endl;
-        ;
+        if (FD_ISSET(si->exitPipe[0], &rfds))
+        {
+            break;
+        }
     }
-    return PROTOSSL_RETRY;
+    net_close(si->fd);
+
+    WaitUtil::Lock lck(&connLock);
+    serverInfoMap::iterator it = servers.find(fd);
+    if (it != servers.end())
+        servers.erase(it);
+}
+
+bool
+ProtoSSLMsgs::startClient(ProtoSSLConnFactory &factory,
+                          const std::string &remoteHost, int remotePort)
+{
+    int ret, fd;
+
+    if ((ret = net_connect(&fd, remoteHost.c_str(), remotePort)) != 0)
+    {
+        printf("net connect returns -0x%x\n", -ret);
+        return false;
+    }
+
+    _ProtoSSLConn * c = factory.newConnection();
+    {
+        WaitUtil::Lock lck(&connLock);
+        conns[fd] = c;
+    } // lock released here
+    if (c->_startThread(this, false, fd) == false)
+    {
+        printf("start thread failed\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool
+ProtoSSLMsgs::run(int timeout_ms /*= -1*/)
+{
+    fd_set  rfds, rfds_proto;
+    struct timeval tv, tv_proto, *tvp;
+
+    FD_ZERO(&rfds_proto);
+    FD_SET(exitPipe[0], &rfds_proto);
+
+    if (timeout_ms == -1)
+    {
+        tvp = NULL;
+    }
+    else
+    {
+        tvp = &tv;
+        tv_proto.tv_sec = timeout_ms / 1000;
+        tv_proto.tv_usec = (timeout_ms % 1000) * 1000;
+    }
+    
+    while (1)
+    {
+        rfds = rfds_proto;
+        tv = tv_proto;
+        int cc = select(exitPipe[0]+1, &rfds, NULL, NULL, tvp);
+        if (cc > 0)
+        {
+            if (FD_ISSET(exitPipe[0], &rfds))
+                return false;
+        }
+        if (cc == 0)
+            break;
+    }
+
+    return true;
 }
 
 }; // namespace ProtoSSL

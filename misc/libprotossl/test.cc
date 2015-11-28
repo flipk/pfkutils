@@ -2,148 +2,158 @@
 #include "libprotossl.h"
 #include "test_proto.pb.h"
 
-#include <iostream>
 #include <unistd.h>
+
+using namespace ProtoSSL;
+using namespace PFK::Test;
+
+//
+// server
+//
+
+class myConnServer : public ProtoSSLConn<ClientToServer, ServerToClient>
+{
+public:
+    myConnServer(void) {
+        printf("myConnServer::myConnServer\n");
+    }
+    ~myConnServer(void) {
+        printf("myConnServer::~myConnServer\n");
+    }
+    void handleConnect(void)  {
+        printf("myConnServer::handleConnect\n");
+        outMessage().set_type(STC_PROTO_VERSION);
+        outMessage().mutable_proto_version()->set_version(1);
+        sendMessage();
+    }
+    bool messageHandler(const ClientToServer &inMsg) {
+        printf("myConnServer::messageHandler\n");
+        switch (inMsg.type())
+        {
+        case CTS_PROTO_VERSION:
+            printf("server got proto version %d from client\n",
+                   inMsg.proto_version().version());
+            break;
+        }
+        return true;
+    }
+};
+
+class myFactoryServer : public ProtoSSLConnFactory
+{
+public:
+    myFactoryServer(void) { }
+    ~myFactoryServer(void) { }
+    _ProtoSSLConn * newConnection(void) {
+        return new myConnServer;
+    }
+};
+
+//
+// client
+//
+
+class myConnClient : public ProtoSSLConn<ServerToClient, ClientToServer>
+{
+public:
+    myConnClient(void) {
+        printf("myConnClient::myConnClient\n");
+    }
+    ~myConnClient(void) {
+        printf("myConnClient::~myConnClient\n");
+    }
+    void handleConnect(void)  {
+        printf("myConnClient::handleConnect\n");
+        outMessage().set_type(CTS_PROTO_VERSION);
+        outMessage().mutable_proto_version()->set_version(1);
+        sendMessage();
+    }
+    bool messageHandler(const ServerToClient &inMsg) {
+        printf("myConnClient::messageHandler\n");
+        switch (inMsg.type())
+        {
+        case STC_PROTO_VERSION:
+            printf("client got proto version %d from server\n",
+                   inMsg.proto_version().version());
+            break;
+        }
+        sleep(1);
+        stopMsgs();
+        return false;
+    }
+};
+
+class myFactoryClient : public ProtoSSLConnFactory
+{
+public:
+    myFactoryClient(void) { }
+    ~myFactoryClient(void) { }
+    _ProtoSSLConn * newConnection(void) {
+        return new myConnClient;
+    }
+};
+
+//
+// main
+//
 
 int
 main(int argc, char ** argv)
 {
+    std::string cert_ca           = "file:keys/Root-CA.crt";
+
+    std::string cert_server       = "file:keys/Server-Cert.crt";
+    std::string key_server        = "file:keys/Server-Cert-encrypted.key";
+    std::string key_pwd_server    = "0KZ7QMalU75s0IXoWnhm3BXEtswirfwrXwwNiF6c";
+    std::string commonname_server = "Server Cert";
+
+    std::string cert_client       = "file:keys/Client-Cert.crt";
+    std::string key_client        = "file:keys/Client-Cert-encrypted.key";
+    std::string key_pwd_client    = "IgiLNFWx3fTMioJycI8qXCep8j091yfHOwsBbo6f";
+    std::string commonname_client = "Client Cert";
+
     if (argc != 2)
+    {
         return 1;
-    if (argv[1][0] == 's')
-    {
-        ProtoSSL::ProtoSSLMsgs<PFK::Test::ClientToServer,
-                               PFK::Test::ServerToClient>
-            svr(ProtoSSL::ProtoSSLCertParams(
-                    "ca.crt",
-                    "srv.crt",
-                    "srv.key.enc",
-                    "nErQniLmoG",
-                    "Clnt Common Name"),
-                2005);
-
-        if (!svr.isGood())
-        {
-            std::cerr << "protosslmsgs not good\n";
-            return 1;
-        }
-
-        while (1)
-        {
-            ProtoSSL::ProtoSSLEvent<PFK::Test::ClientToServer>  evt;
-            PFK::Test::ServerToClient stc;
-
-            if (!svr.isGood())
-            {
-                std::cerr << "protosslmsgs not good\n";
-                return 1;
-            }
-            svr.getEvent( evt, 1000 );
-            switch (evt.type)
-            {
-            case ProtoSSL::PROTOSSL_CONNECT:
-                std::cout << "connection on id " << evt.connectionId
-                          << std::endl;
-                stc.set_type(PFK::Test::STC_PROTO_VERSION);
-                stc.mutable_proto_version()->set_version(1);
-                svr.sendMessage(stc);
-                stc.Clear();
-                break;
-            case ProtoSSL::PROTOSSL_DISCONNECT:
-                std::cout << "disconnect id " << evt.connectionId << std::endl;
-                break;
-            case ProtoSSL::PROTOSSL_TIMEOUT:
-                std::cout << "timeout" << std::endl;
-                break;
-            case ProtoSSL::PROTOSSL_MESSAGE:
-                std::cout << "event on conn " << evt.connectionId << std::endl;
-                switch (evt.msg->type())
-                {
-                case PFK::Test::CTS_PROTO_VERSION:
-                    std::cout << "got proto version "
-                              << evt.msg->proto_version().version() 
-                              << std::endl;
-                    break;
-                default:
-                    std::cout << "unknown msg rcvd" << std::endl;
-                    break;
-                }
-                break;
-            case ProtoSSL::PROTOSSL_RETRY:
-                // do nothing
-                break;
-            }
-        }
     }
-    else if (argv[1][0] == 'c')
+    std::string argv1(argv[1]);
+    ProtoSSLMsgs  msgs;
+    if (argv1 == "s")
     {
-        ProtoSSL::ProtoSSLMsgs<PFK::Test::ServerToClient,
-                               PFK::Test::ClientToServer>
-            clnt(ProtoSSL::ProtoSSLCertParams(
-                    "ca.crt",
-                    "clnt.crt",
-                    "clnt.key.enc",
-                    "nFunJ0ODB0",
-                    "Srv Common Name"),
-                 "127.0.0.1", 2005);
+        ProtoSSLCertParams  certs(cert_ca,
+                                  cert_server,
+                                  key_server,
+                                  key_pwd_server,
+                                  commonname_client);
+        myFactoryServer fact;
 
-        if (!clnt.isGood())
-        {
-            std::cerr << "protosslmsgs is not good\n";
+        if (msgs.loadCertificates(certs) == false)
             return 1;
-        }
+    
+        msgs.startServer(fact, 5000);
+        while (msgs.run())
+            ;
+    }
+    else if (argv1 == "c")
+    {
+        ProtoSSLCertParams  certs(cert_ca,
+                                  cert_client,
+                                  key_client,
+                                  key_pwd_client,
+                                  commonname_server);
+        myFactoryClient fact;
 
-        while (1)
-        {
-            ProtoSSL::ProtoSSLEvent<PFK::Test::ServerToClient>  evt;
-            PFK::Test::ClientToServer  cts;
-
-            if (!clnt.isGood())
-            {
-                std::cerr << "protosslmsgs is not good\n";
-                return 1;
-            }
-            clnt.getEvent( evt, 1000 );
-            switch (evt.type)
-            {
-            case ProtoSSL::PROTOSSL_CONNECT:
-                std::cout << "connection on id " << evt.connectionId
-                          << std::endl;
-                cts.set_type(PFK::Test::CTS_PROTO_VERSION);
-                cts.mutable_proto_version()->set_version(1);
-                clnt.sendMessage(cts);
-                cts.Clear();
-                break;
-            case ProtoSSL::PROTOSSL_DISCONNECT:
-                std::cout << "disconnect id " << evt.connectionId << std::endl;
-                break;
-            case ProtoSSL::PROTOSSL_TIMEOUT:
-                std::cout << "timeout" << std::endl;
-                break;
-            case ProtoSSL::PROTOSSL_MESSAGE:
-                std::cout << "event on conn " << evt.connectionId << std::endl;
-                switch (evt.msg->type())
-                {
-                case PFK::Test::CTS_PROTO_VERSION:
-                    std::cout << "got proto version "
-                              << evt.msg->proto_version().version() 
-                              << std::endl;
-                    break;
-                default:
-                    std::cout << "unknown msg rcvd" << std::endl;
-                    break;
-                }
-                break;
-            case ProtoSSL::PROTOSSL_RETRY:
-                sleep(1);
-                // do nothing
-                break;
-            }
-        }
-
+        if (msgs.loadCertificates(certs) == false)
+            return 1;
+    
+        msgs.startClient(fact, "127.0.0.1", 5000);
+        while (msgs.run())
+            ;
     }
     else
+    {
         return 2;
+    }
 
     return 0;
 }
