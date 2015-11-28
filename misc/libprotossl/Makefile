@@ -28,6 +28,10 @@ test_proto.pb.o: test_proto.pb.cc
 dist.tar: t
 	tar cf dist.tar t keys/
 
+install:
+	cp libprotossl.a $(HOME)/pfk/$(PFKARCH)/lib
+	cp libprotossl.h libprotossl.tcc $(HOME)/pfk/include/util
+
 .cc.o:
 	g++ -I../../libpfkutil -c -Wall -Werror $*.cc
 
