@@ -7,6 +7,25 @@
 namespace ProtoSSL {
 
 //
+// ProtoSSLCertParams
+//
+
+ProtoSSLCertParams::ProtoSSLCertParams(
+    const std::string &_caCert, // file:/...
+    const std::string &_myCert, // file:/...
+    const std::string &_myKey,  // file:/...
+    const std::string &_myKeyPassword,
+    const std::string &_otherCommonName)
+    : caCert(_caCert), myCert(_myCert), myKey(_myKey),
+      myKeyPassword(_myKeyPassword), otherCommonName(_otherCommonName)
+{
+}
+
+ProtoSSLCertParams::~ProtoSSLCertParams(void)
+{
+}
+
+//
 // _ProtoSSLConn
 //
 
@@ -218,6 +237,19 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
     return false;
 }
 
+void
+_ProtoSSLConn::closeConnection(void)
+{
+    char dummy = 1;
+    ::write(exitPipe[1], &dummy, 1);
+}
+
+void
+_ProtoSSLConn::stopMsgs(void)
+{
+    msgs->stop();
+}
+
 //
 // ProtoSSLMsgs
 //
@@ -233,6 +265,31 @@ ProtoSSLMsgs::ProtoSSLMsgs(void)
 
 ProtoSSLMsgs::~ProtoSSLMsgs(void)
 {
+    char dummy = 1;
+    {
+        WaitUtil::Lock  lck(&connLock);
+        connMap::iterator  cit;
+        // tell all connection threads to exit
+        for (cit = conns.begin(); cit != conns.end(); cit++)
+        {
+            _ProtoSSLConn * conn = cit->second;
+            conn->closeConnection();
+        }
+        serverInfoMap::iterator sit;
+        // tell all server threads to exit
+        for (sit = servers.begin(); sit != servers.end(); sit++)
+        {
+            serverInfo &si = sit->second;
+            write(si.exitPipe[1], &dummy, 1);
+        }
+    } // unlock
+
+    // wait for all connection threads and server threads
+    // to exit, call in, and remove them selves from the
+    // maps as they exit.
+    while ((conns.size() > 0) || (servers.size() > 0))
+        usleep(1);
+
     // TODO pop servers list and clean
     // TODO pop connMap and clean
     pk_free( &mykey);
@@ -360,6 +417,7 @@ ProtoSSLMsgs::serverThread(void * arg)
     serverInfo * si = (serverInfo *) arg;
     ProtoSSLMsgs * obj = si->msgs;
     obj->_serverThread(si);
+    delete si;
     return NULL;
 }
 
@@ -408,7 +466,7 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
     net_close(si->fd);
 
     WaitUtil::Lock lck(&connLock);
-    serverInfoMap::iterator it = servers.find(fd);
+    serverInfoMap::iterator it = servers.find(si->fd);
     if (it != servers.end())
         servers.erase(it);
 }
@@ -474,6 +532,13 @@ ProtoSSLMsgs::run(int timeout_ms /*= -1*/)
     }
 
     return true;
+}
+
+void
+ProtoSSLMsgs::stop(void)
+{
+    char dummy = 1;
+    ::write(exitPipe[1], &dummy, 1);
 }
 
 }; // namespace ProtoSSL

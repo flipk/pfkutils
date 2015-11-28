@@ -1,14 +1,24 @@
 
+// note i made all the field numbers different
+// to catch protocol errors, i.e. if you're
+// decoding a ServerToClient and you get a field type 6,
+// then you're not actually decoding a ServerToClient,
+// you're decoding a ClientToServer.
+
 package PFK.Test;
 
 // common messages first
 
 enum ProtocolVersion {
-  PROTOCOL_VERSION = 3;
+  PROTOCOL_VERSION_1 = 1;
+  PROTOCOL_VERSION_2 = 2;
+  PROTOCOL_VERSION_3 = 3;
+  // increment whenever you modify this file
 }
 
 message ProtoVersion {
-  required int32 version = 1;
+  required string app_name = 11; // "LIBPROTOSSL_TEST"
+  required int32 version = 1;    // PROTOCOL_VERSION
 }
 
 message PingInfo {

@@ -136,8 +136,6 @@ public:
     void stop(void);
 };
 
-#include "libprotossl.tcc"
-
 }; // namespace ProtoSSL
 
 #endif /* __LIBPROTOSSL_H__ */

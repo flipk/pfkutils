@@ -38,14 +38,16 @@ public:
     void handleConnect(void)  {
         printf("myConnServer::handleConnect\n");
         outMessage().set_type(STC_PROTO_VERSION);
-        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION);
+        outMessage().mutable_proto_version()->set_app_name("LIBPROTOSSL_TEST");
+        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
         sendMessage();
     }
     bool messageHandler(const ClientToServer &inMsg) {
         switch (inMsg.type())
         {
         case CTS_PROTO_VERSION:
-            printf("server got proto version %d from client\n",
+            printf("server got proto app %s version %d from client\n",
+                   inMsg.proto_version().app_name().c_str(),
                    inMsg.proto_version().version());
             break;
         case CTS_PING:
@@ -93,7 +95,8 @@ public:
     void handleConnect(void)  {
         printf("myConnClient::handleConnect\n");
         outMessage().set_type(CTS_PROTO_VERSION);
-        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION);
+        outMessage().mutable_proto_version()->set_app_name("LIBPROTOSSL_TEST");
+        outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
         sendMessage();
     }
     bool messageHandler(const ServerToClient &inMsg) {
@@ -103,7 +106,8 @@ public:
         case STC_PROTO_VERSION:
         {
             myTimeval now;
-            printf("client got proto version %d from server\n",
+            printf("client got proto app %s version %d from server\n",
+                   inMsg.proto_version().app_name().c_str(),
                    inMsg.proto_version().version());
             now.getNow();
             outMessage().set_type(CTS_PING);
@@ -123,7 +127,7 @@ public:
                    seq,
                    (unsigned int) diff.tv_sec,
                    (unsigned int) diff.tv_usec);
-            if (seq < 100)
+            if (seq < 10)
             {
                 outMessage().set_type(CTS_PING);
                 outMessage().mutable_ping()->set_seq(seq+1);
@@ -193,7 +197,7 @@ main(int argc, char ** argv)
         if (msgs.loadCertificates(certs) == false)
             return 1;
     
-        msgs.startServer(fact, 5000);
+        msgs.startServer(fact, 2005);
         while (msgs.run())
             ;
     }
@@ -209,7 +213,7 @@ main(int argc, char ** argv)
         if (msgs.loadCertificates(certs) == false)
             return 1;
     
-        msgs.startClient(fact, "127.0.0.1", 5000);
+        msgs.startClient(fact, "104.131.232.148", 2005);
         while (msgs.run())
             ;
     }
