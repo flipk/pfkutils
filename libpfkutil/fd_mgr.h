@@ -23,22 +23,19 @@
 #ifndef __FD_MGR_H__
 #define __FD_MGR_H__
 
-#define DLL2_INCLUDE_LOGNEW 0
-#define DLL2_CHECKSUMS      1
-#define DLL2_INCLUDE_BTREE  0
-
-#include <dll2.h>
 #include <stdio.h>
+#include "dll3.h"
 
 class fd_mgr;
 
-class fd_interface {
+typedef DLL3::List<class fd_interface,0> fd_interface_list_t;
+
+class fd_interface : public fd_interface_list_t::Links {
 protected:
     void make_nonblocking( void );
     int fd;
     bool do_close;
 public:
-    LListLinks <fd_interface> links[ 1 ];
     fd_interface( void ) { do_close = false; }
     virtual ~fd_interface( void ) {
         // placeholder : note that fd is NOT closed here, because
@@ -70,7 +67,7 @@ public:
 };
 
 class fd_mgr {
-    LList <fd_interface,0>  ifds;
+    fd_interface_list_t  ifds;
     bool debug;
     int  die_threshold;
 public:
@@ -80,7 +77,7 @@ public:
     void register_fd( fd_interface * ifd ) {
         if ( debug )
             fprintf( stderr, "registering fd %d\n", ifd->fd );
-        ifds.add( ifd );
+        ifds.add_tail( ifd );
     }
     void unregister_fd( fd_interface * ifd ) {
         if ( debug )
