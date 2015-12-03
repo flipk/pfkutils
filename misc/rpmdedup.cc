@@ -132,6 +132,8 @@ main()
         if (n > 1)
         {
             int cnt = 0;
+            // this is flawed, because doxygen-1.8.10 is newer
+            // than doxygen-1.8.9 but this says no.
             stable_sort(rp.files.begin(), rp.files.end());
             rpm_file_info_list::iterator  it2;
             for (it2 = rp.files.begin(); it2 != rp.files.end(); it2++)
