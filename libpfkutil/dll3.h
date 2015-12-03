@@ -70,7 +70,7 @@ private:
     Links * head;
     Links * tail;
     int cnt;
-    void lockwarn(void) throw (ListError);
+    void lockwarn(void) const throw (ListError);
     void _remove(Links * item) throw ();
 public:
     List(void) throw ();
@@ -89,6 +89,8 @@ public:
     T * dequeue_head(void) throw (ListError);
     T * dequeue_tail(void) throw (ListError);
     void remove(Links * item) throw (ListError);
+    const bool onlist(Links * item) const throw (ListError);
+    const bool onthislist(Links * item) const throw (ListError);
     const int get_cnt(void) const { return cnt; }
 };
 
@@ -134,7 +136,9 @@ public:
     ~Hash(void) throw (ListError);
     void add(Links * item) throw (ListError);
     void remove(Links * item) throw (ListError);
-    T * find(const KeyT &key) throw (ListError);
+    T * find(const KeyT &key) const throw (ListError);
+    const bool onlist(Links * item) const throw (ListError);
+    const bool onthislist(Links * item) const throw (ListError);
     const int get_cnt(void) const { return cnt; }
 };
 

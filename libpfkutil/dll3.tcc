@@ -44,7 +44,7 @@ __DLL3_LIST::~List(void) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::lockwarn(void) throw (ListError)
+void __DLL3_LIST::lockwarn(void) const throw (ListError)
 {
     if (lockWarn == true && isLocked() == false)
         __DLL3_LISTERR(LIST_NOT_LOCKED);
@@ -154,6 +154,34 @@ void __DLL3_LIST::remove(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
+const bool __DLL3_LIST::onlist(Links * item) const throw (ListError)
+{
+    lockwarn();
+    if (validate)
+    {
+        if (item->magic != Links::MAGIC)
+            __DLL3_LISTERR(ITEM_NOT_VALID);
+    }
+    if (item->lst != NULL)
+        return true;
+    return false;
+}
+
+template <__DLL3_LIST_TEMPL>
+const bool __DLL3_LIST::onthislist(Links * item) const throw (ListError)
+{
+    lockwarn();
+    if (validate)
+    {
+        if (item->magic != Links::MAGIC)
+            __DLL3_LISTERR(ITEM_NOT_VALID);
+    }
+    if (item->lst == this)
+        return true;
+    return false;
+}
+
+template <__DLL3_LIST_TEMPL>
 T * __DLL3_LIST::dequeue_head(void) throw (ListError)
 {
     lockwarn();
@@ -248,7 +276,7 @@ void __DLL3_HASH :: remove(Links * item) throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-T * __DLL3_HASH :: find(const KeyT &key) throw (ListError)
+T * __DLL3_HASH :: find(const KeyT &key) const throw (ListError)
 {
     lockwarn();
     uint32_t h = HashT::key2hash(key) % hashsize;
@@ -261,6 +289,24 @@ T * __DLL3_HASH :: find(const KeyT &key) throw (ListError)
             return item;
     }
     return NULL;
+}
+
+template <__DLL3_HASH_TEMPL>
+const bool __DLL3_HASH :: onlist(Links * item) const throw (ListError)
+{
+    lockwarn();
+    if (item->hsh != NULL)
+        return true;
+    return false;
+}
+
+template <__DLL3_HASH_TEMPL>
+const bool __DLL3_HASH :: onthislist(Links * item) const throw (ListError)
+{
+    lockwarn();
+    if (item->hsh == this)
+        return true;
+    return false;
 }
 
 template <__DLL3_HASH_TEMPL>

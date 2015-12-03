@@ -3,6 +3,13 @@
 #ifndef __BACKTRACE_H__
 #define __BACKTRACE_H__
 
+// NOTE NOTE NOTE
+//
+// proper use of the backtrace functionality requires use
+// of the "-rdynamic" flag to gcc.
+//
+// NOTE NOTE NOTE
+
 #include <string>
 #include <execinfo.h>
 

@@ -49,7 +49,7 @@ public:
      *     by the time you do something based on this return value,
      *     it may have changed. really only useful for catching errors
      *     like not locking something that should be locked. */
-    bool isLocked() throw ();
+    bool isLocked() const throw ();
 };
 
 /** an instance of a lock (a critical region) should be framed
@@ -181,7 +181,7 @@ Lockable::unlock(void) throw ()
 }
 
 inline bool
-Lockable::isLocked(void) throw ()
+Lockable::isLocked(void) const throw ()
 {
     return locked;
 }
