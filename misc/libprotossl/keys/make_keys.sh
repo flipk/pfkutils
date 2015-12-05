@@ -53,7 +53,7 @@ EOF
             -CAcreateserial -days 3650
     fi
 
-    rm -f $params_file $request_file
+#    rm -f $params_file $request_file
 #    chmod 400 $encrypted_key_file $plain_key_file $cert_file $pwd_file
 }
 
@@ -66,13 +66,18 @@ genkey Client-Cert 'Client Cert' client@example.com `random_text 40` Root-CA
 exit 0
 
 #display a csr with:
-openssl req -in Root-CA.csr -noout -text
+openssl req -in     Root-CA.csr -noout -text
 openssl req -in Client-Cert.csr -noout -text
 openssl req -in Server-Cert.csr -noout -text
 
 #display a crt with:
+openssl x509 -in     Root-CA.crt -noout -text
 openssl x509 -in Client-Cert.crt -noout -text
-openssl x509 -in Root-CA.crt -noout -text
 openssl x509 -in Server-Cert.crt -noout -text
+
+#display a key with:
+openssl rsa -in     Root-CA-plain.key -noout -text
+openssl rsa -in Client-Cert-plain.key -noout -text
+openssl rsa -in Server-Cert-plain.key -noout -text
 
 # in windows, run "certmgr.msc"
