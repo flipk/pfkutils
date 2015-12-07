@@ -1,0 +1,57 @@
+# Local Variables:
+# mode: Makefile
+# tab-width: 8
+# End:
+
+PREPROC_SOURCES = \
+environ/kshrc \
+environ/profile \
+environ/setup-links-sh \
+main/programs.h \
+main/sudo.h \
+scripts/cs \
+scripts/emacs-lone \
+scripts/myemacs-cscope-helper \
+scripts/myshell-launcher \
+scripts/myshell \
+scripts/pf_frontend
+
+PREPROC_TARGETS += preproc_prepare $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
+
+PFK_USER_NAME := `whoami`
+PFK_USER_ID := `id -u`
+PFK_GROUP_ID := `id -g`
+UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
+PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
+prefix := $(HOME)/pfk
+ENVIRON := $(CONFIG)
+ETCDIR := $(prefix)/etc
+KSHRC_LOCAL := kshrc.local.$(CONFIG)
+DOT_FILES := "Xresources ctwmrc twmrc hexdump_format screenrc xinitrc xsession vnc-xstartup"
+ELISP_FILES := "emacs-lone.el emacs.el go-mode.el"
+SCRIPTS_DIR := $(prefix)/bin
+PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
+SHELLS= /bin/bash /bin/ksh /bin/sh
+SHELL_PATH := $(firstword $(wildcard $(SHELLS)))
+
+SUBST_VARS = \
+	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
+	ENVIRON ETCDIR KSHRC_LOCAL DOT_FILES ELISP_FILES SCRIPTS_DIR \
+	PFK_BIN_DIR SHELL_PATH \
+	PFK_BUILD_pfkbak PFK_BUILD_pfksh PFK_BUILD_syslog \
+	PFK_BUILD_checksize PFK_BUILD_treescan PFK_BUILD_sudo \
+	PFK_BUILD_ampfk PFK_BUILD_pfkscript PFK_BUILD_xrandr
+
+preproc_prepare:
+	@mkdir -p $(OBJDIR)/environ $(OBJDIR)/main $(OBJDIR)/scripts
+
+define PREPROC_SUBST
+$(OBJDIR)/$(file): $(file).in
+	@echo making $(file)
+	@sed $(foreach v,$(SUBST_VARS),-e s,@$(v)@,$($(v)),) \
+		< $(file).in > $(OBJDIR)/$(file)
+
+endef
+
+$(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
+

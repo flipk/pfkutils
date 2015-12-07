@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-09-14.20:47:46
+#      Last update: 2015-12-06.17:19:13
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -225,9 +225,6 @@ if __isksh ; then
         _ps="${_ps}$REALUSER@$HOST"
         if [[ x$CLEARCASE_ROOT != x ]] ; then
             _ps="${_ps} in CMBP"
-        fi
-        if [[ "x$WIND_BASE" != x ]] ; then
-            _ps="${_ps} in ${WIND_BASE##*/}"
         fi
         _ps="${_ps} pid $$ on $TTY"
         if [[ x$WINDOW != x ]] ; then
