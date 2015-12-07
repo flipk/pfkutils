@@ -19,8 +19,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <pfkutils_config.h>
-#define _GNU_SOURCE 
+#define _LARGEFILE64_SOURCE
+
+#include <pfkutils_config2.h>
+#ifndef _GNU_SOURCE 
+#define _GNU_SOURCE
+#endif
 #define _FILE_OFFSET_BITS 64
 
 #include <stdio.h>

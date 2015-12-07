@@ -203,7 +203,7 @@ T * __DLL3_LIST::dequeue_tail(void) throw (ListError)
 
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH::lockwarn(void) throw (ListError)
+void __DLL3_HASH::lockwarn(void) const throw (ListError)
 {
     if (lockWarn == true && isLocked() == false)
         __DLL3_LISTERR(LIST_NOT_LOCKED);

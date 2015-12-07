@@ -28,7 +28,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "pfkutils_config.h"
+#include "pfkutils_config2.h"
 
 /** information about what pools should be included in the shared mem */
 struct shmempipePoolInfo {

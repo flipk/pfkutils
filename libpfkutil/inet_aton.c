@@ -1,5 +1,5 @@
 
-#include <pfkutils_config.h>
+#include "pfkutils_config2.h"
 
 #ifndef HAVE_INET_ATON
 

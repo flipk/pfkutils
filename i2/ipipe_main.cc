@@ -27,6 +27,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "fd_mgr.h"
 #include "m.h"

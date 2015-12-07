@@ -49,9 +49,16 @@
  * oh, and it does all this in 259 characters.
  */
 
+#if 0
+
 genpw_main(a,h,g,i,l,c,p,r){char w[9];srand(time(w[8]=0));for(;!r|h^1|!g|g>2;){l=(p=rand()%8)%2;for(h=g=r=i=0;i<8;i++,l^=1){(a=(c="yuiophjklnm7890---__qwertasdfgzxcvb12345"[rand()%20+l*20])>96)&&!i?r++:c==45||c==95?h++:c<58?g++:0;w[i]=i==p?!a?r=0:c-32:c;}}puts(w);}
 
-#if 0
+#else
+
+#include <stdlib.h>
+#include <time.h>
+#include <stdio.h>
+
 /*
  * a = isalpha flag
  * i = index into password
@@ -64,10 +71,14 @@ genpw_main(a,h,g,i,l,c,p,r){char w[9];srand(time(w[8]=0));for(;!r|h^1|!g|g>2;){l
  * w = output password
  */
 
-main(a,h,g,i,l,c,p,r)
+int 
+genpw_main()
 {
+    int a=1,h;
+    int g,i,l,c,p,r;
     char w[9];
-    srand(time(w[8]=0));
+    srand(time(NULL));
+    w[8]=0;
     for ( ; !r | h^1 | !g | g>2; )
     {
         l = (p=rand()%8) %2;
@@ -85,8 +96,5 @@ main(a,h,g,i,l,c,p,r)
     }
     puts(w);
 }
-
-main(a,h,g,i,l,c,p,r){char w[9];srandom(time(w[8]=0));for(;!r|h^1|!g|g>2;){l=(p=random()%8)%2;for(h=g=r=i=0;i<8;i++,l^=1){(a=(c="yuiophjklnm7890---__qwertasdfgzxcvb12345"[random()%20+l*20])>96)&&!i?r++:c==45||c==95?h++:c<58?g++:0;w[i]=i==p?!a?r=0:c-32:c;}}puts(w);}
-
 
 #endif

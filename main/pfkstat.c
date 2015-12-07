@@ -23,10 +23,9 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
-#ifdef HAVE_CONFIG_H
-#include "pfkutils_config.h"
-#endif
+#include "pfkutils_config2.h"
 
 int
 pfkstat_main( int argc, char ** argv )

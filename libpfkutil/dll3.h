@@ -117,7 +117,7 @@ class Hash : public WaitUtil::Lockable {
     int hashorder;
     int hashsize;
     int cnt;
-    void lockwarn(void) throw (ListError);
+    void lockwarn(void) const throw (ListError);
     void _rehash(int newOrder);
     void rehash(void) throw (ListError);
 public:

@@ -19,7 +19,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <pfkutils_config.h>
+#include <pfkutils_config2.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
