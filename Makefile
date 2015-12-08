@@ -1,3 +1,7 @@
+# Local Variables:
+# mode: makefile-gmake
+# tab-width: 8
+# End:
 
 ifeq ($(CONFIG),)
 
@@ -53,7 +57,7 @@ else
 Q=@
 endif
 
-all: objdirs $(OBJDIR)/xmakefile
+all: $(OBJDIR)/xmakefile
 	$(Q)+make -f $(OBJDIR)/xmakefile _all
 
 include config/$(CONFIG)
@@ -76,14 +80,6 @@ echoconfig:
 	@echo '**************** CURRENT CONFIGURATION **************************'
 	@echo ''
 
-OBJDIRS_TOMAKE= \
-	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
-	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfksh scripts syslog
-
-objdirs:
-	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
-
 $(OBJDIR)/%.o: %.c
 	@echo compiling $<
 	$(Q)gcc -c $(INCS) $(DEFS) $(CXXFLAGS) $< -o $@
@@ -95,6 +91,9 @@ $(OBJDIR)/%.o: %.cc
 CONFIG_H= $(OBJDIR)/pfkutils_config2.h
 
 ##############################################
+
+# XXX TODO support $(target)_LLSRCS and $(target)_YYSRCS
+# then enable PFK_BUILD_ampfk=1
 
 define LIB_TARGET_VARS
 $(target)_COBJS= $(patsubst %.c,$(OBJDIR)/%.o,$($(target)_CSRCS))
@@ -126,7 +125,8 @@ endef
 define PROG_TARGET_RULES
 $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) $($(target)_DEPLIBS)
 	@echo linking $($(target)_TARGET)
-	$(Q)g++ -o $($(target)_TARGET) $($(target)_COBJS) $($(target)_CXXOBJS) $($(target)_LIBS) $($(target)_DEPLIBS)
+	$(Q)g++ -o $($(target)_TARGET) $($(target)_COBJS) \
+		$($(target)_CXXOBJS) $($(target)_LIBS) $($(target)_DEPLIBS)
 
 endef
 
@@ -138,7 +138,8 @@ $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
 
 ##############################################
 
-$(OBJDIR)/xmakefile: $(CONFIG_H) $(PREPROC_TARGETS) Makefile $(CSRCS) $(CXXSRCS) $(HDRS)
+$(OBJDIR)/xmakefile: $(CONFIG_H) $(PREPROC_TARGETS) \
+			Makefile $(CSRCS) $(CXXSRCS) $(HDRS)
 	@echo depending
 	$(Q)cat Makefile > $(OBJDIR)/x
 	$(Q)set -e ; for f in $(CSRCS) ; do \
@@ -166,16 +167,24 @@ define PFK_CONFIG_LINE
 echo \#define $(value) $(PFK_CONFIG_$(value)) ;
 endef
 
+OBJDIRS_TOMAKE= \
+	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
+	ampfk backup bglog diskloader environ i2 main misc \
+	pfkscript pfksh scripts syslog
+
 $(CONFIG_H): Makefile config/always config/$(CONFIG)
-	@echo making $(CONFIG_H).tmp
+	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils\" >> $(CONFIG_H).tmp
-	$(Q)($(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))) >> $(CONFIG_H).tmp
+	$(Q)($(foreach value,$(CONFIG_VALUES), \
+		$(PFK_CONFIG_LINE))) >> $(CONFIG_H).tmp
 	$(Q)if [ -f $(CONFIG_H) ] ; then \
 		if ! cmp -s $(CONFIG_H).tmp $(CONFIG_H) ; then \
+			echo making $(CONFIG_H) ; \
 			mv $(CONFIG_H).tmp $(CONFIG_H) ; \
 		fi ; \
 	else \
+		echo making $(CONFIG_H) ; \
 		mv $(CONFIG_H).tmp $(CONFIG_H) ; \
 	fi
 

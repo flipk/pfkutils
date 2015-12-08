@@ -1,12 +1,16 @@
+# Local Variables:
+# mode: makefile-gmake
+# tab-width: 8
+# End:
 
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
-PFK_BUILD_syslog=0
+PFK_BUILD_syslog=1
 PFK_BUILD_checksize=1
 PFK_BUILD_treescan=1
 PFK_BUILD_sudo=1
 PFK_BUILD_ampfk=0
-PFK_BUILD_pfkscript=0
+PFK_BUILD_pfkscript=1
 PFK_BUILD_xrandr=1
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
