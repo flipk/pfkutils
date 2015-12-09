@@ -88,58 +88,84 @@ $(OBJDIR)/%.o: %.cc
 	@echo compiling $<
 	$(Q)g++ -c $(INCS) $(DEFS) $(CXXFLAGS) $< -o $@
 
+%.o: %.cc
+	@echo compiling $<
+	$(Q)g++ -c $(INCS) $(DEFS) $(CXXFLAGS) $< -o $@
+
+$(OBJDIR)/%.cc : %.yy
+	@echo making $@
+	bison -d $< -o $@
+
+# flex ignores the -o arg !
+$(OBJDIR)/%.cc : %.ll
+	@echo making $@
+	@LLFILE=$$PWD/$< && \
+		cd `dirname $@` && \
+		flex $$LLFILE && \
+		mv lex.yy.c `basename $@`
+
 CONFIG_H= $(OBJDIR)/pfkutils_config2.h
 
 ##############################################
 
-# XXX TODO support $(target)_LLSRCS and $(target)_YYSRCS
-# then enable PFK_BUILD_ampfk=1
+# TODO: add .y and .l support some day
 
-define LIB_TARGET_VARS
+define TARGET_VARS
 $(target)_COBJS= $(patsubst %.c,$(OBJDIR)/%.o,$($(target)_CSRCS))
 $(target)_CXXOBJS= $(patsubst %.cc,$(OBJDIR)/%.o,$($(target)_CXXSRCS))
+$(target)_YYGENSRCS= $(patsubst %.yy,$(OBJDIR)/%.cc,$($(target)_YYSRCS))
+$(target)_YYGENHDRS= $(patsubst %.yy,$(OBJDIR)/%.hh,$($(target)_YYSRCS))
+$(target)_YYGENOBJS= $(patsubst %.yy,$(OBJDIR)/%.o,$($(target)_YYSRCS))
+$(target)_LLGENSRCS= $(patsubst %.ll,$(OBJDIR)/%.cc,$($(target)_LLSRCS))
+$(target)_LLGENOBJS= $(patsubst %.ll,$(OBJDIR)/%.o,$($(target)_LLSRCS))
+
 CSRCS += $($(target)_CSRCS)
 CXXSRCS += $($(target)_CXXSRCS)
 HDRS += $($(target)_HDRS)
+YYSRCS += $($(target)_YYSRCS)
+LLSRCS += $($(target)_LLSRCS)
 
 endef
 
 define LIB_TARGET_RULES
-$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS)
+
+# add xmakefile deps so bison and flex are run before
+# xmakefile dependencies
+
+CXXSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
+
+$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
+		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)rm -f $($(target)_TARGET)
-	$(Q)$(AR) cq $($(target)_TARGET) $($(target)_COBJS) $($(target)_CXXOBJS)
+	$(Q)$(AR) cq $($(target)_TARGET) \
+		$($(target)_COBJS) $($(target)_CXXOBJS) \
+		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS)
 	$(Q)$(RANLIB) $($(target)_TARGET)
 
 endef
 
-define PROG_TARGET_VARS
-$(target)_COBJS= $(patsubst %.c,$(OBJDIR)/%.o,$($(target)_CSRCS))
-$(target)_CXXOBJS= $(patsubst %.cc,$(OBJDIR)/%.o,$($(target)_CXXSRCS))
-CSRCS += $($(target)_CSRCS)
-CXXSRCS += $($(target)_CXXSRCS)
-HDRS += $($(target)_HDRS)
-
-endef
-
 define PROG_TARGET_RULES
-$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) $($(target)_DEPLIBS)
+$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
+		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_DEPLIBS)
 	@echo linking $($(target)_TARGET)
-	$(Q)g++ -o $($(target)_TARGET) $($(target)_COBJS) \
-		$($(target)_CXXOBJS) $($(target)_LIBS) $($(target)_DEPLIBS)
+	$(Q)g++ -o $($(target)_TARGET) \
+		$($(target)_COBJS) $($(target)_CXXOBJS) \
+		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_LIBS) $($(target)_DEPLIBS)
 
 endef
 
-$(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_VARS)))
-$(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_VARS)))
-
+$(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_VARS)))
 $(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_RULES)))
 $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
 
 ##############################################
 
 $(OBJDIR)/xmakefile: $(CONFIG_H) $(PREPROC_TARGETS) \
-			Makefile $(CSRCS) $(CXXSRCS) $(HDRS)
+			Makefile $(CSRCS) $(CXXSRCS) $(HDRS) \
+			$(YYSRCS) $(LLSRCS)
 	@echo depending
 	$(Q)cat Makefile > $(OBJDIR)/x
 	$(Q)set -e ; for f in $(CSRCS) ; do \

@@ -167,6 +167,7 @@ libampfk_CXXSRCS = \
 	ampfk/automake_variables.cc ampfk/condition.cc ampfk/main.cc
 libampfk_HDRS = \
 	ampfk/automake_parser.h ampfk/condition.h ampfk/tokenizer.h
+INCS += -Iampfk
 endif
 
 ifeq ($(PFK_BUILD_syslog),1)
@@ -235,7 +236,7 @@ define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
 $(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
 $(t)_CXXSRCS = libpfkutil/$(t).cc
-$(t)_LIBS = -lpthread
+$(t)_LIBS += -lpthread
 $(t)_DEPLIBS = $(libpfkutil_TARGET)
 
 endef
@@ -263,3 +264,7 @@ PROG_TARGETS += fb_testFileBlock
 fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
+
+# TODO : bglog cscope ctwm diskloader libpfkthread
+# TODO : libWebAppServer proxyTcpServer  libprotossl slowlink states
+# TODO : make all the $(prog)_main be subject to -DMAIN_FROM_PFKUTILS

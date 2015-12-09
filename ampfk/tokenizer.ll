@@ -36,7 +36,7 @@ static int maybe_ret(void);
 (\r|\n)		{ if (maybe_ret()) { BEGIN(INITIAL); return NL; }}
 ^\t		{ if (maybe_ret()) return TAB; }
 \\(\r|\n)[ \t]*	{ if (maybe_ret()) return BSNL; }
-#.*/(\r|\n)	{ /* skip comments */ }
+#.*(\r|\n)	{ /* skip comments */ }
 [ \t]+		{ /* skip */ }
 <INITIAL>[^ \t\r\n:=#]+	{
 		    if (maybe_ret()) {
