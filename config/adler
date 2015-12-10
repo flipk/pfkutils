@@ -36,3 +36,7 @@ PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 
 pfkutils_LIBS += -lrt
 HSM_test_LIBS += -lrt
+pfkthr_test-1_LIBS += -lrt
+pfkthr_test-2_LIBS += -lrt
+pfkthr_test-3_LIBS += -lrt
+pfkthr_test-4_LIBS += -lrt

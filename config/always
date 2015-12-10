@@ -342,7 +342,7 @@ define BUILD_LIBPFKTHR_TEST_TARGET
 PROG_TARGETS += pfkthr_$(t)
 pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
 pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
-pfkthr_$(t)_LIBS = -lpthread
+pfkthr_$(t)_LIBS += -lpthread
 pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
 
 endef
