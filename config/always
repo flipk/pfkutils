@@ -27,13 +27,14 @@ PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 SHELLS= /bin/bash /bin/ksh /bin/sh
 SHELL_PATH := $(firstword $(wildcard $(SHELLS)))
 
+BUILD_SWITCHES = \
+	pfkbak pfksh syslog checksize treescan sudo ampfk pfkscript xrandr
+
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH \
 	prefix ENVIRON ETCDIR KSHRC_LOCAL DOT_FILES ELISP_FILES \
-	SCRIPTS_DIR PFK_BIN_DIR SHELL_PATH PFK_BUILD_pfkbak \
-	PFK_BUILD_pfksh PFK_BUILD_syslog PFK_BUILD_checksize \
-	PFK_BUILD_treescan PFK_BUILD_sudo PFK_BUILD_ampfk \
-	PFK_BUILD_pfkscript PFK_BUILD_xrandr
+	SCRIPTS_DIR PFK_BIN_DIR SHELL_PATH \
+	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
 
 define PREPROC_SUBST
 $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
