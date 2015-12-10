@@ -57,11 +57,21 @@ else
 Q=@
 endif
 
-all: $(OBJDIR)/xmakefile
-	$(Q)+make -f $(OBJDIR)/xmakefile _all
+# this is named with a "2" to catch all those places
+# i haven't converted yet. when i'm done converting,
+# this should change back to pfkutils_config.h.
+CONFIG_H= $(OBJDIR)/pfkutils_config2.h
+
+all:
+	@+make objdirs
+	@+make preprocs
+	@+make deps
+	@+make PFKUTILS_INCLUDE_DEPS=1 _all
 
 include config/$(CONFIG)
 include config/always
+
+preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
 
 echoconfig:
 	@echo ''
@@ -104,10 +114,17 @@ $(OBJDIR)/%.cc : %.ll
 		flex $$LLFILE && \
 		mv lex.yy.c `basename $@`
 
-# this is named with a "2" to catch all those places
-# i haven't converted yet. when i'm done converting,
-# this should change back to pfkutils_config.h.
-CONFIG_H= $(OBJDIR)/pfkutils_config2.h
+$(OBJDIR)/%.c.d: %.c
+	@echo depending $<
+	$(Q)$(CC) $(INCS) $(DEFS) -M $< -MT $(<:%.c=%.o) -MF $@
+
+%.cc.d: %.cc
+	@echo depending $<
+	$(Q)$(CC) $(INCS) $(DEFS) -M $< -MT $(<:%.cc=%.o) -MF $@
+
+$(OBJDIR)/%.cc.d: %.cc
+	@echo depending $<
+	$(Q)$(CC) $(INCS) $(DEFS) -M $< -MT $(<:%.cc=$(OBJDIR)/%.o) -MF $@
 
 ##############################################
 
@@ -132,10 +149,11 @@ endef
 
 define LIB_TARGET_RULES
 
-# add xmakefile deps so bison and flex are run before
-# xmakefile dependencies
+$($(target)_LLGENSRCS): $($(target)_YYGENSRCS)
+$($(target)_LLGENSRCS): $($(target)_LLSRCS)
+$($(target)_YYGENSRCS): $($(target)_YYSRCS)
 
-CXXSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
+CXXGENSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
 $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS)
@@ -149,6 +167,13 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 endef
 
 define PROG_TARGET_RULES
+
+$($(target)_LLGENSRCS): $($(target)_YYGENSRCS)
+$($(target)_LLGENSRCS): $($(target)_LLSRCS)
+$($(target)_YYGENSRCS): $($(target)_YYSRCS)
+
+CXXGENSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
+
 $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
 		$($(target)_DEPLIBS)
@@ -166,24 +191,17 @@ $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
 
 ##############################################
 
-$(OBJDIR)/xmakefile: $(CONFIG_H) $(PREPROC_TARGETS) \
-			Makefile $(CSRCS) $(CXXSRCS) $(HDRS) \
-			$(YYSRCS) $(LLSRCS)
-	@echo depending
-	$(Q)cat Makefile > $(OBJDIR)/x
-	$(Q)set -e ; for f in $(CSRCS) ; do \
-		$(CC) $(INCS) $(DEFS) -M $$f \
-			-MT $(OBJDIR)/$${f%.c}.o -MF $(OBJDIR)/xdeps ; \
-		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
-		rm -f $(OBJDIR)/xdeps ; \
-	done
-	$(Q)set -e ; for f in $(CXXSRCS) ; do \
-		$(CC) $(INCS) $(DEFS) -M $$f \
-			-MT $(OBJDIR)/$${f%.cc}.o -MF $(OBJDIR)/xdeps ; \
-		cat $(OBJDIR)/xdeps >> $(OBJDIR)/x ; \
-		rm -f $(OBJDIR)/xdeps ; \
-	done
-	$(Q)mv $(OBJDIR)/x $(OBJDIR)/xmakefile
+CDEPS = $(CSRCS:%.c=$(OBJDIR)/%.c.d)
+CXXDEPS = $(CXXSRCS:%.cc=$(OBJDIR)/%.cc.d)
+CXXGENDEPS = $(CXXGENSRCS:%.cc=%.cc.d)
+
+deps: $(CDEPS) $(CXXDEPS) $(CXXGENDEPS)
+
+ifeq ($(PFKUTILS_INCLUDE_DEPS),1)
+include $(CDEPS) $(CXXDEPS) # $(CXXGENDEPS)
+endif
+
+##############################################
 
 _all: $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$($(target)_TARGET))
 
@@ -201,8 +219,10 @@ OBJDIRS_TOMAKE= \
 	ampfk backup bglog diskloader environ i2 main misc \
 	pfkscript pfksh scripts syslog
 
-$(CONFIG_H): Makefile config/always config/$(CONFIG)
+objdirs:
 	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
+
+$(CONFIG_H): Makefile config/always config/$(CONFIG)
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils\" >> $(CONFIG_H).tmp
 	$(Q)($(foreach value,$(CONFIG_VALUES), \
