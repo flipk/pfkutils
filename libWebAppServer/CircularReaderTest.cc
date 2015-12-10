@@ -15,11 +15,11 @@ using namespace std;
 int
 main()
 {
-    unsigned char buf[4] = { 0xa0, 0xb0, 0xb1, 0xb2 };
+    uint8_t buf[4] = { 0xa0, 0xb0, 0xb1, 0xb2 };
 
-    CircularReader x;
+    WebAppServer::CircularReader x;
 
-    x.assign((char*)buf, 4);
+    x.assign(buf, 4);
 
     int a = ((uint8_t)x[0]) << 8;
 

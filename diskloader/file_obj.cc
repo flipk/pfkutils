@@ -1,6 +1,6 @@
 
-#include "file_obj.H"
-#include "pseudo_random.H"
+#include "file_obj.h"
+#include "pseudo_random.h"
 
 #include <string.h>
 #include <stdio.h>

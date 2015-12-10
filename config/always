@@ -190,6 +190,58 @@ pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 
 endif
 
+LIB_TARGETS += diskloader
+diskloader_TARGET = $(OBJDIR)/libdiskloader.a
+diskloader_CXXSRCS = \
+	diskloader/file_obj.cc diskloader/main.cc diskloader/pseudo_random.cc
+diskloader_HDRS = \
+	diskloader/file_obj.h diskloader/pseudo_random.h
+
+LIB_TARGETS += bglog
+bglog_TARGET = $(OBJDIR)/libbglog.a
+bglog_CSRCS = bglog/log.c bglog/main.c
+bglog_HDRS = bglog/config.h bglog/log.h
+
+LIB_TARGETS += libWebAppServer
+libWebAppServer_TARGET = $(OBJDIR)/libWebAppServer.a
+libWebAppServer_CXXSRCS = \
+	libWebAppServer/WebAppConnection.cc \
+	libWebAppServer/WebAppServer.cc \
+	libWebAppServer/WebAppServerConfig.cc \
+	libWebAppServer/WebFastCGIConnection.cc \
+	libWebAppServer/WebServerConnectionBase.cc \
+	libWebAppServer/WebSocketClient.cc \
+	libWebAppServer/WebSocketConnection.cc \
+	libWebAppServer/serverPorts.cc
+libWebAppServer_HDRS = \
+	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
+	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
+	libWebAppServer/WebAppServerInternal.h \
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
+
+LIB_TARGETS += libpfkthread
+libpfkthread_TARGET = $(OBJDIR)/libpfkthread.a
+libpfkthread_CXXSRCS = \
+	libpfkthread/pk_filedescs.cc libpfkthread/pk_filedescs_thread.cc \
+	libpfkthread/pk_messages.cc libpfkthread/pk_messages_ext.cc \
+	libpfkthread/pk_messages_ext_link_tcp.cc \
+	libpfkthread/pk_semaphores.cc libpfkthread/pk_threads.cc \
+	libpfkthread/pk_timers.cc libpfkthread/stringhash.cc
+libpfkthread_HDRS = \
+	libpfkthread/h/pk_semaphores.h \
+	libpfkthread/h/pk_messages.h \
+	libpfkthread/h/pk_filedescs.h \
+	libpfkthread/h/pk_messages_ext.h \
+	libpfkthread/h/pk_timers.h \
+	libpfkthread/h/pk_threads.h \
+	libpfkthread/h/stringhash.h \
+	libpfkthread/int/pk_filedescs_internal.h \
+	libpfkthread/int/pk_messages_internal.h \
+	libpfkthread/int/pk_threads_internal.h \
+	libpfkthread/int/pk_timers_internal.h
+
+INCS += -Ilibpfkthread/h -Ilibpfkthread/int
+
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
 pfkutils_CSRCS = \
@@ -225,7 +277,9 @@ pfkutils_LIBS += -lpthread
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkdll2_TARGET) $(libi2_TARGET) \
-	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) 
+	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
+	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
+	$(libpfkthread_TARGET)
 
 LIBPFKUTIL_TEST_TARGETS = \
 	HSM_test hsmthread_test dll3_test dll3_btree_test \
@@ -265,6 +319,40 @@ fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
 
-# TODO : bglog cscope ctwm diskloader libpfkthread
-# TODO : libWebAppServer proxyTcpServer  libprotossl slowlink states
+LIBWAS_TEST_TARGETS= \
+	testUrlRegex CircularReaderTest wsClientTest wsServerTest
+
+define BUILD_LIBWAS_TEST_TARGET
+PROG_TARGETS += libwas_$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
+libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
+libwas_$(t)_LIBS += -lpthread
+libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
+
+LIBPFKTHR_TEST_TARGETS = \
+	test-1 test-2 test-3 test-4
+
+define BUILD_LIBPFKTHR_TEST_TARGET
+PROG_TARGETS += pfkthr_$(t)
+pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
+pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
+pfkthr_$(t)_LIBS = -lpthread
+pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
+
+
 # TODO : make all the $(prog)_main be subject to -DMAIN_FROM_PFKUTILS
+# TODO : libWebAppServer/proxyTcpServer
+# TODO : contrib/cscope-15.7a/
+# TODO : contrib/ctwm-3.8a/
+# TODO : misc/libprotossl/
+# TODO : misc/slowlink/
+# TODO : misc/states/

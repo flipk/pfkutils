@@ -1,5 +1,5 @@
 
-#include "pseudo_random.H"
+#include "pseudo_random.h"
  
 pseudo_random_generator :: pseudo_random_generator(uint32_t seed)
 {

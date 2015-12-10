@@ -59,6 +59,8 @@ PROG(0,fbdump,"FileBlock dumper")
 PROG(0,fbcompact,"FileBlock compacter")
 PROG(0,btdump,"FileBlock Btree dumper")
 PROG(0,pfkSessionMgr,"session manager")
+PROG(0,diskloader,"exercise a filesystem")
+PROG(0,bglog,"background logger")
 
 #if PFK_BUILD_XRANDR
 PROG(0,pfkSessionXrandr,"xrandr event monitor")

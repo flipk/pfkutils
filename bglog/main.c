@@ -5,11 +5,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pty.h>
+#include <utmp.h>
 
 #include "config.h"
+#include "log.h"
 
 int
-main(int argc, char ** argv)
+bglog_main(int argc, char ** argv)
 {
     char * args[MAX_ARGS+1];
     int num_args = 0;

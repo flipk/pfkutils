@@ -16,7 +16,7 @@ $(KNOWN_CONFIGS):
 	@+make CONFIG=$@
 
 clean:
-	rm -rf obj.$(PFKARCH).*
+	rm -rf obj.*
 
 else # $CONFIG
 
@@ -46,7 +46,7 @@ CONFIG_VALUES= \
 	HAVE_LSEEK64 HAVE_LSEEK HAVE_STRINGS_H HAVE_STRING_H \
 	HAVE_STRUCT_STAT_ST_RDEV HAVE_STRUCT_STAT_ST_BLOCKS \
 	HAVE_STRUCT_STAT_ST_BLKSIZE HAVE_STRUCT_STAT_ST_FLAGS \
-	HAVE_STRUCT_STAT_ST_GEN HAVE_INET_ATON \
+	HAVE_STRUCT_STAT_ST_GEN HAVE_INET_ATON HAVE_INTTYPES_H \
 	HAVE_PTHREAD_MUTEX_CONSISTENT_NP HAVE_PTHREAD_MUTEXATTR_SETPSHARED \
 	HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP \
 	HAVE_PTHREAD_CONDATTR_SETPSHARED
@@ -94,16 +94,19 @@ $(OBJDIR)/%.o: %.cc
 
 $(OBJDIR)/%.cc : %.yy
 	@echo making $@
-	bison -d $< -o $@
+	$(Q)bison -d $< -o $@
 
 # flex ignores the -o arg !
 $(OBJDIR)/%.cc : %.ll
 	@echo making $@
-	@LLFILE=$$PWD/$< && \
+	$(Q)LLFILE=$$PWD/$< && \
 		cd `dirname $@` && \
 		flex $$LLFILE && \
 		mv lex.yy.c `basename $@`
 
+# this is named with a "2" to catch all those places
+# i haven't converted yet. when i'm done converting,
+# this should change back to pfkutils_config.h.
 CONFIG_H= $(OBJDIR)/pfkutils_config2.h
 
 ##############################################
@@ -111,19 +114,19 @@ CONFIG_H= $(OBJDIR)/pfkutils_config2.h
 # TODO: add .y and .l support some day
 
 define TARGET_VARS
-$(target)_COBJS= $(patsubst %.c,$(OBJDIR)/%.o,$($(target)_CSRCS))
-$(target)_CXXOBJS= $(patsubst %.cc,$(OBJDIR)/%.o,$($(target)_CXXSRCS))
+$(target)_COBJS    = $(patsubst %.c, $(OBJDIR)/%.o, $($(target)_CSRCS))
+$(target)_CXXOBJS  = $(patsubst %.cc,$(OBJDIR)/%.o, $($(target)_CXXSRCS))
 $(target)_YYGENSRCS= $(patsubst %.yy,$(OBJDIR)/%.cc,$($(target)_YYSRCS))
 $(target)_YYGENHDRS= $(patsubst %.yy,$(OBJDIR)/%.hh,$($(target)_YYSRCS))
-$(target)_YYGENOBJS= $(patsubst %.yy,$(OBJDIR)/%.o,$($(target)_YYSRCS))
+$(target)_YYGENOBJS= $(patsubst %.yy,$(OBJDIR)/%.o, $($(target)_YYSRCS))
 $(target)_LLGENSRCS= $(patsubst %.ll,$(OBJDIR)/%.cc,$($(target)_LLSRCS))
-$(target)_LLGENOBJS= $(patsubst %.ll,$(OBJDIR)/%.o,$($(target)_LLSRCS))
+$(target)_LLGENOBJS= $(patsubst %.ll,$(OBJDIR)/%.o, $($(target)_LLSRCS))
 
-CSRCS += $($(target)_CSRCS)
+CSRCS   += $($(target)_CSRCS)
 CXXSRCS += $($(target)_CXXSRCS)
-HDRS += $($(target)_HDRS)
-YYSRCS += $($(target)_YYSRCS)
-LLSRCS += $($(target)_LLSRCS)
+HDRS    += $($(target)_HDRS)
+YYSRCS  += $($(target)_YYSRCS)
+LLSRCS  += $($(target)_LLSRCS)
 
 endef
 
@@ -215,5 +218,3 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 	fi
 
 endif # $CONFIG
-
-# contrib/cscope

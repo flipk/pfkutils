@@ -1,5 +1,5 @@
 
-#include "file_obj.H"
+#include "file_obj.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,8 +66,8 @@ signal_handler(int sig)
     stopping = true;
 }
 
-int
-main(int argc, char ** argv)
+extern "C" int
+diskloader_main(int argc, char ** argv)
 {
     if (argc != 5)
     {
