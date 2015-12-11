@@ -31,8 +31,8 @@ OBJDIR= obj.$(PFKARCH).$(CONFIG)
 
 CC=gcc
 CXX=g++
-CCOPTS=
-CXXOPTS=
+CFLAGS= -O3
+CXXFLAGS= -O3
 AR=ar
 RANLIB=ranlib
 
@@ -125,7 +125,7 @@ CXXGENDEPS += $($(target)_YYGENDEPS) $($(target)_LLGENDEPS)
 $($(target)_COBJS) : $(OBJDIR)/%.o: %.c
 	@echo compiling $$<
 	$(Q)gcc -c -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
-		$(CXXFLAGS) $$< -o $$@
+		$(CFLAGS) $$< -o $$@
 
 $($(target)_CXXOBJS) : $(OBJDIR)/%.o: %.cc
 	@echo compiling $$<
