@@ -1,15 +1,4 @@
-# Local Variables:
-# mode: makefile-gmake
-# tab-width: 8
-# End:
-
-PREPROC_SOURCES = \
-	main/programs.h environ/kshrc environ/profile \
-	environ/setup-links-sh main/sudo.h scripts/cs \
-	scripts/emacs-lone scripts/myemacs-cscope-helper \
-	scripts/myshell-launcher scripts/myshell scripts/pf_frontend
-
-PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
+# -*- Mode:makefile-gmake; tab-width:8 -*-
 
 PFK_USER_NAME := `whoami`
 PFK_USER_ID := `id -u`
@@ -27,6 +16,51 @@ PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 SHELLS= /bin/bash /bin/ksh /bin/sh
 SHELL_PATH := $(firstword $(wildcard $(SHELLS)))
 
+CONFIG_VALUES= \
+	HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H HAVE_DIRENT_H \
+	HAVE_STRUCT_DIRENT_D_TYPE \
+	HAVE_LSEEK64 HAVE_LSEEK HAVE_STRINGS_H HAVE_STRING_H \
+	HAVE_STRUCT_STAT_ST_RDEV HAVE_STRUCT_STAT_ST_BLOCKS \
+	HAVE_STRUCT_STAT_ST_BLKSIZE HAVE_STRUCT_STAT_ST_FLAGS \
+	HAVE_STRUCT_STAT_ST_GEN HAVE_INET_ATON HAVE_INTTYPES_H \
+	HAVE_PTHREAD_MUTEX_CONSISTENT_NP HAVE_PTHREAD_MUTEXATTR_SETPSHARED \
+	HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP \
+	HAVE_PTHREAD_CONDATTR_SETPSHARED
+
+# this is named with a "2" to catch all those places
+# i haven't converted yet. when i'm done converting,
+# this should change back to pfkutils_config.h.
+CONFIG_H= $(OBJDIR)/pfkutils_config2.h
+
+define PFK_CONFIG_LINE
+echo \#define $(value) $(PFK_CONFIG_$(value)) ;
+endef
+
+$(CONFIG_H): Makefile config/always config/$(CONFIG)
+	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
+	$(Q)echo \#define PACKAGE_STRING \"pfkutils\" >> $(CONFIG_H).tmp
+	$(Q)($(foreach value,$(CONFIG_VALUES), \
+		$(PFK_CONFIG_LINE))) >> $(CONFIG_H).tmp
+	$(Q)if [ -f $(CONFIG_H) ] ; then \
+		if ! cmp -s $(CONFIG_H).tmp $(CONFIG_H) ; then \
+			echo making $(CONFIG_H) ; \
+			mv $(CONFIG_H).tmp $(CONFIG_H) ; \
+		else \
+			rm -f $(CONFIG_H).tmp ; \
+		fi ; \
+	else \
+		echo making $(CONFIG_H) ; \
+		mv $(CONFIG_H).tmp $(CONFIG_H) ; \
+	fi
+
+OBJDIRS_TOMAKE= \
+	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
+	ampfk backup bglog diskloader environ i2 main misc \
+	pfkscript pfksh scripts syslog
+
+objdirs:
+	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
+
 BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo ampfk pfkscript xrandr
 
@@ -35,6 +69,14 @@ SUBST_VARS = \
 	prefix ENVIRON ETCDIR KSHRC_LOCAL DOT_FILES ELISP_FILES \
 	SCRIPTS_DIR PFK_BIN_DIR SHELL_PATH \
 	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
+
+PREPROC_SOURCES = \
+	main/programs.h environ/kshrc environ/profile \
+	environ/setup-links-sh main/sudo.h scripts/cs \
+	scripts/emacs-lone scripts/myemacs-cscope-helper \
+	scripts/myshell-launcher scripts/myshell scripts/pf_frontend
+
+PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
 define PREPROC_SUBST
 $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
@@ -47,14 +89,14 @@ $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
 		if ! cmp -s $(OBJDIR)/$(file).tmp $(OBJDIR)/$(file) ; then \
 			echo making $(file) ; \
 			mv $(OBJDIR)/$(file).tmp $(OBJDIR)/$(file) ; \
+		else \
+			rm -f $(OBJDIR)/$(file).tmp ; \
 		fi ;  \
 	fi
 
 endef
 
 $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
-
-INCS += -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
 
 LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
@@ -85,7 +127,7 @@ libpfkutil_HDRS = \
 
 LIB_TARGETS += libpfkfb
 libpfkfb_TARGET = $(OBJDIR)/libpfkfb.a
-libpfkfb_CSRCS = 
+libpfkfb_INCS = -Ilibpfkutil -Ilibpfkdll2
 libpfkfb_CXXSRCS = \
 	libpfkfb/BlockCache.cc libpfkfb/Btree.cc libpfkfb/BtreeNode.cc \
 	libpfkfb/FileBlockLocal.cc libpfkfb/FileBlockLocalAllocFree.cc \
@@ -106,7 +148,7 @@ libpfkfb_HDRS = \
 ifeq ($(PFK_BUILD_pfkbak),1)
 LIB_TARGETS += libpfkbak
 libpfkbak_TARGET = $(OBJDIR)/libpfkbak.a
-libpfkbak_CSRCS = 
+libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
 libpfkbak_CXXSRCS = \
 	backup/FileList.cc backup/create_backup.cc backup/create_file.cc \
 	backup/delete_backup.cc backup/delete_gen.cc backup/delete_gens.cc \
@@ -121,7 +163,6 @@ endif
 
 LIB_TARGETS += libpfkdll2
 libpfkdll2_TARGET = $(OBJDIR)/libpfkdll2.a
-libpfkdll2_CSRCS = 
 libpfkdll2_CXXSRCS = libpfkdll2/dll2_hash.cc 
 libpfkdll2_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
 
@@ -146,7 +187,7 @@ endif
 
 LIB_TARGETS += libi2
 libi2_TARGET = $(OBJDIR)/libi2.a
-libi2_CSRCS = 
+libi2_INCS = -Ilibpfkutil
 libi2_CXXSRCS = \
 	i2/ipipe_acceptor.cc i2/ipipe_connector.cc i2/ipipe_factories.cc \
 	i2/ipipe_forwarder.cc i2/ipipe_main.cc i2/ipipe_rollover.cc \
@@ -159,6 +200,7 @@ libi2_HDRS = \
 ifeq ($(PFK_BUILD_ampfk),1)
 LIB_TARGETS += libampfk
 libampfk_TARGET = $(OBJDIR)/libampfk.a
+libampfk_INCS = -Ilibpfkdll2 -I$(OBJDIR)/ampfk -Iampfk
 libampfk_LLSRCS = ampfk/tokenizer.ll
 libampfk_YYSRCS = ampfk/parser.yy
 libampfk_CXXSRCS = \
@@ -168,7 +210,6 @@ libampfk_CXXSRCS = \
 	ampfk/automake_variables.cc ampfk/condition.cc ampfk/main.cc
 libampfk_HDRS = \
 	ampfk/automake_parser.h ampfk/condition.h ampfk/tokenizer.h
-INCS += -Iampfk
 endif
 
 ifeq ($(PFK_BUILD_syslog),1)
@@ -186,6 +227,7 @@ endif
 ifeq ($(PFK_BUILD_pfkscript),1)
 LIB_TARGETS += pfkscript
 pfkscript_TARGET = $(OBJDIR)/libpfkscript.a
+pfkscript_INCS = -Ilibpfkutil
 pfkscript_CXXSRCS = pfkscript/logfile.cc pfkscript/main.cc pfkscript/options.cc
 pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 
@@ -205,6 +247,7 @@ bglog_HDRS = bglog/config.h bglog/log.h
 
 LIB_TARGETS += libWebAppServer
 libWebAppServer_TARGET = $(OBJDIR)/libWebAppServer.a
+libWebAppServer_INCS = -Ilibpfkutil
 libWebAppServer_CXXSRCS = \
 	libWebAppServer/WebAppConnection.cc \
 	libWebAppServer/WebAppServer.cc \
@@ -222,6 +265,8 @@ libWebAppServer_HDRS = \
 
 LIB_TARGETS += libpfkthread
 libpfkthread_TARGET = $(OBJDIR)/libpfkthread.a
+libpfkthread_INCS = \
+	-Ilibpfkthread/h -Ilibpfkthread/int -Ilibpfkdll2 -Ilibpfkutil
 libpfkthread_CXXSRCS = \
 	libpfkthread/pk_filedescs.cc libpfkthread/pk_filedescs_thread.cc \
 	libpfkthread/pk_messages.cc libpfkthread/pk_messages_ext.cc \
@@ -241,10 +286,9 @@ libpfkthread_HDRS = \
 	libpfkthread/int/pk_threads_internal.h \
 	libpfkthread/int/pk_timers_internal.h
 
-INCS += -Ilibpfkthread/h -Ilibpfkthread/int
-
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
+pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main -Ilibpfkfb -Ilibpfkdll2
 pfkutils_CSRCS = \
 	main/crnl.c main/he.c main/random-hex.c main/fmtsdiff.c \
 	main/genpw.c main/xtermbar.c main/waitpid.c main/pfkstat.c
@@ -312,11 +356,13 @@ dll2_test_hash_DEPLIBS = $(libpfkdll2_TARGET)
 
 PROG_TARGETS += fb_testBtree
 fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
+fb_testBtree_INCS = $(libpfkfb_INCS)
 fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
 fb_testBtree_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
 
 PROG_TARGETS += fb_testFileBlock
 fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
+fb_testFileBlock_INCS = $(libpfkfb_INCS)
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
 
@@ -326,6 +372,7 @@ LIBWAS_TEST_TARGETS= \
 define BUILD_LIBWAS_TEST_TARGET
 PROG_TARGETS += libwas_$(t)
 libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
+libwas_$(t)_INCS = $(libWebAppServer_INCS)
 libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
 libwas_$(t)_LIBS += -lpthread
 libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
@@ -341,6 +388,7 @@ LIBPFKTHR_TEST_TARGETS = \
 define BUILD_LIBPFKTHR_TEST_TARGET
 PROG_TARGETS += pfkthr_$(t)
 pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
+pfkthr_$(t)_INCS = $(libpfkthread_INCS)
 pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
 pfkthr_$(t)_LIBS += -lpthread
 pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
@@ -349,7 +397,6 @@ endef
 
 $(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
 
-
 # TODO : make all the $(prog)_main be subject to -DMAIN_FROM_PFKUTILS
 # TODO : libWebAppServer/proxyTcpServer
 # TODO : contrib/cscope-15.7a/
@@ -357,3 +404,13 @@ $(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
 # TODO : misc/libprotossl/
 # TODO : misc/slowlink/
 # TODO : misc/states/
+# TODO : try $$ to see if vars and rules macros can collapse?
+
+# test cases :
+# - touch a .c file and see if it depends and makes
+# - touch a .h file and see if c files make
+# - touch a .ll file and see if it makes cc, depends, and makes
+# - touch a .yy file and see if it makes cc, depends, and makes
+# - touch a .in file and see if preprocs
+# - touch a .h.in file and see if preprocs and makes
+# - touch a .c.in file and see if preprocs, depends, and makes
