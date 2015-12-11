@@ -51,9 +51,9 @@ static	int	symbol;		/* yylex value */
 #define	REJECT	(reject = 1)
 #define	ACCEPT	(reject = 0)
 #define	token(cf) \
-	((reject) ? (ACCEPT, symbol) : (symbol = yylex(cf)))
+	((reject) ? (ACCEPT, symbol) : (symbol = pfksh_yylex(cf)))
 #define	tpeek(cf) \
-	((reject) ? (symbol) : (REJECT, symbol = yylex(cf)))
+	((reject) ? (symbol) : (REJECT, symbol = pfksh_yylex(cf)))
 
 static void
 yyparse()
@@ -157,18 +157,18 @@ synio(cf)
 	if (tpeek(cf) != REDIR)
 		return NULL;
 	ACCEPT;
-	iop = yylval.iop;
+	iop = pfksh_yylval.iop;
 	ishere = (iop->flag&IOTYPE) == IOHERE;
 	musthave(LWORD, ishere ? HEREDELIM : 0);
 	if (ishere) {
-		iop->delim = yylval.cp;
+		iop->delim = pfksh_yylval.cp;
 		if (*ident != 0) /* unquoted */
 			iop->flag |= IOEVAL;
 		if (herep >= &heres[HERES])
-			yyerror("too many <<'s\n");
+			pfksh_yyerror("too many <<'s\n");
 		*herep++ = iop;
 	} else
-		iop->name = yylval.cp;
+		iop->name = pfksh_yylval.cp;
 	return iop;
 }
 
@@ -230,7 +230,7 @@ get_command(cf)
 			switch (tpeek(cf)) {
 			  case REDIR:
 				if (iopn >= NUFILE)
-					yyerror("too many redirections\n");
+					pfksh_yyerror("too many redirections\n");
 				iops[iopn++] = synio(cf);
 				break;
 
@@ -244,10 +244,10 @@ get_command(cf)
 				    && assign_command(ident))
 					t->u.evalflags = DOVACHECK;
 				if ((XPsize(args) == 0 || Flag(FKEYWORD))
-				    && is_wdvarassign(yylval.cp))
-					XPput(vars, yylval.cp);
+				    && is_wdvarassign(pfksh_yylval.cp))
+					XPput(vars, pfksh_yylval.cp);
 				else
-					XPput(args, yylval.cp);
+					XPput(args, pfksh_yylval.cp);
 				break;
 
 			  case '(':
@@ -295,7 +295,7 @@ get_command(cf)
 		ACCEPT;
 		XPput(args, wdcopy(let_cmd, ATEMP));
 		musthave(LWORD,LETEXPR);
-		XPput(args, yylval.cp);
+		XPput(args, pfksh_yylval.cp);
 		break;
 	  }
 
@@ -321,8 +321,8 @@ get_command(cf)
 	  case SELECT:
 		t = newtp((c == FOR) ? TFOR : TSELECT);
 		musthave(LWORD, ARRAYVAR);
-		if (!is_wdvarname(yylval.cp, TRUE))
-			yyerror("%s: bad identifier\n",
+		if (!is_wdvarname(pfksh_yylval.cp, TRUE))
+			pfksh_yyerror("%s: bad identifier\n",
 				c == FOR ? "for" : "select");
 		t->str = str_save(ident, ATEMP);
 		nesting_push(&old_nesting, c);
@@ -343,7 +343,7 @@ get_command(cf)
 	  case CASE:
 		t = newtp(TCASE);
 		musthave(LWORD, 0);
-		t->str = yylval.cp;
+		t->str = pfksh_yylval.cp;
 		nesting_push(&old_nesting, c);
 		t->left = caselist();
 		nesting_pop(&old_nesting);
@@ -374,13 +374,13 @@ get_command(cf)
 
 	  case FUNCTION:
 		musthave(LWORD, 0);
-		t = function_body(yylval.cp, TRUE);
+		t = function_body(pfksh_yylval.cp, TRUE);
 		break;
 	}
 
 	while ((iop = synio(syniocf)) != NULL) {
 		if (iopn >= NUFILE)
-			yyerror("too many redirections\n");
+			pfksh_yyerror("too many redirections\n");
 		iops[iopn++] = iop;
 	}
 
@@ -508,7 +508,7 @@ casepart(endtok)
 		REJECT;
 	do {
 		musthave(LWORD, 0);
-		XPput(ptns, yylval.cp);
+		XPput(ptns, pfksh_yylval.cp);
 	} while ((c = token(0)) == '|');
 	REJECT;
 	XPput(ptns, NULL);
@@ -540,7 +540,7 @@ function_body(name, ksh_func)
 	 */
 	for (p = sname; *p; p++)
 		if (ctype(*p, C_QUOTE) || *p == '=')
-			yyerror("%s: invalid function name\n", sname);
+			pfksh_yyerror("%s: invalid function name\n", sname);
 
 	t = newtp(TFUNCT);
 	t->str = sname;
@@ -597,7 +597,7 @@ wordlist()
 		return NULL;
 	}
 	while ((c = token(0)) == LWORD)
-		XPput(args, yylval.cp);
+		XPput(args, pfksh_yylval.cp);
 	if (c != '\n' && c != ';')
 		syntaxerr((char *) 0);
 	if (XPsize(args) == 0) {
@@ -705,15 +705,15 @@ syntaxerr(what)
 			goto Again;
 		}
 		/* don't quote the EOF */
-		yyerror("syntax error: unexpected EOF\n");
+		pfksh_yyerror("syntax error: unexpected EOF\n");
 		/*NOTREACHED*/
 
 	case LWORD:
-		s = snptreef((char *) 0, 32, "%S", yylval.cp);
+		s = snptreef((char *) 0, 32, "%S", pfksh_yylval.cp);
 		break;
 
 	case REDIR:
-		s = snptreef(redir, sizeof(redir), "%R", yylval.iop);
+		s = snptreef(redir, sizeof(redir), "%R", pfksh_yylval.iop);
 		break;
 
 	default:
@@ -732,7 +732,7 @@ syntaxerr(what)
 			s = redir;
 		}
 	}
-	yyerror("syntax error: `%s' %s\n", s, what);
+	pfksh_yyerror("syntax error: `%s' %s\n", s, what);
 }
 
 static void
@@ -856,23 +856,23 @@ dbtestp_isa(te, meta)
 	else if (meta == TM_AND)
 		ret = c == LOGAND;
 	else if (meta == TM_NOT)
-		ret = uqword && strcmp(yylval.cp, dbtest_tokens[(int) TM_NOT]) == 0;
+		ret = uqword && strcmp(pfksh_yylval.cp, dbtest_tokens[(int) TM_NOT]) == 0;
 	else if (meta == TM_OPAREN)
 		ret = c == '(' /*)*/;
 	else if (meta == TM_CPAREN)
 		ret = c == /*(*/ ')';
 	else if (meta == TM_UNOP || meta == TM_BINOP) {
 		if (meta == TM_BINOP && c == REDIR
-		    && (yylval.iop->flag == IOREAD
-			|| yylval.iop->flag == IOWRITE))
+		    && (pfksh_yylval.iop->flag == IOREAD
+			|| pfksh_yylval.iop->flag == IOWRITE))
 		{
 			ret = 1;
-			save = wdcopy(yylval.iop->flag == IOREAD ?
+			save = wdcopy(pfksh_yylval.iop->flag == IOREAD ?
 				db_lthan : db_gthan, ATEMP);
 		} else if (uqword && (ret = (int) test_isop(te, meta, ident)))
-			save = yylval.cp;
+			save = pfksh_yylval.cp;
 	} else /* meta == TM_END */
-		ret = uqword && strcmp(yylval.cp, db_close) == 0;
+		ret = uqword && strcmp(pfksh_yylval.cp, db_close) == 0;
 	if (ret) {
 		ACCEPT;
 		if (meta != TM_END) {
@@ -896,7 +896,7 @@ dbtestp_getopnd(te, op, do_eval)
 		return (const char *) 0;
 
 	ACCEPT;
-	XPput(*te->pos.av, yylval.cp);
+	XPput(*te->pos.av, pfksh_yylval.cp);
 
 	return null;
 }
@@ -924,7 +924,7 @@ dbtestp_error(te, offset, msg)
 		REJECT;
 		/* Kludgy to say the least... */
 		symbol = LWORD;
-		yylval.cp = *(XPptrv(*te->pos.av) + XPsize(*te->pos.av)
+		pfksh_yylval.cp = *(XPptrv(*te->pos.av) + XPsize(*te->pos.av)
 				+ offset);
 	}
 	syntaxerr(msg);

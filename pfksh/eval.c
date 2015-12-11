@@ -68,11 +68,11 @@ substitute(cp, f)
 	s = pushs(SWSTR, ATEMP);
 	s->start = s->str = cp;
 	yysource = s;
-	if (yylex(ONEWORD) != LWORD)
+	if (pfksh_yylex(ONEWORD) != LWORD)
 		internal_errorf(1, "substitute");
 	yysource = sold;
 	afree(s, ATEMP);
-	return evalstr(yylval.cp, f);
+	return evalstr(pfksh_yylval.cp, f);
 }
 
 /*

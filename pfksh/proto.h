@@ -146,8 +146,8 @@ void 	j_notify	ARGS((void));
 pid_t	j_async		ARGS((void));
 int 	j_stopped_running	ARGS((void));
 /* lex.c */
-int 	yylex		ARGS((int cf));
-void 	yyerror		ARGS((const char *fmt, ...))
+int 	pfksh_yylex	ARGS((int cf));
+void 	pfksh_yyerror	ARGS((const char *fmt, ...))
 				GCC_FUNC_ATTR2(noreturn, format(printf, 1, 2));
 Source * pushs		ARGS((int type, Area *areap));
 void	set_prompt	ARGS((int to, Source *s));

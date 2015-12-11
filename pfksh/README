@@ -45,4 +45,7 @@ a great deal of cleanup.  Compilers and OSs have changed greatly since
 - tab-completion can take ESC-number to autocomplete from numbered
   expansions output.
 
+- most yy* (lex and yacc) vars and funcs replaced with pfksh_yy* to be
+  more pfkutils-crunch friendly.
+
 - and yes, KSH_VERSION says "PFK KSH v0.0.1" now... sorry.

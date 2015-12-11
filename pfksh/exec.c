@@ -1245,10 +1245,10 @@ herein(content, sub)
 		s = pushs(SSTRING, ATEMP);
 		s->start = s->str = content;
 		yysource = s;
-		if (yylex(ONEWORD) != LWORD)
+		if (pfksh_yylex(ONEWORD) != LWORD)
 			internal_errorf(1, "herein: yylex");
 		yysource = osource;
-		shf_puts(evalstr(yylval.cp, 0), shf);
+		shf_puts(evalstr(pfksh_yylval.cp, 0), shf);
 	} else
 		shf_puts(content, shf);
 

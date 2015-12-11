@@ -113,7 +113,7 @@ typedef union {
 #define	HERES	10		/* max << in line */
 
 EXTERN	Source *yysource;	/* yyparse/yylex source */
-EXTERN	YYSTYPE	yylval;		/* result from yylex */
+EXTERN	YYSTYPE	pfksh_yylval;	/* result from yylex */
 EXTERN	struct ioword *heres [HERES], **herep;
 EXTERN	char	ident [IDENT+1];
 

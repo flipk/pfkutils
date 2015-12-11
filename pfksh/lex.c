@@ -95,7 +95,7 @@ static int ignore_backslash_newline;
  */
 
 int
-yylex(cf)
+pfksh_yylex(cf)
 	int cf;
 {
 	Lex_state states[STATE_BSIZE], *statep;
@@ -609,7 +609,7 @@ Done:
 	Xcheck(ws, wp);
 	if (statep != &states[1])
 		/* XXX figure out what is missing */
-		yyerror("no closing quote\n");
+		pfksh_yyerror("no closing quote\n");
 
 	/* This done to avoid tests for SHEREDELIM wherever SBASE tested */
 	if (state == SHEREDELIM)
@@ -654,7 +654,7 @@ Done:
 		iop->delim = (char *) 0;
 		iop->heredoc = (char *) 0;
 		Xfree(ws, wp);	/* free word */
-		yylval.iop = iop;
+		pfksh_yylval.iop = iop;
 		return REDIR;
 	}
 
@@ -699,13 +699,13 @@ Done:
 	}
 
 	*wp++ = EOS;		/* terminate word */
-	yylval.cp = Xclose(ws, wp);
+	pfksh_yylval.cp = Xclose(ws, wp);
 	if (state == SWORD || state == SLETPAREN)	/* ONEWORD? */
 		return LWORD;
 	ungetsc(c);		/* unget terminator */
 
 	/* copy word to unprefixed string ident */
-	for (sp = yylval.cp, dp = ident; dp < ident+IDENT && (c = *sp++) == CHAR; )
+	for (sp = pfksh_yylval.cp, dp = ident; dp < ident+IDENT && (c = *sp++) == CHAR; )
 		*dp++ = *sp++;
 	/* Make sure the ident array stays '\0' paded */
 	memset(dp, 0, (ident+IDENT) - dp + 1);
@@ -720,7 +720,7 @@ Done:
 		if ((cf & KEYWORD) && (p = tsearch(&keywords, ident, h))
 		    && (!(cf & ESACONLY) || p->val.i == ESAC || p->val.i == '}'))
 		{
-			afree(yylval.cp, ATEMP);
+			afree(pfksh_yylval.cp, ATEMP);
 			return p->val.i;
 		}
 		if ((cf & ALIAS) && (p = tsearch(&aliases, ident, h))
@@ -737,7 +737,7 @@ Done:
 			s->u.tblp = p;
 			s->next = yysource;
 			yysource = s;
-			afree(yylval.cp, ATEMP);
+			afree(pfksh_yylval.cp, ATEMP);
 			goto Again;
 		}
 	}
@@ -804,7 +804,7 @@ readhere(iop)
 		ungetsc(c);
 		while ((c = getsc()) != '\n') {
 			if (c == 0)
-				yyerror("here document `%s' unclosed\n", eof);
+				pfksh_yyerror("here document `%s' unclosed\n", eof);
 			Xcheck(xs, xp);
 			Xput(xs, xp, c);
 		}
@@ -819,7 +819,7 @@ readhere(iop)
 }
 
 void
-yyerror(const char *fmt, ...)
+pfksh_yyerror(const char *fmt, ...)
 {
 	va_list va;
 
@@ -1168,7 +1168,7 @@ get_brace_var(wsp, wp)
 					char *tmp, *p;
 
 					if (!arraysub(&tmp))
-						yyerror("missing ]\n");
+						pfksh_yyerror("missing ]\n");
 					*wp++ = c;
 					for (p = tmp; *p; ) {
 						Xcheck(*wsp, wp);

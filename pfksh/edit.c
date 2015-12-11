@@ -494,14 +494,14 @@ x_file_glob(flags, str, slen, wordsp)
 	s = pushs(SWSTR, ATEMP);
 	s->start = s->str = toglob;
 	yysource = s;
-	if (yylex(ONEWORD) != LWORD) {
+	if (pfksh_yylex(ONEWORD) != LWORD) {
 		yysource = sold;
 		internal_errorf(0, "fileglob: substitute error");
 		return 0;
 	}
 	yysource = sold;
 	XPinit(w, 32);
-	expand(yylval.cp, &w, DOGLOB|DOTILDE|DOMARKDIRS);
+	expand(pfksh_yylval.cp, &w, DOGLOB|DOTILDE|DOMARKDIRS);
 	XPput(w, NULL);
 	words = (char **) XPclose(w);
 
