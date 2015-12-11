@@ -44,7 +44,7 @@ extern char * baseclassC;
 static int parse_args( int argc, char ** argv, struct args * );
 
 int
-pkstgen_main( int argc, char ** argv )
+states_main( int argc, char ** argv )
 {
     struct args args;
     int fd;

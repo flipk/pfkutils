@@ -25,15 +25,9 @@
 
 #include "wordentry.h"
 #include "parse_actions.h"
-#include "tokens.h"
+#include "parser.h"
 
-#if defined(FREEBSD) || defined(CYGWIN32) || defined(LINUX)
 #define myinput input
-#endif
-
-#if defined(SOLARIS)
-#define myinput yyinput
-#endif
 
 char * strvec( char * w, int len );
 

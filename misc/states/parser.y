@@ -22,6 +22,7 @@
 %{
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "wordentry.h"
 #include "parse_actions.h"
 #include "machine.h"

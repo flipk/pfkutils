@@ -8,6 +8,7 @@
 #define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
 #define PFK_BUILD_PFKSCRIPT  @PFK_BUILD_pfkscript@
 #define PFK_BUILD_XRANDR     @PFK_BUILD_xrandr@
+#define PFK_BUILD_STATES     @PFK_BUILD_states@
 
 #if PFK_BUILD_PFKBAK
 PROG(0,pfkbak,"Incremental and full-history backup tool")
@@ -42,6 +43,10 @@ PROG(1,sudo,"do a command as the superuser")
 PROG(0,ampfk,"pfk build utils")
 #endif
 
+#if PFK_BUILD_STATES
+PROG(0,states,"state machine generator")
+#endif
+
 PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
 PROG(0,deduplifier,"find identical files and link them")
 PROG(0,he,"hexedit")
@@ -64,8 +69,4 @@ PROG(0,bglog,"background logger")
 
 #if PFK_BUILD_XRANDR
 PROG(0,pfkSessionXrandr,"xrandr event monitor")
-#endif
-
-#if 0 // TODO
-PROG(0,pkstgen,"phil knaack's state machine generator")
 #endif
