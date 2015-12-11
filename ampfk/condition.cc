@@ -7,7 +7,7 @@
 
 using namespace std;
 
-extern int yylineno;
+extern int ampfk_yylineno;
 
 // match[1] is for the "!"
 // match[2] is for the word
@@ -63,7 +63,7 @@ ConditionSet :: check(const char * text, int len)
     cc = regexec(&condition_regex, str, 8, matches, 0);
     if (cc == REG_NOMATCH)
     {
-        cerr << "syntax error on 'if' statement line " << (yylineno-1) << endl;
+        cerr << "syntax error on 'if' statement line " << (ampfk_yylineno-1) << endl;
         exit(1);
     }
     else
