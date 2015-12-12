@@ -14,8 +14,16 @@ all:
 	@echo or do 'make known_config' where known_config is
 	@echo one of: $(KNOWN_CONFIGS)
 
-$(KNOWN_CONFIGS):
-	@+make CONFIG=$@
+define PER_CONFIG_RULES
+$(config):
+	@+make CONFIG=$(config)
+
+$(config)-cscope:
+	@make CONFIG=$(config) cscope
+
+endef
+
+$(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
 
 clean:
 	rm -rf obj.*
@@ -53,7 +61,8 @@ all:
 	@+make preprocs
 	@+make deps
 	@+make PFKUTILS_INCLUDE_DEPS=1 _all
-#	@+cd contrib && make
+	@+cd contrib && make \
+		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
 include config/$(CONFIG)
 include config/always
@@ -121,6 +130,11 @@ CXXDEPS += $($(target)_CXXDEPS)
 
 CGENDEPS += $($(target)_YGENDEPS) $($(target)_LGENDEPS)
 CXXGENDEPS += $($(target)_YYGENDEPS) $($(target)_LLGENDEPS)
+
+# for cscope
+HDRS += $($(target)_HDRS)
+CSRCS += $($(target)_CSRCS) $($(target)_YGENSRCS) $($(target)_LGENSRCS)
+CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
 $($(target)_COBJS) : $(OBJDIR)/%.o: %.c
 	@echo compiling $$<
@@ -239,6 +253,15 @@ endif
 ##############################################
 
 _all: $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$($(target)_TARGET))
+
+cscope.files: Makefile config/always config/$(CONFIG)
+	@echo making cscope.files
+	@rm -f cscope.files ; touch cscope.files
+	@$(foreach f,$(HDRS) $(CSRCS) $(CXXSRCS),echo $(f) >> cscope.files ;)
+
+cscope: cscope.files $(HDRS) $(CSRCS) $(CXXSRCS)
+	@echo making cscope.out
+	@cscope -bk
 
 install:
 

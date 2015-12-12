@@ -56,7 +56,7 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfksh scripts syslog misc/states
+	pfkscript pfksh scripts syslog misc/states contrib
 
 objdirs:
 	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
@@ -374,7 +374,7 @@ ifeq ($(PFK_BUILD_xrandr),1)
 pfkutils_CXXSRCS += main/sessionXrandr.cc 
 endif
 pfkutils_HDRS = \
-	main/programs.h.in
+	$(OBJDIR)/main/programs.h
 pfkutils_LIBS = -lncurses -lz -lX11
 ifeq ($(PFK_BUILD_xrandr),1)
 pfkutils_LIBS += -lXrandr
