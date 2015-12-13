@@ -61,7 +61,7 @@ all:
 	@+make preprocs
 	@+make deps
 	@+make PFKUTILS_INCLUDE_DEPS=1 _all
-	@+cd contrib && make \
+	@+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
 include config/$(CONFIG)

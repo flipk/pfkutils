@@ -1,5 +1,5 @@
 
-#include "pfkutils_config2.h"
+#include "pfkutils_config.h"
 
 #include <iostream>
 #include <sstream>

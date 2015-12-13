@@ -29,7 +29,7 @@
 #define _GNU_SOURCE
 
 #ifdef HAVE_CONFIG_H
-# include <pfkutils_config.h>
+# include "pfkutils_config.h"
 #endif
 
 #ifndef PARAMS

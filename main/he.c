@@ -21,7 +21,7 @@
 
 #define _LARGEFILE64_SOURCE
 
-#include <pfkutils_config2.h>
+#include "pfkutils_config.h"
 #ifndef _GNU_SOURCE 
 #define _GNU_SOURCE
 #endif

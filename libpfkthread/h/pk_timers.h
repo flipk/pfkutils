@@ -30,7 +30,7 @@
 #include "dll2.h"
 #include "pk_messages.h"
 
-#include "pfkutils_config2.h"
+#include "pfkutils_config.h"
 #if HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif

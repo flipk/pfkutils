@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "pfkutils_config2.h"
+#include "pfkutils_config.h"
 
 #include "Btree.h"
 #include "params.h"

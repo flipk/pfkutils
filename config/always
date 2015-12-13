@@ -27,20 +27,21 @@ CONFIG_VALUES= \
 	HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP \
 	HAVE_PTHREAD_CONDATTR_SETPSHARED
 
-# this is named with a "2" to catch all those places
-# i haven't converted yet. when i'm done converting,
-# this should change back to pfkutils_config.h.
-CONFIG_H= $(OBJDIR)/pfkutils_config2.h
+CONFIG_H= $(OBJDIR)/pfkutils_config.h
 
 define PFK_CONFIG_LINE
-echo \#define $(value) $(PFK_CONFIG_$(value)) ;
+	if [ "x$(PFK_CONFIG_$(value))" == "x" ] ; then \
+	   echo 'plz define PFK_CONFIG_$(value) in config/$(CONFIG)' ; \
+	   exit 1 ; \
+	elif [ "$(PFK_CONFIG_$(value))" != "0" ] ; then \
+	   echo \#define $(value) $(PFK_CONFIG_$(value)) >> $(CONFIG_H).tmp ; \
+	fi ; 
 endef
 
 $(CONFIG_H): Makefile config/always config/$(CONFIG)
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils\" >> $(CONFIG_H).tmp
-	$(Q)($(foreach value,$(CONFIG_VALUES), \
-		$(PFK_CONFIG_LINE))) >> $(CONFIG_H).tmp
+	$(Q)$(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))
 	$(Q)if [ -f $(CONFIG_H) ] ; then \
 		if ! cmp -s $(CONFIG_H).tmp $(CONFIG_H) ; then \
 			echo making $(CONFIG_H) ; \
@@ -81,6 +82,11 @@ PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
 define PREPROC_SUBST
 $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
+	@$(foreach sw,$(BUILD_SWITCHES),\
+		if [ "x$(PFK_BUILD_$(sw))" == "x" ] ; then \
+			echo 'plz set PFK_BUILD_$(sw) in config/$(CONFIG)' ; \
+			exit 1 ; \
+		fi ; ) true
 	$(Q)sed $(foreach v,$(SUBST_VARS),-e s,@$(v)@,$($(v)),) \
 		< $(file).in > $(OBJDIR)/$(file).tmp
 	$(Q)if ! [ -f $(OBJDIR)/$(file) ] ; then \
@@ -462,8 +468,7 @@ endef
 
 $(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
 
-# TODO : contrib/cscope-15.7a/
-# TODO : contrib/ctwm-3.8a/
+# TODO : make install
 
 # test cases :
 # - touch a .c file and see if it depends and makes

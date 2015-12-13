@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pfkutils_config2.h"
+#include "pfkutils_config.h"
 
 int
 pfkstat_main( int argc, char ** argv )
