@@ -3,16 +3,25 @@
 # tab-width: 8
 # End:
 
-PFK_BUILD_pfkbak=1
+PFK_BUILD_pfkbak=0
 PFK_BUILD_pfksh=1
-PFK_BUILD_syslog=1
-PFK_BUILD_checksize=1
+PFK_BUILD_syslog=0
+PFK_BUILD_checksize=0
 PFK_BUILD_treescan=1
 PFK_BUILD_sudo=0
 PFK_BUILD_ampfk=1
 PFK_BUILD_pfkscript=1
+PFK_BUILD_sessionmgr=1
 PFK_BUILD_xrandr=1
-PFK_BUILD_states=1
+PFK_BUILD_states=0
+PFK_BUILD_bglog=0
+PFK_BUILD_he=1
+PFK_BUILD_libpfkfb=1
+PFK_BUILD_diskloader=0
+PFK_BUILD_pfkstat=0
+PFK_BUILD_deduplifier=1
+PFK_BUILD_libwas=0
+PFK_BUILD_libpfkthread=0
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
 PFK_CONFIG_HAVE_NCURSES_H= 0
