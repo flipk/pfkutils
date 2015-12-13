@@ -1,72 +1,83 @@
 
-#define PFK_BUILD_PFKBAK     @PFK_BUILD_pfkbak@
-#define PFK_BUILD_PFKSH      @PFK_BUILD_pfksh@
-#define PFK_BUILD_SYSLOG     @PFK_BUILD_syslog@
-#define PFK_BUILD_CHECKSIZE  @PFK_BUILD_checksize@
-#define PFK_BUILD_TREESCAN   @PFK_BUILD_treescan@
-#define PFK_BUILD_SUDO       @PFK_BUILD_sudo@
-#define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
-#define PFK_BUILD_PFKSCRIPT  @PFK_BUILD_pfkscript@
-#define PFK_BUILD_XRANDR     @PFK_BUILD_xrandr@
-#define PFK_BUILD_STATES     @PFK_BUILD_states@
-
-#if PFK_BUILD_PFKBAK
+#if @PFK_BUILD_pfkbak@
 PROG(0,pfkbak,"Incremental and full-history backup tool")
 #endif
 
-#if PFK_BUILD_PFKSH
+#if @PFK_BUILD_pfksh@
 PROG(0,pfksh,"public domain pdksh-based shell")
 #endif
 
-#if PFK_BUILD_PFKSCRIPT
-PROG(0,pfkscript,"my script replacement that does more stuff")
-#endif
-
-#if PFK_BUILD_SYSLOG
+#if @PFK_BUILD_syslog@
 PROG(0,syslogd,"syslogd server with regex patterns")
 PROG(0,postprocess_syslog,"syslog postprocessor with regex patterns")
 #endif
 
-#if PFK_BUILD_CHECKSIZE
+#if @PFK_BUILD_checksize@
 PROG(0,checksize,"check size of hard disk partition")
 #endif
 
-#if PFK_BUILD_TREESCAN
+#if @PFK_BUILD_treescan@
 PROG(0,treescan,"scan a tree producing tree info")
 #endif
 
-#if PFK_BUILD_SUDO
+#if @PFK_BUILD_sudo@
 PROG(1,sudo,"do a command as the superuser")
 #endif
 
-#if PFK_BUILD_AMPFK
+#if @PFK_BUILD_ampfk@
 PROG(0,ampfk,"pfk build utils")
 #endif
 
-#if PFK_BUILD_STATES
+#if @PFK_BUILD_pfkscript@
+PROG(0,pfkscript,"my script replacement that does more stuff")
+#endif
+
+#if @PFK_BUILD_sessionmgr@
+PROG(0,pfkSessionMgr,"session manager")
+#endif
+
+#if @PFK_BUILD_xrandr@
+PROG(0,pfkSessionXrandr,"xrandr event monitor")
+#endif
+
+#if @PFK_BUILD_states@
 PROG(0,states,"state machine generator")
 #endif
 
-PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
-PROG(0,deduplifier,"find identical files and link them")
+#if @PFK_BUILD_bglog@
+PROG(0,bglog,"background logger")
+#endif
+
+#if @PFK_BUILD_he@
 PROG(0,he,"hexedit")
+#endif
+
+#if @PFK_BUILD_libpfkfb@
+PROG(0,fbdump,"FileBlock dumper")
+PROG(0,fbcompact,"FileBlock compacter")
+PROG(0,btdump,"FileBlock Btree dumper")
+#endif
+
+#if @PFK_BUILD_diskloader@
+PROG(0,diskloader,"exercise a filesystem")
+#endif
+
+#if @PFK_BUILD_pfkstat@
+PROG(0,pfkstat,"My own stat/ls command")
+#endif
+
+#if @PFK_BUILD_deduplifier@
+PROG(0,deduplifier,"find identical files and link them")
+#endif
+
+// always built
 PROG(0,m,"hex/dec/bin mathematics on command line")
 PROG(0,random_hex,"generate a random hex number")
 PROG(0,random_text,"generate a random text string")
-PROG(0,rmstar,"recursive rm -rf but verbosely")
-PROG(0,fmtsdiff,"format sdiff output")
 PROG(0,genpw,"generate random passwords")
 PROG(0,xtermbar,"change title in the xterm")
 PROG(0,waitpid,"wait for some process ids to exit")
 PROG(0,i2,"internet pipe fitting mark II")
-PROG(0,pfkstat,"My own stat/ls command")
-PROG(0,fbdump,"FileBlock dumper")
-PROG(0,fbcompact,"FileBlock compacter")
-PROG(0,btdump,"FileBlock Btree dumper")
-PROG(0,pfkSessionMgr,"session manager")
-PROG(0,diskloader,"exercise a filesystem")
-PROG(0,bglog,"background logger")
-
-#if PFK_BUILD_XRANDR
-PROG(0,pfkSessionXrandr,"xrandr event monitor")
-#endif
+PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
+PROG(0,rmstar,"recursive rm -rf but verbosely")
+PROG(0,fmtsdiff,"format sdiff output")
