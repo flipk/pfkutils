@@ -5,16 +5,25 @@ PFK_USER_ID := `id -u`
 PFK_GROUP_ID := `id -g`
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
-prefix := $(HOME)/pfk
 ENVIRON := $(CONFIG)
-ETCDIR := $(prefix)/etc
 KSHRC_LOCAL := kshrc.local.$(CONFIG)
 DOT_FILES := "Xresources ctwmrc twmrc hexdump_format screenrc xinitrc xsession vnc-xstartup"
 ELISP_FILES := "emacs-lone.el emacs.el go-mode.el"
-SCRIPTS_DIR := $(prefix)/bin
-PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 SHELLS= /bin/bash /bin/ksh /bin/sh
 SHELL_PATH := $(firstword $(wildcard $(SHELLS)))
+
+
+# install info
+prefix := $(HOME)/pfk_test
+ETCDIR := $(prefix)/etc
+SCRIPTS_DIR := $(prefix)/bin
+PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
+PFK_LIB_DIR := $(prefix)/$(PFKARCH)/lib
+PFK_INC_DIR := $(prefix)/include
+
+installdirs:
+	@mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) \
+		$(PFK_BIN_DIR) $(PFK_LIB_DIR) $(PFK_INC_DIR)
 
 CONFIG_VALUES= \
 	HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H HAVE_DIRENT_H \
@@ -121,6 +130,16 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/msgr.cc libpfkutil/prioWorkQ.cc \
 	libpfkutil/sha1.cc libpfkutil/shmempipe.cc \
 	libpfkutil/thread_slinger.cc 
+libpfkutil_INSTALL_HDRS = \
+	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
+	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
+	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
+	libpfkutil/d3des.h libpfkutil/d3des_orig.h libpfkutil/dll3.h \
+	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
+	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
+	libpfkutil/msgr.h libpfkutil/myTimeval.h libpfkutil/pk-md5.h \
+	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
+	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h libpfkutil/types.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -148,6 +167,10 @@ libpfkfb_CXXSRCS = \
 	libpfkfb/PageCache.cc libpfkfb/PageIO.cc \
 	libpfkfb/PageIOFileDescriptor.cc libpfkfb/PageIONetworkTCPServer.cc \
 	libpfkfb/documentation.cc
+libpfkfb_INSTALL_HDRS = \
+	libpfkfb/BlockCache.h libpfkfb/Btree.h libpfkfb/BtreeDbClasses.h \
+	libpfkfb/FileBlockLocal.h libpfkfb/FileBlock_iface.h \
+	libpfkfb/PageCache.h libpfkfb/PageIO.h
 libpfkfb_HDRS = \
 	libpfkfb/BlockCache.h libpfkfb/BlockCache_internal.h \
 	libpfkfb/Btree.h libpfkfb/BtreeDbClasses.h \
@@ -283,6 +306,11 @@ libWebAppServer_CXXSRCS = \
 	libWebAppServer/WebSocketClient.cc \
 	libWebAppServer/WebSocketConnection.cc \
 	libWebAppServer/serverPorts.cc
+libWebAppServer_INSTALL_HDRS = \
+	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
+	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
+	libWebAppServer/WebAppServerInternal.h \
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
 libWebAppServer_HDRS = \
 	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
 	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
@@ -294,21 +322,29 @@ ifeq ($(PFK_BUILD_libpfkthread),1)
 LIB_TARGETS += libpfkthread
 libpfkthread_TARGET = $(OBJDIR)/libpfkthread.a
 libpfkthread_INCS = \
-	-Ilibpfkthread/h -Ilibpfkthread/int -Ilibpfkdll2 -Ilibpfkutil
+	-Ilibpfkthread -Ilibpfkthread/int -Ilibpfkdll2 -Ilibpfkutil
 libpfkthread_CXXSRCS = \
 	libpfkthread/pk_filedescs.cc libpfkthread/pk_filedescs_thread.cc \
 	libpfkthread/pk_messages.cc libpfkthread/pk_messages_ext.cc \
 	libpfkthread/pk_messages_ext_link_tcp.cc \
 	libpfkthread/pk_semaphores.cc libpfkthread/pk_threads.cc \
 	libpfkthread/pk_timers.cc libpfkthread/stringhash.cc
+libpfkthread_INSTALL_HDRS = \
+	libpfkthread/pk_semaphores.h \
+	libpfkthread/pk_messages.h \
+	libpfkthread/pk_filedescs.h \
+	libpfkthread/pk_messages_ext.h \
+	libpfkthread/pk_timers.h \
+	libpfkthread/pk_threads.h \
+	libpfkthread/stringhash.h
 libpfkthread_HDRS = \
-	libpfkthread/h/pk_semaphores.h \
-	libpfkthread/h/pk_messages.h \
-	libpfkthread/h/pk_filedescs.h \
-	libpfkthread/h/pk_messages_ext.h \
-	libpfkthread/h/pk_timers.h \
-	libpfkthread/h/pk_threads.h \
-	libpfkthread/h/stringhash.h \
+	libpfkthread/pk_semaphores.h \
+	libpfkthread/pk_messages.h \
+	libpfkthread/pk_filedescs.h \
+	libpfkthread/pk_messages_ext.h \
+	libpfkthread/pk_timers.h \
+	libpfkthread/pk_threads.h \
+	libpfkthread/stringhash.h \
 	libpfkthread/int/pk_filedescs_internal.h \
 	libpfkthread/int/pk_messages_internal.h \
 	libpfkthread/int/pk_threads_internal.h \
@@ -419,6 +455,12 @@ pfkutils_DEPLIBS = \
 	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET)
+pfkutils_INSTALL = 1
+pfkutils_POSTINSTALL = pfkutils-post-install
+
+pfkutils-post-install:
+	@echo setting up pfkutils symlinks
+	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -dellinks && ./pfkutils -makelinks
 
 LIBPFKUTIL_TEST_TARGETS = \
 	HSM_test hsmthread_test dll3_test dll3_btree_test \
@@ -496,8 +538,20 @@ endef
 $(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
 endif
 
-# TODO : cscope and ctwm should use custom makefiles
+
+POSTINSTALL = environ_install scripts_install
+
+environ_install:
+	@echo installing environ
+
+scripts_install:
+	@echo installing scripts
+
+
 # TODO : make install
+# TODO : cscope and ctwm should use custom makefiles
+# TODO : update all doxygen
+# TODO : proxyTcpServer
 
 # test cases :
 # - touch a .c file and see if it depends and makes

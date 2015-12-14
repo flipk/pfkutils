@@ -21,6 +21,12 @@ $(config):
 $(config)-cscope:
 	@make CONFIG=$(config) cscope
 
+$(config)-install:
+	@make CONFIG=$(config) install
+
+$(config)-clean:
+	@make CONFIG=$(config) clean
+
 endef
 
 $(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
@@ -60,7 +66,7 @@ all:
 	@+make objdirs
 	@+make preprocs
 	@+make deps
-	@+make PFKUTILS_INCLUDE_DEPS=1 _all
+	@+make __INCLUDE_DEPS=1 _all
 	@+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
@@ -216,6 +222,14 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_EXTRAOBJS)
 	$(Q)$(RANLIB) $($(target)_TARGET)
 
+$(target)_install: $($(target)_TARGET)
+	$(Q)set -e ; if [ "x$($(target)_INSTALL_HDRS)" != "x" ] ; then \
+		echo installing $($(target)_TARGET) and headers ; \
+		cp $($(target)_TARGET) $(PFK_LIB_DIR) ; \
+		tar cf - $($(target)_INSTALL_HDRS) | \
+			tar -C $(PFK_INC_DIR) -xvf - ; \
+	fi
+
 endef
 
 define PROG_TARGET_RULES
@@ -232,6 +246,12 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_LIBS) $($(target)_DEPLIBS) \
 		$($(target)_EXTRAOBJS)
 
+$(target)_install: $($(target)_TARGET)
+	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
+		echo installing $($(target)_TARGET) ; \
+		cp $($(target)_TARGET) $(PFK_BIN_DIR) ; \
+	fi
+
 endef
 
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_RULES)))
@@ -246,8 +266,10 @@ preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
 
 deps: $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
 
-ifeq ($(PFKUTILS_INCLUDE_DEPS),1)
+ifeq ($(__INCLUDE_DEPS),1)
 include $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
+else
+-include $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
 endif
 
 ##############################################
@@ -263,7 +285,10 @@ cscope: cscope.files $(HDRS) $(CSRCS) $(CXXSRCS)
 	@echo making cscope.out
 	@cscope -bk
 
-install:
+install: installdirs $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),\
+		$(target)_install) $(foreach target,$(LIB_TARGETS) \
+		$(PROG_TARGETS),$($(target)_POSTINSTALL)) \
+		$(POSTINSTALL)
 
 clean:
 	rm -rf $(OBJDIR)
