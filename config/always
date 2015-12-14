@@ -22,7 +22,7 @@ PFK_LIB_DIR := $(prefix)/$(PFKARCH)/lib
 PFK_INC_DIR := $(prefix)/include
 
 installdirs:
-	@mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) \
+	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) \
 		$(PFK_BIN_DIR) $(PFK_LIB_DIR) $(PFK_INC_DIR)
 
 CONFIG_VALUES= \
@@ -519,6 +519,9 @@ libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 endef
 
 $(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
+# TODO PROG_TARGETS += wsProxyServer wsProxyClient
+
 endif
 
 ifeq ($(PFK_BUILD_libpfkthread),1)
@@ -538,20 +541,26 @@ endef
 $(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
 endif
 
+POSTALL = post_all # TODO doxygen
 
-POSTINSTALL = environ_install scripts_install
+post_all:
+	@+make -C contrib \
+		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
-environ_install:
+POSTINSTALL = environ_install scripts_install contrib_install
+
+environ_install: # TODO
 	@echo installing environ
 
-scripts_install:
+scripts_install: # TODO
 	@echo installing scripts
 
+contrib_install:
+	@$(foreach prog,$(CONTRIB_PROGS),\
+	    make -C contrib OBJDIR=$(PWD)/$(OBJDIR)/contrib \
+		PFK_BIN_DIR=$(PFK_BIN_DIR) $(prog)-install &&) true
 
-# TODO : make install
 # TODO : cscope and ctwm should use custom makefiles
-# TODO : update all doxygen
-# TODO : proxyTcpServer
 
 # test cases :
 # - touch a .c file and see if it depends and makes

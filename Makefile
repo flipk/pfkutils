@@ -3,11 +3,19 @@
 # tab-width: 8
 # End:
 
+ifeq ($(VERBOSE),1)
+Q=
+else
+Q=@
+endif
+
+export VERBOSE
+
 ifeq ($(CONFIG),)
 
 ##############################################
 
-KNOWN_CONFIGS= blade adler bohr droid sunlogin
+KNOWN_CONFIGS= blade adler droid
 
 all:
 	@echo please specify CONFIG= from config/ subdir
@@ -16,16 +24,16 @@ all:
 
 define PER_CONFIG_RULES
 $(config):
-	@+make CONFIG=$(config)
+	$(Q)+make CONFIG=$(config)
 
 $(config)-cscope:
-	@make CONFIG=$(config) cscope
+	$(Q)make CONFIG=$(config) cscope
 
 $(config)-install:
-	@make CONFIG=$(config) install
+	$(Q)make CONFIG=$(config) install
 
 $(config)-clean:
-	@make CONFIG=$(config) clean
+	$(Q)make CONFIG=$(config) clean
 
 endef
 
@@ -54,21 +62,14 @@ PREPROC_TARGETS=
 LIB_TARGETS=
 PROG_TARGETS= 
 
-ifeq ($(VERBOSE),1)
-Q=
-else
-Q=@
-endif
-
 ##############################################
 
 all:
-	@+make objdirs
-	@+make preprocs
-	@+make deps
-	@+make __INCLUDE_DEPS=1 _all
-	@+make -C contrib \
-		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
+	echo SHIT
+	$(Q)+make objdirs
+	$(Q)+make preprocs
+	$(Q)+make deps
+	$(Q)+make __INCLUDE_DEPS=1 _all
 
 include config/$(CONFIG)
 include config/always
@@ -268,13 +269,12 @@ deps: $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
 
 ifeq ($(__INCLUDE_DEPS),1)
 include $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
-else
--include $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
 endif
 
 ##############################################
 
-_all: $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$($(target)_TARGET))
+_all: $(foreach target,$(LIB_TARGETS) \
+	$(PROG_TARGETS),$($(target)_TARGET)) $(POSTALL)
 
 cscope.files: Makefile config/always config/$(CONFIG)
 	@echo making cscope.files

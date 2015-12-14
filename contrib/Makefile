@@ -23,6 +23,10 @@ cscope:
 	fi
 	@+make -C $(OBJDIR)/$(CSCOPE_DIR)
 
+cscope-install:
+	@echo installing cscope to $(PFK_BIN_DIR)
+	@cp $(OBJDIR)/$(CSCOPE_DIR)/src/cscope $(PFK_BIN_DIR)
+
 CTWM_DIR= ctwm-3.8a
 
 # no "+" on this make rule because dependencies
@@ -54,5 +58,7 @@ ctwm:
 	fi
 	@make -C $(OBJDIR)/$(CTWM_DIR)
 
-
+ctwm-install:
+	@echo installing ctwm to $(PFK_BIN_DIR)
+	@cp $(OBJDIR)/$(CTWM_DIR)/ctwm $(PFK_BIN_DIR)
 
