@@ -250,8 +250,13 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
 		echo installing $($(target)_TARGET) ; \
-		rm -f $(PFK_BIN_DIR)/$(notdir $($(target)_TARGET)) ; \
-		cp $($(target)_TARGET) $(PFK_BIN_DIR) ; \
+		FNAME="$(notdir $($(target)_TARGET))" ; \
+		echo FNAME is $$$$FNAME ; \
+		if [ -f $(PFK_BIN_DIR)/$$$$FNAME ] ; then \
+			mv -f $(PFK_BIN_DIR)/$$$$FNAME \
+				$(PFK_BIN_DIR)/$$$$FNAME.old ;\
+		fi ; \
+		cp $($(target)_TARGET) $(PFK_BIN_DIR)/$$$$FNAME ; \
 	fi
 
 endef

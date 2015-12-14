@@ -475,7 +475,21 @@ pfkutils_POSTINSTALL = pfkutils-post-install
 
 pfkutils-post-install:
 	@echo setting up pfkutils symlinks
-	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -dellinks && ./pfkutils -makelinks
+	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -dellinks
+ifeq ($(PFK_BUILD_sudo),1)
+	$(Q)cd $(PFK_BIN_DIR) && \
+		if [ -f pfkutils.old ] ; then \
+			ln -s pfkutils.old sudo ; \
+			./sudo chown root pfkutils ; \
+			./sudo chmod 4755 pfkutils ; \
+		fi ; true
+	@echo ""
+	@echo "*** also, if not already done, perform the following as root:"
+	@echo "     chown root $(PFK_BIN_DIR)/pfkutils"
+	@echo "     chmod 4755 $(PFK_BIN_DIR)/pfkutils"
+	@echo ""
+endif
+	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -makelinks
 
 LIBPFKUTIL_TEST_TARGETS = \
 	HSM_test hsmthread_test dll3_test dll3_btree_test \
