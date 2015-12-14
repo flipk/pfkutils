@@ -49,6 +49,7 @@ else # $CONFIG
 ##############################################
 
 TOP= $(PWD)
+PFKARCH := $(shell ./scripts/architecture)
 OBJDIR= obj.$(PFKARCH).$(CONFIG)
 
 CC=gcc
@@ -65,7 +66,6 @@ PROG_TARGETS=
 ##############################################
 
 all:
-	echo SHIT
 	$(Q)+make objdirs
 	$(Q)+make preprocs
 	$(Q)+make deps
@@ -89,7 +89,7 @@ echoconfig:
 
 ##############################################
 
-# TODO: add .y and .l support some day
+# TODO add .proto support
 
 define TARGET_VARS
 $(target)_COBJS    = $(patsubst %.c,  $(OBJDIR)/%.o,    $($(target)_CSRCS))
@@ -228,7 +228,7 @@ $(target)_install: $($(target)_TARGET)
 		echo installing $($(target)_TARGET) and headers ; \
 		cp $($(target)_TARGET) $(PFK_LIB_DIR) ; \
 		tar cf - $($(target)_INSTALL_HDRS) | \
-			tar -C $(PFK_INC_DIR) -xvf - ; \
+			tar -C $(PFK_INC_DIR) -xf - ; \
 	fi
 
 endef
@@ -250,6 +250,7 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
 		echo installing $($(target)_TARGET) ; \
+		rm -f $(PFK_BIN_DIR)/$(notdir $($(target)_TARGET)) ; \
 		cp $($(target)_TARGET) $(PFK_BIN_DIR) ; \
 	fi
 

@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-12-06.17:19:13
+#      Last update: 2015-12-13.21:35:07
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -35,6 +35,7 @@
 #
 
 USER=@PFK_USER_NAME@
+PFKUTILS_PREFIX=@prefix@
 REALUSER=`id -u -n`
 HOME=/home/$USER
 ENV=$HOME/.kshrc
@@ -51,7 +52,7 @@ if [ ! -d $TMP ] ; then
     chmod 700 $TMP
 fi
 
-export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER
+export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER PFKUTILS_PREFIX
  
 if [ -f $HOME/.verbose ] ; then
        __verbose() {
@@ -300,7 +301,7 @@ alias cdc='cd $HOME;clear'
 alias pfkman='MANPATH=`find $HOME/pfk -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
-alias gitdiff='GIT_EXTERNAL_DIFF=$HOME/pfk/bin/git-diff-helper.sh git --no-pager diff'
+alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
 
 #FUNCTIONS: make_file_part emacsn x xsd xsd2 d sd sd2 xless ediff merge3 merge2 sendtree gettree aesenc aesdec
 

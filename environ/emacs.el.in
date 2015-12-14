@@ -29,8 +29,7 @@
  '(verilog-auto-newline nil)
  '(verilog-indent-begin-after-if nil))
 
-(load-file (concat "/home/" (getenv "USER")
-		   "/pfk/etc/go-mode.el"))
+(load-file "@prefix@/etc/emacs/go-mode.el")
 
 (setq mouse-buffer-menu-mode-groups
       '((".*" . "Buffers")))
@@ -258,18 +257,15 @@ nEnter c-mode-tabwidth value (4 or 8):")
   (interactive)
   (call-process "pfkterm" nil 0 nil
 		"-g" "185x70+20+20"
-		"-e" 
-		(concat "/home/" (getenv "USER")
-			"/pfk/bin/myemacs-cscope-helper")))
+		"-e" "@prefix@/bin/myemacs-cscope-helper"))
 
 (defun cscope-rebuild ()
   "rebuild cscope database"
   (interactive)
   (call-process "pfkterm" nil 0 nil
 		"-g" "80x10+200+200"
-		"-e" 
-		(concat "/home/" (getenv "USER")
-			"/pfk/bin/myemacs-cscope-rebuild-helper")))
+		"-e"
+		"@prefix@/bin/myemacs-cscope-rebuild-helper"))
 
 (defun clearcase-checkout-file ()
   "checkout a clearcase file"
@@ -281,9 +277,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 	  (message "About to checkout file %s..." fname)
 	  (call-process "pfkterm" nil 0 nil
 			"-g" "80x10+200+200" "-e"
-			(concat "/home/"
-				(getenv "USER")
-				"/pfk/bin/myemacs-checkout-helper")
+			"@prefix@/bin/myemacs-checkout-helper"
 			(buffer-file-name))
 	  (message "Checked out file %s." fname))
       (message "File is already checked out?"))))

@@ -1,29 +1,42 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-PFK_USER_NAME := `whoami`
-PFK_USER_ID := `id -u`
-PFK_GROUP_ID := `id -g`
+PFK_USER_NAME := $(shell whoami)
+PFK_USER_ID := $(shell id -u)
+PFK_GROUP_ID := $(shell id -g)
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
 ENVIRON := $(CONFIG)
-KSHRC_LOCAL := kshrc.local.$(CONFIG)
-DOT_FILES := "Xresources ctwmrc twmrc hexdump_format screenrc xinitrc xsession vnc-xstartup"
-ELISP_FILES := "emacs-lone.el emacs.el go-mode.el"
+DOT_FILES = \
+	Xresources ctwmrc twmrc hexdump_format \
+	screenrc xinitrc vnc-xstartup
+PREPROC_DOT_FILES = \
+	kshrc profile xsession
+ELISP_FILES = emacs-lone.el go-mode.el
+PREPROC_ELISP_FILES = emacs.el
+SCRIPT_FILES = \
+	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \
+	git-diff-helper.sh git-merge-helper.sh make_linux_cscope mcs \
+	myemacs-checkout-helper myemacs-cscope-rebuild-helper \
+	pfkterm refresh set-background.sh
+PREPROC_SCRIPT_FILES = \
+	cs emacs-lone myemacs-cscope-helper myshell-launcher \
+	myshell pf_frontend
 SHELLS= /bin/bash /bin/ksh /bin/sh
 SHELL_PATH := $(firstword $(wildcard $(SHELLS)))
 
-
 # install info
-prefix := $(HOME)/pfk_test
+prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
+EMACSDIR := $(ETCDIR)/emacs
 SCRIPTS_DIR := $(prefix)/bin
 PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 PFK_LIB_DIR := $(prefix)/$(PFKARCH)/lib
 PFK_INC_DIR := $(prefix)/include
+VNCDIR := $(HOME)/.vnc
 
 installdirs:
-	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) \
-		$(PFK_BIN_DIR) $(PFK_LIB_DIR) $(PFK_INC_DIR)
+	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) \
+		$(PFK_BIN_DIR) $(PFK_LIB_DIR) $(PFK_INC_DIR) $(VNCDIR)
 
 CONFIG_VALUES= \
 	HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H HAVE_DIRENT_H \
@@ -77,6 +90,7 @@ BUILD_SWITCHES = \
 	libpfkfb diskloader pfkstat deduplifier libwas \
 	libpfkthread
 
+# TODO audit subst_vars for vars no longer in use
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH \
 	prefix ENVIRON ETCDIR KSHRC_LOCAL DOT_FILES ELISP_FILES \
@@ -87,7 +101,8 @@ PREPROC_SOURCES = \
 	main/programs.h environ/kshrc environ/profile \
 	environ/setup-links-sh main/sudo.h scripts/cs \
 	scripts/emacs-lone scripts/myemacs-cscope-helper \
-	scripts/myshell-launcher scripts/myshell scripts/pf_frontend
+	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
+	environ/xsession environ/emacs.el
 
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
@@ -98,7 +113,7 @@ $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
 			echo 'plz set PFK_BUILD_$(sw) in config/$(CONFIG)' ; \
 			exit 1 ; \
 		fi ; ) true
-	$(Q)sed $(foreach v,$(SUBST_VARS),-e s,@$(v)@,$($(v)),) \
+	$(Q)sed $(foreach v,$(SUBST_VARS),-e 's,@$(v)@,$($(v)),') \
 		< $(file).in > $(OBJDIR)/$(file).tmp
 	$(Q)if ! [ -f $(OBJDIR)/$(file) ] ; then \
 		echo making $(file) ; \
@@ -549,18 +564,48 @@ post_all:
 
 POSTINSTALL = environ_install scripts_install contrib_install
 
-environ_install: # TODO
+environ_install:
 	@echo installing environ
+	$(Q)cd environ && cp $(DOT_FILES) $(KSHRC_LOCAL) $(ETCDIR)
+	$(Q)cd environ && cp $(ELISP_FILES) $(EMACSDIR)
+	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_ELISP_FILES) $(EMACSDIR)
+	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_DOT_FILES) $(ETCDIR)
+	$(Q)set -e ; cd $(HOME) ; $(foreach f,\
+		$(DOT_FILES) $(PREPROC_DOT_FILES), \
+		rm -f .$f ; ln -s $(ETCDIR)/$f .$f ;) true
+	$(Q)set -e ; cd $(HOME) ; rm -rf .kshrc.local .emacs .elisp ; \
+		ln -s $(ETCDIR)/$(KSHRC_LOCAL) .kshrc.local ; \
+		ln -s $(EMACSDIR) .elisp ; \
+		ln -s .elisp/emacs.el .emacs
+	$(Q)set -e ; cd $(HOME)/.vnc ; rm -f xstartup ; \
+		ln -s $(ETCDIR)/vnc-xstartup xstartup ; \
+		chmod u+x $(ETCDIR)/vnc-xstartup
+	$(Q)set -e ; tar -C environ -cf - fluxbox | tar -C $(ETCDIR) -xf -
+	$(Q)cd $(HOME) ; rm -rf .fluxbox ; ln -s $(ETCDIR)/fluxbox .fluxbox
 
-scripts_install: # TODO
+scripts_install:
 	@echo installing scripts
+	$(Q)cd scripts && cp $(SCRIPT_FILES) $(SCRIPTS_DIR)
+	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
+	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
+		$(PREPROC_SCRIPT_FILES)
+	$(Q)cd $(PFK_BIN_DIR) && binaries=`echo *` && \
+		cd $(SCRIPTS_DIR) && \
+		for f in $$binaries ; do \
+			rm -f $$f ; \
+			ln -s pf_frontend $$f ; \
+		done
+
+# TODO launchers
+# TODO diffdotfiles
 
 contrib_install:
 	@$(foreach prog,$(CONTRIB_PROGS),\
 	    make -C contrib OBJDIR=$(PWD)/$(OBJDIR)/contrib \
 		PFK_BIN_DIR=$(PFK_BIN_DIR) $(prog)-install &&) true
 
-# TODO : cscope and ctwm should use custom makefiles
+# TODO cscope and ctwm should use custom makefiles
+# TODO get rid of setup-links-sh
 
 # test cases :
 # - touch a .c file and see if it depends and makes

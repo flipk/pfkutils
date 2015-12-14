@@ -4,8 +4,8 @@
 # will not be set. i need a few basic things, like PFKARCH and SHELL.
 
 cd $HOME
-PFKARCH=`$HOME/pfk/bin/architecture`
-SHELL=$HOME/pfk/$PFKARCH/bin/pfksh
+PFKARCH=`@prefix@/bin/architecture`
+SHELL=@prefix@/$PFKARCH/bin/pfksh
 ENV=$HOME/.kshrc
 export ENV PFKARCH SHELL
 
