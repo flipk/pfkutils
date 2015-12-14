@@ -79,7 +79,8 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfksh scripts syslog misc/states contrib
+	pfkscript pfksh scripts syslog misc/states contrib \
+	libWebAppServer/proxyTcpServer
 
 objdirs:
 	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
@@ -99,7 +100,7 @@ SUBST_VARS = \
 
 PREPROC_SOURCES = \
 	main/programs.h environ/kshrc environ/profile \
-	environ/setup-links-sh main/sudo.h scripts/cs \
+	main/sudo.h scripts/cs \
 	scripts/emacs-lone scripts/myemacs-cscope-helper \
 	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
 	environ/xsession environ/emacs.el
@@ -333,6 +334,50 @@ libWebAppServer_HDRS = \
 	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
 endif
 
+ifeq ($(PFK_BUILD_wsproxy),1)
+ifeq ($(PFK_BUILD_libwas),0)
+$(error PFK_BUILD_libwas is required for PFK_BUILD_wsproxy)
+endif
+PROG_TARGETS += wsProxyClient wsProxyServer
+
+wsProxyClient_TARGET = $(OBJDIR)/wsProxyClient
+wsProxyClient_PROTOSRCS = \
+	libWebAppServer/proxyTcpServer/proxyMsgs.proto
+wsProxyClient_INCS = \
+	-IlibWebAppServer -Ilibpfkutil \
+	-I$(OBJDIR)/libWebAppServer/proxyTcpServer
+wsProxyClient_CXXSRCS = \
+	libWebAppServer/proxyTcpServer/proxyClientConn.cc \
+	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.cc \
+	libWebAppServer/proxyTcpServer/proxyClientMain.cc
+wsProxyClient_HDRS = \
+	libWebAppServer/proxyTcpServer/proxyClientConn.h \
+	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.h
+wsProxyClient_LIBS = $(PROTOBUF_LIB) -lpthread
+wsProxyClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+wsProxyClient_INSTALL = 1
+
+wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
+# since wsProxyClient already supplied this, pick up the object
+# using EXTRAOBJS instead.
+#wsProxyServer_PROTOSRCS = \
+#	libWebAppServer/proxyTcpServer/proxyMsgs.proto
+wsProxyServer_INCS = \
+	-IlibWebAppServer -Ilibpfkutil \
+	-I$(OBJDIR)/libWebAppServer/proxyTcpServer
+wsProxyServer_CXXSRCS = \
+	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
+	libWebAppServer/proxyTcpServer/proxyServerMain.cc
+wsProxyServer_HDRS = \
+	libWebAppServer/proxyTcpServer/proxyServerConn.h
+wsProxyServer_LIBS = $(PROTOBUF_LIB) -lpthread
+wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+wsProxyServer_INSTALL = 1
+wsProxyServer_EXTRAOBJS = \
+	$(OBJDIR)/libWebAppServer/proxyTcpServer/proxyMsgs.pb.o
+
+endif
+
 ifeq ($(PFK_BUILD_libpfkthread),1)
 LIB_TARGETS += libpfkthread
 libpfkthread_TARGET = $(OBJDIR)/libpfkthread.a
@@ -549,8 +594,6 @@ endef
 
 $(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
 
-# TODO PROG_TARGETS += wsProxyServer wsProxyClient
-
 endif
 
 ifeq ($(PFK_BUILD_libpfkthread),1)
@@ -619,7 +662,6 @@ contrib_install:
 		PFK_BIN_DIR=$(PFK_BIN_DIR) $(prog)-install &&) true
 
 # TODO cscope and ctwm should use custom makefiles
-# TODO get rid of setup-links-sh
 
 # test cases :
 # - touch a .c file and see if it depends and makes

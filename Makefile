@@ -89,8 +89,6 @@ echoconfig:
 
 ##############################################
 
-# TODO add .proto support
-
 define TARGET_VARS
 $(target)_COBJS    = $(patsubst %.c,  $(OBJDIR)/%.o,    $($(target)_CSRCS))
 $(target)_CDEPS    = $(patsubst %.c,  $(OBJDIR)/%.c.d,  $($(target)_CSRCS))
@@ -114,6 +112,15 @@ $(target)_LLGENSRCS= $(patsubst %.ll, $(OBJDIR)/%.cc,   $($(target)_LLSRCS))
 $(target)_LLGENDEPS= $(patsubst %.ll, $(OBJDIR)/%.cc.d, $($(target)_LLSRCS))
 $(target)_LLGENOBJS= $(patsubst %.ll, $(OBJDIR)/%.o,    $($(target)_LLSRCS))
 
+$(target)_PROTOGENSRCS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc, \
+				$($(target)_PROTOSRCS))
+$(target)_PROTOGENHDRS = $(patsubst %.proto, $(OBJDIR)/%.pb.h, \
+				$($(target)_PROTOSRCS))
+$(target)_PROTOGENDEPS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc.d, \
+				$($(target)_PROTOSRCS))
+$(target)_PROTOGENOBJS = $(patsubst %.proto, $(OBJDIR)/%.pb.o, \
+				$($(target)_PROTOSRCS))
+
 endef
 
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_VARS)))
@@ -130,13 +137,13 @@ $($(target)_LGENSRCS): $($(target)_LSRCS)
 $($(target)_YGENSRCS): $($(target)_YSRCS)
 
 CGENSRCS += $($(target)_YGENSRCS) $($(target)_LGENSRCS)
-CXXGENSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
+CXXGENSRCS += $($(target)_YYGENSRCS) $($(target)_LLGENSRCS) $($(target)_PROTOGENSRCS)
 
 CDEPS += $($(target)_CDEPS)
 CXXDEPS += $($(target)_CXXDEPS)
 
 CGENDEPS += $($(target)_YGENDEPS) $($(target)_LGENDEPS)
-CXXGENDEPS += $($(target)_YYGENDEPS) $($(target)_LLGENDEPS)
+CXXGENDEPS += $($(target)_YYGENDEPS) $($(target)_LLGENDEPS) $($(target)_PROTOGENDEPS)
 
 # for cscope
 HDRS += $($(target)_HDRS)
@@ -157,6 +164,11 @@ $($(target)_YGENOBJS) $($(target)_LGENOBJS) : %.o: %.c
 	@echo compiling $$<
 	$(Q)gcc -c -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
 		$(CFLAGS) $$< -o $$@
+
+$($(target)_PROTOGENOBJS) : %.o: %.cc
+	@echo compiling $$<
+	$(Q)gcc -c -I$(OBJDIR) -I$(PROTOBUF_INC) $($(target)_INCS) \
+		$($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
 
 $($(target)_YYGENOBJS) $($(target)_LLGENOBJS) : %.o: %.cc
 	@echo compiling $$<
@@ -186,6 +198,11 @@ $($(target)_LLGENSRCS) : $(OBJDIR)/%.cc : %.ll
 		flex $$$$LLFILE && \
 		mv lex.yy.c `basename $$@`
 
+$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
+	@echo making $$@
+	@cd $$(dir $$<) && $(PROTOC_PATH) \
+		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
+
 $($(target)_CDEPS) : $(OBJDIR)/%.c.d: %.c
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
@@ -201,7 +218,7 @@ $($(target)_YGENDEPS) $($(target)_LGENDEPS) : %.c.d: %.c
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.c=%.o) -MF $$@
 
-$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) : %.cc.d: %.cc
+$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) $($(target)_PROTOGENDEPS) : %.cc.d: %.cc
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
@@ -238,12 +255,14 @@ define PROG_TARGET_RULES
 $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_PROTOGENOBJS) \
 		$($(target)_DEPLIBS) $($(target)_EXTRAOBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)g++ -o $($(target)_TARGET) \
 		$($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_PROTOGENOBJS) \
 		$($(target)_LIBS) $($(target)_DEPLIBS) \
 		$($(target)_EXTRAOBJS)
 
@@ -271,7 +290,7 @@ preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
 
 ##############################################
 
-deps: $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)
+deps: $(CGENDEPS) $(CXXGENDEPS) $(CDEPS) $(CXXDEPS)
 
 ifeq ($(__INCLUDE_DEPS),1)
 include $(CDEPS) $(CXXDEPS) $(CGENDEPS) $(CXXGENDEPS)

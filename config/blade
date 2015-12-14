@@ -22,8 +22,12 @@ PFK_BUILD_pfkstat=1
 PFK_BUILD_deduplifier=1
 PFK_BUILD_libwas=1
 PFK_BUILD_libpfkthread=1
+PFK_BUILD_wsproxy=1
 
 KSHRC_LOCAL = kshrc.local.blade
+PROTOC_PATH = /bin/protoc
+PROTOBUF_INC =
+PROTOBUF_LIB = -lprotobuf
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
 PFK_CONFIG_HAVE_NCURSES_H= 0
