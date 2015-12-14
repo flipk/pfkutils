@@ -218,10 +218,15 @@ $($(target)_YGENDEPS) $($(target)_LGENDEPS) : %.c.d: %.c
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.c=%.o) -MF $$@
 
-$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) $($(target)_PROTOGENDEPS) : %.cc.d: %.cc
+$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) : %.cc.d: %.cc
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
+
+$($(target)_PROTOGENDEPS) : %.cc.d: %.cc
+	@echo depending $$<
+	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
+		$($(target)_DEFS) -M $$< -MT $$(<:%.cc=%.o) -MF $$@
 
 endef
 
@@ -262,9 +267,8 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
-		$($(target)_PROTOGENOBJS) \
-		$($(target)_LIBS) $($(target)_DEPLIBS) \
-		$($(target)_EXTRAOBJS)
+		$($(target)_PROTOGENOBJS) $($(target)_DEPLIBS) \
+		$($(target)_EXTRAOBJS) $($(target)_LIBS)
 
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \

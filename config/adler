@@ -20,7 +20,7 @@ PFK_BUILD_libpfkfb=1
 PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
 PFK_BUILD_deduplifier=1
-PFK_BUILD_libwas=0
+PFK_BUILD_libwas=1
 PFK_BUILD_libpfkthread=0
 PFK_BUILD_wsproxy=1
 

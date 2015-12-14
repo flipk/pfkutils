@@ -345,7 +345,8 @@ wsProxyClient_PROTOSRCS = \
 	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyClient_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
-	-I$(OBJDIR)/libWebAppServer/proxyTcpServer
+	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
+	$(PROTOBUF_INC)
 wsProxyClient_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyClientConn.cc \
 	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.cc \
@@ -364,7 +365,8 @@ wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
 #	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyServer_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
-	-I$(OBJDIR)/libWebAppServer/proxyTcpServer
+	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
+	$(PROTOBUF_INC)
 wsProxyServer_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
 	libWebAppServer/proxyTcpServer/proxyServerMain.cc
