@@ -7,6 +7,7 @@
 #include <vector>
 #include <pthread.h>
 #include <inttypes.h>
+#include <iostream>
 
 #include "LockWait.h"
 #include "BackTrace.h"
@@ -27,7 +28,9 @@ struct ListError : BackTraceUtil::BackTrace {
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
-    ListError(ListErrValue _e) : err(_e) { }
+    ListError(ListErrValue _e) : err(_e) {
+        std::cerr << "throwing ListError: " << Format() << std::endl;
+    }
     /** return a descriptive string matching the error */
     const std::string Format(void) const;
 };
