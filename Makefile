@@ -24,16 +24,16 @@ all:
 
 define PER_CONFIG_RULES
 $(config):
-	$(Q)+make -s CONFIG=$(config)
+	$(Q)+make CONFIG=$(config)
 
 $(config)-cscope:
-	$(Q)make -s CONFIG=$(config) cscope
+	$(Q)make CONFIG=$(config) cscope
 
 $(config)-install:
-	$(Q)make -s CONFIG=$(config) install
+	$(Q)make CONFIG=$(config) install
 
 $(config)-clean:
-	$(Q)make -s CONFIG=$(config) clean
+	$(Q)make CONFIG=$(config) clean
 
 endef
 
@@ -54,8 +54,14 @@ OBJDIR= obj.$(PFKARCH).$(CONFIG)
 
 CC=gcc
 CXX=g++
+ifeq ($(DBG),1)
+CFLAGS= -g3 -O0
+CXXFLAGS= -g3 -O0
+else
 CFLAGS= -O3
 CXXFLAGS= -O3
+endif
+LDFLAGS = -rdynamic # for backtrace
 AR=ar
 RANLIB=ranlib
 
@@ -268,7 +274,8 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
 		$($(target)_PROTOGENOBJS) $($(target)_DEPLIBS) \
-		$($(target)_EXTRAOBJS) $($(target)_LIBS)
+		$($(target)_EXTRAOBJS) $($(target)_LIBS) \
+		$(LDFLAGS) $($(target)_LDFLAGS)
 
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
