@@ -24,16 +24,16 @@ all:
 
 define PER_CONFIG_RULES
 $(config):
-	$(Q)+make CONFIG=$(config)
+	$(Q)+make -s CONFIG=$(config)
 
 $(config)-cscope:
-	$(Q)make CONFIG=$(config) cscope
+	$(Q)make -s CONFIG=$(config) cscope
 
 $(config)-install:
-	$(Q)make CONFIG=$(config) install
+	$(Q)make -s CONFIG=$(config) install
 
 $(config)-clean:
-	$(Q)make CONFIG=$(config) clean
+	$(Q)make -s CONFIG=$(config) clean
 
 endef
 
