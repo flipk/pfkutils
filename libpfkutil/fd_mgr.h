@@ -77,11 +77,13 @@ public:
     void register_fd( fd_interface * ifd ) {
         if ( debug )
             fprintf( stderr, "registering fd %d\n", ifd->fd );
+        WaitUtil::Lock lck(&ifds);
         ifds.add_tail( ifd );
     }
     void unregister_fd( fd_interface * ifd ) {
         if ( debug )
             fprintf( stderr, "unregistering fd %d\n", ifd->fd );
+        WaitUtil::Lock lck(&ifds);
         ifds.remove( ifd );
     }
     // return false if timeout, true if out of fds to service

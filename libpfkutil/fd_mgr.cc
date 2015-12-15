@@ -49,39 +49,43 @@ fd_mgr :: loop( struct timeval *tv )
 
         max = -1;
 
-        for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
         {
-            nfdi = ifds.get_next(fdi);
-            bool dosrd, doswr;
-            fdi->select_rw( this, &dosrd, &doswr );
-            if ( dosrd )
+            WaitUtil::Lock  lck(&ifds);
+            for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
             {
-                if ( debug )
-                    fprintf( stderr,
-                             "selecting for read on fd %d\n", fdi->fd );
-                FD_SET( fdi->fd, &rfds );
-                if ( fdi->fd > max )
-                    max = fdi->fd;
+                nfdi = ifds.get_next(fdi);
+                bool dosrd, doswr;
+                fdi->select_rw( this, &dosrd, &doswr );
+                if ( dosrd )
+                {
+                    if ( debug )
+                        fprintf( stderr,
+                                 "selecting for read on fd %d\n", fdi->fd );
+                    FD_SET( fdi->fd, &rfds );
+                    if ( fdi->fd > max )
+                        max = fdi->fd;
+                }
+                if ( doswr )
+                {
+                    if ( debug )
+                        fprintf( stderr, "selecting for write on fd %d\n",
+                                 fdi->fd );
+                    FD_SET( fdi->fd, &wfds );
+                    if ( fdi->fd > max )
+                        max = fdi->fd;
+                }
+                if ( fdi->do_close )
+                {
+                    if ( debug )
+                        fprintf( stderr,
+                                 "deleting fd %d due to do_close flag\n",
+                                 fdi->fd );
+                    ifds.remove( fdi );
+                    delete fdi;
+                }
             }
-            if ( doswr )
-            {
-                if ( debug )
-                    fprintf( stderr, "selecting for write on fd %d\n",
-                             fdi->fd );
-                FD_SET( fdi->fd, &wfds );
-                if ( fdi->fd > max )
-                    max = fdi->fd;
-            }
-            if ( fdi->do_close )
-            {
-                if ( debug )
-                    fprintf( stderr,
-                             "deleting fd %d due to do_close flag\n",
-                             fdi->fd );
-                ifds.remove( fdi );
-                delete fdi;
-            }
-        }
+        } // unlock lck
+
         if ( ifds.get_cnt() <= die_threshold )
             break;
 
@@ -104,54 +108,68 @@ fd_mgr :: loop( struct timeval *tv )
             continue;
         }
 
+        {
+            WaitUtil::Lock lck(&ifds);
+            for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
+            {
+                bool del = false;
+                nfdi = ifds.get_next(fdi);
+
+                if ( FD_ISSET( fdi->fd, &rfds ))
+                {
+                    if ( debug )
+                        fprintf( stderr, "servicing read on fd %d\n",
+                                 fdi->fd );
+                    lck.unlock(); // handler may add a new conn
+                    if ( fdi->read(this) == fd_interface::DEL )
+                    {
+                        if ( debug )
+                            fprintf( stderr,
+                                     "deleting %d due to false read\n",
+                                     fdi->fd );
+                        del = true;
+                    }
+                    lck.lock();
+                }
+                if ( FD_ISSET( fdi->fd, &wfds ))
+                {
+                    if ( debug )
+                        fprintf( stderr, "servicing write on fd %d\n",
+                                 fdi->fd );
+                    lck.unlock(); // handler may add a new conn
+                    if ( fdi->write(this) == fd_interface::DEL )
+                    {
+                        if ( debug )
+                            fprintf( stderr,
+                                     "deleting %d due to false write\n",
+                                     fdi->fd );
+                        del = true;
+                    }
+                    lck.lock();
+                }
+                if ( !del && fdi->do_close )
+                {
+                    del = true;
+                    if ( debug )
+                        fprintf( stderr,
+                                 "deleting %d due to do_close\n", fdi->fd );
+                }
+                if ( del )
+                {
+                    ifds.remove( fdi );
+                    delete fdi;
+                }
+            }
+        } // unlock lck
+    }
+    {
+        WaitUtil::Lock lck(&ifds);
         for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
         {
-            bool del = false;
             nfdi = ifds.get_next(fdi);
-
-            if ( FD_ISSET( fdi->fd, &rfds ))
-            {
-                if ( debug )
-                    fprintf( stderr, "servicing read on fd %d\n", fdi->fd );
-                if ( fdi->read(this) == fd_interface::DEL )
-                {
-                    if ( debug )
-                        fprintf( stderr,
-                                 "deleting %d due to false read\n", fdi->fd );
-                    del = true;
-                }
-            }
-            if ( FD_ISSET( fdi->fd, &wfds ))
-            {
-                if ( debug )
-                    fprintf( stderr, "servicing write on fd %d\n", fdi->fd );
-                if ( fdi->write(this) == fd_interface::DEL )
-                {
-                    if ( debug )
-                        fprintf( stderr,
-                                 "deleting %d due to false write\n", fdi->fd );
-                    del = true;
-                }
-            }
-            if ( !del && fdi->do_close )
-            {
-                del = true;
-                if ( debug )
-                    fprintf( stderr,
-                             "deleting %d due to do_close\n", fdi->fd );
-            }
-            if ( del )
-            {
-                ifds.remove( fdi );
-                delete fdi;
-            }
+            ifds.remove( fdi );
+            delete fdi;
         }
-    }
-    for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
-    {
-        nfdi = ifds.get_next(fdi);
-        ifds.remove( fdi );
-        delete fdi;
-    }
+    } // unlock lck
     return true;
 }
