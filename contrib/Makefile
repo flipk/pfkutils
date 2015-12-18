@@ -24,8 +24,8 @@ cscope:
 	@+make -C $(OBJDIR)/$(CSCOPE_DIR)
 
 cscope-install:
-	@echo installing cscope to $(PFK_BIN_DIR)
-	@cp $(OBJDIR)/$(CSCOPE_DIR)/src/cscope $(PFK_BIN_DIR)
+	@echo installing cscope to $(INSTALL_BIN_DIR)
+	@cp $(OBJDIR)/$(CSCOPE_DIR)/src/cscope $(INSTALL_BIN_DIR)
 
 CTWM_DIR= ctwm-3.8a
 
@@ -59,6 +59,6 @@ ctwm:
 	@make -C $(OBJDIR)/$(CTWM_DIR)
 
 ctwm-install:
-	@echo installing ctwm to $(PFK_BIN_DIR)
-	@cp $(OBJDIR)/$(CTWM_DIR)/ctwm $(PFK_BIN_DIR)
+	@echo installing ctwm to $(INSTALL_BIN_DIR)
+	@cp $(OBJDIR)/$(CTWM_DIR)/ctwm $(INSTALL_BIN_DIR)
 
