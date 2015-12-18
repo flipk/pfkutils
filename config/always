@@ -29,14 +29,19 @@ prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
 EMACSDIR := $(ETCDIR)/emacs
 SCRIPTS_DIR := $(prefix)/bin
-PFK_BIN_DIR := $(prefix)/$(PFKARCH)/bin
-PFK_LIB_DIR := $(prefix)/$(PFKARCH)/lib
-PFK_INC_DIR := $(prefix)/include
+INSTALL_BIN_DIR := $(prefix)/$(PFKARCH)/bin
+INSTALL_LIB_DIR := $(prefix)/$(PFKARCH)/lib
+INSTALL_INC_DIR := $(prefix)/include
 VNCDIR := $(HOME)/.vnc
+
+##############################################
 
 installdirs:
 	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) \
-		$(PFK_BIN_DIR) $(PFK_LIB_DIR) $(PFK_INC_DIR) $(VNCDIR)
+		$(INSTALL_BIN_DIR) $(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) \
+		$(VNCDIR)
+
+##############################################
 
 CONFIG_VALUES= \
 	HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H HAVE_DIRENT_H \
@@ -76,14 +81,15 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 		mv $(CONFIG_H).tmp $(CONFIG_H) ; \
 	fi
 
+##############################################
+
 OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
 	pfkscript pfksh scripts syslog misc/states contrib \
 	libWebAppServer/proxyTcpServer
 
-objdirs:
-	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
+##############################################
 
 BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
@@ -129,6 +135,9 @@ endef
 
 $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
 
+##############################################
+##############################################
+
 LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
 libpfkutil_CSRCS = \
@@ -166,6 +175,26 @@ libpfkutil_HDRS = \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h \
 	libpfkutil/types.h
 
+###################
+
+LIBPFKUTIL_TEST_TARGETS = \
+	HSM_test hsmthread_test dll3_test dll3_btree_test \
+	msgr-test-clnt msgr-test-msg msgr-test-svr \
+	shmempipe_test_master shmempipe_test_slave
+
+define BUILD_LIBPFKUTIL_TEST_TARGET
+PROG_TARGETS += $(t)
+$(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
+$(t)_CXXSRCS = libpfkutil/$(t).cc
+$(t)_LIBS += -lpthread
+$(t)_DEPLIBS = $(libpfkutil_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
+
+##############################################
+
 ifeq ($(PFK_BUILD_libpfkfb),1)
 LIB_TARGETS += libpfkfb
 libpfkfb_TARGET = $(OBJDIR)/libpfkfb.a
@@ -190,7 +219,23 @@ libpfkfb_HDRS = \
 	libpfkfb/Btree_internal.h libpfkfb/FileBlockLocal.h \
 	libpfkfb/FileBlock_iface.h libpfkfb/PageCache.h \
 	libpfkfb/PageCache_internal.h libpfkfb/PageIO.h
+
+###################
+
+PROG_TARGETS += fb_testBtree
+fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
+fb_testBtree_INCS = $(libpfkfb_INCS)
+fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
+fb_testBtree_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
+
+PROG_TARGETS += fb_testFileBlock
+fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
+fb_testFileBlock_INCS = $(libpfkfb_INCS)
+fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
+fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_pfkbak),1)
 ifeq ($(PFK_BUILD_libpfkfb),0)
@@ -212,10 +257,28 @@ libpfkbak_HDRS = \
 pfkutils_LIBZ= -lz
 endif
 
+##############################################
+
 LIB_TARGETS += libpfkdll2
 libpfkdll2_TARGET = $(OBJDIR)/libpfkdll2.a
 libpfkdll2_CXXSRCS = libpfkdll2/dll2_hash.cc 
 libpfkdll2_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
+
+###################
+
+PROG_TARGETS += dll2_test_btree
+dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2/test_btree
+dll2_test_btree_CXXSRCS = libpfkdll2/test_btree.cc
+
+PROG_TARGETS += dll2_test_hash
+dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2/test_hash
+dll2_test_hash_CXXSRCS = \
+	libpfkdll2/test_hash.cc libpfkdll2/test_hash_add.cc \
+	libpfkdll2/test_hash_del.cc
+dll2_test_hash_HDRS = libpfkdll2/test_hash.h
+dll2_test_hash_DEPLIBS = $(libpfkdll2_TARGET)
+
+##############################################
 
 ifeq ($(PFK_BUILD_pfksh),1)
 LIB_TARGETS += libpfksh
@@ -237,6 +300,8 @@ libpfksh_HDRS = \
 pfkutils_LIBNCURSES= -lncurses
 endif
 
+##############################################
+
 LIB_TARGETS += libi2
 libi2_TARGET = $(OBJDIR)/libi2.a
 libi2_INCS = -Ilibpfkutil
@@ -248,6 +313,8 @@ libi2_HDRS = \
 	i2/ipipe_acceptor.h i2/ipipe_connector.h i2/ipipe_factories.h \
 	i2/ipipe_forwarder.h i2/ipipe_main.h i2/ipipe_rollover.h \
 	i2/ipipe_stats.h
+
+##############################################
 
 ifeq ($(PFK_BUILD_ampfk),1)
 LIB_TARGETS += libampfk
@@ -269,6 +336,8 @@ libampfk_DEFS = \
 	-Dyy_flex_debug=ampfk_yy_flex_debug
 endif
 
+##############################################
+
 ifeq ($(PFK_BUILD_syslog),1)
 LIB_TARGETS += syslog
 syslog_TARGET = $(OBJDIR)/libsyslog.a
@@ -280,6 +349,8 @@ syslog_HDRS = \
 	syslog/strip_chars.h
 endif
 
+##############################################
+
 ifeq ($(PFK_BUILD_pfkscript),1)
 LIB_TARGETS += pfkscript
 pfkscript_TARGET = $(OBJDIR)/libpfkscript.a
@@ -288,6 +359,8 @@ pfkscript_CXXSRCS = pfkscript/logfile.cc pfkscript/main.cc pfkscript/options.cc
 pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 pfkutils_LIBUTILS = -lutil
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_diskloader),1)
 LIB_TARGETS += diskloader
@@ -298,6 +371,8 @@ diskloader_HDRS = \
 	diskloader/file_obj.h diskloader/pseudo_random.h
 endif
 
+##############################################
+
 ifeq ($(PFK_BUILD_bglog),1)
 LIB_TARGETS += bglog
 bglog_TARGET = $(OBJDIR)/libbglog.a
@@ -305,6 +380,8 @@ bglog_CSRCS = bglog/log.c bglog/main.c
 bglog_HDRS = bglog/config.h bglog/log.h
 pfkutils_LIBUTILS = -lutil
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_libwas),1)
 LIB_TARGETS += libWebAppServer
@@ -329,7 +406,27 @@ libWebAppServer_HDRS = \
 	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
 	libWebAppServer/WebAppServerInternal.h \
 	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
+
+###################
+
+LIBWAS_TEST_TARGETS= \
+	testUrlRegex CircularReaderTest wsClientTest wsServerTest
+
+define BUILD_LIBWAS_TEST_TARGET
+PROG_TARGETS += libwas_$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
+libwas_$(t)_INCS = $(libWebAppServer_INCS)
+libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
+libwas_$(t)_LIBS += -lpthread
+libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_wsproxy),1)
 ifeq ($(PFK_BUILD_libwas),0)
@@ -374,8 +471,9 @@ wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 wsProxyServer_INSTALL = 1
 wsProxyServer_EXTRAOBJS = \
 	$(OBJDIR)/libWebAppServer/proxyTcpServer/proxyMsgs.pb.o
-
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_libpfkthread),1)
 LIB_TARGETS += libpfkthread
@@ -408,7 +506,27 @@ libpfkthread_HDRS = \
 	libpfkthread/int/pk_messages_internal.h \
 	libpfkthread/int/pk_threads_internal.h \
 	libpfkthread/int/pk_timers_internal.h
+
+###################
+
+LIBPFKTHR_TEST_TARGETS = \
+	test-1 test-2 test-3 test-4
+
+define BUILD_LIBPFKTHR_TEST_TARGET
+PROG_TARGETS += pfkthr_$(t)
+pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
+pfkthr_$(t)_INCS = $(libpfkthread_INCS)
+pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
+pfkthr_$(t)_LIBS += -lpthread
+pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
+
 endif
+
+##############################################
 
 ifeq ($(PFK_BUILD_states),1)
 LIB_TARGETS += states
@@ -467,6 +585,8 @@ $(eval $(call STATES_TEMPL_SOURCE \
 
 endif
 
+##############################################
+
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
 pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main -Ilibpfkfb -Ilibpfkdll2
@@ -519,9 +639,9 @@ pfkutils_POSTINSTALL = pfkutils-post-install
 
 pfkutils-post-install:
 	@echo setting up pfkutils symlinks
-	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -dellinks
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -dellinks
 ifeq ($(PFK_BUILD_sudo),1)
-	$(Q)cd $(PFK_BIN_DIR) && \
+	$(Q)cd $(INSTALL_BIN_DIR) && \
 		if [ -f pfkutils.old ] ; then \
 			ln -s pfkutils.old sudo ; \
 			./sudo chown root pfkutils ; \
@@ -529,88 +649,13 @@ ifeq ($(PFK_BUILD_sudo),1)
 		fi ; true
 	@echo ""
 	@echo "*** also, if not already done, perform the following as root:"
-	@echo "     chown root $(PFK_BIN_DIR)/pfkutils"
-	@echo "     chmod 4755 $(PFK_BIN_DIR)/pfkutils"
+	@echo "     chown root $(INSTALL_BIN_DIR)/pfkutils"
+	@echo "     chmod 4755 $(INSTALL_BIN_DIR)/pfkutils"
 	@echo ""
 endif
-	$(Q)cd $(PFK_BIN_DIR) && ./pfkutils -makelinks
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
 
-LIBPFKUTIL_TEST_TARGETS = \
-	HSM_test hsmthread_test dll3_test dll3_btree_test \
-	msgr-test-clnt msgr-test-msg msgr-test-svr \
-	shmempipe_test_master shmempipe_test_slave
-
-define BUILD_LIBPFKUTIL_TEST_TARGET
-PROG_TARGETS += $(t)
-$(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
-$(t)_CXXSRCS = libpfkutil/$(t).cc
-$(t)_LIBS += -lpthread
-$(t)_DEPLIBS = $(libpfkutil_TARGET)
-
-endef
-
-$(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
-
-PROG_TARGETS += dll2_test_btree
-dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2/test_btree
-dll2_test_btree_CXXSRCS = libpfkdll2/test_btree.cc
-
-PROG_TARGETS += dll2_test_hash
-dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2/test_hash
-dll2_test_hash_CXXSRCS = \
-	libpfkdll2/test_hash.cc libpfkdll2/test_hash_add.cc \
-	libpfkdll2/test_hash_del.cc
-dll2_test_hash_HDRS = libpfkdll2/test_hash.h
-dll2_test_hash_DEPLIBS = $(libpfkdll2_TARGET)
-
-ifeq ($(PFK_BUILD_libpfkfb),1)
-PROG_TARGETS += fb_testBtree
-fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
-fb_testBtree_INCS = $(libpfkfb_INCS)
-fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
-fb_testBtree_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
-
-PROG_TARGETS += fb_testFileBlock
-fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
-fb_testFileBlock_INCS = $(libpfkfb_INCS)
-fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
-fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
-endif
-
-ifeq ($(PFK_BUILD_libwas),1)
-LIBWAS_TEST_TARGETS= \
-	testUrlRegex CircularReaderTest wsClientTest wsServerTest
-
-define BUILD_LIBWAS_TEST_TARGET
-PROG_TARGETS += libwas_$(t)
-libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
-libwas_$(t)_INCS = $(libWebAppServer_INCS)
-libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
-libwas_$(t)_LIBS += -lpthread
-libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
-
-endef
-
-$(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
-
-endif
-
-ifeq ($(PFK_BUILD_libpfkthread),1)
-LIBPFKTHR_TEST_TARGETS = \
-	test-1 test-2 test-3 test-4
-
-define BUILD_LIBPFKTHR_TEST_TARGET
-PROG_TARGETS += pfkthr_$(t)
-pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
-pfkthr_$(t)_INCS = $(libpfkthread_INCS)
-pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
-pfkthr_$(t)_LIBS += -lpthread
-pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
-
-endef
-
-$(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
-endif
+##############################################
 
 POSTALL = post_all # TODO doxygen
 
@@ -645,21 +690,20 @@ scripts_install:
 	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
 	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
 		$(PREPROC_SCRIPT_FILES)
-	$(Q)cd $(PFK_BIN_DIR) && binaries=`echo *` && \
+	$(Q)cd $(INSTALL_BIN_DIR) && binaries=`echo *` && \
 		cd $(SCRIPTS_DIR) && \
 		for f in $$binaries ; do \
 			rm -f $$f ; \
 			ln -s pf_frontend $$f ; \
 		done
 
-# TODO launchers
-# TODO diffdotfiles
-
 contrib_install:
 	@$(foreach prog,$(CONTRIB_PROGS),\
 	    make -C contrib OBJDIR=$(PWD)/$(OBJDIR)/contrib \
-		PFK_BIN_DIR=$(PFK_BIN_DIR) $(prog)-install &&) true
+		INSTALL_BIN_DIR=$(INSTALL_BIN_DIR) $(prog)-install &&) true
 
+# TODO launchers
+# TODO diffdotfiles
 # TODO cscope and ctwm should use custom makefiles
 
 # test cases :

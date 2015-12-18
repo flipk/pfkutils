@@ -1,7 +1,4 @@
-# Local Variables:
-# mode: makefile-gmake
-# tab-width: 8
-# End:
+# -*- Mode:makefile-gmake; tab-width:8 -*-
 
 PFK_BUILD_pfkbak=0
 PFK_BUILD_pfksh=1
