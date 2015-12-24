@@ -22,7 +22,7 @@ $(error unsupported CONFIG value, please edit Makefile)
 endif
 
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
-BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
+BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')-TEST
 
 CC=gcc
 CXX=g++
