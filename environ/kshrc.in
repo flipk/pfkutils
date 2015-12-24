@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2015-12-13.21:35:07
+#      Last update: 2015-12-24.14:23:11
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -228,6 +228,7 @@ if __isksh ; then
             _ps="${_ps} in CMBP"
         fi
         _ps="${_ps} pid $$ on $TTY"
+        _ps="${_ps} $PFKSH_BUILD"
         if [[ x$WINDOW != x ]] ; then
             _ps="${_ps}, scr $STY-$WINDOW"
         fi

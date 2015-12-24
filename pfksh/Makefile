@@ -22,6 +22,7 @@ $(error unsupported CONFIG value, please edit Makefile)
 endif
 
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
+BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
 
 CC=gcc
 CXX=g++
@@ -48,7 +49,7 @@ pfksh_HDRS = \
 	config.h edit.h emacs_autogen.h expand.h lex.h \
 	proto.h sh.h shf.h siglist_autogen.h table.h tree.h tty.h
 pfksh_CXXSRCS = xtree.cc
-pfksh_DEFS = -Dpfksh_main=main
+pfksh_DEFS = -Dpfksh_main=main -DBUILD_DATE=\"pfksh-$(BUILD_DATE)\"
 pfksh_LIBS = -lcurses
 
 include ../Makefile.inc

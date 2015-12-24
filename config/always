@@ -297,6 +297,8 @@ libpfksh_HDRS = \
 	pfksh/emacs_autogen.h pfksh/expand.h pfksh/lex.h pfksh/proto.h \
 	pfksh/sh.h pfksh/shf.h pfksh/siglist-gen.sh pfksh/siglist_autogen.h \
 	pfksh/table.h pfksh/tree.h pfksh/tty.h
+PFKSH_BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
+libpfksh_DEFS = -DBUILD_DATE=\"pfksh-$(PFKSH_BUILD_DATE)\"
 pfkutils_LIBNCURSES= -lncurses
 endif
 

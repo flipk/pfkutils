@@ -28,9 +28,9 @@ static const char initifs[] = "IFS= \t\n";
 
 static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
-static const char version_param[] =
-	"KSH_VERSION"
-	;
+static const char version_param[] = "KSH_VERSION";
+
+static const char build_date_param[] = "PFKSH_BUILD";
 
 static const char *const initcoms [] = {
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
@@ -209,6 +209,9 @@ pfksh_main(argc, argv)
 	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 	/* setstr can't fail here */
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
+#ifdef BUILD_DATE
+        setstr(global(build_date_param), BUILD_DATE, KSH_RETURN_ERROR);
+#endif
 
 	/* execute initialization statements */
 	for (wp = (char**) initcoms; *wp != NULL; wp++) {

@@ -337,7 +337,6 @@ $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
 		echo installing $($(target)_TARGET) ; \
 		FNAME="$(notdir $($(target)_TARGET))" ; \
-		echo FNAME is $$$$FNAME ; \
 		if [ -f $(INSTALL_BIN_DIR)/$$$$FNAME ] ; then \
 			mv -f $(INSTALL_BIN_DIR)/$$$$FNAME \
 				$(INSTALL_BIN_DIR)/$$$$FNAME.old ;\
