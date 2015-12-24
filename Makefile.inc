@@ -1,5 +1,8 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# TODO strip relpaths and handle files outside this tree;
+# TODO prepend target-name to product artifacts?
+
 ##############################################
 
 # all artifacts produced by this makefile go under
@@ -31,6 +34,10 @@ CXXFLAGS ?= -O2
 #    -Wa,-ahls=$$(@:.o=.L)
 # to CFLAGS, CXXFLAGS, $(target)_CFLAGS, and/or $(target)_CXXFLAGS
 # (assuming your assembler is gnu gas, of course)
+
+# flags applied to program linker. (i.e. -rdynamic). applied to
+# all targets in PROG_TARGETS, applied before $(target)_LDFLAGS.
+LDFLAGS ?= 
 
 # cpp type arguments. INCS should be -I's, DEFS should be -D's.
 # note these are global for all LIB and PROG targets! if different
