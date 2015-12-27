@@ -107,6 +107,8 @@ handle_admin( int argc, char ** argv )
     struct stat sb;
 
     printf("version: %s\n", PACKAGE_STRING);
+    printf("branch: %s\n", PFKUTILS_BRANCH);
+    printf("commit: %s\n", PFKUTILS_COMMIT);
     if ( argc == 0 || arg0 == "-help" )
     {
     usage:
