@@ -5,6 +5,7 @@ PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
+BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
 DOT_FILES = \
 	Xresources ctwmrc twmrc hexdump_format \
 	screenrc xinitrc vnc-xstartup
@@ -297,9 +298,14 @@ libpfksh_HDRS = \
 	pfksh/emacs_autogen.h pfksh/expand.h pfksh/lex.h pfksh/proto.h \
 	pfksh/sh.h pfksh/shf.h pfksh/siglist-gen.sh pfksh/siglist_autogen.h \
 	pfksh/table.h pfksh/tree.h pfksh/tty.h
-PFKSH_BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
-libpfksh_DEFS = -DBUILD_DATE=\"pfksh-$(PFKSH_BUILD_DATE)\"
+libpfksh_DEFS = -DBUILD_DATE=\"pfksh-$(BUILD_DATE)\"
 pfkutils_LIBNCURSES= -lncurses
+
+
+# TODO PFKSH MAN PAGE
+# TODO PFKSH MAN PAGE INSTALL
+
+
 endif
 
 ##############################################
@@ -641,7 +647,8 @@ pfkutils_DEPLIBS = \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET)
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
-	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\"
+	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \
+	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\"
 pfkutils_INSTALL = 1
 pfkutils_POSTINSTALL = pfkutils-post-install
 

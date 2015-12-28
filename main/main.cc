@@ -106,14 +106,14 @@ handle_admin( int argc, char ** argv )
     string arg0(argc > 0 ? argv[0] : "");
     struct stat sb;
 
-    printf("version: %s\n", PACKAGE_STRING);
-    printf("branch: %s\n", PFKUTILS_BRANCH);
-    printf("commit: %s\n", PFKUTILS_COMMIT);
+    printf("version: %s %s\n", PACKAGE_STRING, BUILD_DATE);
+    printf("commit: %s %s\n", PFKUTILS_BRANCH, PFKUTILS_COMMIT);
     if ( argc == 0 || arg0 == "-help" )
     {
     usage:
         printf( "usage: pfkutils [-dellinks] [-makelinks] "
                 "[-help]\n" );
+        printf( "or symlink 'pfkutils' to one of the following names\n");
         return -2;
     }
 
