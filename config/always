@@ -33,6 +33,7 @@ SCRIPTS_DIR := $(prefix)/bin
 INSTALL_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 INSTALL_LIB_DIR := $(prefix)/$(PFKARCH)/lib
 INSTALL_INC_DIR := $(prefix)/include
+INSTALL_MAN_DIR := $(prefix)/man
 VNCDIR := $(HOME)/.vnc
 
 ##############################################
@@ -300,12 +301,19 @@ libpfksh_HDRS = \
 	pfksh/table.h pfksh/tree.h pfksh/tty.h
 libpfksh_DEFS = -DBUILD_DATE=\"pfksh-$(BUILD_DATE)\"
 pfkutils_LIBNCURSES= -lncurses
+POSTALL += $(OBJDIR)/pfksh.0
+pfkutils_POSTINSTALL += pfksh-install-man
 
+$(OBJDIR)/pfksh.0: pfksh/pfksh.man
+	nroff -man pfksh/pfksh.man > $(OBJDIR)/pfksh.0
 
-# TODO PFKSH MAN PAGE
-# TODO PFKSH MAN PAGE INSTALL
-
-
+pfksh-install-man:
+	@mkdir -p $(INSTALL_MAN_DIR)/cat1
+	@mkdir -p $(INSTALL_MAN_DIR)/man1
+	@echo installing $(OBJDIR)/pfksh.0
+	@cp -f $(OBJDIR)/pfksh.0 $(INSTALL_MAN_DIR)/cat1
+	@echo installing pfksh/pfksh.man
+	@cp -f pfksh/pfksh.man $(INSTALL_MAN_DIR)/man1/pfksh.1
 endif
 
 ##############################################
@@ -650,7 +658,7 @@ pfkutils_DEFS = \
 	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \
 	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\"
 pfkutils_INSTALL = 1
-pfkutils_POSTINSTALL = pfkutils-post-install
+pfkutils_POSTINSTALL += pfkutils-post-install
 
 pfkutils-post-install:
 	@echo setting up pfkutils symlinks
@@ -672,7 +680,7 @@ endif
 
 ##############################################
 
-POSTALL = post_all # TODO doxygen
+POSTALL += post_all # TODO doxygen
 
 post_all:
 	@+make -C contrib \
