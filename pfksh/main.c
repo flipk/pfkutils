@@ -208,9 +208,13 @@ pfksh_main(argc, argv)
 	setint(global("PPID"), (long) ppid);
 	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 	/* setstr can't fail here */
-	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 #ifdef BUILD_DATE
         setstr(global(build_date_param), BUILD_DATE, KSH_RETURN_ERROR);
+        char ksh_version_string[100];
+        sprintf(ksh_version_string, "%s %s", ksh_version, BUILD_DATE);
+       	setstr(global(version_param), ksh_version_string, KSH_RETURN_ERROR);
+#else
+       	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
 #endif
 
 	/* execute initialization statements */

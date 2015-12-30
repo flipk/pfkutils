@@ -1,8 +1,11 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-ifndef CONFIG
-$(error please set CONFIG to a hostname)
-endif
+ifeq ($(CONFIG),)
+
+blade:
+	+make CONFIG=blade
+
+else # $(CONFIG)
 
 CONFIG_VALUES= \
         HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H 
@@ -21,6 +24,7 @@ $(error unsupported CONFIG value, please edit Makefile)
 
 endif
 
+OBJDIR= obj.$(PFKARCH).$(CONFIG)
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
 BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')-TEST
 
@@ -34,11 +38,10 @@ PREPROC_TARGETS=
 LIB_TARGETS=
 PROG_TARGETS= 
 
-PROG_TARGETS += pfksh
-
 CFLAGS = -O0 -g3
 CXXFLAGS = -O0 -g3
 
+PROG_TARGETS += pfksh
 pfksh_TARGET = $(OBJDIR)/pfksh
 pfksh_CSRCS = \
 	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c \
@@ -51,6 +54,9 @@ pfksh_HDRS = \
 pfksh_CXXSRCS = xtree.cc
 pfksh_DEFS = -Dpfksh_main=main -DBUILD_DATE=\"pfksh-$(BUILD_DATE)\"
 pfksh_LIBS = -lcurses
+#pfksh_POSTINSTALL = pfksh-install-man
+
+POSTALL += $(OBJDIR)/pfksh.0
 
 include ../Makefile.inc
 
@@ -76,3 +82,11 @@ $(CONFIG_H): Makefile
 		echo making $(CONFIG_H) ; \
 		mv $(CONFIG_H).tmp $(CONFIG_H) ; \
 	fi
+
+$(OBJDIR)/pfksh.0: pfksh.man
+	nroff -man pfksh.man > $(OBJDIR)/pfksh.0
+
+#pfksh-install-man:
+#	@echo installing $(OBJDIR)/pfksh.0 to somewhere
+
+endif # $(CONFIG)
