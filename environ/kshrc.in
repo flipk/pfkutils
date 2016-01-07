@@ -882,7 +882,10 @@ if __isksh ; then
             xtermbar $bardisp
         fi
         CDPATH=.:$ti/src:$cpe/src:$HOME
-        echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
+        # root can't touch homedir files on nfs shares, don't try.
+        if [[ $REALUSER == $USER ]] ; then
+            echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
+        fi
     }
     shellstring() {
         SHELLFILESPECIAL=$1
