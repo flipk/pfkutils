@@ -30,7 +30,6 @@
 #include "dll2.h"
 #include <pthread.h>
 
-#include "types.h"
 #include "bst.h"
 
 #include <sys/types.h>
@@ -45,7 +44,7 @@ xxx
 #define PkMsgIntDef( classname, typevalue, body ) \
 class classname : public pk_msg_int { \
 public: \
-    static const UINT16 TYPE = typevalue ; \
+    static const uint16_t TYPE = typevalue ; \
     classname( void ) : pk_msg_int( sizeof( classname ), TYPE ) { } \
     body \
 }
@@ -65,7 +64,7 @@ xxx
                       constructargs, constructor ) \
 class classname : public pk_msg_int { \
 public: \
-    static const UINT16 TYPE = typevalue ; \
+    static const uint16_t TYPE = typevalue ; \
     classname( void ) : pk_msg_int( sizeof( classname ), TYPE ) { } \
     classname constructargs : pk_msg_int( sizeof( classname ), TYPE ) \
         constructor \
@@ -80,28 +79,28 @@ public:
     /** length in bytes of the message, automatically populated.
      * this field is automatically filled in by \ref PkMsgIntDef
      * (using sizeof). */
-    UINT16    length;
+    uint16_t    length;
     /** type of the message body, automatically populated.
      * this field is automatically filled in by \ref PkMsgIntDef and
      * comes from the TYPE value declared by that macro. */
-    UINT16    type;
+    uint16_t    type;
     /** source message queue id, user may fill if required.
      * this field is not automatically populated. the user must
      * fill it if the recipient of this message wants to reply
      * to sender. if the recipient will not reply to sender, this
      * field does not have to be populated. */
-    UINT32    src_q;
+    uint32_t    src_q;
     /** destination message queue id, user must fill.
      * this field is not automatically populated. the user must
      * fill this in order for the message to be delivered to its
      * destination. */
-    UINT32    dest_q;
+    uint32_t    dest_q;
 //
     /** constructor, called automatically by \ref PkMsgIntDef. 
      * user should not have to call this.
      * \param _length the length of the message in bytes.
      * \param _type  the type of the message, from the TYPE constant. */
-    pk_msg_int( UINT16 _length, UINT16 _type )
+    pk_msg_int( uint16_t _length, uint16_t _type )
         : length( _length ), type( _type ) { }
     /** automatic method for upcasting to derived message type.
      * derived types defined by \ref PkMsgIntDef will have a TYPE

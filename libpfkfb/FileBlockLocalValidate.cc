@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -113,7 +112,7 @@ FileBlockLocal :: validate( bool verbose )
             if (au.d->used() && au.d->auid() != 0)
             {
                 FileBlock * fb = get(au.d->auid());
-                UCHAR * ptr = fb->get_ptr();
+                uint8_t * ptr = fb->get_ptr();
                 int size = fb->get_size();
                 printf("  contents:\n");
                 for (int pos = 0; pos < size; pos++)

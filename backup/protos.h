@@ -31,9 +31,9 @@
 /** @name utility function prototypes */
 //@{
 bool   pfkbak_get_info    ( PfkBackupDbInfo * info );
-UINT32 pfkbak_find_backup ( char * bakname );
-void   pfkbak_md5_buffer  ( UCHAR * buf, int buflen, UCHAR * md5 );
-void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
+uint32_t pfkbak_find_backup ( char * bakname );
+void   pfkbak_md5_buffer  ( uint8_t * buf, int buflen, uint8_t * md5 );
+void   pfkbak_sprint_md5  ( uint8_t * md5hash, char * string );
 #define MD5_STRING_LEN 34
 //@}
 
@@ -43,15 +43,15 @@ void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
 void pfkbak_create_file   ( char * filename );
 void pfkbak_list_backups  ( void );
 void pfkbak_create_backup ( char * bakname, char * root_dir, char * comment );
-void pfkbak_delete_backup ( UINT32 baknum );
-void pfkbak_update_backup ( UINT32 baknum );
-void pfkbak_delete_gens   ( UINT32 baknum, int argc, char ** argv );
-void pfkbak_delete_gen    ( UINT32 baknum,
-                            UINT32 gen_num_s, UINT32 gen_num_e );
-void pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num );
-void pfkbak_extract       ( UINT32 baknum, UINT32 gen_num,
+void pfkbak_delete_backup ( uint32_t baknum );
+void pfkbak_update_backup ( uint32_t baknum );
+void pfkbak_delete_gens   ( uint32_t baknum, int argc, char ** argv );
+void pfkbak_delete_gen    ( uint32_t baknum,
+                            uint32_t gen_num_s, uint32_t gen_num_e );
+void pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num );
+void pfkbak_extract       ( uint32_t baknum, uint32_t gen_num,
                             int argc, char ** argv );
-void pfkbak_extract_list  ( UINT32 baknum, UINT32 gen_num,
+void pfkbak_extract_list  ( uint32_t baknum, uint32_t gen_num,
                             char * list_file );
 
 //@}

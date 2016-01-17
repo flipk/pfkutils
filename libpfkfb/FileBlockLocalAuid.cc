@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -129,7 +128,7 @@ FB_AUID_T
 FileBlockLocal :: alloc_auid( FB_AUN_T aun )
 {
     FB_AUID_T auid = 0;
-    UINT32 stack_top;
+    uint32_t stack_top;
 
     stack_top = fh.d->info.auid_stack_top.get();
     if (stack_top != 0)
@@ -272,7 +271,7 @@ FileBlockLocal :: free_auid( FB_AUID_T auid )
 
     rename_auid(auid,0);
 
-    UINT32 index = fh.d->info.auid_stack_top.get();
+    uint32_t index = fh.d->info.auid_stack_top.get();
     fh.d->info.auid_stack_top.set(index+1);
     fh.mark_dirty();
 
@@ -280,7 +279,7 @@ FileBlockLocal :: free_auid( FB_AUID_T auid )
 }
 
 void
-FileBlockLocal :: write_stack( UINT32 index, FB_AUID_T auid )
+FileBlockLocal :: write_stack( uint32_t index, FB_AUID_T auid )
 {
     int sl1_index = AuidL1Tab ::auid_to_l1_index(index);
     int sl2_index = AuidL23Tab::auid_to_l2_index(index);
@@ -324,7 +323,7 @@ FileBlockLocal :: write_stack( UINT32 index, FB_AUID_T auid )
 }
 
 FB_AUID_T
-FileBlockLocal :: lookup_stack( UINT32 index )
+FileBlockLocal :: lookup_stack( uint32_t index )
 {
     int sl1_index = AuidL1Tab ::auid_to_l1_index(index);
     int sl2_index = AuidL23Tab::auid_to_l2_index(index);

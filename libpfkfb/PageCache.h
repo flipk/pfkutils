@@ -28,10 +28,10 @@
 #ifndef __PAGE_CACHE_H__
 #define __PAGE_CACHE_H__
 
-#include "types.h"
 #include "PageIO.h"
 
 #include <sys/types.h>
+#include <inttypes.h>
 #include <unistd.h>
 
 class PageIO;
@@ -130,19 +130,19 @@ protected:
      *   it is assumed the caller will do that. */
     PageCachePage(int _page_number) {
         dirty = false;  page_number = _page_number;
-        ptr = new UCHAR[PageCache::PC_PAGE_SIZE];
+        ptr = new uint8_t[PageCache::PC_PAGE_SIZE];
     }
     /** destructor frees memory for the page.
      * \note this destructor does not write the contents back to the file.
      *   it is assumed the caller will do that. */
     ~PageCachePage(void) { delete[] ptr; }
     /** a pointer to the page data itself. */
-    UCHAR * ptr;
+    uint8_t * ptr;
 public:
     /** access method to return the page number. */
     int get_page_number(void) { return page_number; }
     /** access method to get the data pointer. */
-    UCHAR * get_ptr(void) { return ptr; }
+    uint8_t * get_ptr(void) { return ptr; }
     /** user must call this if he has modified the page data. */
     void mark_dirty(void) { dirty = true; }
     bool is_dirty(void) { return dirty; }

@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -178,7 +177,7 @@ main(int argc, char ** argv)
                     printf("%d: ERROR id mismatch\n", loop);
                 else if (td.d->idxor.get() != (i->id ^ XOR_CONSTANT))
                     printf("%d: ERROR idxor mismatch\n", loop);
-                else if (td.d->seq.get() != (UINT32)i->seq)
+                else if (td.d->seq.get() != (uint32_t)i->seq)
                     printf("%d: ERROR seq mismatch\n", loop);
             }
             count_read ++;
@@ -290,7 +289,7 @@ main( int argc, char ** argv )
 
     if (strcmp(argv[1], "1") == 0)
     {
-        UINT32 id;
+        uint32_t id;
         FileBlockT <CRAP>  crap(fbi);
 
         id = fbi->alloc(sizeof(CRAP));
@@ -311,7 +310,7 @@ main( int argc, char ** argv )
 
     if (strcmp(argv[1], "2") == 0)
     {
-        UINT32 id;
+        uint32_T id;
 
         id = fbi->get_data_info_block((char*)"CRAP");
         if (id > 0)
@@ -402,7 +401,7 @@ main()
         JunkType  j, k;
         j.one.v = 24;
         j.two.strdup((char*)"this is a stupid test");
-        UCHAR * jptr;
+        uint8_t * jptr;
         int jlen = 0;
         jptr = j.bst_encode( &jlen );
         if (jptr)
@@ -424,7 +423,7 @@ main()
             printf("jptr is null\n");
     }
 
-    UINT32 newid = 0;
+    uint32_t newid = 0;
     CrapType c(fbi);
     CrapType d(fbi);
     CrapType e(fbi);

@@ -39,10 +39,10 @@
  * @param gen_num_e  The ending range of generations to delete.
  */
 void
-pfkbak_delete_gen ( UINT32 baknum,
-                    UINT32 gen_num_s, UINT32 gen_num_e )
+pfkbak_delete_gen ( uint32_t baknum,
+                    uint32_t gen_num_s, uint32_t gen_num_e )
 {
-    UINT32 in, out;
+    uint32_t in, out;
 
     printf("deleting generations %d thru %d\n", gen_num_s, gen_num_e);
 
@@ -78,8 +78,8 @@ pfkbak_delete_gen ( UINT32 baknum,
     }
     backup_info.put(true);
 
-    UINT32 file_count = backup_info.data.file_count.v;
-    UINT32 file_number;
+    uint32_t file_count = backup_info.data.file_count.v;
+    uint32_t file_number;
     time_t now, last_progress;
 
     time( &last_progress );
@@ -90,7 +90,7 @@ pfkbak_delete_gen ( UINT32 baknum,
 
         if (time( &now ) != last_progress)
         {
-            UINT32 progress = file_number * 1000 / file_count;
+            uint32_t progress = file_number * 1000 / file_count;
             if (pfkbak_verb == VERB_1)
             {
                 printf("\rprogress: %3d.%d%% ", progress/10, progress%10);
@@ -116,7 +116,7 @@ pfkbak_delete_gen ( UINT32 baknum,
             BST_ARRAY  <BST_UINT32_t> * genlist = &file_info.data.generations;
             for (in = out = 0; in < genlist->num_items; in++)
             {
-                UINT32 g = genlist->array[in]->v;
+                uint32_t g = genlist->array[in]->v;
                 if (g < gen_num_s  ||  g > gen_num_e)
                 {
                     if (in != out)
@@ -134,7 +134,7 @@ pfkbak_delete_gen ( UINT32 baknum,
         else
             file_info.del();
 
-        UINT32 piece_number;
+        uint32_t piece_number;
         for (piece_number = 0; ; piece_number++)
         {
             PfkBackupFilePieceInfo piece_info(pfkbak_meta);

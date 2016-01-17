@@ -79,14 +79,14 @@ BTNode :: BTNode( FileBlockInterface * _fbi, int _btorder, FB_AUID_T _fbn )
         for (i=0; i < (numitems+1); i++)
             ptrs[i] = btn.d->items[i].ptr.get();
 
-        UCHAR * keydata = btn.d->get_key_data(btorder);
+        uint8_t * keydata = btn.d->get_key_data(btorder);
         int keystart = 0;
 
         // get keys, datas, alloc key memory, extract key data
         for (i=0; i < numitems; i++)
         {
             datas[i] = btn.d->items[i].data.get();
-            UINT32 keylen = btn.d->items[i].keysize.get();
+            uint32_t keylen = btn.d->items[i].keysize.get();
             keys[i] = new(keylen) BTKey(keylen);
             memcpy( keys[i]->data, keydata + keystart,
                     keys[i]->keylen );
@@ -137,7 +137,7 @@ BTNode :: store( void )
     btn.d->set_root( root );
     btn.d->set_leaf( leaf );
 
-    UCHAR * keydata = btn.d->get_key_data(btorder);
+    uint8_t * keydata = btn.d->get_key_data(btorder);
     int keystart = 0;
 
     for (i=0; i < numitems; i++)

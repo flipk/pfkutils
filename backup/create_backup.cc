@@ -47,7 +47,7 @@ pfkbak_create_backup ( char * bakname,
                        char * root_dir, char * comment )
 {
     PfkBackupDbInfo   info(pfkbak_meta);
-    UINT32  baknum;
+    uint32_t  baknum;
 
     if (root_dir[0] != '/')
     {

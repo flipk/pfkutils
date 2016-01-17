@@ -1,3 +1,4 @@
+
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 /*
@@ -25,9 +26,11 @@
 
 // ByteStream interface (BST)
 
+#include <sys/types.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdio.h>
-#include "types.h"
+#include <time.h>
 
 enum BST_OP {
 //    BST_OP_NONE,       // stream is uninitialized.
@@ -45,20 +48,20 @@ public:
     BST_STREAM(void) { op = (BST_OP)0; /* BST_OP_NONE */ }
     virtual ~BST_STREAM(void) { /*placeholder*/ }
     BST_OP get_op(void) { return op; }
-    virtual UCHAR * get_ptr(int step) = 0;
+    virtual uint8_t * get_ptr(int step) = 0;
 };
 
 class BST_STREAM_BUFFER : public BST_STREAM {
-    UCHAR * buffer;
+    uint8_t * buffer;
     int     buffer_size;
-    UCHAR * ptr;
+    uint8_t * ptr;
     int     size;
     int     remaining;
     bool    my_buffer;
 public:
     // the user supplies the buffer and also takes care
     // of deleting it.
-    BST_STREAM_BUFFER( UCHAR * _buffer, int _size ) {
+    BST_STREAM_BUFFER( uint8_t * _buffer, int _size ) {
         buffer = _buffer;
         buffer_size = _size;
         my_buffer = false;
@@ -66,7 +69,7 @@ public:
     // this object creates the buffer, which is deleted when
     // this object is deleted.
     BST_STREAM_BUFFER( int _size ) {
-        buffer = new UCHAR[_size];
+        buffer = new uint8_t[_size];
         buffer_size = _size;
         my_buffer = true;
     }
@@ -76,7 +79,7 @@ public:
     }
     // reset the current buffer position to the beginning, used
     // to reset the stream state for beginning a new operation.
-    void start(BST_OP _op, UCHAR * _buffer=NULL, int _size=0) {
+    void start(BST_OP _op, uint8_t * _buffer=NULL, int _size=0) {
         op = _op; 
         if (_buffer && _size)
         {
@@ -92,7 +95,7 @@ public:
     }
     // return the start of the buffer; used at the end of an
     // encode to collect the constructed bytestream.
-    UCHAR * get_finished_buffer(void) { return buffer; }
+    uint8_t * get_finished_buffer(void) { return buffer; }
     // return the amount of data in the buffer; used at the end
     // of an encode to collect the size of the constructed bytestream.
     int get_finished_size(void) { return size; }
@@ -100,17 +103,17 @@ public:
     // data types as the bytestream is processed.  specify the number
     // of bytes needed.  if there are not enough left in the buffer,
     // returns NULL.
-    /*virtual*/ UCHAR * get_ptr(int step) {
+    /*virtual*/ uint8_t * get_ptr(int step) {
         if (remaining < step)
             return NULL;
-        UCHAR * ret = ptr;
+        uint8_t * ret = ptr;
         remaining -= step;
         size += step;
         if (op == BST_OP_CALC_SIZE)
             // return something, anything, that is not NULL,
             // because the user may have specified a NULL buffer ptr
             // for the calc op.
-            return (UCHAR*)1;
+            return (uint8_t*)1;
         ptr += step;
         return ret;
     }
@@ -149,9 +152,9 @@ public:
         bst_op(&str);
         return str.get_finished_size();
     }
-    UCHAR * bst_encode( int * len ) {
+    uint8_t * bst_encode( int * len ) {
         *len = bst_calc_size();
-        UCHAR * buffer = new UCHAR[*len];
+        uint8_t * buffer = new uint8_t[*len];
         if (bst_encode(buffer, len) == false)
         {
             *len = 0;
@@ -160,7 +163,7 @@ public:
         }
         return buffer;
     }
-    bool bst_encode( UCHAR * buffer, int * len ) {
+    bool bst_encode( uint8_t * buffer, int * len ) {
         BST_STREAM_BUFFER str(buffer,*len);
         str.start(BST_OP_ENCODE);
         if (bst_op(&str) == false)
@@ -168,7 +171,7 @@ public:
         *len = str.get_finished_size();
         return true;
     }
-    bool bst_decode( UCHAR * buffer, int len ) {
+    bool bst_decode( uint8_t * buffer, int len ) {
         BST_STREAM_BUFFER str(buffer,len);
         str.start(BST_OP_DECODE);
         return bst_op(&str);
@@ -184,9 +187,9 @@ public:
 
 struct BST_UINT64_t : public BST {
     BST_UINT64_t(BST *parent) : BST(parent) { }
-    unsigned long long v;
+    uint64_t v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -228,9 +231,9 @@ struct BST_UINT64_t : public BST {
 
 struct BST_UINT32_t : public BST {
     BST_UINT32_t(BST *parent) : BST(parent) { }
-    unsigned int v;
+    uint32_t v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -262,9 +265,9 @@ struct BST_UINT32_t : public BST {
 
 struct BST_UINT16_t : public BST {
     BST_UINT16_t(BST *parent) : BST(parent) { }
-    unsigned short v;
+    uint16_t v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -293,9 +296,9 @@ struct BST_UINT16_t : public BST {
 
 struct BST_UINT8_t : public BST {
     BST_UINT8_t(BST *parent) : BST(parent) { }
-    unsigned char v;
+    uint8_t v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -318,6 +321,22 @@ struct BST_UINT8_t : public BST {
             return true;
         }
         return false;
+    }
+};
+
+struct BST_TIMEVAL : public BST {
+    BST_TIMEVAL(BST *parent)
+        : BST(parent), btv_sec(this), btv_usec(this) { }
+    ~BST_TIMEVAL(void) { }
+    BST_UINT64_t  btv_sec;
+    BST_UINT32_t  btv_usec;
+    void set(const struct timeval &tv) {
+        btv_sec.v = (uint64_t) tv.tv_sec;
+        btv_usec.v = (uint32_t) tv.tv_usec;
+    }
+    void get(struct timeval &tv) {
+        tv.tv_sec = (typeof(tv.tv_sec)) btv_sec.v;
+        tv.tv_usec = (typeof(tv.tv_usec)) btv_usec.v;
     }
 };
 
@@ -348,7 +367,7 @@ struct BST_BINARY : public BST {
         binary = newbin;
     }
     /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         BST_UINT16_t   count(NULL);
         switch (str->get_op())
         {
@@ -396,7 +415,7 @@ struct BST_STRING : public BST {
     virtual ~BST_STRING(void) { if (string) delete[] string; }
     char * string;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        UCHAR * ptr;
+        uint8_t * ptr;
         BST_UINT16_t  len(NULL);
         switch (str->get_op())
         {
@@ -611,13 +630,127 @@ public:
             return false;
         if (which.v >= max)
             return false;
-        if (!fields[which.v]->bst_op(str))
-            return false;
-        if (str->get_op() == BST_OP_MEM_FREE)
+        BST_OP op = str->get_op();
+        if (op != BST_OP_MEM_FREE)
+        {
+            if (!fields[which.v]->bst_op(str))
+                return false;
+        }
+        else
+        {
+            // op free should free all fields
+            for (BST * b = head; b; b = b->next)
+                b->bst_op(str);
             which.v = max;
+        }
         return true;
     }
 };
+
+// these are types for swapbyting in place.
+
+class UINT64_t {
+private:
+    static const int BYTES = 8;
+    typedef uint64_t __T;
+    uint8_t p[BYTES];
+public:
+    UINT64_t( void ) { }
+    UINT64_t( __T x ) { set( x ); }
+    __T get(void) {
+            return
+                ((__T)p[0] << 56) + ((__T)p[1] << 48) + 
+                ((__T)p[2] << 40) + ((__T)p[3] << 32) + 
+                ((__T)p[4] << 24) + ((__T)p[5] << 16) + 
+                ((__T)p[6] <<  8) + ((__T)p[7] <<  0);
+    }
+    void set( __T x ) {
+            p[0] = (x >> 56) & 0xff;  p[1] = (x >> 48) & 0xff;
+            p[2] = (x >> 40) & 0xff;  p[3] = (x >> 32) & 0xff;
+            p[4] = (x >> 24) & 0xff;  p[5] = (x >> 16) & 0xff;
+            p[6] = (x >>  8) & 0xff;  p[7] = (x >>  0) & 0xff;
+    }
+    int size_of(void) { return BYTES; }
+    __T incr(__T v=1) { __T n = get() + v; set(n); return n; }
+    __T decr(__T v=1) { __T n = get() - v; set(n); return n; }
+    // specific to UINT64
+    uint32_t get_lo(void) {
+        return
+            ((uint32_t)p[4] << 24) + ((uint32_t)p[5] << 16) + 
+            ((uint32_t)p[6] <<  8) + ((uint32_t)p[7] <<  0);
+    }
+    uint32_t get_hi(void) {
+        return
+            ((uint32_t)p[0] << 24) + ((uint32_t)p[1] << 16) + 
+            ((uint32_t)p[2] <<  8) + ((uint32_t)p[3] <<  0);
+    }
+};
+
+class UINT32_t {
+private:
+    static const int BYTES = 4;
+    typedef uint32_t __T;
+    uint8_t p[BYTES];
+public:
+    UINT32_t( void ) { }
+    UINT32_t( __T x ) { set( x ); }
+    __T get(void) {
+            return
+                ((__T)p[0] << 24) + ((__T)p[1] << 16) + 
+                ((__T)p[2] <<  8) + ((__T)p[3] <<  0);
+    }
+    void set( __T x ) {
+            p[0] = (x >> 24) & 0xff;  p[1] = (x >> 16) & 0xff;
+            p[2] = (x >>  8) & 0xff;  p[3] = (x >>  0) & 0xff;
+    }
+    int size_of(void) { return BYTES; }
+    __T incr(__T v=1) { __T n = get() + v; set(n); return n; }
+    __T decr(__T v=1) { __T n = get() - v; set(n); return n; }
+};
+
+class UINT16_t {
+private:
+    static const int BYTES = 2;
+    typedef uint16_t __T;
+    uint8_t p[BYTES];
+public:
+    UINT16_t( void ) { }
+    UINT16_t( __T x ) { set( x ); }
+    __T get(void) {
+            return
+                ((__T)p[0] <<  8) + ((__T)p[1] <<  0);
+    }
+    void set( __T x ) {
+            p[0] = (x >>  8) & 0xff;  p[1] = (x >>  0) & 0xff;
+    }
+    int size_of(void) { return BYTES; }
+    __T incr(__T v=1) { __T n = get() + v; set(n); return n; }
+    __T decr(__T v=1) { __T n = get() - v; set(n); return n; }
+};
+
+// useless class exists for consistency's sake.
+class UINT8_t {
+private:
+    static const int BYTES = 1;
+    typedef uint16_t __T;
+    uint8_t p[BYTES];
+public:
+    UINT8_t( void ) { }
+    UINT8_t( __T x ) { set( x ); }
+    __T get(void) {
+            return ((__T)p[0] <<  0);
+    }
+    void set( __T x ) {
+            p[0] = (x >>  0) & 0xff;
+    }
+    int size_of(void) { return BYTES; }
+    __T incr(__T v=1) { __T n = get() + v; set(n); return n; }
+    __T decr(__T v=1) { __T n = get() - v; set(n); return n; }
+};
+
+
+
+
 
 /* examples:
 
@@ -653,7 +786,7 @@ struct myStruct2 : public BST {
 int main() {
     myStruct2  x(NULL);
     myStruct2  y(NULL);
-    UCHAR * buffer;
+    uint8_t * buffer;
     int len;
 
     x.thing.one.v = 4;

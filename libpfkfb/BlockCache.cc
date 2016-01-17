@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -111,14 +110,14 @@ BlockCache :: get( off_t offset, int size, bool for_write )
     ret->num_pages = num_pages;
     ret->pages = new PageCachePage*[num_pages];
 
-    UCHAR * uptr = NULL;
+    uint8_t * uptr = NULL;
     int remaining = 0;
     int pg_offset = offset_in_starting_page;
 
     if (num_pages > 1)
     {
         // need a temporary buf
-        ret->ptr = new UCHAR[size];
+        ret->ptr = new uint8_t[size];
 
         if (!for_write)
         {
@@ -191,7 +190,7 @@ BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
         dirty = true;
     bcl->list.remove(bcb);
 
-    UCHAR * uptr = NULL;
+    uint8_t * uptr = NULL;
     int remaining = 0;
     int pg_offset = 0;
 
@@ -255,7 +254,7 @@ BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
         // if its a single-page object, then the ptr points
         // directly into a page, so there's nothing to sync up.
         return;
-    UCHAR * uptr = bcb->ptr;
+    uint8_t * uptr = bcb->ptr;
     int remaining = bcb->size;
     int pg_offset = bcb->offset % PageCache::PC_PAGE_SIZE;
     int i;

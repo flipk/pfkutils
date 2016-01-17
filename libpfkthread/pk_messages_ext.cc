@@ -1,4 +1,3 @@
-
 /**
  * \file pk_messages_ext.cc
  * \brief implementation of external messaging manager
@@ -51,7 +50,7 @@ bool
 PK_Message_Ext_Manager :: send( pk_msg_ext * msg )
 {
     bool retval = false;
-    UINT32 checksum = 0;
+    uint32_t checksum = 0;
     int  buflen = MAX_MSG_SIZE;
 
     if (msg->bst_encode( sendbuf, &buflen ))
@@ -71,7 +70,7 @@ PK_Message_Ext_Manager :: send( pk_msg_ext * msg )
     return retval;
 }
 
-inline UINT16
+inline uint16_t
 PK_Message_Ext_Manager :: get_byte( int ticks, bool beginning )
 {
     if (rcvbufpos >= rcvbufsize)
@@ -91,13 +90,13 @@ PK_Message_Ext_Manager :: get_byte( int ticks, bool beginning )
         rcvbufsize += bytes_read;
     }
 
-    return (UINT16) rcvbuf[rcvbufpos++];
+    return (uint16_t) rcvbuf[rcvbufpos++];
 }
 
 pk_msg_ext *
 PK_Message_Ext_Manager :: recv( int ticks )
 {
-    UINT16 byte;
+    uint16_t byte;
     UINT16_t * len;
     UINT16_t * type;
     pk_msg_ext * ret = NULL;
@@ -213,7 +212,7 @@ PK_Message_Ext_Manager :: recv( int ticks )
                 {
                     if (ret->bst_decode(rcvbuf, rcvbufpos))
                     {
-                        UINT32 rcvd_checksum, calced_checksum;
+                        uint32_t rcvd_checksum, calced_checksum;
 
                         pk_msg_ext_hdr::post_encode_set_checksum(
                             rcvbuf, 0);

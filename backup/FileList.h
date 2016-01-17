@@ -21,13 +21,13 @@
  */
 
 #include <sys/types.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
 
 #include <pk-md5.h>
 
-#include "types.h"
 #include "dll2.h"
 
 enum TsFileEntryLists {
@@ -85,10 +85,10 @@ public:
         state = STATE_EXISTS;
     }
     enum State { STATE_EXISTS=1, STATE_DELETED=2 } state;
-    UINT64  size;
+    uint64_t  size;
     time_t  mtime;
-    UINT16  mode;
-    UINT8   md5[MD5_DIGEST_SIZE];
+    uint16_t  mode;
+    uint8_t   md5[MD5_DIGEST_SIZE];
 };
 
 class TSFileEntryDir : public TSFileEntry {
@@ -98,7 +98,7 @@ public:
     {
         type = TYPE_DIR;
     }
-    UINT16  mode;
+    uint16_t  mode;
 };
 
 class TSFileEntryLink : public TSFileEntry {

@@ -40,7 +40,7 @@ class BtreeInternal;
 class BtreeIterator {
 public:
     virtual ~BtreeIterator(void) { /* placeholder */ }
-    virtual bool handle_item( UCHAR * keydata, UINT32 keylen,
+    virtual bool handle_item( uint8_t * keydata, uint32_t keylen,
                               FB_AUID_T data_fbn ) = 0;
     virtual void print( const char * format, ... )
         __attribute__ ((format( printf, 2, 3 ))) = 0;
@@ -135,7 +135,7 @@ public:
      * \return true if the data was found (and the 'data_id' parameter will be
      *         populated with the relevant data), or false if the data was 
      *         not found (key not present).*/
-    virtual bool get( UCHAR * key, int keylen, FB_AUID_T * data_id ) = 0;
+    virtual bool get( uint8_t * key, int keylen, FB_AUID_T * data_id ) = 0;
     /** a version of the get method which understands BST data structures.
      * this method will encode the BST bytestream and then call the 
      * pointer/length version of the get method.
@@ -146,7 +146,7 @@ public:
      */
     bool get( BST * key, FB_AUID_T * data_id ) {
         int keylen = 0;
-        UCHAR * keybuf = key->bst_encode( &keylen );
+        uint8_t * keybuf = key->bst_encode( &keylen );
         bool retval = false;
         if (keybuf)
         {
@@ -180,7 +180,7 @@ public:
      *     contain the old data associated with the key prior to replacement.
      * \return true if the item was put in the database; false if the key
      *         already exists and replace argument is false. */
-    virtual bool put( UCHAR * key, int keylen, FB_AUID_T data_id,
+    virtual bool put( uint8_t * key, int keylen, FB_AUID_T data_id,
                       bool replace=false, bool *replaced=NULL,
                       FB_AUID_T *old_data_id=NULL ) = 0;
     /** a version of the put method which supports key in BST form.
@@ -201,7 +201,7 @@ public:
     bool put( BST * key, FB_AUID_T data_id, bool replace=false,
               bool *replaced=NULL, FB_AUID_T *old_data_id=NULL ) {
         int keylen = 0;
-        UCHAR * keybuf = key->bst_encode( &keylen );
+        uint8_t * keybuf = key->bst_encode( &keylen );
         bool retval = false;
         if (keybuf)
         {
@@ -222,7 +222,7 @@ public:
      *    left to the user, i.e. if it was being used to store FBN numbers,
      *    presumably the user will wish to free the associated file block.
      * \return true if the item was deleted, false if not found or error. */
-    virtual bool del  ( UCHAR * key, int keylen, FB_AUID_T *old_data_id ) = 0;
+    virtual bool del  ( uint8_t * key, int keylen, FB_AUID_T *old_data_id ) = 0;
     /** a BST version of del.
      * \param key the key data to delete.
      * \param old_data_id if the matching key was found, and the record
@@ -233,7 +233,7 @@ public:
      * \return true if the key/data was deleted or false if not. */
     bool del( BST * key, FB_AUID_T *old_data_id ) {
         int keylen = 0;
-        UCHAR * keybuf = key->bst_encode( &keylen );
+        uint8_t * keybuf = key->bst_encode( &keylen );
         bool retval = false;
         if (keybuf)
         {

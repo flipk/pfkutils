@@ -32,7 +32,7 @@
 #include "dll2.h"
 
 /** a data type for AU id numbers.  */
-typedef UINT32   FB_AUN_T;
+typedef uint32_t   FB_AUN_T;
 /** a data type for AU id numbers when encoded in a file */
 typedef UINT32_t FB_AUN_t;
 
@@ -80,7 +80,7 @@ private:
  */
 struct InfoBlock {
     /** the file must have a valid signature to be used. */
-    static const UINT32 SIGNATURE = 0x04f78c2a;
+    static const uint32_t SIGNATURE = 0x04f78c2a;
     UINT32_t  signature;      /**< value is SIGNATURE */
     UINT32_t  used_aus;       /**< count of used AUs */
     UINT32_t  free_aus;       /**< count of free AUs */
@@ -166,7 +166,7 @@ struct AuidL1Tab {
     static const int L1_ENTRIES = 4096;
     /** the top 12 bits of a 32-bit value are used to index 
      * this table. */
-    static int auid_to_l1_index(UINT32 v) { return (v >> 20) & 0xFFF; }
+    static int auid_to_l1_index(uint32_t v) { return (v >> 20) & 0xFFF; }
     FB_AUN_t  entries[L1_ENTRIES];
 };
 
@@ -179,8 +179,8 @@ struct AuidL1Tab {
  */
 struct AuidL23Tab {
     static const int L23_ENTRIES = 1024;
-    static int auid_to_l2_index(UINT32 v) { return (v >> 10) & 0x3FF; }
-    static int auid_to_l3_index(UINT32 v) { return (v >>  0) & 0x3FF; }
+    static int auid_to_l2_index(uint32_t v) { return (v >> 10) & 0x3FF; }
+    static int auid_to_l3_index(uint32_t v) { return (v >>  0) & 0x3FF; }
     FB_AUN_t  entries[L23_ENTRIES];
 };
 
@@ -220,9 +220,9 @@ public:
  */
 class _AUHead {
     /** if this bit is set in size_and_used, the region is in use. */
-    static const UINT32 USED_MASK = 0x80000000;
+    static const uint32_t USED_MASK = 0x80000000;
     /** these 31 bits are used for the size of the region. */
-    static const UINT32 SIZE_MASK = 0x7fffffff;
+    static const uint32_t SIZE_MASK = 0x7fffffff;
 public:
     static const int used_size = 12;
     /** pointer to the previous region in the file. */
@@ -306,7 +306,7 @@ enum FILE_BLOCK_LIST_INDICES { FILE_BLOCK_LIST, FILE_BLOCK_NUM_LISTS };
 class FileBlockInt : public FileBlock {
 public:
     LListLinks <FileBlockInt> links[FILE_BLOCK_NUM_LISTS];
-    void set_auid(UINT32 _auid) { auid = _auid; }
+    void set_auid(uint32_t _auid) { auid = _auid; }
     void set_bcb(BlockCacheBlock * _bcb) { bcb = _bcb; }
     BlockCacheBlock *get_bcb(void) { return bcb; }
 };
@@ -433,12 +433,12 @@ class FileBlockLocal : public FileBlockInterface {
      * \param  index    the entry in the stack to modify.
      * \param  auid     the value to write to the specified entry.
      */
-    void      write_stack    ( UINT32 index, FB_AUID_T auid );
+    void      write_stack    ( uint32_t index, FB_AUID_T auid );
     /** read out of the free-AUID stack.
      * \param index    the entry to read.
      * \return   the AUID stored at that position in the stack.
      */
-    FB_AUID_T lookup_stack   ( UINT32 index );
+    FB_AUID_T lookup_stack   ( uint32_t index );
     // @}
     /** @name Compaction */
     // @{

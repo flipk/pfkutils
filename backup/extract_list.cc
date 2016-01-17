@@ -40,8 +40,8 @@
  * @param list_file path to a file containing file names to extract.
  */
 void
-pfkbak_extract_list  ( UINT32 baknum,
-                       UINT32 gen_num, char * list_file )
+pfkbak_extract_list  ( uint32_t baknum,
+                       uint32_t gen_num, char * list_file )
 {
     printf("Sorry, this functionality is not yet implemented.\n");
     /** \todo modify extract.C to make a generic function for

@@ -99,7 +99,7 @@ FileBlockLocal :: realloc( FB_AUID_T auid, FB_AUN_T to_aun,
                            int new_size )
 {
     FB_AUN_T aun;
-    UCHAR * buffer;
+    uint8_t * buffer;
     int buflen;
 
     aun = translate_auid( auid );
@@ -117,12 +117,12 @@ FileBlockLocal :: realloc( FB_AUID_T auid, FB_AUN_T to_aun,
     if (buflen >= new_size)
     {
         buflen = new_size;
-        buffer = new UCHAR[ buflen ];
+        buffer = new uint8_t[ buflen ];
         memcpy(buffer, fb->get_ptr(), buflen);
     }
     else
     {
-        buffer = new UCHAR[ new_size ];
+        buffer = new uint8_t[ new_size ];
         memcpy(buffer, fb->get_ptr(), buflen);
         memset(buffer + buflen, 0, new_size - buflen);
         buflen = new_size;

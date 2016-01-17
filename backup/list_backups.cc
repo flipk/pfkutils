@@ -48,7 +48,7 @@ pfkbak_list_backups  ( void )
 
     for (i=0; i < info.data.backups.num_items; i++)
     {
-        UINT32   backup_number = info.data.backups.array[i]->v;
+        uint32_t   backup_number = info.data.backups.array[i]->v;
 
         PfkBackupInfo   binf(pfkbak_meta);
 

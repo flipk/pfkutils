@@ -38,8 +38,8 @@ the keys are the same number of bytes and have the same contents, the
 data portion of the second "put" will replace the data of the first in
 the file.
 
-The "key" and "data" units are specified with UCHAR pointers and an int
-specifying a length.  A UCHAR and int together are known as a "datum".
+The "key" and "data" units are specified with uint8_t pointers and an int
+specifying a length.  A uint8_t and int together are known as a "datum".
 
 To retrieve data from a Btree, construct a key datum with the proper
 contents, and call the "get" method.  It will return a data datum which
@@ -105,7 +105,7 @@ The BTREE node, on disk, has the following layout:
      	  works to access items[order].ptr (even though the dimension of the
 	  array is order-1), to access this extra ptr.
      </ul>
-<li> UCHAR keydata[]
+<li> uint8_t keydata[]
      <ul>
      <li> this is a variable-length array of data where the key data for
      	  all the items begins.  the \em keystart and \em keysize elements
@@ -261,7 +261,7 @@ BtreeInternal :: ~BtreeInternal(void)
 
 //static
 int
-BtreeInternal :: compare_keys( UCHAR * key, int keylen, BTKey * two )
+BtreeInternal :: compare_keys( uint8_t * key, int keylen, BTKey * two )
 {
     int onesize = keylen;
     int twosize = two->keylen;
@@ -279,7 +279,7 @@ BtreeInternal :: compare_keys( UCHAR * key, int keylen, BTKey * two )
 }
 
 int
-BtreeInternal :: walknode( BTNode * n, UCHAR * key, int keylen, bool *exact )
+BtreeInternal :: walknode( BTNode * n, uint8_t * key, int keylen, bool *exact )
 {
     if (n->numitems == 0)
     {
@@ -441,7 +441,7 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, FB_AUID_T * data_fbn,
 
 //virtual
 bool
-BtreeInternal :: get( UCHAR * key, int keylen, FB_AUID_T * data )
+BtreeInternal :: get( uint8_t * key, int keylen, FB_AUID_T * data )
 {
     bool ret = false;
     bool exact = false;
@@ -489,7 +489,7 @@ struct nodewalker {
 
 //virtual
 bool
-BtreeInternal :: put( UCHAR * key, int keylen, FB_AUID_T data_id,
+BtreeInternal :: put( uint8_t * key, int keylen, FB_AUID_T data_id,
                       bool replace, bool * replaced, FB_AUID_T * old_data_id )
 {
     if (iterate_inprogress)
@@ -675,7 +675,7 @@ out:
 
 //virtual
 bool
-BtreeInternal :: del( UCHAR * key, int keylen, FB_AUID_T *old_data_id )
+BtreeInternal :: del( uint8_t * key, int keylen, FB_AUID_T *old_data_id )
 {
     bool ret = false;
 

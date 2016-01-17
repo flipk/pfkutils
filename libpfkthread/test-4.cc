@@ -57,7 +57,7 @@ PkMsgExtDef( MyMessage, 0x1234, MyType );
 
 class test1 : public PK_Thread, PK_Message_Ext_Handler {
     void entry( void );
-    /*virtual*/ pk_msg_ext * make_msg( UINT16 type ) {
+    /*virtual*/ pk_msg_ext * make_msg( uint16_t type ) {
         switch (type)
         {
         case MyMessage::TYPE: return new MyMessage;

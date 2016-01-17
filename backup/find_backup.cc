@@ -36,7 +36,7 @@
  * @return the backup ID of the backup, if found; if not found, returns 0,
  *         which is an invalid backup ID. 
  */
-UINT32
+uint32_t
 pfkbak_find_backup( char * bakname )
 {
     PfkBackupDbInfo   info(pfkbak_meta);
@@ -47,7 +47,7 @@ pfkbak_find_backup( char * bakname )
 
     for (i=0; i < info.data.backups.num_items; i++)
     {
-        UINT32 backup_number = info.data.backups.array[i]->v;
+        uint32_t backup_number = info.data.backups.array[i]->v;
 
         PfkBackupInfo   binf(pfkbak_meta);
 

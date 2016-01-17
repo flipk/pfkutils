@@ -36,7 +36,7 @@
  * @param baknum The backup ID number of the backup to delete.
  */
 void
-pfkbak_delete_backup ( UINT32 baknum )
+pfkbak_delete_backup ( uint32_t baknum )
 {
     printf("Sorry, this functionality is not yet implemented.\n");
     /** \todo support deleting backup from a database. */

@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -47,8 +46,8 @@ class myIterator : public BtreeIterator {
     FileBlockInterface * fbi;
 public:
     myIterator(FileBlockInterface * _fbi) { fbi = _fbi; }
-    /*virtual*/ bool handle_item( UCHAR * keydata, UINT32 keylen,
-                                  UINT32 data_fbn ) {
+    /*virtual*/ bool handle_item( uint8_t * keydata, uint32_t keylen,
+                                  uint32_t data_fbn ) {
         printf( "key len %d: ", keylen);
         int i;
         for (i=0; i < (int)keylen; i++)
@@ -90,7 +89,7 @@ struct crapdata : public FileBlockBST {
 
 struct ramcopy {
     bool infile;
-    UINT32 data;
+    uint32_t data;
     ramcopy(void) { infile = false; }
 };
 
@@ -102,7 +101,7 @@ main()
 
     crapkey    key;
     crapdata   data(bt->get_fbi());
-    UINT32     data_fbn;
+    uint32_t     data_fbn;
 
 #define ITERATIONS 0x10000
 #define ITEMS      0x01000
@@ -187,7 +186,7 @@ struct crapkey : public BST {
 
 struct ramcopy {
     bool infile;
-    UINT32 data;
+    uint32_t data;
     ramcopy(void) { infile = false; }
 };
 
@@ -203,7 +202,7 @@ main()
     Btree * bt = Btree::createFile( TEST_FILE, MAX_BYTES, 0644, 13 );
 
     crapkey    key(NULL);
-    UINT32     data;
+    uint32_t     data;
 
     int iter, ind;
     int inserts = 0, queries = 0, deletes = 0;

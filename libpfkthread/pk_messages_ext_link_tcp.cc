@@ -1,4 +1,3 @@
-
 /**
  * \file pk_messages_ext_link_tcp.cc
  * \brief implementation of external messaging link over TCP
@@ -133,9 +132,9 @@ PK_Message_Ext_Link_TCP :: ~PK_Message_Ext_Link_TCP(void)
 
 //virtual
 bool
-PK_Message_Ext_Link_TCP :: write( UCHAR * buf, int buflen )
+PK_Message_Ext_Link_TCP :: write( uint8_t * buf, int buflen )
 {
-    UCHAR * ptr = buf;
+    uint8_t * ptr = buf;
     int cc;
 
     if (fd < 0)
@@ -158,7 +157,7 @@ PK_Message_Ext_Link_TCP :: write( UCHAR * buf, int buflen )
 
 //virtual
 int
-PK_Message_Ext_Link_TCP :: read ( UCHAR * buf, int buflen, int ticks )
+PK_Message_Ext_Link_TCP :: read ( uint8_t * buf, int buflen, int ticks )
 {
     int cc;
     fd_set rfds;

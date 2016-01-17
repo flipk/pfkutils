@@ -31,7 +31,7 @@ class BtreeInternal;
 
 /** a Btree information block as it appears on disk. */
 struct _BTInfo {
-    static const UINT32 MAGIC = 0x0d83f387;
+    static const uint32_t MAGIC = 0x0d83f387;
     UINT32_t magic;
     FB_AUID_t bti_fbn;     /**< fileblock number of this info block (self) */
     FB_AUID_t root_fbn;    /**< fileblock number of the root node */
@@ -53,7 +53,7 @@ struct BTNodeItem {
 /** a Btree node as it appears on disk, plus access methods.
  * \note this structure is variable-sized. */
 struct _BTNodeDisk {
-    static const UINT32 MAGIC = 0x4463ab2d;
+    static const uint32_t MAGIC = 0x4463ab2d;
     UINT32_t    magic;      /**< must equal _BTNodeDisk::MAGIC */
 private:
     UINT16_t    _numitems;  /**< count of items, also encode leaf and root
@@ -104,8 +104,8 @@ public:
             sizeof(BTNodeItem)*(_order-1) +
             sizeof(FB_AUID_t);
     }
-    UCHAR * get_key_data(int _order) {
-        return ((UCHAR*)this) + node_size(_order);
+    uint8_t * get_key_data(int _order) {
+        return ((uint8_t*)this) + node_size(_order);
     }
 };
 typedef FileBlockT <_BTNodeDisk> BTNodeDisk;
@@ -120,22 +120,22 @@ typedef FileBlockT <_BTNodeDisk> BTNodeDisk;
  * the constructor so that the right amount of memory may be allocated.
  */
 struct BTKey {
-    UINT32 keylen;     /**< the length of the key data */
-    UCHAR data[0];     /**< the key data itself */
+    uint32_t keylen;     /**< the length of the key data */
+    uint8_t data[0];     /**< the key data itself */
     //
     /** constructor will populate the keylen field from its parameter */
-    BTKey( UINT32 _keylen ) { keylen = _keylen; }
+    BTKey( uint32_t _keylen ) { keylen = _keylen; }
     /** operator allocates memory based on size of key.
      * \param sz  the compiler provides this as sizeof(BTKey) however this 
      *            parameter is not used by this method.
      * \param keylen the length of the key data.
      * \return enough memory for BTKey and the key data combined. */
     void * operator new( size_t sz, int keylen ) {
-        return (void*) new UCHAR[ sizeof(BTKey) + keylen ];
+        return (void*) new uint8_t[ sizeof(BTKey) + keylen ];
     }
     /** operator which matches the custom new operator to free memory. */
     void operator delete( void * ptr ) {
-        delete[] (UCHAR*)ptr;
+        delete[] (uint8_t*)ptr;
     }
 };
 
@@ -302,7 +302,7 @@ class BtreeInternal : public Btree {
      * \return -1 if one is "less than" two, 0 if one is binary equivalent
      *         to two, 1 if one is "greator than" two.
      */
-    static int compare_keys( UCHAR * key, int keylen, BTKey * two );
+    static int compare_keys( uint8_t * key, int keylen, BTKey * two );
     /** compare key to each key in node.  key is in pointer/len form to 
      * handle arguments to get/put/del.
      * if exact match is found, *exact is set to true.
@@ -317,7 +317,7 @@ class BtreeInternal : public Btree {
      *  <li> if this is a non-leaf, the pointer at that index should be
      * followed to get closer to the desired item. </ul>
      */
-    int walknode( BTNode * n, UCHAR * key, int keylen, bool *exact );
+    int walknode( BTNode * n, uint8_t * key, int keylen, bool *exact );
     /** take full node plus 1 item and split into 2 nodes
      * plus 1 "pivot" item between them.  Supply a key and an associated
      * data, plus a node pointer to the right of that key, and an index
@@ -378,10 +378,10 @@ public:
     /** free all memory associated with the btree and sync all nodes
      * back to the file. */
     /*virtual*/ ~BtreeInternal( void );
-    /*virtual*/ bool get( UCHAR * key, int keylen, FB_AUID_T * data_id );
-    /*virtual*/ bool put( UCHAR * key, int keylen, FB_AUID_T data_id,
+    /*virtual*/ bool get( uint8_t * key, int keylen, FB_AUID_T * data_id );
+    /*virtual*/ bool put( uint8_t * key, int keylen, FB_AUID_T data_id,
                           bool replace, bool * replaced,
                           FB_AUID_T * old_data_id );
-    /*virtual*/ bool del( UCHAR * key, int keylen, FB_AUID_T * old_data_id );
+    /*virtual*/ bool del( uint8_t * key, int keylen, FB_AUID_T * old_data_id );
     /*virtual*/ bool iterate( BtreeIterator * bti );
 };

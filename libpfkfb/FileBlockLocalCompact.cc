@@ -326,7 +326,7 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
     while (1)
     {
         FB_AUN_T aun, last_aun;
-        UINT32 free_aus, num_aus;
+        uint32_t free_aus, num_aus;
         FB_AUID_T auid;
         int bucket;
 

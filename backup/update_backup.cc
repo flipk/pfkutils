@@ -46,7 +46,7 @@ enum file_state {
                           timestamp and size as recorded in the database. */
 };
 
-static UINT64 bytes_written;
+static uint64_t bytes_written;
 
 /** add the data for a file piece to the database.
  * this function will also compress the data before adding it,
@@ -64,14 +64,14 @@ static UINT64 bytes_written;
  * @return true if data added okay, false if there was an error.
  */
 static bool
-put_piece_data( UINT32 baknum, UINT32 file_number,
-                UINT32 piece_number, UCHAR * md5hash,
-                UCHAR * buffer, int usize )
+put_piece_data( uint32_t baknum, uint32_t file_number,
+                uint32_t piece_number, uint8_t * md5hash,
+                uint8_t * buffer, int usize )
 {
     PfkBackupFilePieceData   piece_data(pfkbak_meta);
-    UINT32 data_fbn = 0;
-    UCHAR * final_buffer;
-    UINT16  final_size;
+    uint32_t data_fbn = 0;
+    uint8_t * final_buffer;
+    uint16_t  final_size;
 
     // unfortunately, we have to compress to a temp buffer
     // and then copy it to the FileBlock, because we don't know
@@ -79,7 +79,7 @@ put_piece_data( UINT32 baknum, UINT32 file_number,
     // complete! bummer.
 
     uLongf csize = compressBound( usize );
-    UCHAR cbuf[ csize ];
+    uint8_t cbuf[ csize ];
 
     bytes_written += usize;
 
@@ -153,10 +153,10 @@ put_piece_data( UINT32 baknum, UINT32 file_number,
  */
 static void
 walk_file( file_state state, 
-           UINT32 baknum, UINT32 file_number, UINT32 gen_num,
+           uint32_t baknum, uint32_t file_number, uint32_t gen_num,
            PfkBackupFileInfo * file_info, TSFileEntryFile * fef )
 {
-    UINT32 piece_number;
+    uint32_t piece_number;
     int fd = -1;
     int idx, newidx;
 
@@ -182,8 +182,8 @@ walk_file( file_state state,
 
     int piece_len;
     int PIECE_SIZE = PfkBackupFilePieceDataData::PIECE_SIZE;
-    UCHAR buffer[PIECE_SIZE];
-    UCHAR  md5hash[MD5_DIGEST_SIZE];
+    uint8_t buffer[PIECE_SIZE];
+    uint8_t  md5hash[MD5_DIGEST_SIZE];
     PfkBackupFilePieceInfo   piece_info(pfkbak_meta);
 
     // walk all the pieces.
@@ -387,10 +387,10 @@ walk_file( file_state state,
  * @param baknum  The backup number in the database to update.
  */
 void
-pfkbak_update_backup ( UINT32 baknum )
+pfkbak_update_backup ( uint32_t baknum )
 {
     PfkBackupInfo   bakinfo(pfkbak_meta);
-    UINT32  gen_num;
+    uint32_t  gen_num;
 
     bytes_written = 0;
 
@@ -449,8 +449,8 @@ pfkbak_update_backup ( UINT32 baknum )
         TSFileEntryFile * fef;
     } fe;
     TSFileEntry     * nfe;
-    UINT64            total_bytes = 0;
-    UINT64            processed_bytes = 0;
+    uint64_t            total_bytes = 0;
+    uint64_t            processed_bytes = 0;
 
     for (fe.fe = fel->get_head(); fe.fe; fe.fe = nfe)
     {
@@ -474,14 +474,14 @@ pfkbak_update_backup ( UINT32 baknum )
         fflush(stdout);
     }
 
-    UINT32 file_number;
+    uint32_t file_number;
 
     // walk through all file entries in the database, looking
     // to see if a file we found has changed.
 
     struct unused_file_number {
         struct unused_file_number * next;
-        UINT32  file_number;
+        uint32_t  file_number;
     };
     unused_file_number * unused_head = NULL;
     PfkBackupFileInfo  file_info(pfkbak_meta);
@@ -526,7 +526,7 @@ pfkbak_update_backup ( UINT32 baknum )
             processed_bytes += fe.fef->size;
             if (time( &now ) != last_progress )
             {
-                UINT32 progress = processed_bytes * 1000 / total_bytes;
+                uint32_t progress = processed_bytes * 1000 / total_bytes;
                 if (pfkbak_verb == VERB_1)
                 {
                     printf("\rprogress: %3d.%d%%   bytes: %lld  written: %lld ",
@@ -595,7 +595,7 @@ pfkbak_update_backup ( UINT32 baknum )
         processed_bytes += fe.fef->size;
         if (time( &now ) != last_progress )
         {
-            UINT32 progress = processed_bytes * 1000 / total_bytes;
+            uint32_t progress = processed_bytes * 1000 / total_bytes;
             if (pfkbak_verb == VERB_1)
             {
                 printf("\rprogress: %3d.%d%%   bytes: %lld  written: %lld ",

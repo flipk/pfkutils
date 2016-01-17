@@ -1,4 +1,3 @@
-
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pfk@pfk.org).
@@ -138,7 +137,7 @@ inconsistent use of data types, and partially due to an overly complex
 interface.
 
 Consider that in previous iterations, the get_block methods returned a
-UCHAR* which had to be cast to the relevant data type.  Also, there
+uint8_t* which had to be cast to the relevant data type.  Also, there
 was a separate UINT32 "magic" value which the application had to
 store, to be used when a block was released ("unlocked" in the old
 terminology).  (The "magic" was actually a pointer to an internal data

@@ -3,7 +3,7 @@
 #include <time.h>
 #include "FileBlock_iface.h"
 
-static UINT32 max_free = 0;
+static uint32_t max_free = 0;
 
 static bool
 compaction_status_function(FileBlockStats *stats, void *arg)

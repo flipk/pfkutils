@@ -29,6 +29,8 @@
 #ifndef __BLOCK_CACHE_H__
 #define __BLOCK_CACHE_H__
 
+#include <sys/types.h>
+#include <inttypes.h>
 #include "PageCache.h"
 
 class BlockCacheList;
@@ -46,7 +48,7 @@ protected:
      * in the PageCache; however if it crosses a page boundary,
      * this is a pointer to a private buffer which is copied out
      * of the PageCache and then copied back when modified. */
-    UCHAR * ptr;
+    uint8_t * ptr;
     /** the number of PageCache pages which this block references.
      * if greator than 1, indicates the block crosses at least one
      * page boundary. */
@@ -68,10 +70,10 @@ protected:
             delete[] pages;
     }
 public:
-    off_t   get_offset(void) { return offset; }
-    int     get_size  (void) { return size;   }
-    UCHAR * get_ptr   (void) { return ptr;    }
-    void    mark_dirty(void) { dirty = true;  }
+    off_t     get_offset(void) { return offset; }
+    int       get_size  (void) { return size;   }
+    uint8_t * get_ptr   (void) { return ptr;    }
+    void      mark_dirty(void) { dirty = true;  }
 };
 
 /** Interface to get and put arbitrary-sized blocks in a file.

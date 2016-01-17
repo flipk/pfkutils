@@ -30,7 +30,6 @@
 #include "dll2.h"
 #include <pthread.h>
 
-#include "types.h"
 #include "bst.h"
 
 #include <sys/types.h>
@@ -45,8 +44,8 @@ class pk_msg_ext_hdr : public BST {
     BST_UINT32_t checksum;
     static int checksum_offset(void) { return 8; }
 public:
-    static const UINT32 MAGIC = 0x819b8300UL;
-    pk_msg_ext_hdr(BST *parent, UINT16 _type)
+    static const uint32_t MAGIC = 0x819b8300UL;
+    pk_msg_ext_hdr(BST *parent, uint16_t _type)
         : BST(parent),
           magic(this), type(this), length(this), checksum(this)
     {
@@ -54,21 +53,21 @@ public:
         type.v = _type;
     }
     bool valid_magic(void) { return magic.v == MAGIC; }
-    void set_length(UINT16 len) { length.v = len; }
-    UINT16 get_length(void) { return length.v; }
-    UINT16 get_type(void) { return type.v; }
-    UINT32 get_checksum(void) { return checksum.v; }
-    static void post_encode_set_checksum(UCHAR * buf,
-                                         UINT32 checksum) {
+    void set_length(uint16_t len) { length.v = len; }
+    uint16_t get_length(void) { return length.v; }
+    uint16_t get_type(void) { return type.v; }
+    uint32_t get_checksum(void) { return checksum.v; }
+    static void post_encode_set_checksum(uint8_t * buf,
+                                         uint32_t checksum) {
         UINT32_t * checksum_location = (UINT32_t *) (buf + checksum_offset());
         checksum_location->set( checksum );
     }
-    static void post_encode_set_len(UCHAR * buf, UINT16 len) {
+    static void post_encode_set_len(uint8_t * buf, uint16_t len) {
         UINT16_t * length_location = (UINT16_t *) (buf + length_offset());
         length_location->set( len );
     }
-    static UINT32 calc_checksum( UCHAR * buf, int len ) {
-        UINT32 checksum = 0xc2db895cUL;
+    static uint32_t calc_checksum( uint8_t * buf, int len ) {
+        uint32_t checksum = 0xc2db895cUL;
         for (int i=0; i < len; i++)
             checksum = ((checksum << 5) + checksum) + (buf[i] + i);
         return checksum;
@@ -79,19 +78,19 @@ class pk_msg_ext : public BST {
 public:
     pk_msg_ext_hdr hdr;
     LListLinks <pk_msg_ext> links[1];
-    pk_msg_ext( UINT16 type )
+    pk_msg_ext( uint16_t type )
         : BST(NULL), hdr(this, type) { }
     virtual ~pk_msg_ext( void ) { }
-    virtual UINT16 get_TYPE(void) = 0;
+    virtual uint16_t get_TYPE(void) = 0;
 };
 
 template <class T, int typeValue> 
 class pk_msg_ext_body : public pk_msg_ext {
 public:
-    static const UINT16 TYPE = typeValue;
+    static const uint16_t TYPE = typeValue;
     pk_msg_ext_body( void ) : pk_msg_ext(TYPE), body(this) { }
     T body;
-    /*virtual*/ UINT16 get_TYPE(void) { return TYPE; }
+    /*virtual*/ uint16_t get_TYPE(void) { return TYPE; }
 };
 
 #define PkMsgExtDef( classname, typevalue, bodytype )       \
@@ -105,7 +104,7 @@ public:
     PK_Message_Ext_Handler(void) { }
     virtual ~PK_Message_Ext_Handler(void) { }
     // used by PK_Message_Ext_Manager for receiving
-    virtual pk_msg_ext * make_msg( UINT16 type ) = 0;
+    virtual pk_msg_ext * make_msg( uint16_t type ) = 0;
 };
 
 class PK_Message_Ext_Link {
@@ -119,16 +118,16 @@ public:
     }
     virtual ~PK_Message_Ext_Link(void) { }
     // false means link closure
-    virtual bool write( UCHAR * buf, int buflen ) = 0;
+    virtual bool write( uint8_t * buf, int buflen ) = 0;
     // 0 means timeout, -1 means error
-    virtual int  read ( UCHAR * buf, int buflen, int ticks ) = 0;
+    virtual int  read ( uint8_t * buf, int buflen, int ticks ) = 0;
     bool Connected(void) { return connected; }
 };
 
 class PK_Message_Ext_Manager {
     static const int MAX_MSG_SIZE = 8192;
-    UCHAR sendbuf[MAX_MSG_SIZE];
-    UCHAR rcvbuf[MAX_MSG_SIZE];
+    uint8_t sendbuf[MAX_MSG_SIZE];
+    uint8_t rcvbuf[MAX_MSG_SIZE];
     int   rcvbufpos;
     int   rcvbufsize;
     enum state {
@@ -145,7 +144,7 @@ class PK_Message_Ext_Manager {
     state s;
     int read_remaining; // only valid in READ_BODY state
     // return 0xFFFFUS if ticks expires.
-    UINT16 get_byte(int ticks, bool beginning=false);
+    uint16_t get_byte(int ticks, bool beginning=false);
 protected:
     PK_Message_Ext_Handler * handler;
     PK_Message_Ext_Link * link;
@@ -171,8 +170,8 @@ public:
     PK_Message_Ext_Link_TCP(PK_Message_Ext_Handler * _handler,
                             char * host, short port);
     ~PK_Message_Ext_Link_TCP(void);
-    /*virtual*/ bool write( UCHAR * buf, int buflen );
-    /*virtual*/ int  read ( UCHAR * buf, int buflen, int ticks );
+    /*virtual*/ bool write( uint8_t * buf, int buflen );
+    /*virtual*/ int  read ( uint8_t * buf, int buflen, int ticks );
 };
 
 #endif /* __MESSAGES_EXT_H__ */

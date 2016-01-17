@@ -86,7 +86,7 @@ extern "C" int
 pfkbak_main(int argc, char ** argv)
 {
     backop     pfkbak_op;
-    UINT32     baknum = 0;
+    uint32_t     baknum = 0;
 
     pfkbak_op = BAK_NONE;
     pfkbak_verb = VERB_QUIET;

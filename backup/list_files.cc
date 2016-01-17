@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 void
-pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num )
+pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num )
 {
     fprintf(stderr,
             "listing generation %d in backup number %d\n", gen_num, baknum);
@@ -41,7 +41,7 @@ pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num )
         return;
     }
 
-    UINT32 number_files = bakinfo.data.file_count.v;
+    uint32_t number_files = bakinfo.data.file_count.v;
 
     fprintf(stderr,
             "backup name: %s\n"
@@ -51,7 +51,7 @@ pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num )
             bakinfo.data.comment.string,
             number_files);
 
-    UINT32 file_number;
+    uint32_t file_number;
     int idx, piece_number;
 
     for (file_number = 0; file_number < number_files; file_number++)

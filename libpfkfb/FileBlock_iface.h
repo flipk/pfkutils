@@ -29,10 +29,12 @@
 #ifndef __FILE_BLOCK_H__
 #define __FILE_BLOCK_H__
 
+#include <sys/types.h>
+#include <inttypes.h>
 #include "BlockCache.h"
-#include "types.h"
+#include "bst.h"
 
-typedef UINT32   FB_AUID_T;
+typedef uint32_t FB_AUID_T;
 typedef UINT32_t FB_AUID_t;
 
 /** A data unit in a FileBlockInterface file.
@@ -76,19 +78,19 @@ public:
     int     get_size  (void) { return bcb->get_size  (); }
     /** return a pointer to memory which holds this block's data.
      * \return a pointer to this block */
-    UCHAR * get_ptr   (void) { return bcb->get_ptr   (); }
+    uint8_t * get_ptr   (void) { return bcb->get_ptr   (); }
     /** call this if you have modified this block's data */
     void    mark_dirty(void) { bcb->mark_dirty(); }
 };
 
 /** A struct containing statistics for a FileBlock file. */
 struct FileBlockStats {
-    UINT32  au_size;       /**< size of an allocation unit */
-    UINT32  used_aus;      /**< number of aus in use */
-    UINT32  free_aus;      /**< number of aus free */
-    UINT32  used_regions;  /**< number of unique regions in use */
-    UINT32  free_regions;  /**< number of free regions (holes) in use */
-    UINT32  num_aus;       /**< file size, in aus */
+    uint32_t  au_size;       /**< size of an allocation unit */
+    uint32_t  used_aus;      /**< number of aus in use */
+    uint32_t  free_aus;      /**< number of aus free */
+    uint32_t  used_regions;  /**< number of unique regions in use */
+    uint32_t  free_regions;  /**< number of free regions (holes) in use */
+    uint32_t  num_aus;       /**< file size, in aus */
 };
 
 typedef bool (*FileBlockCompactionStatusFunc)(FileBlockStats *stats, void *arg);

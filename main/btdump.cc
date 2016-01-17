@@ -9,7 +9,7 @@ class myIterator : public BtreeIterator {
 public:
     myIterator(FileBlockInterface * _fbi) { fbi = _fbi; }
     /*virtual*/ ~myIterator(void) { }
-    /*virtual*/ bool handle_item( UCHAR * keydata, UINT32 keylen,
+    /*virtual*/ bool handle_item( uint8_t * keydata, uint32_t keylen,
                                   FB_AUID_T data_fbn );
     /*virtual*/ void print( const char * format, ... )
         __attribute__ ((format( printf, 2, 3 )));
@@ -35,7 +35,7 @@ display_hex(unsigned char * ptr, int size, bool prefix)
 }
 
 bool
-myIterator :: handle_item( UCHAR * keydata, UINT32 keylen,
+myIterator :: handle_item( uint8_t * keydata, uint32_t keylen,
                            FB_AUID_T data_fbn )
 {
     printf("data @ %#x  key:", data_fbn);

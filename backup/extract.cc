@@ -50,7 +50,7 @@
  *         set in the event of a failure.
  */
 static int
-openfile( char *in_path, UINT16 mode )
+openfile( char *in_path, uint16_t mode )
 {
     int len = strlen(in_path)+1;
     int num_comps = 1;
@@ -95,8 +95,8 @@ openfile( char *in_path, UINT16 mode )
  *              a file to be extracted.
  */
 void
-pfkbak_extract       ( UINT32 baknum,
-                       UINT32 gen_num, int argc, char ** argv )
+pfkbak_extract       ( uint32_t baknum,
+                       uint32_t gen_num, int argc, char ** argv )
 {
     PfkBackupInfo back_info(pfkbak_meta);
 
@@ -134,8 +134,8 @@ pfkbak_extract       ( UINT32 baknum,
     (void) chdir( back_info.data.name.string );
 #endif
 
-    UINT32 num_files = back_info.data.file_count.v;
-    UINT32 file_number;
+    uint32_t num_files = back_info.data.file_count.v;
+    uint32_t file_number;
     for (file_number = 0; file_number < num_files; file_number++)
     {
         PfkBackupFileInfo file_info(pfkbak_meta);
@@ -183,7 +183,7 @@ pfkbak_extract       ( UINT32 baknum,
 
         PfkBackupFilePieceInfo piece_info(pfkbak_meta);
         PfkBackupFilePieceData piece_data(pfkbak_meta);
-        UINT32 piece_number;
+        uint32_t piece_number;
 
         for (piece_number = 0; ; piece_number++)
         {
@@ -226,9 +226,9 @@ pfkbak_extract       ( UINT32 baknum,
                 }
                 else
                 {
-                    UINT32 fbn = piece_data.data.data_fbn.v;
-                    UINT16 usize = piece_data.data.usize.v;
-                    UINT16 csize = piece_data.data.csize.v;
+                    uint32_t fbn = piece_data.data.data_fbn.v;
+                    uint16_t usize = piece_data.data.usize.v;
+                    uint16_t csize = piece_data.data.csize.v;
 
                     FileBlock * fb = pfkbak_data->get( fbn );
 
@@ -239,7 +239,7 @@ pfkbak_extract       ( UINT32 baknum,
                     }
                     else
                     {
-                        UCHAR ubuf[ usize ];
+                        uint8_t ubuf[ usize ];
                         uLongf ulen = usize;
 
                         if (usize == csize)

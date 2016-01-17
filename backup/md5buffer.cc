@@ -36,7 +36,7 @@
  *               function.
  */
 void
-pfkbak_md5_buffer( UCHAR * buf, int buflen, UCHAR * md5 )
+pfkbak_md5_buffer( uint8_t * buf, int buflen, uint8_t * md5 )
 {
     MD5_CTX ctx;
     MD5_DIGEST     digest;
@@ -56,7 +56,7 @@ pfkbak_md5_buffer( UCHAR * buf, int buflen, UCHAR * md5 )
  *                 of hex digits, terminated with a nul (no newline).
  */
 void
-pfkbak_sprint_md5  ( UCHAR * md5hash, char * string )
+pfkbak_sprint_md5  ( uint8_t * md5hash, char * string )
 {
     int i, cc;
     for (i = 0; i < MD5_DIGEST_SIZE; i++)
