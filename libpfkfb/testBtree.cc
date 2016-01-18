@@ -45,7 +45,10 @@
 class myIterator : public BtreeIterator {
     FileBlockInterface * fbi;
 public:
-    myIterator(FileBlockInterface * _fbi) { fbi = _fbi; }
+    myIterator(FileBlockInterface * _fbi) {
+        fbi = _fbi;
+        wantPrinting = true;
+    }
     /*virtual*/ bool handle_item( uint8_t * keydata, uint32_t keylen,
                                   uint32_t data_fbn ) {
         printf( "key len %d: ", keylen);

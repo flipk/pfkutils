@@ -7,7 +7,10 @@
 class myIterator : public BtreeIterator {
     FileBlockInterface * fbi;
 public:
-    myIterator(FileBlockInterface * _fbi) { fbi = _fbi; }
+    myIterator(FileBlockInterface * _fbi) {
+        fbi = _fbi;
+        wantPrinting = true;
+    }
     /*virtual*/ ~myIterator(void) { }
     /*virtual*/ bool handle_item( uint8_t * keydata, uint32_t keylen,
                                   FB_AUID_T data_fbn );

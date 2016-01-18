@@ -1158,10 +1158,11 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn )
     BTNode * n;
     n = node_cache->get(node_fbn);
 
-    bti->print( "node ID %08x:  %d items %s %s\n",
-                node_fbn, n->numitems,
-                n->root ? ", root" : "",
-                n->leaf ? ", leaf" : "");
+    if (bti->wantPrinting)
+        bti->print( "node ID %08x:  %d items %s %s\n",
+                    node_fbn, n->numitems,
+                    n->root ? ", root" : "",
+                    n->leaf ? ", leaf" : "");
     int i;
     for (i=0; i < n->numitems; i++)
     {
@@ -1203,18 +1204,19 @@ BtreeInternal :: iterate( BtreeIterator * bti )
 
     node_fbn = info.d->root_fbn.get();
 
-    bti->print( "bti fbn : %08x\n"
-                "root fbn : %08x\n"
-                "numnodes : %d\n"
-                "numrecords : %d\n"
-                "depth : %d\n"
-                "order : %d\n\n",
-                info.d->bti_fbn.get(),
-                node_fbn,
-                info.d->numnodes.get(),
-                info.d->numrecords.get(),
-                info.d->depth.get(),
-                info.d->order.get());
+    if (bti->wantPrinting)
+        bti->print( "bti fbn : %08x\n"
+                    "root fbn : %08x\n"
+                    "numnodes : %d\n"
+                    "numrecords : %d\n"
+                    "depth : %d\n"
+                    "order : %d\n\n",
+                    info.d->bti_fbn.get(),
+                    node_fbn,
+                    info.d->numnodes.get(),
+                    info.d->numrecords.get(),
+                    info.d->depth.get(),
+                    info.d->order.get());
 
     //printf("root node: ");
     ret = iterate_node(bti, node_fbn);

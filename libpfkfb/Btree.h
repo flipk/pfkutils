@@ -39,11 +39,13 @@ class BtreeInternal;
  */
 class BtreeIterator {
 public:
+    BtreeIterator(void) { wantPrinting = false; }
     virtual ~BtreeIterator(void) { /* placeholder */ }
     virtual bool handle_item( uint8_t * keydata, uint32_t keylen,
                               FB_AUID_T data_fbn ) = 0;
     virtual void print( const char * format, ... )
         __attribute__ ((format( printf, 2, 3 ))) = 0;
+    bool wantPrinting; // derived constructor should populate this
 };
 
 /** The interface to a Btree file with FileBlockInterface backend.
