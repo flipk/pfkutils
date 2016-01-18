@@ -1167,14 +1167,14 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn )
     {
         if (!n->leaf)
         {
-            printf("node %08x recurse ptr %d -> ", node_fbn, i);
+            //printf("node %08x recurse ptr %d -> ", node_fbn, i);
             if (iterate_node(bti, n->ptrs[i]) == false)
             {
                 ret = false;
                 break;
             }
         }
-        printf("node %08x item %d: ", node_fbn, i);
+        //printf("node %08x item %d: ", node_fbn, i);
         if (bti->handle_item( n->keys[i]->data,
                               n->keys[i]->keylen,
                               n->datas[i] ) == false)
@@ -1185,7 +1185,7 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn )
     }
     if (n->numitems > 0 && !n->leaf)
     {
-        printf("node %08x recurse ptr %d -> ", node_fbn, i);
+        //printf("node %08x recurse ptr %d -> ", node_fbn, i);
         if (iterate_node(bti, n->ptrs[i]) == false)
             ret = false;
     }
@@ -1216,7 +1216,7 @@ BtreeInternal :: iterate( BtreeIterator * bti )
                 info.d->depth.get(),
                 info.d->order.get());
 
-printf("root node: ");
+    //printf("root node: ");
     ret = iterate_node(bti, node_fbn);
     iterate_inprogress = false;
 
