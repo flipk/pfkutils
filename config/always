@@ -163,7 +163,7 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
 	libpfkutil/msgr.h libpfkutil/myTimeval.h libpfkutil/pk-md5.h \
 	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
-	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h libpfkutil/types.h
+	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -174,8 +174,7 @@ libpfkutil_HDRS = \
 	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
 	libpfkutil/myTimeval.h libpfkutil/pk-md5.h libpfkutil/prioWorkQ.h \
 	libpfkutil/regex.h libpfkutil/sha1.h libpfkutil/shmempipe.h \
-	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h \
-	libpfkutil/types.h
+	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
 
 ###################
 
