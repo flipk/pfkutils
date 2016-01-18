@@ -478,6 +478,13 @@ struct BST_STRING : public BST {
         string = new char[len];
         memcpy(string, str, len);
     }
+    void set(const std::string &str) {
+        if (string)
+            delete[] string;
+        int len = str.length()+1;
+        string = new char[len];
+        memcpy(string, str.c_str(), len);
+    }
 };
 
 // it is legal for pointer to be NULL pointer.
