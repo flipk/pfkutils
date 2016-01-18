@@ -4,6 +4,9 @@
 #define __MYTIMEVAL_H__
 
 #include <sys/time.h>
+#include <stdio.h>
+#include <iostream>
+#include <string>
 
 struct myTimeval : public timeval
 {
@@ -33,6 +36,17 @@ struct myTimeval : public timeval
     }
     void getNow(void) {
         gettimeofday(this, NULL);
+    }
+    const std::string Format(void) {
+        time_t seconds = tv_sec;
+        struct tm t;
+        localtime_r(&seconds, &t);
+        char ymdhms[128], ms[12];
+        strftime(ymdhms,sizeof(ymdhms),"%Y-%m-%d %H:%M:%S",&t);
+        ymdhms[sizeof(ymdhms)-1] = 0;
+        snprintf(ms,sizeof(ms),"%06d", tv_usec);
+        ms[sizeof(ms)-1] = 0;
+        return std::string(ymdhms) + "." + ms;
     }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,

@@ -1,4 +1,3 @@
-
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 /*
@@ -31,6 +30,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+
+#include "myTimeval.h"
 
 enum BST_OP {
 //    BST_OP_NONE,       // stream is uninitialized.
@@ -337,6 +338,11 @@ struct BST_TIMEVAL : public BST {
     void get(struct timeval &tv) {
         tv.tv_sec = (typeof(tv.tv_sec)) btv_sec.v;
         tv.tv_usec = (typeof(tv.tv_usec)) btv_usec.v;
+    }
+    const std::string Format(void) {
+        myTimeval v;
+        get(v);
+        return v.Format();
     }
 };
 
