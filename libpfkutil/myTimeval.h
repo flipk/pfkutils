@@ -34,6 +34,13 @@ struct myTimeval : public timeval
         }
         return *this;
     }
+    const bool operator==(const myTimeval &other) {
+        if (tv_sec != other.tv_sec)
+            return false;
+        if (tv_usec != other.tv_usec)
+            return false;
+        return true;
+    }
     void getNow(void) {
         gettimeofday(this, NULL);
     }
