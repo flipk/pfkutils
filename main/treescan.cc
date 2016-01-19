@@ -20,6 +20,7 @@ exit 0
 #include <iostream>
 #include <string>
 #include <list>
+#include <map>
 
 #include "Btree.h"
 #include "myTimeval.h"
@@ -142,6 +143,13 @@ private:
         }
         tskey key;
         tsdata data;
+    };
+    struct Sha1Hash {
+        static const int size = SHA1HashSize;
+        unsigned char hash[size];
+        inline bool operator<(const Sha1Hash &other) const {
+            return memcmp(hash, other.hash, size);
+        }
     };
     struct fileInfo {
         fileInfo(const string &_name) : name(_name) {
@@ -310,6 +318,7 @@ public:
         todo.push_back(fileInfo("."));
         if (todo.back().err)
             return; // no point in descending
+        map<Sha1Hash,string> newFiles;
         while (todo.size() > 0)
         {
             const fileInfo &item = todo.front();
@@ -344,12 +353,15 @@ public:
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.data.fname_to_info.mtime.set(item.mtime);
                     dat.data.fname_to_info.sha1hash.alloc(SHA1HashSize);
-                    calc_sha1_hash(item.name,
-                                   dat.data.fname_to_info.sha1hash.binary);
+                    unsigned char * binary =
+                        dat.data.fname_to_info.sha1hash.binary;
+                    calc_sha1_hash(item.name, binary);
                     dat.mark_dirty();
-                    cout << "N "
-                        << format_hash(dat.data.fname_to_info.sha1hash.binary)
-                        << " " << item.name << endl;
+                    cout << "N " << format_hash(binary)
+                         << " " << item.name << endl;
+                    Sha1Hash h;
+                    memcpy(h.hash, binary, Sha1Hash::size);
+                    newFiles[h] = item.name;
                 }
                 else
                 {
@@ -363,12 +375,11 @@ public:
                     {
                         dat.data.fname_to_info.mtime.set(item.mtime);
                         dat.data.fname_to_info.sha1hash.alloc(SHA1HashSize);
-                        calc_sha1_hash(item.name,
-                                   dat.data.fname_to_info.sha1hash.binary);
-                        cout << "U "
-                            << format_hash(
-                                dat.data.fname_to_info.sha1hash.binary)
-                            << " " << item.name << endl;
+                        unsigned char * binary =
+                            dat.data.fname_to_info.sha1hash.binary;
+                        calc_sha1_hash(item.name, binary);
+                        cout << "U " << format_hash(binary)
+                             << " " << item.name << endl;
                     }
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.mark_dirty();
@@ -382,9 +393,18 @@ public:
         {
             tsdatum * dat = myIter.leftovers.front();
             myIter.leftovers.pop_front();
+            const string &oldFname =
+                dat->key.fname_to_info.fname.string;
             dat->del();
-            cout << "D "
-                 << dat->key.fname_to_info.fname.string << endl;
+            Sha1Hash h;
+            memcpy(h.hash,
+                   dat->data.fname_to_info.sha1hash.binary,
+                   Sha1Hash::size);
+            map<Sha1Hash,string>::iterator  it = newFiles.find(h);
+            if (it == newFiles.end())
+                cout << "D " << oldFname << endl;
+            else
+                cout << "M " << oldFname << " " << it->second << endl;
             delete dat;
         }
         lastScan = now;
