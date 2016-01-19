@@ -18,6 +18,7 @@ PROG(0,checksize,"check size of hard disk partition")
 
 #if @PFK_BUILD_treescan@
 PROG(0,treescan,"scan a tree producing tree info")
+/* not ready yet PROG(0,treesync,"sync one tree to another") */
 #endif
 
 #if @PFK_BUILD_sudo@

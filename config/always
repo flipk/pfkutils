@@ -622,7 +622,7 @@ ifeq ($(PFK_BUILD_sudo),1)
 pfkutils_CSRCS += main/sudo.c
 endif
 ifeq ($(PFK_BUILD_treescan),1)
-pfkutils_CSRCS += main/treescan.c
+pfkutils_CXXSRCS += main/treescan.cc
 endif
 ifeq ($(PFK_BUILD_checksize),1)
 pfkutils_CSRCS += main/checksize.c

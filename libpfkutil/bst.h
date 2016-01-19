@@ -416,6 +416,8 @@ struct BST_BINARY : public BST {
 
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
+// TODO : convert "char * string" to "std::string v"--
+// the memory allocation will certainly be much simpler.
 struct BST_STRING : public BST {
     BST_STRING(BST *parent) : BST(parent) { string = NULL; }
     virtual ~BST_STRING(void) { if (string) delete[] string; }

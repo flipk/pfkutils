@@ -41,6 +41,9 @@ struct myTimeval : public timeval
             return false;
         return true;
     }
+    const bool operator!=(const myTimeval &other) {
+        return !operator==(other);
+    }
     void getNow(void) {
         gettimeofday(this, NULL);
     }
