@@ -148,7 +148,13 @@ private:
         static const int size = SHA1HashSize;
         unsigned char hash[size];
         inline bool operator<(const Sha1Hash &other) const {
-            return memcmp(hash, other.hash, size);
+            return memcmp(hash, other.hash, size) < 0;
+        }
+        std::string Format(void) {
+            char str[size*2+1];
+            for (int ind = 0; ind < size; ind++)
+                sprintf(str + ind*2, "%02x", hash[ind]);
+            return std::string(str);
         }
     };
     struct fileInfo {
