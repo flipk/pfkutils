@@ -47,8 +47,8 @@ pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num )
             "backup name: %s\n"
             "comment: %s\n"
             "files: %d\n",
-            bakinfo.data.name.string,
-            bakinfo.data.comment.string,
+            bakinfo.data.name.string.c_str(),
+            bakinfo.data.comment.string.c_str(),
             number_files);
 
     uint32_t file_number;
@@ -72,13 +72,13 @@ pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num )
         {
             for (idx = 0; idx < file_info.data.generations.num_items; idx++)
                 if (gen_num == file_info.data.generations.array[idx]->v)
-                    printf("%s\n", file_info.data.file_path.string);
+                    printf("%s\n", file_info.data.file_path.string.c_str());
             continue;
         }
 
         printf("%lld\t%s\n",
                file_info.data.size.v,
-               file_info.data.file_path.string);
+               file_info.data.file_path.string.c_str());
 
         printf("  gens: ");
         for (idx = 0; idx < file_info.data.generations.num_items; idx++)

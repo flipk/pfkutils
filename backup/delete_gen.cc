@@ -108,7 +108,7 @@ pfkbak_delete_gen ( uint32_t baknum,
 
         if (pfkbak_verb == VERB_2)
         {
-            printf("%s", file_info.data.file_path.string);
+            printf("%s", file_info.data.file_path.string.c_str());
             fflush(stdout);
         }
 

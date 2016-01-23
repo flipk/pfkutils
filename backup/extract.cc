@@ -50,12 +50,12 @@
  *         set in the event of a failure.
  */
 static int
-openfile( char *in_path, uint16_t mode )
+openfile( const char *in_path, uint16_t mode )
 {
     int len = strlen(in_path)+1;
     int num_comps = 1;
     int i, j;
-    char * p;
+    const char * p;
 
     // count the path components.
     for (p = in_path; *p; p++)
@@ -159,7 +159,7 @@ pfkbak_extract       ( uint32_t baknum,
             // this file is not part of this generation.
             continue;
 
-        char * file_path = file_info.data.file_path.string;
+        const char * file_path = file_info.data.file_path.string.c_str();
 
         // do a tar-like display, show the file name without
         // newline; don't display the newline until extraction

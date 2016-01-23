@@ -59,7 +59,7 @@ pfkbak_find_backup( char * bakname )
             return 0;
         }
 
-        if (strcmp(bakname, binf.data.name.string) == 0)
+        if (strcmp(bakname, binf.data.name.string.c_str()) == 0)
         {
             return backup_number;
         }

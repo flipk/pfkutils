@@ -402,7 +402,7 @@ pfkbak_update_backup ( uint32_t baknum )
         return;
     }
 
-    if (chdir(bakinfo.data.root_dir.string) < 0)
+    if (chdir(bakinfo.data.root_dir.string.c_str()) < 0)
     {
         fprintf(stderr, "changing to backup root directory: %s\n",
                 strerror(errno));
@@ -411,7 +411,7 @@ pfkbak_update_backup ( uint32_t baknum )
 
     gen_num = bakinfo.data.next_generation_number.v++;
     printf("creating generation %d for backup '%s'\n",
-           gen_num, bakinfo.data.name.string);
+           gen_num, bakinfo.data.name.string.c_str());
 
     int gen_index = bakinfo.data.generations.num_items;
     bakinfo.data.generations.alloc(gen_index+1);
@@ -510,7 +510,7 @@ pfkbak_update_backup ( uint32_t baknum )
 
         // look for file in hash.
 
-        fe.fe = hash.find(file_info.data.file_path.string);
+        fe.fe = hash.find(file_info.data.file_path.string.c_str());
         if (!fe.fe)
         {
             // file was deleted!

@@ -346,6 +346,7 @@ struct BST_TIMEVAL : public BST {
     }
 };
 
+#if 1 // PFK TODO REMOVE
 struct BST_BINARY : public BST {
     BST_BINARY(BST *parent) : BST(parent) { binary = NULL; size = 0; }
     ~BST_BINARY(void) { if (binary) delete[] binary; }
@@ -413,25 +414,21 @@ struct BST_BINARY : public BST {
         return false;
     }
 };
+#endif
 
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
-// TODO : convert "char * string" to "std::string v"--
-// the memory allocation will certainly be much simpler.
 struct BST_STRING : public BST {
-    BST_STRING(BST *parent) : BST(parent) { string = NULL; }
-    virtual ~BST_STRING(void) { if (string) delete[] string; }
-    char * string;
+    BST_STRING(BST *parent) : BST(parent) {  }
+    virtual ~BST_STRING(void) {  }
+    std::string string;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         BST_UINT16_t  len(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
-            if (string)
-                len.v = strlen(string);
-            else
-                len.v = 0;
+            len.v = string.length();
             if (!len.bst_op(str))
                 return false;
             if (len.v > 0)
@@ -439,11 +436,11 @@ struct BST_STRING : public BST {
                 ptr = str->get_ptr(len.v);
                 if (!ptr)
                     return false;
-                memcpy(ptr, string, len.v);
+                memcpy(ptr, string.c_str(), len.v);
             }
             return true;
         case BST_OP_CALC_SIZE:
-            len.v = strlen(string);
+            len.v = string.length();
             if (!len.bst_op(str))
                 return false;
             if (len.v > 0)
@@ -453,39 +450,26 @@ struct BST_STRING : public BST {
         case BST_OP_DECODE:
             if (!len.bst_op(str))
                 return false;
-            if (string)
-                delete[] string;
-            string = new char[len.v + 1];
             if (len.v > 0)
             {
                 ptr = str->get_ptr(len.v);
                 if (!ptr)
                     return false;
-                memcpy(string, ptr, len.v);
+                string.resize(len.v);
+                memcpy((void*)string.c_str(), ptr, len.v);
             }
-            string[len.v] = 0;
             return true;
         case BST_OP_MEM_FREE:
-            if (string)
-                delete[] string;
-            string = NULL;
+            string.clear();
             return true;
         };
         return false;
     }
     void set(const char * str) {
-        if (string)
-            delete[] string;
-        int len = strlen(str) + 1;
-        string = new char[len];
-        memcpy(string, str, len);
+        string = str;
     }
     void set(const std::string &str) {
-        if (string)
-            delete[] string;
-        int len = str.length()+1;
-        string = new char[len];
-        memcpy(string, str.c_str(), len);
+        string = str;
     }
 };
 

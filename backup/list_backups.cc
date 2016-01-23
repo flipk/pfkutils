@@ -60,7 +60,7 @@ pfkbak_list_backups  ( void )
             return;
         }
 
-        printf("name: %s\n", binf.data.name.string);
+        printf("name: %s\n", binf.data.name.string.c_str());
 
         if (pfkbak_verb > VERB_QUIET)
         {
@@ -70,8 +70,8 @@ pfkbak_list_backups  ( void )
                    "   number of files: %d\n"
                    "   next generation number: %d\n",
                    backup_number,
-                   binf.data.root_dir.string,
-                   binf.data.comment.string,
+                   binf.data.root_dir.string.c_str(),
+                   binf.data.comment.string.c_str(),
                    binf.data.file_count.v,
                    binf.data.next_generation_number.v);
         }
@@ -83,7 +83,7 @@ pfkbak_list_backups  ( void )
 
             printf("   %d: date/time: %s\n",
                    gen->generation_number.v,
-                   gen->date_time.string);
+                   gen->date_time.string.c_str());
         }
     }
 }
