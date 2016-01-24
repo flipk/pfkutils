@@ -30,18 +30,22 @@
 class BtreeInternal;
 
 /** a Btree information block as it appears on disk. */
-struct _BTInfo {
+struct BTInfo : public FileBlockBST {
     static const uint32_t MAGIC = 0x0d83f387;
-    UINT32_t magic;
-    FB_AUID_t bti_fbn;     /**< fileblock number of this info block (self) */
-    FB_AUID_t root_fbn;    /**< fileblock number of the root node */
-    UINT32_t numnodes;    /**< count of nodes in file */
-    UINT32_t numrecords;  /**< count of records in file */
-    UINT32_t depth;       /**< depth of the btree */
-    UINT32_t order;       /**< order number of the btree */
+    BTInfo(FileBlockInterface * _fbi)
+        : FileBlockBST(NULL,_fbi),
+          magic(this), bti_fbn(this), root_fbn(this),
+          numnodes(this), numrecords(this), depth(this),
+          order(this) { }
+    ~BTInfo(void) { bst_free(); }
+    BST_UINT32_t magic;
+    BST_FB_AUID_t bti_fbn;    /**< fileblock number of this info block (self) */
+    BST_FB_AUID_t root_fbn;   /**< fileblock number of the root node */
+    BST_UINT32_t numnodes;    /**< count of nodes in file */
+    BST_UINT32_t numrecords;  /**< count of records in file */
+    BST_UINT32_t depth;       /**< depth of the btree */
+    BST_UINT32_t order;       /**< order number of the btree */
 };
-/** a FileBlock shortcut for accessing Btree information blocks */
-typedef FileBlockT <_BTInfo> BTInfo;
 
 /** an item within a _BTNodeDisk */
 struct BTNodeItem {

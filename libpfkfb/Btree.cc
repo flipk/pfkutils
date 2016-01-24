@@ -157,16 +157,17 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
     FB_AUID_T  info_fbn;
     BTInfo  info(_fbi);
 
-    info_fbn = info.alloc();
-    info.get(info_fbn, true);
-    info.d->magic.set ( _BTInfo::MAGIC );
-    info.d->bti_fbn.set( info_fbn );
-    info.d->root_fbn.set( root_fbn );
-    info.d->numnodes.set( 1 );
-    info.d->numrecords.set( 0 );
-    info.d->depth.set( 1 );
-    info.d->order.set( order );
+    info.magic.set ( BTInfo::MAGIC );
+    info.root_fbn.set( root_fbn );
+    info.numnodes.set( 1 );
+    info.numrecords.set( 0 );
+    info.depth.set( 1 );
+    info.order.set( order );
 
+    info.putnew(&info_fbn);
+    info.bti_fbn.set( info_fbn );
+    info.put();
+    
     _fbi->set_data_info_block( info_fbn,
                                (char*)BtreeInternal::BTInfoFileInfoName );
 
@@ -193,15 +194,15 @@ BtreeInternal :: valid_file( FileBlockInterface * _fbi )
         return false;
 
     info.get(info_fbn);
-    if (info.d->magic.get() != _BTInfo::MAGIC)
+    if (info.magic.get() != BTInfo::MAGIC)
         return false;
 
-    int order = info.d->order.get();
+    int order = info.order.get();
 
     if (order < 0 || order > MAX_ORDER || (order & 1) == 0)
         return false;
 
-    if (info.d->bti_fbn.get() != info_fbn)
+    if (info.bti_fbn.get() != info_fbn)
         return false;
 
     return true;
@@ -237,14 +238,14 @@ BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
         exit(1);
     }
     info.get(info_fbn);
-    if (info.d->magic.get() != _BTInfo::MAGIC)
+    if (info.magic.get() != BTInfo::MAGIC)
         goto error;
-    BTREE_ORDER = info.d->order.get();
+    BTREE_ORDER = info.order.get();
     if (BTREE_ORDER < 0 || BTREE_ORDER > MAX_ORDER || (BTREE_ORDER & 1) == 0)
         goto error;
     HALF_ORDER = BTREE_ORDER / 2;
     ORDER_MO = BTREE_ORDER - 1;
-    if (info.d->bti_fbn.get() != info_fbn)
+    if (info.bti_fbn.get() != info_fbn)
         goto error;
     node_size = _BTNodeDisk::node_size(BTREE_ORDER);
     node_cache = new BTNodeCache( fbi, BTREE_ORDER, MAX_NODES );
@@ -255,7 +256,6 @@ BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
 BtreeInternal :: ~BtreeInternal(void)
 {
     delete node_cache;
-    info.release();
     delete fbi;
 }
 
@@ -323,7 +323,8 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, FB_AUID_T * data_fbn,
 
     // nr short for 'new right'
     BTNode * nr = node_cache->new_node();
-    info.d->numnodes.set( info.d->numnodes.get() + 1 );
+    info.numnodes.set( info.numnodes.get() + 1 );
+    info.put();
 
     nr->leaf = n->leaf;
     nr->root = false;
@@ -450,7 +451,7 @@ BtreeInternal :: get( uint8_t * key, int keylen, FB_AUID_T * data )
     BTNode * curn;
     FB_AUID_T data_fbn = 0;
 
-    curfbn = info.d->root_fbn.get();
+    curfbn = info.root_fbn.get();
 
     while (!exact && curfbn != 0)
     {
@@ -523,7 +524,7 @@ BtreeInternal :: put( uint8_t * key, int keylen, FB_AUID_T data_id,
     // linked-list (head-first) so that we can trace our path
     // back up the tree if we need to split and promote.
 
-    curfbn = info.d->root_fbn.get();
+    curfbn = info.root_fbn.get();
     curn = node_cache->get( curfbn );
 
     while(1)
@@ -577,8 +578,8 @@ BtreeInternal :: put( uint8_t * key, int keylen, FB_AUID_T data_id,
     // root and create a new root with the promoted item.
 
     ret = true;
-    info.d->numrecords.set( info.d->numrecords.get() + 1 );
-    info.mark_dirty();
+    info.numrecords.set( info.numrecords.get() + 1 );
+    info.put();
 
     nw = nodes;
     nodes = nw->next;
@@ -642,16 +643,16 @@ BtreeInternal :: put( uint8_t * key, int keylen, FB_AUID_T data_id,
 
             BTNode * newroot = node_cache->new_node();
             newroot->numitems = 1;
-            newroot->ptrs[0] = info.d->root_fbn.get();
+            newroot->ptrs[0] = info.root_fbn.get();
             newroot->ptrs[1] = right_fbn;
             newroot->keys[0] = newkey;
             newroot->datas[0] = data_id;
             curn->root = false;
             newroot->root = true;
             newroot->leaf = false;
-            info.d->root_fbn.set(newroot->get_fbn());
-            info.d->numnodes.set( info.d->numnodes.get() + 1 );
-            info.d->depth.set( info.d->depth.get() + 1 );
+            info.root_fbn.set(newroot->get_fbn());
+            info.numnodes.set( info.numnodes.get() + 1 );
+            info.depth.set( info.depth.get() + 1 );
             node_cache->release(curn);
             node_cache->release(newroot);
             break;
@@ -666,6 +667,8 @@ out:
         node_cache->release(nw->node);
         delete nw;
     }
+
+    info.put();
 
     if (ret == false)
         if (newkey)
@@ -698,7 +701,7 @@ BtreeInternal :: del( uint8_t * key, int keylen, FB_AUID_T *old_data_id )
     FB_AUID_T curfbn;
     BTNode * curn;
 
-    curfbn = info.d->root_fbn.get();
+    curfbn = info.root_fbn.get();
     curn = node_cache->get(curfbn);
 
     // begin walking down the tree looking for the
@@ -1079,9 +1082,9 @@ BtreeInternal :: del( uint8_t * key, int keylen, FB_AUID_T *old_data_id )
                              "Btree::delete : error! nonroot node shrunk!\n" );
                 }
                 oldrootfbn = nw->fbn;
-                info.d->root_fbn.set( curfbn );
-                info.d->depth.set( info.d->depth.get() - 1 );
-                info.d->numnodes.set( info.d->numnodes.get() - 1 );
+                info.root_fbn.set( curfbn );
+                info.depth.set( info.depth.get() - 1 );
+                info.numnodes.set( info.numnodes.get() - 1 );
                 r->root = true;
                 oldrootfree = true;
             }
@@ -1122,7 +1125,7 @@ BtreeInternal :: del( uint8_t * key, int keylen, FB_AUID_T *old_data_id )
                 break;
             }
 
-            info.d->numnodes.set( info.d->numnodes.get() - 1 );
+            info.numnodes.set( info.numnodes.get() - 1 );
         }
 
         if (lsib)
@@ -1145,8 +1148,8 @@ BtreeInternal :: del( uint8_t * key, int keylen, FB_AUID_T *old_data_id )
         node_cache->delete_node(curn);
     }
 
-    info.d->numrecords.set( info.d->numrecords.get() - 1 );
-    info.mark_dirty();
+    info.numrecords.set( info.numrecords.get() - 1 );
+    info.put();
 
     return ret;
 }
@@ -1202,7 +1205,7 @@ BtreeInternal :: iterate( BtreeIterator * bti )
     bool ret = true;
     iterate_inprogress = true;
 
-    node_fbn = info.d->root_fbn.get();
+    node_fbn = info.root_fbn.get();
 
     if (bti->wantPrinting)
         bti->print( "bti fbn : %08x\n"
@@ -1211,12 +1214,12 @@ BtreeInternal :: iterate( BtreeIterator * bti )
                     "numrecords : %d\n"
                     "depth : %d\n"
                     "order : %d\n\n",
-                    info.d->bti_fbn.get(),
+                    info.bti_fbn.get(),
                     node_fbn,
-                    info.d->numnodes.get(),
-                    info.d->numrecords.get(),
-                    info.d->depth.get(),
-                    info.d->order.get());
+                    info.numnodes.get(),
+                    info.numrecords.get(),
+                    info.depth.get(),
+                    info.order.get());
 
     //printf("root node: ");
     ret = iterate_node(bti, node_fbn);
