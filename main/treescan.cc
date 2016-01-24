@@ -277,7 +277,10 @@ private:
     static std::string format_hash(const std::string &str) {
         char buf[SHA1HashSize*2+1];
         for (int ind = 0; ind < SHA1HashSize; ind++)
-            sprintf(buf + ind*2, "%02x", str[ind]);
+        {
+            unsigned char c = (unsigned char) str[ind];
+            sprintf(buf + ind*2, "%02x", c);
+        }
         buf[sizeof(buf)-1] = 0;
         return std::string(buf);
     }
