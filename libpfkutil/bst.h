@@ -189,6 +189,8 @@ public:
 struct BST_UINT64_t : public BST {
     BST_UINT64_t(BST *parent) : BST(parent) { }
     uint64_t v;
+    void set(uint64_t _v) { v = _v; }
+    const uint64_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         switch (str->get_op())
@@ -233,6 +235,8 @@ struct BST_UINT64_t : public BST {
 struct BST_UINT32_t : public BST {
     BST_UINT32_t(BST *parent) : BST(parent) { }
     uint32_t v;
+    void set(uint32_t _v) { v = _v; }
+    const uint32_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         switch (str->get_op())
@@ -267,6 +271,8 @@ struct BST_UINT32_t : public BST {
 struct BST_UINT16_t : public BST {
     BST_UINT16_t(BST *parent) : BST(parent) { }
     uint16_t v;
+    void set(uint16_t _v) { v = _v; }
+    const uint16_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         switch (str->get_op())
@@ -298,6 +304,8 @@ struct BST_UINT16_t : public BST {
 struct BST_UINT8_t : public BST {
     BST_UINT8_t(BST *parent) : BST(parent) { }
     uint8_t v;
+    void set(uint8_t _v) { v = _v; }
+    const uint8_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         switch (str->get_op())
