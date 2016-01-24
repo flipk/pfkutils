@@ -125,8 +125,7 @@ put_piece_data( uint32_t baknum, uint32_t file_number,
     piece_data.key.backup_number.v = baknum;
     piece_data.key.file_number.v = file_number;
     piece_data.key.piece_number.v = piece_number;
-    piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
-    memcpy( piece_data.key.md5hash.binary, md5hash, MD5_DIGEST_SIZE );
+    piece_data.key.md5hash.string.assign((char*)md5hash, MD5_DIGEST_SIZE);
 
     piece_data.data.refcount.v = 1;
     piece_data.data.csize.v = final_size;
@@ -230,9 +229,8 @@ walk_file( file_state state,
             // or was a new file and pieces never existed at all.
             versions->alloc(1);
             versions->array[0]->gen_number.v = gen_num;
-            versions->array[0]->md5hash.alloc(MD5_DIGEST_SIZE);
-            memcpy( versions->array[0]->md5hash.binary,
-                    md5hash, MD5_DIGEST_SIZE);
+            versions->array[0]->md5hash.string.assign(
+                (char*) md5hash, MD5_DIGEST_SIZE);
 
             // put data fbn.
 
@@ -257,7 +255,7 @@ walk_file( file_state state,
                 for (idx = 0; idx < versions->num_items; idx++)
                 {
                     res = memcmp( md5hash,
-                                  versions->array[idx]->md5hash.binary,
+                                  versions->array[idx]->md5hash.string.c_str(),
                                   MD5_DIGEST_SIZE );
                     if (res == 0)
                         break;
@@ -276,11 +274,9 @@ walk_file( file_state state,
 
                     versions->alloc(newidx+1);
                     versions->array[newidx]->gen_number.v = gen_num;
-                    versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
-                    memcpy( versions->array[newidx]->md5hash.binary,
-                            versions->array[   idx]->md5hash.binary,
-                            MD5_DIGEST_SIZE );
-
+                    versions->array[newidx]->md5hash.string =
+                        versions->array[   idx]->md5hash.string;
+ 
                     piece_info.put(true);
 
                     // then bump refcount on piecedata.
@@ -290,9 +286,9 @@ walk_file( file_state state,
                     piece_data.key.backup_number.v = baknum;
                     piece_data.key.file_number.v = file_number;
                     piece_data.key.piece_number.v = piece_number;
-                    piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
-                    memcpy( piece_data.key.md5hash.binary, md5hash,
-                            MD5_DIGEST_SIZE );
+
+                    piece_data.key.md5hash.string.assign(
+                        (char*)md5hash, MD5_DIGEST_SIZE );
 
                     if (!piece_data.get())
                     {
@@ -314,9 +310,8 @@ walk_file( file_state state,
 
                     versions->alloc(newidx+1);
                     versions->array[newidx]->gen_number.v = gen_num;
-                    versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
-                    memcpy( versions->array[newidx]->md5hash.binary,
-                            md5hash, MD5_DIGEST_SIZE );
+                    versions->array[newidx]->md5hash.string.assign(
+                        (char*) md5hash, MD5_DIGEST_SIZE );
 
                     piece_info.put(true);
 
@@ -336,10 +331,8 @@ walk_file( file_state state,
 
                 versions->alloc(newidx+1);
                 versions->array[newidx]->gen_number.v = gen_num;
-                versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
-                memcpy( versions->array[newidx]->md5hash.binary,
-                        versions->array[   idx]->md5hash.binary,
-                        MD5_DIGEST_SIZE );
+                versions->array[newidx]->md5hash.string =
+                    versions->array[   idx]->md5hash.string;
 
                 piece_info.put(true);
 
@@ -350,10 +343,8 @@ walk_file( file_state state,
                 piece_data.key.backup_number.v = baknum;
                 piece_data.key.file_number.v = file_number;
                 piece_data.key.piece_number.v = piece_number;
-                piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
-                memcpy( piece_data.key.md5hash.binary,
-                        versions->array[   idx]->md5hash.binary,
-                        MD5_DIGEST_SIZE );
+                piece_data.key.md5hash.string =
+                    versions->array[   idx]->md5hash.string;
 
                 if (!piece_data.get())
                 {

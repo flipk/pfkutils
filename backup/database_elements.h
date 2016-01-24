@@ -192,7 +192,7 @@ struct PfkBackupVersion : public BST {
         BST(parent),
         gen_number(this), md5hash(this) { }
     BST_UINT32_t    gen_number;
-    BST_BINARY      md5hash;
+    BST_STRING      md5hash;
 };
 
 /** one of these for each "piece" of a file in a backup.
@@ -228,7 +228,7 @@ struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     BST_UINT32_t    backup_number;
     BST_UINT32_t    file_number;
     BST_UINT32_t    piece_number;
-    BST_BINARY      md5hash;
+    BST_STRING      md5hash;
 };
 
 /** one of these for each version of each piece of each file in a backup.

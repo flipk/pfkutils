@@ -28,7 +28,7 @@ class MyType2 : public BST {
 public:
 	MyType2(BST * parent)
         : BST(parent), four(this), five(this) { }
-	BST_BINARY     four;
+	BST_STRING     four;
 	BST_STRING     five;
 };
 
@@ -76,11 +76,11 @@ fill_mm(MyMessage * mm)
     mm->body.one.v = 0x123456789abcdef0ULL;
     mm->body.two.v = 0x5531U;
     mm->body.three.pointer = new MyType2(NULL);
-    mm->body.three.pointer->four.alloc(4);
-    mm->body.three.pointer->four.binary[0] = 1;
-    mm->body.three.pointer->four.binary[0] = 2;
-    mm->body.three.pointer->four.binary[0] = 3;
-    mm->body.three.pointer->four.binary[0] = 4;
+    mm->body.three.pointer->four.string.resize(4);
+    mm->body.three.pointer->four.string[0] = 1;
+    mm->body.three.pointer->four.string[1] = 2;
+    mm->body.three.pointer->four.string[2] = 3;
+    mm->body.three.pointer->four.string[3] = 4;
     mm->body.three.pointer->five.set((char*)"this is a test string");
     mm->body.six.alloc(4);
     mm->body.six.array[0]->v = 0x8765U;

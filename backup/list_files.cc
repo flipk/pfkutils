@@ -110,7 +110,9 @@ pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num )
             {
                 char md5string[MD5_STRING_LEN];
 
-                pfkbak_sprint_md5( v->array[idx]->md5hash.binary, md5string );
+                pfkbak_sprint_md5( (uint8_t*)
+                                   v->array[idx]->md5hash.string.c_str(),
+                                   md5string );
                 printf( "      gen %d hash %s ",
                         v->array[idx]->gen_number.v, md5string );
 
@@ -119,10 +121,7 @@ pfkbak_list_files    ( uint32_t baknum, uint32_t gen_num )
                 piece_data.key.backup_number.v = baknum;
                 piece_data.key.file_number.v = file_number;
                 piece_data.key.piece_number.v = piece_number;
-                piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
-                memcpy( piece_data.key.md5hash.binary,
-                        v->array[idx]->md5hash.binary,
-                        MD5_DIGEST_SIZE );
+                piece_data.key.md5hash.string = v->array[idx]->md5hash.string;
 
                 if (!piece_data.get())
                 {

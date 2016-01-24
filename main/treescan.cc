@@ -58,7 +58,7 @@ private:
                   lastScanned(this), mtime(this), sha1hash(this) { }
             BST_TIMEVAL lastScanned;
             BST_TIMEVAL mtime;
-            BST_BINARY  sha1hash;
+            BST_STRING  sha1hash;
         } fname_to_info; // FNAME_TO_INFO
     };
     class tsdatum {
@@ -274,10 +274,10 @@ private:
     out:
         SHA1Result(&ctx, hash);
     }
-    static std::string format_hash(unsigned char * hash) {
+    static std::string format_hash(const std::string &str) {
         char buf[SHA1HashSize*2+1];
         for (int ind = 0; ind < SHA1HashSize; ind++)
-            sprintf(buf + ind*2, "%02x", hash[ind]);
+            sprintf(buf + ind*2, "%02x", str[ind]);
         buf[sizeof(buf)-1] = 0;
         return std::string(buf);
     }
@@ -358,12 +358,14 @@ public:
                     dat.data.which.v = tsdata::FNAME_TO_INFO;
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.data.fname_to_info.mtime.set(item.mtime);
-                    dat.data.fname_to_info.sha1hash.alloc(SHA1HashSize);
-                    unsigned char * binary =
-                        dat.data.fname_to_info.sha1hash.binary;
+                    dat.data.fname_to_info.sha1hash.string.resize(
+                        SHA1HashSize);
+                    unsigned char * binary = (unsigned char *)
+                        dat.data.fname_to_info.sha1hash.string.c_str();
                     calc_sha1_hash(item.name, binary);
                     dat.mark_dirty();
-                    cout << "N " << format_hash(binary)
+                    cout << "N " << format_hash(
+                                     dat.data.fname_to_info.sha1hash.string)
                          << " " << item.name << endl;
                     Sha1Hash h;
                     memcpy(h.hash, binary, Sha1Hash::size);
@@ -380,11 +382,13 @@ public:
                     else
                     {
                         dat.data.fname_to_info.mtime.set(item.mtime);
-                        dat.data.fname_to_info.sha1hash.alloc(SHA1HashSize);
-                        unsigned char * binary =
-                            dat.data.fname_to_info.sha1hash.binary;
+                        dat.data.fname_to_info.sha1hash.string.resize(
+                            SHA1HashSize);
+                        unsigned char * binary = (unsigned char *)
+                            dat.data.fname_to_info.sha1hash.string.c_str();
                         calc_sha1_hash(item.name, binary);
-                        cout << "U " << format_hash(binary)
+                        cout << "U " << format_hash(
+                                        dat.data.fname_to_info.sha1hash.string)
                              << " " << item.name << endl;
                     }
                     dat.data.fname_to_info.lastScanned.set(now);
@@ -404,7 +408,7 @@ public:
             dat->del();
             Sha1Hash h;
             memcpy(h.hash,
-                   dat->data.fname_to_info.sha1hash.binary,
+                   dat->data.fname_to_info.sha1hash.string.c_str(),
                    Sha1Hash::size);
             map<Sha1Hash,string>::iterator  it = newFiles.find(h);
             if (it == newFiles.end())
@@ -436,7 +440,7 @@ private:
             if (dat.get_data(data_fbn) == false)
                 return true;
             cout << "N "
-                 << format_hash(dat.data.fname_to_info.sha1hash.binary)
+                 << format_hash(dat.data.fname_to_info.sha1hash.string)
                  << " "
                  << dat.key.fname_to_info.fname.string
                  << endl;
