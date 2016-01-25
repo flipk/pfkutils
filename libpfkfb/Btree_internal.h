@@ -47,6 +47,14 @@ struct BTInfo : public FileBlockBST {
     BST_UINT32_t order;       /**< order number of the btree */
 };
 
+// i think it would be fun someday to convert
+// _BTNodeDisk and BTNode to FileBlockBST types.
+// seems like the representation should be easy,
+// just use BST_ARRAY<node ptrs, some type with BST_STRING for key data>
+// and maybe an operator[ that returns a ref to the node item?
+// _BTNodeDisk is very clumsy to use with all the zero-length array
+// and weird stuff, FileBlockBST would make this so much simpler.
+
 /** an item within a _BTNodeDisk */
 struct BTNodeItem {
     FB_AUID_t ptr;       /**< fileblock number of a left-child node */

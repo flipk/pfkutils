@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <string>
 
-#include <pk-md5.h>
+#include "md5.h"
 
 #include "dll2.h"
 

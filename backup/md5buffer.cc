@@ -26,7 +26,7 @@
 #include "params.h"
 #include "protos.h"
 
-#include <pk-md5.h>
+#include "md5.h"
 
 /** calculate md5 hash for a buffer of bytes.
  *

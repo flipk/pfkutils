@@ -17,8 +17,6 @@
 #ifndef _SHA1_H_
 #define _SHA1_H_
 
-namespace WebAppServer {
-
 #include <stdint.h>
 /*
  * If you do not have the ISO standard stdint.h header file, then you
@@ -71,7 +69,5 @@ int SHA1Input(  SHA1Context *,
                 unsigned int);
 int SHA1Result( SHA1Context *,
                 uint8_t Message_Digest[SHA1HashSize]);
-
-} // namespace WebAppServer
 
 #endif

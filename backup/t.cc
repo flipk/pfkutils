@@ -23,8 +23,8 @@
  * \author Phillip F Knaack
  */
 
-#include <pk-md5.h>
-#include <pk-md5.c>
+#include "md5.h"
+#include "md5.c"
 
 extern "C" int pfkbak_main(int argc, char ** argv);
 

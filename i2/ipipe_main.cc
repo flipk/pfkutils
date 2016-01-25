@@ -39,7 +39,7 @@
 #include "ipipe_main.h"
 
 #ifdef I2_MD5
-#include "pk-md5.h"
+#include "md5.h"
 #endif
 
 const char * help_msg =

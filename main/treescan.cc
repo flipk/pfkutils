@@ -27,7 +27,6 @@ exit 0
 #include "sha1.h"
 
 using namespace std;
-using namespace WebAppServer;
 
 class treescan_tree {
 private:

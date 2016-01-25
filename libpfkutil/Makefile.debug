@@ -1,10 +1,10 @@
 
 LIB= libpfkutil.a
-CSRCS=	pk-md5.c m.c base64.c inet_aton.c regex.c
+CSRCS=	md5.c m.c base64.c inet_aton.c regex.c
 CXXSRCS=fd_mgr.cc thread_slinger.cc shmempipe.cc HSM.cc dll3.cc \
 	hsmthread.cc LockWait.cc prioWorkQ.cc fdThreadLauncher.cc \
 	sha1.cc msgr.cc childprocessmanager.cc
-HDRS=   pk-md5.h types.h bst.h m.h fd_mgr.h  base64.h inet_aton.h \
+HDRS=   md5.h types.h bst.h m.h fd_mgr.h  base64.h inet_aton.h \
 	thread_slinger.h  shmempipe.h  HSM.h  dll3.h  hsmthread.h \
 	LockWait.h  prioWorkQ.h  regex.h fdThreadLauncher.h sha1.h \
 	msgr.h childprocessmanager.h bufprintf.h BackTrace.h myTimeval.h \

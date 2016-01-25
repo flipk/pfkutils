@@ -144,8 +144,9 @@ LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
 libpfkutil_CSRCS = \
 	libpfkutil/base64.c libpfkutil/d3des.c libpfkutil/d3des_orig.c \
-	libpfkutil/inet_aton.c libpfkutil/m.c libpfkutil/pk-md5.c \
-	libpfkutil/printbuf.c libpfkutil/regex.c
+	libpfkutil/inet_aton.c libpfkutil/m.c libpfkutil/md5.c \
+	libpfkutil/printbuf.c libpfkutil/regex.c \
+	libpfkutil/sha256.c libpfkutil/aes.c
 libpfkutil_CXXSRCS = \
 	libpfkutil/HSM.cc libpfkutil/LockWait.cc \
 	libpfkutil/childprocessmanager.cc libpfkutil/dll3.cc \
@@ -161,9 +162,10 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/d3des.h libpfkutil/d3des_orig.h libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
-	libpfkutil/msgr.h libpfkutil/myTimeval.h libpfkutil/pk-md5.h \
+	libpfkutil/msgr.h libpfkutil/myTimeval.h libpfkutil/md5.h \
 	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
-	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h
+	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
+	libpfkutil/sha256.h libpfkutil/aes.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -172,7 +174,7 @@ libpfkutil_HDRS = \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/inet_aton.h \
 	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
-	libpfkutil/myTimeval.h libpfkutil/pk-md5.h libpfkutil/prioWorkQ.h \
+	libpfkutil/myTimeval.h libpfkutil/md5.h libpfkutil/prioWorkQ.h \
 	libpfkutil/regex.h libpfkutil/sha1.h libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
 
@@ -193,6 +195,16 @@ $(t)_DEPLIBS = $(libpfkutil_TARGET)
 endef
 
 $(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
+
+#PROG_TARGETS += sha256_test
+#sha256_test_TARGET = $(OBJDIR)/libpfkutil/sha256test
+#sha256_test_CSRCS = libpfkutil/sha256.c
+#sha256_test_DEFS = -DPOLARSSL_SELF_TEST=1
+
+#PROG_TARGETS += aes256_test
+#aes256_test_TARGET = $(OBJDIR)/libpfkutil/aes256test
+#aes256_test_CSRCS = libpfkutil/aes.c
+#aes256_test_DEFS = -DPOLARSSL_SELF_TEST=1
 
 ##############################################
 

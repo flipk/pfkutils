@@ -1,6 +1,6 @@
 #if 0
 set -e -x
-g++ -I../libpfkutil ../libpfkutil/pk-md5.c deduplifier.cc -o d
+g++ -I../libpfkutil ../libpfkutil/md5.c deduplifier.cc -o d
 exit 0
 #endif
 
@@ -15,7 +15,7 @@ exit 0
 #include <map>
 #include <list>
 
-#include "pk-md5.h"
+#include "md5.h"
 
 using namespace std;
 

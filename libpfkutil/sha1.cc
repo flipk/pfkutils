@@ -31,8 +31,6 @@
 
 #include "sha1.h"
 
-namespace WebAppServer {
-
 /*
  *  Define the SHA1 circular left shift macro
  */
@@ -389,5 +387,3 @@ void SHA1PadMessage(SHA1Context *context)
 
     SHA1ProcessMessageBlock(context);
 }
-
-} // namespace WebAppServer

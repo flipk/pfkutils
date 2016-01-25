@@ -32,7 +32,7 @@
 #include "bst.h"
 #include "Btree.h"
 #include "BtreeDbClasses.h"
-#include "pk-md5.h"
+#include "md5.h"
 
 /** every time the database structure layout changes, 
     the tool version should be incremented! */
