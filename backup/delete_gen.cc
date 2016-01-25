@@ -170,8 +170,7 @@ pfkbak_delete_gen ( uint32_t baknum,
                     piece_data.key.backup_number.v = baknum;
                     piece_data.key.file_number.v = file_number;
                     piece_data.key.piece_number.v = piece_number;
-                    piece_data.key.md5hash.string =
-                        ver->md5hash.string.c_str();
+                    piece_data.key.md5hash.string = ver->md5hash.string;
                     if (!piece_data.get())
                     {
                         fprintf(stderr,
