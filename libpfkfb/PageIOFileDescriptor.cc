@@ -36,7 +36,10 @@
 #include "PageIO.h"
 
 
-PageIOFileDescriptor :: PageIOFileDescriptor( int _fd )
+PageIOFileDescriptor :: PageIOFileDescriptor(
+    const std::string &_encryption_password,
+    int _fd )
+    : PageIO(_encryption_password)
 {
     // this will probably cause problems for someone.
     if (sizeof(off_t) != 8)
@@ -57,10 +60,12 @@ PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
 bool
 PageIOFileDescriptor :: get_page( PageCachePage * pg )
 {
+    uint8_t hold_buffer[PageCache::PC_PAGE_SIZE];
     int page = pg->get_page_number();
     off_t offset = (off_t)page * (off_t)PageCache::PC_PAGE_SIZE;
     lseek(fd, offset, SEEK_SET);
-    int cc = read(fd, pg->get_ptr(), PageCache::PC_PAGE_SIZE);
+    uint8_t * bufptr = ciphering_enabled ? hold_buffer : pg->get_ptr();
+    int cc = read(fd, bufptr, PageCache::PC_PAGE_SIZE);
     if (cc < 0)
     {
         fprintf(stderr,
@@ -71,8 +76,10 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
     if (cc != PageCache::PC_PAGE_SIZE)
     {
         // zero-fill the remainder of the page.
-        memset(pg->get_ptr() + cc, 0, PageCache::PC_PAGE_SIZE - cc);
+        memset(bufptr + cc, 0, PageCache::PC_PAGE_SIZE - cc);
     }
+    if (ciphering_enabled)
+        decrypt_page(page, pg->get_ptr(), hold_buffer);
     return true;
 }
 
@@ -80,10 +87,19 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
 bool
 PageIOFileDescriptor :: put_page( PageCachePage * pg )
 {
+    uint8_t hold_buffer[PageCache::PC_PAGE_SIZE];
     int page = pg->get_page_number();
     off_t offset = (off_t)page * (off_t)PageCache::PC_PAGE_SIZE;
     lseek(fd, offset, SEEK_SET);
-    if (write(fd, pg->get_ptr(),
+    uint8_t * bufptr = NULL;
+    if (ciphering_enabled)
+    {
+        encrypt_page(page, hold_buffer, pg->get_ptr());
+        bufptr = hold_buffer;
+    }
+    else
+        bufptr = pg->get_ptr();
+    if (write(fd, bufptr,
               PageCache::PC_PAGE_SIZE) != PageCache::PC_PAGE_SIZE)
     {
         fprintf(stderr,

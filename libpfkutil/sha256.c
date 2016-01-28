@@ -30,7 +30,7 @@
 #include <stdio.h>
 
 #ifndef POLARSSL_SELF_TEST
-#define POLARSSL_SELF_TEST 1
+#define POLARSSL_SELF_TEST 0
 #endif
 
 /* Implementation that should never be optimized out by the compiler */

@@ -24,6 +24,10 @@
 #ifndef POLARSSL_AES_H
 #define POLARSSL_AES_H
 
+#define POLARSSL_CIPHER_MODE_CFB 1
+#define POLARSSL_CIPHER_MODE_CBC 1
+#define POLARSSL_CIPHER_MODE_CTR 1
+
 #include <string.h>
 #include <inttypes.h>
 

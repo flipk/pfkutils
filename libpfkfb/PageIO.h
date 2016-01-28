@@ -30,6 +30,9 @@
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string>
+
+#include "aes.h"
 
 class PageCachePage;
 
@@ -41,6 +44,18 @@ class PageCachePage;
  * to a flash memory device, a custom UDP or TCP-based communication
  * path, etc. */
 class PageIO {
+    //    each 4k page is encrypted/decrypted using aes-256-cbc.
+    //    the 32 byte key is the sha256 hash of the password.
+    //    the 16 byte IV is the XOR of the two 16 byte halves of the
+    //       sha256 hash of password plus page_number.
+    std::string encryption_password;
+    aes_context  aesenc_ctx;
+    aes_context  aesdec_ctx;
+protected:
+    PageIO(const std::string &_encryption_password);
+    bool ciphering_enabled;
+    void encrypt_page(int page_number, uint8_t * out, const uint8_t * in);
+    void decrypt_page(int page_number, uint8_t * out, const uint8_t * in);
 public:
     /** Create a PageIO, by opening a path. 
      *
@@ -52,7 +67,7 @@ public:
      * This class provides a virtual destructor, so that any derived
      * classes can implement their own destructors which are invoked
      * when this object is destroyed. */
-    virtual ~PageIO(void) { /* placeholder */ }
+    virtual ~PageIO(void);
     /** Fetch a page from the file.
      * \param pg A PageCachePage object to populate
      * \return true if the fetch succeeded, false if error
@@ -87,7 +102,7 @@ class PageIOFileDescriptor : public PageIO {
 public:
     /** Constructor.
      * \param _fd The file descriptor of the file to access */
-    PageIOFileDescriptor(int _fd);
+    PageIOFileDescriptor(const std::string &_encryption_password, int _fd);
     /** Destructor.
      * \note This destructor closes the file descriptor too!  */
     /*virtual*/ ~PageIOFileDescriptor(void);
@@ -104,7 +119,8 @@ public:
 class PageIONetworkTCPServer : public PageIO {
     int fd; /**< network descriptor, tcp socket */
 public:
-    PageIONetworkTCPServer(void *addr, // actually, struct in_addr *
+    PageIONetworkTCPServer(const std::string &_encryption_password,
+                           void *addr, // actually, struct in_addr *
                            int port);
     /*virtual*/ ~PageIONetworkTCPServer(void);
 

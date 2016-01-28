@@ -40,8 +40,10 @@
 
 
 PageIONetworkTCPServer :: PageIONetworkTCPServer(
+    const std::string &_encryption_password,
     void *addr, // actually, struct in_addr *
     int port)
+    : PageIO(_encryption_password)
 {
 }
 

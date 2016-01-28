@@ -239,13 +239,15 @@ PROG_TARGETS += fb_testBtree
 fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
 fb_testBtree_INCS = $(libpfkfb_INCS)
 fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
-fb_testBtree_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
+fb_testBtree_DEPLIBS = \
+	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
 
 PROG_TARGETS += fb_testFileBlock
 fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
 fb_testFileBlock_INCS = $(libpfkfb_INCS)
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
-fb_testFileBlock_DEPLIBS = $(libpfkfb_TARGET) $(libpfkdll2_TARGET)
+fb_testFileBlock_DEPLIBS = \
+	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
 endif
 
 ##############################################
