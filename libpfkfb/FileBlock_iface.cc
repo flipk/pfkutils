@@ -60,6 +60,9 @@ FileBlockInterface :: _openFile( const char * filename, int max_bytes,
     BlockCache * bc = new BlockCache( pageio, max_bytes );
     if (create)
         FileBlockInterface::init_file(bc);
+    else
+        if (!valid_file(bc))
+            return NULL;
     FileBlockInterface * fbi = open(bc);
     if (!fbi)
     {

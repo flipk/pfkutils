@@ -137,8 +137,12 @@ bool
 FileBlockLocal :: valid_file( BlockCache * bc )
 {
     FileHeader   _fh(bc);
+    _fh.get();
     if (_fh.d->info.signature.get() != InfoBlock::SIGNATURE)
+    {
+        std::cerr << "FileBlockLocal SIGNATURE mismatch!" << std::endl;
         return false;
+    }
     return true;
 }
 
