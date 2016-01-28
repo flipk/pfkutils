@@ -26,6 +26,8 @@ exit 0
 #include "myTimeval.h"
 #include "sha1.h"
 
+#define TSDB_FILENAME ".tsdb"
+
 using namespace std;
 
 class treescan_tree {
@@ -179,7 +181,10 @@ private:
 public:
     treescan_tree(string dir) {
         tsDbDir = dir;
-        string tsDb = dir + "/.tsdb";
+        string tsDb = dir + "/" + TSDB_FILENAME;
+        char * key_var = getenv("TREESCAN_DBKEY");
+        if (key_var != NULL)
+            tsDb += string(":") + string(key_var);
         bt = Btree::openFile(tsDb.c_str(), treescan_cache_size);
         if (bt == NULL)
         {
@@ -189,6 +194,7 @@ public:
         if (bt == NULL)
         {
             cout << "unable to open " << tsDb << endl;
+            exit(1);
         }
     }
     ~treescan_tree(void) {
@@ -346,7 +352,7 @@ public:
                 }
                 closedir(d);
             }
-            else if (item.name == "./.tsdb")
+            else if (item.name == "./" TSDB_FILENAME)
             {
                 // cout << "skipping tsdb\n";
             }
