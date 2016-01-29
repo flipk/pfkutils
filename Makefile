@@ -40,13 +40,6 @@ else # $CONFIG
 PFKARCH := $(shell ./scripts/architecture)
 OBJDIR= obj.$(PFKARCH).$(CONFIG)
 
-ifeq ($(DBG),1)
-CFLAGS= -g3 -O0
-CXXFLAGS= -g3 -O0
-else
-CFLAGS= -O3
-CXXFLAGS= -O3
-endif
 LDFLAGS = -rdynamic # for backtrace
 
 INCLUDE_MAKEFILES= config/$(CONFIG) config/always
