@@ -27,8 +27,14 @@ PROTOC_PATH ?= protoc
 # this should be options to the compiler like optimization, debug,
 # pedantics, warnflags, and the like (i.e. stuff that only cc1 or cc1plus
 # would consume, but not stuff cpp would consume).
+ifeq ($(DBG),1)
+CFLAGS  += -O0 -g3
+CXXFLAGS += -O0 -g3
+OBJDIR := $(OBJDIR).dbg
+else
 CFLAGS ?= -O2
 CXXFLAGS ?= -O2
+endif
 
 # if you want assembler listings from your C or CC files, add
 #    -Wa,-ahls=$$(@:.o=.L)
