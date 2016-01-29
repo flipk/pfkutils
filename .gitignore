@@ -3,3 +3,4 @@ cscope.files
 cscope.out
 /obj.*
 .tsdb
+[0-9]*
