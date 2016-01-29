@@ -278,6 +278,7 @@ LIB_TARGETS += libpfkdll2
 libpfkdll2_TARGET = $(OBJDIR)/libpfkdll2.a
 libpfkdll2_CXXSRCS = libpfkdll2/dll2_hash.cc 
 libpfkdll2_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
+libpfkdll2_INSTALL_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
 
 ###################
 
