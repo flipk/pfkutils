@@ -259,8 +259,7 @@ private:
         }
         list<tsdatum*> leftovers;
     };
-    static void calc_sha1_hash(const string &fname,
-                        unsigned char * hash) {
+    static void calc_sha1_hash(const string &fname, string &hash) {
         uint8_t buffer[65536];
         int  len, fd;
         SHA1Context  ctx;
@@ -277,7 +276,8 @@ private:
         }
         close(fd);
     out:
-        SHA1Result(&ctx, hash);
+        hash.resize(SHA1HashSize);
+        SHA1Result(&ctx, (uint8_t*) hash.c_str());
     }
     static std::string format_hash(const std::string &str) {
         char buf[SHA1HashSize*2+1];
@@ -366,38 +366,31 @@ public:
                     dat.data.which.v = tsdata::FNAME_TO_INFO;
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.data.fname_to_info.mtime.set(item.mtime);
-                    dat.data.fname_to_info.sha1hash.string.resize(
-                        SHA1HashSize);
-                    unsigned char * binary = (unsigned char *)
-                        dat.data.fname_to_info.sha1hash.string.c_str();
-                    calc_sha1_hash(item.name, binary);
+                    string &hash = dat.data.fname_to_info.sha1hash.string;
+                    calc_sha1_hash(item.name, hash);
                     dat.mark_dirty();
-                    cout << "N " << format_hash(
-                                     dat.data.fname_to_info.sha1hash.string)
+                    cout << "N " << format_hash(hash)
                          << " " << item.name << endl;
                     Sha1Hash h;
-                    memcpy(h.hash, binary, Sha1Hash::size);
+                    memcpy(h.hash, hash.c_str(), Sha1Hash::size);
                     newFiles[h] = item.name;
                 }
                 else
                 {
                     myTimeval mt;
                     dat.data.fname_to_info.mtime.get(mt);
-                    if (mt == item.mtime)
-                    {
-                        // cout << "untouched file: " << item.name << endl;
-                    }
-                    else
+                    if (mt != item.mtime)
                     {
                         dat.data.fname_to_info.mtime.set(item.mtime);
-                        dat.data.fname_to_info.sha1hash.string.resize(
-                            SHA1HashSize);
-                        unsigned char * binary = (unsigned char *)
-                            dat.data.fname_to_info.sha1hash.string.c_str();
-                        calc_sha1_hash(item.name, binary);
-                        cout << "U " << format_hash(
-                                        dat.data.fname_to_info.sha1hash.string)
-                             << " " << item.name << endl;
+                        string &hash = dat.data.fname_to_info.sha1hash.string;
+                        string oldhash(hash);
+                        calc_sha1_hash(item.name, hash);
+                        if (oldhash == hash)
+                            cout << "T " << item.name << endl;
+                        else
+                            cout << "U " << format_hash(hash)
+                                 << " " << format_hash(oldhash)
+                                 << " " << item.name << endl;
                     }
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.mark_dirty();
