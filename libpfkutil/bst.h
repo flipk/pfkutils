@@ -343,7 +343,7 @@ struct BST_TIMEVAL : public BST {
         btv_sec.v = (uint64_t) tv.tv_sec;
         btv_usec.v = (uint32_t) tv.tv_usec;
     }
-    void get(struct timeval &tv) {
+    const void get(struct timeval &tv) const {
         tv.tv_sec = (typeof(tv.tv_sec)) btv_sec.v;
         tv.tv_usec = (typeof(tv.tv_usec)) btv_usec.v;
     }
@@ -354,6 +354,7 @@ struct BST_TIMEVAL : public BST {
     }
 };
 
+// BUG: this can't handle strings >= 65536 in length.
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
 struct BST_STRING : public BST {
