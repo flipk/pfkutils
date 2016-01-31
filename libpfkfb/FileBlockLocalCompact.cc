@@ -75,7 +75,7 @@ Next: \ref BtreeStructure
 
 #include <stdlib.h>
 
-#define DEBUG_COMPACTION 0
+static bool debug_compaction = false;
 
 enum TableType { AUID, STACK };
 enum TableLevel { L2, L3 };
@@ -151,14 +151,15 @@ addent( L2L3s * l, FB_AUN_T aun,
     ent->parent = l->find(parent_aun);
     ent->parent_index = parent_index;
     l->add(ent);
-#if DEBUG_COMPACTION
-    printf("add table type %d level %d at aun %d; ", ty, lev, aun);
-    if (lev == L2)
-        printf("  parent is L1 index %d\n", parent_index);
-    else
-        printf("  parent is L2 at %d index %d\n",
-               l->find(parent_aun)->aun, parent_index);
-#endif
+    if (debug_compaction)
+    {
+        printf("add table type %d level %d at aun %d; ", ty, lev, aun);
+        if (lev == L2)
+            printf("  parent is L1 index %d\n", parent_index);
+        else
+            printf("  parent is L2 at %d index %d\n",
+                   l->find(parent_aun)->aun, parent_index);
+    }
 }
 
 void
@@ -223,19 +224,23 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
                 {
                     fh.d->auid_l1.entries[
                         l2l3ent->parent_index].set(new_aun);
-#if DEBUG_COMPACTION
-                    printf("  moved an L2 AUID table from %d to %d (pi %d)\n",
-                           aun, new_aun, l2l3ent->parent_index);
-#endif
+                    if (debug_compaction)
+                    {
+                        printf("  moved an L2 AUID table from %d to %d "
+                               "(pi %d)\n",
+                               aun, new_aun, l2l3ent->parent_index);
+                    }
                 }
                 else /* type == STACK */
                 {
                     fh.d->auid_stack_l1.entries[
                         l2l3ent->parent_index].set(new_aun);
-#if DEBUG_COMPACTION
-                    printf("  moved an L2 stack table from %d to %d (pi %d)\n",
-                           aun, new_aun, l2l3ent->parent_index);
-#endif
+                    if (debug_compaction)
+                    {
+                        printf("  moved an L2 stack table from %d to %d "
+                               "(pi %d)\n",
+                               aun, new_aun, l2l3ent->parent_index);
+                    }
                 }
                 fh.mark_dirty();
             }
@@ -247,13 +252,15 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
                 t->entries[l2l3ent->parent_index].set( new_aun );
                 fb->mark_dirty();
                 release(fb);
-#if DEBUG_COMPACTION
-                printf("  moved an L3 %s table from %d to %d (paun %d pi %d)\n",
-                       l2l3ent->type == AUID ? "AUID" : "stack",
-                       aun, new_aun, 
-                       l2l3ent->parent->aun,
-                       l2l3ent->parent_index);
-#endif
+                if (debug_compaction)
+                {
+                    printf("  moved an L3 %s table from %d to %d "
+                           "(paun %d pi %d)\n",
+                           l2l3ent->type == AUID ? "AUID" : "stack",
+                           aun, new_aun, 
+                           l2l3ent->parent->aun,
+                           l2l3ent->parent_index);
+                }
             }
 
             // must update the aun in this entry, but this also
@@ -271,15 +278,15 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
     }
     else
     {
-#if DEBUG_COMPACTION
-        FB_AUN_T old_aun, new_aun;
-        old_aun = translate_auid(auid);
-#endif
+        FB_AUN_T old_aun = 0, new_aun = 0;
+        if (debug_compaction)
+            old_aun = translate_auid(auid);
         realloc(auid, to_aun, 0);
-#if DEBUG_COMPACTION
-        new_aun = translate_auid(auid);
-        printf("  moved auid %d from %d to %d\n", auid, old_aun, new_aun);
-#endif
+        if (debug_compaction)
+        {
+            new_aun = translate_auid(auid);
+            printf("  moved auid %d from %d to %d\n", auid, old_aun, new_aun);
+        }
     }
 }
 
@@ -291,6 +298,8 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
     L2L3AUN * l2l3ent;
     int i;
     FB_AUN_T next_ds_au;
+
+    debug_compaction = (getenv("DEBUG_COMPACTION") != NULL);
 
     // the only block that can be in use is the FileHeader
 
@@ -333,10 +342,11 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         last_aun = fh.d->info.num_aus.get();        
         free_aus = fh.d->info.free_aus.get();
 
-#if DEBUG_COMPACTION
-        printf("free_aus = %d, file_size = %d, percent = %d\n",
-               free_aus, last_aun, (free_aus*100)/last_aun);
-#endif
+        if (debug_compaction)
+        {
+            printf("free_aus = %d, file_size = %d, percent = %d\n",
+                   free_aus, last_aun, (free_aus*100)/last_aun);
+        }
 
         {
             FileBlockStats stats;
@@ -359,24 +369,27 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         num_aus = au.d->size();
         auid = au.d->auid();
         au.release();
-#if DEBUG_COMPACTION
-        printf("last used au is at %d, auid %d,  size is %d\n",
-               aun, auid, num_aus);
-#endif
+        if (debug_compaction)
+        {
+            printf("last used au is at %d, auid %d,  size is %d\n",
+                   aun, auid, num_aus);
+        }
 
         // don't bother downshifting the whole file just for one block.
         if (num_aus > free_aus)
             break;
 
         bucket = ffu_bucket(num_aus);
-#if DEBUG_COMPACTION
-        printf("bucket is %d\n", bucket);
-#endif
+        if (debug_compaction)
+        {
+            printf("bucket is %d\n", bucket);
+        }
         if (bucket == (BucketList::NUM_BUCKETS-1))
         {
-#if DEBUG_COMPACTION
-            printf("cannot move this piece, must start downshifting\n");
-#endif
+            if (debug_compaction)
+            {
+                printf("cannot move this piece, must start downshifting\n");
+            }
             int num_aus_desired = num_aus;
 
             while (1)
@@ -390,10 +403,11 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                         break;
                     next_ds_au += au.d->size();
                 }
-#if DEBUG_COMPACTION
-                printf("found a free region of size %d at %d\n",
-                       au.d->size(), next_ds_au);
-#endif
+                if (debug_compaction)
+                {
+                    printf("found a free region of size %d at %d\n",
+                           au.d->size(), next_ds_au);
+                }
                 if (au.d->size() == 0)
                 {
                     // have we downshifted the entire file?
@@ -404,9 +418,11 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
 
                 if (au.d->size() >= num_aus_desired)
                 {
-#if DEBUG_COMPACTION
-                    printf("which is large enough for piece we want to move\n");
-#endif
+                    if (debug_compaction)
+                    {
+                        printf("which is large enough for piece we "
+                               "want to move\n");
+                    }
                     break;
                 }
 
@@ -421,19 +437,21 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                 num_aus = au.d->size();
                 auid = au.d->auid();
                 au.release();
-#if DEBUG_COMPACTION
-                printf("downshifting auid %d size %d from %d to %d:\n",
-                       auid, num_aus, naun, next_ds_au );
-#endif
+                if (debug_compaction)
+                {
+                    printf("downshifting auid %d size %d from %d to %d:\n",
+                           auid, num_aus, naun, next_ds_au );
+                }
                 move_unit( &l2l3tables, auid, naun, next_ds_au, num_aus );
-#if DEBUG_COMPACTION
-                naun = next_ds_au + num_aus;
-                au.get(naun);
-                printf("after moving, next %s region size at %d is %d\n",
-                       au.d->used() ? "USED" : "FREE",
-                       naun, au.d->size());
-                au.release();
-#endif
+                if (debug_compaction)
+                {
+                    naun = next_ds_au + num_aus;
+                    au.get(naun);
+                    printf("after moving, next %s region size at %d is %d\n",
+                           au.d->used() ? "USED" : "FREE",
+                           naun, au.d->size());
+                    au.release();
+                }
             }
         }
         else
