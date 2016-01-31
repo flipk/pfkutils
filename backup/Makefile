@@ -4,10 +4,10 @@ OBJDIR= obj.$(PFKARCH)
 PROG_TARGETS += pfkbak
 pfkbak_TARGET = $(OBJDIR)/pfkbak
 pfkbak_HDRS    = \
-	bakfile.h database_items.h options.h
+	bakfile.h database_items.h options.h tarfile.h
 pfkbak_CXXSRCS = \
 	bakfile.cc create.cc deletevers.cc export.cc \
-	extract.cc list.cc main.cc options.cc update.cc
+	extract.cc list.cc main.cc options.cc update.cc tarfile.cc
 pfkbak_INCS = \
 	-I$(HOME)/pfk/include/libpfkfb \
 	-I$(HOME)/pfk/include/libpfkutil \

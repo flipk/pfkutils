@@ -262,9 +262,11 @@ libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
 libpfkbak_CXXSRCS = \
 	backup/bakfile.cc backup/create.cc backup/deletevers.cc \
 	backup/export.cc backup/extract.cc backup/list.cc \
-	backup/main.cc backup/options.cc backup/update.cc
+	backup/main.cc backup/options.cc backup/update.cc \
+	backup/tarfile.cc
 libpfkbak_HDRS = \
-	backup/bakfile.h backup/database_items.h backup/options.h
+	backup/bakfile.h backup/database_items.h backup/options.h \
+	backup/tarfile.h
 endif
 
 ##############################################

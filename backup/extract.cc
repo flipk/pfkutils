@@ -2,6 +2,7 @@
 
 #include "bakfile.h"
 #include "database_items.h"
+#include "tarfile.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,6 +14,12 @@ using namespace std;
 
 void
 bakFile::extract(void)
+{
+    _extract(-1);
+}
+
+void
+bakFile::_extract(int tarfd)
 {
     uint32_t version = opts.versions[0];
 
@@ -61,7 +68,7 @@ bakFile::extract(void)
             for (int ind = 0; ind < fns.num_items; ind++)
             {
                 const string &path = fns.array[ind]->string;
-                extract_file(version, path);
+                extract_file(version, path, tarfd);
             }
             versionindex.key.versionindex.group.v ++;
         }
@@ -71,36 +78,35 @@ bakFile::extract(void)
         for (int ind = 0; ind < opts.paths.size(); ind++)
         {
             const string &path = opts.paths[ind];
-            extract_file(version, path);
+            extract_file(version, path, tarfd);
         }
+    }
+
+    if (tarfd > 0)
+    {
+        tarfile_emit_footer(tarfd);
+        close(tarfd);
     }
 }
 
 static void
 mkdir_minus_p(const string &path)
 {
-    vector<size_t>  slashes;
     size_t pos = 0;
-
     while (1)
     {
         pos = path.find_first_of('/', pos);
         if (pos == string::npos)
             break;
-        slashes.push_back(pos);
-        pos++;
-    }
-
-    for (int ind = 0; ind < slashes.size(); ind++)
-    {
-        const string &shortpath = path.substr(0,slashes[ind]);
+        const string &shortpath = path.substr(0,pos);
         if (shortpath != ".")
             mkdir(shortpath.c_str(), 0700);
+        pos++;
     }
 }
 
 void
-bakFile :: extract_file(uint32_t version, const std::string &path)
+bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
 {
     bakDatum fileinfo(bt);
     fileinfo.key.which.v = bakKey::FILEINFO;
@@ -126,16 +132,27 @@ bakFile :: extract_file(uint32_t version, const std::string &path)
 
     FB_AUID_T auid = blobhash.data.blobhash.first_auid.v;
 
-    mkdir_minus_p(path);
+    if (tarfd < 0)
+        mkdir_minus_p(path);
 
     bakFileContents bfc;
-    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
-    if (fd < 0)
+    int fd = -1;
+
+    if (tarfd < 0)
     {
-        int e = errno;
-        cerr << "unable to open file " << path << ": "
-             << strerror(e) << endl;
-        return;
+        fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+        if (fd < 0)
+        {
+            int e = errno;
+            cerr << "unable to open file " << path << ": "
+                 << strerror(e) << endl;
+            return;
+        }
+    }
+    else
+    {
+        tarfile_emit_fileheader(tarfd, path, filesize);
+        fd = tarfd;
     }
 
     while (auid != 0)
@@ -160,5 +177,12 @@ bakFile :: extract_file(uint32_t version, const std::string &path)
         fbi->release(fb);
     }
 
-    close(fd);
+    if (tarfd > 0)
+    {
+        tarfile_emit_padding(tarfd, filesize);
+    }
+    else
+    {
+        close(fd);
+    }
 }
