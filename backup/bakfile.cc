@@ -25,7 +25,8 @@ bakFile::~bakFile(void)
 {
     if (bt)
     {
-        bt->get_fbi()->compact(&compactionStatus, NULL);
+//BUG: can't compact a file with an open btree due to caching issues
+//        bt->get_fbi()->compact(&compactionStatus, NULL);
         delete bt;
     }
 }

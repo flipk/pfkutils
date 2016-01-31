@@ -200,7 +200,8 @@ public:
     ~treescan_tree(void) {
         if (bt)
         {
-            bt->get_fbi()->compact(&treescan_tree::compactionStatus,this);
+//BUG: can't compact a file with an open btree due to caching issues
+//            bt->get_fbi()->compact(&treescan_tree::compactionStatus,this);
             delete bt;
         }
     }
