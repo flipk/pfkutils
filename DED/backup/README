@@ -1,0 +1,59 @@
+
+database entries:
+
+- max 255 backups in a file
+- max 255 generations in a backup
+
+   BackupFileInfo:
+      key :  <none> (singleton)
+      data : uint32 tool_version
+             uint32 backup_numbers[]
+
+   BackupInfo:
+      key : backup_number
+      data : string backup_name
+             string comment
+             uint32 generation_numbers[]
+
+   GenerationInfo:
+      key : backup_number, generation_number
+      data : string date_time
+             uint64 num_bytes
+             uint32 num_files
+             uint32 GenerationFileList_fbn
+
+    GenerationFileList
+        
+                   FileInfo info
+                       uint32 file_id
+                       uint64 size
+                       uint32 mtime
+                       uint32 num_pieces
+                   string link_target
+
+   FilePieces:
+      key : file_id
+      data : uint16 refcount
+             uint32 next_pieces_fbn
+             PieceVersions pieces[]
+                 uint32 generations[]
+                 md5hash md5
+                 uint16 csize
+                 uint16 usize
+                 uint32 data_fbn
+
+   FileInfoExtended:  (not btree!!)
+      FilePieces next_pieces
+
+   BinaryData: (not btree!!)
+      uint32 next_data
+      binary data[]
+
+
+ALGORITHMS
+----------
+
+there is a singleton object which stores the tool version (used only
+for validation that the tool can open this file properly in the event
+that the data structure format has changed) and a list of the backup
+identifiers in the file.  when a backup is created or deleted, 

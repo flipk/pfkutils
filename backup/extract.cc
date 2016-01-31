@@ -1,262 +1,164 @@
-/*
-    This file is part of the "pfkutils" tools written by Phil Knaack
-    (pfk@pfk.org).
-    Copyright (C) 2008  Phillip F Knaack
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-    This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
+#include "bakfile.h"
+#include "database_items.h"
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write to the Free Software Foundation, Inc.,
-    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
-/** \file extract.cc
- * \brief Extract files from a backup.
- * \author Phillip F Knaack
- */
-
-#include "database_elements.h"
-#include "params.h"
-#include "protos.h"
-#include "FileList.h"
-
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
-#include <zlib.h>
+#include <errno.h>
 
-#define BAIL() \
-    do { \
-    fprintf(stderr, "%s:%s:%d: error\n", __FILE__, __FUNCTION__, __LINE__); \
-    return; \
-    } while (0)
+#include <iostream>
+using namespace std;
 
-/** a helper function which ensures directories exist when opening a file.
- * if the component directories don't exist, this function creates them.
- * it's sort of like "mkdir -p <path>".
- *
- * @param in_path   the path (relative to current working dir) to file to open.
- * @param mode      the file mode to open the file with.
- * @return a file descriptor or negative if there was a failure. errno is 
- *         set in the event of a failure.
- */
-static int
-openfile( const char *in_path, uint16_t mode )
-{
-    int len = strlen(in_path)+1;
-    int num_comps = 1;
-    int i, j;
-    const char * p;
-
-    // count the path components.
-    for (p = in_path; *p; p++)
-        if (*p == '/')
-            num_comps++;
-
-    // copy the path into all of them
-    char comps[num_comps][len];
-    for (i = 0; i < num_comps; i++)
-        memcpy(comps[i], in_path, len);
-
-    // search for slashes and null them out
-    for (i = j = 0; j < len; j++)
-        if (in_path[j] == '/')
-            comps[i++][j] = 0;
-
-    // create component directories if they don't exist
-    for (i=0; i < (num_comps-1); i++)
-        if (mkdir( comps[i], 0700 ) < 0)
-            if (errno != EEXIST)
-                fprintf(stderr, "mkdir '%s': %s\n",
-                        comps[i], strerror(errno));
-
-    // and open the final file.
-    return open( comps[i], O_WRONLY | O_CREAT, mode );
-}
-
-/** extract files from a backup. 
- *  
- * \todo currently argc and argv are ignored, this should be implemented.
- *
- * @param baknum the backup ID number.
- * @param gen_num which generation number to extract from the backup.
- * @param argc  count of arguments following on the command line. if argc is 
- *              zero, it means extract everything.
- * @param argv  array of arguments on the command line; each arg represents
- *              a file to be extracted.
- */
 void
-pfkbak_extract       ( uint32_t baknum,
-                       uint32_t gen_num, int argc, char ** argv )
+bakFile::extract(void)
 {
-    PfkBackupInfo back_info(pfkbak_meta);
+    uint32_t version = opts.versions[0];
 
-    back_info.key.backup_number.v = baknum;
-
-    if (!back_info.get())
-        BAIL();
-
-    int idx;
+    bt = Btree::openFile(opts.backupfile.c_str(), CACHE_SIZE);
+    if (bt == NULL)
     {
-        // validate that this gen# actually exists in this backup.
-
-        BST_ARRAY <PfkBakGenInfo> * gens = &back_info.data.generations;
-        for (idx = 0; idx < gens->num_items; idx++)
-            if (gens->array[idx]->generation_number.v == gen_num)
-                break;
-
-        if (idx == gens->num_items)
-        {
-            fprintf(stderr, "generation %d not found in backup\n", gen_num);
-            return;
-        }
-    }
-
-    (void) umask( 000 );
-
-#if 0
-    if (mkdir( back_info.data.name.string, 0700 ) < 0)
-    {
-        fprintf(stderr, "unable to create directory '%s': %s\n",
-                back_info.data.name.string,
-                strerror(errno));
+        cerr << "unable to open btree database\n";
         return;
     }
-    (void) chdir( back_info.data.name.string );
-#endif
+    fbi = bt->get_fbi();
 
-    uint32_t num_files = back_info.data.file_count.v;
-    uint32_t file_number;
-    for (file_number = 0; file_number < num_files; file_number++)
+    bakDatum dbinfo(bt);
+    dbinfo.key.which.v = bakKey::DBINFO;
+    dbinfo.key.dbinfo.init();
+    if (dbinfo.get() == false)
     {
-        PfkBackupFileInfo file_info(pfkbak_meta);
-
-        file_info.key.backup_number.v = baknum;
-        file_info.key.file_number.v = file_number;
-
-        if (!file_info.get())
-            // deleted files will leave holes, that's okay.
-            continue;
-
-        BST_ARRAY <BST_UINT32_t> * gens = &file_info.data.generations;
-
-        // validate this file is actually part of this generation.
-
-        for (idx = 0; idx < gens->num_items; idx++)
-            if (gens->array[idx]->v == gen_num)
-                break;
-
-        if (idx == gens->num_items)
-            // this file is not part of this generation.
-            continue;
-
-        const char * file_path = file_info.data.file_path.string.c_str();
-
-        // do a tar-like display, show the file name without
-        // newline; don't display the newline until extraction
-        // of the file is complete.
-
-        /** \todo support extracting individual files */
-
-        if (pfkbak_verb > VERB_QUIET)
-        {
-            printf("%s", file_path);
-            fflush(stdout);
-        }
-
-        int fd = openfile(file_path, file_info.data.mode.v);
-
-        if (fd < 0)
-        {
-            printf(": unable to create: %s\n", strerror(errno));
-            continue;
-        }
-
-        PfkBackupFilePieceInfo piece_info(pfkbak_meta);
-        PfkBackupFilePieceData piece_data(pfkbak_meta);
-        uint32_t piece_number;
-
-        for (piece_number = 0; ; piece_number++)
-        {
-            piece_info.key.backup_number.v = baknum;
-            piece_info.key.file_number.v = file_number;
-            piece_info.key.piece_number.v = piece_number;
-
-            if (!piece_info.get())
-                // end of file? probably.
-                break;
-
-            BST_ARRAY <PfkBackupVersion> * v = &piece_info.data.versions;
-
-            for (idx = 0; idx < v->num_items; idx++)
-                if (v->array[idx]->gen_number.v == gen_num)
-                    break;
-
-            if (idx == v->num_items)
-            {
-                // this is not really a bug; if a file gets shorter
-                // from one gen to the next, later pieces will not be
-                // tagged with this generation#, and so this is an
-                // expected result.
-                if (pfkbak_verb > VERB_QUIET)
-                    printf(": piece %d info not found\n", piece_number);
-            }
-            else
-            {
-                piece_data.key.backup_number.v = baknum;
-                piece_data.key.file_number.v = file_number;
-                piece_data.key.piece_number.v = piece_number;
-                piece_data.key.md5hash.string = v->array[idx]->md5hash.string;
-
-                if (!piece_data.get())
-                {
-                    printf(": piece %d data not found\n", piece_number);
-                }
-                else
-                {
-                    uint32_t fbn = piece_data.data.data_fbn.v;
-                    uint16_t usize = piece_data.data.usize.v;
-                    uint16_t csize = piece_data.data.csize.v;
-
-                    FileBlock * fb = pfkbak_data->get( fbn );
-
-                    if (!fb)
-                    {
-                        printf(": unable to fetch data for piece %d\n",
-                               piece_number);
-                    }
-                    else
-                    {
-                        uint8_t ubuf[ usize ];
-                        uLongf ulen = usize;
-
-                        if (usize == csize)
-                        {
-                            (void) write( fd, fb->get_ptr(), csize );
-                        }
-                        else
-                        {
-                            (void) uncompress( (Bytef*)ubuf, &ulen,
-                                               fb->get_ptr(), csize );
-                            (void) write( fd, ubuf, ulen );
-                        }
-                        pfkbak_data->release( fb );
-                    }
-                }
-            }
-        }
-
-        close(fd);
-        if (pfkbak_verb > VERB_QUIET)
-            printf("\n");
+        cerr << "invalid database? cant fetch dbinfo\n";
+        return;
     }
+    const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
+
+    bool found = false;
+    for (int cnt = 0; cnt < dbi.versions.num_items; cnt++)
+        if (dbi.versions.array[cnt]->v == version)
+        {
+            found = true;
+            break;
+        }
+
+    if (!found)
+    {
+        cerr << "version " << version << " is not in this db\n";
+        return;
+    }
+
+    if (opts.paths.size() == 0)
+    {
+        bakDatum versionindex(bt);
+        versionindex.key.which.v = bakKey::VERSIONINDEX;
+        versionindex.key.versionindex.version.v = version;
+        versionindex.key.versionindex.group.v = 0;
+        while (versionindex.get() == true)
+        {
+            const BST_ARRAY<BST_STRING> &fns =
+                versionindex.data.versionindex.filenames;
+            for (int ind = 0; ind < fns.num_items; ind++)
+            {
+                const string &path = fns.array[ind]->string;
+                extract_file(version, path);
+            }
+            versionindex.key.versionindex.group.v ++;
+        }
+    }
+    else
+    {
+        for (int ind = 0; ind < opts.paths.size(); ind++)
+        {
+            const string &path = opts.paths[ind];
+            extract_file(version, path);
+        }
+    }
+}
+
+static void
+mkdir_minus_p(const string &path)
+{
+    vector<size_t>  slashes;
+    size_t pos = 0;
+
+    while (1)
+    {
+        pos = path.find_first_of('/', pos);
+        if (pos == string::npos)
+            break;
+        slashes.push_back(pos);
+        pos++;
+    }
+
+    for (int ind = 0; ind < slashes.size(); ind++)
+    {
+        const string &shortpath = path.substr(0,slashes[ind]);
+        if (shortpath != ".")
+            mkdir(shortpath.c_str(), 0700);
+    }
+}
+
+void
+bakFile :: extract_file(uint32_t version, const std::string &path)
+{
+    bakDatum fileinfo(bt);
+    fileinfo.key.which.v = bakKey::FILEINFO;
+    fileinfo.key.fileinfo.version.v = version;
+    fileinfo.key.fileinfo.filename.string = path;
+    if (fileinfo.get() == false)
+    {
+        cerr << "version " << version << " file " << path << " not found\n";
+        return;
+    }
+    const string &hash = fileinfo.data.fileinfo.hash.string;
+    uint64_t filesize = fileinfo.data.fileinfo.filesize.v;
+
+    bakDatum blobhash(bt);
+    blobhash.key.which.v = bakKey::BLOBHASH;
+    blobhash.key.blobhash.hash.string = hash;
+    blobhash.key.blobhash.filesize.v = filesize;
+    if (blobhash.get() == false)
+    {
+        cerr << "blobhash not found for " << path << endl;
+        return;
+    }
+
+    FB_AUID_T auid = blobhash.data.blobhash.first_auid.v;
+
+    mkdir_minus_p(path);
+
+    bakFileContents bfc;
+    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd < 0)
+    {
+        int e = errno;
+        cerr << "unable to open file " << path << ": "
+             << strerror(e) << endl;
+        return;
+    }
+
+    while (auid != 0)
+    {
+        FileBlock * fb = fbi->get(auid);
+        if (!fb)
+            break;
+        if (bfc.bst_decode(fb->get_ptr(), fb->get_size()) == false)
+            break;
+        if (bfc.data.string.length() > 0)
+        {
+            int cc = ::write(fd,
+                             bfc.data.string.c_str(),
+                             bfc.data.string.length());
+            if (cc != bfc.data.string.length())
+            {
+                cerr << "unable to write to " << path << endl;
+            }
+        }
+        auid = bfc.next_auid.v;
+        bfc.bst_free();
+        fbi->release(fb);
+    }
+
+    close(fd);
 }

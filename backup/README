@@ -1,59 +1,77 @@
+/* -*- Mode:text; indent-tabs-mode:nil; tab-width:8 -*- */
 
-database entries:
+----------------------- use
 
-- max 255 backups in a file
-- max 255 generations in a backup
+bk c file dir
+bk u file
+bk t file
+bk d file ver
+bk x file path path path path
 
-   BackupFileInfo:
-      key :  <none> (singleton)
-      data : uint32 tool_version
-             uint32 backup_numbers[]
+----------------------- database elements
 
-   BackupInfo:
-      key : backup_number
-      data : string backup_name
-             string comment
-             uint32 generation_numbers[]
+key: DBINFO "BKDBINFOKEY"
+data: source directory path
+      next version number (init to 1)
+      list of versions present in file (init to empty)
 
-   GenerationInfo:
-      key : backup_number, generation_number
-      data : string date_time
-             uint64 num_bytes
-             uint32 num_files
-             uint32 GenerationFileList_fbn
+key: VERSIONINFO  version_id
+data: timestamp
+      count of files in this version
+      total bytes in this version
 
-    GenerationFileList
-        
-                   FileInfo info
-                       uint32 file_id
-                       uint64 size
-                       uint32 mtime
-                       uint32 num_pieces
-                   string link_target
+--each of these contains info on up to 100 files.
+--group_number counts starting at 0. iterate group_number++ until key not found.
+key: VERSIONINDEX  version_id  group_number
+data:  array of up to 100 struct { filename }
 
-   FilePieces:
-      key : file_id
-      data : uint16 refcount
-             uint32 next_pieces_fbn
-             PieceVersions pieces[]
-                 uint32 generations[]
-                 md5hash md5
-                 uint16 csize
-                 uint16 usize
-                 uint32 data_fbn
+key: FILEINFO version_id filename
+data: sha256 hash
+      timestamp
+      file size
 
-   FileInfoExtended:  (not btree!!)
-      FilePieces next_pieces
+--information about a "blob" (a file without a name)
+key: BLOBHASH sha256hash filesize
+data: reference count
+      first auid of data
 
-   BinaryData: (not btree!!)
-      uint32 next_data
-      binary data[]
+--outside of btree
 
+DATA AUID: binary blob of 64k or less
+           auid of next 64k, or 0 if end of file
 
-ALGORITHMS
-----------
+----------------------- algorithms
 
-there is a singleton object which stores the tool version (used only
-for validation that the tool can open this file properly in the event
-that the data structure format has changed) and a list of the backup
-identifiers in the file.  when a backup is created or deleted, 
+put_file
+  calc hash of file
+  lookup blobhash newhash filesize -> ref,auid
+  if not found
+    read file, write data AUIDs, make DATA AUID chain
+    make new blobhash hash, ref=1, auid
+  else
+    bump refcount
+  return hash
+
+backup_update
+   lookup dbinfo -> sourcedir, version#, prevversion#
+   file_count = 0
+   total_bytes = 0
+   timestamp = now
+   chdir to sourcedir and recurse thru files, for each file:
+     stat file
+     file_count ++
+     total_bytes += file size
+     lookup fileinfo prevversion# filename -> hash,ts,size
+     if found
+       compare {fileinfo,stat}.{timestamp,file size}
+       if any not equal
+         hash=put_file
+       else
+         lookup blobhash hash filesize -> ref,auid
+         bump refcount
+     else
+       hash=put_file
+     make new fileinfo version# filename, hash,ts,size
+   update versioninfo : timestamp, file_count, total_bytes
+   update dbinfo : add new version number and next_version_number++.
+

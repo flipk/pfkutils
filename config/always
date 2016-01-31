@@ -260,16 +260,11 @@ LIB_TARGETS += libpfkbak
 libpfkbak_TARGET = $(OBJDIR)/libpfkbak.a
 libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
 libpfkbak_CXXSRCS = \
-	backup/FileList.cc backup/create_backup.cc backup/create_file.cc \
-	backup/delete_backup.cc backup/delete_gen.cc backup/delete_gens.cc \
-	backup/documentation.cc backup/extract.cc backup/extract_list.cc \
-	backup/find_backup.cc backup/get_info.cc backup/list_backups.cc \
-	backup/list_files.cc backup/main.cc backup/md5buffer.cc \
-	backup/update_backup.cc
+	backup/bakfile.cc backup/create.cc backup/deletevers.cc \
+	backup/export.cc backup/extract.cc backup/list.cc \
+	backup/main.cc backup/options.cc backup/update.cc
 libpfkbak_HDRS = \
-	backup/FileList.h backup/database_elements.h backup/params.h \
-	backup/protos.h
-pfkutils_LIBZ= -lz
+	backup/bakfile.h backup/database_items.h backup/options.h
 endif
 
 ##############################################
