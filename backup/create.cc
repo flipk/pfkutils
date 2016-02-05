@@ -18,9 +18,7 @@ bakFile::create(void)
 
     {
         bakDatum  dat(bt);
-        dat.key.which.v = bakKey::DBINFO;
-        dat.key.dbinfo.init();
-        dat.data.which.v = bakData::DBINFO;
+        dat.key_dbinfo();
         dat.data.dbinfo.sourcedir.string = opts.sourcedir;
         dat.data.dbinfo.nextver.v = 1;
         dat.mark_dirty();

@@ -19,8 +19,7 @@ bakFile::deletevers(void)
     fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
-    dbinfo.key.which.v = bakKey::DBINFO;
-    dbinfo.key.dbinfo.init();
+    dbinfo.key_dbinfo();
     if (dbinfo.get() == false)
     {
         cerr << "invalid database? cant fetch dbinfo\n";
@@ -29,9 +28,7 @@ bakFile::deletevers(void)
     const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
 
     bakDatum newdbinfo(bt);
-    newdbinfo.key.which.v = bakKey::DBINFO;
-    newdbinfo.key.dbinfo.init();
-    newdbinfo.data.which.v = bakData::DBINFO;
+    newdbinfo.key_dbinfo();
     newdbinfo.data.dbinfo.sourcedir.string = dbi.sourcedir.string;
     newdbinfo.data.dbinfo.nextver.v = dbi.nextver.v;
     newdbinfo.data.dbinfo.versions.alloc(dbi.versions.num_items);
@@ -89,8 +86,7 @@ void
 bakFile::delete_version(int version)
 {
     bakDatum versioninfo(bt);
-    versioninfo.key.which.v = bakKey::VERSIONINFO;
-    versioninfo.key.versioninfo.version.v = version;
+    versioninfo.key_versioninfo( version );
     if (versioninfo.get() == false)
     {
         cerr << "cant fetch versioninfo\n";
@@ -99,12 +95,11 @@ bakFile::delete_version(int version)
     versioninfo.del();
 
     bakDatum versionindex(bt);
-    versionindex.key.which.v = bakKey::VERSIONINDEX;
-    versionindex.key.versionindex.version.v = version;
-    versionindex.key.versionindex.group.v = 0;
+    uint32_t group = 0;
 
     while (1)
     {
+        versionindex.key_versionindex( version, group );
         if (versionindex.get() == false)
             break;
 
@@ -118,9 +113,7 @@ bakFile::delete_version(int version)
             const string &fname = vind.filenames.array[find]->string;
 
             bakDatum fileinfo(bt);
-            fileinfo.key.which.v = bakKey::FILEINFO;
-            fileinfo.key.fileinfo.version.v = version;
-            fileinfo.key.fileinfo.filename.string = fname;
+            fileinfo.key_fileinfo( version, fname );
             if (fileinfo.get() == false)
             {
                 cerr << "unable to get fileinfo\n";
@@ -131,9 +124,7 @@ bakFile::delete_version(int version)
             const bakData::fileinfo_data &fid = fileinfo.data.fileinfo;
 
             bakDatum blobhash(bt);
-            blobhash.key.which.v = bakKey::BLOBHASH;
-            blobhash.key.blobhash.hash.string = fid.hash.string;
-            blobhash.key.blobhash.filesize.v = fid.filesize.v;
+            blobhash.key_blobhash( fid.hash.string, fid.filesize.v );
             if (blobhash.get() == false)
             {
                 cerr << "unable to get blobhash\n";
@@ -170,6 +161,6 @@ bakFile::delete_version(int version)
             } while (auid != 0);
         }
 
-        versionindex.key.versionindex.group.v++;
+        group++;
     }
 }

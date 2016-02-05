@@ -24,8 +24,7 @@ bakFile::listdb(void)
     fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
-    dbinfo.key.which.v = bakKey::DBINFO;
-    dbinfo.key.dbinfo.init();
+    dbinfo.key_dbinfo();
     if (dbinfo.get() == false)
     {
         cerr << "invalid database? cant fetch dbinfo\n";
@@ -41,8 +40,7 @@ bakFile::listdb(void)
         uint32_t version = dbinfo.data.dbinfo.versions.array[vind]->v;
         cout << "    ver: " << version << endl;
         bakDatum versioninfo(bt);
-        versioninfo.key.which.v = bakKey::VERSIONINFO;
-        versioninfo.key.versioninfo.version.v = version;
+        versioninfo.key_versioninfo( version );
         if (versioninfo.get() == false)
             cerr << "can't fetch versioninfo\n";
         else
@@ -54,13 +52,11 @@ bakFile::listdb(void)
                  << versioninfo.data.versioninfo.filecount.v << endl;
             cout << "      total_bytes : "
                  << versioninfo.data.versioninfo.total_bytes.v << endl;
-            int vgroup = 0;
+            uint32_t vgroup = 0;
             if (opts.verbose > 0) while (1)
             {
                 bakDatum versionindex(bt);
-                versionindex.key.which.v = bakKey::VERSIONINDEX;
-                versionindex.key.versionindex.version.v = version;
-                versionindex.key.versionindex.group.v = vgroup;
+                versionindex.key_versionindex( version, vgroup );
                 if (versionindex.get() == false)
                     break;
                 const bakData::versionindex_data &vid =
@@ -76,12 +72,10 @@ bakFile::listdb(void)
                     if (opts.verbose > 1)
                     {
                         bakDatum fileinfo(bt);
-                        fileinfo.key.which.v = bakKey::FILEINFO;
-                        fileinfo.key.fileinfo.version.v = version;
-                        fileinfo.key.fileinfo.filename.string = fn;
+                        fileinfo.key_fileinfo( version, fn );
                         if (fileinfo.get() == false)
                             cerr << "can't fetch fileinfo version "
-                                 << fileinfo.key.fileinfo.version.v << " file "
+                                 << version << " file "
                                  << fn << endl;
                         else
                         {
@@ -97,9 +91,8 @@ bakFile::listdb(void)
                                  << fi.filesize.v << endl;
 
                             bakDatum blobhash(bt);
-                            blobhash.key.which.v = bakKey::BLOBHASH;
-                            blobhash.key.blobhash.hash.string = fi.hash.string;
-                            blobhash.key.blobhash.filesize.v = fi.filesize.v;
+                            blobhash.key_blobhash( fi.hash.string,
+                                                   fi.filesize.v );
                             if (blobhash.get() == false)
                                 cerr << "cant fetch blobhash\n";
                             else

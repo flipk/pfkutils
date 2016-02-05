@@ -32,8 +32,7 @@ bakFile::_extract(int tarfd)
     fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
-    dbinfo.key.which.v = bakKey::DBINFO;
-    dbinfo.key.dbinfo.init();
+    dbinfo.key_dbinfo();
     if (dbinfo.get() == false)
     {
         cerr << "invalid database? cant fetch dbinfo\n";
@@ -58,11 +57,12 @@ bakFile::_extract(int tarfd)
     if (opts.paths.size() == 0)
     {
         bakDatum versionindex(bt);
-        versionindex.key.which.v = bakKey::VERSIONINDEX;
-        versionindex.key.versionindex.version.v = version;
-        versionindex.key.versionindex.group.v = 0;
-        while (versionindex.get() == true)
+        uint32_t group = 0;
+        while (1)
         {
+            versionindex.key_versionindex( version, group );
+            if (versionindex.get() == false)
+                break;
             const BST_ARRAY<BST_STRING> &fns =
                 versionindex.data.versionindex.filenames;
             for (int ind = 0; ind < fns.num_items; ind++)
@@ -70,7 +70,7 @@ bakFile::_extract(int tarfd)
                 const string &path = fns.array[ind]->string;
                 extract_file(version, path, tarfd);
             }
-            versionindex.key.versionindex.group.v ++;
+            group ++;
         }
     }
     else
@@ -109,9 +109,7 @@ void
 bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
 {
     bakDatum fileinfo(bt);
-    fileinfo.key.which.v = bakKey::FILEINFO;
-    fileinfo.key.fileinfo.version.v = version;
-    fileinfo.key.fileinfo.filename.string = path;
+    fileinfo.key_fileinfo( version, path );
     if (fileinfo.get() == false)
     {
         cerr << "version " << version << " file " << path << " not found\n";
@@ -121,9 +119,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
     uint64_t filesize = fileinfo.data.fileinfo.filesize.v;
 
     bakDatum blobhash(bt);
-    blobhash.key.which.v = bakKey::BLOBHASH;
-    blobhash.key.blobhash.hash.string = hash;
-    blobhash.key.blobhash.filesize.v = filesize;
+    blobhash.key_blobhash( hash, filesize );
     if (blobhash.get() == false)
     {
         cerr << "blobhash not found for " << path << endl;

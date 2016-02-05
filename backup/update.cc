@@ -55,9 +55,7 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
 
     bakDatum blobhash(bt);
 
-    blobhash.key.which.v = bakKey::BLOBHASH;
-    blobhash.key.blobhash.hash.string = hash;
-    blobhash.key.blobhash.filesize.v = filesize;
+    blobhash.key_blobhash( hash, filesize );
     if (blobhash.get() == false)
     {
         int fd = ::open(path.c_str(), O_RDONLY);
@@ -140,7 +138,6 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
 
         close(fd);
 
-        blobhash.data.which.v = bakData::BLOBHASH;
         blobhash.data.blobhash.refcount.v = 1;
 
         if (opts.verbose > 1)
@@ -200,8 +197,7 @@ bakFile::_update(void)
 
     now.getNow();
 
-    dbinfo.key.which.v = bakKey::DBINFO;
-    dbinfo.key.dbinfo.init();
+    dbinfo.key_dbinfo();
     if (dbinfo.get() == false)
     {
         cerr << "bogus database: missing DBINFO\n";
@@ -228,10 +224,8 @@ bakFile::_update(void)
     todo.push_back(fileInfo("."));
 
     bakDatum versionindex(bt);
-    versionindex.key.which.v = bakKey::VERSIONINDEX;
-    versionindex.key.versionindex.version.v = version;
-    versionindex.key.versionindex.group.v = 0;
-    versionindex.data.which.v = bakData::VERSIONINDEX;
+    uint32_t group = 0;
+    versionindex.key_versionindex( version, group );
     versionindex.data.versionindex.filenames.alloc(
         bakData::versionindex_data::MAX_FILENAMES);
     int vind = 0;
@@ -265,9 +259,7 @@ bakFile::_update(void)
             total_bytes += item.sb.st_size;
 
             bakDatum fileinfo(bt);
-            fileinfo.key.which.v = bakKey::FILEINFO;
-            fileinfo.key.fileinfo.version.v = prev_version;
-            fileinfo.key.fileinfo.filename.string = item.name;
+            fileinfo.key_fileinfo( prev_version, item.name );
             if (fileinfo.get())
             {
                 if (
@@ -285,9 +277,7 @@ bakFile::_update(void)
                 {
                     hash = fileinfo.data.fileinfo.hash.string;
                     bakDatum blobhash(bt);
-                    blobhash.key.which.v = bakKey::BLOBHASH;
-                    blobhash.key.blobhash.hash.string = hash;
-                    blobhash.key.blobhash.filesize.v = item.sb.st_size;
+                    blobhash.key_blobhash( hash, item.sb.st_size );
                     if (blobhash.get() == false)
                         cerr << "can't fetch blobhash\n";
                     else
@@ -306,10 +296,7 @@ bakFile::_update(void)
             }
 
             bakDatum newfinfo(bt);
-            newfinfo.key.which.v = bakData::FILEINFO;
-            newfinfo.key.fileinfo.version.v = version;
-            newfinfo.key.fileinfo.filename.string = item.name;
-            newfinfo.data.which.v = bakData::FILEINFO;
+            newfinfo.key_fileinfo( version, item.name );
             newfinfo.data.fileinfo.hash.string     = hash;
             newfinfo.data.fileinfo.time.btv_sec.v  = item.mtime.tv_sec;
             newfinfo.data.fileinfo.time.btv_usec.v = item.mtime.tv_usec;
@@ -327,7 +314,8 @@ bakFile::_update(void)
                 versionindex.put();
                 versionindex.reinit();
                 vind = 0;
-                versionindex.key.versionindex.group.v++;
+                group++;
+                versionindex.key_versionindex( version, group );
             }
         }
         todo.pop_front();
@@ -341,9 +329,7 @@ bakFile::_update(void)
     }
 
     bakDatum versioninfo(bt);
-    versioninfo.key.which.v = bakKey::VERSIONINFO;
-    versioninfo.key.versioninfo.version.v = version;
-    versioninfo.data.which.v = bakData::VERSIONINFO;
+    versioninfo.key_versioninfo( version );
     versioninfo.data.versioninfo.time.btv_sec.v = now.tv_sec;
     versioninfo.data.versioninfo.time.btv_usec.v = now.tv_usec;
     versioninfo.data.versioninfo.filecount.v = file_count;

@@ -10,7 +10,6 @@ struct bakKey : public BST_UNION {
     struct dbinfo_key : public BST {
         dbinfo_key(BST *parent) : BST(parent), keystring(this) { }
         BST_STRING keystring;
-        void init(void) { keystring.string = "BKDBINFOKEY"; }
     } dbinfo;
     struct versioninfo_key : public BST {
         versioninfo_key(BST *parent) : BST(parent),
@@ -98,6 +97,35 @@ public:
 
     void reinit(void) { data_id = 0; dirty = false; }
     void mark_dirty(void) { dirty = true; }
+
+    void key_dbinfo(void) {
+        key.which.v = bakKey::DBINFO;
+        key.dbinfo.keystring.string = "BKDBINFOKEY";
+        data.which.v = key.which.v;
+    }
+    void key_versioninfo(uint32_t version) {
+        key.which.v = bakKey::VERSIONINFO;
+        key.versioninfo.version.v = version;
+        data.which.v = key.which.v;
+    }
+    void key_versionindex(uint32_t version, uint32_t group) {
+        key.which.v = bakKey::VERSIONINDEX;
+        key.versionindex.version.v = version;
+        key.versionindex.group.v = group;
+        data.which.v = key.which.v;
+    }
+    void key_fileinfo(uint32_t version, const std::string &filename) {
+        key.which.v = bakKey::FILEINFO;
+        key.fileinfo.version.v = version;
+        key.fileinfo.filename.string = filename;
+        data.which.v = key.which.v;
+    }
+    void key_blobhash(const std::string &hash, uint64_t filesize) {
+        key.which.v = bakKey::BLOBHASH;
+        key.blobhash.hash.string = hash;
+        key.blobhash.filesize.v = filesize;
+        data.which.v = key.which.v;
+    }
 
     // fill out key item before calling this; if it returns
     // true, the data was found and is populated.
