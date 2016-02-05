@@ -66,6 +66,18 @@ Next: \ref AUNBuckets
 
 #include <stdlib.h>
 
+// a fun bug was discovered here.  everything over NUM_BUCKETS-2 aus in size
+// get grouped in a single bucket, NUM_BUCKETS-1.  but there is a case where
+// alloc_aun doesn't check that the bucket just dequeued was actually big
+// enough for the allocation, if "size" requested legitimately goes in
+// that bucket.  if it picks an AU that is smaller than the size requested,
+// the memcpy of data into that allocation will overwrite the next
+// AUHead, corrupting the file.
+// the solution i chose was to put a max on the largest allocation you
+// can ask for and enforce that in FileBlockLocal::alloc. also because the
+// app in question wanted 64k and i like 64k as a number, i doubled
+// NUM_BUCKETS so that 64k works.
+
 FB_AUN_T
 FileBlockLocal :: alloc_aun( FB_AUN_T desired_aun, AUHead * au, int size )
 {

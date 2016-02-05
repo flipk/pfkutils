@@ -82,6 +82,7 @@ struct InfoBlock {
     /** the file must have a valid signature to be used. */
     static const uint32_t SIGNATURE = 0x04f78c2a;
     UINT32_t  signature;      /**< value is SIGNATURE */
+    UINT32_t  num_buckets;    /**< must match BucketList::NUM_BUCKETS */
     UINT32_t  used_aus;       /**< count of used AUs */
     UINT32_t  free_aus;       /**< count of free AUs */
     UINT32_t  used_extents;   /**< count of used regions */
@@ -108,7 +109,7 @@ struct DataInfoPtrs {
  * index [0] is for 1-AU blocks.  index [1] is for 2-AU blocks, etc.
  */
 struct BucketList {
-    static const int NUM_BUCKETS = 2048;
+    static const int NUM_BUCKETS = 4096;
     /** each entry is either zero or the AUN of a linked list head.
      * Also, if a list is nonempty, there will be a bit set in the
      * bitmap, too. \see BucketBitmap
@@ -116,11 +117,16 @@ struct BucketList {
     FB_AUN_t list_head[NUM_BUCKETS];
 };
 
+#define FILE_BLOCK_MAXIMUM_ALLOCATION_SIZE \
+    ((BucketList::NUM_BUCKETS - 2) * AU_SIZE)
+
 /**
  * bitmap for the bucket lists.  If a bit is set, it means the
  * corresponding bucket list is nonempty.
  */
 struct BucketBitmap {
+    // the 32's in this class are not AU_SIZE, they
+    // are the number of bits in a uint32.
     /** the bits themselves live here. */
     UINT32_t longs[BucketList::NUM_BUCKETS/32];
     /**
@@ -312,6 +318,7 @@ public:
 };
 
 //
+class L2L3s;
 
 /**
  * the private implementation of FileBlockInterface.
@@ -454,16 +461,15 @@ class FileBlockLocal : public FileBlockInterface {
      * doesn't matter if this is an L2/L3 table or a user AUID.
      * reallocs a used block, or if its an L2/L3 table, uses the
      * AUN interface.
-     * \param l     L2L3s list, casted to void* to keep type private.
+     * \param l     L2L3s list
      * \param auid  the AUID of the block to move; if its an L2/L3 table
      *              this should be zero.
      * \param aun   the AUN of the block to move.
      * \param to_aun desired AUN position to move block to; if zero,
      *               will be dynamically allocated.
-     * \param num_aus the size of the block to move.
      */
-    void      move_unit   ( void *l, FB_AUID_T auid,
-                            FB_AUN_T aun, FB_AUN_T to_aun, int num_aus );
+    void      move_unit   ( L2L3s *l, FB_AUID_T auid,
+                            FB_AUN_T aun, FB_AUN_T to_aun );
     FB_AUID_T realloc     ( FB_AUID_T auid, FB_AUN_T to_aun, int new_size );
     // @}
 public:

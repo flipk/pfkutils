@@ -143,6 +143,16 @@ FileBlockLocal :: valid_file( BlockCache * bc )
         std::cerr << "FileBlockLocal SIGNATURE mismatch!" << std::endl;
         return false;
     }
+    if (_fh.d->info.num_buckets.get() != BucketList::NUM_BUCKETS)
+    {
+        std::cerr << "FileBlock file created with incompatible "
+                  << "NUM_BUCKETS setting!  ("
+                  << _fh.d->info.num_buckets.get()
+                  << " != "
+                  << BucketList::NUM_BUCKETS
+                  << ")\n";
+        return false;
+    }
     return true;
 }
 
@@ -161,6 +171,7 @@ FileBlockLocal :: init_file( BlockCache * bc )
     first_user_au = SIZE_TO_AUS(sizeof(_FileHeader));
 
     _fh.d->info.signature.set(InfoBlock::SIGNATURE);
+    _fh.d->info.num_buckets.set(BucketList::NUM_BUCKETS);
     _fh.d->info.free_aus.set(0);
     _fh.d->info.used_aus.set(0);
     _fh.d->info.used_extents.set(0);

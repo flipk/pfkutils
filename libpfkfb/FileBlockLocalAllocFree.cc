@@ -61,6 +61,16 @@ FileBlockLocal :: alloc( int size )
     FB_AUN_T  aun;
     FB_AUID_T auid;
 
+    if (size > FILE_BLOCK_MAXIMUM_ALLOCATION_SIZE)
+    {
+        std::cerr << "FileBlockLocal::alloc : allocation of "
+                  << size << " attempted is larger than max "
+                  << "supported allocation size "
+                  << FILE_BLOCK_MAXIMUM_ALLOCATION_SIZE
+                  << std::endl;
+        return 0;
+    }
+
     AUHead au(bc);
 
     aun = alloc_aun( &au, size );

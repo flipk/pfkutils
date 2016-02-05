@@ -184,11 +184,9 @@ FileBlockLocal :: walkl2( void /*L2L3s*/ * l,
 }
 
 void
-FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
-                             FB_AUN_T aun, FB_AUN_T to_aun,
-                             int num_aus )
+FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
+                             FB_AUN_T aun, FB_AUN_T to_aun )
 {
-    L2L3s * l2l3tables = (L2L3s*) l;
     L2L3AUN * l2l3ent;
 
     if (auid == 0)
@@ -442,7 +440,7 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                     printf("downshifting auid %d size %d from %d to %d:\n",
                            auid, num_aus, naun, next_ds_au );
                 }
-                move_unit( &l2l3tables, auid, naun, next_ds_au, num_aus );
+                move_unit( &l2l3tables, auid, naun, next_ds_au );
                 if (debug_compaction)
                 {
                     naun = next_ds_au + num_aus;
@@ -456,7 +454,7 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         }
         else
         {
-            move_unit( &l2l3tables, auid, aun, 0, num_aus );
+            move_unit( &l2l3tables, auid, aun, 0 );
         }
     }
 
