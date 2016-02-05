@@ -9,7 +9,7 @@
 class bakDatum;
 
 class bakFile {
-    static const int CACHE_SIZE = 200 * 1024 * 1024;
+    static const int CACHE_SIZE = 1000 * 1024 * 1024;
     static const int BTREE_ORDER = 25;
     Btree * bt;
     FileBlockInterface * fbi;
