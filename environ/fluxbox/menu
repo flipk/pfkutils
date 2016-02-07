@@ -4,6 +4,8 @@
     [exec]   (emacs) {emacs}
     [exec]   (xload) {xload}
     [exec]   (xclock) {xclock}
+    [exec] (google-chrome) {google-chrome}
+    [exec] (firefox) {firefox}
     [exec] (Reload resources) {xrdb -remove; xrdb -load $HOME/.Xresources}
     [separator]
     [config] (Configure)
@@ -11,7 +13,7 @@
       [stylesdir] (~/pfk/share/fluxbox/styles)
     [end]
     [submenu] (User Styles) {Choose a style...}
-      [stylesdir] (~/.fluxbox/styles)
+      [stylesdir] (~/pfk/etc/fluxbox/styles)
     [end]
     [workspaces] (Workspace List)
     [commanddialog] (Fluxbox Command)
