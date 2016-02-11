@@ -3,6 +3,8 @@
 #ifndef __BACKTRACE_H__
 #define __BACKTRACE_H__
 
+#ifndef __CYGWIN__
+
 // NOTE NOTE NOTE
 //
 // proper use of the backtrace functionality requires use
@@ -54,6 +56,20 @@ BackTrace::Format(void) const
     return ret;
 }
 
-}; // namespace HSM
+}; // namespace BackTraceUtil
+
+#else /* __CYGWIN__ */
+
+#include <string>
+
+namespace BackTraceUtil {
+
+struct BackTrace {
+    const std::string Format(void) const { return ""; }
+};
+
+}; // namespace BackTraceUtil
+
+#endif /* __CYGWIN__ */
 
 #endif /* __BACKTRACE_H__ */

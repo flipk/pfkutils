@@ -4,7 +4,7 @@ ifeq ($(CONFIG),)
 
 ##############################################
 
-KNOWN_CONFIGS= blade adler droid
+KNOWN_CONFIGS= blade adler droid cygwin
 
 all:
 	@echo please specify CONFIG= from config/ subdir
@@ -40,7 +40,9 @@ else # $CONFIG
 PFKARCH := $(shell ./scripts/architecture)
 OBJDIR= obj.$(PFKARCH).$(CONFIG)
 
-LDFLAGS = -rdynamic # for backtrace
+ifeq ($(DISABLE_RDYNAMIC),)
+LDFLAGS += -rdynamic # for backtrace
+endif
 
 INCLUDE_MAKEFILES= config/$(CONFIG) config/always
 
