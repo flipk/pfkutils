@@ -303,6 +303,7 @@ define LIB_TARGET_RULES
 $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_PROTOGENOBJS) \
 		$($(target)_EXTRAOBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)rm -f $($(target)_TARGET)
@@ -310,6 +311,7 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_COBJS) $($(target)_CXXOBJS) \
 		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
 		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
+		$($(target)_PROTOGENOBJS) \
 		$($(target)_EXTRAOBJS)
 	$(Q)$(RANLIB) $($(target)_TARGET)
 
