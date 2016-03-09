@@ -40,7 +40,7 @@ typedef UINT32_t FB_AUN_t;
  * fundamental size of an allocation unit.  every allocation is
  * a multiple of this.
  */
-#define AU_SIZE 32
+#define AU_SIZE 128
 
 /**
  * calculate the number of AUs required to hold a size.  performs
