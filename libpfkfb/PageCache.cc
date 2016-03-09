@@ -77,7 +77,7 @@ PageCache :: PageCache( PageIO * _io, int _max_pages )
     io = _io;
     max_pages = _max_pages;
     pgs = new PageCachePageList;
-    time( &last_flush );
+    printFlushCount = (getenv("FILEBLOCK_FLUSH_COUNT") != NULL);
 }
 
 PageCache :: ~PageCache(void)
@@ -137,6 +137,7 @@ PageCache :: release( PageCachePage * _p, bool dirty )
     if (dirty)
         p->dirty = true;
     pgs->deref(p);
+    bool somethingFlushed = false;
     while (pgs->get_lru_cnt() > max_pages)
     {
         p = pgs->get_oldest();
@@ -149,15 +150,14 @@ PageCache :: release( PageCachePage * _p, bool dirty )
                         p->page_number);
                 exit( 1 );
             }
+            somethingFlushed = true;
         }
         delete p;
     }
-    time_t now;
-    if ( time( &now ) != last_flush )
-    {
-        last_flush = now;
+    if (somethingFlushed)
+        // if one dirty thing had to be flushed due to hitting
+        // bottom of lru, then flush everything dirty in the lru.
         flush();
-    }
 }
 
 void
@@ -224,7 +224,8 @@ PageCache :: flush(void)
     qsort( pages, count, sizeof(PCPInt*),
            (int(*)(const void *, const void *))page_compare );
 
-    //printf("flushing %d pages\n", count);
+    if (printFlushCount)
+        printf("flushing %d pages\n", count);
 
     for (i = 0; i < count; i++)
     {
