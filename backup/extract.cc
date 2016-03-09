@@ -23,13 +23,8 @@ bakFile::_extract(int tarfd)
 {
     uint32_t version = opts.versions[0];
 
-    bt = Btree::openFile(opts.backupfile.c_str(), CACHE_SIZE);
-    if (bt == NULL)
-    {
-        cerr << "unable to open btree database\n";
+    if (openFiles() == false)
         return;
-    }
-    fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
     dbinfo.key_dbinfo();
@@ -153,7 +148,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
 
     while (auid != 0)
     {
-        FileBlock * fb = fbi->get(auid);
+        FileBlock * fb = fbi_data->get(auid);
         if (!fb)
             break;
         if (bfc.bst_decode(fb->get_ptr(), fb->get_size()) == false)
@@ -170,7 +165,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
         }
         auid = bfc.next_auid.v;
         bfc.bst_free();
-        fbi->release(fb);
+        fbi_data->release(fb);
     }
 
     if (tarfd > 0)

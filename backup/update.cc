@@ -18,12 +18,8 @@ using namespace std;
 void
 bakFile::update(void)
 {
-    bt = Btree::openFile(opts.backupfile.c_str(), CACHE_SIZE);
-    if (bt == NULL)
-    {
-        cerr << "unable to open database\n";
+    if (openFiles() == false)
         return;
-    }
 
     if (opts.verbose > 1)
         cout << "database opened\n";
@@ -80,8 +76,8 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
                     bfc.data.string.resize(cc);
                 return cc;
             }
-            void alloc(FileBlockInterface * fbi) {
-                auid = fbi->alloc(bfc.bst_calc_size());
+            void alloc(FileBlockInterface * fbi_data) {
+                auid = fbi_data->alloc(bfc.bst_calc_size());
             }
             void set_next(filecont *oc) {
                 if (oc == NULL)
@@ -89,11 +85,11 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
                 else
                     bfc.next_auid.v = oc->auid;
             }
-            void store(FileBlockInterface * fbi) {
-                FileBlock * fb = fbi->get(auid,true);
+            void store(FileBlockInterface * fbi_data) {
+                FileBlock * fb = fbi_data->get(auid,true);
                 int len = fb->get_size();
                 bfc.bst_encode(fb->get_ptr(), &len);
-                fbi->release(fb,true);
+                fbi_data->release(fb,true);
             }
         };
         filecont conts[2];
@@ -110,19 +106,19 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
                 if (first_block)
                 {
                     // zero length file!
-                    c->alloc(fbi);
+                    c->alloc(fbi_data);
                     blobhash.data.blobhash.first_auid.v = c->auid;
                     c->set_next(NULL);
-                    c->store(fbi);
+                    c->store(fbi_data);
                 }
                 else
                 {
                     oc->set_next(NULL);
-                    oc->store(fbi);
+                    oc->store(fbi_data);
                 }
                 break;
             }
-            c->alloc(fbi);
+            c->alloc(fbi_data);
             if (first_block)
             {
                 blobhash.data.blobhash.first_auid.v = c->auid;
@@ -131,7 +127,7 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
             else
             {
                 oc->set_next(c);
-                oc->store(fbi);
+                oc->store(fbi_data);
             }
             ind ^= 1;
         }

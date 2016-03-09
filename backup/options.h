@@ -20,7 +20,8 @@ class bkOptions {
     void printUsage(void);
     bool _parse(int argc, char ** argv);
 public:
-    std::string backupfile;
+    std::string backupfile_index;
+    std::string backupfile_data;
     std::string sourcedir; // for create
     opcode_t op;
     std::vector<int> versions; // for delete, or one version for extract/export

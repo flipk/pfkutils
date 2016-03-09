@@ -70,10 +70,11 @@ struct bakData : public BST_UNION {
         blobhash_data(BST *parent) : BST(parent), refcount(this),
                                      first_auid(this) { }
         BST_UINT32_t refcount;
-        BST_FB_AUID_t first_auid;
+        BST_FB_AUID_t first_auid; // this is in fbi_data, not bt/fbi
     } blobhash;
 };
 
+// this is stored in fbi_data, not in bt/fbi
 struct bakFileContents : public BST {
     bakFileContents(void) : BST(NULL), data(this), next_auid(this) { }
     BST_STRING data;

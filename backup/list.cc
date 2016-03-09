@@ -15,13 +15,8 @@ using namespace std;
 void
 bakFile::listdb(void)
 {
-    bt = Btree::openFile(opts.backupfile.c_str(), CACHE_SIZE);
-    if (bt == NULL)
-    {
-        cerr << "unable to open btree database\n";
+    if (openFiles() == false)
         return;
-    }
-    fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
     dbinfo.key_dbinfo();

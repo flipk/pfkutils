@@ -10,13 +10,8 @@ bakFile::deletevers(void)
 {
     int versionindex, version;
 
-    bt = Btree::openFile(opts.backupfile.c_str(), CACHE_SIZE);
-    if (bt == NULL)
-    {
-        cerr << "unable to open btree database\n";
+    if (openFiles() == false)
         return;
-    }
-    fbi = bt->get_fbi();
 
     bakDatum dbinfo(bt);
     dbinfo.key_dbinfo();
@@ -148,17 +143,18 @@ bakFile::delete_version(int version)
 
             bakFileContents bfc;
 
-            do {
-                FileBlock * fb = fbi->get(auid);
+            while (auid != 0)
+            {
+                FileBlock * fb = fbi_data->get(auid);
                 if (!fb)
                     break;
                 if (bfc.bst_decode(fb->get_ptr(), fb->get_size()) == false)
                     break;
-                fbi->release(fb);
-                fbi->free(auid);
+                fbi_data->release(fb);
+                fbi_data->free(auid);
                 auid = bfc.next_auid.v;
                 bfc.bst_free();
-            } while (auid != 0);
+            }
         }
 
         group++;

@@ -43,7 +43,23 @@ bkOptions::_parse(int argc, char ** argv)
     if (argc < 3)
         return false;
 
-    backupfile = argv[2];
+    string filepath = argv[2];
+
+    size_t colon_pos = filepath.find_first_of(':');
+    if (colon_pos != string::npos)
+    {
+        backupfile_index =
+            filepath.substr(0,colon_pos) + ".index" +
+            filepath.substr(colon_pos);
+        backupfile_data  =
+            filepath.substr(0,colon_pos) + ".data" +
+            filepath.substr(colon_pos);
+    }
+    else
+    {
+        backupfile_index = filepath + ".index";
+        backupfile_data  = filepath + ".data";
+    }
 
     string op_str = argv[1];
 

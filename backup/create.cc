@@ -8,13 +8,8 @@ using namespace std;
 void
 bakFile::create(void)
 {
-    bt = Btree::createFile(opts.backupfile.c_str(), CACHE_SIZE,
-                           /*file mode*/ 0600, BTREE_ORDER);
-    if (bt == NULL)
-    {
-        cerr << "unable to create database\n";
+    if (createFiles() == false)
         return;
-    }
 
     {
         bakDatum  dat(bt);

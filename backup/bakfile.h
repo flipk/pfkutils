@@ -9,10 +9,14 @@
 class bakDatum;
 
 class bakFile {
-    static const int CACHE_SIZE = 1000 * 1024 * 1024;
+    static const int CACHE_SIZE_INDEX =  100 * 1024 * 1024;
+    static const int CACHE_SIZE_DATA  = 1000 * 1024 * 1024;
     static const int BTREE_ORDER = 25;
-    Btree * bt;
-    FileBlockInterface * fbi;
+    Btree * bt; // the index database
+    FileBlockInterface * fbi; // of the btree
+    FileBlockInterface * fbi_data; // of the data
+    bool openFiles(void);
+    bool createFiles(void);
     const bkOptions &opts;
     bool calc_file_hash(std::string &hash, const std::string &path);
     // returns the hash
