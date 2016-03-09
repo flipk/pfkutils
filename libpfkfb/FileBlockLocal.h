@@ -83,6 +83,7 @@ struct InfoBlock {
     static const uint32_t SIGNATURE = 0x04f78c2a;
     UINT32_t  signature;      /**< value is SIGNATURE */
     UINT32_t  num_buckets;    /**< must match BucketList::NUM_BUCKETS */
+    UINT8_t   au_size;        /**< must match AU_SIZE */
     UINT32_t  used_aus;       /**< count of used AUs */
     UINT32_t  free_aus;       /**< count of free AUs */
     UINT32_t  used_extents;   /**< count of used regions */

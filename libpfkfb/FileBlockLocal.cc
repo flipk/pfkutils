@@ -153,6 +153,16 @@ FileBlockLocal :: valid_file( BlockCache * bc )
                   << ")\n";
         return false;
     }
+    if (_fh.d->info.au_size.get() != AU_SIZE)
+    {
+        std::cerr << "FileBlock file created with incompatible "
+                  << "AU_SIZE setting!  ("
+                  << _fh.d->info.au_size.get()
+                  << " != "
+                  << AU_SIZE
+                  << ")\n";
+        return false;
+    }
     return true;
 }
 
@@ -172,6 +182,7 @@ FileBlockLocal :: init_file( BlockCache * bc )
 
     _fh.d->info.signature.set(InfoBlock::SIGNATURE);
     _fh.d->info.num_buckets.set(BucketList::NUM_BUCKETS);
+    _fh.d->info.au_size.set(AU_SIZE);
     _fh.d->info.free_aus.set(0);
     _fh.d->info.used_aus.set(0);
     _fh.d->info.used_extents.set(0);
