@@ -24,7 +24,7 @@ export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4 -R'
 export XLESS='-j5 -c -d -h 5 -i -M -q -x 4 -R'
 
 uname_s=`uname -s`
-for dir in /apps/public/gcc_3.3/sparc-sun-solaris2.8/lib /apps/public/gcc/sparc-sun-solaris2.9/lib ; do
+for dir in /apps/public/gcc_3.3/sparc-sun-solaris2.8/lib /apps/public/gcc/sparc-sun-solaris2.9/lib $HOME/pfk/$PFKARCH/lib ; do
     if [[ -d $dir ]] ; then
         if [[ x$LD_LIBRARY_PATH = x ]] ; then
             LD_LIBRARY_PATH=$dir
