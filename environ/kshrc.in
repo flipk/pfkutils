@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-01-07.14:43:50
+#      Last update: 2016-03-14.11:15:00
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -216,15 +216,23 @@ if __isksh ; then
     TTY=`tty`
     TTY=${TTY#/dev/}
 
+    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
+        PROMPT_COLOR_INVERT="[7m"
+        PROMPT_COLOR_NORMAL="[m"
+    else
+        PROMPT_COLOR_INVERT=""
+        PROMPT_COLOR_NORMAL=""
+    fi
+
     _set_prompt() {
         typeset _ps
         _ps=''
         if [[ "x$1" != x ]] ; then
-            _ps="${_ps}[7m$1[m
+            _ps="${_ps}$PROMPT_COLOR_INVERT$1$PROMPT_COLOR_NORMAL
 "
         fi
         if [[ $REALUSER == "root" ]] ; then
-            _ps="${_ps}[7m$REALUSER@$HOST[m"
+            _ps="${_ps}$PROMPT_COLOR_INVERT$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
         else
             _ps="${_ps}$REALUSER@$HOST"
         fi
@@ -242,7 +250,7 @@ if __isksh ; then
             _set_prompt_first_time=0
         else
             _ps="${_ps}
- [7m%[m "
+ $PROMPT_COLOR_INVERT%$PROMPT_COLOR_NORMAL "
         fi
         export PS1="$_ps"
     }
@@ -882,8 +890,10 @@ if __isksh ; then
             fi
         fi
         if [[ "x$TMUX" != x ]] ; then
-            bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
-            xtermbar $bardisp
+            if [[ x$INSIDE_EMACS == x ]] ; then
+                bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
+                xtermbar $bardisp
+            fi
         fi
         CDPATH=.:$ti/src:$cpe/src:$HOME
         # root can't touch homedir files on nfs shares, don't try.
