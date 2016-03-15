@@ -100,6 +100,7 @@ Xmessage*foreground: green
 Xmessage*background: black
 Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
+Emacs*font: -misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1
 Emacs*verticalScrollBar.background:  grey85
 Emacs*verticalScrollBar.troughColor: grey50
 Emacs.pane.menubar*foreground:       yellow

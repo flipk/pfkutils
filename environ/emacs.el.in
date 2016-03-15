@@ -29,8 +29,6 @@
  '(verilog-auto-newline nil)
  '(verilog-indent-begin-after-if nil))
 
-(load-file "@prefix@/etc/emacs/go-mode.el")
-
 (setq mouse-buffer-menu-mode-groups
       '((".*" . "Buffers")))
 
@@ -43,46 +41,6 @@
  '(menu ((((type x-toolkit)) (:background "grey85" :foreground "black"))))
  '(mouse ((t (:background "white" :foreground "black"))))
  '(scroll-bar ((t (:background "grey85" :foreground "red")))))
-
-(defun my-init-hook ()
-  ""
-  (progn
-;    (message "my-init-hook was run")
-    ))
-
-(add-hook 'after-init-hook 'my-init-hook)
-
-(setq pfk-small-font
-      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
-(setq pfk-minibuf-font
-      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
-(setq pfk-big-font
-      "-misc-*-medium-r-normal-*-20-200-*-*-*-*-iso8859-1")
-;(setq pfk-small-font "Source Code Pro Medium-9")
-;(setq pfk-minibuf-font "Source Code Pro Medium-10")
-;(setq pfk-big-font   "Source Code Pro Medium-14")
-
-(defun my-fix-minibuffer ()
-  ""
-  (progn
-    (select-frame default-minibuffer-frame)
-    (set-frame-font pfk-minibuf-font)
-    ))
-
-(run-at-time 1 nil 'my-fix-minibuffer)
-
-(defun my-make-frame-hook (frame)
-  ""
-  (interactive)
-  (progn
-    (select-frame frame)
-    (set-frame-font pfk-small-font)
-    (set-foreground-color "yellow")
-    (set-background-color "black")
-    (set-cursor-color "red")
-    ))
-
-(add-hook 'after-make-frame-functions 'my-make-frame-hook)
 
 (cond (window-system
        (progn
@@ -115,6 +73,30 @@
       ((not window-system)
        (progn
          (menu-bar-mode -1))))
+
+(setq pfk-small-font
+      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
+(setq pfk-minibuf-font
+      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
+(setq pfk-big-font
+      "-misc-*-medium-r-normal-*-20-200-*-*-*-*-iso8859-1")
+
+;(defun my-make-frame-hook (frame)
+;  ""
+;  (interactive)
+;  (progn
+;    (select-frame frame)
+;    (set-frame-font pfk-small-font)
+;    (set-foreground-color "yellow")
+;    (set-background-color "black")
+;    (set-cursor-color "red")))
+;(defun my-init-hook ()
+;  ""
+;  (progn
+;    (message "my-init-hook was run")))
+;(add-hook 'after-init-hook 'my-init-hook)
+;(add-hook 'after-make-frame-functions 'my-make-frame-hook)
+;(run-at-time 1 nil 'my-fix-minibuffer)
 
 (defvar c-mode-indent 4)
 (defvar c-mode-tabs 0)
@@ -305,6 +287,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (put 'scroll-left 'disabled nil)
 (put 'erase-buffer 'disabled nil)
 
+(load-file "@prefix@/etc/emacs/go-mode.el")
 (garbage-collect)
 (message "Press F1 for a list of local keybindings.")
-
