@@ -63,6 +63,8 @@ menu.bullet:                         Cube
 menu.bullet.position:                Right
 menu.frame.disableColor:             #777777
 
+menu.roundCorners:  TopLeft TopRight BottomLeft BottomRight
+
 ! Window settings...
 window.button.focus:                 Gradient Diagonal
 window.button.focus.color:           rgb:9B/9B/9B
@@ -128,6 +130,8 @@ window.tab.label.unfocus.textColor:  rgb:90/90/90
 
 window.tab.borderWidth:              1
 window.tab.borderColor:              black
+
+window.roundCorners:  TopLeft TopRight BottomLeft BottomRight
 
 ! ---------------
 

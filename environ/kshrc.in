@@ -218,6 +218,8 @@ if __isksh ; then
 
     if [[ "x$INSIDE_EMACS" == "x" ]] ; then
         PROMPT_COLOR_INVERT="[7m"
+        PROMPT_COLOR_FG_RED="[31;1m"
+        PROMPT_COLOR_BG_RED="[41m"
         PROMPT_COLOR_NORMAL="[m"
     else
         PROMPT_COLOR_INVERT=""
@@ -234,7 +236,7 @@ if __isksh ; then
         if [[ $REALUSER == "root" ]] ; then
             _ps="${_ps}$PROMPT_COLOR_INVERT$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
         else
-            _ps="${_ps}$REALUSER@$HOST"
+            _ps="${_ps}$PROMPT_COLOR_FG_RED$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
         fi
         if [[ x$CLEARCASE_ROOT != x ]] ; then
             _ps="${_ps} in CMBP"

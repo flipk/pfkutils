@@ -91,6 +91,10 @@ Control Mod1 Right :NextWorkspace
 Mod4 Left :SendToPrevWorkspace
 Mod4 Right :SendToNextWorkspace
 
+# lock screen
+Mod4 l : Exec gnome-screensaver-command --lock
+Shift Mod4 l : Exec xlock
+
 # send the current window and follow it to previous/next workspace
 Control Mod4 Left :TakeToPrevWorkspace
 Control Mod4 Right :TakeToNextWorkspace

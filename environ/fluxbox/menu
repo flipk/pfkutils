@@ -4,8 +4,12 @@
     [exec]   (emacs) {emacs}
     [exec]   (xload) {xload}
     [exec]   (xclock) {xclock}
+    [exec] (gnome lock) {gnome-screensaver-command --lock}
+    [exec] (xlock) {xlock}
     [exec] (google-chrome) {google-chrome}
     [exec] (firefox) {firefox}
+    [exec] (chromium) {chromium-browser}
+    [exec] (MSWIN) {$HOME/bin/mswin}
     [exec] (Reload resources) {xrdb -remove; xrdb -load $HOME/.Xresources}
     [separator]
     [config] (Configure)
