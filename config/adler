@@ -20,6 +20,7 @@ PFK_BUILD_deduplifier=1
 PFK_BUILD_libwas=1
 PFK_BUILD_libpfkthread=0
 PFK_BUILD_wsproxy=1
+PFK_BUILD_xlock=0
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = PROTOBUF_VERS=2.5.0 /projects/atd_src/tools/bin/protoc.sh

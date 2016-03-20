@@ -1,7 +1,7 @@
 /*-
  * @(#)xlock.h	1.9 91/05/24 XLOCK
  *
- * xlock.h - external interfaces for new modes and SYSV OS defines.
+ * xlock.h - external interfaces
  *
  * Copyright (c) 1991 by Patrick J. Naughton.
  *
@@ -56,37 +56,10 @@ extern void (*init) ();
 
 extern void GetResources();
 extern void hsbramp();
-extern void error();
 extern long seconds();
-extern void usage();
-
-/* System V Release 4 redefinitions of BSD functions and structures */
-
-#ifdef SYSV
 
 #include <sys/time.h>
 #include <poll.h>
 #include <shadow.h>
-#define srandom srand
-#define random rand
-#define MAXRAND (32767.0)
-
-#ifdef sco
-#include <sys/security.h>
-#include <prot.h>
-#define passwd pr_passwd
-#define pw_name ufld.fd_name
-#define pw_passwd ufld.fd_encrypt
-#define getpwnam getprpwnam
-#else
-#define passwd spwd
-#define pw_name sp_namp
-#define pw_passwd sp_pwdp
-#define getpwnam getspnam
-#endif
-
-#else
 
 #define MAXRAND (2147483648.0)
-
-#endif

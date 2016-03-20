@@ -89,7 +89,7 @@ OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
 	pfkscript pfksh scripts syslog misc/states contrib \
-	libWebAppServer/proxyTcpServer
+	libWebAppServer/proxyTcpServer xlock
 
 ##############################################
 
@@ -97,7 +97,7 @@ BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
 	ampfk pfkscript sessionmgr xrandr states bglog he \
 	libpfkfb diskloader pfkstat deduplifier libwas \
-	libpfkthread
+	libpfkthread xlock
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
@@ -555,6 +555,25 @@ endif
 
 ##############################################
 
+ifeq ($(PFK_BUILD_xlock),1)
+PROG_TARGETS += xlock
+
+xlock_TARGET = $(OBJDIR)/xlock.bin
+xlock_CSRCS = xlock/flame.c xlock/hsbramp.c xlock/pyro.c xlock/resource.c xlock/rotor.c xlock/swarm.c xlock/usleep.c xlock/worm.c xlock/xlock.c
+xlock_HDRS = xlock/xlock.h
+xlock_INCS= -Ixlock
+xlock_LIBS= -lX11 -lm
+xlock_INSTALL = 1
+xlock_POSTINSTALL = xlock-postinstall
+
+xlock-postinstall:
+	@echo renaming xlock.bin to xlock
+	$(Q)mv $(INSTALL_BIN_DIR)/xlock.bin $(INSTALL_BIN_DIR)/xlock
+
+endif
+
+##############################################
+
 ifeq ($(PFK_BUILD_states),1)
 LIB_TARGETS += states
 states_TARGET = $(OBJDIR)/libstates.a
@@ -663,7 +682,8 @@ pfkutils_DEPLIBS = \
 	$(pfkscript_TARGET) $(libi2_TARGET) \
 	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
-	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET)
+	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
+	$(libxlock_TARGET)
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
 	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \

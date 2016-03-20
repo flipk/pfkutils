@@ -120,7 +120,9 @@ static char sccsid[] = "@(#)xlock.c 23.21 91/06/27 XLOCK";
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/types.h>
 #include <pwd.h>
+#include <unistd.h>
 
 #include "xlock.h"
 #include <X11/cursorfont.h>
@@ -405,8 +407,6 @@ ReadXString(s, slen)
     }
 }
 
-
-
 static int
 getPassword()
 {
@@ -422,7 +422,7 @@ getPassword()
     pw = getpwnam("root");
     strcpy(rootpass, pw->pw_passwd);
 
-    pw = getpwuid( getuid() );
+    pw = getpwuid (getuid());
     strcpy(userpass, pw->pw_passwd);
 
     user = pw->pw_name;
@@ -512,6 +512,8 @@ getPassword()
 
 #define MAX_TIME 15
 
+void initrandommode(void);
+
 static void
 justDisplay()
 {
@@ -561,7 +563,6 @@ static void
 lockDisplay()
 {
     if (!allowaccess) {
-#ifdef SYSV
         sigset_t    oldsigmask;
         sigset_t    newsigmask;
 
@@ -571,14 +572,6 @@ lockDisplay()
         sigaddset(&newsigmask, SIGQUIT);
         sigaddset(&newsigmask, SIGTERM);
         sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
-#else
-        int         oldsigmask;
-
-        oldsigmask = sigblock(sigmask(SIGHUP) |
-                              sigmask(SIGINT) |
-                              sigmask(SIGQUIT) |
-                              sigmask(SIGTERM));
-#endif
 
         signal(SIGHUP, (void (*) ()) sigcatch);
         signal(SIGINT, (void (*) ()) sigcatch);
@@ -587,11 +580,7 @@ lockDisplay()
 
         XGrabHosts(dsp);
 
-#ifdef SYSV
         sigprocmask(SIG_SETMASK, &oldsigmask, &oldsigmask);
-#else
-        sigsetmask(oldsigmask);
-#endif
     }
     do {
         justDisplay();
@@ -617,7 +606,7 @@ allocpixel(cmap, name, def)
 }
 
 int
-xlock_main(argc, argv)
+main(argc, argv)
     int         argc;
     char       *argv[];
 {

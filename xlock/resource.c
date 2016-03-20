@@ -30,6 +30,7 @@ static char sccsid[] = "@(#)resource.c  1.20 91/09/27 XLOCK";
 #include <netdb.h>
 #include <math.h>
 #include <ctype.h>
+#include <err.h>
 
 #include <X11/Xresource.h>
 
@@ -726,7 +727,7 @@ GetResources(argc, argv)
 
 int current_mode = 0;
 
-initrandommode()
+void initrandommode(void)
 {
     init = LockProcs[current_mode].lp_init;
     callback = LockProcs[current_mode].lp_callback;

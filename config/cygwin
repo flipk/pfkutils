@@ -20,6 +20,7 @@ PFK_BUILD_deduplifier=0
 PFK_BUILD_libwas=1
 PFK_BUILD_libpfkthread=1
 PFK_BUILD_wsproxy=1
+PFK_BUILD_xlock=0
 
 KSHRC_LOCAL = kshrc.local.cygwin
 PROTOC_PATH = /usr/bin/protoc
