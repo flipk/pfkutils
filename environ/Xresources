@@ -13,6 +13,8 @@ URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
 URxvt.fading: 30
 URxvt.font: fixed
+URxvt.transparent: true
+URxvt.cutchars:   "\\\"/`'&()*,;<=>?@[]^{|}/:"
 ! URxvt.lineSpace: 
 ! URxvt.letterSpace: 
 URxvt.keysym.M-C-1: command:\033]710;5x7\007\033]711;5x7\007
