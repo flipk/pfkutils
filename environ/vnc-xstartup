@@ -26,6 +26,7 @@ cd $HOME
 ENV=$HOME/.kshrc
 export ENV
 xrdb -load .Xresources
+set-background.sh
 ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
 # when the user "logs out" (pfkSessionMgr -c stop) the vnc will be killed.
 vncserver -kill $DISPLAY
