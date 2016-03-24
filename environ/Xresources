@@ -87,13 +87,10 @@ XTerm.VT100.Translations: \
  Shift<Btn3Motion>: select-extend() \n\
  Shift<BtnUp>: select-end(CLIPBOARD)
 
-
-/*
- * This is where zwgc puts zwrites.  
- * You can actually configure it so different kinds of zwrites
- * go to different locations on the screen...
- * but I dont remember how to do that.
- */
+! This is where zwgc puts zwrites.  
+! You can actually configure it so different kinds of zwrites
+! go to different locations on the screen...
+! but I dont remember how to do that.
 
 Zwgc*geometry: +c+c
 Zwgc*reverseStack: True
