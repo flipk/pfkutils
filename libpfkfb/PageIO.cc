@@ -240,7 +240,7 @@ PageIO :: open( const char * _path, bool create, int mode )
     {
         int options = O_RDWR;
         if (create)
-            options |= O_CREAT | O_EXCL;
+            options |= O_CREAT;
 #ifdef O_LARGEFILE
         options |= O_LARGEFILE;
 #endif
