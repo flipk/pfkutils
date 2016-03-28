@@ -34,7 +34,6 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-class PageIO;
 class PageCachePage;
 class PageCachePageList;
 
@@ -55,8 +54,6 @@ class PageCache {
     PageCachePageList * pgs;
     bool printFlushCount;
 public:
-    /** a constant indicating how big a page is. */
-    static const int PC_PAGE_SIZE = 4096;
     /** Constructor.
      * \param _io the PageIO that will be used to fetch and put pages.
      * \param _max_pages the number of pages that we will be allowed to
@@ -129,7 +126,7 @@ protected:
      *   it is assumed the caller will do that. */
     PageCachePage(int _page_number) {
         dirty = false;  page_number = _page_number;
-        ptr = new uint8_t[PageCache::PC_PAGE_SIZE];
+        ptr = new uint8_t[PageIO::PAGE_SIZE];
     }
     /** destructor frees memory for the page.
      * \note this destructor does not write the contents back to the file.

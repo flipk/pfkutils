@@ -33,6 +33,7 @@
 #include <string>
 
 #include "aes.h"
+#include "sha256.h"
 
 class PageCachePage;
 
@@ -51,7 +52,12 @@ class PageIO {
     std::string encryption_password;
     aes_context  aesenc_ctx;
     aes_context  aesdec_ctx;
+    sha256_context hmac_sha256_ctx;
+public:
+    static const int PAGE_SIZE = 4096;
 protected:
+    static const int HMAC_OVERHD = 32; // sha256 hmac is 32 bytes
+    static const int CIPHERED_PAGE_SIZE = PAGE_SIZE + HMAC_OVERHD;
     PageIO(const std::string &_encryption_password);
     bool ciphering_enabled;
     void encrypt_page(int page_number, uint8_t * out, const uint8_t * in);

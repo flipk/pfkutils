@@ -27,7 +27,7 @@
 
 The lowest layer is a derived object from PageIO.  This object knows
 only how to read and write PageCachePage objects, whose body is of
-size PageCache::PC_PAGE_SIZE.  An example implementation of PageIO is the
+size PageIO::PAGE_SIZE.  An example implementation of PageIO is the
 object PageIOFileDescriptor, which uses a file descriptor (presumably
 an open file) to read and write offsets in the file.
 
@@ -59,7 +59,6 @@ Next: \ref PageCache
 #include "PageCache.h"
 #include "PageIO.h"
 #include "regex.h"
-#include "sha256.h"
 
 static const char * path_pattern = "\
 ^fbsrv:([0-9]+.[0-9]+):([0-9]+)$|\
@@ -261,12 +260,15 @@ PageIO :: PageIO(const std::string &_encryption_password)
         // init cipher shit
         aes_init( &aesenc_ctx );
         aes_init( &aesdec_ctx );
-        unsigned char file_key[32]; // the sha256 of file_key
+        unsigned char file_key[32];
         sha256( (const unsigned char *) encryption_password.c_str(),
                 encryption_password.length(),
                 file_key, 0/*use SHA256*/);
         aes_setkey_enc( &aesenc_ctx, file_key, 256 );
         aes_setkey_dec( &aesdec_ctx, file_key, 256 );
+        sha256_init( &hmac_sha256_ctx );
+        sha256_hmac_starts( &hmac_sha256_ctx,
+                            file_key, 32, /*is224*/0 );
     }
     else
         ciphering_enabled = false;
@@ -278,6 +280,7 @@ PageIO :: ~PageIO(void)
     {
         aes_free( &aesenc_ctx );
         aes_free( &aesdec_ctx );
+        sha256_free( &hmac_sha256_ctx );
     }
 }
 
@@ -298,9 +301,11 @@ PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
-    size_t ivoff = 0;
-    aes_crypt_cfb128( &aesdec_ctx, AES_ENCRYPT,
-                      PageCache::PC_PAGE_SIZE, &ivoff, IV, in, out);
+    aes_crypt_cbc( &aesenc_ctx, AES_ENCRYPT,
+                   PAGE_SIZE, IV, in, out);
+    sha256_hmac_reset( &hmac_sha256_ctx );
+    sha256_hmac_update( &hmac_sha256_ctx, out, PAGE_SIZE);
+    sha256_hmac_finish( &hmac_sha256_ctx, out + PAGE_SIZE );
 }
 
 void
@@ -308,7 +313,15 @@ PageIO :: decrypt_page(int page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
-    size_t ivoff = 0;
-    aes_crypt_cfb128( &aesdec_ctx, AES_DECRYPT,
-                      PageCache::PC_PAGE_SIZE, &ivoff, IV, in, out);
+    uint8_t  hmac_buf[32];
+    sha256_hmac_reset( &hmac_sha256_ctx );
+    sha256_hmac_update( &hmac_sha256_ctx, in, PAGE_SIZE);
+    sha256_hmac_finish( &hmac_sha256_ctx, hmac_buf );
+
+    if (memcmp(hmac_buf, in + PAGE_SIZE, 32) != 0)
+    {
+        printf("PageIO :: decrypt_page : HMAC FAILURE!\n");
+    }
+    aes_crypt_cbc( &aesdec_ctx, AES_DECRYPT,
+                   PAGE_SIZE, IV, in, out);
 }

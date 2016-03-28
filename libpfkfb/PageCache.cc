@@ -107,7 +107,7 @@ PageCache :: get(int page_number, bool for_write)
         pgs->ref(ret);
         if (for_write)
         {
-            memset(ret->ptr, 0, PC_PAGE_SIZE);
+            memset(ret->ptr, 0, PageIO::PAGE_SIZE);
             ret->dirty = true;
         }
         return ret;
@@ -115,7 +115,7 @@ PageCache :: get(int page_number, bool for_write)
     ret = new PCPInt( page_number );
     if (for_write)
     {
-        memset(ret->ptr, 0, PC_PAGE_SIZE);
+        memset(ret->ptr, 0, PageIO::PAGE_SIZE);
         ret->dirty = true;
     }
     else
