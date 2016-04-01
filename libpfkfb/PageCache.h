@@ -136,12 +136,12 @@ protected:
     uint8_t * ptr;
 public:
     /** access method to return the page number. */
-    int get_page_number(void) { return page_number; }
+    int get_page_number(void) const { return page_number; }
     /** access method to get the data pointer. */
-    uint8_t * get_ptr(void) { return ptr; }
+    uint8_t * get_ptr(void) const { return ptr; }
     /** user must call this if he has modified the page data. */
     void mark_dirty(void) { dirty = true; }
-    bool is_dirty(void) { return dirty; }
+    bool is_dirty(void) const { return dirty; }
 };
 
 #endif /* __PAGE_CACHE_H__ */
