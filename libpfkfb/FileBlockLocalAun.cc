@@ -369,7 +369,7 @@ FileBlockLocal :: get_aun( FB_AUN_T aun, bool for_write )
     }
 
     fb->set_bcb( bcb );
-    active_blocks.add(fb);
+    active_blocks.add_tail(fb);
 
     return fb;
 }

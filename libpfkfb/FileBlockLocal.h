@@ -29,7 +29,7 @@
 #define __FILE_BLOCK_LOCAL_H__
 
 #include "FileBlock_iface.h"
-#include "dll2.h"
+#include "dll3.h"
 
 /** a data type for AU id numbers.  */
 typedef uint32_t   FB_AUN_T;
@@ -302,17 +302,17 @@ struct _DataInfoBlock {
 typedef FileBlockT <_DataInfoBlock> DataInfoBlock;
 
 //
-
-/** an enumerator for FileBlockInt data type linked lists */
-enum FILE_BLOCK_LIST_INDICES { FILE_BLOCK_LIST, FILE_BLOCK_NUM_LISTS };
+class FileBlockInt;
+typedef DLL3::List <FileBlockInt, 1, false>  FileBlockList_t;
 
 /**
  * internal representation of a FileBlock.  Just adds some linked
  * list info so we can keep track of it.
  */
-class FileBlockInt : public FileBlock {
+class FileBlockInt : public FileBlock,
+                     public FileBlockList_t::Links
+{
 public:
-    LListLinks <FileBlockInt> links[FILE_BLOCK_NUM_LISTS];
     void set_auid(uint32_t _auid) { auid = _auid; }
     void set_bcb(BlockCacheBlock * _bcb) { bcb = _bcb; }
     BlockCacheBlock *get_bcb(void) { return bcb; }
@@ -329,7 +329,7 @@ class FileBlockLocal : public FileBlockInterface {
     BlockCache * bc;
     /** a list of all FileBlockInt objects which have been
      * given to the general public.  */
-    LList <FileBlockInt,FILE_BLOCK_LIST> active_blocks;
+    FileBlockList_t  active_blocks;
     /** a perpetual pointer to the header of the file. */
     FileHeader  fh;
     /** @name bucket management */

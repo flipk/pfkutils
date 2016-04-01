@@ -80,14 +80,15 @@ static bool debug_compaction = false;
 enum TableType { AUID, STACK };
 enum TableLevel { L2, L3 };
 
-enum {
-    DLL2_INDEX_LIST,
-    DLL2_INDEX_HASH,
-    DLL2_NUM_LISTS
-};
+struct L2L3AUN;
+class L2L3AUNHashComparator;
+typedef DLL3::List <L2L3AUN, 1, false>  L2L3AUNList_t;
+typedef DLL3::Hash <L2L3AUN, FB_AUN_T,
+                    L2L3AUNHashComparator, 2, false>  L2L3AUNHash_t;
 
-struct L2L3AUN {
-    LListLinks <L2L3AUN> links[DLL2_NUM_LISTS];
+struct L2L3AUN : public L2L3AUNList_t::Links,
+                 public L2L3AUNHash_t::Links
+{
     TableType type;
     TableLevel level;
     FB_AUN_T aun;
@@ -97,23 +98,19 @@ struct L2L3AUN {
 
 class L2L3AUNHashComparator {
 public:
-    static int hash_key( L2L3AUN * item ) { return item->aun; }
-    static int hash_key( FB_AUN_T key ) { return key & 0x7FFFFFFF; }
-    static bool hash_key_compare( L2L3AUN * item, FB_AUN_T key ) {
-        return (item->aun == key);
+    static uint32_t obj2hash  (const L2L3AUN &item) { return item.aun; }
+    static uint32_t key2hash  (const FB_AUN_T &key) { return key & 0x7FFFFFFF; }
+    static bool     hashMatch (const L2L3AUN &item, const FB_AUN_T &key) {
+        return (item.aun == key);
     }
 };
 
-typedef LList <L2L3AUN,DLL2_INDEX_LIST> L2L3AUNList;
-typedef LListHash <L2L3AUN,FB_AUN_T,
-                   L2L3AUNHashComparator,DLL2_INDEX_HASH> L2L3AUNHash;
-
 class L2L3s {
-    L2L3AUNList  list;
-    L2L3AUNHash  hash;
+    L2L3AUNList_t  list;
+    L2L3AUNHash_t  hash;
 public:
     void add   ( L2L3AUN * item ) {
-        list.add(item);
+        list.add_tail(item);
         hash.add(item);
     }
     void remove( L2L3AUN * item ) {
