@@ -105,7 +105,7 @@ BlockCache :: get( off_t offset, int size, bool for_write )
     offset_in_ending_page = ending_offset % PageIO::PAGE_SIZE;
 
     ret = new BCB(offset,size);
-    bcl->list.add(ret);
+    bcl->list.add_tail(ret);
 
     ret->num_pages = num_pages;
     ret->pages = new PageCachePage*[num_pages];
