@@ -25,7 +25,7 @@
  * \author Phillip F Knaack
  */
 
-#include "dll2.h"
+#include "dll3.h"
 
 class BtreeInternal;
 
@@ -151,12 +151,11 @@ struct BTKey {
     }
 };
 
-/** an enum for the LList declarations for BTNode cache */
-enum BTNodeLists { 
-    BTNODE_LRU,      /**< unused BTNodes are on a least-recently used list */
-    BTNODE_HASH,     /**< all BTNodes are on a hash by fbn */
-    BTNODE_NUMLISTS  /**< dimension of the links array */
-};
+class BTNode;
+class BTNodeHashComparator;
+typedef DLL3::List <BTNode, 1, false>  BTNodeList_t;
+typedef DLL3::Hash <BTNode, FB_AUID_T,
+                    BTNodeHashComparator, 2, false> BTNodeHash_t;
 
 /** a type for managing nodes.  if you haven't noticed, _BTNodeDisk is
  * a little clumsy to use, especially considering the key-data is stored
@@ -164,7 +163,9 @@ enum BTNodeLists {
  * on the btree's order-- and of course don't forget each key is
  * variable-sized also.  this structure simplifies all the accesses
  * to the node. */
-class BTNode {
+class BTNode : public BTNodeList_t::Links,
+               public BTNodeHash_t::Links
+{
     friend class BTNodeHashComparator;
     friend class BTNodeCache;
     FileBlockInterface * fbi;   /**< how to access the disk file. */
@@ -175,8 +176,6 @@ class BTNode {
     int refcount;               /**< BTNodeCache keeps track of # users */
     bool dirty;
 public:
-    /** BTNodeCache keeps BTNodes in an LRU and a Hash */
-    LListLinks <BTNode> links[BTNODE_NUMLISTS];
     // let the public (BtreeInternal) access these fields.
     int numitems;    /**< number of items in this node */
     bool leaf;       /**< this is a leaf node */
@@ -202,35 +201,23 @@ public:
     void store( void );
 };
 
-/** a DLL2 helper to help sort BTNode objects into the BTNodeCache hash. */
+/** a DLL3 helper to help sort BTNode objects into the BTNodeCache hash. */
 class BTNodeHashComparator {
 public:
-    /** how to access a BTNode and return a hash index */
-    static int hash_key( BTNode * item ) {
-        return item->fbn & 0x7FFFFFFF;
-    }
-    /** how to access a key (fbn) and return a hash index */
-    static int hash_key( FB_AUID_T key ) {
-        return key & 0x7FFFFFFF;
-    }
-    /** how to compare a key (fbn) to an item (BTNode) */
-    static bool hash_key_compare( BTNode * item, FB_AUID_T key ) {
-        return (item->fbn == key);
-    }
+    static uint32_t obj2hash  (const BTNode &node)
+    { return (uint32_t) (node.fbn & 0x7FFFFFFF); }
+    static uint32_t key2hash  (const FB_AUID_T &key)
+    { return (uint32_t) (key & 0x7FFFFFFF); }
+    static bool     hashMatch (const BTNode &node, const FB_AUID_T &key)
+    { return (node.fbn == key); }
 };
-
-/** typedef for a least-recently used list of BTNode */
-typedef LListLRU <BTNode, BTNODE_LRU>  BTNodeLRU;
-/** typedef for a hash on fbn of BTNode */
-typedef LListHash <BTNode, FB_AUID_T,
-                   BTNodeHashComparator, BTNODE_HASH>   BTNodeHash;
 
 /** a cache of BTNode objects, with least-recently used list, cap on
  * max number of nodes, and a hash searchable by fbn.  All accesses to
  * read and write nodes should go through this interface. */
 class BTNodeCache {
-    BTNodeLRU   lru;           /**< the least-recently-used list of BTNode */
-    BTNodeHash  hash;          /**< a hash on fbn of BTNode */
+    BTNodeList_t   lru;           /**< the least-recently-used list of BTNode */
+    BTNodeHash_t  hash;          /**< a hash on fbn of BTNode */
     FileBlockInterface * fbi;  /**< the file to access for nodes */
     int btorder;               /**< the order of the btree, to assist in 
                                 * calculating node sizes */

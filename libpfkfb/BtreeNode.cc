@@ -209,7 +209,7 @@ void
 BTNodeCache :: release( BTNode * n )
 {
     if (--n->refcount == 0)
-        lru.add(n);
+        lru.add_tail(n);
 }
 
 void
