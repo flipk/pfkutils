@@ -1,7 +1,7 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::Links::Links(void) throw ()
+__DLL3_LIST::Links::Links(void)
 {
     next = prev = NULL;
     lst = NULL;
@@ -9,7 +9,7 @@ __DLL3_LIST::Links::Links(void) throw ()
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::Links::~Links(void) throw (ListError)
+__DLL3_LIST::Links::~Links(void)
 {
     if (validate && lst != NULL)
         __DLL3_LISTERR(STILL_ON_A_LIST);
@@ -17,7 +17,7 @@ __DLL3_LIST::Links::~Links(void) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::Links::checkvalid(__DLL3_LIST * _lst) throw (ListError)
+void __DLL3_LIST::Links::checkvalid(__DLL3_LIST * _lst)
 {
     if (!validate)
         return;
@@ -30,31 +30,29 @@ void __DLL3_LIST::Links::checkvalid(__DLL3_LIST * _lst) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::List(void) throw ()
+__DLL3_LIST::List(void)
 {
     head = tail = NULL;
     cnt = 0;
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::~List(void) throw (ListError)
+__DLL3_LIST::~List(void)
 {
     if (validate && head != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::lockwarn(void) const throw (ListError)
+void __DLL3_LIST::lockwarn(void) const
 {
     if (lockWarn == true && isLocked() == false)
         __DLL3_LISTERR(LIST_NOT_LOCKED);
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::add_head(Links * item) throw (ListError)
+void __DLL3_LIST::_add_head(Links * item)
 {
-    lockwarn();
-    item->checkvalid(NULL);
     item->next = head;
     item->prev = NULL;
     if (head)
@@ -67,7 +65,15 @@ void __DLL3_LIST::add_head(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::add_tail(Links * item) throw (ListError)
+void __DLL3_LIST::add_head(Links * item)
+{
+    lockwarn();
+    item->checkvalid(NULL);
+    _add_head(item);
+}
+
+template <__DLL3_LIST_TEMPL>
+void __DLL3_LIST::add_tail(Links * item)
 {
     lockwarn();
     item->checkvalid(NULL);
@@ -83,7 +89,7 @@ void __DLL3_LIST::add_tail(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::add_before(Links * item, Links * existing) throw (ListError)
+void __DLL3_LIST::add_before(Links * item, Links * existing)
 {
     lockwarn();
     item->checkvalid(NULL);
@@ -100,21 +106,21 @@ void __DLL3_LIST::add_before(Links * item, Links * existing) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::get_head(void) throw (ListError)
+T * __DLL3_LIST::get_head(void)
 {
     lockwarn();
     return static_cast<T*>(head);
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::get_tail(void) throw (ListError)
+T * __DLL3_LIST::get_tail(void)
 {
     lockwarn();
     return static_cast<T*>(tail);
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::get_next(Links * item) throw (ListError)
+T * __DLL3_LIST::get_next(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
@@ -122,7 +128,7 @@ T * __DLL3_LIST::get_next(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::get_prev(Links * item) throw (ListError)
+T * __DLL3_LIST::get_prev(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
@@ -130,7 +136,7 @@ T * __DLL3_LIST::get_prev(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::_remove(Links * item) throw ()
+void __DLL3_LIST::_remove(Links * item)
 {
     if (item->next)
         item->next->prev = item->prev;
@@ -146,7 +152,7 @@ void __DLL3_LIST::_remove(Links * item) throw ()
 }
 
 template <__DLL3_LIST_TEMPL>
-void __DLL3_LIST::remove(Links * item) throw (ListError)
+void __DLL3_LIST::remove(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
@@ -154,7 +160,7 @@ void __DLL3_LIST::remove(Links * item) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-const bool __DLL3_LIST::onlist(Links * item) const throw (ListError)
+const bool __DLL3_LIST::onlist(Links * item) const
 {
     lockwarn();
     if (validate)
@@ -168,7 +174,7 @@ const bool __DLL3_LIST::onlist(Links * item) const throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-const bool __DLL3_LIST::onthislist(Links * item) const throw (ListError)
+const bool __DLL3_LIST::onthislist(Links * item) const
 {
     lockwarn();
     if (validate)
@@ -182,7 +188,7 @@ const bool __DLL3_LIST::onthislist(Links * item) const throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::dequeue_head(void) throw (ListError)
+T * __DLL3_LIST::dequeue_head(void)
 {
     lockwarn();
     Links * item = head;
@@ -192,7 +198,7 @@ T * __DLL3_LIST::dequeue_head(void) throw (ListError)
 }
 
 template <__DLL3_LIST_TEMPL>
-T * __DLL3_LIST::dequeue_tail(void) throw (ListError)
+T * __DLL3_LIST::dequeue_tail(void)
 {
     lockwarn();
     Links * item = head;
@@ -201,22 +207,32 @@ T * __DLL3_LIST::dequeue_tail(void) throw (ListError)
     return static_cast<T*>(item);
 }
 
+template <__DLL3_LIST_TEMPL>
+void __DLL3_LIST::promote(T * item)
+{
+    lockwarn();
+    item->checkvalid(this);
+    _remove(item);
+    _add_head(item);
+}
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH::lockwarn(void) const throw (ListError)
+void __DLL3_HASH::lockwarn(void) const
 {
     if (lockWarn == true && isLocked() == false)
         __DLL3_LISTERR(LIST_NOT_LOCKED);
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH::Links::Links(void) throw ()
+__DLL3_HASH::Links::Links(void)
 {
     magic = MAGIC;
+    hsh = NULL;
+    h = 0xFFFFFFFF;
 }
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH::Links::checkvalid(__DLL3_HASH * _hsh) throw (ListError)
+void __DLL3_HASH::Links::checkvalid(__DLL3_HASH * _hsh)
 {
     if (validate && (magic != MAGIC))
         __DLL3_LISTERR(ITEM_NOT_VALID);
@@ -227,7 +243,7 @@ void __DLL3_HASH::Links::checkvalid(__DLL3_HASH * _hsh) throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH::Links::~Links(void) throw (ListError)
+__DLL3_HASH::Links::~Links(void)
 {
     if (validate && hsh != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -235,39 +251,45 @@ __DLL3_HASH::Links::~Links(void) throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH :: Hash(void) throw ()
+__DLL3_HASH :: Hash(void)
 {
     hashorder = 0;
     hashsize = dll3_hash_primes[hashorder];
     hash = new std::vector<theHash>;
-    hash->reserve(hashsize);
+    hash->resize(hashsize);
     cnt = 0;
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH :: ~Hash(void) throw (ListError)
+__DLL3_HASH :: ~Hash(void)
 {
     delete hash;
 }
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH :: add(Links * item) throw (ListError)
+void __DLL3_HASH :: _add(Links * item)
 {
-    lockwarn();
-    item->checkvalid(NULL);
     T * derived = dynamic_cast<T*>(item);
     item->h = HashT::obj2hash(*derived) % hashsize;
     (*hash)[item->h].add_tail(derived);
     item->hsh = this;
     cnt++;
+}
+
+template <__DLL3_HASH_TEMPL>
+void __DLL3_HASH :: add(Links * item)
+{
+    lockwarn();
+    item->checkvalid(NULL);
+    _add(item);
     rehash();
 }
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH :: remove(Links * item) throw (ListError)
+void __DLL3_HASH :: remove(Links * item)
 {
     lockwarn();
-    item->checkvalid(NULL);
+    item->checkvalid(this);
     T * derived = dynamic_cast<T*>(item);
     (*hash)[item->h].remove(derived);
     item->hsh = NULL;
@@ -276,7 +298,7 @@ void __DLL3_HASH :: remove(Links * item) throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-T * __DLL3_HASH :: find(const KeyT &key) const throw (ListError)
+T * __DLL3_HASH :: find(const KeyT &key) const
 {
     lockwarn();
     uint32_t h = HashT::key2hash(key) % hashsize;
@@ -292,7 +314,7 @@ T * __DLL3_HASH :: find(const KeyT &key) const throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-const bool __DLL3_HASH :: onlist(Links * item) const throw (ListError)
+const bool __DLL3_HASH :: onlist(Links * item) const
 {
     lockwarn();
     if (item->hsh != NULL)
@@ -301,7 +323,7 @@ const bool __DLL3_HASH :: onlist(Links * item) const throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-const bool __DLL3_HASH :: onthislist(Links * item) const throw (ListError)
+const bool __DLL3_HASH :: onthislist(Links * item) const
 {
     lockwarn();
     if (item->hsh == this)
@@ -310,7 +332,7 @@ const bool __DLL3_HASH :: onthislist(Links * item) const throw (ListError)
 }
 
 template <__DLL3_HASH_TEMPL>
-void __DLL3_HASH :: rehash(void) throw (ListError)
+void __DLL3_HASH :: rehash(void)
 {
     int average = cnt / hashsize;
     if (average  > 5 && hashorder < dll3_num_hash_primes)
@@ -327,22 +349,22 @@ void __DLL3_HASH :: _rehash(int newOrder)
     hashorder = newOrder;
     hashsize = dll3_hash_primes[newOrder];
     hash = new std::vector<theHash>;
-    hash->reserve(hashsize);
+    hash->resize(hashsize);
     for (int h = 0; h < oldHashSize; h++)
         while ( T * t = (*oldHash)[h].dequeue_head())
-            add( t );
+            _add( t );
     delete oldHash;
 }
 
 
 template <__DLL3_HASHLRU_TEMPL>
-__DLL3_HASHLRU :: Links :: Links(void) throw ()
+__DLL3_HASHLRU :: Links :: Links(void)
 {
     magic = MAGIC;
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-__DLL3_HASHLRU :: Links :: ~Links(void) throw (ListError)
+__DLL3_HASHLRU :: Links :: ~Links(void)
 {
     if (validate && (hlru != NULL))
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -351,7 +373,7 @@ __DLL3_HASHLRU :: Links :: ~Links(void) throw (ListError)
 
 template <__DLL3_HASHLRU_TEMPL>
 void __DLL3_HASHLRU :: Links :: checkvalid(__DLL3_HASHLRU * _hlru)
-    throw (ListError)
+   
 {
     if (validate && (magic != MAGIC))
         __DLL3_LISTERR(ITEM_NOT_VALID);
@@ -362,14 +384,14 @@ void __DLL3_HASHLRU :: Links :: checkvalid(__DLL3_HASHLRU * _hlru)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-void __DLL3_HASHLRU :: lockwarn(void) throw (ListError)
+void __DLL3_HASHLRU :: lockwarn(void)
 {
     if (lockWarn == true && isLocked() == false)
         __DLL3_LISTERR(LIST_NOT_LOCKED);
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-void __DLL3_HASHLRU :: add(Links * item) throw (ListError)
+void __DLL3_HASHLRU :: add(Links * item)
 {
     lockwarn();
     item->checkvalid(NULL);
@@ -380,7 +402,7 @@ void __DLL3_HASHLRU :: add(Links * item) throw (ListError)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-void __DLL3_HASHLRU :: remove(Links * item) throw (ListError)
+void __DLL3_HASHLRU :: remove(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
@@ -391,7 +413,7 @@ void __DLL3_HASHLRU :: remove(Links * item) throw (ListError)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-void __DLL3_HASHLRU :: promote(Links * item) throw (ListError)
+void __DLL3_HASHLRU :: promote(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
@@ -401,14 +423,14 @@ void __DLL3_HASHLRU :: promote(Links * item) throw (ListError)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-T * __DLL3_HASHLRU :: find(const KeyT &key) throw (ListError)
+T * __DLL3_HASHLRU :: find(const KeyT &key)
 {
     lockwarn();
     return hash.find(key);
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-T * __DLL3_HASHLRU :: get_oldest(void) throw (ListError)
+T * __DLL3_HASHLRU :: get_oldest(void)
 {
     lockwarn();
     return list.get_head();

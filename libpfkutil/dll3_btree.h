@@ -266,7 +266,7 @@ public:
         }
     }
 
-    void add( T * nt ) throw (BtreeError)
+    void add( T * nt )
     {
         if ( items.onlist(nt))
         {
@@ -372,7 +372,7 @@ public:
         empty_store( &store );
     }
 
-    void remove( T * dt ) throw (BtreeError)
+    void remove( T * dt )
     {
         NODESTORE store;
         NODE * n = root, * foundn = 0;

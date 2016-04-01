@@ -65,35 +65,42 @@ public:
         Links * prev;
         __DLL3_LIST * lst;
     public:
-        Links(void) throw ();
-        ~Links(void) throw (ListError);
-        void checkvalid(__DLL3_LIST * _lst) throw (ListError);
+        Links(void);
+        ~Links(void);
+        void checkvalid(__DLL3_LIST * _lst);
     };
 private:
     Links * head;
     Links * tail;
     int cnt;
-    void lockwarn(void) const throw (ListError);
-    void _remove(Links * item) throw ();
+    void lockwarn(void) const;
+    void _remove(Links * item);
+    void _add_head(Links * item);
 public:
-    List(void) throw ();
-    ~List(void) throw (ListError);
+    List(void);
+    ~List(void);
     /** add the item to the head of this list.
      * \param item  the item to add.
      * \throw may throw ListError */
-    void add_head(Links * item) throw (ListError);
-    void add_tail(Links * item) throw (ListError);
-    void add_before(Links * item, Links * existing) throw (ListError);
+    void add_head(Links * item);
+    void add_tail(Links * item);
+    void add_before(Links * item, Links * existing);
 // add_after ?
-    T * get_head(void) throw (ListError);
-    T * get_tail(void) throw (ListError);
-    T * get_next(Links * item) throw (ListError);
-    T * get_prev(Links * item) throw (ListError);
-    T * dequeue_head(void) throw (ListError);
-    T * dequeue_tail(void) throw (ListError);
-    void remove(Links * item) throw (ListError);
-    const bool onlist(Links * item) const throw (ListError);
-    const bool onthislist(Links * item) const throw (ListError);
+    T * get_head(void);
+    T * get_tail(void);
+    T * get_next(Links * item);
+    T * get_prev(Links * item);
+    T * dequeue_head(void);
+    T * dequeue_tail(void);
+    // if using a List as a Least Recently Used,
+    // all items should be added to head and oldest
+    // removed from tail; and this promote method will
+    // remove from the middle and add to head.
+    void promote(T * item);
+    T * get_oldest(void) { return get_tail(); }
+    void remove(Links * item);
+    const bool onlist(Links * item) const;
+    const bool onthislist(Links * item) const;
     const int get_cnt(void) const { return cnt; }
 };
 
@@ -120,9 +127,9 @@ class Hash : public WaitUtil::Lockable {
     int hashorder;
     int hashsize;
     int cnt;
-    void lockwarn(void) const throw (ListError);
+    void lockwarn(void) const;
     void _rehash(int newOrder);
-    void rehash(void) throw (ListError);
+    void rehash(void);
 public:
     class Links : public List<T,uniqueIdentifier,false,true>::Links {
         friend class __DLL3_HASH;
@@ -130,18 +137,21 @@ public:
         int magic;
         __DLL3_HASH * hsh;
         uint32_t h;
-        void checkvalid(__DLL3_HASH * _hsh) throw (ListError);
+        void checkvalid(__DLL3_HASH * _hsh);
     public:
-        Links(void) throw ();
-        virtual ~Links(void) throw (ListError);
+        Links(void);
+        virtual ~Links(void);
     };
-    Hash(void) throw ();
-    ~Hash(void) throw (ListError);
-    void add(Links * item) throw (ListError);
-    void remove(Links * item) throw (ListError);
-    T * find(const KeyT &key) const throw (ListError);
-    const bool onlist(Links * item) const throw (ListError);
-    const bool onthislist(Links * item) const throw (ListError);
+    Hash(void);
+    ~Hash(void);
+private:
+    void _add(Links * item);
+public:
+    void add(Links * item);
+    void remove(Links * item);
+    T * find(const KeyT &key) const;
+    const bool onlist(Links * item) const;
+    const bool onthislist(Links * item) const;
     const int get_cnt(void) const { return cnt; }
 };
 
@@ -157,7 +167,7 @@ template <class T, class KeyT, class HashT,
 class HashLRU : public WaitUtil::Lockable {
     List<T,uniqueIdentifier1,false,true> list;
     Hash<T,KeyT,HashT,uniqueIdentifier2,false,true> hash;
-    void lockwarn(void) throw (ListError);
+    void lockwarn(void);
 public:
     class Links : public List<T,uniqueIdentifier1,false,true>::Links,
                   public Hash<T,KeyT,HashT,uniqueIdentifier2,
@@ -166,18 +176,18 @@ public:
         static const int MAGIC = 0x2cbee2a;
         int magic;
         __DLL3_HASHLRU * hlru;
-        void checkvalid(__DLL3_HASHLRU * _hlru) throw (ListError);
+        void checkvalid(__DLL3_HASHLRU * _hlru);
     public:
-        Links(void) throw ();
-        virtual ~Links(void) throw (ListError);
+        Links(void);
+        virtual ~Links(void);
     };
-    HashLRU(void) throw ();
-    ~HashLRU(void) throw (ListError);
-    void add(Links * item) throw (ListError);
-    void remove(Links * item) throw (ListError);
-    void promote(Links * item) throw (ListError);
-    T * find(const KeyT &key) throw (ListError);
-    T * get_oldest(void) throw (ListError);
+    HashLRU(void);
+    ~HashLRU(void);
+    void add(Links * item);
+    void remove(Links * item);
+    void promote(Links * item);
+    T * find(const KeyT &key);
+    T * get_oldest(void);
 };
 
 #include "dll3.tcc"
