@@ -45,7 +45,9 @@ struct BtreeError : BackTraceUtil::BackTrace {
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
-    BtreeError(BtreeErrorValue _e) : err(_e) { }
+    BtreeError(BtreeErrorValue _e) : err(_e) {
+        std::cerr << "throwing BtreeError: " << Format() << std::endl;
+    }
     /** return a descriptive string matching the error */
     const std::string Format(void) const;
 };
@@ -78,15 +80,21 @@ struct BTREENode : DLL3::List<
 
 // to use BTREE, type T must have a companion comparator class
 // which provides information about how to do keying on the item. This
-// comparator class must have the following static member:
+// comparator class must have the following static members:
 //
-//    static int key_compare( T * item, BTREE_Key_Type key )
-//    static int key_compare( T * item, T * item2 )
-//    static char * key_format( T * item )
+//    static int key_compare( const T &item, const BTREE_Key_Type &key )
+//    static int key_compare( const T &item, const T &item2 )
 //
-// this method must return -1 if the item->key is less than key,
-// 0 if the item->key is equal to the key, 1 if the item->key is 
+// these method must return -1 if the item.key is less than key,
+// 0 if the item.key is equal to the key, 1 if the item.key is 
 // greator than key.
+//
+//    static std::string key_format( const T &item )
+//
+// this method should return a string formatting the contents of item.
+// this will be used by printtree(). if you do not intend to use printtree(),
+// then you may of course choose to leave the body of this dummied--i.e.,
+// return "";
 
 template <class T, class BTREE_Key_Type,
           class BTREE_Key_Comparator, int instance, int ORDER>
@@ -242,7 +250,7 @@ public:
     {
         delete root;
     }
-    T * find( BTREE_Key_Type key ) const
+    T * find( const BTREE_Key_Type &key ) const
     {
         NODE * n = root;
         T * t;
@@ -254,7 +262,7 @@ public:
             for ( i = 0; i < n->numkeys; i++ )
             {
                 t = n->keys[i];
-                v = BTREE_Key_Comparator::key_compare(t, key);
+                v = BTREE_Key_Comparator::key_compare(*t, key);
                 if ( v == 0 )
                     return t;
                 if ( v < 0 )
@@ -265,7 +273,6 @@ public:
             n = n->nodes[i];
         }
     }
-
     void add( T * nt )
     {
         if ( items.onlist(nt))
@@ -291,7 +298,7 @@ public:
             {
                 int k = 
                     BTREE_Key_Comparator::key_compare(
-                        n->keys[(int)n->cur], nt);
+                        *n->keys[(int)n->cur], *nt);
                 if ( k == 0 )
                 {
                     __DLL3_BTREEERR(DUPLICATE_ITEM);
@@ -396,7 +403,7 @@ public:
             {
                 int k =
                     BTREE_Key_Comparator::key_compare(
-                        n->keys[i], dt);
+                        *n->keys[i], *dt);
                 if ( k == 0 )
                     exact = true;
                 if ( k <= 0 )
@@ -755,7 +762,8 @@ public:
             if ( n->keys[i] )
                 printf( "node at %#lx index %d -> %s\n",
                         (unsigned long)n, i, 
-                        BTREE_Key_Comparator::key_format(n->keys[i]));
+                        BTREE_Key_Comparator::key_format(
+                            *n->keys[i]).c_str());
         }
         if ( n->nodes[i] )
             _printtree( n->nodes[i] );
@@ -768,8 +776,7 @@ public:
         _printtree( root );
     }
 
-#if 0
-    T * get_first( void ) 
+    T * get_first( void ) const
     {
         // walk nodes[0] down to leaf, then return keys[0]
         NODE * n = root;
@@ -778,7 +785,9 @@ public:
         return n->keys[0];
     }
 
-    T * get_next( T * t )
+#if 0
+
+    T * get_next( T * t ) const
     {
         // find t in the tree; if it has a pointer to its right,
         // follow nodes[i] down to leaf and return keys[0].

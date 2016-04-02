@@ -31,6 +31,7 @@ exit 0
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <sstream>
 
 #include "dll3.h"
 #include "dll3_btree.h"
@@ -69,20 +70,20 @@ struct thing : public BT::Links {
 
 class thingBtreeComparator {
 public:
-    static int key_compare( thing * item, int key ) {
-        if (item->v < key) return 1;
-        if (item->v > key) return -1;
+    static int key_compare( const thing &item, int &key ) {
+        if (item.v < key) return 1;
+        if (item.v > key) return -1;
         return 0;
     }
-    static int key_compare( thing * item, thing * item2 ) {
-        if (item->v < item2->v) return 1;
-        if (item->v > item2->v) return -1;
+    static int key_compare( const thing &item, const thing &item2 ) {
+        if (item.v < item2.v) return 1;
+        if (item.v > item2.v) return -1;
         return 0;
     }
-    static char * key_format( thing * item ) {
-        static char string[20];
-        sprintf(string,"%d",item->v);
-        return string;
+    static std::string key_format( const thing &item ) {
+        std::ostringstream ostr;
+        ostr << item.v;
+        return ostr.str();
     }
 };
 
