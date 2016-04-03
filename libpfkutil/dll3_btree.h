@@ -84,14 +84,13 @@ struct BTREENode : DLL3::List<
 //
 //    static int key_compare( const T &item, const BTREE_Key_Type &key )
 //    static int key_compare( const T &item, const T &item2 )
+//    static std::string key_format( const T &item )
 //
-// these method must return -1 if the item.key is less than key,
+// the first 2 methods must return -1 if the item.key is less than key,
 // 0 if the item.key is equal to the key, 1 if the item.key is 
 // greator than key.
 //
-//    static std::string key_format( const T &item )
-//
-// this method should return a string formatting the contents of item.
+// key_format should return a string formatting the contents of item.
 // this will be used by printtree(). if you do not intend to use printtree(),
 // then you may of course choose to leave the body of this dummied--i.e.,
 // return "";
@@ -102,10 +101,9 @@ class BTREE : public WaitUtil::Lockable {
     static const int HALF_ORDER = ORDER / 2;
     static const int ORDER_MO   = ORDER - 1;
     static const int ORDER_MT   = ORDER - 2;
-
     typedef BTREENode <T,ORDER>  NODE;
     typedef typename NODE::List_t NODESTORE;
-    typedef DLL3::List <T,0,false,true> itemsList_t;
+    typedef DLL3::List <T,instance,false,true> itemsList_t;
     itemsList_t items;
 public:
     typedef typename itemsList_t::Links  Links;
@@ -236,6 +234,24 @@ private:
         }
 
         return newright;
+    }
+    void _printtree( NODE * n ) const
+    {
+        int i;
+        printf( "node at %#lx, numkeys = %d, root = %d, leaf = %d\n",
+                (unsigned long)n, n->numkeys, n->root, n->leaf );
+        for ( i = 0 ; i < n->numkeys; i++ )
+        {
+            if ( n->nodes[i] )
+                _printtree( n->nodes[i] );
+            if ( n->keys[i] )
+                printf( "node at %#lx index %d -> %s\n",
+                        (unsigned long)n, i, 
+                        BTREE_Key_Comparator::key_format(
+                            *n->keys[i]).c_str());
+        }
+        if ( n->nodes[i] )
+            _printtree( n->nodes[i] );
     }
 public:
     BTREE( void )
@@ -748,25 +764,6 @@ public:
     int get_cnt() const
     {
         return items.get_cnt();
-    }
-
-    void _printtree( NODE * n ) const
-    {
-        int i;
-        printf( "node at %#lx, numkeys = %d, root = %d, leaf = %d\n",
-                (unsigned long)n, n->numkeys, n->root, n->leaf );
-        for ( i = 0 ; i < n->numkeys; i++ )
-        {
-            if ( n->nodes[i] )
-                _printtree( n->nodes[i] );
-            if ( n->keys[i] )
-                printf( "node at %#lx index %d -> %s\n",
-                        (unsigned long)n, i, 
-                        BTREE_Key_Comparator::key_format(
-                            *n->keys[i]).c_str());
-        }
-        if ( n->nodes[i] )
-            _printtree( n->nodes[i] );
     }
 
     void printtree( void ) const
