@@ -82,11 +82,11 @@ fill_mm(MyMessage * mm)
     mm->body.three.pointer->four.string[2] = 3;
     mm->body.three.pointer->four.string[3] = 4;
     mm->body.three.pointer->five.set((char*)"this is a test string");
-    mm->body.six.alloc(4);
-    mm->body.six.array[0]->v = 0x8765U;
-    mm->body.six.array[1]->v = 0x2344U;
-    mm->body.six.array[2]->v = 0x5674U;
-    mm->body.six.array[3]->v = 0x9898U;
+    mm->body.six.resize(4);
+    mm->body.six[0].v = 0x8765U;
+    mm->body.six[1].v = 0x2344U;
+    mm->body.six[2].v = 0x5674U;
+    mm->body.six[3].v = 0x9898U;
 
 #if 1
     mm->body.seven.which.v = MyType3::EIGHT;

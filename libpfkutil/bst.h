@@ -125,6 +125,8 @@ class BST {
     BST * head;
     BST * tail;
     BST * next;
+    // consider adding BST * parent here and having
+    // destructor de-register self from parent.
     friend class BST_UNION;
 public:
     BST(BST *parent) {
@@ -461,14 +463,28 @@ public:
     }
 };
 
+struct BST_ARRAY_ERROR {
+};
+
 template <class T>
 class BST_ARRAY : public BST {
+    int num_items;
+    T ** array;
 public:
     BST_ARRAY(BST *parent) : BST(parent) { array = NULL; num_items = 0; }
     virtual ~BST_ARRAY(void) { bst_var_array_free(); }
-    int num_items;
-    T ** array;
-    void alloc(int c) {
+    T &operator[](const int index) {
+        if (index < 0 || index >= num_items)
+            throw BST_ARRAY_ERROR();
+        return *array[index];
+    }
+    const T &operator[](const int index) const {
+        if (index < 0 || index >= num_items)
+            throw BST_ARRAY_ERROR();
+        return *array[index];
+    }
+    int length(void) const { return num_items; }
+    void resize(int c) {
         if (c == num_items)
             return;
         int i;
@@ -517,7 +533,7 @@ public:
         case BST_OP_DECODE:
             if (!count.bst_op(str))
                 return false;
-            alloc(count.v);
+            resize(count.v);
             for (i=0; i < num_items; i++)
                 if (!array[i]->bst_op(str))
                     return false;

@@ -201,9 +201,9 @@ bakFile::_update(void)
     }
 
     version = dbinfo.data.dbinfo.nextver.v;
-    int version_index = dbinfo.data.dbinfo.versions.num_items - 1;
+    int version_index = dbinfo.data.dbinfo.versions.length() - 1;
     if (version_index >= 0)
-        prev_version = dbinfo.data.dbinfo.versions.array[version_index]->v;
+        prev_version = dbinfo.data.dbinfo.versions[version_index].v;
     sourcedir = dbinfo.data.dbinfo.sourcedir.string;
 
     if (chdir(sourcedir.c_str()) < 0)
@@ -222,7 +222,7 @@ bakFile::_update(void)
     bakDatum versionindex(bt);
     uint32_t group = 0;
     versionindex.key_versionindex( version, group );
-    versionindex.data.versionindex.filenames.alloc(
+    versionindex.data.versionindex.filenames.resize(
         bakData::versionindex_data::MAX_FILENAMES);
     int vind = 0;
 
@@ -299,7 +299,7 @@ bakFile::_update(void)
             newfinfo.data.fileinfo.filesize.v      = item.sb.st_size;
             newfinfo.mark_dirty();
 
-            versionindex.data.versionindex.filenames.array[vind++]->string =
+            versionindex.data.versionindex.filenames[vind++].string =
                 item.name;
             versionindex.mark_dirty();
 
@@ -321,7 +321,7 @@ bakFile::_update(void)
     {
         if (opts.verbose > 1)
             cout << "resizing last versionindex to " << vind << endl;
-        versionindex.data.versionindex.filenames.alloc(vind);
+        versionindex.data.versionindex.filenames.resize(vind);
     }
 
     bakDatum versioninfo(bt);
@@ -333,8 +333,8 @@ bakFile::_update(void)
     versioninfo.mark_dirty();
 
     dbinfo.data.dbinfo.nextver.v++;
-    version_index = dbinfo.data.dbinfo.versions.num_items;
-    dbinfo.data.dbinfo.versions.alloc(version_index + 1);
-    dbinfo.data.dbinfo.versions.array[version_index]->v = version;
+    version_index = dbinfo.data.dbinfo.versions.length();
+    dbinfo.data.dbinfo.versions.resize(version_index + 1);
+    dbinfo.data.dbinfo.versions[version_index].v = version;
     dbinfo.mark_dirty();
 }

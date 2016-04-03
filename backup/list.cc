@@ -30,9 +30,9 @@ bakFile::listdb(void)
          << "  sourcedir : " << dbinfo.data.dbinfo.sourcedir.string << endl
          << "  nextver : " << dbinfo.data.dbinfo.nextver.v << endl
          << "  versions :\n";
-    for (int vind = 0; vind < dbinfo.data.dbinfo.versions.num_items; vind++)
+    for (int vind = 0; vind < dbinfo.data.dbinfo.versions.length(); vind++)
     {
-        uint32_t version = dbinfo.data.dbinfo.versions.array[vind]->v;
+        uint32_t version = dbinfo.data.dbinfo.versions[vind].v;
         cout << "    ver: " << version << endl;
         bakDatum versioninfo(bt);
         versioninfo.key_versioninfo( version );
@@ -58,11 +58,11 @@ bakFile::listdb(void)
                     versionindex.data.versionindex;
                 cout << "        version group : " << vgroup << endl;
                 for (int groupindex = 0;
-                     groupindex < vid.filenames.num_items;
+                     groupindex < vid.filenames.length();
                      groupindex++)
                 {
                     const string &fn =
-                        vid.filenames.array[groupindex]->string;
+                        vid.filenames[groupindex].string;
                     cout << "          " << fn << endl;
                     if (opts.verbose > 1)
                     {

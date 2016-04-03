@@ -36,8 +36,8 @@ bakFile::_extract(int tarfd)
     const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
 
     bool found = false;
-    for (int cnt = 0; cnt < dbi.versions.num_items; cnt++)
-        if (dbi.versions.array[cnt]->v == version)
+    for (int cnt = 0; cnt < dbi.versions.length(); cnt++)
+        if (dbi.versions[cnt].v == version)
         {
             found = true;
             break;
@@ -60,9 +60,9 @@ bakFile::_extract(int tarfd)
                 break;
             const BST_ARRAY<BST_STRING> &fns =
                 versionindex.data.versionindex.filenames;
-            for (int ind = 0; ind < fns.num_items; ind++)
+            for (int ind = 0; ind < fns.length(); ind++)
             {
-                const string &path = fns.array[ind]->string;
+                const string &path = fns[ind].string;
                 extract_file(version, path, tarfd);
             }
             group ++;

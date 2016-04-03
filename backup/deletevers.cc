@@ -26,7 +26,7 @@ bakFile::deletevers(void)
     newdbinfo.key_dbinfo();
     newdbinfo.data.dbinfo.sourcedir.string = dbi.sourcedir.string;
     newdbinfo.data.dbinfo.nextver.v = dbi.nextver.v;
-    newdbinfo.data.dbinfo.versions.alloc(dbi.versions.num_items);
+    newdbinfo.data.dbinfo.versions.resize(dbi.versions.length());
     int newversionsindex = 0;
 
     // first ensure every version the user specified
@@ -35,8 +35,8 @@ bakFile::deletevers(void)
     {
         version = opts.versions[versionindex];
         bool found = false;
-        for (int ind = 0; ind < dbi.versions.num_items; ind++)
-            if (dbi.versions.array[ind]->v == version)
+        for (int ind = 0; ind < dbi.versions.length(); ind++)
+            if (dbi.versions[ind].v == version)
             {
                 found = true;
                 break;
@@ -49,9 +49,9 @@ bakFile::deletevers(void)
     }
 
     // next build a new dbinfo with the selected versions removed
-    for (versionindex = 0; versionindex < dbi.versions.num_items; versionindex++)
+    for (versionindex = 0; versionindex < dbi.versions.length(); versionindex++)
     {
-        version = dbi.versions.array[versionindex]->v;
+        version = dbi.versions[versionindex].v;
         bool found = false;
         for (int ind = 0; ind < opts.versions.size(); ind++)
             if (opts.versions[ind] == version)
@@ -61,7 +61,7 @@ bakFile::deletevers(void)
             }
         if (!found)
         {
-            newdbinfo.data.dbinfo.versions.array[newversionsindex++]->v =
+            newdbinfo.data.dbinfo.versions[newversionsindex++].v =
                 version;
         }
     }
@@ -73,7 +73,7 @@ bakFile::deletevers(void)
         delete_version(version);
     }
 
-    newdbinfo.data.dbinfo.versions.alloc(newversionsindex);
+    newdbinfo.data.dbinfo.versions.resize(newversionsindex);
     newdbinfo.mark_dirty();
 }
 
@@ -103,9 +103,9 @@ bakFile::delete_version(int version)
         const bakData::versionindex_data &vind =
             versionindex.data.versionindex;
 
-        for (int find = 0; find < vind.filenames.num_items; find++)
+        for (int find = 0; find < vind.filenames.length(); find++)
         {
-            const string &fname = vind.filenames.array[find]->string;
+            const string &fname = vind.filenames[find].string;
 
             bakDatum fileinfo(bt);
             fileinfo.key_fileinfo( version, fname );
