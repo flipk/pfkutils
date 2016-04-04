@@ -27,12 +27,12 @@ bakFile::listdb(void)
     }
 
     cout << "dbinfo :\n"
-         << "  sourcedir : " << dbinfo.data.dbinfo.sourcedir.string << endl
-         << "  nextver : " << dbinfo.data.dbinfo.nextver.v << endl
+         << "  sourcedir : " << dbinfo.data.dbinfo.sourcedir() << endl
+         << "  nextver : " << dbinfo.data.dbinfo.nextver() << endl
          << "  versions :\n";
     for (int vind = 0; vind < dbinfo.data.dbinfo.versions.length(); vind++)
     {
-        uint32_t version = dbinfo.data.dbinfo.versions[vind].v;
+        uint32_t version = dbinfo.data.dbinfo.versions[vind]();
         cout << "    ver: " << version << endl;
         bakDatum versioninfo(bt);
         versioninfo.key_versioninfo( version );
@@ -44,9 +44,9 @@ bakFile::listdb(void)
             versioninfo.data.versioninfo.time.get(tv);
             cout << "      time: " << format_time(tv) << endl;
             cout << "      filecount : "
-                 << versioninfo.data.versioninfo.filecount.v << endl;
+                 << versioninfo.data.versioninfo.filecount() << endl;
             cout << "      total_bytes : "
-                 << versioninfo.data.versioninfo.total_bytes.v << endl;
+                 << versioninfo.data.versioninfo.total_bytes() << endl;
             uint32_t vgroup = 0;
             if (opts.verbose > 0) while (1)
             {
@@ -62,7 +62,7 @@ bakFile::listdb(void)
                      groupindex++)
                 {
                     const string &fn =
-                        vid.filenames[groupindex].string;
+                        vid.filenames[groupindex]();
                     cout << "          " << fn << endl;
                     if (opts.verbose > 1)
                     {
@@ -77,26 +77,26 @@ bakFile::listdb(void)
                             const bakData::fileinfo_data &fi =
                                 fileinfo.data.fileinfo;
                             cout << "            hash : "
-                                 << format_hash(fi.hash.string) << endl;
+                                 << format_hash(fi.hash()) << endl;
                             myTimeval mtv;
                             fi.time.get(mtv);
                             cout << "            time : "
                                  << format_time(mtv) << endl;
                             cout << "            size : "
-                                 << fi.filesize.v << endl;
+                                 << fi.filesize() << endl;
 
                             bakDatum blobhash(bt);
-                            blobhash.key_blobhash( fi.hash.string,
-                                                   fi.filesize.v );
+                            blobhash.key_blobhash( fi.hash(),
+                                                   fi.filesize() );
                             if (blobhash.get() == false)
                                 cerr << "cant fetch blobhash\n";
                             else
                             {
                                 cout << "            blob ref : "
-                                     << blobhash.data.blobhash.refcount.v
+                                     << blobhash.data.blobhash.refcount()
                                      << endl
                                      << "            blob first auid : "
-                                     << blobhash.data.blobhash.first_auid.v
+                                     << blobhash.data.blobhash.first_auid()
                                      << endl;
                             }
                         }

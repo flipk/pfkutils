@@ -49,14 +49,14 @@ public:
         : BST(parent),
           magic(this), type(this), length(this), checksum(this)
     {
-        magic.v = MAGIC;
-        type.v = _type;
+        magic() = MAGIC;
+        type() = _type;
     }
-    bool valid_magic(void) { return magic.v == MAGIC; }
-    void set_length(uint16_t len) { length.v = len; }
-    uint16_t get_length(void) { return length.v; }
-    uint16_t get_type(void) { return type.v; }
-    uint32_t get_checksum(void) { return checksum.v; }
+    bool valid_magic(void) { return magic() == MAGIC; }
+    void set_length(uint16_t len) { length() = len; }
+    uint16_t get_length(void) { return length(); }
+    uint16_t get_type(void) { return type(); }
+    uint32_t get_checksum(void) { return checksum(); }
     static void post_encode_set_checksum(uint8_t * buf,
                                          uint32_t checksum) {
         UINT32_t * checksum_location = (UINT32_t *) (buf + checksum_offset());

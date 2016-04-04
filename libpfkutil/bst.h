@@ -188,9 +188,12 @@ public:
 
 // BST base types follow.
 
-struct BST_UINT64_t : public BST {
-    BST_UINT64_t(BST *parent) : BST(parent) { }
+class BST_UINT64_t : public BST {
     uint64_t v;
+public:
+    BST_UINT64_t(BST *parent) : BST(parent) { }
+    uint64_t &operator()() { return v; }
+    const uint64_t &operator()() const { return v; }
     void set(uint64_t _v) { v = _v; }
     const uint64_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
@@ -234,10 +237,13 @@ struct BST_UINT64_t : public BST {
     }
 };
 
-struct BST_UINT32_t : public BST {
-    BST_UINT32_t(BST *parent) : BST(parent) { }
+class BST_UINT32_t : public BST {
     uint32_t v;
+public:
+    BST_UINT32_t(BST *parent) : BST(parent) { }
     void set(uint32_t _v) { v = _v; }
+    uint32_t &operator()() { return v; }
+    const uint32_t &operator()() const { return v; }
     const uint32_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
@@ -270,10 +276,13 @@ struct BST_UINT32_t : public BST {
     }
 };
 
-struct BST_UINT16_t : public BST {
-    BST_UINT16_t(BST *parent) : BST(parent) { }
+class BST_UINT16_t : public BST {
     uint16_t v;
+public:
+    BST_UINT16_t(BST *parent) : BST(parent) { }
     void set(uint16_t _v) { v = _v; }
+    uint16_t &operator()() { return v; }
+    const uint16_t &operator()() const { return v; }
     const uint16_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
@@ -303,10 +312,13 @@ struct BST_UINT16_t : public BST {
     }
 };
 
-struct BST_UINT8_t : public BST {
-    BST_UINT8_t(BST *parent) : BST(parent) { }
+class BST_UINT8_t : public BST {
     uint8_t v;
+public:
+    BST_UINT8_t(BST *parent) : BST(parent) { }
     void set(uint8_t _v) { v = _v; }
+    uint8_t &operator()() { return v; }
+    const uint8_t &operator()() const { return v; }
     const uint8_t get(void) const { return v; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
@@ -342,12 +354,12 @@ struct BST_TIMEVAL : public BST {
     BST_UINT64_t  btv_sec;
     BST_UINT32_t  btv_usec;
     void set(const struct timeval &tv) {
-        btv_sec.v = (uint64_t) tv.tv_sec;
-        btv_usec.v = (uint32_t) tv.tv_usec;
+        btv_sec() = (uint64_t) tv.tv_sec;
+        btv_usec() = (uint32_t) tv.tv_usec;
     }
     const void get(struct timeval &tv) const {
-        tv.tv_sec = (typeof(tv.tv_sec)) btv_sec.v;
-        tv.tv_usec = (typeof(tv.tv_usec)) btv_usec.v;
+        tv.tv_sec = (typeof(tv.tv_sec)) btv_sec();
+        tv.tv_usec = (typeof(tv.tv_usec)) btv_usec();
     }
     const std::string Format(void) {
         myTimeval v;
@@ -359,45 +371,48 @@ struct BST_TIMEVAL : public BST {
 // BUG: this can't handle strings >= 65536 in length.
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
-struct BST_STRING : public BST {
+class BST_STRING : public BST {
+    std::string string;
+public:
     BST_STRING(BST *parent) : BST(parent) {  }
     virtual ~BST_STRING(void) {  }
-    std::string string;
+    std::string &operator()() { return string; }
+    const std::string &operator()() const { return string; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         uint8_t * ptr;
         BST_UINT16_t  len(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
-            len.v = string.length();
+            len() = string.length();
             if (!len.bst_op(str))
                 return false;
-            if (len.v > 0)
+            if (len() > 0)
             {
-                ptr = str->get_ptr(len.v);
+                ptr = str->get_ptr(len());
                 if (!ptr)
                     return false;
-                memcpy(ptr, string.c_str(), len.v);
+                memcpy(ptr, string.c_str(), len());
             }
             return true;
         case BST_OP_CALC_SIZE:
-            len.v = string.length();
+            len() = string.length();
             if (!len.bst_op(str))
                 return false;
-            if (len.v > 0)
-                if (!str->get_ptr(len.v))
+            if (len() > 0)
+                if (!str->get_ptr(len()))
                     return false;
             return true;
         case BST_OP_DECODE:
             if (!len.bst_op(str))
                 return false;
-            if (len.v > 0)
+            if (len() > 0)
             {
-                ptr = str->get_ptr(len.v);
+                ptr = str->get_ptr(len());
                 if (!ptr)
                     return false;
-                string.resize(len.v);
-                memcpy((void*)string.c_str(), ptr, len.v);
+                string.resize(len());
+                memcpy((void*)string.c_str(), ptr, len());
             }
             return true;
         case BST_OP_MEM_FREE:
@@ -429,7 +444,7 @@ public:
         {
         case BST_OP_ENCODE:
         case BST_OP_CALC_SIZE:
-            flag.v = (pointer != NULL) ? 1 : 0;
+            flag() = (pointer != NULL) ? 1 : 0;
             if (!flag.bst_op(str))
                 return false;
             if (pointer)
@@ -439,7 +454,7 @@ public:
         case BST_OP_DECODE:
             if (!flag.bst_op(str))
                 return false;
-            if (flag.v == 0)
+            if (flag() == 0)
                 pointer = NULL;
             else
             {
@@ -470,6 +485,15 @@ template <class T>
 class BST_ARRAY : public BST {
     int num_items;
     T ** array;
+    void bst_var_array_free(void) {
+        if (array) {
+            for (int i=0; i < num_items; i++)
+                delete array[i];
+            delete array;
+            array = NULL;
+            num_items = 0;
+        }
+    }
 public:
     BST_ARRAY(BST *parent) : BST(parent) { array = NULL; num_items = 0; }
     virtual ~BST_ARRAY(void) { bst_var_array_free(); }
@@ -507,15 +531,6 @@ public:
         array = narray;
         num_items = c;
     }
-    void bst_var_array_free(void) {
-        if (array) {
-            for (int i=0; i < num_items; i++)
-                delete array[i];
-            delete array;
-            array = NULL;
-            num_items = 0;
-        }
-    }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         int i;
         BST_UINT32_t  count(NULL);
@@ -523,7 +538,7 @@ public:
         {
         case BST_OP_ENCODE:
         case BST_OP_CALC_SIZE:
-            count.v = num_items;
+            count() = num_items;
             if (!count.bst_op(str))
                 return false;
             for (i=0; i < num_items; i++)
@@ -533,7 +548,7 @@ public:
         case BST_OP_DECODE:
             if (!count.bst_op(str))
                 return false;
-            resize(count.v);
+            resize(count());
             for (i=0; i < num_items; i++)
                 if (!array[i]->bst_op(str))
                     return false;
@@ -575,19 +590,19 @@ public:
     BST_UINT8_t  which;
     BST_UNION( BST *parent, int _max )
         : BST(parent), which(NULL) {
-        max = _max; which.v = max; fields = NULL;
+        max = _max; which() = max; fields = NULL;
     }
     virtual ~BST_UNION(void) { delete[] fields; }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         flatten();
         if (!which.bst_op(str))
             return false;
-        if (which.v >= max)
+        if (which() >= max)
             return false;
         BST_OP op = str->get_op();
         if (op != BST_OP_MEM_FREE)
         {
-            if (!fields[which.v]->bst_op(str))
+            if (!fields[which()]->bst_op(str))
                 return false;
         }
         else
@@ -595,7 +610,7 @@ public:
             // op free should free all fields
             for (BST * b = head; b; b = b->next)
                 b->bst_op(str);
-            which.v = max;
+            which() = max;
         }
         return true;
     }
@@ -743,11 +758,11 @@ int main() {
     uint8_t * buffer;
     int len;
 
-    x.thing.one.v = 4;
-    x.thing.two.v = 8;
-    x.three.v = 12;
-    x.un.which.v = myUnion::CEE;
-    x.un.c.v = 127;
+    x.thing.one() = 4;
+    x.thing.two() = 8;
+    x.three() = 12;
+    x.un.which() = myUnion::CEE;
+    x.un.c() = 127;
     buffer = x.bst_encode(&len);
     if (!buffer) {
         printf("encode error\n");
@@ -760,13 +775,13 @@ int main() {
         printf("decode error\n");
         return 1;
     }
-    printf("%d %d %d %d ", x.thing.one.v, x.thing.two.v,
-           x.three.v, x.un.which.v);
-    switch (x.un.which.v) {
-    case myUnion::AYE:  printf("a=%lld\n", x.un.a.v); break;
-    case myUnion::BEE:  printf("b=%d\n"  , x.un.b.v); break;
-    case myUnion::CEE:  printf("c=%d\n"  , x.un.c.v); break;
-    case myUnion::DEE:  printf("d=%d\n"  , x.un.d.v); break;
+    printf("%d %d %d %d ", x.thing.one(), x.thing.two(),
+           x.three(), x.un.which());
+    switch (x.un.which()) {
+    case myUnion::AYE:  printf("a=%lld\n", x.un.a()); break;
+    case myUnion::BEE:  printf("b=%d\n"  , x.un.b()); break;
+    case myUnion::CEE:  printf("c=%d\n"  , x.un.c()); break;
+    case myUnion::DEE:  printf("d=%d\n"  , x.un.d()); break;
     }
     delete[] buffer;
     return 0;

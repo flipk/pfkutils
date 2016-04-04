@@ -100,32 +100,32 @@ public:
     void mark_dirty(void) { dirty = true; }
 
     void key_dbinfo(void) {
-        key.which.v = bakKey::DBINFO;
-        key.dbinfo.keystring.string = "BKDBINFOKEY";
-        data.which.v = key.which.v;
+        key.which() = bakKey::DBINFO;
+        key.dbinfo.keystring() = "BKDBINFOKEY";
+        data.which() = key.which();
     }
     void key_versioninfo(uint32_t version) {
-        key.which.v = bakKey::VERSIONINFO;
-        key.versioninfo.version.v = version;
-        data.which.v = key.which.v;
+        key.which() = bakKey::VERSIONINFO;
+        key.versioninfo.version() = version;
+        data.which() = key.which();
     }
     void key_versionindex(uint32_t version, uint32_t group) {
-        key.which.v = bakKey::VERSIONINDEX;
-        key.versionindex.version.v = version;
-        key.versionindex.group.v = group;
-        data.which.v = key.which.v;
+        key.which() = bakKey::VERSIONINDEX;
+        key.versionindex.version() = version;
+        key.versionindex.group() = group;
+        data.which() = key.which();
     }
     void key_fileinfo(uint32_t version, const std::string &filename) {
-        key.which.v = bakKey::FILEINFO;
-        key.fileinfo.version.v = version;
-        key.fileinfo.filename.string = filename;
-        data.which.v = key.which.v;
+        key.which() = bakKey::FILEINFO;
+        key.fileinfo.version() = version;
+        key.fileinfo.filename() = filename;
+        data.which() = key.which();
     }
     void key_blobhash(const std::string &hash, uint64_t filesize) {
-        key.which.v = bakKey::BLOBHASH;
-        key.blobhash.hash.string = hash;
-        key.blobhash.filesize.v = filesize;
-        data.which.v = key.which.v;
+        key.which() = bakKey::BLOBHASH;
+        key.blobhash.hash() = hash;
+        key.blobhash.filesize() = filesize;
+        data.which() = key.which();
     }
 
     // fill out key item before calling this; if it returns
@@ -155,9 +155,9 @@ public:
         }
         else
         {
-            if (data.which.v != key.which.v)
+            if (data.which() != key.which())
             {
-                std::cerr << "data.which.v != key.which.v!\n";
+                std::cerr << "data.which() != key.which()!\n";
                 ret = false;
             }
         }

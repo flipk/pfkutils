@@ -73,27 +73,27 @@ public:
 void
 fill_mm(MyMessage * mm)
 {
-    mm->body.one.v = 0x123456789abcdef0ULL;
-    mm->body.two.v = 0x5531U;
+    mm->body.one() = 0x123456789abcdef0ULL;
+    mm->body.two() = 0x5531U;
     mm->body.three.pointer = new MyType2(NULL);
-    mm->body.three.pointer->four.string.resize(4);
-    mm->body.three.pointer->four.string[0] = 1;
-    mm->body.three.pointer->four.string[1] = 2;
-    mm->body.three.pointer->four.string[2] = 3;
-    mm->body.three.pointer->four.string[3] = 4;
+    mm->body.three.pointer->four().resize(4);
+    mm->body.three.pointer->four()[0] = 1;
+    mm->body.three.pointer->four()[1] = 2;
+    mm->body.three.pointer->four()[2] = 3;
+    mm->body.three.pointer->four()[3] = 4;
     mm->body.three.pointer->five.set((char*)"this is a test string");
     mm->body.six.resize(4);
-    mm->body.six[0].v = 0x8765U;
-    mm->body.six[1].v = 0x2344U;
-    mm->body.six[2].v = 0x5674U;
-    mm->body.six[3].v = 0x9898U;
+    mm->body.six[0]() = 0x8765U;
+    mm->body.six[1]() = 0x2344U;
+    mm->body.six[2]() = 0x5674U;
+    mm->body.six[3]() = 0x9898U;
 
 #if 1
-    mm->body.seven.which.v = MyType3::EIGHT;
+    mm->body.seven.which() = MyType3::EIGHT;
     mm->body.seven.eight.set((char*)"this is another test string");
 #else
-    mm->body.seven.which.v = MyType3::NINE;
-    mm->body.seven.nine.v = 0x7676U;
+    mm->body.seven.which() = MyType3::NINE;
+    mm->body.seven.nine() = 0x7676U;
 #endif
 }
 

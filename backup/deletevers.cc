@@ -24,8 +24,8 @@ bakFile::deletevers(void)
 
     bakDatum newdbinfo(bt);
     newdbinfo.key_dbinfo();
-    newdbinfo.data.dbinfo.sourcedir.string = dbi.sourcedir.string;
-    newdbinfo.data.dbinfo.nextver.v = dbi.nextver.v;
+    newdbinfo.data.dbinfo.sourcedir() = dbi.sourcedir();
+    newdbinfo.data.dbinfo.nextver() = dbi.nextver();
     newdbinfo.data.dbinfo.versions.resize(dbi.versions.length());
     int newversionsindex = 0;
 
@@ -36,7 +36,7 @@ bakFile::deletevers(void)
         version = opts.versions[versionindex];
         bool found = false;
         for (int ind = 0; ind < dbi.versions.length(); ind++)
-            if (dbi.versions[ind].v == version)
+            if (dbi.versions[ind]() == version)
             {
                 found = true;
                 break;
@@ -51,7 +51,7 @@ bakFile::deletevers(void)
     // next build a new dbinfo with the selected versions removed
     for (versionindex = 0; versionindex < dbi.versions.length(); versionindex++)
     {
-        version = dbi.versions[versionindex].v;
+        version = dbi.versions[versionindex]();
         bool found = false;
         for (int ind = 0; ind < opts.versions.size(); ind++)
             if (opts.versions[ind] == version)
@@ -61,7 +61,7 @@ bakFile::deletevers(void)
             }
         if (!found)
         {
-            newdbinfo.data.dbinfo.versions[newversionsindex++].v =
+            newdbinfo.data.dbinfo.versions[newversionsindex++]() =
                 version;
         }
     }
@@ -105,7 +105,7 @@ bakFile::delete_version(int version)
 
         for (int find = 0; find < vind.filenames.length(); find++)
         {
-            const string &fname = vind.filenames[find].string;
+            const string &fname = vind.filenames[find]();
 
             bakDatum fileinfo(bt);
             fileinfo.key_fileinfo( version, fname );
@@ -119,22 +119,22 @@ bakFile::delete_version(int version)
             const bakData::fileinfo_data &fid = fileinfo.data.fileinfo;
 
             bakDatum blobhash(bt);
-            blobhash.key_blobhash( fid.hash.string, fid.filesize.v );
+            blobhash.key_blobhash( fid.hash(), fid.filesize() );
             if (blobhash.get() == false)
             {
                 cerr << "unable to get blobhash\n";
                 continue;
             }
             bakData::blobhash_data &bhd = blobhash.data.blobhash;
-            FB_AUID_T auid = bhd.first_auid.v;
+            FB_AUID_T auid = bhd.first_auid();
 
-            if (bhd.refcount.v == 1)
+            if (bhd.refcount() == 1)
             {
                 blobhash.del();
             }
             else
             {
-                bhd.refcount.v --;
+                bhd.refcount() --;
                 blobhash.mark_dirty();
                 // dont delete the fileContents if the blobhash
                 // still exists with a lower refcount.
@@ -152,7 +152,7 @@ bakFile::delete_version(int version)
                     break;
                 fbi_data->release(fb);
                 fbi_data->free(auid);
-                auid = bfc.next_auid.v;
+                auid = bfc.next_auid();
                 bfc.bst_free();
             }
         }

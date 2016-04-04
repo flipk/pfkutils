@@ -68,12 +68,12 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
             bakFileContents bfc;
             FB_AUID_T auid;
             int read(int fd) {
-                bfc.data.string.resize(MYBUFLEN);
+                bfc.data().resize(MYBUFLEN);
                 int cc = ::read(fd,
-                                (char*) bfc.data.string.c_str(),
+                                (char*) bfc.data().c_str(),
                                 MYBUFLEN);
                 if (cc >= 0 && cc != MYBUFLEN)
-                    bfc.data.string.resize(cc);
+                    bfc.data().resize(cc);
                 return cc;
             }
             void alloc(FileBlockInterface * fbi_data) {
@@ -81,9 +81,9 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
             }
             void set_next(filecont *oc) {
                 if (oc == NULL)
-                    bfc.next_auid.v = 0;
+                    bfc.next_auid() = 0;
                 else
-                    bfc.next_auid.v = oc->auid;
+                    bfc.next_auid() = oc->auid;
             }
             void store(FileBlockInterface * fbi_data) {
                 FileBlock * fb = fbi_data->get(auid,true);
@@ -107,7 +107,7 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
                 {
                     // zero length file!
                     c->alloc(fbi_data);
-                    blobhash.data.blobhash.first_auid.v = c->auid;
+                    blobhash.data.blobhash.first_auid() = c->auid;
                     c->set_next(NULL);
                     c->store(fbi_data);
                 }
@@ -121,7 +121,7 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
             c->alloc(fbi_data);
             if (first_block)
             {
-                blobhash.data.blobhash.first_auid.v = c->auid;
+                blobhash.data.blobhash.first_auid() = c->auid;
                 first_block = false;
             }
             else
@@ -134,14 +134,14 @@ bakFile :: put_file(string &hash, const string &path, const uint64_t filesize)
 
         close(fd);
 
-        blobhash.data.blobhash.refcount.v = 1;
+        blobhash.data.blobhash.refcount() = 1;
 
         if (opts.verbose > 1)
             cout << "created new blob " << format_hash(hash) << endl;
     }
     else
     {
-        blobhash.data.blobhash.refcount.v++;
+        blobhash.data.blobhash.refcount()++;
         if (opts.verbose > 1)
             cout << "bumped refcount on blob " << format_hash(hash) << endl;
     }
@@ -200,11 +200,11 @@ bakFile::_update(void)
         return;
     }
 
-    version = dbinfo.data.dbinfo.nextver.v;
+    version = dbinfo.data.dbinfo.nextver();
     int version_index = dbinfo.data.dbinfo.versions.length() - 1;
     if (version_index >= 0)
-        prev_version = dbinfo.data.dbinfo.versions[version_index].v;
-    sourcedir = dbinfo.data.dbinfo.sourcedir.string;
+        prev_version = dbinfo.data.dbinfo.versions[version_index]();
+    sourcedir = dbinfo.data.dbinfo.sourcedir();
 
     if (chdir(sourcedir.c_str()) < 0)
     {
@@ -259,9 +259,9 @@ bakFile::_update(void)
             if (fileinfo.get())
             {
                 if (
-              (fileinfo.data.fileinfo.time.btv_sec.v  != item.mtime.tv_sec ) ||
-              (fileinfo.data.fileinfo.time.btv_usec.v != item.mtime.tv_usec) ||
-              (fileinfo.data.fileinfo.filesize.v      != item.sb.st_size   )
+              (fileinfo.data.fileinfo.time.btv_sec()  != item.mtime.tv_sec ) ||
+              (fileinfo.data.fileinfo.time.btv_usec() != item.mtime.tv_usec) ||
+              (fileinfo.data.fileinfo.filesize()      != item.sb.st_size   )
                     )
                 {
                     if (opts.verbose > 1)
@@ -271,7 +271,7 @@ bakFile::_update(void)
                 }
                 else
                 {
-                    hash = fileinfo.data.fileinfo.hash.string;
+                    hash = fileinfo.data.fileinfo.hash();
                     bakDatum blobhash(bt);
                     blobhash.key_blobhash( hash, item.sb.st_size );
                     if (blobhash.get() == false)
@@ -281,7 +281,7 @@ bakFile::_update(void)
                         if (opts.verbose > 1)
                             cout << "bumped refcount on blob "
                                  << format_hash(hash) << endl;
-                        blobhash.data.blobhash.refcount.v++;
+                        blobhash.data.blobhash.refcount()++;
                         blobhash.mark_dirty();
                     }
                 }  
@@ -293,13 +293,13 @@ bakFile::_update(void)
 
             bakDatum newfinfo(bt);
             newfinfo.key_fileinfo( version, item.name );
-            newfinfo.data.fileinfo.hash.string     = hash;
-            newfinfo.data.fileinfo.time.btv_sec.v  = item.mtime.tv_sec;
-            newfinfo.data.fileinfo.time.btv_usec.v = item.mtime.tv_usec;
-            newfinfo.data.fileinfo.filesize.v      = item.sb.st_size;
+            newfinfo.data.fileinfo.hash()          = hash;
+            newfinfo.data.fileinfo.time.btv_sec()  = item.mtime.tv_sec;
+            newfinfo.data.fileinfo.time.btv_usec() = item.mtime.tv_usec;
+            newfinfo.data.fileinfo.filesize()      = item.sb.st_size;
             newfinfo.mark_dirty();
 
-            versionindex.data.versionindex.filenames[vind++].string =
+            versionindex.data.versionindex.filenames[vind++]() =
                 item.name;
             versionindex.mark_dirty();
 
@@ -326,15 +326,15 @@ bakFile::_update(void)
 
     bakDatum versioninfo(bt);
     versioninfo.key_versioninfo( version );
-    versioninfo.data.versioninfo.time.btv_sec.v = now.tv_sec;
-    versioninfo.data.versioninfo.time.btv_usec.v = now.tv_usec;
-    versioninfo.data.versioninfo.filecount.v = file_count;
-    versioninfo.data.versioninfo.total_bytes.v = total_bytes;
+    versioninfo.data.versioninfo.time.btv_sec() = now.tv_sec;
+    versioninfo.data.versioninfo.time.btv_usec() = now.tv_usec;
+    versioninfo.data.versioninfo.filecount() = file_count;
+    versioninfo.data.versioninfo.total_bytes() = total_bytes;
     versioninfo.mark_dirty();
 
-    dbinfo.data.dbinfo.nextver.v++;
+    dbinfo.data.dbinfo.nextver()++;
     version_index = dbinfo.data.dbinfo.versions.length();
     dbinfo.data.dbinfo.versions.resize(version_index + 1);
-    dbinfo.data.dbinfo.versions[version_index].v = version;
+    dbinfo.data.dbinfo.versions[version_index]() = version;
     dbinfo.mark_dirty();
 }

@@ -14,8 +14,8 @@ bakFile::create(void)
     {
         bakDatum  dat(bt);
         dat.key_dbinfo();
-        dat.data.dbinfo.sourcedir.string = opts.sourcedir;
-        dat.data.dbinfo.nextver.v = 1;
+        dat.data.dbinfo.sourcedir() = opts.sourcedir;
+        dat.data.dbinfo.nextver() = 1;
         dat.mark_dirty();
     } // bakDatum destructor puts datum
 

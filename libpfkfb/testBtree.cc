@@ -127,7 +127,7 @@ main()
         {
             if ((random() & 0xff) > 0x80)
             {
-                key.key.v = ind;
+                key.key() = ind;
                 if (bt->del( &key, &data_fbn ) == false)
                     fprintf(stderr,"\r %d delete %d failed\n",iter,ind);
                 bt->get_fbi()->free(data_fbn);
@@ -136,7 +136,7 @@ main()
             }
             else
             {
-                key.key.v = ind;
+                key.key() = ind;
                 if (bt->get( &key, &data_fbn ) == false)
                     fprintf(stderr,"\r %d query %d failed\n", iter, ind);
                 else
@@ -144,7 +144,7 @@ main()
                     if (!data.get(data_fbn))
                         fprintf(stderr,"\r %d data retrieval %d failed\n",
                                 iter, ind);
-                    else if (data.data.v != ram[ind].data)
+                    else if (data.data() != ram[ind].data)
                         fprintf(stderr,"\r %d query %d data mismatch\n",
                                 iter, ind);
                 }
@@ -154,8 +154,8 @@ main()
         else
         {
             ram[ind].data = random();
-            key.key.v = ind;
-            data.data.v = ram[ind].data;
+            key.key() = ind;
+            data.data() = ram[ind].data;
             if (!data.putnew( &data_fbn ))
                 fprintf(stderr,"\r %d data put %d failed\n", iter, ind);
             if (bt->put( &key, data_fbn ) == false)
@@ -224,7 +224,7 @@ main()
         {
             if ((random() & 0xff) > 0x80)
             {
-                key.key.v = ind;
+                key.key() = ind;
                 if (bt->del( &key, &data ) == false)
                     fprintf(stderr,"\r %d delete %d failed\n",iter,ind);
                 ram[ind].infile = false;
@@ -232,7 +232,7 @@ main()
             }
             else
             {
-                key.key.v = ind;
+                key.key() = ind;
                 if (bt->get( &key, &data ) == false)
                     fprintf(stderr,"\r %d query %d failed\n", iter, ind);
                 else
@@ -248,7 +248,7 @@ main()
         {
             ram[ind].data = random();
             data = ram[ind].data;
-            key.key.v = ind;
+            key.key() = ind;
             if (bt->put( &key, data ) == false)
                 fprintf(stderr,"\r %d put %d failed\n", iter, ind);
             else

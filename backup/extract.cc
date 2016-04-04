@@ -37,7 +37,7 @@ bakFile::_extract(int tarfd)
 
     bool found = false;
     for (int cnt = 0; cnt < dbi.versions.length(); cnt++)
-        if (dbi.versions[cnt].v == version)
+        if (dbi.versions[cnt]() == version)
         {
             found = true;
             break;
@@ -62,7 +62,7 @@ bakFile::_extract(int tarfd)
                 versionindex.data.versionindex.filenames;
             for (int ind = 0; ind < fns.length(); ind++)
             {
-                const string &path = fns[ind].string;
+                const string &path = fns[ind]();
                 extract_file(version, path, tarfd);
             }
             group ++;
@@ -110,8 +110,8 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
         cerr << "version " << version << " file " << path << " not found\n";
         return;
     }
-    const string &hash = fileinfo.data.fileinfo.hash.string;
-    uint64_t filesize = fileinfo.data.fileinfo.filesize.v;
+    const string &hash = fileinfo.data.fileinfo.hash();
+    uint64_t filesize = fileinfo.data.fileinfo.filesize();
 
     bakDatum blobhash(bt);
     blobhash.key_blobhash( hash, filesize );
@@ -121,7 +121,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
         return;
     }
 
-    FB_AUID_T auid = blobhash.data.blobhash.first_auid.v;
+    FB_AUID_T auid = blobhash.data.blobhash.first_auid();
 
     if (tarfd < 0)
         mkdir_minus_p(path);
@@ -153,17 +153,17 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
             break;
         if (bfc.bst_decode(fb->get_ptr(), fb->get_size()) == false)
             break;
-        if (bfc.data.string.length() > 0)
+        if (bfc.data().length() > 0)
         {
             int cc = ::write(fd,
-                             bfc.data.string.c_str(),
-                             bfc.data.string.length());
-            if (cc != bfc.data.string.length())
+                             bfc.data().c_str(),
+                             bfc.data().length());
+            if (cc != bfc.data().length())
             {
                 cerr << "unable to write to " << path << endl;
             }
         }
-        auid = bfc.next_auid.v;
+        auid = bfc.next_auid();
         bfc.bst_free();
         fbi_data->release(fb);
     }

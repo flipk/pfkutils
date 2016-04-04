@@ -73,21 +73,21 @@ test1 :: entry( void )
 
     TestMsg1 * tm1;
     tm1 = new TestMsg1;
-    tm1->body.one.v = 1;
-    tm1->body.two.v = 2;
+    tm1->body.one() = 1;
+    tm1->body.two() = 2;
     if (!tcp->send(tm1))
         printf("test1 send failed\n");
 
     TestMsg2 * tm2;
     tm2 = new TestMsg2;
-    tm2->body.one.v = 3;
-    tm2->body.two.v = 4;
+    tm2->body.one() = 3;
+    tm2->body.two() = 4;
     if (!tcp->send(tm2))
         printf("test1 send failed\n");
 
     tm1 = new TestMsg1;
-    tm1->body.one.v = 5;
-    tm1->body.two.v = 6;
+    tm1->body.one() = 5;
+    tm1->body.two() = 6;
     if (!tcp->send(tm1))
         printf("test1 send failed\n");
 
@@ -140,12 +140,12 @@ test2 :: entry( void )
         {
         case TestMsg1::TYPE:
             printf("test2 got TestMsg1, one=%d two=%d\n",
-                   u.tm1->body.one.v, u.tm1->body.two.v);
+                   u.tm1->body.one(), u.tm1->body.two());
             break;
 
         case TestMsg2::TYPE:
             printf("test2 got TestMsg2, one=%d two=%d\n",
-                   u.tm2->body.one.v, u.tm2->body.two.v);
+                   u.tm2->body.one(), u.tm2->body.two());
             break;
 
         default:

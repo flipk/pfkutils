@@ -94,9 +94,9 @@ private:
             }
             else
             {
-                if (data.which.v != key.which.v)
+                if (data.which() != key.which())
                 {
-                    cout << "data.which.v != key.which.v!\n";
+                    cout << "data.which() != key.which()!\n";
                     ret = false;
                 }
             }
@@ -219,7 +219,7 @@ private:
                 cout << "bst_decode failed\n";
                 goto out;
             }
-            if (dat->key.which.v != tskey::FNAME_TO_INFO)
+            if (dat->key.which() != tskey::FNAME_TO_INFO)
             {
                 //cout << "not an FNAME_TO_INFO record\n";
                 goto out;
@@ -310,12 +310,12 @@ public:
         } dirpusher(tsDbDir);
         {
             tsdatum dat(bt);
-            dat.key.which.v = tskey::DBINFO;
+            dat.key.which() = tskey::DBINFO;
             dat.key.dbinfo.set("DB_INFO");
             if (dat.get() == false)
             {
                 cout << "# new database" << endl;
-                dat.data.which.v = tsdata::DBINFO;
+                dat.data.which() = tsdata::DBINFO;
                 lastScan.getNow();
                 dat.data.dbinfo.last_scan.set(lastScan);
                 dat.mark_dirty(); // put happens on destruction of dat
@@ -359,14 +359,14 @@ public:
             else
             {
                 tsdatum dat(bt);
-                dat.key.which.v = tskey::FNAME_TO_INFO;
+                dat.key.which() = tskey::FNAME_TO_INFO;
                 dat.key.fname_to_info.fname.set(item.name);
                 if (dat.get() == false)
                 {
-                    dat.data.which.v = tsdata::FNAME_TO_INFO;
+                    dat.data.which() = tsdata::FNAME_TO_INFO;
                     dat.data.fname_to_info.lastScanned.set(now);
                     dat.data.fname_to_info.mtime.set(item.mtime);
-                    string &hash = dat.data.fname_to_info.sha1hash.string;
+                    string &hash = dat.data.fname_to_info.sha1hash();
                     calc_sha1_hash(item.name, hash);
                     dat.mark_dirty();
                     cout << "N " << format_hash(hash)
@@ -382,7 +382,7 @@ public:
                     if (mt != item.mtime)
                     {
                         dat.data.fname_to_info.mtime.set(item.mtime);
-                        string &hash = dat.data.fname_to_info.sha1hash.string;
+                        string &hash = dat.data.fname_to_info.sha1hash();
                         string oldhash(hash);
                         calc_sha1_hash(item.name, hash);
                         if (oldhash == hash)
@@ -405,11 +405,11 @@ public:
             tsdatum * dat = myIter.leftovers.front();
             myIter.leftovers.pop_front();
             const string &oldFname =
-                dat->key.fname_to_info.fname.string;
+                dat->key.fname_to_info.fname();
             dat->del();
             Sha1Hash h;
             memcpy(h.hash,
-                   dat->data.fname_to_info.sha1hash.string.c_str(),
+                   dat->data.fname_to_info.sha1hash().c_str(),
                    Sha1Hash::size);
             map<Sha1Hash,string>::iterator  it = newFiles.find(h);
             if (it == newFiles.end())
@@ -421,9 +421,9 @@ public:
         lastScan = now;
         {
             tsdatum dat(bt);
-            dat.key.which.v = tskey::DBINFO;
+            dat.key.which() = tskey::DBINFO;
             dat.key.dbinfo.set("DB_INFO");
-            dat.data.which.v = tsdata::DBINFO;
+            dat.data.which() = tsdata::DBINFO;
             dat.data.dbinfo.last_scan.set(now);
             dat.mark_dirty();
         } // put happens on destruction of dat
@@ -436,14 +436,14 @@ private:
             tsdatum dat(bt);
             if (dat.key.bst_decode(keydata,keylen) == false)
                 return true;
-            if (dat.key.which.v != tskey::FNAME_TO_INFO)
+            if (dat.key.which() != tskey::FNAME_TO_INFO)
                 return true;
             if (dat.get_data(data_fbn) == false)
                 return true;
             cout << "N "
-                 << format_hash(dat.data.fname_to_info.sha1hash.string)
+                 << format_hash(dat.data.fname_to_info.sha1hash())
                  << " "
-                 << dat.key.fname_to_info.fname.string
+                 << dat.key.fname_to_info.fname()
                  << endl;
             return true;
         }
