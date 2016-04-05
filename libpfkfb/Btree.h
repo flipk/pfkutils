@@ -215,7 +215,9 @@ public:
     }
     /** delete an item from the database given only the key.
      * this function will search for the key/data pair using the key,
-     * and then free all disk space associated with the key and its data.
+     * and then free all disk space associated with the key. if the data
+     * is a FB_AUID_T, this API does not know or assume that, and does NOT
+     * free the associated data block.
      * \param key  pointer to the key data.
      * \param keylen length of the key data.
      * \param old_data_id if the matching key was found, and the record

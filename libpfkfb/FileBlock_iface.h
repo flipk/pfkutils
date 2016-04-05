@@ -252,7 +252,7 @@ public:
      * This function is called to indicate the user is done with a FileBlock
      * that was previously returned by get_block().  If the user has modified
      * the data, the user should call FileBlock::mark_dirty() before calling
-     * this function.
+     * this function, or call this function with dirty=true.
      * \param blk pointer to FileBlock previously returned by get_block().
      * \param dirty the caller should indicate if the block was modified.
      *  passing dirty=true is equivalent to calling FileBlock::mark_dirty
