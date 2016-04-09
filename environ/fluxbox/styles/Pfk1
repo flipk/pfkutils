@@ -4,13 +4,16 @@ style.date:                          Mon Dec 31 2001
 style.credits:
 style.comments:                      Modified/tweaked by skypher, then by pfk
 
-! background: tiled
-! background.pixmap: /home/flipk/Dropbox/Public/pics/grid3.png
+! NOTE  fluxbox can't handle fonts.alias entries, so
+!       you can't say "6x13" -- you have to go to the misc
+!       dir and lookup that "6x13" actually means
+!       -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 
 ! Toolbar settings...
 toolbar.button:                      Gradient Diagonal
 toolbar.button.color:                rgb:9B/9B/9B
 toolbar.button.colorTo:              rgb:42/42/42
+toolbar.button.font:                 -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 toolbar.button.picColor:             black
 
 toolbar.button.pressed:              Flat Gradient CrossDiagonal
@@ -29,13 +32,18 @@ toolbar.windowLabel.textColor:       #ffffff
 
 toolbar.clock:                       Flat Gradient CrossDiagonal
 toolbar.clock.color:                 #40545d
+toolbar.clock.font:                  -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 toolbar.clock.colorTo:               #0e1a27
 toolbar.clock.textColor:             #ffffff
+
+toolbar.workspace.font:              -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
+toolbar.systray.font:                -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
+toolbar.iconbar.font:                -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 
 toolbar:                             Flat Solid CrossDiagonal
 toolbar.color:                       #000000
 toolbar.textColor:                   #333333
-toolbar.font:                        lucidasans-10
+toolbar.font:                        -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 toolbar.justify:                     Left
 
 
@@ -44,14 +52,14 @@ menu.frame:                          Flat Gradient CrossDiagonal
 menu.frame.color:                    #40545d
 menu.frame.colorTo:                  #0e1a27
 menu.frame.textColor:                #ffffff
-menu.frame.font:                     lucidasans-10
+menu.frame.font:                     -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 menu.frame.justify:                  Left
 
 menu.title:                          Flat Gradient CrossDiagonal
 menu.title.color:                    #80949d
 menu.title.colorTo:                  #4e5a67
 menu.title.textColor:                #ffffff
-menu.title.font:                     -*-lucida-bold-r-*-*-11-*-*-*-*-*-*-*
+menu.title.font:                     -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 menu.title.justify:                  Left
 
 menu.hilite:                         Flat Gradient CrossDiagonal
@@ -92,10 +100,10 @@ window.label.focus:                  Flat Gradient CrossDiagonal
 window.label.focus.color:            #60747d
 window.label.focus.colorTo:          #0e1a27
 window.label.focus.textColor:        #ffffff
-window.label.focus.font:             lucidasans-10
+window.label.focus.font:             -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 window.label.focus.justify:          Left
 
-window.font:                         lucidasans-10
+window.font:                         -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1
 window.justify:                      Left
 window.label.unfocus:                Flat Gradient CrossDiagonal
 window.label.unfocus.color:          #40545d
