@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-04-10.13:07:06
+#      Last update: 2016-04-10.17:40:03
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -287,16 +287,16 @@ export HISTSIZE=250
 
 if [ x$RXVT_PID != x ] ; then
     TERM=rxvt
-    else
-        case $TERM in
-            xterm|xterms|linux|screen|rmhost-*)
-                TERM=vt100
-                ;;
-            cygwin)
-                TERM=vt100
-                stty rows 24 cols 80
-                ;;
-        esac
+else
+    case $TERM in
+        xterm|xterms|linux|screen|rmhost-*)
+            TERM=vt100
+            ;;
+        cygwin)
+            TERM=vt100
+            stty rows 24 cols 80
+            ;;
+    esac
 fi
 export TERM
 
