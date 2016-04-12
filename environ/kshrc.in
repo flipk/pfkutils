@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-04-10.17:40:03
+#      Last update: 2016-04-11.22:21:50
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -840,6 +840,13 @@ fi
 __verbose bindings complete
 
 if __isksh ; then
+    SHELLFILEDIR=$HOME/pfk/shells
+    if [[ ! -d $SHELLFILEDIR ]] ; then
+        mkdir -p $SHELLFILEDIR
+    fi
+    SHELLFILE=$SHELLFILEDIR/$HOST.$$
+    trap "rm -f $SHELLFILE         "          EXIT
+    trap "rm -f $SHELLFILE ; exit 0" HUP TERM EXIT
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
         I_AM_XCONSOLE=yes
@@ -857,9 +864,6 @@ if __isksh ; then
             SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,w$WINDOW,sty$STY
         fi
     fi
-    SHELLFILE=$HOME/.y.shell.$HOST.$$
-    trap "rm -f $SHELLFILE         "          EXIT
-    trap "rm -f $SHELLFILE ; exit 0" HUP TERM EXIT
     cd() {
         if [[ $# -eq 0 ]] ; then
             command cd
@@ -912,7 +916,7 @@ if __isksh ; then
         cd .
     }
     shells() {
-        cat $HOME/.y.*
+        cat $SHELLFILEDIR/*
     }
 
     # update xterm title
