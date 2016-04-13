@@ -25,6 +25,7 @@
 cd $HOME
 ENV=$HOME/.kshrc
 export ENV
+xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources
 set-background.sh
 ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'

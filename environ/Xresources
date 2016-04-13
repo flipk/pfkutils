@@ -12,18 +12,17 @@ URxvt.background: black
 URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
 URxvt.fading: 30
-URxvt.font: fixed
+URxvt.font: pfk13
+URxvt.boldFont: pfk13
 ! URxvt.transparent: true
 URxvt.cutchars:   "\\\"/`'&()*,;<=>?@[]^{|}/:"
 ! URxvt.lineSpace: 
 ! URxvt.letterSpace: 
-URxvt.keysym.M-C-1: command:\033]710;5x7\007\033]711;5x7\007
-URxvt.keysym.M-C-2: command:\033]710;fixed\007\033]711;fixed\007
-URxvt.keysym.M-C-3: command:\033]710;10x20\007\033]711;10x20\007
+URxvt.keysym.M-C-1: command:\033]710;pfk7\007\033]711;pfk7\007
+URxvt.keysym.M-C-2: command:\033]710;pfk13\007\033]711;pfk13\007
+URxvt.keysym.M-C-3: command:\033]710;pfk20\007\033]711;pfk20\007
 URxvt.keysym.M-C-8: command:\033[8;25;80t
 URxvt.keysym.M-C-9: command:\033[8;40;80t
-
-! 10x20
 
 XTerm*termName: vt100
 XTerm*jumpScroll:             true
@@ -99,7 +98,7 @@ Xmessage*foreground: green
 Xmessage*background: black
 Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
-Emacs*font: -misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1
+Emacs*font: pfk13
 Emacs*verticalScrollBar.background:  grey85
 Emacs*verticalScrollBar.troughColor: grey50
 Emacs.pane.menubar*foreground:       yellow
@@ -123,7 +122,7 @@ Xman*foreground:      gray85
 Xman*background:      black
 Xman.notopbox:        true
 
-Xedit*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-70-iso646.1991-irv
+Xedit*font:   pfk13
 Xedit*geometry:       500x500
 Xedit*foreground:     Yellow
 Xedit*background:     Black

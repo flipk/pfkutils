@@ -74,12 +74,9 @@
        (progn
          (menu-bar-mode -1))))
 
-(setq pfk-small-font
-      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
-(setq pfk-minibuf-font
-      "-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1")
-(setq pfk-big-font
-      "-misc-*-medium-r-normal-*-20-200-*-*-*-*-iso8859-1")
+(setq pfk-small-font "pfk13")
+(setq pfk-minibuf-font "pfk13")
+(setq pfk-big-font "pfk20")
 
 ;(defun my-make-frame-hook (frame)
 ;  ""
