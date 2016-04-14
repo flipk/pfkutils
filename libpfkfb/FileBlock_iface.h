@@ -74,6 +74,10 @@ public:
      * \return the offset in the file */
     off_t   get_offset(void) { return bcb->get_offset(); }
     /** return return the size of this block.
+     * \note this does not return the exact size passed to alloc() !
+     *       the size value this returns is rounded up to the nearest
+     *       internal block boundary, and thus may be up to 127 bytes
+     *       larger than what was passed to alloc().
      * \return the size of this block */
     int     get_size  (void) { return bcb->get_size  (); }
     /** return a pointer to memory which holds this block's data.

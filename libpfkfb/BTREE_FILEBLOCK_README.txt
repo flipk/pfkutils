@@ -302,6 +302,10 @@ through FileBlockInterface::release(). FileBlock has the following methods:
 uint8_t * get_ptr   (void);
 
     /** return return the size of this block.
+     * NOTE: this does not return the exact size passed to alloc() !
+     *       the size value this returns is rounded up to the nearest
+     *       internal block boundary, and thus may be up to 127 bytes
+     *       larger than what was passed to alloc().
      * \return the size of this block */
 int     get_size  (void);
 
