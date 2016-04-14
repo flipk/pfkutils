@@ -13,6 +13,7 @@ URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
 URxvt.fading: 30
 URxvt.font: pfk13
+URxvt.altFont: fixed
 URxvt.boldFont: pfk13
 ! URxvt.transparent: true
 URxvt.cutchars:   "\\\"/`'&()*,;<=>?@[]^{|}/:"
