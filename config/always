@@ -743,7 +743,8 @@ environ_install:
 		ln -s .elisp/emacs.el .emacs
 	$(Q)set -e ; cd $(HOME)/.vnc ; rm -f xstartup ; \
 		ln -s $(ETCDIR)/vnc-xstartup xstartup ; \
-		chmod u+x $(ETCDIR)/vnc-xstartup
+		chmod u+x $(ETCDIR)/vnc-xstartup \
+			$(ETCDIR)/xinitrc $(ETCDIR)/xsession
 	$(Q)set -e ; tar -C environ -cf - fluxbox | tar -C $(ETCDIR) -xf -
 	$(Q)cd $(HOME) ; rm -rf .fluxbox ; ln -s $(ETCDIR)/fluxbox .fluxbox
 
