@@ -6,15 +6,16 @@
 #include "CircularReader.h"
 #include "WebAppMessage.h"
 #include "LockWait.h"
+#include "BackTrace.h"
 #include "fdThreadLauncher.h"
 
 #include <sstream>
 
 namespace WebAppClient {
 
-struct WSClientError
+struct WSClientError : BackTraceUtil::BackTrace
 {
-    enum err {
+    enum WSClientErrVal {
         ERR_URL_MALFORMED,
         ERR_URL_PATH_MALFORMED,
         ERR_PROXY_MALFORMED,
@@ -24,10 +25,13 @@ struct WSClientError
         ERR_URL_IP,
         ERR_SOCKET,
         ERR_CONNREFUSED,
-        ERR_NOTCONN
-    };
-    err e;
-    WSClientError(err _e) : e(_e) { }
+        ERR_NOTCONN,
+        __NUMERRS
+    } err;
+    static const std::string errStrings[__NUMERRS];
+    WSClientError(WSClientErrVal _e) : err(_e) { }
+    /** return a descriptive string matching the error */
+    const std::string Format(void) const;
 };
 
 class WebSocketClient : fdThreadLauncher,

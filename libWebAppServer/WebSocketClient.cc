@@ -20,6 +20,27 @@ using namespace WebAppServer;
 
 namespace WebAppClient {
 
+#define __WSERR(e) throw WSClientError(WSClientError::e)
+
+const std::string WSClientError::errStrings[__NUMERRS] = {
+    "item not valid",
+    "item already on list",
+    "item still on a list",
+    "list not empty",
+    "list not locked",
+    "item not on this list"
+};
+
+const std::string
+WSClientError::Format(void) const
+{
+    std::string ret = "WebSocketClient ERROR: ";
+    ret += errStrings[err];
+    ret += " at:\n";
+    ret += BackTrace::Format();
+    return ret;
+}
+
 // proxy format should be "hostname:port" or "a.b.c.d:port".
 //   note port is not required for proxy, assumed to be 1080 if absent.
 
@@ -87,7 +108,7 @@ WebSocketClient :: init_common(const string &proxy,
         regex_t   proxyReg;
         regcomp(&proxyReg, proxyRegexPattern, REG_EXTENDED);
         if (regexec(&proxyReg, proxy.c_str(), MAX_MATCHES, matches, 0) != 0)
-            throw WSClientError(WSClientError::ERR_PROXY_MALFORMED);
+            __WSERR(ERR_PROXY_MALFORMED);
         if (MATCH(PROXY_GROUP_HOSTNAME))
             proxyHost = MATCHSTR(proxy,PROXY_GROUP_HOSTNAME);
         if (MATCH(PROXY_GROUP_IPADDR))
@@ -108,7 +129,7 @@ WebSocketClient :: init_common(const string &proxy,
     regex_t  urlReg;
     regcomp(&urlReg, urlRegexPattern, REG_EXTENDED);
     if (regexec(&urlReg, url.c_str(), MAX_MATCHES, matches, 0) != 0)
-        throw WSClientError(WSClientError::ERR_URL_MALFORMED);
+        __WSERR(ERR_URL_MALFORMED);
     if (MATCH(URL_GROUP_HOSTNAME))
         urlHost = MATCHSTR(url,URL_GROUP_HOSTNAME);
     if (MATCH(URL_GROUP_IPADDR))
@@ -118,7 +139,7 @@ WebSocketClient :: init_common(const string &proxy,
     if (MATCH(URL_GROUP_PATH))
         urlPath = MATCHSTR(url,URL_GROUP_PATH);
     else
-        throw WSClientError(WSClientError::ERR_URL_PATH_MALFORMED);
+        __WSERR(ERR_URL_PATH_MALFORMED);
     regfree(&urlReg);
 
     if (urlHost.length() > 0)
@@ -134,28 +155,28 @@ WebSocketClient :: init_common(const string &proxy,
     {
         struct hostent * he = gethostbyname( proxyHost.c_str() );
         if (he == NULL)
-            throw WSClientError(WSClientError::ERR_PROXY_HOSTNAME);
+            __WSERR(ERR_PROXY_HOSTNAME);
         memcpy( &destAddr.s_addr, he->h_addr, he->h_length );
         destPort = proxyPort;
     }
     else if (proxyIp.length() > 0)
     {
         if ( ! inet_aton(proxyIp.c_str(), &destAddr))
-            throw WSClientError(WSClientError::ERR_PROXY_IP);
+            __WSERR(ERR_PROXY_IP);
         destPort = proxyPort;
     }
     else if (urlHost.length() > 0)
     {
         struct hostent * he = gethostbyname( urlHost.c_str() );
         if (he == NULL)
-            throw WSClientError(WSClientError::ERR_URL_HOSTNAME);
+            __WSERR(ERR_URL_HOSTNAME);
         memcpy( &destAddr.s_addr, he->h_addr, he->h_length );
         destPort = urlPort;
     }
     else if (urlIp.length() > 0)
     {
         if ( ! inet_aton(urlIp.c_str(), &destAddr))
-            throw WSClientError(WSClientError::ERR_URL_IP);
+            __WSERR(ERR_URL_IP);
         destPort = urlPort;
     }
 
@@ -166,13 +187,13 @@ WebSocketClient :: init_common(const string &proxy,
     newfd = socket(AF_INET, SOCK_STREAM, 0);
     if (newfd < 0)
     {
-        throw WSClientError(WSClientError::ERR_SOCKET);
+        __WSERR(ERR_SOCKET);
     }
 
     if (connect(newfd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
         close(newfd);
-        throw WSClientError(WSClientError::ERR_CONNREFUSED);
+        __WSERR(ERR_CONNREFUSED);
     }
 
     ostringstream hdrs;
@@ -199,7 +220,6 @@ WebSocketClient :: init_common(const string &proxy,
     }
 
     got_flags = GOT_NONE;
-    startFdThread( newfd );
 }
 
 WebSocketClient :: ~WebSocketClient(void)
@@ -292,7 +312,7 @@ WebSocketClient :: generateWsHeaders(ostringstream &hdrs)
 bool
 WebSocketClient :: doSelect(bool *forRead, bool *forWrite)
 {
-    *forRead = true;
+    *forRead = !finished;
     *forWrite = false;
     return true;
 }
@@ -301,6 +321,9 @@ WebSocketClient :: doSelect(bool *forRead, bool *forWrite)
 bool
 WebSocketClient :: handleReadSelect(int fd)
 {
+    if (finished)
+        return false;
+
     if (readbuf.remaining() == 0)
     {
         cerr << "read : buffer is full!" << endl;
@@ -471,9 +494,12 @@ WebSocketClient :: handle_wsheader(const CircularReaderSubstr &hdr)
         else
         {
             state = STATE_CONNECTED;
-            WaitUtil::Lock   lock(this);
-            onConnect();
-            bUserConnCallback = true;
+            if (!finished)
+            {
+                WaitUtil::Lock   lock(this);
+                onConnect();
+                bUserConnCallback = true;
+            }
         }
     }
     return true;
@@ -568,6 +594,7 @@ WebSocketClient :: handle_message(void)
             return false;
         }
 
+        if (!finished)
         {
             WaitUtil::Lock   lock(this);
             if (onMessage(
@@ -607,20 +634,20 @@ WebSocketClient :: doPoll(void)
 void
 WebSocketClient :: done(void)
 {
+    finished = true;
     if (bUserConnCallback)
     {
         WaitUtil::Lock   lock(this);
         onDisconnect();
-        bUserConnCallback = false;
     }
-    finished = true;
+    bUserConnCallback = false;
 }
 
 bool
 WebSocketClient :: sendMessage(const WebAppMessage &m)
 {
     if (state != STATE_CONNECTED)
-        throw WSClientError(WSClientError::ERR_NOTCONN);
+        __WSERR(ERR_NOTCONN);
 
     string msg;
 
