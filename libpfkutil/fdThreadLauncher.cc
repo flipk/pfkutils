@@ -30,30 +30,33 @@ fdThreadLauncher :: startFdThread(int _fd, int _pollInterval)
     fd = _fd;
     pollInterval = _pollInterval;
     state = STARTING;
+    pipe(startSyncFds);
     pthread_attr_t attr;
     pthread_attr_init( &attr );
-    pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
-    pthread_t id;
-    pthread_create(&id, &attr,
-                   &_threadEntry, (void*) this);
+    int cc =
+        pthread_create(&threadId, &attr,
+                       &_threadEntry, (void*) this);
     pthread_attr_destroy( &attr );
-    int count = 100000;
-    while (state == STARTING && count > 0)
+    if (cc != 0)
     {
-        count--;
-        usleep(1);
-    }
-    if (state != RUNNING)
-    {
-        cerr << "thread failed to start, state : " << state << endl;
+        cerr << "fdThreadLauncher :: startFdThread: "
+             << "pthread_create failed, error = "
+             << strerror(cc) << endl;
         state = DEAD;
+    }
+    else
+    {
+        char dummy;
+        // wait for thread to start up
+        read(startSyncFds[0], &dummy, 1);
+        close(startSyncFds[0]);
+        close(startSyncFds[1]);
     }
 }
 
 fdThreadLauncher :: ~fdThreadLauncher(void)
 {
-    if (state == RUNNING)
-        stopFdThread();
+    stopFdThread();
 }
 
 void
@@ -72,12 +75,8 @@ fdThreadLauncher :: stopFdThread(void)
     state = STOPPING;
     char c = CMD_CLOSE;
     (void) ::write(cmdFds[1], &c, 1);
-    int count = 100000;
-    while (state == STOPPING && count > 0)
-    {
-        count--;
-        usleep(1);
-    }
+    void * dummy = NULL;
+    pthread_join(threadId, &dummy);
 }
 
 //static
@@ -87,6 +86,8 @@ fdThreadLauncher :: _threadEntry(void *arg)
     fdThreadLauncher * obj = (fdThreadLauncher *) arg;
     pipe(obj->cmdFds);
     obj->state = RUNNING;
+    char dummy = 0;
+    write(obj->startSyncFds[1], &dummy, 1);
     printf("fdThread starting to manage fd %d\n", obj->fd);
     obj->threadEntry();
     printf("fdThread managing fd %d is exiting!\n", obj->fd);

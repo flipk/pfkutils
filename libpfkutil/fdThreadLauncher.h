@@ -19,7 +19,9 @@ public:
     } state;
 private:
     bool threadRunning;
+    pthread_t threadId;
     enum { CMD_CLOSE, CMD_CHANGEPOLL };
+    int startSyncFds[2];
     int cmdFds[2];
     static void * _threadEntry(void *);
     void threadEntry(void);
