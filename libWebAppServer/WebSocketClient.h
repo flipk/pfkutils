@@ -50,7 +50,9 @@ class WebSocketClient : fdThreadLauncher,
     /*virtual*/ bool handleReadSelect(int fd);
     /*virtual*/ bool handleWriteSelect(int fd);
     /*virtual*/ bool doPoll(void);
+public:
     /*virtual*/ void done(void);
+private:
     static const int  GOT_NONE               = 0;
     static const int  GOT_SWITCHING          = 1;
     static const int  GOT_CONNECTION_UPGRADE = 2;

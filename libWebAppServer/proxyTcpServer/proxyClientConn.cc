@@ -40,6 +40,7 @@ proxyClientConn :: read ( fd_mgr *_mgr )
         pm_out.set_type(PMT_CLOSING);
         pm_out.mutable_closing()->set_reason("tcp proxy rcvd close");
         sendProxyMsg();
+        done();
         return DEL;
     }
     pm_out.set_type(PMT_DATA);
