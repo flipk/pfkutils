@@ -114,12 +114,14 @@ serverPort :: handleReadSelect(int fd)
         WebServerConnectionBase * wscb = 
             new WebSocketConnection(configs, clientFd);
         connections.push_back(wscb);
+        wscb->startServer();
     }
     else if (type == APP_TYPE_FASTCGI)
     {
         WebServerConnectionBase * wscb = 
             new WebFastCGIConnection(configs, clientFd);
         connections.push_back(wscb);
+        wscb->startServer();
     }
     return true;
 }

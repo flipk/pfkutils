@@ -163,7 +163,7 @@ WebSocketClient :: init_common(const string &proxy,
     sa.sin_port = htons(destPort);
     sa.sin_addr = destAddr;
 
-    int newfd = socket(AF_INET, SOCK_STREAM, 0);
+    newfd = socket(AF_INET, SOCK_STREAM, 0);
     if (newfd < 0)
     {
         throw WSClientError(WSClientError::ERR_SOCKET);
@@ -205,6 +205,12 @@ WebSocketClient :: init_common(const string &proxy,
 WebSocketClient :: ~WebSocketClient(void)
 {
     stopFdThread();
+}
+
+void
+WebSocketClient :: startClient(void)
+{
+    startFdThread( newfd );
 }
 
 void

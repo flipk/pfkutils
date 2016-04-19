@@ -67,6 +67,7 @@ private:
     std::string secWebsocketKey;
     std::string secWebsocketKeyResponse;
     int proxyPort, urlPort;
+    int newfd;
     void generateProxyHeaders(std::ostringstream &hdrs);
     void generateWsHeaders(std::ostringstream &hdrs);
     inline const std::string &hostForConn(void);
@@ -76,6 +77,7 @@ public:
     WebSocketClient(const std::string &proxy, const std::string &url,
                     bool _proxyWsWithConnect);
     virtual ~WebSocketClient(void);
+    void startClient(void);
     bool sendMessage(const WebAppServer::WebAppMessage &m);
     bool checkFinished(void) { return finished; }
     // derived class must implement

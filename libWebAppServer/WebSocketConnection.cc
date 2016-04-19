@@ -20,11 +20,7 @@ WebSocketConnection :: WebSocketConnection(
     : WebServerConnectionBase(_configs, _fd)
 {
     state = STATE_HEADER;
-    got_flags = GOT_NONE;
-    // i wanted to startFdThread in WebServerConnectionBase, but i can't
-    // because it would call pure virtual methods that aren't set up until
-    // this derived contructor is complete. so.. bummer.
-    startFdThread(_fd);
+     got_flags = GOT_NONE;
 }
 
 WebSocketConnection :: ~WebSocketConnection(void)
@@ -35,6 +31,16 @@ WebSocketConnection :: ~WebSocketConnection(void)
         delete wac;
     }
     wac = NULL;
+}
+
+//virtual
+void
+WebSocketConnection :: startServer(void)
+{
+    // i wanted to startFdThread in WebServerConnectionBase, but i can't
+    // because it would call pure virtual methods that aren't set up until
+    // this derived contructor is complete. so.. bummer.
+    startFdThread(tempFd, 1000);    
 }
 
 //virtual

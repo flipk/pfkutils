@@ -102,6 +102,7 @@ public:
     static const int MAX_READBUF = 65536;
     friend class serverPort;
 protected:
+    int tempFd;
     serverPort::ConfigRecList_t &configs;
     WebAppServerConfigRecord * config;
     WebAppConnection * wac;
@@ -118,10 +119,12 @@ protected:
 public:
     WebServerConnectionBase(serverPort::ConfigRecList_t &_configs, int _fd);
     virtual ~WebServerConnectionBase(void);
+    virtual void startServer(void) = 0;
     virtual void sendMessage(const WebAppMessage &m) = 0;
 };
 
 class WebSocketConnection : public WebServerConnectionBase {
+    /*virtual*/ void startServer(void);
     // return false to close
     /*virtual*/ bool handleSomeData(void);
     /*virtual*/ bool doPoll(void);
@@ -162,6 +165,7 @@ public:
 
 class WebFastCGIConnection : public WebServerConnectionBase {
     // return false to close
+    /*virtual*/ void startServer(void);
     /*virtual*/ bool handleSomeData(void);
     /*virtual*/ bool doPoll(void);
     /*virtual*/ void done(void);

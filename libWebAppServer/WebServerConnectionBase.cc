@@ -11,7 +11,7 @@ namespace WebAppServer {
 
 WebServerConnectionBase :: WebServerConnectionBase(
     serverPort::ConfigRecList_t &_configs, int _fd)
-    : configs(_configs), readbuf(MAX_READBUF)
+    : tempFd(_fd), configs(_configs), readbuf(MAX_READBUF)
 {
     wac = NULL;
     config = NULL;

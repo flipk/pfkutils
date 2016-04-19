@@ -55,6 +55,8 @@ proxyClientTcpAcceptor :: read ( fd_mgr * mgr )
 
     mgr->register_fd(pcc);
 
+    pcc->startClient();
+
     return OK;
 }
 

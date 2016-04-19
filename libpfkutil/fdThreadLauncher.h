@@ -119,6 +119,12 @@ public:
     /** start the thread, managing the given descriptor.
      * \note this function blocks until the thread is confirmed to have
      *    started and taken control of the descriptor.
+     * \warning if you derived an object from this class, you
+     *    CANNOT call startFdThread from your derived class
+     *    constructor!  you may enter a race where the fdThread
+     *    receives a message and calls handleReadSelect before
+     *    your constructor completes, causing a null virtual
+     *    function pointer exception.
      * \param _fd the descriptor to manage.  this is copied into 
      *    this object's fd data member.
      * \param _pollInterval if desired, the doPoll will be called on
