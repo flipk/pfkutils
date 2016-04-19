@@ -54,9 +54,12 @@ struct myTimeval : public timeval
         char ymdhms[128], ms[12];
         strftime(ymdhms,sizeof(ymdhms),"%Y-%m-%d %H:%M:%S",&t);
         ymdhms[sizeof(ymdhms)-1] = 0;
-        snprintf(ms,sizeof(ms),"%06d", tv_usec);
+        snprintf(ms,sizeof(ms),"%06ld", tv_usec);
         ms[sizeof(ms)-1] = 0;
         return std::string(ymdhms) + "." + ms;
+    }
+    uint32_t msecs(void) {
+        return (tv_sec * 1000) + (tv_usec / 1000);
     }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
