@@ -1,3 +1,4 @@
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 #ifndef __SERVER_PORTS_H__
 #define __SERVER_PORTS_H__
