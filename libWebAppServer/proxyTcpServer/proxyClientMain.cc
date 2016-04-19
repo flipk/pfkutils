@@ -4,6 +4,7 @@
 
 #include "proxyClientConn.h"
 #include "proxyClientTcpAcceptor.h"
+#include <signal.h>
 
 using namespace std;
 using namespace WebAppServer;
@@ -20,6 +21,8 @@ int usage(void)
 int
 main(int argc, char ** argv)
 {
+    signal(SIGPIPE, SIG_IGN);
+
     int listenPort = -1;
     bool proxyConnect = false;
     string proxy = "";
@@ -50,7 +53,14 @@ main(int argc, char ** argv)
     while (1)
     {
         struct timeval tv = { 0, 100000 };
-        mgr.loop(&tv);
+        try {
+            mgr.loop(&tv);
+        }
+        catch (WSClientError x)
+        {
+            std::cerr << "caught WSClientError: "
+                      << x.Format() << std::endl;
+        }
     }
     return 0;
 }

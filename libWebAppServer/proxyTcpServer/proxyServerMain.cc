@@ -5,6 +5,7 @@
 #include "WebAppServer.h"
 #include "proxyServerConn.h"
 #include <stdlib.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -18,6 +19,8 @@ int usage(void)
 int
 main(int argc, char ** argv)
 {
+    signal(SIGPIPE, SIG_IGN);
+
     string destHost = "";
     int destPort = -1;
     int wsPort = -1;
