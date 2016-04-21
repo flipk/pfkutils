@@ -30,6 +30,7 @@ $(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
 
 clean:
 	rm -rf obj.*
+	make -C contrib clean
 
 ##############################################
 

@@ -89,7 +89,7 @@ OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
 	pfkscript pfksh scripts syslog misc/states contrib \
-	libWebAppServer/proxyTcpServer xlock
+	libWebAppServer/proxyTcpServer xlock fonts
 
 ##############################################
 
@@ -576,6 +576,34 @@ endif
 
 ##############################################
 
+ifeq ($(PFK_BUILD_fonts),1)
+
+FONTDIR= $(HOME)/pfk/fonts
+ALIAS= fonts/fonts.alias
+
+BDF_FILES= fonts/5x7.bdf fonts/6x13.bdf fonts/10x20.bdf
+PCFGZ_FILES= $(patsubst %.bdf, $(OBJDIR)/%.pcf.gz, $(BDF_FILES))
+
+POSTALL += build_fonts
+
+build_fonts: $(PCFGZ_FILES)
+
+$(PCFGZ_FILES) : $(OBJDIR)/%.pcf.gz: %.bdf
+	bdftopcf -t < $< | gzip > $@
+
+POSTINSTALL += install_fonts
+
+install_fonts:
+	mkdir -p $(FONTDIR)
+	cp $(PCFGZ_FILES) $(ALIAS) $(FONTDIR)
+	cd $(FONTDIR) && mkfontdir .
+	[ x$(DISPLAY) != x ] && xset +fp $(FONTDIR) || true
+	tar -C $(HOME) -jxvf fonts/dot-fonts.tar.bz2
+
+endif
+
+##############################################
+
 ifeq ($(PFK_BUILD_states),1)
 LIB_TARGETS += states
 states_TARGET = $(OBJDIR)/libstates.a
@@ -726,7 +754,7 @@ post_all:
 	@+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
-POSTINSTALL = environ_install scripts_install contrib_install
+POSTINSTALL += environ_install scripts_install contrib_install
 
 environ_install:
 	@echo installing environ

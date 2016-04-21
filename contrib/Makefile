@@ -1,6 +1,8 @@
 
 all: $(PROGS)
 
+######################################################
+
 CSCOPE_DIR= cscope-15.7a
 
 cscope:
@@ -26,6 +28,8 @@ cscope:
 cscope-install:
 	@echo installing cscope to $(INSTALL_BIN_DIR)
 	@cp $(OBJDIR)/$(CSCOPE_DIR)/src/cscope $(INSTALL_BIN_DIR)
+
+######################################################
 
 CTWM_DIR= ctwm-3.8a
 
@@ -61,4 +65,36 @@ ctwm:
 ctwm-install:
 	@echo installing ctwm to $(INSTALL_BIN_DIR)
 	@cp $(OBJDIR)/$(CTWM_DIR)/ctwm $(INSTALL_BIN_DIR)
+
+######################################################
+
+rxvt-unicode-pfk:
+	@echo making rxvt-unicode
+	chmod u+x build-rxvt-unicode.sh
+	./build-rxvt-unicode.sh
+
+rxvt-unicode-pfk-install:
+	@echo installing rxvt-unicode
+	chmod u+x install-rxvt-unicode.sh
+	./install-rxvt-unicode.sh
+
+######################################################
+
+fluxbox-pfk:
+	@echo making fluxbox
+	chmod u+x build-fluxbox.sh
+	./build-fluxbox.sh
+
+fluxbox-pfk-install:
+	@echo installing fluxbox
+	chmod u+x install-fluxbox.sh
+	./install-fluxbox.sh
+
+######################################################
+
+clean:
+	cd $(CSCOPE_DIR) && make clean || true
+	cd $(CTWM_DIR) && make clean || true
+	cd fluxbox && make clean || true
+	cd rxvt-unicode && make clean || true
 
