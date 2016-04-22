@@ -27,10 +27,28 @@ if [ ! -f configure ] ; then
     autoreconf -i
 fi
 
+case x$PFK_CONFIG_flubox_xinerama in
+    xenable)
+	xinerama=--enable-xinerama
+	;;
+    xdisable)
+	xinerama=--disable-xinerama
+	;;
+    xdefault)
+	xinerama=""
+	;;
+    *)
+	echo please set PFK_CONFIG_flubox_xinerama to yes or no in config
+	exit 1
+	;;
+
+esac
+
 if [ ! -f Makefile ] ; then
-    sh 00-PFK-CONFIGURE
+    ./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7 \
+		--disable-xrandr $xinerama
 fi
 
-make -j3
+make $PFK_CONFIG_contrib_makejobs
 
 exit 0

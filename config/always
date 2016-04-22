@@ -751,7 +751,7 @@ pfkutils-makelinks: $(pfkutils_TARGET)
 POSTALL += post_all # TODO doxygen
 
 post_all:
-	@+make -C contrib \
+	$(Q)+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
 
 POSTINSTALL += environ_install scripts_install contrib_install

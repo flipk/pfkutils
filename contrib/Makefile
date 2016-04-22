@@ -3,6 +3,22 @@ all: $(PROGS)
 
 ######################################################
 
+clone-https:
+	rm -rf rxvt-unicode fluxbox
+	git clone https://github.com/flipk/rxvt-unicode.git
+	git clone https://github.com/flipk/fluxbox.git
+	cd rxvt-unicode && git checkout pfk-2016-0410
+	cd fluxbox && git checkout pfk-1_3_7
+
+clone-me:
+	rm -rf rxvt-unicode fluxbox
+	git clone git@github.com:flipk/rxvt-unicode.git
+	git clone git@github.com:flipk/fluxbox.git
+	cd rxvt-unicode && git checkout pfk-2016-0410
+	cd fluxbox && git checkout pfk-1_3_7
+
+######################################################
+
 CSCOPE_DIR= cscope-15.7a
 
 cscope:
@@ -23,7 +39,7 @@ cscope:
 			tar cf - $$FILELIST | tar -C $(OBJDIR) -xvf - ; \
 		fi ; \
 	fi
-	@+make -C $(OBJDIR)/$(CSCOPE_DIR)
+	@+make -C $(OBJDIR)/$(CSCOPE_DIR) $(PFK_CONFIG_contrib_makejobs)
 
 cscope-install:
 	@echo installing cscope to $(INSTALL_BIN_DIR)

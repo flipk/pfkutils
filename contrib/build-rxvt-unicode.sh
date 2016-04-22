@@ -20,9 +20,15 @@ if [ ! -f 00-PFK-CONFIGURE ] ; then
 fi
 
 if [ ! -f Makefile ] ; then
-    sh 00-PFK-CONFIGURE
+    ./configure --prefix=$HOME/pfk/$PFKARCH/urxvt-9.22 \
+		--enable-xft --enable-font-styles --disable-perl \
+		--disable-iso14755 --enable-selectionscrolling \
+		--enable-mousewheel --disable-utmp --disable-wtmp \
+		--disable-lastlog --with-term=vt100
+    cp src/Makefile src/Makefile.orig
+    sed -e s/gcc/g++/ < src/Makefile.orig > src/Makefile
 fi
 
-make -j3
+make $PFK_CONFIG_contrib_makejobs
 
 exit 0

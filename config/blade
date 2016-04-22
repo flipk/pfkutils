@@ -53,3 +53,6 @@ PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 # to make sure i didnt break anything.
 
 CONTRIB_PROGS= cscope ctwm fluxbox-pfk rxvt-unicode-pfk
+
+export PFK_CONFIG_flubox_xinerama=enable
+export PFK_CONFIG_contrib_makejobs=-j9
