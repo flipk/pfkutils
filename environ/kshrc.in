@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-04-11.22:21:50
+#      Last update: 2016-04-23.00:31:22
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -272,8 +272,8 @@ export VIEWER=xless
 export CSCOPE_EDITOR=$HOME/bin/ec
 export NPCL_EDITOR=less
 export PAGER=less
-export  LESS='-j5 -c -d -h 5 -i -M -q -S -n -e -R'
-export XLESS='-j5 -c -d -h 5 -i -M -q -R'
+export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'
+export XLESS='-X -j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
 
