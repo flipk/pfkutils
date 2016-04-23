@@ -1,6 +1,8 @@
 
 #include "proxyClientConn.h"
 
+#include <errno.h>
+
 using namespace std;
 using namespace proxyTcp;
 using namespace WebAppServer;
@@ -165,12 +167,23 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
         int cc = 0;
         if (pm_in.data().data().length() > 0)
         {
-            cc = ::write(fd_interface::fd,
-                         pm_in.data().data().c_str(),
-                         pm_in.data().data().length());
-            if (cc != pm_in.data().data().length())
-                printf("PFK ERROR write of %d != %d\n",
-                       cc, pm_in.data().data().length());
+            uint8_t * ptr = (uint8_t *) pm_in.data().data().c_str();
+            size_t bytes_left = (size_t) pm_in.data().data().length();
+            while (bytes_left > 0)
+            {
+                cc = ::write(fd_interface::fd, ptr, bytes_left);
+                if (cc <= 0)
+                {
+                    int e = errno;
+                    printf("NOTE: write failed! (cc=%d, %d:%s)\n",
+                           cc, e, strerror(e));
+                    break;
+                }
+                if (cc != bytes_left)
+                    printf("NOTE: write of %d != %d\n", bytes_left, cc);
+                bytes_left -= cc;
+                ptr += cc;
+            }
         }
         if (cc <= 0)
             ret = false;
