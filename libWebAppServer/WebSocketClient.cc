@@ -23,12 +23,16 @@ namespace WebAppClient {
 #define __WSERR(e) throw WSClientError(WSClientError::e)
 
 const std::string WSClientError::errStrings[__NUMERRS] = {
-    "item not valid",
-    "item already on list",
-    "item still on a list",
-    "list not empty",
-    "list not locked",
-    "item not on this list"
+    "URL malformed",
+    "URL path malformed",
+    "PROXY malformed",
+    "PROXY hostname not resolved",
+    "PROXY IP parse failure",
+    "URL hostname not resolved",
+    "URL IP parse failure",
+    "could not create socket",
+    "Server Connection Refused",
+    "Trying to send message while not connected"
 };
 
 const std::string
