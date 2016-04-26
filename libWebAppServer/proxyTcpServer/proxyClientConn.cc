@@ -172,15 +172,33 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
             while (bytes_left > 0)
             {
                 cc = ::write(fd_interface::fd, ptr, bytes_left);
-                if (cc <= 0)
+                if (cc == 0)
                 {
-                    int e = errno;
-                    printf("NOTE: write failed! (cc=%d, %d:%s)\n",
-                           cc, e, strerror(e));
+                    printf("NOTE: write failed, end of file\n");
                     break;
                 }
+                if (cc < 0)
+                {
+                    int e = errno;
+                    if (e != EAGAIN)
+                    {
+                        printf("NOTE: write failed! (cc=%d, %d:%s)\n",
+                               cc, e, strerror(e));
+                        break;
+                    }
+                }
+                //else cc > 0
                 if (cc != bytes_left)
+                {
                     printf("NOTE: write of %d != %d\n", bytes_left, cc);
+                    fd_set rfds;
+                    FD_ZERO(&rfds);
+                    FD_SET(fd_interface::fd, &rfds);
+                    struct timeval tv;
+                    tv.tv_sec = 1;
+                    tv.tv_usec = 0;
+                    select(fd_interface::fd+1,&rfds,NULL,NULL,&tv);
+                }
                 bytes_left -= cc;
                 ptr += cc;
             }
