@@ -10,10 +10,7 @@ class Bufprintf {
     char buf[maxsize];
     int len;
 public:
-    Bufprintf(void) {
-        memset(buf,0,maxsize);
-        len = 0;
-    }
+    Bufprintf(void) { clear(); }
     ~Bufprintf(void) { }
     void print(const char *format...) {
         va_list ap;
@@ -27,4 +24,5 @@ public:
     void write(int fd) { ::write(fd,buf,len); }
     char * getBuf(void) { return buf; }
     int getLen(void) { return len; }
+    void clear(void) { len = 0; }
 };
