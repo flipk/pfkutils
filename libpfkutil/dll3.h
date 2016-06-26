@@ -12,6 +12,16 @@
 #include "LockWait.h"
 #include "BackTrace.h"
 
+#ifdef __GNUC__
+# if __GNUC__ >= 6
+#  define ALLOW_THROWS noexcept(false)
+# else
+#  define ALLOW_THROWS
+# endif
+#else
+# define ALLOW_THROWS
+#endif
+
 /** all dynamic linked list version 3 templates under this namespace */
 namespace DLL3 {
 
@@ -66,7 +76,7 @@ public:
         __DLL3_LIST * lst;
     public:
         Links(void);
-        ~Links(void);
+        ~Links(void) ALLOW_THROWS;
         void checkvalid(__DLL3_LIST * _lst);
     };
 private:
@@ -78,7 +88,7 @@ private:
     void _add_head(Links * item);
 public:
     List(void);
-    ~List(void);
+    ~List(void) ALLOW_THROWS;
     /** add the item to the head of this list.
      * \param item  the item to add.
      * \throw may throw ListError */
@@ -140,10 +150,10 @@ public:
         void checkvalid(__DLL3_HASH * _hsh);
     public:
         Links(void);
-        virtual ~Links(void);
+        virtual ~Links(void) ALLOW_THROWS;
     };
     Hash(void);
-    ~Hash(void);
+    ~Hash(void) ALLOW_THROWS;
 private:
     void _add(Links * item);
 public:
@@ -179,10 +189,10 @@ public:
         void checkvalid(__DLL3_HASHLRU * _hlru);
     public:
         Links(void);
-        virtual ~Links(void);
+        virtual ~Links(void) ALLOW_THROWS;
     };
     HashLRU(void);
-    ~HashLRU(void);
+    ~HashLRU(void) ALLOW_THROWS;
     void add(Links * item);
     void remove(Links * item);
     void promote(Links * item);

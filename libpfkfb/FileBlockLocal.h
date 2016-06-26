@@ -31,6 +31,16 @@
 #include "FileBlock_iface.h"
 #include "dll3.h"
 
+#ifdef __GNUC__
+# if __GNUC__ >= 6
+#  define ALLOW_THROWS noexcept(false)
+# else
+#  define ALLOW_THROWS
+# endif
+#else
+# define ALLOW_THROWS
+#endif
+
 /** a data type for AU id numbers.  */
 typedef uint32_t   FB_AUN_T;
 /** a data type for AU id numbers when encoded in a file */
@@ -313,6 +323,7 @@ class FileBlockInt : public FileBlock,
                      public FileBlockList_t::Links
 {
 public:
+    virtual ~FileBlockInt(void) ALLOW_THROWS { }
     void set_auid(uint32_t _auid) { auid = _auid; }
     void set_bcb(BlockCacheBlock * _bcb) { bcb = _bcb; }
     BlockCacheBlock *get_bcb(void) { return bcb; }

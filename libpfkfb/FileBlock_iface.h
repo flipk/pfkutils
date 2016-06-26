@@ -34,6 +34,16 @@
 #include "BlockCache.h"
 #include "bst.h"
 
+#ifdef __GNUC__
+# if __GNUC__ >= 6
+#  define ALLOW_THROWS noexcept(false)
+# else
+#  define ALLOW_THROWS
+# endif
+#else
+# define ALLOW_THROWS
+#endif
+
 typedef uint32_t FB_AUID_T;
 typedef UINT32_t FB_AUID_t;
 
@@ -64,7 +74,7 @@ protected:
      * \note The destructor is private to prevent users from creating
      *    this object; this object should be freed by passing to
      *    FileBlockInterface::release only. */
-    virtual ~FileBlock(void) { }
+    virtual ~FileBlock(void) ALLOW_THROWS { }
     friend class FileBlockInterface;
 public:
     /** return the identifier of this block.
@@ -117,7 +127,7 @@ public:
     /** Destructor.
      * This destructor is a placeholder; so that objects derived from
      * this class can implement their own virtual destructors. */
-    virtual ~FileBlockInterface(void) { }
+    virtual ~FileBlockInterface(void) ALLOW_THROWS { }
     // @}
 
     /** @name File open/close methods */

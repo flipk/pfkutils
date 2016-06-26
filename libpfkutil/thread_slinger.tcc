@@ -7,7 +7,7 @@ inline thread_slinger_message::thread_slinger_message(void)
     refcount = 0;
 }
 
-inline thread_slinger_message::~thread_slinger_message(void)
+inline thread_slinger_message::~thread_slinger_message(void) ALLOW_THROWS
 {
     if (_slinger_next != NULL)
         throw ThreadSlingerError(

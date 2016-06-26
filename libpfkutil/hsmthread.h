@@ -9,6 +9,16 @@
 #include "BackTrace.h"
 #include  "dll3.h"
 
+#ifdef __GNUC__
+# if __GNUC__ >= 6
+#  define ALLOW_THROWS noexcept(false)
+# else
+#  define ALLOW_THROWS
+# endif
+#else
+# define ALLOW_THROWS
+#endif
+
 namespace HSMThread {
 
 /** thread-related errors that may be encountered */
@@ -43,7 +53,7 @@ protected:
     virtual void stopReq(void) = 0;
 public:
     Thread(const std::string &_name);
-    virtual ~Thread(void);
+    virtual ~Thread(void) ALLOW_THROWS;
     const std::string &getName(void) { return name; }
     void start(void);
     void stop(void);

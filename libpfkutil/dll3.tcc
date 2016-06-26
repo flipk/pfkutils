@@ -9,7 +9,7 @@ __DLL3_LIST::Links::Links(void)
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::Links::~Links(void)
+__DLL3_LIST::Links::~Links(void) ALLOW_THROWS
 {
     if (validate && lst != NULL)
         __DLL3_LISTERR(STILL_ON_A_LIST);
@@ -37,7 +37,7 @@ __DLL3_LIST::List(void)
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::~List(void)
+__DLL3_LIST::~List(void) ALLOW_THROWS
 {
     if (validate && head != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -243,7 +243,7 @@ void __DLL3_HASH::Links::checkvalid(__DLL3_HASH * _hsh)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH::Links::~Links(void)
+__DLL3_HASH::Links::~Links(void) ALLOW_THROWS
 {
     if (validate && hsh != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -261,7 +261,7 @@ __DLL3_HASH :: Hash(void)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH :: ~Hash(void)
+__DLL3_HASH :: ~Hash(void) ALLOW_THROWS
 {
     delete hash;
 }
@@ -364,7 +364,7 @@ __DLL3_HASHLRU :: Links :: Links(void)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-__DLL3_HASHLRU :: Links :: ~Links(void)
+__DLL3_HASHLRU :: Links :: ~Links(void) ALLOW_THROWS
 {
     if (validate && (hlru != NULL))
         __DLL3_LISTERR(LIST_NOT_EMPTY);
