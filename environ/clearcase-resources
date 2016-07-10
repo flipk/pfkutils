@@ -1,0 +1,315 @@
+#define	 CallstackContext		#488484
+#define	 InactiveTrapColor		#ce7070
+#define	 ProgramCounterColor		#5a7264
+#define	 ScrollBarCallstackContext	#14d4d7
+#define	 ScrollBarInactiveTrapColor	#eb5151
+#define	 ScrollBarProgramCounterColor	#00d300
+#define	 ScrollBarTrapColor		#b10c0c
+#define	 TrapColor			#ab5252
+#define	 VtreeSelectColor		red
+#define  BasicBackground  		#9f9f9f
+#define  ButtonBackground  		#848484
+#define  ChangeColor 			#6097bf
+#define  ChartFillStyle			FillSolid
+#define  ChartLineStyle0		LineSolid
+#define  ChartLineStyle1		LineSolid
+#define  ChartLineStyle2		LineSolid
+#define  ChartLineStyle3		LineSolid
+#define  CheckMarkColor			#17ffb7
+#define  CheckedOutColor		yellow
+#define  ConstraintColor		TypeColor4
+#define  CurrentColor			TypeColor1
+#define  DefaultFontSize        	10
+#define  DeleteColor 			#ff0080
+#define  DerivedBackground		#0c203a
+#define  DrawingAreaBackground		#608189
+#define  FileIconSize 			40
+#define  HighlightForeground    	TextForeground
+#define  InsertColor 			#48bf60
+#define  ModifiedBackground		#a19ffd
+#define  ObsoleteColor			#ffff00
+#define  PromptColor			#ffff00
+#define  PromptDiffColor		#ffff00
+#define  PromptTextColor		#000001
+#define  ReadOnlyBackground  		#9f9f9f
+#define  ResultColor			#cba3b1
+#define  ScrollBarColor1		#191851
+#define  ScrollBarColor2		#cc984b
+#define  ScrollBarSearchColor		#ffff50
+#define  ScrollBarTroughColor  		#535353
+#define  ScrollbarErrorColor		#dc8efb
+#define  ScrollbarWarningColor		#ffb46e
+#define  ScrolledListBackground 	#6b6b6b
+#define  SearchColor			#ffff50
+#define  SelectFillColor		#ffff00
+#define  SessionColor1			BasicBackground
+#define  SessionColor2			#9f8484
+#define  SessionColor3			#7c917c
+#define  SessionColor4			#78788d
+#define  SessionColor5			#9f8571
+#define  SourceBackground		#53e6ff
+#define  StippleValue			false
+#define  StripChartColor1		#282768
+#define  StripChartColor2		#842f2a
+#define  StripChartColor3		#004200
+#define  StripChartColor4		#20441f
+#define  SyntaxErrorColor		#9d5199
+#define  SyntaxWarningColor		#de863d
+#define  TargetColor			#9891c6
+#define  TextBackground  		#919191
+#define  TextFieldBackground  		#9f6868
+#define  TextForeground  		#000000
+#define  TimeLineBackground		#3e5a60
+#define  ToolbarIconSize		24
+#define  TypeColor1			#ff0000
+#define  TypeColor2			#0000ff
+#define  TypeColor3			#00ff00
+#define  TypeColor4			#7307e6
+#define  TypeColor5	      		#ff7900
+#define  TypeColor6	      		#00ffff
+#define  TypeColor7	      		#ff00ff
+#define  TypeColor8	      		#ffff00
+#define  ViewerColor			TypeColor2
+#define  VtreeFillColor			wheat
+#define  VtreeMasterFillColor		white
+#define  VtreeViewtagColors     	red,blue,green,yellow,black
+
+#define  ObliqueLabelFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  PlainLabelFont         	-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  BoldLabelFont			-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  BoldPromptFontList		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  BrowserFontList		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  CPromptLabelFontList		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  CPromptTextFontList		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  FileInfoFontSet		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  FileInfoLinkFontSet		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  FixedWidthFont			-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  SmallBoldLabelFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  SmallFixedWidthFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  SmallObliqueLabelFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  SmallPlainLabelFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  TinyBoldLabelFont		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  XcleardiffBaseFont             -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+#define  XcleardiffBoldFont             -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+#define  XcleardiffItalicFont           -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+#define  XcleardiffBoldItalicFont       -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+#define  XcleardiffTinyFont             -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+#define  XcleardiffFontList             -misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+
+#define  VtreeBranchFontSet		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  VtreeLabelFontSet		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+#define  VtreeVersionFontSet		-*-*-medium-r-normal--14-*-*-*-*-*-gbk-*:,-*-fixed-medium-r-normal--14-*-*-*-*-*-big5-*:,-misc-fixed-medium-r-normal--14-*-*-*-*-*-*-*:
+
+*VkList*background:			ScrolledListBackground
+*XbaeMatrix*FontList:			PlainLabelFont
+*XbaeMatrix*background:			ScrolledListBackground
+*XbaeMatrix*background:			ScrolledListBackground
+*XbaeMatrix*evenRowBackground:		ScrolledListBackground
+*XbaeMatrix*evenRowBackground:		ScrolledListBackground
+*XbaeMatrix*fontList:			PlainLabelFont
+*XbaeMatrix*oddRowBackground:		ScrolledListBackground
+*XbaeMatrix*oddRowBackground:		ScrolledListBackground
+*XcgLiteClue*fontSet:			PlainLabelFont
+*XmArc*fontList:			SmallPlainLabelFont
+*XmBulletinBoard*buttonFontList:	PlainLabelFont
+*XmBulletinBoard*labelFontList:		BoldLabelFont
+*XmColorText*highlightThickness:	1
+*XmColorText*marginHeight:		4
+*XmColorText.background:		TextFieldBackground
+*XmColorText.fontList:			FixedWidthFont
+*XmColorTextField.fontList:		FixedWidthFont
+*XmDrawingArea.background:		DrawingAreaBackground
+*XmGraph*background:			DrawingAreaBackground
+*XmGraph*highlightColor:		TypeColor1
+*XmGraph*highlightThickness:		1
+*XmGraph*overviewColor:			TextForeground
+*XmIconGadget*fontList:			PlainLabelFont
+*XmLabel*fontList:			BoldLabelFont
+*XmLabel*fontList:			PlainLabelFont
+*XmLabelGadget*fontList:		BoldLabelFont
+*XmLabelGadget*fontList:		PlainLabelFont
+*XmList*background:			ScrolledListBackground
+*XmList*fontList:			PlainLabelFont
+*XmList*listMarginWidth:		3
+*XmMenuShell*XmCascadeButton*fontList:	ObliqueLabelFont
+*XmMenuShell*XmCascadeButtonGadget*fontList: ObliqueLabelFont
+*XmMenuShell*XmLabelGadget*fontList:	ObliqueLabelFont
+*XmMenuShell*XmLabelGadget*marginHeight:4
+*XmMenuShell*XmPushButton*fontList:	ObliqueLabelFont
+*XmMenuShell*XmPushButtonGadget*fontList: ObliqueLabelFont
+*XmMenuShell*XmToggleButton*fontList:	ObliqueLabelFont
+*XmMenuShell*XmToggleButtonGadget*fontList: ObliqueLabelFont
+*XmMenuShell*XmToggleButtonGadget*indicatorSize:	10
+*XmMenuShell*XmToggleButtonGadget*marginHeight:		0
+*XmMenuShell*XmToggleButtonGadget*spacing:		2
+*XmMenuShell*marginLeft:		3
+*XmMenuShell*marginRight:		4
+*XmMessageBox*background:		BasicBackground
+*XmPushButton*background:		ButtonBackground
+*XmPushButton*fontList:			PlainLabelFont
+*XmPushButton*highlightThickness:	1
+*XmPushButton*marginHeight:		4
+*XmPushButton*marginWidth:		7
+*XmPushButtonGadget*fontList:		PlainLabelFont
+*XmScale*fontList:			BoldLabelFont
+*XmScale*scaleHeight:			20
+*XmScrollBar*height:			18
+*XmScrollBar*width:			18
+*XmScrolledWindow*spacing:		0
+*XmSelectionBox*XmColorText*background:	TextFieldBackground
+*XmSelectionBox*XmText*background:	TextFieldBackground
+*XmSelectionBox*background:		BasicBackground
+*XmTabList*background:			ScrolledListBackground
+*XmTabList*fontList:			PlainLabelFont
+*XmTabList*listMarginWidth:		3
+*XmText*highlightThickness:		1
+*XmText*marginHeight:			4
+*XmText.background:			TextFieldBackground
+*XmText.fontList:			FixedWidthFont
+*XmTextField*highlightThickness:	1
+*XmTextField.background:		TextFieldBackground
+*XmTextField.fontList:			FixedWidthFont
+*XmToggleButton*fontList:		PlainLabelFont
+*XmToggleButton*spacing:		4
+*XmToggleButtonGadget*fontList:		PlainLabelFont
+*XmToggleButtonGadget*spacing:		4
+*background:				BasicBackground
+*fillOnSelect:				True
+*foreground:				TextForeground
+*graphSW*ScrolledWindowClipWindow.background: DrawingAreaBackground
+*highlightColor:			TextForeground
+*highlightThickness:			0
+*menuBar*fontList:			ObliqueLabelFont
+*menuBar*marginHeight:			1
+*menuBar*marginLeft:			1
+*menuBar.marginHeight:			0
+*menuBar.spacing:			7
+*optionMenu*fontList:			PlainLabelFont
+*optionMenu*marginBottom:		5
+*optionMenu*marginHeight:		0
+*optionMenu*marginTop:			5
+*optionMenu*marginWidth:		0
+*optionMenu.XmLabelGadget*fontList:	BoldLabelFont
+*optionPane*XmPushButton*marginHeight:	1
+*optionPane*XmPushButton*marginLeft:	3
+*optionPane*XmPushButton*marginRight:	3
+*optionPane*XmPushButton*marginWidth:	1
+*optionPane*fontList:			ObliqueLabelFont
+*overview.background:			DrawingAreaBackground
+*readOnlyBackground:			ReadOnlyBackground
+*selectColor:				SelectFillColor
+*troughColor:				ScrollBarTroughColor
+*visibleWhenOff:			True
+clearprompt*XmLabel*fontList:		CPromptLabelFontList
+clearprompt*XmLabelGadget*fontList:	CPromptLabelFontList
+clearprompt*XmText*fontList:		CPromptTextFontList
+clearprompt*simpleDialog*fontList:	CPromptTextFontList
+xclearcase*XbaeMatrix*FontList:		BrowserFontList
+xclearcase*XmDrawingArea.background:	TextFieldBackground
+xclearcase*XmLabel*fontList:		BrowserFontList
+xclearcase*XmList.background:		TextFieldBackground
+xclearcase*XmList.fontList:		BrowserFontList
+xclearcase*XmPushButton*marginHeight:	2
+xclearcase*XmPushButton*marginWidth:	2
+xclearcase*XmRowColumn.XmPushButton*background:	BasicBackground
+xclearcase*XmTabList.background:	TextFieldBackground
+xclearcase*XmTabList.fontList:		BrowserFontList
+xclearcase*arrow*XmCascadeButton.marginHeight: 0
+xclearcase*arrow*XmCascadeButton.marginWidth: 0
+xclearcase*brows_prompt.FontList:	BoldPromptFontList
+xclearcase*brows_prompt.background:	PromptColor
+xclearcase*brows_prompt.foreground:	PromptTextColor	
+xclearcase*checkedOutColor:		CheckedOutColor
+xclearcase*fileIconSize:		FileIconSize
+xclearcase*fileLabelFont:		FileInfoFontSet
+xclearcase*hlinkLabelFont:		FileInfoFontSet
+xclearcase*hlinkToFromTextFont:		VtreeLabelFontSet
+xclearcase*icon_size:			ToolbarIconSize
+xclearcase*masteredFillColor:		VtreeMasterFillColor
+xclearcase*symlinkLabelFont:		FileInfoLinkFontSet
+xclearcase*toolbar.XmPushButton*background:	ButtonBackground
+xclearcase*toolbar.XmPushButton*marginHeight:	2
+xclearcase*toolbar.XmPushButton*marginWidth:	2
+xclearcase*toolbar.XmPushButton*shadowThickness: 2
+xclearcase*toolbar.XmToggleButton*background:	ButtonBackground
+xclearcase*toolbar.XmToggleButton*marginHeight:	2
+xclearcase*toolbar.XmToggleButton*marginWidth:	2
+xclearcase*toolbar.XmToggleButton*shadowThickness: 2
+xclearcase*vtreeBranchFont:		VtreeBranchFontSet
+xclearcase*vtreeBranchOriginToggle:	TRUE
+xclearcase*vtreeFillColor:		VtreeFillColor
+xclearcase*vtreeLabelFont:		VtreeLabelFontSet
+xclearcase*vtreeMergesAsLines:		FALSE
+xclearcase*vtreeSelectColor:		VtreeSelectColor
+xclearcase*vtreeTagColors:		VtreeViewtagColors
+xclearcase*vtreeVersionFont:		VtreeVersionFontSet
+xcleardiff*<CR>_substitute:		+
+xcleardiff*CHANGED*foreground:		red3
+xcleardiff*CHANGED*text_style:		None
+xcleardiff*COMMON*foreground:		dynamic_fg
+xcleardiff*COMMON*text_style:		None
+xcleardiff*DELETED*foreground:		gray25
+xcleardiff*DELETED*text_style:		StrikeThru
+xcleardiff*DELETEMOVED*foreground:	gray25
+xcleardiff*DELETEMOVED*text_style:	StrikeThru
+xcleardiff*DIFFOBJID*foreground:	red3
+xcleardiff*DIFFOBJID*text_style:	None
+xcleardiff*EOF_MARKER*foreground:	gray25
+xcleardiff*EOF_MARKER*text_style:	None
+xcleardiff*FontSize:			DefaultFontSize
+xcleardiff*INSERTED*foreground:		blue3
+xcleardiff*INSERTED*text_style:		None
+xcleardiff*INSERTMOVED*foreground:	blue3
+xcleardiff*INSERTMOVED*text_style:	None
+xcleardiff*MERGED*foreground:		dynamic_fg
+xcleardiff*MERGED*text_style:		None
+xcleardiff*MERGING*foreground:		green3
+xcleardiff*MERGING*text_style:		None
+xcleardiff*NOCHANGE*foreground:		dynamic_fg
+xcleardiff*NOCHANGE*text_style:		None
+xcleardiff*PADDING*foreground:		gray25
+xcleardiff*PADDING*text_style:		None
+xcleardiff*background:			gray
+xcleardiff*base_font:			XcleardiffBaseFont
+xcleardiff*bold_font:			XcleardiffBoldFont
+xcleardiff*bold_italic_font:		XcleardiffBoldItalicFont
+xcleardiff*changeColor:			ChangeColor
+xcleardiff*color_chooser*color0:	white
+xcleardiff*color_chooser*color10:	brown
+xcleardiff*color_chooser*color11:	green
+xcleardiff*color_chooser*color12:	green3
+xcleardiff*color_chooser*color13:	blue
+xcleardiff*color_chooser*color14:	blue3
+xcleardiff*color_chooser*color15:	black
+xcleardiff*color_chooser*color1:	gray75
+xcleardiff*color_chooser*color2:	gray50
+xcleardiff*color_chooser*color3:	gray25
+xcleardiff*color_chooser*color4:	yellow
+xcleardiff*color_chooser*color5:	yellow3
+xcleardiff*color_chooser*color6:	tan
+xcleardiff*color_chooser*color7:	tan3
+xcleardiff*color_chooser*color8:	red
+xcleardiff*color_chooser*color9:	red3
+xcleardiff*deleteColor:			DeleteColor
+xcleardiff*directory_op*arrange_contributor_panels: ArrangeLeftToRight
+xcleardiff*directory_op*arrange_merge_panel: ArrangeAbove
+xcleardiff*directory_op*dimensions:	1027610
+xcleardiff*enable_tooltips_showing:	True
+xcleardiff*fontList:			XcleardiffFontList
+xcleardiff*font_type:			fontSet
+xcleardiff*ignore_blanks:		False
+xcleardiff*insertColor:			InsertColor
+xcleardiff*italic_font:			XcleardiffItalicFont
+xcleardiff*merge_prompt.FontList:	BoldPromptFontList
+xcleardiff*merge_prompt.background:	PromptColor
+xcleardiff*merge_prompt.foreground:	PromptTextColor
+xcleardiff*persist_ignore:		False
+xcleardiff*promptBrightColor:		PromptDiffColor
+xcleardiff*show_carriage_returns:	False
+xcleardiff*show_line_numbers:		True
+xcleardiff*stippleColor:		StippleValue
+xcleardiff*tab_size:			8
+xcleardiff*text_file_op*arrange_contributor_panels: ArrangeLeftToRight
+xcleardiff*text_file_op*arrange_merge_panel: ArrangeAbove
+xcleardiff*text_file_op*dimensions:	1270 620
+xcleardiff*tiny_font:			XcleardiffTinyFont
