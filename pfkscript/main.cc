@@ -17,6 +17,7 @@
 #include <fcntl.h>
 
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -59,8 +60,16 @@ pfkscript_main(int argc, char ** argv)
         sigaction(SIGPIPE, &sa, NULL);
     }
 
-// TODO backgroundSpecified
-// only if backgroundSpecified    daemon(0,0);
+    if (opts.backgroundSpecified)
+    {
+        if (daemon(1,0) < 0)
+            printf("warning: unable to daemonize\n");
+        // when daemon returns, we are the new child
+        ofstream outfile(opts.pidFile.c_str(),
+                         ios::out | ios::trunc);
+        int pid = getpid();
+        outfile << pid << endl;
+    }
 
     pid_t pid = fork();
     if (pid < 0)
@@ -101,22 +110,25 @@ pfkscript_main(int argc, char ** argv)
           fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
 
     // gross but effective
-    // dont do this if backgroundSpecified
-    system("stty raw -echo");
+    if (!opts.backgroundSpecified)
+        system("stty raw -echo");
 
     // TODO forward window size changes to child PTY
 
     while (!done)
     {
-        struct timeval tv = { 1, 0 };
+        struct timeval tv;
         int cc;
         int maxfd;
 
         FD_ZERO(&rfds);
         maxfd = master_fd;
         FD_SET(master_fd, &rfds);
-        FD_SET(0, &rfds); // only if not background
+        if (!opts.backgroundSpecified)
+            FD_SET(0, &rfds);
 
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
         cc = select(maxfd+1, &rfds, NULL, NULL, &tv);
     
         if (cc == 0)
@@ -170,8 +182,10 @@ pfkscript_main(int argc, char ** argv)
     }
 
     // gross but effective
-    // dont do this if backgroundSpecified
-    system("stty cooked");
+    if (opts.backgroundSpecified)
+        unlink(opts.pidFile.c_str());
+    else
+        system("stty cooked");
 
     return 0;
 }
