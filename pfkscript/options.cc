@@ -75,6 +75,8 @@ Options :: Options( int _argc, char ** _argv )
     maxFilesSpecified = false;
     backgroundSpecified = false;
     commandSpecified = false;
+    noReadSpecified = false;
+    noOutputSpecified = false;
 
     if (outOfArgs())
         return;
@@ -99,13 +101,21 @@ Options :: Options( int _argc, char ** _argv )
                 return;
             zipSpecified = true;
         }
-        else if (arg == "-n")
+        else if (arg == "-m")
         {
             LargeInt v;
             if (getInteger(v) == false)
                 return;
             maxFiles = (int) v;
             maxFilesSpecified = true;
+        }
+        else if (arg == "-n")
+        {
+            noReadSpecified = true;
+        }
+        else if (arg == "-O")
+        {
+            noOutputSpecified = true;
         }
         else if (arg == "-b")
         {
@@ -138,7 +148,7 @@ Options :: Options( int _argc, char ** _argv )
     }
     if (maxFilesSpecified && !maxSizeSpecified)
     {
-        cerr << "-n requires -s\n";
+        cerr << "-m requires -s\n";
         return;
     }
     if (backgroundSpecified && !commandSpecified)
@@ -176,6 +186,10 @@ Options :: printOptions(void)
         cout << "maxFiles = " << maxFiles << endl;
     if (backgroundSpecified)
         cout << "pidFile = " << pidFile << endl;
+    if (noReadSpecified)
+        cout << "noRead" << endl;
+    if (noOutputSpecified)
+        cout << "noOutput" << endl;
     cout << "command = ";
     // command vector ends in NULL so stop 1 before end
     for (int ind = 0; ind < (command.size()-1); ind++)
@@ -188,7 +202,7 @@ Options :: printHelp(void)
 {
     cerr <<
 "\n"
-"pfkscript logfile [-b pid_path] [-s max_size_in_mb] [-n max_files] \n"
+"pfkscript logfile [-b pid_path] [-s max_size_in_mb] [-m max_files] \n"
 "                  [-z [bzip2|gzip|xz|etc]] [-c command....]\n"
 "\n"
 "   logfile      : required. if -s is not present, this is the file name all\n"
@@ -203,7 +217,9 @@ Options :: printHelp(void)
 "   -z program   : requires -s. when each log file is closed, it is compressed\n"
 "                  by forking the specified program. the compression program\n"
 "                  as run as a low-priority background process.\n"
-"   -n max_files : requires -s. when each log file is closed, an old file\n"
+"   -n           : no read from stdin\n"
+"   -O           : write only to log, no copy to stdout\n"
+"   -m max_files : requires -s. when each log file is closed, an old file\n"
 "                  may be removed, if the number of files matching the\n"
 "                  glob pattern 'logfile*' exceeds max_files.\n"
 "   -b pid_path  : when present, pfkscript forks into the background, detaches\n"

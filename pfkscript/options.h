@@ -31,6 +31,8 @@ public:
     bool maxFilesSpecified;
     int maxFiles;
     bool backgroundSpecified;
+    bool noReadSpecified;
+    bool noOutputSpecified;
     std::string pidFile;
     bool commandSpecified;
     ChildProcessManager::commandVector command;

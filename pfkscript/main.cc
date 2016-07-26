@@ -110,7 +110,7 @@ pfkscript_main(int argc, char ** argv)
           fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
 
     // gross but effective
-    if (!opts.backgroundSpecified)
+    if (!opts.backgroundSpecified && !opts.noReadSpecified)
         system("stty raw -echo");
 
     // TODO forward window size changes to child PTY
@@ -124,7 +124,7 @@ pfkscript_main(int argc, char ** argv)
         FD_ZERO(&rfds);
         maxfd = master_fd;
         FD_SET(master_fd, &rfds);
-        if (!opts.backgroundSpecified)
+        if (!opts.backgroundSpecified && !opts.noReadSpecified)
             FD_SET(0, &rfds);
 
         tv.tv_sec = 1;
@@ -165,7 +165,8 @@ pfkscript_main(int argc, char ** argv)
             else
             {
                 logfile.addData(buffer,buflen);
-                (void) write(1, buffer, buflen); // only if not background
+                if (!opts.backgroundSpecified && !opts.noOutputSpecified)
+                    (void) write(1, buffer, buflen);
             }
         }
         if (FD_ISSET(0, &rfds))
@@ -181,10 +182,11 @@ pfkscript_main(int argc, char ** argv)
         }
     }
 
-    // gross but effective
     if (opts.backgroundSpecified)
         unlink(opts.pidFile.c_str());
-    else
+
+    // gross but effective
+    if (!opts.backgroundSpecified && !opts.noReadSpecified)
         system("stty cooked");
 
     return 0;
