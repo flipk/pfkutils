@@ -1,9 +1,6 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 //
-// TODO: file open and close stamps on each file
-// TODO: script start and stop times for first and last file
-// TODO: signal handler to cleanup cleaner and log signal and cleanup
 // TODO: cleanup terminal mode (maybe turn echo back on?)
 //       (but only if isatty)
 //       actually, maybe detect isatty and force certain options

@@ -96,6 +96,19 @@ LogFile :: nextLogFileName(void)
     currentLogFile = ostr.str();
 }
 
+static std::string
+currentDate(void)
+{
+    char buf[64];
+    struct tm current_time;
+    time_t now;
+    time(&now);
+    localtime_r(&now, &current_time);
+    memset(buf,0,sizeof(buf));
+    strftime(buf,sizeof(buf)-1,"%Y/%m/%d %H:%M:%S", &current_time);
+    return std::string(buf);
+}
+
 bool
 LogFile :: openFile(void)
 {
@@ -110,14 +123,22 @@ LogFile :: openFile(void)
         currentStream = NULL;
     }
     else
+    {
         currentSize = 0;
+        (*currentStream) << "pfkscript log file opened "
+                         << currentDate() << "\n\n";
+    }
 }
 
 void
 LogFile :: closeFile(void)
 {
     if (currentStream != NULL)
+    {
+        (*currentStream) << "\n\npfkscript log file closed "
+                         << currentDate() << endl;
         delete currentStream;
+    }
     currentStream = NULL;
     trimFiles();
 }
