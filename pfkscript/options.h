@@ -35,6 +35,8 @@ public:
     bool noOutputSpecified;
     std::string pidFile;
     bool commandSpecified;
+    bool listenPortSpecified;
+    short listenPort;
     ChildProcessManager::commandVector command;
 };
 

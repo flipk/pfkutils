@@ -1,5 +1,22 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+//
+// TODO: file open and close stamps on each file
+// TODO: script start and stop times for first and last file
+// TODO: signal handler to cleanup cleaner and log signal and cleanup
+// TODO: cleanup terminal mode (maybe turn echo back on?)
+//       (but only if isatty)
+//       actually, maybe detect isatty and force certain options
+// TODO: create command port, pass to children via env var
+// TODO: make library of commands to pass thru from children
+//        - roll over file now
+//        - close file
+//        - open new file
+//        - query current file name
+//        - query names of all files currently in existence
+// TODO: make command line interface to library calls
+// 
+
 #include "options.h"
 #include "logfile.h"
 #include "bufprintf.h"
@@ -15,6 +32,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <iostream>
 #include <fstream>
@@ -40,6 +59,29 @@ pfkscript_main(int argc, char ** argv)
     if (logfile.isError)
         // assume LogFile already printed something informative
         return 1;
+
+    int listenPortFd = -1;
+    int listenDataPortFd = -1;
+
+    if (opts.listenPortSpecified)
+    {
+        listenPortFd = socket(AF_INET, SOCK_STREAM, 0);
+        int v = 1;
+        setsockopt( listenPortFd, SOL_SOCKET, SO_REUSEADDR,
+                    (void*) &v, sizeof( v ));
+        struct sockaddr_in sa;
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(opts.listenPort);
+        sa.sin_addr.s_addr = INADDR_ANY;
+        if (bind(listenPortFd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            cerr << "unable to bind to port " << opts.listenPort
+                 << ": " << strerror(e) << endl;
+            return 1;
+        }
+        listen(listenPortFd,1);
+    }
 
     int master_fd, slave_fd;
     char ttyname[256];
@@ -126,6 +168,18 @@ pfkscript_main(int argc, char ** argv)
         FD_SET(master_fd, &rfds);
         if (!opts.backgroundSpecified && !opts.noReadSpecified)
             FD_SET(0, &rfds);
+        if (opts.listenPortSpecified)
+        {
+            FD_SET(listenPortFd, &rfds);
+            if (listenPortFd > maxfd)
+                maxfd = listenPortFd;
+        }
+        if (listenDataPortFd != -1)
+        {
+            FD_SET(listenDataPortFd, &rfds);
+            if (listenDataPortFd > maxfd)
+                maxfd = listenDataPortFd;
+        }
 
         tv.tv_sec = 1;
         tv.tv_usec = 0;
@@ -167,18 +221,48 @@ pfkscript_main(int argc, char ** argv)
                 logfile.addData(buffer,buflen);
                 if (!opts.backgroundSpecified && !opts.noOutputSpecified)
                     (void) write(1, buffer, buflen);
+                if (listenDataPortFd != -1)
+                    (void) write(listenDataPortFd, buffer, buflen);
             }
         }
         if (FD_ISSET(0, &rfds))
         {
             buflen = read(0, buffer, sizeof(buffer));
-// only log what's output, for now;
-// in 99% of the cases, what's input is echoed back on output,
-// so we dont want that output occuring in the log file twice.
-//            if (buflen > 0)
-//                logfile.addData(buffer,buflen);
             if (buflen > 0)
+            {
                 (void) write(master_fd, buffer, buflen);
+            }
+        }
+        if (listenPortFd > 0 && FD_ISSET(listenPortFd, &rfds))
+        {
+            struct sockaddr_in sa;
+            socklen_t len = sizeof(sa);
+            int newfd = accept(listenPortFd, (struct sockaddr *)&sa,
+                               &len);
+            if (newfd > 0)
+            {
+                if (listenDataPortFd != -1)
+                {
+                    FILE * fd = fdopen(listenDataPortFd, "w");
+                    fprintf(fd,
+                            "\r\n\r\n\r\n"
+                            " *** remote port takeover ***"
+                            "\r\n\r\n\r\n");
+                    fclose(fd);
+                }
+                listenDataPortFd = newfd;
+            }
+        }
+        if (listenDataPortFd != -1 && FD_ISSET(listenDataPortFd, &rfds))
+        {
+            // discard data, just so the fd doesn't get stuffed up;
+            // also, detect remote closures.
+            buflen = read(listenDataPortFd, buffer, sizeof(buffer));
+            if (buflen <= 0)
+            {
+                close(listenDataPortFd);
+                listenDataPortFd = -1;
+            }
         }
     }
 

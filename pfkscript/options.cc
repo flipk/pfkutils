@@ -77,6 +77,7 @@ Options :: Options( int _argc, char ** _argv )
     commandSpecified = false;
     noReadSpecified = false;
     noOutputSpecified = false;
+    listenPortSpecified = false;
 
     if (outOfArgs())
         return;
@@ -122,6 +123,19 @@ Options :: Options( int _argc, char ** _argv )
             if (getString(pidFile) == false)
                 return;
             backgroundSpecified = true;
+        }
+        else if (arg == "-l")
+        {
+            LargeInt v;
+            if (getInteger(v) == false)
+                return;
+            if (v < 50 || v > 32767)
+            {
+                cerr << "invalid listen port number " << v << endl;
+                return;
+            }
+            listenPort = (short) v;
+            listenPortSpecified = true;
         }
         else if (arg == "-c")
         {
@@ -190,6 +204,8 @@ Options :: printOptions(void)
         cout << "noRead" << endl;
     if (noOutputSpecified)
         cout << "noOutput" << endl;
+    if (listenPortSpecified)
+        cout << "listenPort = " << listenPort << endl;
     cout << "command = ";
     // command vector ends in NULL so stop 1 before end
     for (int ind = 0; ind < (command.size()-1); ind++)
@@ -230,6 +246,7 @@ Options :: printHelp(void)
 "                  written to the file specified by pid_path. when -b is not\n"
 "                  present, pfkscript runs in the foreground and passes all\n"
 "                  user input to the running command.\n"
+"   -l port      : tcp port number for listening to peek in.\n"
 "   -c command   : must be the last command line parameter. all command line\n"
 "                  parameters following -c are assumed to be for the command\n"
 "                  and will not be otherwise interpreted by pfkscript.\n"
