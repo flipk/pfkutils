@@ -1,6 +1,7 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 //
+// TODO: -z seems to be buggy
 // TODO: cleanup terminal mode (maybe turn echo back on?)
 //       (but only if isatty)
 //       actually, maybe detect isatty and force certain options
@@ -32,10 +33,13 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+#include "ticker.h"
+
 #include <iostream>
 #include <fstream>
 
 using namespace std;
+
 
 extern "C" int
 pfkscript_main(int argc, char ** argv)
@@ -154,6 +158,10 @@ pfkscript_main(int argc, char ** argv)
 
     // TODO forward window size changes to child PTY
 
+    Ticker   ticker;
+    int ticker_fd = ticker.get_fd();
+
+    ticker.start();
     while (!done)
     {
         struct timeval tv;
@@ -177,13 +185,20 @@ pfkscript_main(int argc, char ** argv)
             if (listenDataPortFd > maxfd)
                 maxfd = listenDataPortFd;
         }
+        FD_SET(ticker_fd, &rfds);
+        if (ticker_fd > maxfd)
+            maxfd = ticker_fd;
 
         tv.tv_sec = 1;
         tv.tv_usec = 0;
         cc = select(maxfd+1, &rfds, NULL, NULL, &tv);
     
-        if (cc == 0)
+        if (FD_ISSET(ticker_fd, &rfds))
+        {
+            char c;
+            (void) read(ticker_fd, &c, 1);
             logfile.periodic();
+        }
 
         if (FD_ISSET(master_fd, &rfds))
         {
@@ -262,6 +277,7 @@ pfkscript_main(int argc, char ** argv)
             }
         }
     }
+    ticker.stop();
 
     if (opts.backgroundSpecified)
         unlink(opts.pidFile.c_str());
