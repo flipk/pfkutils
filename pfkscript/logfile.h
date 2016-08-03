@@ -18,6 +18,9 @@ class ZipProcessHandle : public ChildProcessManager::Handle {
     /*virtual*/ void handleOutput(const char *buffer, size_t len);
     /*virtual*/ void processExited(int status);
     bool done;
+    std::string tempInputFileName;
+    std::string tempOutputFileName;
+    std::string finalOutputFileName;
 public:
     ZipProcessHandle(const Options &_opts, const std::string &_fname);
     ~ZipProcessHandle(void);

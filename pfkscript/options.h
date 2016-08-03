@@ -27,7 +27,7 @@ public:
     bool maxSizeSpecified;
     size_t maxSize;
     bool zipSpecified;
-    std::string zipProgram;
+    enum { ZIP_NONE, ZIP_GZIP, ZIP_BZIP2, ZIP_XZ } zipProgram;
     bool maxFilesSpecified;
     int maxFiles;
     bool backgroundSpecified;

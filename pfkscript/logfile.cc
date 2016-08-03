@@ -83,6 +83,24 @@ LogFile :: LogFile(const Options &_opts)
 LogFile :: ~LogFile(void)
 {
     closeFile();
+
+    if (zipHandles.size() > 0)
+        cout << "waiting for all zips to finish" << endl;
+    while (zipHandles.size() > 0)
+    {
+        for (zipList::iterator it = zipHandles.begin();
+             it != zipHandles.end(); it++)
+        {
+            ZipProcessHandle * zph = it->second;
+            if (zph->getDone())
+            {
+                zipHandles.erase(it);
+                delete zph;
+            }
+        }
+        usleep(100000);
+    }
+
 }
 
 void
@@ -250,8 +268,8 @@ LogFile :: periodic(void)
 {
     if (currentStream)
         currentStream->flush();
-    zipList::iterator it;
-    for (it = zipHandles.begin(); it != zipHandles.end(); it++)
+    for (zipList::iterator it = zipHandles.begin();
+         it != zipHandles.end(); it++)
     {
         ZipProcessHandle * zph = it->second;
         if (zph->getDone())
@@ -286,8 +304,31 @@ ZipProcessHandle :: ZipProcessHandle(const Options &_opts,
                                      const std::string &_fname)
     : opts(_opts), fname(_fname)
 {
-    cmd.push_back( opts.zipProgram.c_str() );
-    cmd.push_back( fname.c_str() );
+    tempInputFileName = fname + "_pfkscript_zipping_";
+    tempOutputFileName = tempInputFileName;
+    finalOutputFileName = fname;
+    switch (opts.zipProgram)
+    {
+    case Options::ZIP_BZIP2:
+        cmd.push_back( "bzip2" );
+        tempOutputFileName += ".bz2";
+        finalOutputFileName += ".bz2";
+        break;
+    case Options::ZIP_XZ:
+        cmd.push_back( "xz" );
+        tempOutputFileName += ".xz";
+        finalOutputFileName += ".xz";
+        break;
+    case Options::ZIP_GZIP:
+        // fallthru; if zipProgram weird, default to gzip.
+    default:
+        cmd.push_back( "gzip" );
+        tempOutputFileName += ".gz";
+        finalOutputFileName += ".gz";
+        break;
+    }
+    rename(fname.c_str(), tempInputFileName.c_str());
+    cmd.push_back( tempInputFileName.c_str());
     cmd.push_back( NULL );
     done = false;
 }
@@ -311,7 +352,11 @@ ZipProcessHandle :: processExited(int status)
 {
     if (0) // debug
     {
-        cout << "compression completed for file " << fname << "\r\n";
+        cout << "compression completed for file " << fname
+             << " (temp name " << tempInputFileName << ")" << endl;
+        cout << "renaming " << tempOutputFileName
+             << " to " << finalOutputFileName << endl;
     }
     done = true;
+    rename(tempOutputFileName.c_str(), finalOutputFileName.c_str());
 }

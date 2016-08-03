@@ -1,10 +1,6 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 //
-// TODO: -z seems to be buggy
-// TODO: cleanup terminal mode (maybe turn echo back on?)
-//       (but only if isatty)
-//       actually, maybe detect isatty and force certain options
 // TODO: create command port, pass to children via env var
 // TODO: make library of commands to pass thru from children
 //        - roll over file now
@@ -152,9 +148,13 @@ pfkscript_main(int argc, char ** argv)
     fcntl(master_fd, F_SETFL, 
           fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
 
+    bool sttyWasRun = false;
     // gross but effective
-    if (!opts.backgroundSpecified && !opts.noReadSpecified)
+    if (isatty(0) && !opts.backgroundSpecified && !opts.noReadSpecified)
+    {
         system("stty raw -echo");
+        sttyWasRun = true;
+    }
 
     // TODO forward window size changes to child PTY
 
@@ -192,7 +192,10 @@ pfkscript_main(int argc, char ** argv)
         tv.tv_sec = 1;
         tv.tv_usec = 0;
         cc = select(maxfd+1, &rfds, NULL, NULL, &tv);
-    
+
+        if (cc <= 0)
+            continue;
+
         if (FD_ISSET(ticker_fd, &rfds))
         {
             char c;
@@ -283,8 +286,8 @@ pfkscript_main(int argc, char ** argv)
         unlink(opts.pidFile.c_str());
 
     // gross but effective
-    if (!opts.backgroundSpecified && !opts.noReadSpecified)
-        system("stty cooked");
+    if (sttyWasRun)
+        system("stty echo cooked");
 
     return 0;
 }

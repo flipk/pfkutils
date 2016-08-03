@@ -72,6 +72,7 @@ Options :: Options( int _argc, char ** _argv )
 {
     maxSizeSpecified = false;
     zipSpecified = false;
+    zipProgram = ZIP_NONE;
     maxFilesSpecified = false;
     backgroundSpecified = false;
     commandSpecified = false;
@@ -95,12 +96,21 @@ Options :: Options( int _argc, char ** _argv )
                 return;
             maxSize = (size_t) v;
             maxSizeSpecified = true;
-       }
-        else if (arg == "-z")
+        }
+        else if (arg == "-zg")
         {
-            if (getString(zipProgram) == false)
-                return;
             zipSpecified = true;
+            zipProgram = ZIP_GZIP;
+        }
+        else if (arg == "-zb")
+        {
+            zipSpecified = true;
+            zipProgram = ZIP_BZIP2;
+        }
+        else if (arg == "-zx")
+        {
+            zipSpecified = true;
+            zipProgram = ZIP_XZ;
         }
         else if (arg == "-m")
         {
@@ -219,7 +229,7 @@ Options :: printHelp(void)
     cerr <<
 "\n"
 "pfkscript logfile [-b pid_path] [-s max_size_in_mb] [-m max_files] \n"
-"                  [-z [bzip2|gzip|xz|etc]] [-c command....]\n"
+"                  [-zg|-zb|-zx] [-c command....]\n"
 "\n"
 "   logfile      : required. if -s is not present, this is the file name all\n"
 "                  command output will be logged to. if -s is present, this is\n"
@@ -230,9 +240,9 @@ Options :: printHelp(void)
 "                  the counter is incremented and a new file is opened.\n"
 "                  the chars k, m, and g are supported as suffixes for\n"
 "                  kilobyte, megabyte, and gigabyte.\n"
-"   -z program   : requires -s. when each log file is closed, it is compressed\n"
-"                  by forking the specified program. the compression program\n"
-"                  as run as a low-priority background process.\n"
+"   -zX          : requires -s. when each log file is closed, it is compressed\n"
+"                  by forking the specified program; X can be:\n"
+"                  g = gzip, b = bzip2, or x = xz\n"
 "   -n           : no read from stdin\n"
 "   -O           : write only to log, no copy to stdout\n"
 "   -m max_files : requires -s. when each log file is closed, an old file\n"
