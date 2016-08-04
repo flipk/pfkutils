@@ -11,6 +11,8 @@
 struct myTimeval : public timeval
 {
     myTimeval(void) { tv_sec = 0; tv_usec = 0; }
+    myTimeval(typeof(tv_sec) s, typeof(tv_usec) u) { set(s,u); }
+    void set(typeof(tv_sec) s, typeof(tv_usec) u) { tv_sec = s; tv_usec = u; }
     const myTimeval& operator-=(const myTimeval &rhs) {
         bool borrow = false;
         if (rhs.tv_usec > tv_usec)
@@ -47,12 +49,14 @@ struct myTimeval : public timeval
     void getNow(void) {
         gettimeofday(this, NULL);
     }
-    const std::string Format(void) {
+    const std::string Format(const char *format = NULL) {
+        if (format == NULL)
+            format = "%Y-%m-%d %H:%M:%S";
         time_t seconds = tv_sec;
         struct tm t;
         localtime_r(&seconds, &t);
         char ymdhms[128], ms[12];
-        strftime(ymdhms,sizeof(ymdhms),"%Y-%m-%d %H:%M:%S",&t);
+        strftime(ymdhms,sizeof(ymdhms),format,&t);
         ymdhms[sizeof(ymdhms)-1] = 0;
         snprintf(ms,sizeof(ms),"%06ld", tv_usec);
         ms[sizeof(ms)-1] = 0;
@@ -61,6 +65,7 @@ struct myTimeval : public timeval
     uint32_t msecs(void) {
         return (tv_sec * 1000) + (tv_usec / 1000);
     }
+    timeval *operator()(void) { return this; }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
                                        const myTimeval &rhs)

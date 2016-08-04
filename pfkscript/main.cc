@@ -140,7 +140,7 @@ pfkscript_main(int argc, char ** argv)
     // parent
     close(slave_fd);
 
-    fd_set rfds;
+    pfk_select  sel;
     bool done = false;
     char buffer[4096];
     int buflen;
@@ -164,46 +164,32 @@ pfkscript_main(int argc, char ** argv)
     ticker.start();
     while (!done)
     {
-        struct timeval tv;
         int cc;
-        int maxfd;
 
-        FD_ZERO(&rfds);
-        maxfd = master_fd;
-        FD_SET(master_fd, &rfds);
+        sel.rfds.zero();
+        sel.rfds.set(master_fd);
         if (!opts.backgroundSpecified && !opts.noReadSpecified)
-            FD_SET(0, &rfds);
+            sel.rfds.set(0);
         if (opts.listenPortSpecified)
-        {
-            FD_SET(listenPortFd, &rfds);
-            if (listenPortFd > maxfd)
-                maxfd = listenPortFd;
-        }
+            sel.rfds.set(listenPortFd);
         if (listenDataPortFd != -1)
-        {
-            FD_SET(listenDataPortFd, &rfds);
-            if (listenDataPortFd > maxfd)
-                maxfd = listenDataPortFd;
-        }
-        FD_SET(ticker_fd, &rfds);
-        if (ticker_fd > maxfd)
-            maxfd = ticker_fd;
+            sel.rfds.set(listenDataPortFd);
+        sel.rfds.set(ticker_fd);
+        sel.tv.set(1,0);
 
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        cc = select(maxfd+1, &rfds, NULL, NULL, &tv);
+        cc = sel.select();
 
         if (cc <= 0)
             continue;
 
-        if (FD_ISSET(ticker_fd, &rfds))
+        if (sel.rfds.isset(ticker_fd))
         {
             char c;
             (void) read(ticker_fd, &c, 1);
             logfile.periodic();
         }
 
-        if (FD_ISSET(master_fd, &rfds))
+        if (sel.rfds.isset(master_fd));
         {
             buflen = read(master_fd, buffer, sizeof(buffer));
             if (0) // debug
@@ -240,7 +226,7 @@ pfkscript_main(int argc, char ** argv)
                     (void) write(listenDataPortFd, buffer, buflen);
             }
         }
-        if (FD_ISSET(0, &rfds))
+        if (sel.rfds.isset(0))
         {
             buflen = read(0, buffer, sizeof(buffer));
             if (buflen > 0)
@@ -248,7 +234,7 @@ pfkscript_main(int argc, char ** argv)
                 (void) write(master_fd, buffer, buflen);
             }
         }
-        if (listenPortFd > 0 && FD_ISSET(listenPortFd, &rfds))
+        if (listenPortFd > 0 && sel.rfds.isset(listenPortFd))
         {
             struct sockaddr_in sa;
             socklen_t len = sizeof(sa);
@@ -268,7 +254,7 @@ pfkscript_main(int argc, char ** argv)
                 listenDataPortFd = newfd;
             }
         }
-        if (listenDataPortFd != -1 && FD_ISSET(listenDataPortFd, &rfds))
+        if (listenDataPortFd != -1 && sel.rfds.isset(listenDataPortFd))
         {
             // discard data, just so the fd doesn't get stuffed up;
             // also, detect remote closures.
