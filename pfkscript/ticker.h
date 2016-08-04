@@ -5,12 +5,10 @@
 
 #include "pfkpthread.h"
 
-class Ticker {
+class Ticker : pfk_pthread {
     int closer_pipe_fds[2];
     int pipe_fds[2];
-    pfk_pthread  thr_id;
-    static void * entry(void * arg) { ((class Ticker *)arg)->_entry(); }
-    void _entry(void) {
+    /*virtual*/ void entry(void) {
         char c = 1;
         int clfd = closer_pipe_fds[0];
         pfk_select   sel;
@@ -47,8 +45,7 @@ public:
     void start(void) {
         if (running)
             return;
-        pfk_pthread_attr attr;
-        thr_id.create(attr(), entry, this);
+        create();
         running = true;
     }
     void stop(void) {
@@ -56,7 +53,7 @@ public:
             return;
         char c = 1;
         (void) write(closer_pipe_fds[1], &c, 1);
-        thr_id.join();
+        join();
         running = false;
     }
     int get_fd(void) { return pipe_fds[0]; }

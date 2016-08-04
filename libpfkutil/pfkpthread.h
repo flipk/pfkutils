@@ -1,5 +1,9 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+// TODO : strerror_r workarounds
+// http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
+// TODO : poison file
+
 #ifndef __pfkpthread_h__
 #define __pfkpthread_h__
 
@@ -32,16 +36,22 @@ public:
 };
 
 struct pfk_pthread {
+    pfk_pthread_attr attr;
     pthread_t  id;
-    int create(const pthread_attr_t *attr, void * (*func)(void*), void *arg) {
-        return pthread_create(&id, attr, func, arg);
+    int create() {
+        return pthread_create(&id, attr(), &_entry, this);
     }
-    void join(void) {
-        void * dummy = NULL;
-        pthread_join(id, &dummy);
+    void * join(void) {
+        void * ret = NULL;
+        pthread_join(id, &ret);
+        return ret;
     }
-    void join(void **ret) {
-        pthread_join(id, ret);
+    virtual void entry(void) = 0;
+private:
+    static void * _entry(void *arg) {
+        pfk_pthread * th = (pfk_pthread *)arg;
+        th->entry();
+        return NULL;
     }
 };
 
@@ -55,7 +65,7 @@ public:
     void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
     void clr(int fd) { FD_CLR(fd, &fds); }
     bool isset(int fd) { return FD_ISSET(fd, &fds) != 0; }
-    fd_set *operator()(void) { return max_fd==1 ? NULL : &fds; }
+    fd_set *operator()(void) { return max_fd==-1 ? NULL : &fds; }
     int nfds(void) { return max_fd + 1; }
 };
 
@@ -67,14 +77,10 @@ struct pfk_select {
     pfk_select(void) { }
     ~pfk_select(void) { }
     int select(void) {
-        int nfds = rfds.nfds();
-        int nfds2 = wfds.nfds();
-        int nfds3 = efds.nfds();
-        if (nfds2 > nfds)
-            nfds = nfds2;
-        if (nfds3 > nfds)
-            nfds = nfds3;
-        return ::select(nfds, rfds(), wfds(), efds(), tv());
+        int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
+        if (n < n2) n = n2;
+        if (n < n3) n = n3;
+        return ::select(n, rfds(), wfds(), efds(), tv());
     }
 };
 

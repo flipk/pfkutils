@@ -85,7 +85,8 @@ LogFile :: ~LogFile(void)
     closeFile();
 
     if (zipHandles.size() > 0)
-        cout << "waiting for all zips to finish" << endl;
+        cout << "\r\nwaiting for all zips to finish\r\n";
+
     while (zipHandles.size() > 0)
     {
         for (zipList::iterator it = zipHandles.begin();
@@ -100,7 +101,6 @@ LogFile :: ~LogFile(void)
         }
         usleep(100000);
     }
-
 }
 
 void

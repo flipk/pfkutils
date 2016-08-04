@@ -254,7 +254,7 @@ pfkscript_main(int argc, char ** argv)
                 listenDataPortFd = newfd;
             }
         }
-        if (listenDataPortFd != -1 && sel.rfds.isset(listenDataPortFd))
+        if (listenDataPortFd > 0 && sel.rfds.isset(listenDataPortFd))
         {
             // discard data, just so the fd doesn't get stuffed up;
             // also, detect remote closures.
