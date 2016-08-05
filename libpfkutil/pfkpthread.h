@@ -2,7 +2,9 @@
 
 // TODO : strerror_r workarounds
 // http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
-// TODO : poison file
+// TODO : error check the hell out of stuff that isn't being error checked.
+// TODO : readdir class
+// TODO : strtok class
 
 #ifndef __pfkpthread_h__
 #define __pfkpthread_h__
@@ -35,11 +37,116 @@ public:
 // pthread_attr_setstacksize
 };
 
+class pfk_pthread_condattr {
+    pthread_condattr_t attr;
+public:
+    pfk_pthread_condattr(void) {
+        pthread_condattr_init(&attr);
+    }
+    ~pfk_pthread_condattr(void) {
+        pthread_condattr_destroy(&attr);
+    }
+    const pthread_condattr_t *operator()(void) { return &attr; }
+    void setclock(clockid_t id) {
+        pthread_condattr_setclock(&attr,id);
+    }
+    void setpshared(bool shared) {
+        pthread_condattr_setpshared(
+            &attr,
+            shared ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE);
+    }
+};
+
+class pfk_pthread_mutexattr {
+    pthread_mutexattr_t  attr;
+public:
+    pfk_pthread_mutexattr(void) {
+        pthread_mutexattr_init(&attr);
+    }
+    ~pfk_pthread_mutexattr(void) {
+        pthread_mutexattr_destroy(&attr);
+    }
+    pthread_mutexattr_t *operator()(void) { return &attr; }
+    // pthread_mutexattr_setprioceiling
+    // pthread_mutexattr_setprotocol
+    // pthread_mutexattr_setpshared
+    // pthread_mutexattr_setrobust
+    // pthread_mutexattr_settype
+};
+
+class pfk_pthread_mutex {
+    pthread_mutex_t  mutex;
+    bool initialized;
+public:
+    pfk_pthread_mutexattr  attr;
+    pfk_pthread_mutex(void) {
+        initialized = false;
+    }
+    ~pfk_pthread_mutex(void) {
+        if (initialized)
+            pthread_mutex_destroy(&mutex);
+    }
+    void init(void) {
+        if (initialized)
+            pthread_mutex_destroy(&mutex);
+        pthread_mutex_init(&mutex, attr());
+        initialized = true;
+    }
+    void lock(void) { pthread_mutex_lock(&mutex); }
+    void trylock(void) { pthread_mutex_trylock(&mutex); }
+    void unlock(void) { pthread_mutex_unlock(&mutex); }
+    pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
+};
+
+class pfk_pthread_cond {
+    pthread_cond_t  cond;
+    bool initialized;
+public:
+    pfk_pthread_condattr attr;
+    pfk_pthread_cond(void) {
+        initialized = false;
+    }
+    ~pfk_pthread_cond(void) {
+        if (initialized)
+            pthread_cond_destroy(&cond);
+    }
+    void init(void) {
+        if (initialized)
+            pthread_cond_destroy(&cond);
+        pthread_cond_init(&cond, attr());
+        initialized = true;
+    }
+    pthread_cond_t *operator()(void) { return initialized ? &cond : NULL; }
+    int wait(pthread_mutex_t *mut, timespec *abstime) {
+        return pthread_cond_timedwait(&cond, mut, abstime);
+    }
+    void signal(void) {
+        pthread_cond_signal(&cond);
+    }
+    // timedwait
+    // signal
+    // broadcast
+};
+
 struct pfk_pthread {
     pfk_pthread_attr attr;
+    pfk_pthread_mutex mut;
+    pfk_pthread_cond cond;
+    bool started;
     pthread_t  id;
+    pfk_pthread(void) { mut.init(); cond.init(); }
+    ~pfk_pthread(void) { }
     int create() {
-        return pthread_create(&id, attr(), &_entry, this);
+        started = false;
+        int ret = pthread_create(&id, attr(), &_entry, this);
+        if (ret == 0) {
+            while (!started) {
+                myTimespec ts(5,0);
+                ts += myTimespec().getNow();
+                cond.wait(mut(), &ts);
+            }
+        }
+        return ret;
     }
     void * join(void) {
         void * ret = NULL;
@@ -50,6 +157,8 @@ struct pfk_pthread {
 private:
     static void * _entry(void *arg) {
         pfk_pthread * th = (pfk_pthread *)arg;
+        th->started = true;
+        th->cond.signal();
         th->entry();
         return NULL;
     }
