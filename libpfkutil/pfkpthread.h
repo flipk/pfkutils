@@ -3,7 +3,6 @@
 // TODO : strerror_r workarounds
 // http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
 // TODO : error check the hell out of stuff that isn't being error checked.
-// TODO : readdir class
 // TODO : strtok class
 
 #ifndef __pfkpthread_h__
@@ -14,6 +13,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <inttypes.h>
+#include <dirent.h>
 #include "myTimeval.h"
 
 class pfk_pthread_attr {
@@ -190,6 +191,34 @@ struct pfk_select {
         if (n < n2) n = n2;
         if (n < n3) n = n3;
         return ::select(n, rfds(), wfds(), efds(), tv());
+    }
+};
+
+class pfk_readdir {
+    DIR * d;
+    bool isOk;
+public:
+    pfk_readdir(const char *dirname) {
+        d = ::opendir(dirname);
+        if (d == NULL)
+            isOk = false;
+        else
+            isOk = true;
+    }
+    ~pfk_readdir(void) {
+        if (d != NULL)
+            closedir(d);
+    }
+    const bool ok(void) const { return isOk; }
+    bool read(dirent &de) {
+        dirent * result = NULL;
+        int cc = readdir_r(d, &de, &result);
+        if (cc != 0 || result == NULL)
+            return false;
+        return true;
+    }
+    void rewind(void) {
+        rewinddir(d);
     }
 };
 

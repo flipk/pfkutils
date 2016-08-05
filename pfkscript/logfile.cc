@@ -20,6 +20,8 @@
 #include <iomanip>
 #include <algorithm>
 
+#include "pfkpthread.h"
+
 using namespace std;
 
 void
@@ -179,15 +181,14 @@ LogFile::logFileEnt::sortTimestamp(const logFileEnt &a,
 void
 LogFile :: globLogFiles(LogFile::LfeList &list)
 {
-
-    DIR * d = opendir(logDir.c_str());
-    if (d)
+    pfk_readdir   d(logDir.c_str());
+    size_t baselen = logFilebase.length();
+    if (d.ok())
     {
-        struct dirent *dep;
-        while ((dep = readdir(d)) != NULL)
+        struct dirent de;
+        while (d.read(de))
         {
-            string dirFileName(dep->d_name);
-            size_t baselen = logFilebase.length();
+            string dirFileName(de.d_name);
             if (logFilebase.compare(0, baselen,
                                     dirFileName,
                                     0, baselen) == 0)
@@ -218,7 +219,6 @@ LogFile :: globLogFiles(LogFile::LfeList &list)
             }
                                          
         }
-        closedir(d);
         std::sort(list.begin(), list.end(), logFileEnt::sortTimestamp);
     }
     else
