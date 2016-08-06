@@ -703,7 +703,7 @@ pfkutils_LIBX11= -lX11
 endif
 pfkutils_HDRS = \
 	$(OBJDIR)/main/programs.h
-pfkutils_LIBS = \
+pfkutils_LIBS += \
 	$(pfkutils_LIBNCURSES) $(pfkutils_LIBZ) \
 	$(pfkutils_LIBXRANDR) $(pfkutils_LIBX11) \
 	$(pfkutils_LIBUTILS) -lpthread
