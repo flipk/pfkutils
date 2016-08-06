@@ -4,6 +4,7 @@
 // http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
 // TODO : error check the hell out of stuff that isn't being error checked.
 // TODO : strtok class
+// TODO : merge LockWait and the cond/mutex in here?
 
 #ifndef __pfkpthread_h__
 #define __pfkpthread_h__
@@ -129,40 +130,70 @@ public:
     // broadcast
 };
 
-struct pfk_pthread {
-    pfk_pthread_attr attr;
+class pfk_pthread {
     pfk_pthread_mutex mut;
     pfk_pthread_cond cond;
-    bool started;
+    enum {
+        INIT, NEWBORN, RUNNING, ZOMBIE
+    } state;
     pthread_t  id;
-    pfk_pthread(void) { mut.init(); cond.init(); }
-    ~pfk_pthread(void) { }
+    static void * _entry(void *arg) {
+        pfk_pthread * th = (pfk_pthread *)arg;
+        th->mut.lock();
+        th->state = RUNNING;
+        th->mut.unlock();
+        th->cond.signal();
+        th->entry();
+        th->mut.lock();
+        th->state = ZOMBIE;
+        th->mut.unlock();
+        return NULL;
+    }
+protected:
+    virtual void entry(void) = 0;
+public:
+    pfk_pthread_attr attr;
+    pfk_pthread(void) { state = INIT; mut.init(); cond.init(); }
+    ~pfk_pthread(void) { join(); }
     int create() {
-        started = false;
+        mut.lock();
+        if (state != INIT) {
+            mut.unlock();
+            return -1;
+        }
+        state = NEWBORN;
+        mut.unlock();
         int ret = pthread_create(&id, attr(), &_entry, this);
         if (ret == 0) {
-            while (!started) {
+            mut.lock();
+            while (state == NEWBORN) {
                 myTimespec ts(5,0);
                 ts += myTimespec().getNow();
-                cond.wait(mut(), &ts);
+                cond.wait(mut(), ts());
             }
+            mut.unlock();
+        } else {
+            mut.lock();
+            state = INIT;
+            mut.unlock();
         }
         return ret;
     }
     void * join(void) {
+        mut.lock();
+        if (state != RUNNING && state != ZOMBIE) {
+            mut.unlock();
+            return NULL;
+        }
+        mut.unlock();
         void * ret = NULL;
         pthread_join(id, &ret);
+        mut.lock();
+        state = INIT;
+        mut.unlock();
         return ret;
     }
-    virtual void entry(void) = 0;
-private:
-    static void * _entry(void *arg) {
-        pfk_pthread * th = (pfk_pthread *)arg;
-        th->started = true;
-        th->cond.signal();
-        th->entry();
-        return NULL;
-    }
+    const bool running(void) const { return (state != INIT); }
 };
 
 class pfk_fd_set {

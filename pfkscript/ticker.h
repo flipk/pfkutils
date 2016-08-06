@@ -28,12 +28,10 @@ class Ticker : pfk_pthread {
             }
         }
     }
-    bool running;
 public:
     Ticker(void) {
         pipe(pipe_fds);
         pipe(closer_pipe_fds);
-        running = false;
     }
     ~Ticker(void) {
         stop();
@@ -43,18 +41,16 @@ public:
         close(pipe_fds[1]);
     }
     void start(void) {
-        if (running)
+        if (running())
             return;
         create();
-        running = true;
     }
     void stop(void) {
-        if (!running)
+        if (!running())
             return;
         char c = 1;
         (void) write(closer_pipe_fds[1], &c, 1);
         join();
-        running = false;
     }
     int get_fd(void) { return pipe_fds[0]; }
 };
