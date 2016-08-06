@@ -205,6 +205,7 @@ struct myTimespec : public timespec
     uint64_t nsecs(void) {
         return ((uint64_t)tv_sec * 1000000000) + tv_nsec;
     }
+    timespec *operator()(void) { return this; }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
                                        const myTimespec &rhs)
