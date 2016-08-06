@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "myTimeval.h"
+#include "pfkposix.h"
 
 enum BST_OP {
 //    BST_OP_NONE,       // stream is uninitialized.
@@ -362,7 +362,7 @@ struct BST_TIMEVAL : public BST {
         tv.tv_usec = (typeof(tv.tv_usec)) btv_usec();
     }
     const std::string Format(void) {
-        myTimeval v;
+        pfk_timeval v;
         get(v);
         return v.Format();
     }

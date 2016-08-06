@@ -3,7 +3,7 @@
 #ifndef __ticker_h__
 #define __ticker_h__
 
-#include "pfkpthread.h"
+#include "pfkposix.h"
 
 class Ticker : pfk_pthread {
     int closer_pipe_fds[2];

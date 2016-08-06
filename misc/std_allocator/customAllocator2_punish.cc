@@ -17,6 +17,7 @@ exit 0
 #include <unordered_map>
 #include <iostream>
 #include "customAllocator2.h"
+#include "pfkposix.h"
 
 using namespace std;
 
@@ -29,19 +30,7 @@ int creates;
 int erases;
 int finds;
 
-struct myTimeval : public timeval {
-    void operator-=(const myTimeval &other) {
-        if (tv_usec < other.tv_usec)
-        {
-            tv_usec += 1000000;
-            tv_sec -= 1;
-        }
-        tv_usec -= other.tv_usec;
-        tv_sec -= other.tv_sec;
-    }
-};
-
-ostream& operator<<(ostream& ostr, const myTimeval &tv) {
+ostream& operator<<(ostream& ostr, const pfk_timeval &tv) {
     ostr << tv.tv_sec;
     ostr << ".";
     ostr.width(6);
@@ -68,7 +57,7 @@ main()
         > m;
     m.reserve(ITEMS);
 #endif
-    myTimeval startTime, endTime;
+    pfk_timeval startTime, endTime;
 
     srandom(0xb12d5ca4);
     memset(present,0,sizeof(present));

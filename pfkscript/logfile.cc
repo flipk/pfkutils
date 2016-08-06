@@ -20,7 +20,7 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "pfkpthread.h"
+#include "pfkposix.h"
 
 using namespace std;
 

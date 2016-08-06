@@ -1,7 +1,7 @@
 
 #include "LockWait.h"
 #include "thread_slinger.h"
-#include "myTimeval.h"
+#include "pfkposix.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,7 @@ struct fdBuffer : public ThreadSlinger::thread_slinger_message
     fdBuffer(void) { buffer = NULL; }
     ~fdBuffer(void) { if (buffer != NULL) delete[] buffer; }
     static int BUFFERSIZE;
-    myTimeval stamp; // the time at which this should be sent.
+    pfk_timeval stamp; // the time at which this should be sent.
     int length;
     char * buffer;
     void init(void) {
@@ -200,7 +200,7 @@ void * reader_thread_routine( void * _cfg )
     fdBufPool *myPool = doServer ? &cfg->stcPool : &cfg->ctsPool;
     fdBufQ *myQ = doServer ? &cfg->stcQ : &cfg->ctsQ;
     fdBuffer * buf;
-    myTimeval latency;
+    pfk_timeval latency;
 
     latency.tv_sec = cfg->latency / 1000; // ms to sec
     latency.tv_usec = (cfg->latency % 1000) * 1000; // ms to us
@@ -232,7 +232,7 @@ void * writer_thread_routine( void * _cfg )
     connection_config * cfg = (connection_config *) _cfg;
     bool doServer = cfg->doServer;
     bool *myRunning = doServer ? &cfg->writer0_running : &cfg->writer1_running;
-    myTimeval now;
+    pfk_timeval now;
     WaitUtil::Semaphore *myTokens =
         doServer ? &cfg->server_tokens : &cfg->client_tokens;
     fdBufQ *myQ = doServer ? &cfg->stcQ : &cfg->ctsQ;

@@ -60,7 +60,7 @@ proxyClientConn :: select_rw ( fd_mgr *_mgr, bool * do_read, bool * do_write )
 
     if (allowReads)
     {
-        myTimeval  now, diff;
+        pfk_timeval now, diff;
         gettimeofday(&now, NULL);
         diff = now - lastPing;
         if (diff.tv_sec > 10)
@@ -210,7 +210,7 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
 
     case PMT_PING:
     {
-        myTimeval  now, then, diff;
+        pfk_timeval  now, then, diff;
         gettimeofday(&now, NULL);
         then.tv_sec = pm_in.ping().time_sec();
         then.tv_usec = pm_in.ping().time_usec();

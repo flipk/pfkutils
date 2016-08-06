@@ -23,7 +23,7 @@ exit 0
 #include <map>
 
 #include "Btree.h"
-#include "myTimeval.h"
+#include "pfkposix.h"
 #include "sha1.h"
 
 #define TSDB_FILENAME ".tsdb"
@@ -175,9 +175,9 @@ private:
         string name;
         struct stat sb;
         bool err;
-        myTimeval mtime;
+        pfk_timeval mtime;
     };
-    myTimeval lastScan;
+    pfk_timeval lastScan;
 public:
     treescan_tree(string dir) {
         tsDbDir = dir;
@@ -206,12 +206,12 @@ public:
     }
 private:
     class deleteDetector : public BtreeIterator {
-        myTimeval now;
+        pfk_timeval now;
         Btree * bt;
         tsdatum *dat;
         /*virtual*/ bool handle_item(uint8_t *keydata, uint32_t keylen,
                                      FB_AUID_T data_fbn) {
-            myTimeval ls;
+            pfk_timeval ls;
             if (dat == NULL)
                 dat = new tsdatum(bt);
             if (dat->key.bst_decode(keydata,keylen) == false)
@@ -246,7 +246,7 @@ private:
             __attribute__ ((format( printf, 2, 3 ))) {
         }
     public:
-        deleteDetector(myTimeval _now, Btree *_bt)
+        deleteDetector(pfk_timeval _now, Btree *_bt)
             : now(_now), bt(_bt) { dat = NULL; }
         ~deleteDetector(void) {
             if (dat) delete dat;
@@ -291,7 +291,7 @@ private:
     }
 public:
     void scan(void) {
-        myTimeval now;
+        pfk_timeval now;
         now.getNow();
         // cd to root of db dir, but guarantee that
         // no matter how we get out of this function,
@@ -377,7 +377,7 @@ public:
                 }
                 else
                 {
-                    myTimeval mt;
+                    pfk_timeval mt;
                     dat.data.fname_to_info.mtime.get(mt);
                     if (mt != item.mtime)
                     {

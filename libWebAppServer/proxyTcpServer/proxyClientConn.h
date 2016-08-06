@@ -2,7 +2,7 @@
 
 #include "WebSocketClient.h"
 #include "fd_mgr.h"
-#include "myTimeval.h"
+#include "pfkposix.h"
 #include "proxyMsgs.pb.h"
 #include <sys/time.h>
 
@@ -18,7 +18,7 @@ private:
     /*virtual*/ ~proxyClientConn(void);
     bool allowReads;
     int sequence;
-    myTimeval lastPing;
+    pfk_timeval lastPing;
     proxyTcp::ProxyMsg  pm_in;
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;

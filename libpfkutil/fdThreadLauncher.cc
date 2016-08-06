@@ -1,6 +1,6 @@
 
 #include "fdThreadLauncher.h"
-#include "myTimeval.h"
+#include "pfkposix.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -112,8 +112,8 @@ fdThreadLauncher :: threadEntry(void)
     int maxfd;
     int cc;
     int currentPollInterval = -1;
-    myTimeval lastPoll;
-    myTimeval interval;
+    pfk_timeval lastPoll;
+    pfk_timeval interval;
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
     maxfd = cmdFds[0];
@@ -143,12 +143,12 @@ fdThreadLauncher :: threadEntry(void)
         }
         if (currentPollInterval > 0)
         {
-            myTimeval nextPoll, now;
+            pfk_timeval nextPoll, now;
             nextPoll = lastPoll + interval;
             gettimeofday(&now, NULL);
             if (nextPoll > now)
             {
-                myTimeval tv = nextPoll - now;
+                pfk_timeval tv = nextPoll - now;
                 cc = select(maxfd, &rfds, &wfds, NULL, &tv);
             }
             else

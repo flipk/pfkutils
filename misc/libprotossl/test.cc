@@ -1,7 +1,7 @@
 
 #include "libprotossl.h"
 #include "test_proto.pb.h"
-#include "myTimeval.h"
+#include "pfkposix.h"
 
 #include <unistd.h>
 
@@ -9,14 +9,14 @@ using namespace ProtoSSL;
 using namespace PFK::Test;
 
 void
-timeval_to_PingInfo(PingInfo &pi, const myTimeval &tv)
+timeval_to_PingInfo(PingInfo &pi, const pfk_timeval &tv)
 {
     pi.set_time_seconds(tv.tv_sec);
     pi.set_time_useconds(tv.tv_usec);
 }
 
 void
-PingInfo_to_timeval(myTimeval &tv, const PingInfo &pi)
+PingInfo_to_timeval(pfk_timeval &tv, const PingInfo &pi)
 {
     tv.tv_sec = pi.time_seconds();
     tv.tv_usec = pi.time_useconds();
@@ -52,7 +52,7 @@ public:
             break;
         case CTS_PING:
         {
-            myTimeval ts;
+            pfk_timeval ts;
             uint32_t seq = inMsg.ping().seq();
             PingInfo_to_timeval(ts, inMsg.ping());
             outMessage().set_type(STC_PING_ACK);
@@ -105,7 +105,7 @@ public:
         {
         case STC_PROTO_VERSION:
         {
-            myTimeval now;
+            pfk_timeval now;
             printf("client got proto app %s version %d from server\n",
                    inMsg.proto_version().app_name().c_str(),
                    inMsg.proto_version().version());
@@ -118,7 +118,7 @@ public:
         }
         case STC_PING_ACK:
         {
-            myTimeval ts, now, diff;
+            pfk_timeval ts, now, diff;
             uint32_t seq = inMsg.ping().seq();
             now.getNow();
             PingInfo_to_timeval(ts, inMsg.ping());

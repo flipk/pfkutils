@@ -155,7 +155,7 @@ struct fileInfo {
     string name;
     struct stat sb;
     bool err;
-    myTimeval mtime;
+    pfk_timeval mtime;
     fileInfo(const string &_name) : name(_name) {
         if (lstat(name.c_str(), &sb) < 0) {
             int e = errno;
@@ -187,7 +187,7 @@ bakFile::_update(void)
     uint64_t total_bytes = 0;
     bakDatum  dbinfo(bt);
     string sourcedir;
-    myTimeval now;
+    pfk_timeval now;
 
     fbi = bt->get_fbi();
 

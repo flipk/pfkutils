@@ -40,7 +40,7 @@ bakFile::listdb(void)
             cerr << "can't fetch versioninfo\n";
         else
         {
-            myTimeval tv;
+            pfk_timeval tv;
             versioninfo.data.versioninfo.time.get(tv);
             cout << "      time: " << format_time(tv) << endl;
             cout << "      filecount : "
@@ -78,7 +78,7 @@ bakFile::listdb(void)
                                 fileinfo.data.fileinfo;
                             cout << "            hash : "
                                  << format_hash(fi.hash()) << endl;
-                            myTimeval mtv;
+                            pfk_timeval mtv;
                             fi.time.get(mtv);
                             cout << "            time : "
                                  << format_time(mtv) << endl;
