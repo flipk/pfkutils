@@ -1,6 +1,7 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
 //
+// TODO: so_reuseaddr on -l
 // TODO: create command port, pass to children via env var
 // TODO: make library of commands to pass thru from children
 //        - roll over file now
