@@ -162,7 +162,7 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/d3des.h libpfkutil/d3des_orig.h libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
-	libpfkutil/msgr.h libpfkutil/myTimeval.h libpfkutil/md5.h \
+	libpfkutil/msgr.h libpfkutil/pfkposix.h libpfkutil/md5.h \
 	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
 	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
 	libpfkutil/sha256.h libpfkutil/aes.h
@@ -174,7 +174,7 @@ libpfkutil_HDRS = \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/inet_aton.h \
 	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
-	libpfkutil/myTimeval.h libpfkutil/md5.h libpfkutil/prioWorkQ.h \
+	libpfkutil/pfkposix.h libpfkutil/md5.h libpfkutil/prioWorkQ.h \
 	libpfkutil/regex.h libpfkutil/sha1.h libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
 
