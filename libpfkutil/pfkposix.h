@@ -4,7 +4,7 @@
 // http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
 // TODO : error check the hell out of stuff that isn't being error checked.
 // TODO : strtok class
-// TODO : merge LockWait and the cond/mutex in here?
+// TODO : revamp dll3 to use this interface instead of LockWait
 
 #ifndef __pfkposix_h__
 #define __pfkposix_h__
@@ -24,6 +24,9 @@ struct pfk_timeval : public timeval
 {
     pfk_timeval(void) { tv_sec = 0; tv_usec = 0; }
     pfk_timeval(time_t s, long u) { set(s,u); }
+    pfk_timeval(const pfk_timeval &other) {
+        tv_sec = other.tv_sec;  tv_usec = other.tv_usec;
+    }
     void set(time_t s, long u) { tv_sec = s; tv_usec = u; }
     const pfk_timeval& operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
@@ -102,32 +105,13 @@ static inline std::ostream& operator<<(std::ostream& ostr,
     ostr << "pfk_timeval(" << rhs.tv_sec << "," << rhs.tv_usec << ")";
     return ostr;
 }
-static inline pfk_timeval operator-(const pfk_timeval &lhs, const pfk_timeval &rhs) {
-   bool borrow = false;
-   pfk_timeval tmp;
-   tmp.tv_sec = lhs.tv_sec;
-   tmp.tv_usec = lhs.tv_usec;
-   if (rhs.tv_usec > lhs.tv_usec)
-      borrow = true;
-   tmp.tv_sec -= rhs.tv_sec;
-   tmp.tv_usec -= rhs.tv_usec;
-   if (borrow)
-   {
-      tmp.tv_sec -= 1;
-      tmp.tv_usec += 1000000;
-   }
-   return tmp;
+static inline pfk_timeval operator-(const pfk_timeval &lhs,
+                                    const pfk_timeval &rhs) {
+    return pfk_timeval(lhs).operator-=(rhs);
 }
-static inline pfk_timeval operator+(const pfk_timeval &lhs, const pfk_timeval &rhs) {
-   pfk_timeval tmp;
-   tmp.tv_sec = lhs.tv_sec + rhs.tv_sec;
-   tmp.tv_usec = lhs.tv_usec + rhs.tv_usec;
-   if (tmp.tv_usec > 1000000)
-   {
-      tmp.tv_usec -= 1000000;
-      tmp.tv_sec += 1;
-   }
-   return tmp;
+static inline pfk_timeval operator+(const pfk_timeval &lhs,
+                                    const pfk_timeval &rhs) {
+    return pfk_timeval(lhs).operator+=(rhs);
 }
 static inline bool operator>(const pfk_timeval &lhs, const pfk_timeval &other) {
    if (lhs.tv_sec > other.tv_sec) 
@@ -148,6 +132,9 @@ struct pfk_timespec : public timespec
 {
     pfk_timespec(void) { tv_sec = 0; tv_nsec = 0; }
     pfk_timespec(time_t s, long n) { set(s,n); }
+    pfk_timespec(const pfk_timespec &other) {
+        tv_sec = other.tv_sec; tv_nsec = other.tv_nsec;
+    }
     void set(time_t s, long n) { tv_sec = s; tv_nsec = n; }
     const pfk_timespec &operator=(const pfk_timespec &rhs) {
         tv_sec = rhs.tv_sec;
@@ -226,33 +213,12 @@ static inline std::ostream& operator<<(std::ostream& ostr,
     return ostr;
 }
 static inline pfk_timespec operator-(const pfk_timespec &lhs,
-                                   const pfk_timespec &rhs) {
-   bool borrow = false;
-   pfk_timespec tmp;
-   tmp.tv_sec = lhs.tv_sec;
-   tmp.tv_nsec = lhs.tv_nsec;
-   if (rhs.tv_nsec > lhs.tv_nsec)
-      borrow = true;
-   tmp.tv_sec -= rhs.tv_sec;
-   tmp.tv_nsec -= rhs.tv_nsec;
-   if (borrow)
-   {
-      tmp.tv_sec -= 1;
-      tmp.tv_nsec += 1000000000;
-   }
-   return tmp;
+                                     const pfk_timespec &rhs) {
+   return pfk_timespec(lhs).operator-=(rhs);
 }
 static inline pfk_timespec operator+(const pfk_timespec &lhs,
-                                   const pfk_timespec &rhs) {
-   pfk_timespec tmp;
-   tmp.tv_sec = lhs.tv_sec + rhs.tv_sec;
-   tmp.tv_nsec = lhs.tv_nsec + rhs.tv_nsec;
-   if (tmp.tv_nsec > 1000000000)
-   {
-      tmp.tv_nsec -= 1000000000;
-      tmp.tv_sec += 1;
-   }
-   return tmp;
+                                     const pfk_timespec &rhs) {
+   return pfk_timespec(lhs).operator+=(rhs);
 }
 static inline bool operator>(const pfk_timespec &lhs,
                              const pfk_timespec &other) {
@@ -270,27 +236,6 @@ static inline bool operator<(const pfk_timespec &lhs,
       return false;
    return lhs.tv_nsec < other.tv_nsec;
 }
-
-class pfk_pthread_attr {
-    pthread_attr_t _attr;
-public:
-    pfk_pthread_attr(void) {
-        pthread_attr_init(&_attr);
-    }
-    ~pfk_pthread_attr(void) {
-        pthread_attr_destroy(&_attr);
-    }
-    void set_detach(bool set=true) {
-        int state = set ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE;
-        pthread_attr_setdetachstate(&_attr, state);
-    }
-    const pthread_attr_t *operator()(void) { return &_attr; }
-// pthread_attr_setaffinity_np
-// pthread_attr_setguardsize
-// pthread_attr_setschedparam
-// pthread_attr_setstackaddr
-// pthread_attr_setstacksize
-};
 
 class pfk_pthread_condattr {
     pthread_condattr_t attr;
@@ -353,6 +298,38 @@ public:
     pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
 };
 
+class pfk_pthread_mutex_lock {
+    pfk_pthread_mutex &mut;
+    bool locked;
+public:
+     pfk_pthread_mutex_lock(pfk_pthread_mutex &_mut, bool dolock=true)
+        : mut(_mut), locked(false) {
+        if (dolock) {
+            mut.lock();
+            locked = true;
+        }
+    }
+    ~pfk_pthread_mutex_lock(void) {
+        if (locked) {
+            mut.unlock();
+        }
+    }
+    bool lock(void) {
+        if (locked)
+            return false;
+        mut.lock();
+        locked = true;
+        return true;
+    }
+    bool unlock(void) {
+        if (!locked)
+            return false;
+        mut.unlock();
+        locked = false;
+        return true;
+    }
+};
+
 class pfk_pthread_cond {
     pthread_cond_t  cond;
     bool initialized;
@@ -372,15 +349,65 @@ public:
         initialized = true;
     }
     pthread_cond_t *operator()(void) { return initialized ? &cond : NULL; }
-    int wait(pthread_mutex_t *mut, timespec *abstime) {
+    int wait(pthread_mutex_t *mut, timespec *abstime = NULL) {
+        if (abstime == NULL)
+            return pthread_cond_wait(&cond, mut);
         return pthread_cond_timedwait(&cond, mut, abstime);
     }
     void signal(void) {
         pthread_cond_signal(&cond);
     }
-    // timedwait
-    // signal
-    // broadcast
+    void bcast(void) {
+        pthread_cond_broadcast(&cond);
+    }
+};
+
+// classical counting semaphore like P and V from school.
+class pfk_semaphore {
+    pfk_pthread_cond cond;
+    pfk_pthread_mutex mut;
+    int value;
+public:
+    pfk_semaphore(int initial) {
+        mut.init();
+        cond.init();
+    }
+    ~pfk_semaphore(void) { /* what */ }
+    void give(void) {
+        pfk_pthread_mutex_lock lock(mut);
+        value++;
+        lock.unlock();
+        cond.signal();
+    }
+    bool take(struct timespec *expire = NULL) {
+        pfk_pthread_mutex_lock lock(mut);
+        while (value <= 0) {
+            if (cond.wait(mut(), expire) < 0)
+                return false;
+        }
+        return true;
+    }
+};
+
+class pfk_pthread_attr {
+    pthread_attr_t _attr;
+public:
+    pfk_pthread_attr(void) {
+        pthread_attr_init(&_attr);
+    }
+    ~pfk_pthread_attr(void) {
+        pthread_attr_destroy(&_attr);
+    }
+    void set_detach(bool set=true) {
+        int state = set ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE;
+        pthread_attr_setdetachstate(&_attr, state);
+    }
+    const pthread_attr_t *operator()(void) { return &_attr; }
+// pthread_attr_setaffinity_np
+// pthread_attr_setguardsize
+// pthread_attr_setschedparam
+// pthread_attr_setstackaddr
+// pthread_attr_setstacksize
 };
 
 class pfk_pthread {
@@ -392,14 +419,16 @@ class pfk_pthread {
     pthread_t  id;
     static void * _entry(void *arg) {
         pfk_pthread * th = (pfk_pthread *)arg;
-        th->mut.lock();
-        th->state = RUNNING;
-        th->mut.unlock();
+        {
+            pfk_pthread_mutex_lock lock(th->mut);
+            th->state = RUNNING;
+        }
         th->cond.signal();
         th->entry();
-        th->mut.lock();
-        th->state = ZOMBIE;
-        th->mut.unlock();
+        {
+            pfk_pthread_mutex_lock lock(th->mut);
+            th->state = ZOMBIE;
+        }
         return NULL;
     }
 protected:
@@ -409,41 +438,39 @@ public:
     pfk_pthread(void) { state = INIT; mut.init(); cond.init(); }
     ~pfk_pthread(void) { join(); }
     int create() {
-        mut.lock();
-        if (state != INIT) {
-            mut.unlock();
-            return -1;
+        {
+            pfk_pthread_mutex_lock lock(mut);
+            if (state != INIT)
+                return -1;
+            state = NEWBORN;
         }
-        state = NEWBORN;
-        mut.unlock();
+        attr.set_detach(false); // this class depends on joinable.
         int ret = pthread_create(&id, attr(), &_entry, this);
         if (ret == 0) {
-            mut.lock();
+            pfk_pthread_mutex_lock lock(mut);
             while (state == NEWBORN) {
                 pfk_timespec ts(5,0);
                 ts += pfk_timespec().getNow();
                 cond.wait(mut(), ts());
             }
-            mut.unlock();
         } else {
-            mut.lock();
+            pfk_pthread_mutex_lock lock(mut);
             state = INIT;
-            mut.unlock();
         }
         return ret;
     }
     void * join(void) {
-        mut.lock();
-        if (state != RUNNING && state != ZOMBIE) {
-            mut.unlock();
-            return NULL;
+        {
+            pfk_pthread_mutex_lock lock(mut);
+            if (state != RUNNING && state != ZOMBIE)
+                return NULL;
         }
-        mut.unlock();
         void * ret = NULL;
         pthread_join(id, &ret);
-        mut.lock();
-        state = INIT;
-        mut.unlock();
+        {
+            pfk_pthread_mutex_lock lock(mut);
+            state = INIT;
+        }
         return ret;
     }
     const bool running(void) const { return (state != INIT); }
