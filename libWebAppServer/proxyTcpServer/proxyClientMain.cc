@@ -1,4 +1,8 @@
 
+// TODO there's some bytes getting lost somewhere. 
+//      every once in a while i get an ssh error that has
+//      to be a truncated packet or something. (missing HMAC)
+
 // wsProxyClient proxyConn proxy=wwwgate0.mot.com:1080 \
 //   url=ws://leviathan.phillipknaack.com/websocket/levproto listenPort=2222
 
