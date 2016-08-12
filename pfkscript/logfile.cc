@@ -181,9 +181,9 @@ LogFile::logFileEnt::sortTimestamp(const logFileEnt &a,
 void
 LogFile :: globLogFiles(LogFile::LfeList &list)
 {
-    pfk_readdir   d(logDir.c_str());
+    pfk_readdir  d;
     size_t baselen = logFilebase.length();
-    if (d.ok())
+    if (d.open(logDir.c_str()))
     {
         struct dirent de;
         while (d.read(de))
