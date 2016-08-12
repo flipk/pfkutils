@@ -507,29 +507,35 @@ struct pfk_select {
 
 class pfk_readdir {
     DIR * d;
-    bool isOk;
 public:
-    pfk_readdir(const char *dirname) {
-        d = ::opendir(dirname);
-        if (d == NULL)
-            isOk = false;
-        else
-            isOk = true;
+    pfk_readdir(void) {
+        d = NULL;
     }
     ~pfk_readdir(void) {
         if (d != NULL)
-            closedir(d);
+            ::closedir(d);
     }
-    const bool ok(void) const { return isOk; }
+    bool open(const std::string &dirstr) { return open(dirstr.c_str()); }
+    bool open(const char *dirname) {
+        if (d)
+            ::closedir(d);
+        d = ::opendir(dirname);
+        if (d == NULL)
+            return false;
+        return true;
+    }
     bool read(dirent &de) {
+        if (d == NULL)
+            return false;
         dirent * result = NULL;
-        int cc = readdir_r(d, &de, &result);
+        int cc = ::readdir_r(d, &de, &result);
         if (cc != 0 || result == NULL)
             return false;
         return true;
     }
     void rewind(void) {
-        rewinddir(d);
+        if (d)
+            ::rewinddir(d);
     }
 };
 
