@@ -8,7 +8,7 @@
 using namespace pfktop;
 using namespace std;
 
-int
+extern "C" int
 pfktop_main(int argc, char ** argv)
 {
     Options opts(argc, argv);

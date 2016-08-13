@@ -88,14 +88,14 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 OBJDIRS_TOMAKE= \
 	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
 	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfksh scripts syslog misc/states contrib \
+	pfkscript pfktop pfksh scripts syslog misc/states contrib \
 	libWebAppServer/proxyTcpServer xlock fonts
 
 ##############################################
 
 BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
-	ampfk pfkscript sessionmgr xrandr states bglog he \
+	ampfk pfkscript pfktop sessionmgr xrandr states bglog he \
 	libpfkfb diskloader pfkstat deduplifier libwas \
 	libpfkthread xlock
 
@@ -387,6 +387,18 @@ pfkscript_INCS = -Ilibpfkutil
 pfkscript_CXXSRCS = pfkscript/logfile.cc pfkscript/main.cc pfkscript/options.cc
 pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 pfkutils_LIBUTILS = -lutil
+endif
+
+##############################################
+
+ifeq ($(PFK_BUILD_pfktop),1)
+LIB_TARGETS += pfktop
+pfktop_TARGET = $(OBJDIR)/libpfktop.a
+pfktop_INCS = -Ilibpfkutil
+pfktop_CXXSRCS = pfktop/pfktop.cc \
+	pfktop/pidlist.cc pfktop/options.cc pfktop/screen.cc \
+	pfktop/fileparser.cc pfktop/tiddb.cc pfktop/tidentry.cc
+pfktop_HDRS = pfktop/options.h pfktop/pidlist.h pfktop/screen.h
 endif
 
 ##############################################
@@ -709,7 +721,7 @@ pfkutils_LIBS += \
 	$(pfkutils_LIBUTILS) -lpthread
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
-	$(pfkscript_TARGET) $(libi2_TARGET) \
+	$(pfkscript_TARGET) $(pfktop_TARGET) $(libi2_TARGET) \
 	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \

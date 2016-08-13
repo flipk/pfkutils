@@ -22,6 +22,7 @@ PFK_BUILD_libpfkthread=0
 PFK_BUILD_wsproxy=0
 PFK_BUILD_xlock=1
 PFK_BUILD_fonts=1
+PFK_BUILD_pfktop=1
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = 
