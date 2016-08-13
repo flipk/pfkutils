@@ -108,11 +108,7 @@ PidList :: fetch(void)
                     // if a process exited and took all threads with it
                     // there would be no parent.db to search.
                     if (pe)
-                    {
-                        pe->update();
-                        if (pe->any_nonzero_history() == false)
-                            pe->db.remove(te);
-                    }
+                        pe->db.remove(te);
                 }
                 delete te;
             }
