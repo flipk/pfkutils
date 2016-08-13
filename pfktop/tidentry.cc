@@ -32,6 +32,9 @@ tidEntry :: update(void)
         return;
 
     if (parent)
+        // i had a reason for doing this. i don't think
+        // i actually need to do this anymore, because
+        // i don't actually reference anything from the parent.
         parent->update();
 
     stamp = true;
@@ -39,14 +42,7 @@ tidEntry :: update(void)
     int nf;
 
 // see https://www.kernel.org/doc/Documentation/filesystems/proc.txt
-
-    // read "comm" to get cmdline
-    // loginuid, or comes from parent
-
-    // not that interesting
-    // nf = fp.parse(pathToDir + "/schedstat");
-    // cout << "schedstat " << nf << " ";
-
+// format of the "stat" file in /proc.
 // Field          Content
 //  pid           process id
 //  tcomm         filename of the executable
@@ -105,6 +101,9 @@ tidEntry :: update(void)
 //                 by the waitpid system call
 
     nf = fp.parse(pathToDir + "/stat");
+    // if there was any error in parsing this file, the number
+    // of fields will not be 52.  since we're not error checking
+    // for failure to open file, this covers that case too.
     if (nf == 52)
     {
         stat_line = fp.get_line();
@@ -122,6 +121,10 @@ tidEntry :: update(void)
             utime_diff = utime - utime_prev;
             stime_diff = stime - stime_prev;
             diffsum = utime_diff + stime_diff;
+            // the cpu time can exceed 100 because this process
+            // may be low priority and get delayed, and the process
+            // we're measuring accumulated more than 1 second's worth
+            // of ticks.  cap to 99 for nice display (2 columns).
             if (diffsum > 99)
                 diffsum = 99;
             history.insert(history.begin(), diffsum);
@@ -131,11 +134,16 @@ tidEntry :: update(void)
         utime_prev = utime;
         stime_prev = stime;
         rss = strtoul(fp[23].c_str(),NULL,10);
-        prio = strtol(fp[17].c_str(),NULL,10);
+        prio = strtol(fp[17].c_str(),NULL,10); // signed.
         state = fp[2][0];
     }
     else
     {
+        // this is not an error, this happens quite naturally.
+        // there's a race between reading /proc and then trying
+        // to descend into the /proc/pid or /proc/pid/task dirs.
+        // if the proc or thread has exited, we might hit a window
+        // of time where we thought it existed but it really doesn't.
         history.insert(history.begin(), -1);
         if (history.size() > 10)
             history.resize(10);

@@ -12,6 +12,7 @@ namespace pfktop {
         static void sigwinch_handler(int);
         int fds[2];
         bool started;
+        std::string outbuffer; // references held by cout.
     public:
         Screen(void);
         ~Screen(void);

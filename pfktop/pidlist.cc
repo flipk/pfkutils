@@ -36,6 +36,7 @@ PidList :: fetch(void)
         return;
     }
 
+    // clear the 'stamp' on everything in the db.
     db.unstamp();
 
     while (p.read(de))
@@ -45,6 +46,7 @@ PidList :: fetch(void)
         unsigned long _pid = strtoul(de.d_name, &endpp, 10);
         if (*endpp != 0)
             // not an integer, must be one of those other words
+            // found in /proc.
             continue;
 
         pid_t pid = (pid_t) _pid;
@@ -52,9 +54,12 @@ PidList :: fetch(void)
         tidEntry * pe = db.find(pid);
         if (!pe)
         {
+            // we've not seen this one before, add an entry
+            // for it.
             pe = new tidEntry(pid, pid, path + "/" + de_name);
             db.add(pe);
         }
+        // this will set the stamp.
         pe->update();
         pfk_readdir t;
         string taskDir = string("/proc/") + de_name + "/task";
@@ -65,6 +70,7 @@ PidList :: fetch(void)
             unsigned long _tid = strtoul(de.d_name, &endpt, 10);
             if (*endpt != 0)
                 // not an integer, must be one of those other words
+                // found in /proc.
                 continue;
 
             if (_tid == _pid)
@@ -75,16 +81,21 @@ PidList :: fetch(void)
             tidEntry * te = db.find(tid);
             if (!te)
             {
+                // a thread we've not seen before, add an entry for it.
                 te = new tidEntry(tid, pid,
                                   taskDir + "/" + string(de.d_name),
                                   pe);
                 db.add(te);
                 pe->db.add(te);
             }
+            // this will set the stamp.
             te->update();
         }
     }
 
+    // look for every entry with no stamp.
+    // these entries represent threads or processes which
+    // have exited and need to be cleaned up.
     pidList_t  notStampedList;
     db.find_not_stamped(notStampedList);
 
@@ -94,7 +105,13 @@ PidList :: fetch(void)
     {
         tidEntry * te = *it;
         {
+            // this entry didn't get updated above, so update it here.
+            // basically all this does is right-shift the history,
+            // for pretty display.
             te->update();
+            // we dont delete the entry until the history has shifted
+            // completely off. this way threads that have recently died
+            // will still show up for a little while.
             if (te->any_nonzero_history() == false)
             {
                 db.remove(te);
@@ -142,13 +159,13 @@ PidList :: print(void) const
         cout << "ERROR" << nl;
         return;
     }
+    height--; // account for header row.
 
+    // build list of things we want to print.
+    // basically only things that have some CPU
+    // time in the history to print.
     pidList_t::const_iterator lit;
     pidVec_t printList;
-
-    cout << "  pid   tid              cmd    "
-         << "rss prio  time (10 sec history)       10av"
-         << nl;
     for (lit = db.begin(); lit != db.end(); lit++)
     {
         tidEntry * te = *lit;
@@ -156,19 +173,37 @@ PidList :: print(void) const
             printList.push_back(te);
     }
 
+    // sort the list by priority, highest prio at the top.
     mySorterClass mySorter;
     std::sort(printList.begin(), printList.end(), mySorter);
+
+    bool more = false;
+    if (printList.size() > height)
+    {
+        printList.resize(height);
+        more = true;
+    }
+
+    // no, there IS no "nl" here. this code prints a nl
+    // prior to each entry so the cursor always ends up
+    // on the right of the last entry.
+    cout
+        << "  pid   tid              cmd    "
+        << "rss prio  time (10 sec history)       10av";
 
     pidVec_t::iterator vit;
     for (vit = printList.begin(); vit != printList.end(); vit++)
     {
         tidEntry * te = *vit;
         cout
+            << nl
             << setw(5) << te->pid << " "
             << setw(5) << te->tid << " "
             << setw(16) << te->cmd << " "
             << setw(6) << te->rss << " "
             << setw(4) << te->prio << "  ";
+
+        // sum and count the CPU history, for the 'average' column.
         int s = 0;
         int c = 0;
         for (int ind = 0; ind < 10; ind++)
@@ -181,6 +216,10 @@ PidList :: print(void) const
             if (!skip)
             {
                 v = te->history[ind];
+                // negative value means we've been
+                // updating in the unstamped case
+                // and this entry should not be counted
+                // in the average.
                 if (v < 0)
                     skip = true;
             }
@@ -195,9 +234,11 @@ PidList :: print(void) const
         }
         if (c > 0)
             s /= c;
-        cout << setw(2) << s;
-        cout << nl;
+        cout << setw(2) << s; // average
     }
+
+    if (more)
+        cout << " MORE";
 
     cout << erase;
 }

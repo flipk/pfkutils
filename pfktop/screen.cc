@@ -43,7 +43,10 @@ Screen :: Screen(void)
     system("stty -echo raw");
 #endif
 
-    string outbuffer;
+    // a nicer output is if the whole screen
+    // appears to be re-drawn at once. this forces
+    // the cout to accumulate all output and not
+    // spit it out until a flush().
     outbuffer.resize(8192);
     cout.rdbuf()->pubsetbuf((char*)outbuffer.c_str(),
                             outbuffer.size());

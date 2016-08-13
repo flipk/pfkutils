@@ -66,5 +66,7 @@ pfktop_main(int argc, char ** argv)
         }
     }
 
+    cout << screen.nl << screen.nl;
+
     return 0;
 }

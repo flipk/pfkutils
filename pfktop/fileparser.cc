@@ -30,7 +30,6 @@ fileParser :: parse(const char *fname)
         line.clear();
         getline(inf, line);
     } // inf closed here
-//    cout << "got line : '" << line << "' ";
 
     size_t pos = 0, spacepos;
     while (1)
@@ -45,13 +44,24 @@ fileParser :: parse(const char *fname)
             if (parenpos == string::npos)
                 // WUT
                 return -1;
+            // find the whitespace after the ')' -- there's
+            // a couple of pids that have two ((xxx)) in them,
+            // this takes care of those too.
             spacepos = line.find_first_of(' ',parenpos);
-            fields.push_back(line.substr(pos+1,parenpos-pos-1));
+            if (spacepos == string::npos)
+                // +1 to skip the '('
+                fields.push_back(line.substr(pos+1));
+            else
+                // -1 to skip the ')'
+                fields.push_back(line.substr(pos+1,parenpos-pos-1));
         }
         else
         {
             spacepos = line.find_first_of(' ',pos);
-            fields.push_back(line.substr(pos,spacepos-pos));
+            if (spacepos == string::npos)
+                fields.push_back(line.substr(pos));
+            else
+                fields.push_back(line.substr(pos,spacepos-pos));
         }
         if (spacepos == string::npos)
             break;
