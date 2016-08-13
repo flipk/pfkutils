@@ -22,6 +22,9 @@ pfktop_main(int argc, char ** argv)
     pfk_select sel;
 
     bool done = false;
+
+    cout << screen.home << screen.erase;
+
     int winchfd = screen.start_winch();
     while (!done)
     {

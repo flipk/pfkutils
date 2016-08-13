@@ -16,6 +16,7 @@ namespace pfktop {
     struct tidEntry;
 
     typedef std::list<tidEntry*> pidList_t;
+    typedef std::vector<tidEntry*> pidVec_t;
     typedef std::map<pid_t,tidEntry*> pidMap_t;
 
     struct tidDb {
@@ -43,7 +44,6 @@ namespace pfktop {
         bool stamp;
         bool first_update;
         char state;
-        bool inError;
         unsigned long rss;
         long prio;
         unsigned long long utime;
@@ -52,13 +52,20 @@ namespace pfktop {
         unsigned long long stime_prev;
         unsigned long long utime_diff;
         unsigned long long stime_diff;
-        unsigned long long diffsum;
+        int diffsum;
+        std::vector<int> history;
         // TODO add diffsum history
         tidDb  db; // all threads of a process, ptr shared with pidlist.db
         tidEntry(pid_t tid, pid_t pid,
                  const std::string &path, tidEntry *_parent = NULL);
         ~tidEntry(void);
         void update(void);
+        bool any_nonzero_history(void) const {
+            for (int ind = 0; ind < history.size(); ind++)
+                if (history[ind] > 0)
+                    return true;
+            return false;
+        }
     };
 
     class fileParser {
@@ -79,6 +86,7 @@ namespace pfktop {
         Screen &screen;
         std::string &nl;
         std::string &erase;
+        std::string &home;
         tidDb  db; // includes all threads of all processes
     public:
         PidList(const Options &_opts, Screen &screen);

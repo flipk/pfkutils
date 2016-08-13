@@ -22,9 +22,12 @@ Screen :: Screen(void)
     if (!isatty(0))
         return;
 
-    erase = " [H [J";
-    erase[0] = erase[3] = 27;
-    nl = "\r\n";
+    home = " [H";  // move cursor to home.
+    erase = " [J"; // erase to end of screen.
+    home[0] = 27;
+    erase[0] = 27;
+    nl = "\r\n [K"; // newline, erase to end of line.
+    nl[2] = 27;
 
 #if 0
     struct termios  tios;

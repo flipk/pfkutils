@@ -15,6 +15,7 @@ namespace pfktop {
     public:
         Screen(void);
         ~Screen(void);
+        std::string home;
         std::string erase;
         std::string nl;
         int height(void) const;

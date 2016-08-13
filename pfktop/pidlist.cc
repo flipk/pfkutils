@@ -3,16 +3,18 @@
 #include "screen.h"
 #include "pfkposix.h"
 
-#include <iostream>
-#include <fstream>
 #include <stdlib.h>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <algorithm>
 
 using namespace pfktop;
 using namespace std;
 
 PidList :: PidList(const Options &_opts, Screen &_screen)
     : opts(_opts), screen(_screen),
-      nl(_screen.nl), erase(_screen.erase),
+      nl(_screen.nl), erase(_screen.erase), home(_screen.home),
       db(true)
 {
 }
@@ -91,31 +93,53 @@ PidList :: fetch(void)
          it++)
     {
         tidEntry * te = *it;
-        db.remove(te);
-        if (te->pid != te->tid)
         {
-            // the case we're dealing with here is when a thread
-            // exits but the parent process does not -- must make
-            // sure parent.db doesn't point to an object since deleted.
-            tidEntry * pe = db.find(te->pid);
-            // not finding it would be quite normal,
-            // if a process exited and took all threads with it
-            // there would be no parent.db to search.
-            if (pe)
+            te->update();
+            if (te->any_nonzero_history() == false)
             {
-                pe->db.remove(te);
+                db.remove(te);
+                if (te->pid != te->tid)
+                {
+                    // the case we're dealing with here is when a thread
+                    // exits but the parent process does not -- must make
+                    // sure parent.db doesn't point to an object since deleted.
+                    tidEntry * pe = db.find(te->pid);
+                    // not finding it would be quite normal,
+                    // if a process exited and took all threads with it
+                    // there would be no parent.db to search.
+                    if (pe)
+                    {
+                        pe->update();
+                        if (pe->any_nonzero_history() == false)
+                            pe->db.remove(te);
+                    }
+                }
+                delete te;
             }
         }
-        delete te;
     }
 }
 
-
+struct mySorterClass {
+    bool operator() (const tidEntry * a,
+                     const tidEntry * b) {
+        // sort first by prio
+        if (a->prio < b->prio)
+            return true;
+        if (a->prio > b->prio)
+            return false;
+        // break a prio tie by thread id
+        if (a->tid < b->tid)
+            return true;
+        return false;
+    }
+};
 
 void
 PidList :: print(void) const
 {
-    cout << erase;
+    cout << home;
+
     int height = screen.height();
     if (height < 0)
     {
@@ -123,27 +147,61 @@ PidList :: print(void) const
         return;
     }
 
-    pidList_t::const_iterator it;
+    pidList_t::const_iterator lit;
+    pidVec_t printList;
 
-    cout << "pid tid cmd time rss prio" << nl;
-    for (it = db.begin(); it != db.end(); it++)
+    cout << "  pid   tid              cmd    "
+         << "rss prio  time (10 sec history)       10av"
+         << nl;
+    for (lit = db.begin(); lit != db.end(); lit++)
     {
-        tidEntry * te = *it;
-        if (te->inError)
-            // skip
-            continue;
-        if (te->diffsum > 0)
-        {
-//            cout << te->stat_line << nl;
-            cout
-//                << " ****** " 
-                << te->pid << " "
-                << te->tid << " "
-                << te->cmd << " "
-                << te->diffsum << " "
-                << te->rss << " "
-                << te->prio << nl;
-        }
+        tidEntry * te = *lit;
+        if (te->any_nonzero_history())
+            printList.push_back(te);
     }
 
+    mySorterClass mySorter;
+    std::sort(printList.begin(), printList.end(), mySorter);
+
+    pidVec_t::iterator vit;
+    for (vit = printList.begin(); vit != printList.end(); vit++)
+    {
+        tidEntry * te = *vit;
+        cout
+            << setw(5) << te->pid << " "
+            << setw(5) << te->tid << " "
+            << setw(16) << te->cmd << " "
+            << setw(6) << te->rss << " "
+            << setw(4) << te->prio << "  ";
+        int s = 0;
+        int c = 0;
+        for (int ind = 0; ind < 10; ind++)
+        {
+            bool skip = false;
+            int v = 0;
+
+            if (ind >= te->history.size())
+                skip = true;
+            if (!skip)
+            {
+                v = te->history[ind];
+                if (v < 0)
+                    skip = true;
+            }
+            if (skip)
+                cout << "   ";
+            else
+            {
+                s += v;
+                cout << setw(2) << v << " ";
+                c++;
+            }
+        }
+        if (c > 0)
+            s /= c;
+        cout << setw(2) << s;
+        cout << nl;
+    }
+
+    cout << erase;
 }

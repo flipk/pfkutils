@@ -17,7 +17,6 @@ tidEntry :: tidEntry(pid_t _tid, pid_t _pid,
       stamp(false), first_update(true), db(false)
 {
 //    cout << "new pid " << pid << " tid " << tid << "\r\n";
-    inError = false;
 }
 
 tidEntry :: ~tidEntry(void)
@@ -106,9 +105,9 @@ tidEntry :: update(void)
 //                 by the waitpid system call
 
     nf = fp.parse(pathToDir + "/stat");
-    stat_line = fp.get_line();
     if (nf == 52)
     {
+        stat_line = fp.get_line();
         cmd = fp[1];
         utime = strtoull(fp[13].c_str(),NULL,10);
         stime = strtoull(fp[14].c_str(),NULL,10);
@@ -116,23 +115,29 @@ tidEntry :: update(void)
         {
             first_update = false;
             utime_diff = stime_diff = 0;
+            diffsum = 0;
         }
         else
         {
             utime_diff = utime - utime_prev;
             stime_diff = stime - stime_prev;
+            diffsum = utime_diff + stime_diff;
+            if (diffsum > 99)
+                diffsum = 99;
+            history.insert(history.begin(), diffsum);
+            if (history.size() > 10)
+                history.resize(10);
         }
         utime_prev = utime;
         stime_prev = stime;
-        diffsum = utime_diff + stime_diff;
         rss = strtoul(fp[23].c_str(),NULL,10);
         prio = strtol(fp[17].c_str(),NULL,10);
         state = fp[2][0];
-        inError = false;
     }
     else
     {
-//        cout << " ** NOT 52: " << stat_line << "\r\n";
-        inError = true;
+        history.insert(history.begin(), -1);
+        if (history.size() > 10)
+            history.resize(10);
     }
 }
