@@ -514,12 +514,13 @@ struct pfk_select {
 class pfk_ticker : public pfk_pthread {
     int closer_pipe_fds[2];
     int pipe_fds[2];
+    pfk_timeval interval;
     /*virtual*/ void * entry(void) {
         char c = 1;
         int clfd = closer_pipe_fds[0];
         pfk_select   sel;
         while (1) {
-            sel.tv.set(1,0);
+            sel.tv = interval;
             sel.rfds.zero();
             sel.rfds.set(clfd);
             if (sel.select() <= 0) {
@@ -541,6 +542,7 @@ public:
     pfk_ticker(void) {
         pipe(pipe_fds);
         pipe(closer_pipe_fds);
+        interval.set(1,0);
     }
     ~pfk_ticker(void) {
         stopjoin();
@@ -549,7 +551,12 @@ public:
         close(pipe_fds[0]);
         close(pipe_fds[1]);
     }
-    int get_fd(void) { return pipe_fds[0]; }
+    void start(time_t s, long us) {
+        interval.set(s,us);
+        if (!running())
+            create();
+    }
+    int fd(void) { return pipe_fds[0]; }
 };
 
 class pfk_readdir {

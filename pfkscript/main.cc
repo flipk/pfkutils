@@ -159,9 +159,8 @@ pfkscript_main(int argc, char ** argv)
     // TODO forward window size changes to child PTY
 
     pfk_ticker   ticker;
-    int ticker_fd = ticker.get_fd();
 
-    ticker.create();
+    ticker.start(1,0);
     while (!done)
     {
         int cc;
@@ -174,7 +173,7 @@ pfkscript_main(int argc, char ** argv)
             sel.rfds.set(listenPortFd);
         if (listenDataPortFd != -1)
             sel.rfds.set(listenDataPortFd);
-        sel.rfds.set(ticker_fd);
+        sel.rfds.set(ticker.fd());
         sel.tv.set(1,0);
 
         cc = sel.select();
@@ -182,10 +181,10 @@ pfkscript_main(int argc, char ** argv)
         if (cc <= 0)
             continue;
 
-        if (sel.rfds.isset(ticker_fd))
+        if (sel.rfds.isset(ticker.fd()))
         {
             char c;
-            (void) read(ticker_fd, &c, 1);
+            (void) read(ticker.fd(), &c, 1);
             logfile.periodic();
         }
 

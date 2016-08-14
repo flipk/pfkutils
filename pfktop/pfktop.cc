@@ -20,26 +20,36 @@ pfktop_main(int argc, char ** argv)
     Screen screen;
     PidList  list(opts, screen);
     pfk_select sel;
+    pfk_ticker  ticker;
 
     bool done = false;
 
     cout << screen.home << screen.erase;
 
+    list.fetch();
     int winchfd = screen.start_winch();
+    ticker.start(1,0);
     while (!done)
     {
         char c;
 
-        list.fetch();
         list.print();
         cout.flush();
 
         sel.rfds.zero();
         sel.rfds.set(0);
         sel.rfds.set(winchfd);
+        sel.rfds.set(ticker.fd());
         sel.tv.set(1,0);
         if (sel.select() > 0)
         {
+            if (sel.rfds.isset(ticker.fd()))
+            {
+                int cc = read(ticker.fd(), &c, 1);
+                if (cc <= 0)
+                    done = true;
+                list.fetch();
+            }
             if (sel.rfds.isset(0))
             {
                 if (read(0,&c,1) == 1)
@@ -65,6 +75,7 @@ pfktop_main(int argc, char ** argv)
             }
         }
     }
+    ticker.stopjoin();
 
     cout << screen.nl << screen.nl;
 
