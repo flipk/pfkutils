@@ -414,65 +414,71 @@ class pfk_pthread {
     pfk_pthread_mutex mut;
     pfk_pthread_cond cond;
     enum {
-        INIT, NEWBORN, RUNNING, ZOMBIE
+        INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE
     } state;
     pthread_t  id;
     static void * _entry(void *arg) {
         pfk_pthread * th = (pfk_pthread *)arg;
-        {
-            pfk_pthread_mutex_lock lock(th->mut);
-            th->state = RUNNING;
-        }
+        pfk_pthread_mutex_lock lock(th->mut);
+        th->state = RUNNING;
+        lock.unlock();
         th->cond.signal();
-        th->entry();
-        {
-            pfk_pthread_mutex_lock lock(th->mut);
-            th->state = ZOMBIE;
-        }
-        return NULL;
+        void * ret = th->entry();
+        lock.lock();
+        th->state = ZOMBIE;
+        return ret;
     }
 protected:
-    virtual void entry(void) = 0;
+    virtual void * entry(void) = 0;
+    virtual void send_stop(void) = 0;
 public:
     pfk_pthread_attr attr;
     pfk_pthread(void) { state = INIT; mut.init(); cond.init(); }
-    ~pfk_pthread(void) { join(); }
-    int create() {
-        {
-            pfk_pthread_mutex_lock lock(mut);
-            if (state != INIT)
-                return -1;
-            state = NEWBORN;
-        }
+    ~pfk_pthread(void) {
+        // derived class destructor really should do stop/join
+        // before destroying anything else in derived, but it doesn't
+        // hurt to repeat it here since stop and join both check the state.
+        stopjoin();
+    }
+    int create(void) {
+        pfk_pthread_mutex_lock lock(mut);
+        if (state != INIT)
+            return -1;
+        state = NEWBORN;
+        lock.unlock();
         attr.set_detach(false); // this class depends on joinable.
         int ret = pthread_create(&id, attr(), &_entry, this);
+        lock.lock();
         if (ret == 0) {
-            pfk_pthread_mutex_lock lock(mut);
             while (state == NEWBORN) {
                 pfk_timespec ts(5,0);
                 ts += pfk_timespec().getNow();
                 cond.wait(mut(), ts());
             }
         } else {
-            pfk_pthread_mutex_lock lock(mut);
             state = INIT;
         }
         return ret;
+    }
+    void stop(void) {
+        pfk_pthread_mutex_lock lock(mut);
+        if (state != RUNNING)
+            return;
+        state = STOPPING;
+        send_stop();
     }
     void * join(void) {
-        {
-            pfk_pthread_mutex_lock lock(mut);
-            if (state != RUNNING && state != ZOMBIE)
-                return NULL;
-        }
+        pfk_pthread_mutex_lock lock(mut);
+        if (state != STOPPING && state != ZOMBIE)
+            return NULL;
+        lock.unlock();
         void * ret = NULL;
         pthread_join(id, &ret);
-        {
-            pfk_pthread_mutex_lock lock(mut);
-            state = INIT;
-        }
+        lock.lock();
+        state = INIT;
         return ret;
     }
+    void * stopjoin(void) { stop(); return join(); }
     const bool running(void) const { return (state != INIT); }
 };
 
@@ -503,6 +509,47 @@ struct pfk_select {
         if (n < n3) n = n3;
         return ::select(n, rfds(), wfds(), efds(), tv());
     }
+};
+
+class pfk_ticker : public pfk_pthread {
+    int closer_pipe_fds[2];
+    int pipe_fds[2];
+    /*virtual*/ void * entry(void) {
+        char c = 1;
+        int clfd = closer_pipe_fds[0];
+        pfk_select   sel;
+        while (1) {
+            sel.tv.set(1,0);
+            sel.rfds.zero();
+            sel.rfds.set(clfd);
+            if (sel.select() <= 0) {
+                (void) write(pipe_fds[1], &c, 1);
+                continue;
+            }
+            if (sel.rfds.isset(clfd)) {
+                (void) read(clfd, &c, 1);
+                break;
+            }
+        }
+        return NULL;
+    }
+    /*virtual*/ void send_stop(void) {
+        char c = 1;
+        (void) write(closer_pipe_fds[1], &c, 1);
+    }
+public:
+    pfk_ticker(void) {
+        pipe(pipe_fds);
+        pipe(closer_pipe_fds);
+    }
+    ~pfk_ticker(void) {
+        stopjoin();
+        close(closer_pipe_fds[0]);
+        close(closer_pipe_fds[1]);
+        close(pipe_fds[0]);
+        close(pipe_fds[1]);
+    }
+    int get_fd(void) { return pipe_fds[0]; }
 };
 
 class pfk_readdir {

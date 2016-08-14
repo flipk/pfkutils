@@ -15,6 +15,7 @@
 #include "options.h"
 #include "logfile.h"
 #include "bufprintf.h"
+#include "pfkposix.h"
 
 #include <stdio.h>
 #include <pty.h>
@@ -29,8 +30,6 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
-#include "ticker.h"
 
 #include <iostream>
 #include <fstream>
@@ -159,10 +158,10 @@ pfkscript_main(int argc, char ** argv)
 
     // TODO forward window size changes to child PTY
 
-    Ticker   ticker;
+    pfk_ticker   ticker;
     int ticker_fd = ticker.get_fd();
 
-    ticker.start();
+    ticker.create();
     while (!done)
     {
         int cc;
@@ -267,7 +266,7 @@ pfkscript_main(int argc, char ** argv)
             }
         }
     }
-    ticker.stop();
+    ticker.stopjoin();
 
     if (opts.backgroundSpecified)
         unlink(opts.pidFile.c_str());
