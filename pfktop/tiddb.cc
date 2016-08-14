@@ -1,11 +1,5 @@
 
-#include "pidlist.h"
-#include "screen.h"
-#include "pfkposix.h"
-
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
+#include "tiddb.h"
 
 using namespace pfktop;
 using namespace std;

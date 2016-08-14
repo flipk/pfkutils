@@ -1,9 +1,9 @@
 
 #include <iostream>
-#include "pfkposix.h"
 #include "screen.h"
 #include "options.h"
 #include "pidlist.h"
+#include "pfkposix.h"
 
 using namespace pfktop;
 using namespace std;

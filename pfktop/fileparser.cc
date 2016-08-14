@@ -1,11 +1,6 @@
 
-#include "pidlist.h"
-#include "screen.h"
-#include "pfkposix.h"
-
-#include <iostream>
+#include "fileparser.h"
 #include <fstream>
-#include <stdlib.h>
 
 using namespace pfktop;
 using namespace std;
@@ -31,29 +26,29 @@ fileParser :: parse(const char *fname)
         getline(inf, line);
     } // inf closed here
 
+    // there might be fields with parens, and those fields
+    // might have spaces. delete the parens, but don't forget
+    // the spaces inside the parens aren't field delimiters.
+    // also: there might be double parens ((like this)).
+    // also: linux /proc files don't do this but just for
+    // completeness we should handle the last field having parens.
+
     size_t pos = 0, spacepos;
     while (1)
     {
-        // special case : the process title may have a space
-        // in it, and has parens to delimit the field. if a
-        // field starts with a '(' we should search for the
-        // matching ')'.
         if (line[pos] == '(')
         {
-            size_t parenpos = line.find_first_of(')',pos);
-            if (parenpos == string::npos)
-                // WUT
+            size_t firstcharpos = line.find_first_not_of('(',pos);
+            if (firstcharpos == string::npos)
+                // buh? this line sucks.
                 return -1;
-            // find the whitespace after the ')' -- there's
-            // a couple of pids that have two ((xxx)) in them,
-            // this takes care of those too.
-            spacepos = line.find_first_of(' ',parenpos);
-            if (spacepos == string::npos)
-                // +1 to skip the '('
-                fields.push_back(line.substr(pos+1));
-            else
-                // -1 to skip the ')'
-                fields.push_back(line.substr(pos+1,parenpos-pos-1));
+            size_t parenpos = line.find_first_of(')',firstcharpos);
+            if (parenpos == string::npos)
+                // this line sucks some other way.
+                return -1;
+            spacepos = line.find_first_of(' ',parenpos+1);
+            fields.push_back(line.substr(firstcharpos,
+                                         parenpos-firstcharpos));
         }
         else
         {

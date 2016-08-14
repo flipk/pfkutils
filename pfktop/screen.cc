@@ -1,14 +1,12 @@
 
 #include "screen.h"
-
-#include <stdlib.h>
 #include <iostream>
-#include <termios.h>
+#include <stdlib.h>
+//#include <termios.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <termios.h>
 #include <signal.h>
 
 using namespace pfktop;

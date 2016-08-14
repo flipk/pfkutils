@@ -1,10 +1,6 @@
 
-#include "pidlist.h"
-#include "screen.h"
-#include "pfkposix.h"
-
-#include <iostream>
-#include <fstream>
+#include "tiddb.h"
+#include "fileparser.h"
 #include <stdlib.h>
 
 using namespace pfktop;
@@ -30,12 +26,6 @@ tidEntry :: update(void)
     if (stamp)
         // already updated, dont do it twice.
         return;
-
-    if (parent)
-        // i had a reason for doing this. i don't think
-        // i actually need to do this anymore, because
-        // i don't actually reference anything from the parent.
-        parent->update();
 
     stamp = true;
     fileParser fp;

@@ -1,12 +1,9 @@
 
 #include "pidlist.h"
-#include "screen.h"
 #include "pfkposix.h"
 
 #include <stdlib.h>
-#include <iostream>
 #include <iomanip>
-#include <fstream>
 #include <algorithm>
 
 using namespace pfktop;
@@ -28,9 +25,9 @@ PidList :: fetch(void)
 {
     pfk_readdir p;
     dirent de;
-    string   path = "/proc";
+    string procDir = "/proc";
 
-    if (!p.open(path))
+    if (!p.open(procDir))
     {
         cout << "cannot open /proc" << nl;
         return;
@@ -56,13 +53,14 @@ PidList :: fetch(void)
         {
             // we've not seen this one before, add an entry
             // for it.
-            pe = new tidEntry(pid, pid, path + "/" + de_name);
+            pe = new tidEntry(pid, pid,
+                              procDir + "/" + de_name + "/task/" + de_name);
             db.add(pe);
         }
         // this will set the stamp.
         pe->update();
         pfk_readdir t;
-        string taskDir = string("/proc/") + de_name + "/task";
+        string taskDir = procDir + "/" + de_name + "/task";
         t.open(taskDir); // ignore return cuz read will ret false anyway
         while (t.read(de))
         {
@@ -83,7 +81,7 @@ PidList :: fetch(void)
             {
                 // a thread we've not seen before, add an entry for it.
                 te = new tidEntry(tid, pid,
-                                  taskDir + "/" + string(de.d_name),
+                                  taskDir + "/" + de.d_name,
                                   pe);
                 db.add(te);
                 pe->db.add(te);
@@ -160,6 +158,7 @@ PidList :: print(void) const
         return;
     }
     height--; // account for header row.
+    height--; // account for TOTAL row at bottom
 
     // build list of things we want to print.
     // basically only things that have some CPU
@@ -191,21 +190,25 @@ PidList :: print(void) const
         << "  pid   tid              cmd    "
         << "rss prio  time (10 sec history)       10av";
 
+    int totalCpu = 0;
     pidVec_t::iterator vit;
     for (vit = printList.begin(); vit != printList.end(); vit++)
     {
         tidEntry * te = *vit;
         cout
             << nl
-            << setw(5) << te->pid << " "
-            << setw(5) << te->tid << " "
-            << setw(16) << te->cmd << " "
-            << setw(6) << te->rss << " "
-            << setw(4) << te->prio << "  ";
+            << setw(5)  << te->pid  << " "
+            << setw(5)  << te->tid  << " "
+            << setw(16) << te->cmd  << " "
+            << setw(6)  << te->rss  << " "
+            << setw(4)  << te->prio << "  ";
 
         // sum and count the CPU history, for the 'average' column.
         int s = 0;
         int c = 0;
+        if (te->history.size() > 0)
+            if (te->history[0] > 0)
+                totalCpu += te->history[0];
         for (int ind = 0; ind < 10; ind++)
         {
             bool skip = false;
@@ -239,6 +242,9 @@ PidList :: print(void) const
 
     if (more)
         cout << " MORE";
+
+    cout << nl << "                       TOTAL ";
+    cout << "            " << setw(3) << totalCpu;
 
     cout << erase;
 }
