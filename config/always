@@ -95,7 +95,7 @@ OBJDIRS_TOMAKE= \
 
 BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
-	ampfk pfkscript pfktop sessionmgr xrandr states bglog he \
+	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat deduplifier libwas \
 	libpfkthread xlock
 
@@ -387,6 +387,15 @@ pfkscript_INCS = -Ilibpfkutil
 pfkscript_CXXSRCS = pfkscript/logfile.cc pfkscript/main.cc pfkscript/options.cc
 pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 pfkutils_LIBUTILS = -lutil
+endif
+
+##############################################
+
+ifeq ($(PFK_BUILD_spinner),1)
+LIB_TARGETS += spinner
+spinner_TARGET = $(OBJDIR)/libspinner.a
+spinner_INCS = -Ilibpfkutil
+spinner_CXXSRCS = main/spinner.cc
 endif
 
 ##############################################
@@ -725,7 +734,7 @@ pfkutils_DEPLIBS = \
 	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
-	$(libxlock_TARGET)
+	$(libxlock_TARGET) $(spinner_TARGET) 
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
 	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \

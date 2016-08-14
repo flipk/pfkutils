@@ -25,6 +25,10 @@ PROG(0,treescan,"scan a tree producing tree info")
 PROG(1,sudo,"do a command as the superuser")
 #endif
 
+#if @PFK_BUILD_spinner@
+PROG(0,spinner,"spin and burn CPU")
+#endif
+
 #if @PFK_BUILD_ampfk@
 PROG(0,ampfk,"pfk build utils")
 #endif

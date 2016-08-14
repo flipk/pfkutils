@@ -23,6 +23,7 @@ PFK_BUILD_wsproxy=1
 PFK_BUILD_xlock=1
 PFK_BUILD_fonts=1
 PFK_BUILD_pfktop=1
+PFK_BUILD_spinner=1
 
 KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /bin/protoc
