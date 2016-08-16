@@ -1,11 +1,5 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-// TODO : strerror_r workarounds
-// http://stackoverflow.com/questions/3051204/strerror-r-returns-trash-when-i-manually-set-errno-during-testing
-// TODO : error check the hell out of stuff that isn't being error checked.
-// TODO : strtok class
-// TODO : revamp dll3 to use this interface instead of LockWait
-
 #ifndef __pfkposix_h__
 #define __pfkposix_h__
 
@@ -237,26 +231,6 @@ static inline bool operator<(const pfk_timespec &lhs,
    return lhs.tv_nsec < other.tv_nsec;
 }
 
-class pfk_pthread_condattr {
-    pthread_condattr_t attr;
-public:
-    pfk_pthread_condattr(void) {
-        pthread_condattr_init(&attr);
-    }
-    ~pfk_pthread_condattr(void) {
-        pthread_condattr_destroy(&attr);
-    }
-    const pthread_condattr_t *operator()(void) { return &attr; }
-    void setclock(clockid_t id) {
-        pthread_condattr_setclock(&attr,id);
-    }
-    void setpshared(bool shared) {
-        pthread_condattr_setpshared(
-            &attr,
-            shared ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE);
-    }
-};
-
 class pfk_pthread_mutexattr {
     pthread_mutexattr_t  attr;
 public:
@@ -267,18 +241,31 @@ public:
         pthread_mutexattr_destroy(&attr);
     }
     pthread_mutexattr_t *operator()(void) { return &attr; }
+    void setpshared(bool shared = true) {
+        pthread_mutexattr_setpshared(
+            &attr,
+            shared ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE);
+    }
+    // args: PTHREAD_PRIO_INHERIT, NONE, PROTECT
+    void setproto(int proto) {
+        pthread_mutexattr_setprotocol(&attr, proto);
+    }
+    // args: PTHREAD_MUTEX_NORMAL, ERRORCHECK, RECURSIVE, DEFAULT
+    void settype(int type) {
+        pthread_mutexattr_settype(&attr, type);
+    }
+    void setrobust(bool robust = true) {
+        pthread_mutexattr_setrobust(
+            &attr, robust ? PTHREAD_MUTEX_ROBUST : PTHREAD_MUTEX_STALLED);
+    }
     // pthread_mutexattr_setprioceiling
-    // pthread_mutexattr_setprotocol
-    // pthread_mutexattr_setpshared
-    // pthread_mutexattr_setrobust
-    // pthread_mutexattr_settype
 };
 
 class pfk_pthread_mutex {
     pthread_mutex_t  mutex;
     bool initialized;
 public:
-    pfk_pthread_mutexattr  attr;
+    pfk_pthread_mutexattr attr;
     pfk_pthread_mutex(void) {
         initialized = false;
     }
@@ -292,10 +279,10 @@ public:
         pthread_mutex_init(&mutex, attr());
         initialized = true;
     }
+    pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
     void lock(void) { pthread_mutex_lock(&mutex); }
     void trylock(void) { pthread_mutex_trylock(&mutex); }
     void unlock(void) { pthread_mutex_unlock(&mutex); }
-    pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
 };
 
 class pfk_pthread_mutex_lock {
@@ -327,6 +314,25 @@ public:
         mut.unlock();
         locked = false;
         return true;
+    }
+};
+
+class pfk_pthread_condattr {
+    pthread_condattr_t attr;
+public:
+    pfk_pthread_condattr(void) {
+        pthread_condattr_init(&attr);
+    }
+    ~pfk_pthread_condattr(void) {
+        pthread_condattr_destroy(&attr);
+    }
+    const pthread_condattr_t *operator()(void) { return &attr; }
+    void setclock(clockid_t id) {
+        pthread_condattr_setclock(&attr,id);
+    }
+    void setpshared(bool shared = true) {
+        pthread_condattr_setpshared(
+            &attr, shared ? PTHREAD_PROCESS_SHARED : PTHREAD_PROCESS_PRIVATE);
     }
 };
 
@@ -385,6 +391,7 @@ public:
             if (cond.wait(mut(), expire) < 0)
                 return false;
         }
+        value--;
         return true;
     }
 };
@@ -398,16 +405,20 @@ public:
     ~pfk_pthread_attr(void) {
         pthread_attr_destroy(&_attr);
     }
+    const pthread_attr_t *operator()(void) { return &_attr; }
     void set_detach(bool set=true) {
         int state = set ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE;
         pthread_attr_setdetachstate(&_attr, state);
     }
-    const pthread_attr_t *operator()(void) { return &_attr; }
-// pthread_attr_setaffinity_np
-// pthread_attr_setguardsize
-// pthread_attr_setschedparam
-// pthread_attr_setstackaddr
-// pthread_attr_setstacksize
+    // pthread_attr_setaffinity_np
+    // pthread_attr_setguardsize
+    // pthread_attr_setinheritsched
+    // pthread_attr_setschedparam
+    // pthread_attr_setschedpolicy
+    // pthread_attr_setscope
+    // pthread_attr_setstack
+    // pthread_attr_setstackaddr
+    // pthread_attr_setstacksize
 };
 
 class pfk_pthread {
@@ -433,7 +444,11 @@ protected:
     virtual void send_stop(void) = 0;
 public:
     pfk_pthread_attr attr;
-    pfk_pthread(void) { state = INIT; mut.init(); cond.init(); }
+    pfk_pthread(void) {
+        state = INIT;
+        mut.init();
+        cond.init();
+    }
     ~pfk_pthread(void) {
         // derived class destructor really should do stop/join
         // before destroying anything else in derived, but it doesn't
