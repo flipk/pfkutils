@@ -7,5 +7,6 @@ pfktop_CXXSRCS = pfktop.cc \
 	fileparser.cc tiddb.cc tidentry.cc
 pfktop_DEFS = -Dpfktop_main=main
 pfktop_INCS = -I../libpfkutil
+pfktop_LIBS= -lpthread -lrt
 
 include ../Makefile.inc
