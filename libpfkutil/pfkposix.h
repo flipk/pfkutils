@@ -254,10 +254,16 @@ public:
     void settype(int type) {
         pthread_mutexattr_settype(&attr, type);
     }
+#ifdef PTHREAD_MUTEX_ROBUST
     void setrobust(bool robust = true) {
         pthread_mutexattr_setrobust(
             &attr, robust ? PTHREAD_MUTEX_ROBUST : PTHREAD_MUTEX_STALLED);
     }
+#else
+    void setrobust(bool robust = true) {
+        std::cerr << " WARNING : ROBUST MUTEX NOT SUPPORTED" << std::endl;
+    }
+#endif
     // pthread_mutexattr_setprioceiling
 };
 
