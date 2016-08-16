@@ -90,13 +90,63 @@ tidEntry :: update(void)
 //  exit_code     the thread's exit_code in the form reported
 //                 by the waitpid system call
 
+// linux 2.6.18 format is not documented in Documentation/
+//  so here is the source that makes the output:
+//        res = sprintf(buffer,"%d (%s) %c %d %d %d %d %d %lu %lu \
+//%lu %lu %lu %lu %lu %ld %ld %ld %ld %d 0 %llu %lu %ld %lu %lu %lu %lu %lu \
+//%lu %lu %lu %lu %lu %lu %lu %lu %d %d %lu %lu %llu\n",
+//   0            task->pid,
+//   1            tcomm,
+//   2            state,
+//   3            ppid,
+//   4            pgid,
+//   5            sid,
+//   6            tty_nr,
+//   7            tty_pgrp,
+//   8            task->flags,
+//   9            min_flt,
+//   10           cmin_flt,
+//   11           maj_flt,
+//   12           cmaj_flt,
+//   13           cputime_to_clock_t(utime),
+//   14           cputime_to_clock_t(stime),
+//   15           cputime_to_clock_t(cutime),
+//   16           cputime_to_clock_t(cstime),
+//   17           priority,
+//   18           nice,
+//   19           num_threads,
+//   20           /* 0 in format string */
+//   21           start_time,
+//   22           vsize,
+//   23           mm ? get_mm_rss(mm) : 0,
+//   24           rsslim,
+//   25           mm ? mm->start_code : 0,
+//   26           mm ? mm->end_code : 0,
+//   27           mm ? mm->start_stack : 0,
+//   28           esp,
+//   29           eip,
+//   30           task->pending.signal.sig[0] & 0x7fffffffUL,
+//   31           task->blocked.sig[0] & 0x7fffffffUL,
+//   32           sigign      .sig[0] & 0x7fffffffUL,
+//   33           sigcatch    .sig[0] & 0x7fffffffUL,
+//   34           wchan,
+//   35           0UL,
+//   36           0UL,
+//   37           task->exit_signal,
+//   38           task_cpu(task),
+//   39           task->rt_priority,
+//   40           task->policy,
+//   41           (unsigned long long)delayacct_blkio_ticks(task));
+
     nf = fp.parse(pathToDir + "/stat");
+    stat_line = fp.get_line();
     // if there was any error in parsing this file, the number
     // of fields will not be 52.  since we're not error checking
     // for failure to open file, this covers that case too.
-    if (nf == 52)
+    // recent linux has 52 entries, 2.6.18 has 42.  the ones
+    // we are interested have the same index in both formats.
+    if (nf == 52 || nf == 42)
     {
-        stat_line = fp.get_line();
         cmd = fp[1];
         utime = strtoull(fp[13].c_str(),NULL,10);
         stime = strtoull(fp[14].c_str(),NULL,10);
