@@ -4,7 +4,7 @@ ifeq ($(CONFIG),)
 
 ##############################################
 
-KNOWN_CONFIGS= adler bilskirnir blade cygwin droid motlap
+KNOWN_CONFIGS= adler bilskirnir blade cygwin droid motlap atdsrv
 
 all:
 	@echo please specify CONFIG= from config/ subdir
