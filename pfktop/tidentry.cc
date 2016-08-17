@@ -145,7 +145,8 @@ tidEntry :: update(void)
     // for failure to open file, this covers that case too.
     // recent linux has 52 entries, 2.6.18 has 42.  the ones
     // we are interested have the same index in both formats.
-    if (nf == 52 || nf == 42)
+    // 2.6.32 has 44 entries.
+    if (nf == 52 || nf == 42 || nf == 44)
     {
         cmd = fp[1];
         utime = strtoull(fp[13].c_str(),NULL,10);
