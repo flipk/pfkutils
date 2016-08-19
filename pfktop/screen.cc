@@ -2,7 +2,7 @@
 #include "screen.h"
 #include <iostream>
 #include <stdlib.h>
-//#include <termios.h>
+#include <termios.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -27,14 +27,34 @@ Screen :: Screen(void)
     nl = "\r\n [K"; // newline, erase to end of line.
     nl[2] = 27;
 
-#if 0
-    struct termios  tios;
+#if 1
+    struct termios  new_tios;
 
-    if (tcgetattr(0, &tios) < 0)
+    if (tcgetattr(0, &old_tios) < 0)
     {
         char * errstring = strerror(errno);
         cerr << "failed to get termios: " << errstring << nl;
-        return -1;
+        return;
+    }
+    new_tios = old_tios;
+
+//       raw    same as -ignbrk -brkint -ignpar -parmrk  -inpck  -istrip  -inlcr
+//              -igncr  -icrnl  -ixon  -ixoff -icanon -opost -isig -iuclc -ixany
+//              -imaxbel -xcase min 1 time 0
+
+    new_tios.c_iflag &= ~(IGNBRK | BRKINT | IGNPAR | INPCK   | IXANY |
+                          PARMRK | ISTRIP | INPCK  | INLCR   | IGNCR |
+                          ICRNL  | IXON   | IXOFF  | IMAXBEL | IUCLC);
+    new_tios.c_oflag &= ~(OPOST);
+// leave out ISIG because this program needs to support ^C
+    new_tios.c_lflag &= ~(XCASE | ICANON | /*ISIG |*/ ECHO);
+    new_tios.c_cc[VMIN] = 1;
+    new_tios.c_cc[VTIME] = 0;
+    if (tcsetattr(0, TCSANOW, &new_tios) < 0)
+    {
+        char * errstring = strerror(errno);
+        cerr << "failed to set termios: " << errstring << nl;
+        return;
     }
 #else
     // gross
@@ -61,8 +81,17 @@ Screen :: ~Screen(void)
         stop_winch();
     instance = NULL;
 
+#if 1
+    if (tcsetattr(0, TCSANOW, &old_tios) < 0)
+    {
+        char * errstring = strerror(errno);
+        cerr << "failed to set termios: " << errstring << nl;
+        return;
+    }
+#else
     // gross
     system("stty echo cooked");
+#endif
 
     if (fds[0] != -1)
         close(fds[0]);

@@ -148,11 +148,33 @@ pfkscript_main(int argc, char ** argv)
     fcntl(master_fd, F_SETFL, 
           fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
 
+    struct termios  old_tios, new_tios;
     bool sttyWasRun = false;
-    // gross but effective
     if (isatty(0) && !opts.backgroundSpecified && !opts.noReadSpecified)
     {
-        system("stty raw -echo");
+        if (tcgetattr(0, &old_tios) < 0)
+        {
+            char * errstring = strerror(errno);
+            cerr << "failed to get termios: " << errstring << endl;
+            return -1;
+        }
+        new_tios = old_tios;
+//       raw    same as -ignbrk -brkint -ignpar -parmrk  -inpck  -istrip  -inlcr
+//              -igncr  -icrnl  -ixon  -ixoff -icanon -opost -isig -iuclc -ixany
+//              -imaxbel -xcase min 1 time 0
+        new_tios.c_iflag &= ~(IGNBRK | BRKINT | IGNPAR | INPCK   | IXANY |
+                              PARMRK | ISTRIP | INPCK  | INLCR   | IGNCR |
+                              ICRNL  | IXON   | IXOFF  | IMAXBEL | IUCLC);
+        new_tios.c_oflag &= ~(OPOST);
+        new_tios.c_lflag &= ~(XCASE | ICANON | ISIG | ECHO);
+        new_tios.c_cc[VMIN] = 1;
+        new_tios.c_cc[VTIME] = 0;
+        if (tcsetattr(0, TCSANOW, &new_tios) < 0)
+        {
+            char * errstring = strerror(errno);
+            cerr << "failed to set termios: " << errstring << endl;
+            return -1;
+        }
         sttyWasRun = true;
     }
 
@@ -270,9 +292,15 @@ pfkscript_main(int argc, char ** argv)
     if (opts.backgroundSpecified)
         unlink(opts.pidFile.c_str());
 
-    // gross but effective
     if (sttyWasRun)
-        system("stty echo cooked");
+    {
+        if (tcsetattr(0, TCSANOW, &old_tios) < 0)
+        {
+            char * errstring = strerror(errno);
+            cerr << "failed to set termios: " << errstring << endl;
+            return -1;
+        }
+    }
 
     return 0;
 }

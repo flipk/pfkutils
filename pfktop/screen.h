@@ -4,6 +4,8 @@
 #define __screen_h__ 1
 
 #include <string>
+#include <termios.h>
+#include <unistd.h>
 
 namespace pfktop {
 
@@ -13,6 +15,7 @@ namespace pfktop {
         int fds[2];
         bool started;
         std::string outbuffer; // references held by cout.
+        struct termios old_tios;
     public:
         Screen(void);
         ~Screen(void);
