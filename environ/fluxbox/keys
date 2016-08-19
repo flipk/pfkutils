@@ -14,6 +14,10 @@ OnToolbar Mouse5 :NextWindow {static groups} (iconhidden=no)
 # alt + left/right click to move/resize a window
 OnWindow Mod1 Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}
 OnWindowBorder Move1 :StartMoving
+# numeric keypad PgUp (9) will raise a window.
+81 OnWindow :Raise
+# numeric keypad PgDn (3) will lower a window.
+89 OnWindow :Lower
 
 OnWindow Mod1 Mouse3 :MacroCmd {Raise} {Focus} {StartResizing NearestCornerOrEdge}
 OnLeftGrip Move1 :StartResizing bottomleft
@@ -69,6 +73,18 @@ Mod1 F2 :Exec fbrun
 176 :Exec amixer sset Master,0 1+
 174 :Exec amixer sset Master,0 1-
 160 :Exec amixer sset Master,0 toggle
+
+# plus key on numeric keyboard
+86 :Exec amixer sset Master,0 1+
+# minus key on numeric keyboard
+82 :Exec amixer sset Master,0 1-
+# enter key on numeric keyboard
+104 :Exec amixer sset Master,0 toggle
+
+# star (multiply) key on numeric keypad
+63 :Exec xlock
+# slash (divide) on numeric keypad
+106 :Exec pfkterm
 
 # current window commands
 Mod1 F4 :Close
