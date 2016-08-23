@@ -1,21 +1,18 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-//
-// TODO: so_reuseaddr on -l
-// TODO: create command port, pass to children via env var
 // TODO: make library of commands to pass thru from children
+//        - query current file name
 //        - roll over file now
 //        - close file
 //        - open new file
-//        - query current file name
 //        - query names of all files currently in existence
 // TODO: make command line interface to library calls
-// 
 
 #include "options.h"
 #include "logfile.h"
 #include "bufprintf.h"
 #include "pfkposix.h"
+#include "libpfkscriptutil.h"
 
 #include <stdio.h>
 #include <pty.h>
@@ -30,7 +27,6 @@
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
 #include <iostream>
 #include <fstream>
 
@@ -110,6 +106,14 @@ pfkscript_main(int argc, char ** argv)
         outfile << pid << endl;
     }
 
+    bool use_ctrl_sock = false;
+    unix_dgram_socket control_sock;
+    if (control_sock.ok())
+    {
+        use_ctrl_sock = true;
+        setenv(PFKSCRIPT_ENV_VAR_NAME, control_sock.getPath().c_str(), 1);
+    }
+
     pid_t pid = fork();
     if (pid < 0)
     {
@@ -118,13 +122,19 @@ pfkscript_main(int argc, char ** argv)
     }
     if (pid == 0)
     {
-        // child
-        close(master_fd);
         if (login_tty(slave_fd) < 0)
         {
             printError("login_tty");
             exit(98);
         }
+
+        // close all fds i don't need. and i only
+        // need 0, 1, 2. i really dont want to pass
+        // any of my networking fds on to my children,
+        // who knows what problems that may hide.
+        int maxfd = sysconf(_SC_OPEN_MAX);
+        for (int fd = 3; fd < maxfd; fd++)
+            close(fd);
 
         char ppid[16];
         sprintf(ppid,"%d",getppid());
@@ -195,6 +205,8 @@ pfkscript_main(int argc, char ** argv)
             sel.rfds.set(listenPortFd);
         if (listenDataPortFd != -1)
             sel.rfds.set(listenDataPortFd);
+        if (use_ctrl_sock)
+            sel.rfds.set(control_sock.getFd());
         sel.rfds.set(ticker.fd());
         sel.tv.set(1,0);
 
@@ -255,6 +267,32 @@ pfkscript_main(int argc, char ** argv)
                 (void) write(master_fd, buffer, buflen);
             }
         }
+        if (use_ctrl_sock && sel.rfds.isset(control_sock.getFd()))
+        {
+            string buf, remote_path;
+            if (control_sock.recv(buf, remote_path))
+            {
+                pfkscript_msg * msg = (pfkscript_msg *) buf.c_str();
+                switch (msg->type)
+                {
+                case PFKSCRIPT_CMD_GET_FILE_PATH:
+                {
+                    msg->type = PFKSCRIPT_CMD_GET_FILE_PATH_RESP;
+                    msg->u.cmd_get_file_path_resp.open = true; //xxx
+                    int len = sizeof(msg->u.cmd_get_file_path_resp.path)-1;
+                    strncpy(msg->u.cmd_get_file_path_resp.path,
+                            "/tmp/SHITPATH", // xxx
+                            len);
+                    msg->u.cmd_get_file_path_resp.path[len] = 0;
+                    control_sock.send(buf, remote_path);
+                    break;
+                }
+                default:
+                    cerr << "unknown msg type " << msg->type
+                         << " received on ctrl sock" << endl;
+                }
+            }
+        }
         if (listenPortFd > 0 && sel.rfds.isset(listenPortFd))
         {
             struct sockaddr_in sa;
@@ -270,7 +308,7 @@ pfkscript_main(int argc, char ** argv)
                             "\r\n\r\n\r\n"
                             " *** remote port takeover ***"
                             "\r\n\r\n\r\n");
-                    fclose(fd);
+                    fclose(fd); // also closes listenDataPortFd
                 }
                 listenDataPortFd = newfd;
             }
@@ -289,6 +327,10 @@ pfkscript_main(int argc, char ** argv)
     }
     ticker.stopjoin();
 
+    if (listenDataPortFd > 0)
+        close(listenDataPortFd);
+    if (listenPortFd > 0)
+        close(listenPortFd);
     if (opts.backgroundSpecified)
         unlink(opts.pidFile.c_str());
 
