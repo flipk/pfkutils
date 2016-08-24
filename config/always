@@ -387,6 +387,13 @@ pfkscript_INCS = -Ilibpfkutil
 pfkscript_CXXSRCS = pfkscript/logfile.cc pfkscript/main.cc pfkscript/options.cc
 pfkscript_HDRS = pfkscript/logfile.h pfkscript/options.h
 pfkutils_LIBUTILS = -lutil
+
+LIB_TARGETS += libpfkscriptutil
+libpfkscriptutil_TARGET = $(OBJDIR)/libpfkscriptutil.a
+libpfkscriptutil_CXXSRCS = pfkscript/libpfkscriptutil.cc
+libpfkscriptutil_HDRS = pfkscript/libpfkscriptutil.h
+libpfkscriptutil_INSTALL_HDRS = pfkscript/libpfkscriptutil.h
+
 endif
 
 ##############################################
@@ -730,7 +737,8 @@ pfkutils_LIBS += \
 	$(pfkutils_LIBUTILS) -lpthread
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
-	$(pfkscript_TARGET) $(pfktop_TARGET) $(libi2_TARGET) \
+	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
+	$(pfktop_TARGET) $(libi2_TARGET) \
 	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
