@@ -1,13 +1,5 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-// TODO: make library of commands to pass thru from children
-//        - query current file name
-//        - roll over file now
-//        - close file
-//        - open new file
-//        - query names of all files currently in existence
-// TODO: make command line interface to library calls
-
 #include "options.h"
 #include "logfile.h"
 #include "bufprintf.h"
