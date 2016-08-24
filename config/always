@@ -28,6 +28,7 @@ PREPROC_SCRIPT_FILES = \
 # install info
 prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
+ETCBAKDIR := $(prefix)/etc-backup
 EMACSDIR := $(ETCDIR)/emacs
 SCRIPTS_DIR := $(prefix)/bin
 INSTALL_BIN_DIR := $(prefix)/$(PFKARCH)/bin
@@ -804,6 +805,13 @@ environ_install:
 			$(ETCDIR)/xinitrc $(ETCDIR)/xsession
 	$(Q)set -e ; tar -C environ -cf - fluxbox | tar -C $(ETCDIR) -xf -
 	$(Q)cd $(HOME) ; rm -rf .fluxbox ; ln -s $(ETCDIR)/fluxbox .fluxbox
+	@cd $(ETCDIR) && \
+		tar cf ~/etc-backup.tar . && \
+		rm -rf $(ETCBAKDIR) && \
+		mkdir -p $(ETCBAKDIR) && \
+		cd $(ETCBAKDIR) && \
+		tar xvf ~/etc-backup.tar && \
+		rm -f ~/etc-backup.tar
 
 scripts_install:
 	@echo installing scripts
@@ -823,8 +831,9 @@ contrib_install:
 	    make -C contrib OBJDIR=$(PWD)/$(OBJDIR)/contrib \
 		INSTALL_BIN_DIR=$(INSTALL_BIN_DIR) $(prog)-install &&) true
 
-# TODO launchers
-# TODO diffdotfiles
+diffdotfiles:
+	@cd $(prefix) && diff -r etc-backup etc
+
 # TODO cscope and ctwm should use custom makefiles
 
 # test cases :

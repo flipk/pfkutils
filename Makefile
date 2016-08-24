@@ -24,6 +24,9 @@ $(config)-install:
 $(config)-clean:
 	$(Q)make CONFIG=$(config) clean
 
+$(config)-diffdotfiles:
+	$(Q)make CONFIG=$(config) diffdotfiles
+
 endef
 
 $(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
