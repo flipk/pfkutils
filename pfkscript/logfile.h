@@ -36,8 +36,10 @@ class LogFile {
     void nextLogFileName(void);
     size_t currentSize;
     bool openFile(void);
-    void closeFile(void);
-    void trimFiles(void);
+    // return true if a zip process was started
+    bool closeFile(void);
+    // return true if a zip process was started
+    bool trimFiles(void);
     struct logFileEnt {
         logFileEnt(const std::string &_fname, time_t _t, bool _isOrig);
         std::string filename;
@@ -49,6 +51,7 @@ class LogFile {
     typedef std::vector<logFileEnt> LfeList;
     void globLogFiles(LfeList &list);
     std::ostream * currentStream;
+    bool stayClosed;
     typedef std::map<pid_t,ZipProcessHandle*> zipList;
     zipList zipHandles;
 public:
@@ -57,6 +60,14 @@ public:
     void periodic(void);
     void addData(const char * data, size_t len);
     bool isError;
+    const bool isOpen(void) const;
+    // dont call this if isOpen return false.
+    const std::string &getFilename(void) const;
+    // return true if this caused a zip to start
+    bool rolloverNow(void);
+    // return true if this caused a zip to start
+    bool closeNow(void);
+    void openNow(void);
 };
 
 #endif /* __logfile_h__ */

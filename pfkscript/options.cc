@@ -5,6 +5,8 @@
 #include <string>
 #include <iostream>
 
+#include <stdio.h>
+
 using namespace std;
 
 bool
@@ -79,9 +81,18 @@ Options :: Options( int _argc, char ** _argv )
     noReadSpecified = false;
     noOutputSpecified = false;
     listenPortSpecified = false;
+    isRemoteCmd = false;
 
     if (outOfArgs())
         return;
+
+    if (argc == 2 && string(argv[0]) == "-r")
+    {
+        remoteCmd = argv[1];
+        isRemoteCmd = true;
+        isError = false;
+        return;
+    }
 
     logfileBase.assign(nextArg());
 
@@ -257,6 +268,8 @@ Options :: printHelp(void)
 "                  present, pfkscript runs in the foreground and passes all\n"
 "                  user input to the running command.\n"
 "   -l port      : tcp port number for listening to peek in.\n"
+"   -r cmd       : issue remote cmd to parent pfkscript.\n"
+"                  <cmd> is one of: close open rollover getfile\n"
 "   -c command   : must be the last command line parameter. all command line\n"
 "                  parameters following -c are assumed to be for the command\n"
 "                  and will not be otherwise interpreted by pfkscript.\n"

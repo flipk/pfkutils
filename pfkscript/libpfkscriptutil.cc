@@ -84,6 +84,13 @@ unix_dgram_socket :: connect(const std::string &remote_path)
 bool
 unix_dgram_socket :: send(const std::string &msg)
 {
+    if (msg.size() > MAX_MSG_LEN)
+    {
+        cerr << "ERROR unix_dgram_socket send msg size of "
+             << msg.size() << " is greater than max "
+             << MAX_MSG_LEN << endl;
+        return false;
+    }
     if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
     {
         int e = errno;
@@ -114,6 +121,13 @@ bool
 unix_dgram_socket :: send(const std::string &msg,
                           const std::string &remote_path)
 {
+    if (msg.size() > MAX_MSG_LEN)
+    {
+        cerr << "ERROR unix_dgram_socket send msg size of "
+             << msg.size() << " is greater than max "
+             << MAX_MSG_LEN << endl;
+        return false;
+    }
     struct sockaddr_un sa;
     sa.sun_family = AF_UNIX;
     int len = sizeof(sa.sun_path)-1;
@@ -152,10 +166,13 @@ unix_dgram_socket :: recv(std::string &msg,
 
 //////////////////////////////////////////////////////////////////////////////
 
+//static
+const char * pfkscript_ctrl::env_var_name = "PFKSCRIPT_CTRL_SOCKET";
+
 pfkscript_ctrl::pfkscript_ctrl(void)
 {
     isOk = false;
-    char * ctrl_path = getenv("PFKSCRIPT_CTRL_SOCKET");
+    char * ctrl_path = getenv(env_var_name);
     if (ctrl_path == NULL)
     {
         cerr << "cannot open control socket: env var not set" << endl;
@@ -169,32 +186,86 @@ pfkscript_ctrl::~pfkscript_ctrl(void)
 {
 }
 
+struct theMsg {
+    string  buf;
+    pfkscript_msg &m() { return *((pfkscript_msg *)buf.c_str()); }
+    theMsg(void) { buf.resize(sizeof(pfkscript_msg)); }
+};
+
 // return false if failure
 bool
-pfkscript_ctrl::getFile(std::string &path, bool &isopen)
+pfkscript_ctrl::getFile(std::string &path)
 {
-    string _msg;
-    pfkscript_msg * msg;
-
-    _msg.resize(sizeof(pfkscript_msg));
-    msg = (pfkscript_msg *) _msg.c_str();
-    msg->type = PFKSCRIPT_CMD_GET_FILE_PATH;
-    sock.send(_msg);
-    if (sock.recv(_msg))
+    theMsg   m;
+    m.m().type = PFKSCRIPT_CMD_GET_FILE_PATH;
+    sock.send(m.buf);
+    if (sock.recv(m.buf))
     {
-        msg = (pfkscript_msg *) _msg.c_str();
-        if (msg->type == PFKSCRIPT_CMD_GET_FILE_PATH_RESP)
+        if (m.m().type == PFKSCRIPT_RESP_GET_FILE_PATH)
         {
-            if (msg->u.cmd_get_file_path_resp.open == false)
-            {
-                isopen = false;
-                return true;
-            }
-            isopen = true;
-            path.assign(msg->u.cmd_get_file_path_resp.path);
+            resp_get_file_path_t * resp = &m.m().u.resp_get_file_path;
+            path.assign(resp->path);
             return true;
         }
-        return false;
+    }
+    return false;
+}
+
+bool
+pfkscript_ctrl::rolloverNow(std::string &oldpath,
+                            bool &zipping,
+                            std::string &newpath)
+{
+    theMsg  m;
+    m.m().type = PFKSCRIPT_CMD_ROLLOVER_NOW;
+    sock.send(m.buf);
+    if (sock.recv(m.buf))
+    {
+        if (m.m().type == PFKSCRIPT_RESP_ROLLOVER_NOW)
+        {
+            resp_rollover_now_t * resp = &m.m().u.resp_rollover_now;
+            oldpath.assign(resp->oldpath);
+            zipping = resp->zipping;
+            newpath.assign(resp->newpath);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipping)
+{
+    theMsg m;
+    m.m().type = PFKSCRIPT_CMD_CLOSE_NOW;
+    sock.send(m.buf);
+    if (sock.recv(m.buf))
+    {
+        if (m.m().type == PFKSCRIPT_RESP_CLOSE_NOW)
+        {
+            resp_rollover_now_t * resp = &m.m().u.resp_rollover_now;
+            oldpath.assign(resp->oldpath);
+            zipping = resp->zipping;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+pfkscript_ctrl::openNow(std::string &newpath)
+{
+    theMsg m;
+    m.m().type = PFKSCRIPT_CMD_OPEN_NOW;
+    sock.send(m.buf);
+    if (sock.recv(m.buf))
+    {
+        if (m.m().type == PFKSCRIPT_RESP_OPEN_NOW)
+        {
+            resp_get_file_path_t * resp = &m.m().u.resp_get_file_path;
+            newpath.assign(resp->path);
+            return true;
+        }
     }
     return false;
 }

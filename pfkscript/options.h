@@ -23,6 +23,8 @@ public:
     void printOptions(void);
 
     bool isError;
+    bool isRemoteCmd;
+    std::string remoteCmd;
     std::string logfileBase;
     bool maxSizeSpecified;
     size_t maxSize;

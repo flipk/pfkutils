@@ -80,6 +80,7 @@ LogFile :: LogFile(const Options &_opts)
     }
 
     isError = false;
+    stayClosed = false;
 }
 
 LogFile :: ~LogFile(void)
@@ -111,8 +112,7 @@ LogFile :: nextLogFileName(void)
     counter++;
     ostringstream ostr;
     ostr << opts.logfileBase;
-    if (opts.maxSizeSpecified)
-        ostr << "." << setw(4) << setfill('0') << counter;
+    ostr << "." << setw(4) << setfill('0') << counter;
     currentLogFile = ostr.str();
 }
 
@@ -150,7 +150,7 @@ LogFile :: openFile(void)
     }
 }
 
-void
+bool
 LogFile :: closeFile(void)
 {
     if (currentStream != NULL)
@@ -160,7 +160,7 @@ LogFile :: closeFile(void)
         delete currentStream;
     }
     currentStream = NULL;
-    trimFiles();
+    return trimFiles();
 }
 
 LogFile::logFileEnt::logFileEnt(const std::string &_fname, time_t _t,
@@ -225,12 +225,12 @@ LogFile :: globLogFiles(LogFile::LfeList &list)
         printError("opendir");
 }
 
-void
+bool
 LogFile :: trimFiles(void)
 {
     LfeList list;
     if (opts.maxFilesSpecified == false && opts.zipSpecified == false)
-        return;
+        return false;
 
     globLogFiles(list);
 
@@ -246,6 +246,7 @@ LogFile :: trimFiles(void)
         }
     }
 
+    bool ret = false;
     if (opts.zipSpecified)
     {
         for (int ind = 0; ind < list.size(); ind++)
@@ -258,9 +259,11 @@ LogFile :: trimFiles(void)
                 zipHandles[zph->getPid()] = zph;
                 // we let 'periodic' clean these up when 
                 // they are done.
+                ret = true;
             }
         }
     }
+    return ret;
 }
 
 void
@@ -284,7 +287,11 @@ void
 LogFile :: addData(const char * data, size_t len)
 {
     if (currentStream == NULL)
+    {
+        if (stayClosed)
+            return; // do nothing
         openFile();
+    }
     if (currentStream != NULL)
     {
         currentStream->write(data,len);
@@ -296,6 +303,46 @@ LogFile :: addData(const char * data, size_t len)
             openFile();
         }
     }
+}
+
+
+const bool
+LogFile :: isOpen(void) const
+{
+    if (currentStream != NULL)
+        return true;
+    return false;
+}
+const std::string &
+LogFile :: getFilename(void) const
+{
+    return currentLogFile;
+}
+
+bool
+LogFile :: rolloverNow(void)
+{
+    stayClosed = false;
+    bool ret = closeFile();
+    openFile();
+    return ret;
+}
+
+bool
+LogFile :: closeNow(void)
+{
+    stayClosed = true;
+    if (currentStream != NULL)
+        return closeFile();
+    return false;
+}
+
+void
+LogFile :: openNow(void)
+{
+    stayClosed = false;
+    if (currentStream == NULL)
+        openFile();
 }
 
 /************************* ZipProcessHandle ******************************/

@@ -47,6 +47,49 @@ pfkscript_main(int argc, char ** argv)
     if (0) // debug
         opts.printOptions();
 
+    if (opts.isRemoteCmd)
+    {
+        pfkscript_ctrl   ctrl;
+        if (!ctrl.ok())
+        {
+            cerr << "unable to contact parent pfkscript\n";
+            return 1;
+        }
+        bool zipping;
+        string oldpath, newpath;
+        if (opts.remoteCmd == "close")
+        {
+            ctrl.closeNow(oldpath, zipping);
+            cout << "oldpath: " << oldpath << endl;
+            cout << "zipping: " << (zipping ? "yes" : "no") << endl;
+        }
+        else if (opts.remoteCmd == "open") 
+        {
+            ctrl.openNow(newpath);
+            cout << "newpath: " << newpath << endl;
+        }
+        else if (opts.remoteCmd == "rollover")
+        {
+            ctrl.rolloverNow(oldpath, zipping, newpath);
+            cout << "oldpath: " << oldpath << endl;
+            cout << "zipping: " << (zipping ? "yes" : "no") << endl;
+            cout << "newpath: " << newpath << endl;
+        }
+        else if (opts.remoteCmd == "getfile")
+        {
+            ctrl.getFile(newpath);
+            cout << "path: " << newpath << endl;
+        }
+        else
+        {
+            cerr << "unrecognized remote command\n";
+            opts.printHelp();
+            return 1;
+        }
+
+        return 0;
+    }
+
     LogFile   logfile(opts);
 
     if (logfile.isError)
@@ -111,7 +154,8 @@ pfkscript_main(int argc, char ** argv)
     if (control_sock.ok())
     {
         use_ctrl_sock = true;
-        setenv(PFKSCRIPT_ENV_VAR_NAME, control_sock.getPath().c_str(), 1);
+        setenv(pfkscript_ctrl::env_var_name,
+               control_sock.getPath().c_str(), 1);
     }
 
     pid_t pid = fork();
@@ -277,13 +321,70 @@ pfkscript_main(int argc, char ** argv)
                 {
                 case PFKSCRIPT_CMD_GET_FILE_PATH:
                 {
-                    msg->type = PFKSCRIPT_CMD_GET_FILE_PATH_RESP;
-                    msg->u.cmd_get_file_path_resp.open = true; //xxx
-                    int len = sizeof(msg->u.cmd_get_file_path_resp.path)-1;
-                    strncpy(msg->u.cmd_get_file_path_resp.path,
-                            "/tmp/SHITPATH", // xxx
-                            len);
-                    msg->u.cmd_get_file_path_resp.path[len] = 0;
+                    msg->type = PFKSCRIPT_RESP_GET_FILE_PATH;
+                    bool isOpen = logfile.isOpen();
+                    int tail = 0;
+                    if (isOpen)
+                    {
+                        tail = sizeof(msg->u.resp_get_file_path.path)-1;
+                        strncpy(msg->u.resp_get_file_path.path,
+                                logfile.getFilename().c_str(), tail);
+                    }
+                    msg->u.resp_get_file_path.path[tail] = 0;
+                    control_sock.send(buf, remote_path);
+                    break;
+                }
+                case PFKSCRIPT_CMD_ROLLOVER_NOW:
+                {
+                    msg->type = PFKSCRIPT_RESP_ROLLOVER_NOW;
+                    int tail = 0;
+                    if (logfile.isOpen())
+                    {
+                        tail = sizeof(msg->u.resp_rollover_now.oldpath)-1;
+                        strncpy(msg->u.resp_rollover_now.oldpath,
+                                logfile.getFilename().c_str(), tail);
+                    }
+                    msg->u.resp_rollover_now.oldpath[tail] = 0;
+                    msg->u.resp_rollover_now.zipping = logfile.rolloverNow();
+                    tail = 0;
+                    if (logfile.isOpen())
+                    {
+                        tail = sizeof(msg->u.resp_rollover_now.newpath)-1;
+                        strncpy(msg->u.resp_rollover_now.newpath,
+                                logfile.getFilename().c_str(), tail);
+                    }
+                    msg->u.resp_rollover_now.newpath[tail] = 0;
+                    control_sock.send(buf, remote_path);
+                    break;
+                }
+                case PFKSCRIPT_CMD_CLOSE_NOW:
+                {
+                    msg->type = PFKSCRIPT_RESP_CLOSE_NOW;
+                    int tail = 0;
+                    if (logfile.isOpen())
+                    {
+                        tail = sizeof(msg->u.resp_rollover_now.oldpath)-1;
+                        strncpy(msg->u.resp_rollover_now.oldpath,
+                                logfile.getFilename().c_str(), tail);
+                    }
+                    msg->u.resp_rollover_now.oldpath[tail] = 0;
+                    msg->u.resp_rollover_now.zipping = logfile.closeNow();
+                    msg->u.resp_rollover_now.newpath[0] = 0;
+                    control_sock.send(buf, remote_path);
+                    break;
+                }
+                case PFKSCRIPT_CMD_OPEN_NOW:
+                {
+                    msg->type = PFKSCRIPT_RESP_OPEN_NOW;
+                    logfile.openNow();
+                    int tail = 0;
+                    if (logfile.isOpen())
+                    {
+                        tail = sizeof(msg->u.resp_get_file_path.path)-1;
+                        strncpy(msg->u.resp_get_file_path.path,
+                                logfile.getFilename().c_str(), tail);
+                    }
+                    msg->u.resp_get_file_path.path[tail] = 0;
                     control_sock.send(buf, remote_path);
                     break;
                 }
