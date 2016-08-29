@@ -106,11 +106,9 @@ Manager :: createChild(Handle *handle)
     int forkErrorPipe[2];
     pipe(forkErrorPipe);
 
-    // since we're forking for the purpose of
-    // only exec, use vfork instead of fork.
-    // it is more efficient. there are restrictions
-    // to what the child can do (before exec) though.
-    handle->pid = vfork();
+    // google "vfork considered dangerous". the article on
+    // EWONTFIX is particularly informative.
+    handle->pid = fork();
     if (handle->pid < 0)
     {
         int e = errno;
@@ -131,7 +129,8 @@ Manager :: createChild(Handle *handle)
         dup2(handle->fromChildPipe[1], 2);
 
         // don't allow the child to inhert any
-        // "interesting" file descriptors.
+        // "interesting" file descriptors. note this
+        // also closes all the pipe ends we don't use in the child.
         for (int i = 3; i < sysconf(_SC_OPEN_MAX); i++)
             if (i != forkErrorPipe[1])
                 close(i);
@@ -143,16 +142,14 @@ Manager :: createChild(Handle *handle)
 
         execvp(handle->cmd[0], (char *const*)handle->cmd.data());
 
-        // dont print stuff! we're vforked, that can screw
-        // up the parent process' address space.
+        // dont print stuff! fork is weird, don't trust anything
+        // to work.
 
         // send the errno to parent.
         int e = errno;
         write(forkErrorPipe[1], &e, sizeof(int));
 
-        // call _exit because it isn't correct for a vforked
-        // child to call the atexit handlers, that can screw
-        // up crap in the parent.
+        // call _exit because we dont want to call any atexit handlers.
         _exit(99);
     }
     //parent
