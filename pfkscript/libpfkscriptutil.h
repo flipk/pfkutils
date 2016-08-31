@@ -4,30 +4,7 @@
 #define __pfkscriptlib_h__ 1
 
 #include <string>
-
-class unix_dgram_socket {
-    static int counter;
-    std::string path;
-    int fd;
-    bool init_common(bool new_path);
-public:
-    unix_dgram_socket(void);
-    ~unix_dgram_socket(void);
-    bool init(void) { return init_common(true); }
-    bool init(const std::string &_path) { 
-        path = _path;
-        return init_common(false);
-    }
-    static const int MAX_MSG_LEN = 16384;
-    const std::string &getPath(void) { return path; }
-    int getFd(void) { return fd; }
-    void connect(const std::string &remote_path);
-    bool send(const std::string &msg);
-    bool recv(std::string &msg);
-    bool send(const std::string &msg, const std::string &remote_path);
-    bool recv(      std::string &msg,       std::string &remote_path);
-};
-
+#include "pfkposix.h"
 
 enum pfkscript_msg_type {
     PFKSCRIPT_CMD_GET_FILE_PATH      =   1, // no args
@@ -64,7 +41,7 @@ struct PfkscriptMsg {
 
 class pfkscript_ctrl {
     bool isOk;
-    unix_dgram_socket sock;
+    pfk_unix_dgram_socket sock;
 public:
     static const char * env_var_name;
     pfkscript_ctrl(void);

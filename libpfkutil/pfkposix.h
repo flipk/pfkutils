@@ -11,7 +11,13 @@
 #include <inttypes.h>
 #include <dirent.h>
 #include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 struct pfk_timeval : public timeval
@@ -611,6 +617,152 @@ public:
     void rewind(void) {
         if (d)
             ::rewinddir(d);
+    }
+};
+
+class pfk_unix_dgram_socket {
+    static int counter;
+    std::string path;
+    int fd;
+    bool init_common(bool new_path) {
+        static int counter = 1;
+        if (new_path)
+        {
+            const char * temp_path = getenv("TMP");
+            if (temp_path == NULL)
+                temp_path = getenv("TEMP");
+            if (temp_path == NULL)
+                temp_path = getenv("TMPDIR");
+            if (temp_path == NULL)
+                temp_path = "/tmp";
+            std::ostringstream  str;
+            str << temp_path << "/udslibtmp." << getpid() << "." << counter;
+            counter++;
+            path = str.str();
+        }
+        fd = ::socket(AF_UNIX, SOCK_DGRAM, 0);
+        if (fd < 0)
+        {
+            int e = errno;
+            std::cerr << "socket: " << strerror(e) << std::endl;
+            return false;
+        }
+        struct sockaddr_un sa;
+        sa.sun_family = AF_UNIX;
+        int len = sizeof(sa.sun_path)-1;
+        strncpy(sa.sun_path, path.c_str(), len);
+        sa.sun_path[len] = 0;
+        if (::bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            std::cerr << "bind dgram: " << strerror(e) << std::endl;
+            ::close(fd);
+            fd = -1;
+            return false;
+        }
+        return true;
+    }
+public:
+    pfk_unix_dgram_socket(void) {
+        path.clear();
+        fd = -1;
+    }
+    ~pfk_unix_dgram_socket(void) {
+        if (fd > 0)
+        {
+            ::close(fd);
+            (void) unlink( path.c_str() );
+        }
+    }
+    bool init(void) { return init_common(true); }
+    bool init(const std::string &_path) { 
+        path = _path;
+        return init_common(false);
+    }
+    static const int MAX_MSG_LEN = 16384;
+    const std::string &getPath(void) { return path; }
+    int getFd(void) { return fd; }
+    // next 3 are for connected-mode sockets
+    void connect(const std::string &remote_path) {
+        struct sockaddr_un addr;
+        addr.sun_family = AF_UNIX;
+        int len = sizeof(addr.sun_path)-1;
+        strncpy(addr.sun_path, remote_path.c_str(), len);
+        addr.sun_path[len] = 0;
+        if (::connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        {
+            int e = errno;
+            std::cerr << "connect: " << e << ": " << strerror(e) << std::endl;
+        }
+    }
+    bool send(const std::string &msg) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            std::cerr << "ERROR unix_dgram_socket send msg size of "
+                 << msg.size() << " is greater than max "
+                 << MAX_MSG_LEN << std::endl;
+            return false;
+        }
+        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        {
+            int e = errno;
+            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    bool recv(std::string &msg) {
+        msg.resize(MAX_MSG_LEN);
+        ssize_t msglen = ::recv(fd, (void*) msg.c_str(), MAX_MSG_LEN, /*flags*/0);
+        if (msglen <= 0)
+        {
+            int e = errno;
+            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+            msg.resize(0);
+            return false;
+        }
+        msg.resize(msglen);
+        return true;
+    }
+    // next 2 are for promiscuous datagram sockets
+    bool send(const std::string &msg, const std::string &remote_path) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            std::cerr << "ERROR unix_dgram_socket send msg size of "
+                 << msg.size() << " is greater than max "
+                 << MAX_MSG_LEN << std::endl;
+            return false;
+        }
+        struct sockaddr_un sa;
+        sa.sun_family = AF_UNIX;
+        int len = sizeof(sa.sun_path)-1;
+        strncpy(sa.sun_path, remote_path.c_str(), len);
+        sa.sun_path[len] = 0;
+        if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
+                     (struct sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            std::cerr << "sendto: " << e << ": " << strerror(e) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    bool recv(      std::string &msg,       std::string &remote_path) {
+        msg.resize(MAX_MSG_LEN);
+        struct sockaddr_un sa;
+        socklen_t salen = sizeof(sa);
+        ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
+                                    /*flags*/0, (struct sockaddr *)&sa, &salen);
+        if (msglen <= 0)
+        {
+            int e = errno;
+            std::cerr << "recvfrom: " << e << ": " << strerror(e) << std::endl;
+            msg.resize(0);
+            return false;
+        }
+        msg.resize(msglen);
+        remote_path.assign(sa.sun_path);
+        return true;
     }
 };
 

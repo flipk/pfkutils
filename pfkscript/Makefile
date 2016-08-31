@@ -3,6 +3,7 @@ LIB_TARGETS = libpfkscriptutil
 
 libpfkscriptutil_TARGET = $(OBJDIR)/libpfkscriptutil.a
 libpfkscriptutil_CXXSRCS = libpfkscriptutil.cc
+libpfkscriptutil_INCS = -I../libpfkutil
 
 PROG_TARGETS = pfkscript
 

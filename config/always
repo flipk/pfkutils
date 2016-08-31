@@ -391,6 +391,7 @@ pfkutils_LIBUTILS = -lutil
 
 LIB_TARGETS += libpfkscriptutil
 libpfkscriptutil_TARGET = $(OBJDIR)/libpfkscriptutil.a
+libpfkscriptutil_INCS = -Ilibpfkutil
 libpfkscriptutil_CXXSRCS = pfkscript/libpfkscriptutil.cc
 libpfkscriptutil_HDRS = pfkscript/libpfkscriptutil.h
 libpfkscriptutil_INSTALL_HDRS = pfkscript/libpfkscriptutil.h

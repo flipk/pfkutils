@@ -17,9 +17,6 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <iostream>
 #include <fstream>
 
 using namespace std;
@@ -30,7 +27,7 @@ class Pfkscript_program {
     int listenPortFd;
     int listenDataPortFd;
     bool use_ctrl_sock;
-    unix_dgram_socket control_sock;
+    pfk_unix_dgram_socket control_sock;
     struct termios old_tios;
     bool sttyWasRun;
     pfk_ticker ticker;
