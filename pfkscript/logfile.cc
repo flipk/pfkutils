@@ -25,10 +25,8 @@
 using namespace std;
 
 void
-printError(const std::string &func)
+printError(int e /*errno*/, const std::string &func)
 {
-    int e = errno;
-
 #if 1
     cerr << func << ": " << e << ": " << strerror(e) << endl;
 #else
@@ -47,7 +45,14 @@ printError(const std::string &func)
 }
 
 LogFile :: LogFile(const Options &_opts)
-    : opts(_opts), isError(true), counter(0), currentStream(NULL)
+    : opts(_opts), counter(0), currentStream(NULL)
+{
+    stayClosed = false;
+    initialized = false;
+}
+
+void
+LogFile :: init(void)
 {
     size_t slashPos = opts.logfileBase.find_last_of('/');
     if (slashPos == string::npos)
@@ -78,13 +83,14 @@ LogFile :: LogFile(const Options &_opts)
                  << list[ind].filename << endl;
         }
     }
-
-    isError = false;
-    stayClosed = false;
+    initialized = true;
 }
 
 LogFile :: ~LogFile(void)
 {
+    if (!initialized)
+        return;
+
     closeFile();
 
     if (zipHandles.size() > 0)
@@ -111,7 +117,7 @@ LogFile :: nextLogFileName(void)
 {
     counter++;
     ostringstream ostr;
-    ostr << opts.logfileBase;
+    ostr << logDir << "/" << logFilebase;
     ostr << "." << setw(4) << setfill('0') << counter;
     currentLogFile = ostr.str();
 }
@@ -135,10 +141,11 @@ LogFile :: openFile(void)
     if (currentStream != NULL)
         closeFile();
     nextLogFileName();
+
     currentStream = new ofstream(currentLogFile.c_str());
     if (!currentStream->good())
     {
-        printError("open file");
+        printError(errno, string("open file: ") + currentLogFile);
         delete currentStream;
         currentStream = NULL;
     }
@@ -215,14 +222,14 @@ LogFile :: globLogFiles(LogFile::LfeList &list)
                                               isOrig));
                 }
                 else
-                    printError("stat");
+                    printError(errno, string("stat: ") + dirFileName);
             }
                                          
         }
         std::sort(list.begin(), list.end(), logFileEnt::sortTimestamp);
     }
     else
-        printError("opendir");
+        printError(errno, string("opendir: ") + logDir);
 }
 
 bool
@@ -267,18 +274,18 @@ LogFile :: trimFiles(void)
 }
 
 void
-LogFile :: periodic(void)
+LogFile :: periodic(FilenameList_t &list)
 {
     if (currentStream)
         currentStream->flush();
-    for (zipList::iterator it = zipHandles.begin();
-         it != zipHandles.end(); it++)
+    for ( zipList::iterator it = zipHandles.begin();
+          it != zipHandles.end(); it++)
     {
-        ZipProcessHandle * zph = it->second;
-        if (zph->getDone())
+        if (it->second->getDone())
         {
+            list.push_back(it->second->outputFilename());
+            delete it->second;
             zipHandles.erase(it);
-            delete zph;
         }
     }
 }
@@ -304,7 +311,6 @@ LogFile :: addData(const char * data, size_t len)
         }
     }
 }
-
 
 const bool
 LogFile :: isOpen(void) const
@@ -351,6 +357,7 @@ ZipProcessHandle :: ZipProcessHandle(const Options &_opts,
                                      const std::string &_fname)
     : opts(_opts), fname(_fname)
 {
+    //cout << "ZipProcessHandle created with fname " << fname << "\r\n";
     tempInputFileName = fname + "_pfkscript_zipping_";
     tempOutputFileName = tempInputFileName;
     finalOutputFileName = fname;
@@ -383,6 +390,7 @@ ZipProcessHandle :: ZipProcessHandle(const Options &_opts,
 ZipProcessHandle :: ~ZipProcessHandle(void)
 {
     // nothing?
+    //cout << "ZipProcessHandle deleted with fname " << fname << "\r\n";
 }
 
 //virtual
@@ -400,9 +408,9 @@ ZipProcessHandle :: processExited(int status)
     if (0) // debug
     {
         cout << "compression completed for file " << fname
-             << " (temp name " << tempInputFileName << ")" << endl;
+             << " (temp name " << tempInputFileName << ")" << "\r\n";
         cout << "renaming " << tempOutputFileName
-             << " to " << finalOutputFileName << endl;
+             << " to " << finalOutputFileName << "\r\n";
     }
     done = true;
     rename(tempOutputFileName.c_str(), finalOutputFileName.c_str());

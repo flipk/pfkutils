@@ -6,18 +6,19 @@
 #include <string>
 
 class unix_dgram_socket {
+    static int counter;
     std::string path;
     int fd;
-    void init_common(bool new_path);
-    static int counter;
-    bool isOk;
+    bool init_common(bool new_path);
 public:
-    unix_dgram_socket(const std::string &_path)
-        : path(_path) { init_common(false); }
-    unix_dgram_socket(void) { init_common(true); }
+    unix_dgram_socket(void);
     ~unix_dgram_socket(void);
+    bool init(void) { return init_common(true); }
+    bool init(const std::string &_path) { 
+        path = _path;
+        return init_common(false);
+    }
     static const int MAX_MSG_LEN = 16384;
-    const bool ok(void) const { return isOk; }
     const std::string &getPath(void) { return path; }
     int getFd(void) { return fd; }
     void connect(const std::string &remote_path);
@@ -44,15 +45,21 @@ struct resp_get_file_path_t {
 };
 struct resp_rollover_now_t {
     char oldpath[1024]; // [0] == 0 when not open
-    bool zipping; // indicates oldpath is temp and might be replaced
+    bool zipped; // indicates oldpath was compressed
     char newpath[1024]; // [0] == 0 when not open
 };
+
 struct pfkscript_msg {
     pfkscript_msg_type type;
     union {
         resp_get_file_path_t resp_get_file_path;
         resp_rollover_now_t resp_rollover_now;
     } u;
+};
+struct PfkscriptMsg {
+    std::string  buf;
+    pfkscript_msg &m() { return *((pfkscript_msg *)buf.c_str()); }
+    PfkscriptMsg(void) { buf.resize(sizeof(pfkscript_msg)); }
 };
 
 class pfkscript_ctrl {
@@ -65,8 +72,8 @@ public:
     const bool ok(void) const { return isOk; }
     // return false if fail
     bool getFile(std::string &path);
-    bool rolloverNow(std::string &oldpath, bool &zipping, std::string &newpath);
-    bool closeNow(std::string &oldpath, bool &zipping);
+    bool rolloverNow(std::string &oldpath, bool &zipped, std::string &newpath);
+    bool closeNow(std::string &oldpath, bool &zipped);
     bool openNow(std::string &newpath);
 };
 

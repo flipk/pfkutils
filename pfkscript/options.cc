@@ -176,11 +176,7 @@ Options :: Options( int _argc, char ** _argv )
 
     // now enforce the required/mutually exclusive rules
 
-    if (zipSpecified && !maxSizeSpecified)
-    {
-        cerr << "-z requires -s\n";
-        return;
-    }
+    // (note: allow -z without -s, for support of remote "close" command.
     if (maxFilesSpecified && !maxSizeSpecified)
     {
         cerr << "-m requires -s\n";

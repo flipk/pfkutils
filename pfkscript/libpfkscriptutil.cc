@@ -16,10 +16,24 @@ using namespace std;
 //static
 int unix_dgram_socket :: counter = 1;
 
-void
+unix_dgram_socket :: unix_dgram_socket(void)
+{
+    path.clear();
+    fd = -1;
+}
+
+unix_dgram_socket :: ~unix_dgram_socket(void)
+{
+    if (fd > 0)
+    {
+        ::close(fd);
+        (void) unlink( path.c_str() );
+    }
+}
+
+bool
 unix_dgram_socket :: init_common(bool new_path)
 {
-    isOk = false;
     if (new_path)
     {
         const char * temp_path = getenv("TMP");
@@ -39,7 +53,7 @@ unix_dgram_socket :: init_common(bool new_path)
     {
         int e = errno;
         cerr << "socket: " << strerror(e) << endl;
-        return;
+        return false;
     }
     struct sockaddr_un sa;
     sa.sun_family = AF_UNIX;
@@ -49,21 +63,12 @@ unix_dgram_socket :: init_common(bool new_path)
     if (::bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
         int e = errno;
-        cerr << "bind: " << strerror(e) << endl;
+        cerr << "bind dgram: " << strerror(e) << endl;
         ::close(fd);
         fd = -1;
-        return;
+        return false;
     }
-    isOk = true;
-}
-
-unix_dgram_socket :: ~unix_dgram_socket(void)
-{
-    if (fd > 0)
-    {
-        ::close(fd);
-        (void) unlink( path.c_str() );
-    }
+    return true;
 }
 
 void
@@ -178,25 +183,22 @@ pfkscript_ctrl::pfkscript_ctrl(void)
         cerr << "cannot open control socket: env var not set" << endl;
         return;
     }
-    sock.connect(ctrl_path);
-    isOk = true;
+    if (sock.init() == true)
+    {
+        sock.connect(ctrl_path);
+        isOk = true;
+    }
 }
 
 pfkscript_ctrl::~pfkscript_ctrl(void)
 {
 }
 
-struct theMsg {
-    string  buf;
-    pfkscript_msg &m() { return *((pfkscript_msg *)buf.c_str()); }
-    theMsg(void) { buf.resize(sizeof(pfkscript_msg)); }
-};
-
 // return false if failure
 bool
 pfkscript_ctrl::getFile(std::string &path)
 {
-    theMsg   m;
+    PfkscriptMsg   m;
     m.m().type = PFKSCRIPT_CMD_GET_FILE_PATH;
     sock.send(m.buf);
     if (sock.recv(m.buf))
@@ -213,10 +215,10 @@ pfkscript_ctrl::getFile(std::string &path)
 
 bool
 pfkscript_ctrl::rolloverNow(std::string &oldpath,
-                            bool &zipping,
+                            bool &zipped,
                             std::string &newpath)
 {
-    theMsg  m;
+    PfkscriptMsg  m;
     m.m().type = PFKSCRIPT_CMD_ROLLOVER_NOW;
     sock.send(m.buf);
     if (sock.recv(m.buf))
@@ -225,7 +227,7 @@ pfkscript_ctrl::rolloverNow(std::string &oldpath,
         {
             resp_rollover_now_t * resp = &m.m().u.resp_rollover_now;
             oldpath.assign(resp->oldpath);
-            zipping = resp->zipping;
+            zipped = resp->zipped;
             newpath.assign(resp->newpath);
             return true;
         }
@@ -234,9 +236,9 @@ pfkscript_ctrl::rolloverNow(std::string &oldpath,
 }
 
 bool
-pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipping)
+pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipped)
 {
-    theMsg m;
+    PfkscriptMsg m;
     m.m().type = PFKSCRIPT_CMD_CLOSE_NOW;
     sock.send(m.buf);
     if (sock.recv(m.buf))
@@ -245,7 +247,7 @@ pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipping)
         {
             resp_rollover_now_t * resp = &m.m().u.resp_rollover_now;
             oldpath.assign(resp->oldpath);
-            zipping = resp->zipping;
+            zipped = resp->zipped;
             return true;
         }
     }
@@ -255,7 +257,7 @@ pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipping)
 bool
 pfkscript_ctrl::openNow(std::string &newpath)
 {
-    theMsg m;
+    PfkscriptMsg m;
     m.m().type = PFKSCRIPT_CMD_OPEN_NOW;
     sock.send(m.buf);
     if (sock.recv(m.buf))

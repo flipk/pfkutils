@@ -10,7 +10,7 @@
 #include <iostream>
 #include <vector>
 
-void printError(const std::string &func);
+void printError(int e /*=errno*/, const std::string &func);
 
 class ZipProcessHandle : public ChildProcessManager::Handle {
     const Options &opts;
@@ -25,6 +25,7 @@ public:
     ZipProcessHandle(const Options &_opts, const std::string &_fname);
     ~ZipProcessHandle(void);
     bool getDone(void) { return done; }
+    const std::string &outputFilename(void) { return finalOutputFileName; }
 };
 
 class LogFile {
@@ -54,12 +55,15 @@ class LogFile {
     bool stayClosed;
     typedef std::map<pid_t,ZipProcessHandle*> zipList;
     zipList zipHandles;
+    bool initialized;
 public:
     LogFile(const Options &_opts);
     ~LogFile(void);
-    void periodic(void);
+    void init(void);
+    typedef std::vector<std::string> FilenameList_t;
+    // returns list of zip files completed.
+    void periodic(FilenameList_t &list);
     void addData(const char * data, size_t len);
-    bool isError;
     const bool isOpen(void) const;
     // dont call this if isOpen return false.
     const std::string &getFilename(void) const;
