@@ -33,13 +33,13 @@ ThreadSlingerError::errStrings[__NUMERRS] = {
     "dereference hit 0 but pool is null"
 };
 
+//virtual
 const std::string
-ThreadSlingerError::Format(void) const
+ThreadSlingerError::_Format(void) const
 {
     std::string ret = "ThreadSlingerError: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }
 

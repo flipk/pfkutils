@@ -42,7 +42,7 @@ struct ListError : BackTraceUtil::BackTrace {
         std::cerr << "throwing ListError: " << Format() << std::endl;
     }
     /** return a descriptive string matching the error */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 // internal: shorthand for throwing a list error.
 #define __DLL3_LISTERR(e) throw ListError(ListError::e)

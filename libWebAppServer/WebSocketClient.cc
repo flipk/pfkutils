@@ -35,13 +35,13 @@ const std::string WSClientError::errStrings[__NUMERRS] = {
     "Trying to send message while not connected"
 };
 
+//virtual
 const std::string
-WSClientError::Format(void) const
+WSClientError::_Format(void) const
 {
     std::string ret = "WebSocketClient ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }
 

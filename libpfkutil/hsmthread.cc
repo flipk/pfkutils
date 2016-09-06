@@ -16,13 +16,13 @@ const std::string ThreadError::errStrings[__NUMERRS] = {
     "Threads::start called when thread already started"
 };
 
+//virtual
 const std::string
-ThreadError::Format(void) const
+ThreadError::_Format(void) const
 {
     std::string ret = "THREAD ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }
 

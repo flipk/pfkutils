@@ -31,7 +31,7 @@ struct WSClientError : BackTraceUtil::BackTrace
     static const std::string errStrings[__NUMERRS];
     WSClientError(WSClientErrVal _e) : err(_e) { }
     /** return a descriptive string matching the error */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 
 class WebSocketClient : fdThreadLauncher,

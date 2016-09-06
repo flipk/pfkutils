@@ -33,6 +33,16 @@ struct BackTrace {
      * and return a multi-line string listing them.
      * \return multi-line string containing the stack backtrace. */
     const std::string Format(void) const;
+protected:
+    virtual const std::string _Format(void) const = 0;
+};
+
+// use this if you dont want to derive another
+// class from BackTrace.
+struct BackTraceBasic : public BackTrace {
+    /*virtual*/ const std::string _Format(void) const {
+        return "";
+    }
 };
 
 // inline impls below this line
@@ -45,11 +55,11 @@ inline BackTrace::BackTrace(void)
 inline const std::string
 BackTrace::Format(void) const
 {
-    std::string ret;
-    char ** symbols = backtrace_symbols(traceAddresses,
-                                        numAddresses);
+    std::string ret = _Format();
+    char ** symbols = backtrace_symbols(traceAddresses, numAddresses);
     for (size_t ind = 0; ind < numAddresses; ind++)
     {
+        ret += "[bt] ";
         ret += std::string(symbols[ind]);
         ret += "\n";
     }

@@ -16,12 +16,12 @@ const std::string BtreeError::errStrings[__NUMERRS] = {
     "nonroot node shrunk! debug me"
 };
 
+//virtual
 const std::string
-BtreeError::Format(void) const
+BtreeError::_Format(void) const
 {
     std::string ret = "BTREE ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }

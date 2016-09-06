@@ -37,7 +37,7 @@ struct HSMError : BackTraceUtil::BackTrace {
     std::string str;
     HSMError(HSMErrorType t) : type(t) { }
     /** utility function to format printable string of error and backtrace */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
    
 /** base class for an HSMEvent, see HSMEventT and HSM_EVENT_DECLARE. */

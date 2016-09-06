@@ -13,13 +13,13 @@ const std::string HSMError::errStrings [__NUMERRS] = {
     "state exit handler must return HANDLED"
 };
 
+//virtual
 const std::string
-HSMError::Format(void) const
+HSMError::_Format(void) const
 {
     std::string ret = "HSM ERROR: ";
     ret += errStrings[type];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }
 

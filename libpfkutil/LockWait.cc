@@ -9,12 +9,12 @@ LockableError::errStrings[__NUMERRS] = {
     "lock recursion error"
 };
 
+//virtual
 const std::string
-LockableError::Format(void) const
+LockableError::_Format(void) const
 {
     std::string ret = "LOCKABLE ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }

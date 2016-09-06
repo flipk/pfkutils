@@ -54,7 +54,7 @@ struct ThreadSlingerError : BackTraceUtil::BackTrace {
     static const std::string errStrings[__NUMERRS];
     ThreadSlingerError(errValue _e) : err(_e) { }
     /** handy utility function for printing error and stack backtrace */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 
 class thread_slinger_pool_base;

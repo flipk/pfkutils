@@ -34,7 +34,7 @@ struct ThreadError : public BackTraceUtil::BackTrace
     static const std::string errStrings[__NUMERRS];
     ThreadError(ThreadErrorValue _e) : err(_e) { }
     /** utility function to format printable string of error and backtrace */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 
 class Thread;

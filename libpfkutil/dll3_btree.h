@@ -49,7 +49,7 @@ struct BtreeError : BackTraceUtil::BackTrace {
         std::cerr << "throwing BtreeError: " << Format() << std::endl;
     }
     /** return a descriptive string matching the error */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 #define __DLL3_BTREEERR(e) throw BtreeError(BtreeError::e)
 

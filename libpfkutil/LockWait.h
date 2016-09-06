@@ -23,7 +23,7 @@ struct LockableError : BackTraceUtil::BackTrace {
     LockableError(LockableErrValue _e) : err(_e) { }
     /** returns a descriptive string for the error
      * \return a descriptive string matching the err */
-    const std::string Format(void) const;
+    /*virtual*/ const std::string _Format(void) const;
 };
 
 #define LOCKABLERR(e) throw LockableError(LockableError::e)

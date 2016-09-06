@@ -12,13 +12,13 @@ const std::string ListError::errStrings[__NUMERRS] = {
     "item not on this list"
 };
 
+//virtual
 const std::string
-ListError::Format(void) const
+ListError::_Format(void) const
 {
     std::string ret = "LIST ERROR: ";
     ret += errStrings[err];
     ret += " at:\n";
-    ret += BackTrace::Format();
     return ret;
 }
 
