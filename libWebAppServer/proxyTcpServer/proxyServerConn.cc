@@ -16,7 +16,7 @@ proxyServerConn :: proxyServerConn(const std::string &_destHost, int _destPort)
     sequence = 1;
 }
 
-proxyServerConn :: ~proxyServerConn(void)
+proxyServerConn :: ~proxyServerConn(void) ALLOW_THROWS
 {
     stopFdThread();
 }
