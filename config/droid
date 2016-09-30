@@ -1,6 +1,6 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-PFK_BUILD_pfkbak=0
+PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
@@ -18,7 +18,7 @@ PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
 PFK_BUILD_deduplifier=1
 PFK_BUILD_libwas=1
-PFK_BUILD_libpfkthread=0
+PFK_BUILD_libpfkthread=1
 PFK_BUILD_wsproxy=0
 PFK_BUILD_xlock=1
 PFK_BUILD_fonts=1
@@ -58,7 +58,7 @@ pfkthr_test-2_LIBS += -lrt
 pfkthr_test-3_LIBS += -lrt
 pfkthr_test-4_LIBS += -lrt
 
-CONTRIB_PROGS= cscope fluxbox-pfk rxvt-unicode-pfk
+CONTRIB_PROGS= cscope # fluxbox-pfk rxvt-unicode-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j3
