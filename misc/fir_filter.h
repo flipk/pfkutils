@@ -20,6 +20,12 @@ public:
     virtual ~fir_filter(void) {
         delete[] shift_register;
     }
+    void one_sample_nocalc(SampleType v) {
+        // overwrite oldest sample with newest
+        shift_register[sr_pos] = v;
+        if (++sr_pos >= order_p_1)
+            sr_pos = 0;
+    }
     SampleType one_sample(SampleType v) {
         // overwrite oldest sample with newest
         shift_register[sr_pos] = v;
