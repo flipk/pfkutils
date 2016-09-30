@@ -119,9 +119,7 @@ endif
 export VERBOSE
 
 all:
-	$(Q)+make objdirs
-	$(Q)+make preprocs
-	$(Q)+make deps
+	$(Q)+make objdirs preprocs deps
 	$(Q)+make __INCLUDE_DEPS=1 _all
 
 include $(INCLUDE_MAKEFILES)
