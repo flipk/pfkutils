@@ -2,12 +2,10 @@
 
 if [[ $# -eq 0 ]] ; then
     show_eclipsed=1
-    branches=`cleartool catcs | awk -F/ '/^element.*LATEST/ { print $2 }'`
-    inactive_branches=`cleartool catcs | awk -F/ '/^# *element.*LATEST/ { print $2 }'`
+    branches=`cleartool catcs | awk '/^[ \t*]mkbranch/ { print $2 }'`
 else
     show_eclipsed=0
     branches="$*"
-    inactive_branches=""
 fi
 
 if [[ "x$branches" = x ]] ; then
@@ -42,10 +40,6 @@ fi
 
 for branch in $branches ; do
     print_branch active $branch
-done
-
-for branch in $inactive_branches ; do
-    print_branch inactive $branch
 done
 
 exit 0
