@@ -5,7 +5,7 @@ PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
-BUILD_DATE = $(shell date '+%Y-%m%d-%H%M%S')
+BUILD_DATE := $(shell date '+%Y-%m%d-%H%M%S')
 DOT_FILES = \
 	Xresources ctwmrc twmrc hexdump_format \
 	screenrc xinitrc vnc-xstartup

@@ -8,7 +8,15 @@
 # all artifacts produced by this makefile go under
 # an objects tree rooted at this directory.
 # default: specific to this os and processor.
-OBJDIR ?= obj.$(shell uname -m).$(shell uname -s).$(shell uname -r)
+ifeq ($(OBJDIR),)
+# neat bug: if you use OBJDIR = $(shell xxx) then the shell cmd is
+#           executed EVERY time $(OBJDIR) is evaluated; on complex
+#           targets, this could be hundreds or thousands of invocations
+#           of "uname".
+#           if you use OBJDIR := $(shell xxx) then the shell cmd is
+#           executed only once and the output reused for every $(OBJDIR) ref.
+OBJDIR := obj.$(shell uname -m).$(shell uname -s).$(shell uname -r)
+endif
 
 # additional subdirs of $(OBJDIR) to create, if your source tree
 # has has a tree of relpath "dir/file.c" sources.
