@@ -1,6 +1,13 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
 ifeq ($(CONFIG),)
+CONFIG_FILE := $(wildcard $(HOME)/.pfkutils_config)
+ifneq ($(CONFIG_FILE),)
+CONFIG := $(shell cat $(CONFIG_FILE))
+endif
+endif
+
+ifeq ($(CONFIG),)
 
 ##############################################
 
@@ -10,6 +17,8 @@ all:
 	@echo please specify CONFIG= from config/ subdir
 	@echo or do 'make known_config' where known_config is
 	@echo one of: $(KNOWN_CONFIGS)
+	@echo or create $(HOME)/.pfkutils_config
+	@echo containing one of those values.
 
 define PER_CONFIG_RULES
 $(config):
