@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-04-23.00:31:22
+#      Last update: 2016-10-15.15:06:59
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -239,7 +239,7 @@ if __isksh ; then
             _ps="${_ps}$PROMPT_COLOR_FG_RED$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
         fi
         if [[ x$CLEARCASE_ROOT != x ]] ; then
-            _ps="${_ps} in CMBP"
+            _ps="${_ps} in CC"
         fi
         _ps="${_ps} pid $$ on $TTY"
         _ps="${_ps} $PFKSH_BUILD"
