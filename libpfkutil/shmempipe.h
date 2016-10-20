@@ -450,6 +450,8 @@ shmempipe :: allocSize(uint32_t size, bool bWait /*=false */)
         m_stats.alloc_fails++;
         unlockStats();
     }
+    else
+        ret->poolInd = poolInd;
     return ret;
 }
 
@@ -471,6 +473,8 @@ shmempipe :: allocPool(uint32_t poolInd, bool bWait /*=false*/ )
         m_stats.alloc_fails++;
         unlockStats();
     }
+    else
+        ret->poolInd = poolInd;
     return ret;
 }
 

@@ -120,13 +120,13 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
              bufnum < pConfig->numBufs[poolInd];
              bufnum++)
         {
-            m_pHeader->pools[poolInd].enqueue(
-                m_shmemPtr,
-                (shmempipeMessage *)buf,
-                NULL,
-                false,
-                false /*for speed*/);
+            shmempipeMessage * msg = (shmempipeMessage *) buf;
+            msg->bufInd = bufnum;
+            msg->poolInd = poolInd;
             // add buf to pool
+            m_pHeader->pools[poolInd].enqueue(
+                m_shmemPtr, msg,
+                NULL, false, false /*for speed*/);
             buf +=
                 pConfig->bufSizes[poolInd] +
                 sizeof(shmempipeMessage);
