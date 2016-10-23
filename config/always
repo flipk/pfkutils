@@ -184,7 +184,7 @@ libpfkutil_HDRS = \
 LIBPFKUTIL_TEST_TARGETS = \
 	HSM_test hsmthread_test dll3_test dll3_btree_test \
 	msgr-test-clnt msgr-test-msg msgr-test-svr \
-	shmempipe_test_master shmempipe_test_slave
+	shmempipe_test_master shmempipe_test_slave testpipe
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
