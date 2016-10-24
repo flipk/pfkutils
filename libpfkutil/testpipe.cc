@@ -9,8 +9,8 @@
 class readerThread : public pfk_pthread
 {
     int which;
-    int closerPipe[2];
-    /*virtual*/ void * entry(void)
+    pfk_pipe closerPipe;
+    /*virtual*/ void * entry(void *arg)
     {
         // fifo with O_NONBLOCK cannot be opened for write first,
         // it will fail with error 6 : no such device or address
@@ -29,7 +29,7 @@ class readerThread : public pfk_pthread
             else
                 printf("t1 open failed err %d:%s\n", errno, strerror(errno));
             pfk_select sel;
-            sel.rfds.set(closerPipe[0]);
+            sel.rfds.set(closerPipe.readEnd);
             sel.wfds.set(fd);
             sel.tv.set(5,0);
             printf("t1 entering select\n");
@@ -37,7 +37,7 @@ class readerThread : public pfk_pthread
             printf("t1 select returns %d\n", cc);
             if (cc > 0)
             {
-                if (sel.rfds.isset(closerPipe[0]))
+                if (sel.rfds.isset(closerPipe.readEnd))
                     printf("t1 closer pipe\n");
                 if (sel.wfds.isset(fd))
                 {
@@ -64,7 +64,7 @@ class readerThread : public pfk_pthread
             else
                 printf("t2 open failed err %d:%s\n", errno, strerror(errno));
             pfk_select sel;
-            sel.rfds.set(closerPipe[0]);
+            sel.rfds.set(closerPipe.readEnd);
             sel.rfds.set(fd);
             sel.tv.set(5,0);
             printf("t2 entering select\n");
@@ -72,7 +72,7 @@ class readerThread : public pfk_pthread
             printf("t2 select returns %d\n", cc);
             if (cc > 0)
             {
-                if (sel.rfds.isset(closerPipe[0]))
+                if (sel.rfds.isset(closerPipe.readEnd))
                     printf("t2 closer pipe\n");
                 if (sel.rfds.isset(fd))
                     printf("t2 select for read\n");
@@ -89,19 +89,16 @@ class readerThread : public pfk_pthread
     /*virtual*/ void send_stop(void)
     {
         char c = 1;
-        write(closerPipe[1], &c, 1);
+        write(closerPipe.writeEnd, &c, 1);
     }
 public:
     readerThread(int _which)
     {
         which = _which;
-        pipe(closerPipe);
     }
     ~readerThread(void)
     {
         stopjoin();
-        close(closerPipe[0]);
-        close(closerPipe[1]);
     }
 };
 

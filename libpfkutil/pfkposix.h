@@ -433,6 +433,24 @@ public:
     // pthread_attr_setstacksize
 };
 
+class pfk_pipe {
+public:
+    int readEnd;
+    int writeEnd;
+    pfk_pipe(void)
+    {
+        int fds[2];
+        pipe(fds);
+        readEnd = fds[0];
+        writeEnd = fds[1];
+    }
+    ~pfk_pipe(void)
+    {
+        close(writeEnd);
+        close(readEnd);
+    }
+};
+
 class pfk_pthread {
     pfk_pthread_mutex mut;
     pfk_pthread_cond cond;
@@ -440,19 +458,20 @@ class pfk_pthread {
         INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE
     } state;
     pthread_t  id;
+    void *arg;
     static void * _entry(void *arg) {
         pfk_pthread * th = (pfk_pthread *)arg;
         pfk_pthread_mutex_lock lock(th->mut);
         th->state = RUNNING;
         lock.unlock();
         th->cond.signal();
-        void * ret = th->entry();
+        void * ret = th->entry(arg);
         lock.lock();
         th->state = ZOMBIE;
         return ret;
     }
 protected:
-    virtual void * entry(void) = 0;
+    virtual void * entry(void *arg) = 0;
     virtual void send_stop(void) = 0;
 public:
     pfk_pthread_attr attr;
@@ -467,13 +486,14 @@ public:
         // hurt to repeat it here since stop and join both check the state.
         stopjoin();
     }
-    int create(void) {
+    int create(void *_arg=NULL) {
         pfk_pthread_mutex_lock lock(mut);
         if (state != INIT)
             return -1;
         state = NEWBORN;
         lock.unlock();
         attr.set_detach(false); // this class depends on joinable.
+        arg = _arg;
         int ret = pthread_create(&id, attr(), &_entry, this);
         lock.lock();
         if (ret == 0) {
@@ -542,7 +562,7 @@ class pfk_ticker : public pfk_pthread {
     int closer_pipe_fds[2];
     int pipe_fds[2];
     pfk_timeval interval;
-    /*virtual*/ void * entry(void) {
+    /*virtual*/ void * entry(void *arg) {
         char c = 1;
         int clfd = closer_pipe_fds[0];
         pfk_select   sel;

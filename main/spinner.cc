@@ -12,20 +12,20 @@ using namespace std;
 class spinnerThread : public pfk_pthread
 {
     int ind;
-    int p[2];
+    pfk_pipe pipe;
     void settitle(void) {
         char buf[17];
         memset(buf,0,sizeof(buf));
         snprintf(buf,sizeof(buf)-1,"spin%d",ind);
         prctl(PR_SET_NAME, (unsigned long) buf, 0, 0, 0);
     }
-    /*virtual*/ void * entry(void) {
+    /*virtual*/ void * entry(void *arg) {
         cerr << ind << " ";
         settitle();
         pfk_select sel;
         while (1) {
             sel.rfds.zero();
-            sel.rfds.set(p[0]);
+            sel.rfds.set(pipe.readEnd);
             sel.tv.set(0,0);
             int cc = sel.select();
             if (cc < 0)
@@ -35,10 +35,10 @@ class spinnerThread : public pfk_pthread
             }
             if (cc > 0)
             {
-                if (sel.rfds.isset(p[0]))
+                if (sel.rfds.isset(pipe.readEnd))
                 {
                     char c;
-                    read(p[0],&c,1);
+                    read(pipe.readEnd,&c,1);
                     break;
                 }
             }
@@ -47,15 +47,12 @@ class spinnerThread : public pfk_pthread
     }
     /*virtual*/ void send_stop(void) {
         char c = 1;
-        write(p[1],&c,1);
+        write(pipe.writeEnd,&c,1);
     }
 public:
     spinnerThread(void) {
-        pipe(p);
     }
     ~spinnerThread(void) {
-        close(p[0]);
-        close(p[1]);
     }
     void start(int _ind) { ind = _ind; create(); }
 };
