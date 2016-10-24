@@ -1,3 +1,8 @@
+
+! for droid:
+! session.screen0.toolbar.onhead: 2
+session.screen0.toolbar.onhead:	1
+
 session.appsFile:	~/pfk/etc/fluxbox/apps
 session.autoRaiseDelay:	250
 session.cacheLife:	5
@@ -57,7 +62,6 @@ session.screen0.toolbar.autoHide:	false
 session.screen0.toolbar.height:	0
 session.screen0.toolbar.layer:	Dock
 session.screen0.toolbar.maxOver:	true
-session.screen0.toolbar.onhead:	1
 session.screen0.toolbar.placement:	TopRight
 session.screen0.toolbar.tools:	iconbar, systemtray, clock, prevworkspace, workspacename, nextworkspace
 session.screen0.toolbar.visible:	true
