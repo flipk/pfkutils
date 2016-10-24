@@ -51,10 +51,7 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETPSHARED = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 
-# dont really use ctwm anymore, but keep building it
-# to make sure i didnt break anything.
-
-CONTRIB_PROGS= cscope ctwm fluxbox-pfk rxvt-unicode-pfk
+CONTRIB_PROGS= cscope # ctwm fluxbox-pfk rxvt-unicode-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j9
