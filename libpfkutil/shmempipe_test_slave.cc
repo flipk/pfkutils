@@ -76,17 +76,27 @@ main()
         return 1;
     }
 
-    while (!connected)
-        usleep(1);
-
-    for (int counter=0; counter < 50; counter++)
+    while (!connected && !done)
     {
-        MyTestMsg * pMsg = MyTestMsg::allocSize(pPipe);
-        pMsg->seqno = 1;
-        pPipe->send(pMsg);
+        pfk_select sel;
+        sel.rfds.set(0);
+        sel.tv.set(0,100000);
+        if (sel.select() <= 0)
+            continue;
+        if (sel.rfds.isset(0))
+            done = true;
     }
 
-    do {
+    if (!done)
+        for (int counter=0; counter < 50; counter++)
+        {
+            MyTestMsg * pMsg = MyTestMsg::allocSize(pPipe);
+            pMsg->seqno = 1;
+            pPipe->send(pMsg);
+        }
+
+    while (connected && !done)
+    {
         shmempipeStats stats;
         pPipe->getStats(&stats,true);
         printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
@@ -94,8 +104,15 @@ main()
                stats.sent_bytes, stats.sent_packets, stats.sent_signals,
                stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
                stats.alloc_fails, stats.free_buffers);
-        usleep(100000);
-    } while (connected && !done);
+
+        pfk_select sel;
+        sel.rfds.set(0);
+        sel.tv.set(0,100000);
+        if (sel.select() <= 0)
+            continue;
+        if (sel.rfds.isset(0))
+            done = true;
+    }
 
     delete pPipe;
     return 0;

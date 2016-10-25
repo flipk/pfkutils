@@ -272,15 +272,13 @@ shmempipe  :: startCloserThread(void)
 {
     pthread_attr_t  attr;
 
-    pipe(m_closerPipe);
-
     m_closerState = CLOSER_NOT_EXIST;
     pthread_attr_init( &attr );
     pthread_attr_setdetachstate( &attr, PTHREAD_CREATE_DETACHED );
     pthread_create(&m_closerId, &attr, &_closerThreadEntry, (void*) this);
     pthread_attr_destroy( &attr );
 
-    while (m_closerState != CLOSER_STARTING)
+    while (m_closerState != CLOSER_RUNNING)
         usleep(1);
 }
 
@@ -288,14 +286,8 @@ void
 shmempipe  :: stopCloserThread(void)
 {
     int count = 0;
-    close(m_closerPipe[1]);
-    if (m_closerState == CLOSER_STARTING)
-    {
-        // closer is probably blocked in the 'open'
-        // call on the pipe, waiting for someone
-        // to attach.
-        pthread_cancel(m_closerId);
-    }
+    char c = 1;
+    write(m_closerPipe.writeEnd, &c, 1);
     while (m_closerState != CLOSER_DEAD)
     {
         if (++count > 30) // wait 3 seconds
@@ -304,7 +296,6 @@ shmempipe  :: stopCloserThread(void)
         }
         usleep(100000);
     }
-    close(m_closerPipe[0]);
     m_closerState = CLOSER_NOT_EXIST;
 }
 
@@ -317,69 +308,123 @@ shmempipe :: _closerThreadEntry(void * arg)
     return NULL;
 }
 
-//static
-void
-shmempipe :: closerThreadCleanup(void *arg)
-{
-    shmempipe * pPipe = (shmempipe *) arg;
-    pPipe->m_closerState = CLOSER_DEAD;
-}
-
 void
 shmempipe :: closerThread(void)
 {
-    shmempipeCallbacks callbacks;
-    m_closerState = CLOSER_STARTING;
-    pthread_cleanup_push(&closerThreadCleanup, (void*) this);
+    shmempipeCallbacks callbacks = m_callbacks;
+    char c;
+    m_closerState = CLOSER_RUNNING;
+
     if (m_bMaster)
     {
         // open my pipe, wait for connect indication.
         // when i get one, open other pipe, write connect indication.
-        m_myPipeFd = open(m_filename.s2mname, O_RDONLY);
+        m_myPipeFd = open(m_filename.s2mname, O_RDONLY | O_NONBLOCK);
         if (m_myPipeFd < 0)
         {
-            printf("crap 1\n");
+            printf("closerThread : Failure opening s2m\n");
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
-        char c;
-        read(m_myPipeFd, &c, 1);
+        while (1)
+        {
+            pfk_select sel;
+            sel.rfds.set(m_myPipeFd);
+            sel.rfds.set(m_closerPipe.readEnd);
+            sel.tv.set(1,0);
+            if (sel.select() <= 0)
+                continue;
+            if (sel.rfds.isset(m_myPipeFd))
+            {
+                if (read(m_myPipeFd, &c, 1) <= 0)
+                {
+                    printf("shmempipe :: closerThead pipe closed\n");
+                    m_closerState = CLOSER_DEAD;
+                    callbacks.disconnectCallback(this, callbacks.arg);
+                    return;
+                }
+                break;
+            }
+            if (sel.rfds.isset(m_closerPipe.readEnd))
+            {
+                printf("shmempipe :: closerThread told to exit from init\n");
+                read(m_closerPipe.readEnd, &c, 1);
+                m_closerState = CLOSER_DEAD;
+                callbacks.disconnectCallback(this, callbacks.arg);
+                return;
+            }
+        }
         m_otherPipeFd = open(m_filename.m2sname, O_WRONLY);
         if (m_otherPipeFd < 0)
         {
-            printf("crap 2\n");
+            printf("closerThread : Failure opening m2s\n");
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
+        c = 1;
         write(m_otherPipeFd, &c, 1);
     }
     else
     {
         // open other pipe, write connect indication,
         // then try to open my pipe, wait for connect indication.
-        char c = 1;
-        m_otherPipeFd = open(m_filename.s2mname, O_WRONLY);
+        int counter = 0;
+
+        m_otherPipeFd = open(m_filename.s2mname, O_WRONLY | O_NONBLOCK);
         if (m_otherPipeFd < 0)
         {
-            printf("crap 2\n");
+            printf("shmempipe slave connect fail\n");
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
+        c = 1;
         write(m_otherPipeFd, &c, 1);
-        m_myPipeFd = open(m_filename.m2sname, O_RDONLY);
+        m_myPipeFd = open(m_filename.m2sname, O_RDONLY | O_NONBLOCK);
         if (m_myPipeFd < 0)
         {
-            printf("crap 1\n");
+            printf("closerThread : Failure opening m2s\n");
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
-        read(m_myPipeFd, &c, 1);
+        pfk_select sel;
+        sel.rfds.set(m_myPipeFd);
+        sel.rfds.set(m_closerPipe.readEnd);
+        sel.tv.set(1,0);
+        if (sel.select() <= 0)
+        {
+            // failure negotiating with server
+            printf("shmempipe slave connect ack timeout\n");
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
+            return;
+        }
+        if (sel.rfds.isset(m_closerPipe.readEnd))
+        {
+            printf("shmempipe :: closerThread told to exit from init\n");
+            read(m_closerPipe.readEnd, &c, 1);
+            m_closerState = CLOSER_DEAD;
+            callbacks.disconnectCallback(this, callbacks.arg);
+            return;
+        }
+        if (sel.rfds.isset(m_myPipeFd))
+        {
+            if (read(m_myPipeFd, &c, 1) <= 0)
+            {
+                printf("shmempipe slave connect lost\n");
+                m_closerState = CLOSER_DEAD;
+                callbacks.disconnectCallback(this, callbacks.arg);
+                return;
+            }
+        }
     }
-    pthread_cleanup_pop(0);
-
-    callbacks = m_callbacks;
-
 
     m_bConnected = true;
     callbacks.connectCallback(this, callbacks.arg);
     startReaderThread();
-    m_closerState = CLOSER_RUNNING;
     while (1)
     {
         fd_set rfds;
@@ -387,14 +432,17 @@ shmempipe :: closerThread(void)
 
         FD_ZERO(&rfds);
         FD_SET(m_myPipeFd, &rfds);
-        FD_SET(m_closerPipe[0], &rfds);
-        if (m_myPipeFd > m_closerPipe[0])
+        FD_SET(m_closerPipe.readEnd, &rfds);
+        if (m_myPipeFd > m_closerPipe.readEnd)
             maxfd = m_myPipeFd + 1;
         else
-            maxfd = m_closerPipe[0] + 1;
+            maxfd = m_closerPipe.readEnd + 1;
         select(maxfd, &rfds, NULL, NULL, NULL);
-        if (FD_ISSET(m_closerPipe[0], &rfds))
+        if (FD_ISSET(m_closerPipe.readEnd, &rfds))
+        {
+            read(m_closerPipe.readEnd, &c, 1);
             break;
+        }
         if (FD_ISSET(m_myPipeFd, &rfds))
         {
             char buf[10];
@@ -419,7 +467,6 @@ shmempipe :: closerThread(void)
     }
 
     m_closerState = CLOSER_DEAD;
-
     callbacks.disconnectCallback(this, callbacks.arg);
 }
 

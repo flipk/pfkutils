@@ -1,13 +1,3 @@
-#if 0
-set -e -x
-opt=-O3
-g++ -Wall $opt -c shmempipe.cc
-g++ -Wall $opt -c shmempipe_test_master.cc
-g++ -Wall $opt -c shmempipe_test_slave.cc
-g++ $opt shmempipe_test_master.o shmempipe.o -o tm -lpthread
-g++ $opt shmempipe_test_slave.o shmempipe.o -o ts -lpthread
-exit 0
-#endif
 
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
@@ -80,9 +70,19 @@ main()
         printf("error constructing shmempipe\n");
         return 1;
     }
-    while (!connected)
-        usleep(1);
-    do {
+    bool die = false;
+    while (!connected && !die)
+    {
+        pfk_select sel;
+        sel.rfds.set(0);
+        sel.tv.set(0,100000);
+        if (sel.select() <= 0)
+            continue;
+        if (sel.rfds.isset(0))
+            die = true;
+    }
+    while (connected && !die)
+    {
         shmempipeStats stats;
         pPipe->getStats(&stats,true);
         printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
@@ -90,8 +90,16 @@ main()
                stats.sent_bytes, stats.sent_packets, stats.sent_signals,
                stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
                stats.alloc_fails, stats.free_buffers);
-        usleep(100000);
-    } while (connected);
+
+        pfk_select sel;
+        sel.rfds.set(0);
+        sel.tv.set(0,100000);
+        if (sel.select() <= 0)
+            continue;
+        if (sel.rfds.isset(0))
+            break;
+
+    }
     delete pPipe;
     return 0;
 }
