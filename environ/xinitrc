@@ -5,6 +5,7 @@ ENV=$HOME/.kshrc
 export ENV
 
 if [ -f $HOME/safe-session ] ; then
+    xset m 0
     urxvt -fn fixed -fb fixed
     gnome-terminal
     xfce4-terminal
@@ -13,6 +14,7 @@ if [ -f $HOME/safe-session ] ; then
 else
     xset +fp $HOME/pfk/fonts
     xrdb -load .Xresources
+    xset m 0
     set-background.sh
     exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
 fi
