@@ -190,7 +190,7 @@ define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
 $(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
 $(t)_CXXSRCS = libpfkutil/$(t).cc
-$(t)_LIBS += -lpthread
+$(t)_LIBS += -lpthread -lrt
 $(t)_DEPLIBS = $(libpfkutil_TARGET)
 
 endef
