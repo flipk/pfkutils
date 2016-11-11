@@ -60,7 +60,7 @@ CONFIG_VALUES= \
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
 
 define PFK_CONFIG_LINE
-	if [ "x$(PFK_CONFIG_$(value))" == "x" ] ; then \
+	if [ "x$(PFK_CONFIG_$(value))" = "x" ] ; then \
 	   echo 'plz define PFK_CONFIG_$(value) in config/$(CONFIG)' ; \
 	   exit 1 ; \
 	elif [ "$(PFK_CONFIG_$(value))" != "0" ] ; then \
@@ -116,7 +116,7 @@ PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 define PREPROC_SUBST
 $(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
 	@$(foreach sw,$(BUILD_SWITCHES),\
-		if [ "x$(PFK_BUILD_$(sw))" == "x" ] ; then \
+		if [ "x$(PFK_BUILD_$(sw))" = "x" ] ; then \
 			echo 'plz set PFK_BUILD_$(sw) in config/$(CONFIG)' ; \
 			exit 1 ; \
 		fi ; ) true

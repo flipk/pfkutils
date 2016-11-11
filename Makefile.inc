@@ -350,7 +350,7 @@ $($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
 		$(LDFLAGS) $($(target)_LDFLAGS)
 
 $(target)_install: $($(target)_TARGET)
-	$(Q)set -e ; if [ "x$($(target)_INSTALL)" == "x1" ] ; then \
+	$(Q)set -e ; if [ "x$($(target)_INSTALL)" = "x1" ] ; then \
 		echo installing $($(target)_TARGET) ; \
 		FNAME="$(notdir $($(target)_TARGET))" ; \
 		if [ -f $(INSTALL_BIN_DIR)/$$$$FNAME ] ; then \
