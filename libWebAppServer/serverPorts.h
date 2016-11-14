@@ -10,7 +10,8 @@ namespace WebAppServer {
 enum WebAppType { APP_TYPE_WEBSOCKET, APP_TYPE_FASTCGI };
 
 class serverPort : public fdThreadLauncher {
-    std::list<WebServerConnectionBase*> connections;
+    typedef std::list<WebServerConnectionBase*> ConnectionList;
+    ConnectionList connections;
     typedef std::list<WebServerConnectionBase*>::iterator connectionsIterator_t;
     /*virtual*/ bool doSelect(bool *forRead, bool *forWrite);
     /*virtual*/ bool handleReadSelect(int serverFd);

@@ -88,6 +88,14 @@ void
 serverPort::stopThread(void)
 {
     stopFdThread();
+    close(fd);
+    ConnectionList::iterator it;
+    for (it = connections.begin(); it != connections.end(); )
+    {
+        WebServerConnectionBase * wscb = *it;
+        delete wscb;
+        it = connections.erase(it);
+    }
 }
 
 bool

@@ -28,6 +28,7 @@ WebServerConnectionBase :: ~WebServerConnectionBase(void)
     stopFdThread();
     // it is the derived object's responsibility to clean
     // up the wac.  websocket will delete it, fastcgi will not.
+    close(fd);
 }
 
 //virtual
