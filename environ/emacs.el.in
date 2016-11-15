@@ -286,5 +286,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (load-file "@prefix@/etc/emacs/go-mode.el")
 (load-file "@prefix@/etc/emacs/xcscope.el")
+(cscope-setup)
 (garbage-collect)
 (message "Press F1 for a list of local keybindings.")
