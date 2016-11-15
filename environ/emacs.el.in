@@ -285,5 +285,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (put 'erase-buffer 'disabled nil)
 
 (load-file "@prefix@/etc/emacs/go-mode.el")
+(load-file "@prefix@/etc/emacs/xcscope.el")
 (garbage-collect)
 (message "Press F1 for a list of local keybindings.")
