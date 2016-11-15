@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-10-15.15:06:59
+#      Last update: 2016-11-14.22:45:18
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -216,15 +216,15 @@ if __isksh ; then
     TTY=`tty`
     TTY=${TTY#/dev/}
 
-    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
+#    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
         PROMPT_COLOR_INVERT="[7m"
         PROMPT_COLOR_FG_RED="[31;1m"
         PROMPT_COLOR_BG_RED="[41m"
         PROMPT_COLOR_NORMAL="[m"
-    else
-        PROMPT_COLOR_INVERT=""
-        PROMPT_COLOR_NORMAL=""
-    fi
+#    else
+#        PROMPT_COLOR_INVERT=""
+#        PROMPT_COLOR_NORMAL=""
+#    fi
 
     _set_prompt() {
         typeset _ps
