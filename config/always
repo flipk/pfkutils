@@ -11,7 +11,9 @@ DOT_FILES = \
 	screenrc xinitrc vnc-xstartup
 PREPROC_DOT_FILES = \
 	kshrc profile xsession
-ELISP_FILES = emacs-lone.el go-mode.el xcscope.el
+ELISP_FILES = emacs-lone.el go-mode.el xcscope.el \
+	colir.el counsel.el ivy-hydra.el ivy-overlay.el \
+	ivy-test.el ivy.el swiper.el
 PREPROC_ELISP_FILES = emacs.el
 SCRIPT_FILES = \
 	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \

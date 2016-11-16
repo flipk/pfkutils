@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2016-11-14.22:45:18
+#      Last update: 2016-11-15.22:11:49
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -216,6 +216,8 @@ if __isksh ; then
     TTY=`tty`
     TTY=${TTY#/dev/}
 
+# no longer need to disable this since emacs 25
+# understands ansi color codes inside a shell buffer!
 #    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
         PROMPT_COLOR_INVERT="[7m"
         PROMPT_COLOR_FG_RED="[31;1m"
@@ -265,13 +267,20 @@ else
 
 fi
 
+if [[ "x$INSIDE_EMACS" == "x" ]] ; then
+    export EDITOR=vi
+    export VISUAL=vi
+    export VIEWER=xless
+    export PAGER=less
+else
+    export EDITOR=emacsclient
+    export VISUAL=emacsclient
+    export VIEWER=emacsclient
+    export PAGER=cat
+fi
 export LANG=C
-export EDITOR=vi
-export VISUAL=vi
-export VIEWER=xless
 export CSCOPE_EDITOR=$HOME/bin/ec
 export NPCL_EDITOR=less
-export PAGER=less
 export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'
 export XLESS='-X -j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
