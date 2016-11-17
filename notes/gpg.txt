@@ -1,0 +1,26 @@
+
+keepass "GPG Key"
+
+list keys (public, then private):
+gpg -k
+gpg -K
+
+gpg --import private-key.txt
+
+gpg --edit-key pknaack1@gmail.com
+gpg> trust
+  5 = I trust ultimately
+gpg --update-trustdb
+
+gpg -e -r pknaack1@gmail.com < file > file.gpg
+gpg -d < file.gpg > file
+
+add "-a" for an ascii-armoured output.
+
+gpg --gen-key
+gpg --export-secret-keys -a
+
+gpg --export -a C8822DA5
+
+gpg --sign --clearsign < plain > signed
+

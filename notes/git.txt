@@ -1,0 +1,49 @@
+
+to list tags:
+git tag
+
+to get info on a particular tag:
+git tag -v v3.11
+
+to apply a plain tag which is just a pointer to a commit:
+git tag v3.11
+
+to apply a signed tag:
+git tag -u C8822DA5 -s v3.11 -m 'version v3.11 release'
+
+git push --tags
+<or>
+git push origin v3.11
+
+to reduce the number of files in .git:
+   git gc --aggressive
+
+if 'git fsck' says there's dangling blobs, you can clean them with:
+
+   git reflog expire --expire=now --all
+   git gc --prune=now
+
+if you pushed a commit to github but didn't mean to, you can push again
+to roll it back:
+   git push -f origin HEAD^:master
+or
+   git push -f origin <sha_of_previous_commit>:master
+
+if you pushed a tag, but it was on the wrong version:
+
+$ git tag -d v1.0.0
+$ git push origin :refs/tags/v1.0.0
+$ git tag v1.0.0
+$ git push origin --tags
+
+if you want to delete a local tracking branch for a remote repo:
+
+git branch -rd origin/pfk-1_3_7
+
+to delete a branch on a remote repo:
+
+git push origin --delete pfk-1_3_7
+
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
+git://git.denx.de/u-boot.git
+https://kernel.googlesource.com/pub/scm/linux/hotplug/udev

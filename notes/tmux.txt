@@ -1,0 +1,29 @@
+
+TERM=xterm SHELL=/bin/sh tmux
+
+tmux list-sessions
+tmux attach [-t <sessionid>]
+or 'tmux a'
+to attach multiple to different windows:
+tmux new-session -t 0
+
+? : help (enter to exit)
+c : new window
+n : next window
+p : prev window
+digit : switch to window n
+w : show menu of windows
+d : detach
+t : show time (enter to exit)
+" : split horiz (new pane)
+up /down : switch panes
+% : split vert (new pane)
+left/right : switch panes
+esc-arrow [repeated] : resize pane by 5 cells
+! : current pane becomes its own window
+[ : copy mode (space to toggle selection, enter to copy and exit)
+] : paste
+f : find (in all windows)
+q : display pane indexes
+r : redraw
+

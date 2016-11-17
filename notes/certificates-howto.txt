@@ -1,0 +1,87 @@
+
+root_params=in/PFK-Root-CA-params.txt
+root_key_pwd=in/PFK-Root-CA-password.txt
+
+encrypted_root_key=out/PFK-Root-CA.key
+root_cert=out/PFK-Root-CA.crt
+tmp_root_key=tmp/tmp-decoded-PFK-Root-CA.key
+tmp_root_req=tmp/tmp-root.csr
+
+openssl genrsa -out $encrypted_root_key -passout file:$root_key_pwd -aes256 2048 
+openssl rsa -in $encrypted_root_key -passin file:$root_key_pwd -out $tmp_root_key 
+openssl req -utf8 -new -key $tmp_root_key -out $tmp_root_req  < $root_params
+openssl x509 -in $tmp_root_req -out $root_cert -req -signkey $tmp_root_key -days 3650
+
+--------------
+
+site=chat.pfk.org
+site=www.pfk.org
+
+site_key_pwd=in/$site-password.txt
+site_key=out/$site.key
+site_params=in/$site-params.txt
+site_crt=out/$site.crt
+tmp_site_decoded_key=tmp/tmp-$site.key
+tmp_site_req=tmp/tmp-$site.csr
+
+openssl genrsa -out $site_key -passout file:$site_key_pwd -aes256 2048 
+openssl rsa -in $site_key -passin file:$site_key_pwd -out $tmp_site_decoded_key
+openssl req -utf8 -new -key $tmp_site_decoded_key -out $tmp_site_req < $site_params
+openssl x509 -in $tmp_site_req -out $site_crt -req -CA $root_cert -CAkey $tmp_root_key -CAcreateserial -days 3650
+
+--------------
+
+root_params=in/generic-params.txt
+root_key_pwd=in/generic-password.txt
+
+encrypted_root_key=out/generic.key
+root_cert=out/generic.crt
+tmp_root_key=tmp/tmp-decoded-generic.key
+tmp_root_req=tmp/tmp-generic.csr
+
+openssl genrsa -out $encrypted_root_key -passout file:$root_key_pwd -aes256 2048 
+openssl rsa -in $encrypted_root_key -passin file:$root_key_pwd -out $tmp_root_key 
+openssl req -utf8 -new -key $tmp_root_key -out $tmp_root_req  < $root_params
+openssl x509 -in $tmp_root_req -out $root_cert -req -signkey $tmp_root_key -days 3650
+
+
+--------------
+
+params:
+
+US
+Illinois
+Palatine
+PFK Root CA
+PFK Root CA
+PFK Root CA
+pfk@pfk.org
+
+
+US
+Illinois
+Palatine
+chat.pfk.org
+chat.pfk.org
+chat.pfk.org
+pfk@pfk.org
+
+
+US
+Illinois
+Palatine
+www.pfk.org
+www.pfk.org
+www.pfk.org
+pfk@pfk.org
+
+
+US
+SomeState
+SomeCity
+Some CA
+Some CA
+Some CA
+somewho@somewhere.com
+
+

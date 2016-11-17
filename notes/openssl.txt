@@ -1,0 +1,47 @@
+
+i2 -v 2005 | openssl aes-256-cfb8 -e -out motlap-bak.tar.bz2.aes-256-cfb8
+
+openssl aes-256-cfb8 -d -in motlap-bak.tar.bz2.aes-256-cfb8 | tar jtf -
+
+openssl aes-256-cbc -e -a -salt -in plain -out cipher.txt
+openssl aes-256-cbc -d -a -in cipher.txt -out plain
+
+**** simple certificate signing
+
+# generate an RSA key, extract public part
+openssl genrsa -out private-key.pem 4096
+openssl rsa -in private-key.pem -pubout -out public-key.pub
+
+# SHA1 digest and encryption using private RSA in one step, and verify
+openssl dgst -sha1 -sign private-key.pem -out bundle.tar.bz2.sha1.sig bundle.tar.bz2
+openssl dgst -sha1 -verify public-key.pub -signature bundle.tar.bz2.sha1.sig bundle.tar.bz2
+
+# SHA256 digest and encryption using private RSA, and combine
+openssl dgst -sha256 -sign private-key.pem -out bundle.tar.bz2.sha256.sig bundle.tar.bz2
+cat bundle.tar.bz2.sha256.sig bundle.tar.bz2 > bundle.tar.bz2.combined
+
+# verify combined
+dd if=bundle.tar.bz2.combined of=test.sig bs=512 count=1
+dd if=bundle.tar.bz2.combined of=test_file bs=512 skip=1
+openssl dgst -sha256 -verify public-key.pub -signature test.sig test_file
+
+# generate sha256 hash only
+openssl dgst -sha256 -binary -out bundle.tar.bz2.sha256 bundle.tar.bz2
+
+# sign sha256 hash using RSA private key
+openssl rsautl -sign -inkey private-key.pem -in bundle.tar.bz2.sha256 -out bundle.tar.bz2.sha256.sig
+
+# verify, and decrypt sha256 hash
+openssl rsautl -verify -inkey public-key.pub -pubin -in bundle.tar.bz2.sha256.sig -out bundle.tar.bz2.sha256.decrypted
+
+# password encryption
+random_text 64 > password.txt
+openssl aes-256-cbc -e -salt -in bundle.tar.bz2 -out bundle.tar.bz2.enc -kfile password.txt
+
+
+
+
+
+**** also see radius-certificates.txt
+
+**** also see see pfkutils/misc/libprotossl/keys/make_keys.sh

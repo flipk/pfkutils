@@ -1,0 +1,15 @@
+
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
+
+
+last modified = 2013-08-07.16:10:22
+
+# Local Variables:
+# mode: Text
+# indent-tabs-mode: nil
+# tab-width: 8
+# eval: (add-hook 'write-file-hooks 'time-stamp)
+# time-stamp-start: "last modified = "
+# time-stamp-format: "%:y-%02m-%02d.%02H:%02M:%02S"
+# time-stamp-end: "$"
+# End:

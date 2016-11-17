@@ -1,0 +1,16 @@
+
+generate gcda output:
+gcc -fprofile-arcs
+
+generate gcda and gcno:
+gcc -fprofile-arcs -ftest-coverage
+
+generate data suitable for feedback:
+gcc -fprofile-generate
+
+consume output:
+gcc -fprofile-use
+gcc -fbranch-probabilities
+
+gcov
+

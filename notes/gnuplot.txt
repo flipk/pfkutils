@@ -1,0 +1,8 @@
+
+set y2tics border
+
+plot "filename" using 1:2 with lines, "filename" using 1:4 with lines
+
+plot "somefile" using 1:2 with lines axes x1y1 title "blah", "somefile" using 1:3 with lines axes x1y2 title "foo"
+pause -1
+

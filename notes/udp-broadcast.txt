@@ -1,0 +1,34 @@
+
+send method
+int bcast_opt = 1
+setsockopt( fd, SOL_SOCKET, SO_BROADCAST, &bcast_opt, sizeof(bcast_opt))
+sin_addr.s_addr = htonl(0x ....ff)
+sendto
+
+recv method 1?
+socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)
+bind
+recvfrom
+
+recv method 2
+socket(PF_PACKET, SOCK_DGRAM, htons(ETHERTYPE_IP))
+socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_IP))
+<optional bpf setup here>
+recvfrom
+struct iphdr *ip = buf
+check ip->protocol == IPPROTO_UDP
+struct udphdr *udp = buf + 20
+check udp->dest == htons(my port)
+
+
+bpf:
+struct sock_filter insns[] = {
+  BPF_STMT(BPF_LD+BPF_B+BPF_ABS,0), // read first byte
+  BPF_STMT(BPF_JMP+BPF_JEQ+BPF_K, 0x45, 1, 0), // compare header byte
+  (etc)
+  BPF_STMT(BPF_RET+BPF_K,0), //drop
+  BPF_STMT(BPF_RET+BPF_K,UINT_MAX)  //accept
+struct sock_fprog fcode = { DIM(insns), insns }
+setsockopt(fd,SOL_SOCKET,SO_ATTACH_FILTER,&fcode,num_elemnts)
+
+

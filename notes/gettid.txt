@@ -1,0 +1,7 @@
+
+#include <sys/syscall.h>
+
+int syscall(int number, ...);
+
+SYS_gettid
+
