@@ -1,0 +1,24 @@
+#!/bin/sh
+
+if [ -x $HOME/pfk/bin/myemacs-compile-local ] ; then
+    $HOME/pfk/bin/myemacs-compile-local
+    exit_val=$?
+    if [ $exit_val -ne 99 ] ; then
+	exit $exit_val
+    fi
+fi
+
+set -e -x
+
+case $PWD in
+    $HOME/proj/pfkutils* )
+	cd $HOME/proj/pfkutils
+	make || exit 1
+	;;
+    *)
+	echo unknown dir, please edit myemacs-compile or myemacs-compile-local
+	exit 1
+	;;
+esac
+
+exit 0
