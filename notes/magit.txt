@@ -1,3 +1,14 @@
 
-
 https://github.com/magit/magit.git
+
+in a buffer or dired open on a directory with a repo, hit 'C-x g'.
+
+tab expands or contracts a file.
+p and n move between sections.
+Z stashes.
+g refreshes the buffer.
+s will stage changes.
+on an contracted file, s will stage the file at point.
+on a diff, highlight a region, s will stage the region only.
+c will start commit; c again to accept command; C-c C-c will create the commit.
+P can push

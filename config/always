@@ -11,9 +11,17 @@ DOT_FILES = \
 	screenrc xinitrc vnc-xstartup
 PREPROC_DOT_FILES = \
 	kshrc profile xsession
+MAGIT_ELISP_FILES= \
+	magit-apply.el magit-autorevert.el magit-bisect.el magit-blame.el \
+	magit-commit.el magit-core.el magit-diff.el magit-ediff.el \
+	magit-extras.el magit-git.el magit-log.el magit-mode.el \
+	magit-popup.el magit-process.el magit-remote.el magit-section.el \
+	magit-sequence.el magit-stash.el magit-submodule.el magit-subtree.el \
+	magit-utils.el magit-wip.el magit.el git-commit.el git-gutter.el \
+	git-rebase.el
 ELISP_FILES = emacs-lone.el go-mode.el xcscope.el \
 	colir.el counsel.el ivy-hydra.el ivy-overlay.el \
-	ivy-test.el ivy.el swiper.el
+	ivy-test.el ivy.el swiper.el $(MAGIT_ELISP_FILES)
 PREPROC_ELISP_FILES = emacs.el
 SCRIPT_FILES = \
 	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \

@@ -306,6 +306,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (require 'ivy)
 (require 'swiper)
 (require 'counsel)
+(require 'magit)
+(require 'git-gutter)
 
 (cscope-setup)
 ;not sure these ever worked
@@ -321,17 +323,17 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key [S-f9] 'compile)
 (global-set-key [f8] 'next-error)
 (global-set-key [S-f8] 'previous-error)
+(global-set-key (kbd "C-x g") 'magit-status)
+;we'll see (global-set-key (kbd "C-x M-g") 'magit-dispatch-popup)
 
 (semantic-mode)
 (ivy-mode 1)
+(global-git-gutter-mode +1)
 
 ;todo
 ;use-package
-;magit
 ;org-mode
 ;git-timemachine
-;git-gutter
-;F8 and C-F8 in compile window bound to next-error and previous-error
 ;C-w inside swiper needs somehow bound, forgot what it was.
 
 (garbage-collect)
