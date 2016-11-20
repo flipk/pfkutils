@@ -3352,12 +3352,21 @@ above."
 
 (font-lock-add-keywords 'emacs-lisp-mode magit-font-lock-keywords)
 
-(defvar magit-version 'undefined
+; pfk : i hacked this cuz i didn't want to put a git repo
+; inside a git repo.
+(defvar magit-version '2.8.0-154-gca2b82b
   "The version of Magit that you're using.
 Use the function by the same name instead of this variable.")
 
 ;;;###autoload
 (defun magit-version ()
+  "Return the version of Magit currently in use.
+When called interactive also show the used versions of Magit,
+Git, and Emacs in the echo area."
+  (interactive)
+  magit-version)
+
+(defun magit-version-pfk-disabled ()
   "Return the version of Magit currently in use.
 When called interactive also show the used versions of Magit,
 Git, and Emacs in the echo area."
