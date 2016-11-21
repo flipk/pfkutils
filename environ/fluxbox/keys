@@ -70,9 +70,10 @@ Mod1 F2 :Exec fbrun
 
 # volume settings, using common keycodes
 # if these don't work, use xev to find out your real keycodes
-176 :Exec amixer sset Master,0 1+
-174 :Exec amixer sset Master,0 1-
-160 :Exec amixer sset Master,0 toggle
+# these do not work on green at work! disable
+#176 :Exec amixer sset Master,0 1+
+#174 :Exec amixer sset Master,0 1-
+#160 :Exec amixer sset Master,0 toggle
 
 # plus key on numeric keyboard
 86 :Exec amixer sset Master,0 1+
