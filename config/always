@@ -22,7 +22,7 @@ MAGIT_ELISP_FILES= \
 ELISP_FILES = emacs-lone.el go-mode.el xcscope.el \
 	colir.el counsel.el ivy-hydra.el ivy-overlay.el \
 	ivy-test.el ivy.el swiper.el $(MAGIT_ELISP_FILES) \
-	dash-functional.el dash.el
+	dash-functional.el dash.el with-editor.el
 PREPROC_ELISP_FILES = emacs.el
 SCRIPT_FILES = \
 	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \
