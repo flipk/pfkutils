@@ -2,7 +2,7 @@
 
 if [[ $# -eq 0 ]] ; then
     show_eclipsed=1
-    branches=`cleartool catcs | awk '/^[ \t*]mkbranch/ { print $2 }'`
+    branches=`cleartool catcs | awk '/^mkbranch/ { print $2 }'`
 else
     show_eclipsed=0
     branches="$*"
