@@ -76,11 +76,11 @@ Mod1 F2 :Exec fbrun
 #160 :Exec amixer sset Master,0 toggle
 
 # plus key on numeric keyboard
-86 :Exec amixer sset Master,0 1+
+#86 :Exec amixer sset Master,0 1+
 # minus key on numeric keyboard
-82 :Exec amixer sset Master,0 1-
+#82 :Exec amixer sset Master,0 1-
 # enter key on numeric keyboard
-104 :Exec amixer sset Master,0 toggle
+#104 :Exec amixer sset Master,0 toggle
 
 # star (multiply) key on numeric keypad
 63 :Exec xlock
