@@ -332,7 +332,7 @@ Manager :: _notifyThread(void)
                         handles.push_back(h);
                 }
             } // key destroyed here
-            for (int ind = 0; ind < handles.size(); ind++)
+            for (unsigned int ind = 0; ind < handles.size(); ind++)
             {
                 h = handles[ind];
                 cc = read(h->fds[0], buffer, sizeof(buffer));
