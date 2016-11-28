@@ -2,6 +2,8 @@
 // TODO there's some bytes getting lost somewhere. 
 //      every once in a while i get an ssh error that has
 //      to be a truncated packet or something. (missing HMAC)
+// UPDATE actually i think this bug got fixed, but i'll leave this todo
+//        here for a while just in case.
 
 // wsProxyClient proxyConn proxy=wwwgate0.mot.com:1080 \
 //   url=ws://leviathan.phillipknaack.com/websocket/levproto listenPort=2222
