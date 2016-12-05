@@ -9,6 +9,7 @@
  ;; If there is more than one, they won't work right.
  '(blink-matching-paren-distance nil)
  '(column-number-mode t)
+ '(compilation-scroll-output t)
  '(compile-command "@prefix@/bin/myemacs-compile")
  '(cscope-close-window-after-select nil)
  '(cscope-option-kernel-mode t)
@@ -16,7 +17,7 @@
  '(display-time-mail-file (quote false))
  '(display-time-mode t)
  '(file-precious-flag t)
- '(frame-title-format (list "emacs" (getenv "EMACS_NUMBER") "%*%b %m"))
+ '(frame-title-format (list "emacs" (getenv "EMACS_NUMBER") "%*%b %m") t)
  '(global-semantic-stickyfunc-mode t)
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
