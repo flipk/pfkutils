@@ -18,12 +18,26 @@ typedef std::vector<const char*> commandVector;
 
 class Manager;
 
+// this class is a little brittle.
+// don't delete it while a child is still running, it doesn't handle that.
+// don't re-use it (createChild twice).
+// if you want to kill it using signalChild, please stick around and
+// wait for processExited to be called before deleting it, because
+// deleting it before that can cause an exception.
+// it has to be deleted and reconstructed in order to use it again,
+// because when the child exits the fds are closed and not reinit'd.
+// also there is a race between getOpen and when the manager thread
+// deregisters the descriptor. best to have a bool "done" in your
+// derived class and check for that (like cpm_test does) rather than
+// depending on getOpen.
+
 class Handle {
     friend class Manager;
     int fromChildPipe[2];
     int toChildPipe[2];
     pid_t pid;
     bool open;
+    bool inManager;
     int fds[2];
 protected:
     Handle(void);

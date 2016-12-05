@@ -33,10 +33,16 @@ Handle :: Handle(void)
     open = false;
     fds[0] = fromChildPipe[0];
     fds[1] = toChildPipe[1];
+    pid = -1;
+    inManager = false;
 }
 
 Handle :: ~Handle(void)
 {
+    if (inManager)
+        cerr << "ChildProcessManager::~Handle: still in Manager's map! "
+             << "did you delete Handle before child had exited?"
+             << endl;
     open = false;
 #define CLOSEFD(fd) if (fd != -1) { close(fd); fd = -1; }
     CLOSEFD(fromChildPipe[0]);
@@ -83,7 +89,6 @@ Manager :: Manager(void)
     pipe(rebuildFds);
     pthread_attr_t attr;
     pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
     pthread_create(&notifyThreadId, &attr,
                    &Manager::notifyThread, (void*) this);
     pthread_attr_destroy(&attr);
@@ -94,6 +99,8 @@ Manager :: ~Manager(void)
     char dummy = 2; // code 2 means die
     write(rebuildFds[1], &dummy, 1);
     sigaction(SIGCHLD, &sigChildOact, NULL);
+    void *threadRet = NULL;
+    pthread_join(notifyThreadId, &threadRet);
     close(signalFds[0]);
     close(signalFds[1]);
     close(rebuildFds[0]);
@@ -106,6 +113,10 @@ Manager :: createChild(Handle *handle)
     int forkErrorPipe[2];
     pipe(forkErrorPipe);
 
+    sigset_t  oldset, newset;
+    sigfillset(&newset);
+    pthread_sigmask(SIG_SETMASK, &newset, &oldset);
+
     // google "vfork considered dangerous". the article on
     // EWONTFIX is particularly informative.
     handle->pid = fork();
@@ -113,6 +124,7 @@ Manager :: createChild(Handle *handle)
     {
         int e = errno;
         cerr << "fork: " << e << ": " << strerror(errno) << endl;
+        sigprocmask(SIG_SETMASK, &oldset, NULL);
         return false;
     }
 
@@ -163,6 +175,9 @@ Manager :: createChild(Handle *handle)
     int e;
     int cc = read(forkErrorPipe[0], &e, sizeof(e));
     close(forkErrorPipe[0]);
+
+    pthread_sigmask(SIG_SETMASK, &oldset, NULL);
+
     if (cc == 0)
     {
         // zero read means the pipe was closed-on-exec,
@@ -171,6 +186,7 @@ Manager :: createChild(Handle *handle)
         {
             WaitUtil::Lock key(&handleLock);
             openHandles[handle->pid] = handle;
+            handle->inManager = true;
         } // key destroyed here
         // wake up notify thread so it knows to
         // rebuild its fd_sets to include the 
@@ -310,9 +326,10 @@ Manager :: _notifyThread(void)
                 if (it != openHandles.end())
                 {
                     h = it->second;
-                    h->processExited(msg.status);
                     h->open = false;
+                    h->inManager = false;
                     openHandles.erase(it);
+                    h->processExited(msg.status);
                 }
             } // key destroyed here
         }
@@ -339,6 +356,8 @@ Manager :: _notifyThread(void)
                 if (cc > 0)
                     // call user's virtual method to handle the data.
                     h->handleOutput(buffer, cc);
+                else
+                    h->open = false;
             }
             handles.clear();
         }
@@ -346,80 +365,3 @@ Manager :: _notifyThread(void)
 }
 
 }; /* namespace ChildProcessManager */
-
-#ifdef CHILDPROCESSMANAGERTESTMAIN
-
-class TestHandle : public ChildProcessManager::Handle {
-    int inst;
-public:
-    TestHandle(int _inst) : inst(_inst) {
-        if (0) // debug
-        {
-            Bufprintf<80> bufp;
-            bufp.print("constructing testhandle inst %d\n", inst);
-            bufp.write(1);
-        }
-        if (inst == 1)
-            cmd.push_back("cat");
-        else
-            cmd.push_back("sh");
-        cmd.push_back(NULL);
-    }
-    virtual ~TestHandle(void) {
-        if (0) // debug
-        {
-            Bufprintf<80> bufp;
-            bufp.print("~TestHandle destructor inst %d\n", inst);
-            bufp.write(1);
-        }
-    }
-    /*virtual*/ void handleOutput(const char *buffer, size_t len) {
-        cout << "data from inst " << inst << endl;
-        write(1, buffer, len);
-    }
-    /*virtual*/ void processExited(int status) {
-        cout << "processExited called for inst " << inst << endl;
-    }
-};
-
-int
-main()
-{
-
-    // sigpipe is a fucking douchefucker. fuck him.
-    struct sigaction sa;
-    sa.sa_handler = SIG_IGN;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;//SA_RESTART;
-    sigaction(SIGPIPE, &sa, NULL);
-
-    cout << "my pid is " << getpid() << endl;
-    ChildProcessManager::Manager::instance();
-    {
-        TestHandle hdl1(1);
-        TestHandle hdl2(2);
-        hdl1.createChild();
-        hdl2.createChild();
-        char buf[256];
-        int cc;
-
-        while (hdl1.getOpen() || hdl2.getOpen())
-        {
-            cc = read(0, buf, sizeof(buf));
-            if  (cc == 0)
-                break;
-            hdl1.writeInput(buf, cc);
-            hdl2.writeInput(buf, cc);
-        }
-        if (hdl1.getOpen())
-            hdl1.closeChildInput();
-        if (hdl2.getOpen())
-            hdl2.closeChildInput();
-        while (hdl1.getOpen() && hdl2.getOpen())
-            usleep(1);
-    }
-    ChildProcessManager::Manager::cleanup();
-    return 0;
-}
-
-#endif
