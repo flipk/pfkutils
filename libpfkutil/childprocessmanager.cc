@@ -8,6 +8,7 @@ exit 0
 
 #include "childprocessmanager.h"
 #include "bufprintf.h"
+#include "pfkposix.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -253,7 +254,6 @@ Manager :: _notifyThread(void)
     std::vector<Handle*> handles;
     char buffer[4096];
     int cc;
-    fd_set rfds;
     int maxfd;
     HandleMap::iterator it;
     Handle * h;
@@ -262,12 +262,10 @@ Manager :: _notifyThread(void)
 
     while (!done)
     {
-        FD_ZERO(&rfds);
-        maxfd = signalFds[0];
-        FD_SET(signalFds[0], &rfds);
-        if (maxfd < rebuildFds[0])
-            maxfd = rebuildFds[0];
-        FD_SET(rebuildFds[0], &rfds);
+        pfk_select sel;
+
+        sel.rfds.set(signalFds[0]);
+        sel.rfds.set(rebuildFds[0]);
 
         { // add fds for all open handles to the fd_set.
             WaitUtil::Lock key(&handleLock);
@@ -277,17 +275,14 @@ Manager :: _notifyThread(void)
             {
                 h = it->second;
                 if (h->open)
-                {
-                    if (maxfd < h->fds[0])
-                        maxfd = h->fds[0];
-                    FD_SET(h->fds[0], &rfds);
-                }
+                    sel.rfds.set(h->fds[0]);
             }
         } // key destroyed here
 
-        select(maxfd+1, &rfds, NULL, NULL, NULL);
+        sel.tv.set(10,0);
+        sel.select();
 
-        if (FD_ISSET(rebuildFds[0], &rfds))
+        if (sel.rfds.isset(rebuildFds[0]))
         {
             if (read(rebuildFds[0], &dummy, 1) != 1)
                 done = true;
@@ -306,7 +301,7 @@ Manager :: _notifyThread(void)
             // otherwise this is just meant to make sure we rebuild
             // our fd_sets because the openHandles map has changed.
         }
-        if (!done && FD_ISSET(signalFds[0], &rfds))
+        if (!done && sel.rfds.isset(signalFds[0]))
         {
             // the sigchld handler has sent us a pid and status.
             cc = read(signalFds[0], &msg, sizeof(msg));
@@ -345,7 +340,7 @@ Manager :: _notifyThread(void)
                      it++)
                 {
                     h = it->second;
-                    if (FD_ISSET(h->fds[0], &rfds))
+                    if (sel.rfds.isset(h->fds[0]))
                         handles.push_back(h);
                 }
             } // key destroyed here
