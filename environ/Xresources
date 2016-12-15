@@ -14,7 +14,7 @@ URxvt.highlightTextColor: yellow
 URxvt.fading: 30
 URxvt.font: pfk13
 URxvt.altFont: fixed
-URxvt.boldFont: pfk13
+URxvt.boldFont: pfk13bold
 ! URxvt.transparent: true
 URxvt.cutchars:   "\\\"/`'&()*,;<=>?@[]^{|}/:"
 ! URxvt.lineSpace: 
@@ -100,6 +100,7 @@ Xmessage*background: black
 Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
 Emacs*font: pfk13
+Emacs*boldFont: pfk13bold
 Emacs*verticalScrollBar.background:  grey85
 Emacs*verticalScrollBar.troughColor: grey50
 Emacs.pane.menubar*foreground:       yellow
