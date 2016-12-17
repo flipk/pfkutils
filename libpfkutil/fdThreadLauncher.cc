@@ -30,7 +30,8 @@ fdThreadLauncher :: startFdThread(int _fd, int _pollInterval)
     fd = _fd;
     pollInterval = _pollInterval;
     state = STARTING;
-    pipe(startSyncFds);
+    if (pipe(startSyncFds) < 0)
+        cerr << "fdThreadLauncher pipe failed\n";
     pthread_attr_t attr;
     pthread_attr_init( &attr );
     int cc =
@@ -48,7 +49,8 @@ fdThreadLauncher :: startFdThread(int _fd, int _pollInterval)
     {
         char dummy;
         // wait for thread to start up
-        read(startSyncFds[0], &dummy, 1);
+        if (read(startSyncFds[0], &dummy, 1) < 0)
+            cerr << "startFdThread read failed\n";
         close(startSyncFds[0]);
         close(startSyncFds[1]);
     }
@@ -64,7 +66,8 @@ fdThreadLauncher :: setPollInterval(int _pollInterval)
 {
     pollInterval = _pollInterval;
     char c = CMD_CHANGEPOLL;
-    (void) ::write(cmdFds[1], &c, 1);
+    if (::write(cmdFds[1], &c, 1) < 0)
+        cerr << "fdThreadLauncher :: setPollInterval: write failed\n";
 }
 
 void
@@ -74,7 +77,8 @@ fdThreadLauncher :: stopFdThread(void)
         return;
     state = STOPPING;
     char c = CMD_CLOSE;
-    (void) ::write(cmdFds[1], &c, 1);
+    if (::write(cmdFds[1], &c, 1) < 0)
+        cerr << "fdThreadLauncher :: stopFdTHread: write failed\n";
     void * dummy = NULL;
     pthread_join(threadId, &dummy);
 }
@@ -84,10 +88,12 @@ void *
 fdThreadLauncher :: _threadEntry(void *arg)
 {
     fdThreadLauncher * obj = (fdThreadLauncher *) arg;
-    pipe(obj->cmdFds);
+    if (pipe(obj->cmdFds) < 0)
+        fprintf(stderr, "fdThreadLauncher :: _threadEntry: pipe failed\n");
     obj->state = RUNNING;
     char dummy = 0;
-    write(obj->startSyncFds[1], &dummy, 1);
+    if (write(obj->startSyncFds[1], &dummy, 1) < 0)
+        fprintf(stderr, "fdThreadLauncher :: _threadEntry: write failed\n");
     printf("fdThread starting to manage fd %d\n", obj->fd);
     obj->threadEntry();
     printf("fdThread managing fd %d is exiting!\n", obj->fd);

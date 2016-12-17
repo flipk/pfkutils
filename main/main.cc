@@ -97,7 +97,8 @@ unlink_all_links( void )
 static void
 remove_privs( void )
 {
-    seteuid( getuid() );
+    if (seteuid( getuid() ) < 0)
+        fprintf(stderr, "failure removing priviledges!\n");
 }
 
 static int

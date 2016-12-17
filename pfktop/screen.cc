@@ -123,13 +123,15 @@ void
 Screen :: sigwinch_handler(int sig)
 {
     int c = 1;
-    (void) write(instance->fds[1], &c, 1);
+    if (write(instance->fds[1], &c, 1) < 0)
+        cerr << "Screen::sigwinch: write failed\n";
 }
 
 int
 Screen :: start_winch(void)
 {
-    pipe(fds);
+    if (pipe(fds) < 0)
+        cerr << "Screen:start_winch: pipe failed\n";
     struct sigaction act;
     act.sa_handler = &Screen::sigwinch_handler;
     sigfillset(&act.sa_mask);

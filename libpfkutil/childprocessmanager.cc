@@ -29,8 +29,10 @@ namespace ChildProcessManager {
 
 Handle :: Handle(void)
 {
-    pipe(fromChildPipe);
-    pipe(toChildPipe);
+    if (pipe(fromChildPipe) < 0)
+        cerr << "ChildProcessManager::Handle pipe 1 failed\n";
+    if (pipe(toChildPipe) < 0)
+        cerr << "ChildProcessManager::Handle pipe 2 failed\n";
     open = false;
     fds[0] = fromChildPipe[0];
     fds[1] = toChildPipe[1];
@@ -86,8 +88,10 @@ Manager :: Manager(void)
     sigfillset(&sa.sa_mask);
     sa.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     sigaction(SIGCHLD, &sa, &sigChildOact);
-    pipe(signalFds);
-    pipe(rebuildFds);
+    if (pipe(signalFds) < 0)
+        cerr << "ChildProcessManager::Manager pipe 1 failed\n";
+    if (pipe(rebuildFds) < 0)
+        cerr << "ChildProcessManager::Manager pipe 2 failed\n";
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_create(&notifyThreadId, &attr,
@@ -98,7 +102,8 @@ Manager :: Manager(void)
 Manager :: ~Manager(void)
 {
     char dummy = 2; // code 2 means die
-    write(rebuildFds[1], &dummy, 1);
+    if (write(rebuildFds[1], &dummy, 1) < 0)
+        cerr << "ChildProcessManager::~Manager: write failed\n";
     sigaction(SIGCHLD, &sigChildOact, NULL);
     void *threadRet = NULL;
     pthread_join(notifyThreadId, &threadRet);
@@ -112,7 +117,8 @@ bool
 Manager :: createChild(Handle *handle)
 {
     int forkErrorPipe[2];
-    pipe(forkErrorPipe);
+    if (pipe(forkErrorPipe) < 0)
+        cerr << "createChild: pipe failed\n";
 
     sigset_t  oldset, newset;
     sigfillset(&newset);
@@ -160,7 +166,8 @@ Manager :: createChild(Handle *handle)
 
         // send the errno to parent.
         int e = errno;
-        write(forkErrorPipe[1], &e, sizeof(int));
+        if (write(forkErrorPipe[1], &e, sizeof(int)) < 0)
+            cerr << "write to forkerror pipe failed\n";
 
         // call _exit because we dont want to call any atexit handlers.
         _exit(99);
@@ -193,7 +200,8 @@ Manager :: createChild(Handle *handle)
         // rebuild its fd_sets to include the 
         // new handle.
         char dummy = 1; // code 1 means rebuild
-        (void) write(rebuildFds[1], &dummy, 1);
+        if (write(rebuildFds[1], &dummy, 1) < 0)
+            cerr << "rebuildFds write failed\n";
         ret = true;
     }
     else
@@ -232,7 +240,8 @@ Manager :: sigChildHandler(int s)
                 // that is expensive.) instead send a message to the
                 // notify thread and let it deal with it in thread
                 // context.
-                (void) write(_instance->signalFds[1], &msg, sizeof(msg));
+                if (write(_instance->signalFds[1], &msg, sizeof(msg)) < 0)
+                    cerr << "sig handler write failed\n";
         }
 
     } while (msg.pid > 0);

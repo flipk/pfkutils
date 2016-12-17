@@ -87,7 +87,10 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
             pConfig->numBufs[poolInd];
     }
 
-    ftruncate(m_shmemFd, (off_t) m_fileSize);
+    if (ftruncate(m_shmemFd, (off_t) m_fileSize) < 0)
+        fprintf(stderr, "ftruncate %s to %u failed: %s\n",
+                m_filename.filename, (unsigned) m_fileSize,
+                strerror(errno));
     m_shmemPtr = (uintptr_t)
         mmap(NULL, m_fileSize, PROT_READ | PROT_WRITE,
              MAP_SHARED, m_shmemFd, 0);
@@ -287,7 +290,8 @@ shmempipe  :: stopCloserThread(void)
 {
     int count = 0;
     char c = 1;
-    write(m_closerPipe.writeEnd, &c, 1);
+    if (write(m_closerPipe.writeEnd, &c, 1) < 0)
+        fprintf(stderr, "shmempipe  :: stopCloserThread: write failed\n");
     while (m_closerState != CLOSER_DEAD)
     {
         if (++count > 30) // wait 3 seconds
@@ -349,7 +353,9 @@ shmempipe :: closerThread(void)
             if (sel.rfds.isset(m_closerPipe.readEnd))
             {
                 printf("shmempipe :: closerThread told to exit from init\n");
-                read(m_closerPipe.readEnd, &c, 1);
+                if (read(m_closerPipe.readEnd, &c, 1) < 0)
+                    fprintf(stderr, "shmempipe :: closerThread: "
+                            "read failed\n");
                 m_closerState = CLOSER_DEAD;
                 callbacks.disconnectCallback(this, callbacks.arg);
                 return;
@@ -364,7 +370,8 @@ shmempipe :: closerThread(void)
             return;
         }
         c = 1;
-        write(m_otherPipeFd, &c, 1);
+        if (write(m_otherPipeFd, &c, 1) < 0)
+            fprintf(stderr, "closerThread: write failed\n");
     }
     else
     {
@@ -381,7 +388,8 @@ shmempipe :: closerThread(void)
             return;
         }
         c = 1;
-        write(m_otherPipeFd, &c, 1);
+        if (write(m_otherPipeFd, &c, 1) < 0)
+            fprintf(stderr, "closerThread: write failed\n");
         m_myPipeFd = open(m_filename.m2sname, O_RDONLY | O_NONBLOCK);
         if (m_myPipeFd < 0)
         {
@@ -405,7 +413,8 @@ shmempipe :: closerThread(void)
         if (sel.rfds.isset(m_closerPipe.readEnd))
         {
             printf("shmempipe :: closerThread told to exit from init\n");
-            read(m_closerPipe.readEnd, &c, 1);
+            if (read(m_closerPipe.readEnd, &c, 1) < 0)
+                fprintf(stderr, "closerThread: read failed\n");
             m_closerState = CLOSER_DEAD;
             callbacks.disconnectCallback(this, callbacks.arg);
             return;
@@ -440,7 +449,8 @@ shmempipe :: closerThread(void)
         select(maxfd, &rfds, NULL, NULL, NULL);
         if (FD_ISSET(m_closerPipe.readEnd, &rfds))
         {
-            read(m_closerPipe.readEnd, &c, 1);
+            if (read(m_closerPipe.readEnd, &c, 1) < 0)
+                fprintf(stderr, "closerThread: read failed\n");
             break;
         }
         if (FD_ISSET(m_myPipeFd, &rfds))

@@ -123,6 +123,8 @@ static char sccsid[] = "@(#)xlock.c 23.21 91/06/27 XLOCK";
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 
 #include "xlock.h"
 #include <X11/cursorfont.h>
@@ -757,7 +759,8 @@ main(argc, argv)
     GrabKeyboardAndMouse();
 #endif
 
-    nice(nicelevel);
+    if (nice(nicelevel) == -1)
+        fprintf(stderr, "nice failed: %s\n", strerror(errno));
 
     if (nolock)
         justDisplay();

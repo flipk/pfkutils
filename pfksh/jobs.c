@@ -572,7 +572,10 @@ exchild(t, flags, close_fd)
 #endif /* TTY_PGRP */
 #ifdef HAVE_NICE
 		if (Flag(FBGNICE) && (flags & XBGND))
-			nice(4);
+                {
+                    if (nice(4) == -1)
+                        fprintf(stderr, "nice failed: %s\n", strerror(errno));
+                }
 #endif /* HAVE_NICE */
 		if ((flags & XBGND) && !Flag(FMONITOR)) {
 			setsig(&sigtraps[SIGINT], SIG_IGN,

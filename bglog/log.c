@@ -34,7 +34,8 @@ log_open(void)
     {
         snprintf(cmd, sizeof(cmd),
                  "nice bzip2 %s &", fn);
-        system(cmd);
+        if (system(cmd) < 0)
+            fprintf(stderr, "system(%s) failed\n", cmd);
         fprintf(console_f, "bzipped %s\n", fn);
     }
 
@@ -79,7 +80,8 @@ log_init(FILE *_console_f)
     current_logfile = 0;
     current_logsize = 0;
     memset(logfile_names, 0, sizeof(logfile_names));
-    system("rm -f " LOGFILE_BASE "*");
+    if (system("rm -f " LOGFILE_BASE "*") < 0)
+        fprintf(stderr, "system(rm -rf logfilebase) failed\n");
     log_open();
 }
 

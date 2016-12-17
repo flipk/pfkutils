@@ -38,7 +38,8 @@ class spinnerThread : public pfk_pthread
                 if (sel.rfds.isset(pipe.readEnd))
                 {
                     char c;
-                    read(pipe.readEnd,&c,1);
+                    if (read(pipe.readEnd,&c,1) < 0)
+                        fprintf(stderr, "spinner:entry: read failed\n");
                     break;
                 }
             }
@@ -47,7 +48,8 @@ class spinnerThread : public pfk_pthread
     }
     /*virtual*/ void send_stop(void) {
         char c = 1;
-        write(pipe.writeEnd,&c,1);
+        if (write(pipe.writeEnd,&c,1) < 0)
+            fprintf(stderr, "spinner:stop: write failed\n");
     }
 public:
     spinnerThread(void) {

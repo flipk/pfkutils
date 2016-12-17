@@ -203,9 +203,11 @@ class Pfkscript_program {
         {
             logfile.addData(buffer,buflen);
             if (!opts.backgroundSpecified && !opts.noOutputSpecified)
-                (void) write(1, buffer, buflen);
+                if (write(1, buffer, buflen) < 0)
+                    fprintf(stderr, "handle_master_sock: write 1 failed\n");
             if (listenDataPortFd != -1)
-                (void) write(listenDataPortFd, buffer, buflen);
+                if (write(listenDataPortFd, buffer, buflen) < 0)
+                    fprintf(stderr, "handle_master_sock: write 2 failed\n");
         }
 
         return done;
@@ -218,7 +220,8 @@ class Pfkscript_program {
         buflen = read(0, buffer, sizeof(buffer));
         if (buflen > 0)
         {
-            (void) write(master_fd, buffer, buflen);
+            if (write(master_fd, buffer, buflen) < 0)
+                fprintf(stderr, "handle_fd0: write failed\n");
         }
     }
 
@@ -520,7 +523,8 @@ public:
             if (sel.rfds.isset(ticker.fd()))
             {
                 char c;
-                (void) read(ticker.fd(), &c, 1);
+                if (read(ticker.fd(), &c, 1) < 0)
+                    fprintf(stderr, "ticker:main: read failed\n");
                 do_logfile_maintenance();
             }
 

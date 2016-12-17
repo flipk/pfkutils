@@ -235,7 +235,8 @@ get_file_data( off_t pos, unsigned char *data, int len )
 #endif
         rlen = len;
     }
-    read( file_descriptor, data, rlen );
+    if (read( file_descriptor, data, rlen ) < 0)
+    { /* quiet compiler */ }
 }
 
 void
@@ -243,7 +244,8 @@ put_file_byte( off_t pos, int data )
 {
     unsigned char c = data;
     lseek( file_descriptor, pos, SEEK_SET );
-    write( file_descriptor, &c, 1 );
+    if (write( file_descriptor, &c, 1 ) < 0)
+    { /* quiet compiler */ }
 }
 
 void

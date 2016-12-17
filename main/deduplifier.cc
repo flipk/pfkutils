@@ -81,8 +81,10 @@ deduplifier_main(int argc, char ** argv)
                                 cout << rv.first->second
                                      << " same as " << fullPath << endl;
                                 (void) unlink(fullPath.c_str());
-                                (void) symlink(rv.first->second.c_str(),
-                                               fullPath.c_str());
+                                if (symlink(rv.first->second.c_str(),
+                                            fullPath.c_str()) < 0)
+                                    cerr << "unable to symlink: "
+                                         << strerror(errno) << endl;
                             }
                         }
                         else

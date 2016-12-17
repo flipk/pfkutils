@@ -68,12 +68,16 @@ tarfile_emit_fileheader(int fd, const std::string &path, uint64_t filesize)
     {
         // must emit ././@LongLink shit
         populate_header(header, "././@LongLink", path.size(), true);
-        ::write(fd, header, 512);
-        ::write(fd, path.c_str(), path.size());
+        if ((::write(fd, header, 512) != 512) ||
+            (::write(fd, path.c_str(), path.size()) != path.size()))
+        {
+            fprintf(stderr, "tar emit fileheader: write failed\n");
+        }
         tarfile_emit_padding(fd, path.size());
     }
     populate_header(header, path, (uint32_t) filesize, false);
-    ::write(fd, header, 512);
+    if (::write(fd, header, 512) != 512)
+        fprintf(stderr, "tar emit fileheader: write failed\n");
 }
 
 void
@@ -85,7 +89,8 @@ tarfile_emit_padding(int fd, uint64_t filesize)
         int padding = 512 - lastpage;
         char buf[512];
         memset(buf, 0, padding);
-        ::write(fd, buf, padding);
+        if (::write(fd, buf, padding) != padding)
+            fprintf(stderr, "tar emit padding: write failed\n");
     }
 }
 
@@ -94,5 +99,6 @@ tarfile_emit_footer(int fd)
 {
     char buf[512 * 2];
     memset(buf, 0, sizeof(buf));
-    ::write(fd, buf, sizeof(buf));
+    if (::write(fd, buf, sizeof(buf)) != sizeof(buf))
+        fprintf(stderr, "tar emit footer: write failed\n");
 }

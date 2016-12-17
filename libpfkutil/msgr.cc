@@ -111,7 +111,8 @@ PfkMsgr :: PfkMsgr(const std::string &host, int port)
 void
 PfkMsgr :: common_init(const std::string &host, int port)
 {
-    pipe(closerPipe);
+    if (pipe(closerPipe) < 0)
+        fprintf(stderr, "PfkMsgr :: common_init: pipe failed\n");
     threadRunning = false;
     fd = -1;
     dataFd = -1;
@@ -172,7 +173,8 @@ PfkMsgr :: stop(void)
     if (threadRunning)
     {
         char dummy = 0;
-        write(closerPipe[1],&dummy,1);
+        if (write(closerPipe[1],&dummy,1) < 0)
+            fprintf(stderr, "PfkMsgr :: stop: write failed\n");
         while (threadRunning)
             // xxx need timeout
             usleep(1);

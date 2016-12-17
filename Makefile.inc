@@ -58,6 +58,7 @@ LDFLAGS ?=
 # LIB and PROG need different values, use $(target)_INCS and $(target)_DEFS
 # below.
 INCS ?=
+# add -D_FORTIFY_SOURCE to test warn_unused stuff is okay
 DEFS ?=
 
 # if you have files to preprocess before computing dependencies, here's

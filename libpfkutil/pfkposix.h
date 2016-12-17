@@ -440,7 +440,8 @@ public:
     pfk_pipe(void)
     {
         int fds[2];
-        pipe(fds);
+        if (pipe(fds) < 0)
+            fprintf(stderr, "pfk_pipe: pipe failed\n");
         readEnd = fds[0];
         writeEnd = fds[1];
     }
@@ -571,11 +572,13 @@ class pfk_ticker : public pfk_pthread {
             sel.rfds.zero();
             sel.rfds.set(clfd);
             if (sel.select() <= 0) {
-                (void) write(pipe_fds[1], &c, 1);
+                if (write(pipe_fds[1], &c, 1) < 0)
+                    fprintf(stderr, "pfk_ticker: write failed\n");
                 continue;
             }
             if (sel.rfds.isset(clfd)) {
-                (void) read(clfd, &c, 1);
+                if (read(clfd, &c, 1) < 0)
+                    fprintf(stderr, "pfk_ticker: read failed\n");
                 break;
             }
         }
@@ -583,12 +586,15 @@ class pfk_ticker : public pfk_pthread {
     }
     /*virtual*/ void send_stop(void) {
         char c = 1;
-        (void) write(closer_pipe_fds[1], &c, 1);
+        if (write(closer_pipe_fds[1], &c, 1) < 0)
+            fprintf(stderr, "pfk_ticker: write failed\n");
     }
 public:
     pfk_ticker(void) {
-        pipe(pipe_fds);
-        pipe(closer_pipe_fds);
+        if (pipe(pipe_fds) < 0)
+            fprintf(stderr, "pfk_ticker: pipe 1 failed\n");
+        if (pipe(closer_pipe_fds) < 0)
+            fprintf(stderr, "pfk_ticker: pipe 2 failed\n");
         interval.set(1,0);
     }
     ~pfk_ticker(void) {
@@ -628,10 +634,10 @@ public:
     bool read(dirent &de) {
         if (d == NULL)
             return false;
-        dirent * result = NULL;
-        int cc = ::readdir_r(d, &de, &result);
-        if (cc != 0 || result == NULL)
+        dirent * result = readdir(d);
+        if (result == NULL)
             return false;
+        de = *result;
         return true;
     }
     void rewind(void) {

@@ -43,7 +43,8 @@ PK_Timer_Manager :: PK_Timer_Manager( int _tps )
 
     pthread_mutex_init( &mutex, NULL );
 
-    pipe( fds );
+    if (pipe( fds ) < 0)
+        fprintf(stderr, "PK_Timer_Manager: pipe failed\n");
 
     pthread_create( &th1, NULL, timer_thread1, (void*) this );
     pthread_create( &th2, NULL, timer_thread2, (void*) this );
@@ -222,7 +223,8 @@ PK_Timer_Manager :: _thread1( void )
     {
         usleep( delay );
         pthread_testcancel();
-        write( fds[1], &c, 1 );
+        if (write( fds[1], &c, 1 ) < 0)
+            fprintf(stderr, "PK_Timer_Manager: write failed\n");
     }
 }
 

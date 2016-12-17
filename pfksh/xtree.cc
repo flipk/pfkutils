@@ -221,7 +221,12 @@ private:
         leaveok(stdscr,FALSE);
         {
             char currdir[512];
-            getcwd(currdir, sizeof(currdir));
+            if (getcwd(currdir, sizeof(currdir)) == NULL)
+            {
+                currdir[0] = 0;
+                fprintf(stderr, "getcwd failed: %s\n",
+                        strerror(errno));
+            }
             startingDir = currdir;
         }
         updateRootDir(startingDir);

@@ -34,7 +34,8 @@ bool
 automake_file :: parse(const string &fname)
 {
     char currpath[PATH_MAX];
-    getcwd(currpath, sizeof(currpath));
+    if (getcwd(currpath, sizeof(currpath)) == NULL)
+    { /*quiet compiler*/ }
     builddir = currpath;
     srcdir = currpath;
     size_t pos = fname.find_last_of('/');
@@ -42,11 +43,14 @@ automake_file :: parse(const string &fname)
     {
         srcdir = fname;
         srcdir.erase(pos);
-        chdir(srcdir.c_str());
+        if (chdir(srcdir.c_str()) < 0)
+        { /*quiet compiler*/ }
         char srcpath[PATH_MAX];
-        getcwd(srcpath, sizeof(srcpath));
+        if (getcwd(srcpath, sizeof(srcpath)) == NULL)
+        { /*quiet compiler*/ }
         srcdir = srcpath;
-        chdir(currpath);
+        if (chdir(currpath) < 0)
+        { /*quiet compiler*/ }
     }
 
     FILE * in = fopen(fname.c_str(), "r");

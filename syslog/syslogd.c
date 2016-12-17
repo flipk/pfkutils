@@ -113,7 +113,7 @@ syslogd_main( int argc, char ** argv )
             continue;
         }
 
-        len = recvfrom( fd, buf+40, sizeof(buf), /*flags*/ 0, 
+        len = recvfrom( fd, buf+40, sizeof(buf)-40, /*flags*/ 0, 
                         (struct sockaddr *)&sa, &salen );
 
         gettimeofday( &tv, NULL );

@@ -49,7 +49,8 @@ file_obj :: destroy_directories(int max_num_files)
         printf("\rdestroying %d of %d ", ind1, topdirs);
         fflush(stdout);
         sprintf(cmd, "rm -rf %03d", ind1);
-        system(cmd);
+        if (system(cmd) < 0)
+            fprintf(stderr, "system(%s) failed\n", cmd);
     }
     printf("\n");
 }

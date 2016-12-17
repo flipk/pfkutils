@@ -271,8 +271,12 @@ change_flag(f, what, newval)
 	} else
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
-		setuid(ksheuid = getuid());
-		setgid(getgid());
+            if (setuid(ksheuid = getuid()) < 0)
+                fprintf(stderr, "setuid failed: %s\n",
+                        strerror(errno));
+            if (setgid(getgid()) < 0)
+                fprintf(stderr, "setgid failed: %s\n",
+                        strerror(errno));
 	} else if (f == FPOSIX && newval) {
 		Flag(FBRACEEXPAND) = 0;
 	}

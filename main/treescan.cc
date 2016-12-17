@@ -301,10 +301,14 @@ public:
         public:
             dirpusher(const string &newdir) {
                 oldwd = getcwd(NULL,0);
-                chdir(newdir.c_str());
+                if (chdir(newdir.c_str()) < 0)
+                    fprintf(stderr, "cannot chdir to %s: %s\n",
+                            newdir.c_str(), strerror(errno));
             }
             ~dirpusher(void) {
-                chdir(oldwd);
+                if (chdir(oldwd) < 0)
+                    fprintf(stderr, "cannot chdir to %s: %s\n",
+                            oldwd, strerror(errno));
                 free(oldwd);
             }
         } dirpusher(tsDbDir);

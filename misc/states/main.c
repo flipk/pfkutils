@@ -116,13 +116,15 @@ states_main( int argc, char ** argv )
         fprintf( stderr, "*** producing state machine base header\n" );
         unlink( "pk_state_machine_base.H" );
         fd = open( "pk_state_machine_base.H", O_CREAT | O_WRONLY, 0644 );
-        write( fd, baseclassH, strlen( baseclassH ));
+        if (write( fd, baseclassH, strlen( baseclassH )) < 0)
+            fprintf(stderr, "write base class H failed\n");
         close( fd );
 
         fprintf( stderr, "*** producing state machine base impl\n" );
         unlink( "pk_state_machine_base.C" );
         fd = open( "pk_state_machine_base.C", O_CREAT | O_WRONLY, 0644 );
-        write( fd, baseclassC, strlen( baseclassC ));
+        if (write( fd, baseclassC, strlen( baseclassC )) < 0)
+            fprintf(stderr, "write base class C failed\n");
         close( fd );
     }
 

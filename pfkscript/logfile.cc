@@ -398,7 +398,8 @@ void
 ZipProcessHandle :: handleOutput(const char *buffer, size_t len)
 {
     // compressors dont usually make much output
-    ::write(1, buffer, len);
+    if (::write(1, buffer, len) < 0)
+        cerr << "handleOutput: write failed" << endl;
 }
 
 //virtual

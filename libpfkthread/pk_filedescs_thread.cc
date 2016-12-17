@@ -50,7 +50,8 @@ void
 PK_File_Descriptor_Thread :: stop( void )
 {
     char c = 2;
-    write(mgr->wakeup_pipe[1], &c, 1);
+    if (write(mgr->wakeup_pipe[1], &c, 1) < 0)
+        fprintf(stderr, "PK_File_Descriptor_Thread: write failed\n");
 }
 
 void
@@ -86,7 +87,8 @@ PK_File_Descriptor_Thread :: entry( void )
         if (FD_ISSET(mgmt_pipe, &rfds))
         {
             char c;
-            read(mgmt_pipe,&c,1);
+            if (read(mgmt_pipe,&c,1) < 0)
+                fprintf(stderr, "PK_File_Descriptor_Thread: read failed\n");
             if (c == 2)
                 // we've been instructed to die by the stop() method
                 break;

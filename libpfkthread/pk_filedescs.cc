@@ -50,7 +50,8 @@ PK_File_Descriptor_Manager :: PK_File_Descriptor_Manager( void )
     descs = new PK_File_Descriptor_List;
     pthread_mutex_init( &mutex, NULL );
     PK_File_Descriptors_global = this;
-    pipe(wakeup_pipe);
+    if (pipe(wakeup_pipe) < 0)
+        fprintf(stderr, "PK_File_Descriptor_Manager: pipe failed\n");
     thread = new PK_File_Descriptor_Thread(this);
 }
 
@@ -94,7 +95,8 @@ PK_File_Descriptor_Manager :: register_fd( int fd, PK_FD_RW rw,
 
     // awaken the thread
     char c = 1;
-    write(wakeup_pipe[1], &c, 1);
+    if (write(wakeup_pipe[1], &c, 1) < 0)
+        fprintf(stderr, "PK_File_Descriptor_Manager: write failed\n");
 
     return pkfdid;
 }
@@ -121,7 +123,8 @@ PK_File_Descriptor_Manager :: unregister_fd( int pkfdid )
     {
         // awaken the thread
         char c = 1;
-        write(wakeup_pipe[1], &c, 1);
+        if (write(wakeup_pipe[1], &c, 1) < 0)
+            fprintf(stderr, "PK_File_Descriptor_Manager: write failed\n");
     }
     return obj;
 }

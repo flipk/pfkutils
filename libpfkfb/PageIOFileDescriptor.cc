@@ -149,5 +149,7 @@ PageIOFileDescriptor :: truncate_pages(int num_pages)
 {
     off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PAGE_SIZE;
     off_t size = (off_t)num_pages * pgsize;
-    ftruncate(fd, size);
+    if (ftruncate(fd, size) < 0)
+        fprintf(stderr, "PageIOFileDescriptor :: truncate_pages: "
+                "ftruncate failed\n");
 }

@@ -24,6 +24,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <grp.h>
 
@@ -55,7 +56,8 @@ sudo_main( int argc, char ** argv )
         argv += 2;
         argc -= 2;
         homedir = pw->pw_dir;
-        chdir("/");
+        if (chdir("/") < 0)
+        { /* quiet compiler */ }
         initgroups(usern, pw->pw_gid);
     }
 
@@ -65,8 +67,10 @@ sudo_main( int argc, char ** argv )
         exit(1);
     }
 
-    setgid(newgid);
-    setuid(newuid);
+    if (setgid(newgid) < 0)
+        printf("setgid failed\n");
+    if (setuid(newuid) < 0)
+        printf("setuid failed\n");
 
     if (getuid() != newuid)
     {
@@ -76,7 +80,9 @@ sudo_main( int argc, char ** argv )
 
     if (homedir)
     {
-        chdir(homedir);
+        if (chdir(homedir) < 0)
+            printf("cant chdir to homedir: %s\n",
+                   strerror(errno));
         sprintf( envstr, "HOME=%s", homedir );
         putenv( envstr );
     }

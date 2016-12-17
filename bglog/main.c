@@ -51,7 +51,8 @@ bglog_main(int argc, char ** argv)
     int console_fd = dup(1);
     FILE *console_f = fdopen(console_fd, "w");
     setlinebuf(console_f);
-    daemon(0,0);
+    if (daemon(0,0) < 0)
+        fprintf(stderr, "daemon failed!\n");
 
     pid_t pid = fork();
     if (pid < 0)

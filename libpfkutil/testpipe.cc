@@ -45,7 +45,8 @@ class readerThread : public pfk_pthread
                     sleep(1);
                     char c = 1;
                     printf("t1 writing 1\n");
-                    write(fd, &c, 1);
+                    if (write(fd, &c, 1) < 0)
+                        fprintf(stderr, "t1 write failed\n");
                     printf("t1 writing complete\n");
                 }
             }
@@ -89,7 +90,8 @@ class readerThread : public pfk_pthread
     /*virtual*/ void send_stop(void)
     {
         char c = 1;
-        write(closerPipe.writeEnd, &c, 1);
+        if (write(closerPipe.writeEnd, &c, 1) < 0)
+            fprintf(stderr, "readerThread: write failed\n");
     }
 public:
     readerThread(int _which)

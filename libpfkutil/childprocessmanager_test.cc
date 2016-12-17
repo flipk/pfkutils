@@ -41,7 +41,8 @@ public:
     }
     /*virtual*/ void handleOutput(const char *buffer, size_t len) {
         std::cout << "data from inst " << inst << std::endl;
-        write(1, buffer, len);
+        if (write(1, buffer, len) < 0)
+            std::cerr << "handleOutput: write failed\n";
     }
     /*virtual*/ void processExited(int status) {
         std::cout << "processExited called for inst " << inst << std::endl;
