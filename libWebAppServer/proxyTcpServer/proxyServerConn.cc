@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <errno.h>
+#include <sys/select.h>
 
 using namespace std;
 using namespace proxyTcp;

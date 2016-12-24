@@ -1,7 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_pfksh=0
+PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=1
 PFK_BUILD_checksize=0
 PFK_BUILD_treescan=1
@@ -11,7 +11,7 @@ PFK_BUILD_pfkscript=1
 PFK_BUILD_sessionmgr=0
 PFK_BUILD_xrandr=0
 PFK_BUILD_states=0
-PFK_BUILD_bglog=0
+PFK_BUILD_bglog=1
 PFK_BUILD_he=1
 PFK_BUILD_libpfkfb=1
 PFK_BUILD_diskloader=0
@@ -22,11 +22,15 @@ PFK_BUILD_libpfkthread=1
 PFK_BUILD_wsproxy=1
 PFK_BUILD_xlock=0
 PFK_BUILD_fonts=0
+PFK_BUILD_pfktop=0
+PFK_BUILD_spinner=0
 
 KSHRC_LOCAL = kshrc.local.cygwin
 PROTOC_PATH = /usr/bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
+
+PFK_CONFIG_DISABLE_MAKELINKS = 1
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
 PFK_CONFIG_HAVE_NCURSES_H= 0

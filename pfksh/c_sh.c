@@ -785,10 +785,11 @@ clocktos(t)
 	/* note: posix says must use max precision, ie, if clk_tck is
 	 * 1000, must print 3 places after decimal (if non-zero, else 1).
 	 */
-#define CLK_TCK 1000
-	if (CLK_TCK != 100)	/* convert to 1/100'ths */
-	    t = (t < 1000000000/CLK_TCK) ?
-		    (t * 100) / CLK_TCK : (t / CLK_TCK) * 100;
+// note CLK_TCK conflicts with a cygwin header file!
+#define PFKSH_CLK_TCK 1000
+	if (PFKSH_CLK_TCK != 100)	/* convert to 1/100'ths */
+	    t = (t < 1000000000/PFKSH_CLK_TCK) ?
+		    (t * 100) / PFKSH_CLK_TCK : (t / PFKSH_CLK_TCK) * 100;
 
 	*--cp = '\0';
 	for (i = -2; i <= 0 || t > 0; i++) {
@@ -862,7 +863,9 @@ const struct builtin shbuiltins [] = {
 	{"+read", c_read},
 	{"test", c_test},
 	{"+true", c_label},
+#ifndef __CYGWIN__
 	{"ulimit", c_ulimit},
+#endif
 	{"+umask", c_umask},
 	{"*=unset", c_unset},
 	{NULL, NULL}

@@ -145,6 +145,9 @@ class Pfkscript_program {
                               PARMRK | ISTRIP | INPCK  | INLCR   | IGNCR |
                               ICRNL  | IXON   | IXOFF  | IMAXBEL | IUCLC);
         new_tios.c_oflag &= ~(OPOST);
+#ifndef XCASE
+#define XCASE 0 // cygwin doesnt define this.
+#endif
         new_tios.c_lflag &= ~(XCASE | ICANON | ISIG | ECHO);
         new_tios.c_cc[VMIN] = 1;
         new_tios.c_cc[VTIME] = 0;

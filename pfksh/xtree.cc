@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <pwd.h>
 #include <grp.h>
 #include <math.h>

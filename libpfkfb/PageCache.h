@@ -126,7 +126,7 @@ protected:
      *   it is assumed the caller will do that. */
     PageCachePage(int _page_number) {
         dirty = false;  page_number = _page_number;
-        ptr = new uint8_t[PageIO::PAGE_SIZE];
+        ptr = new uint8_t[PageIO::PCP_PAGE_SIZE];
     }
     /** destructor frees memory for the page.
      * \note this destructor does not write the contents back to the file.

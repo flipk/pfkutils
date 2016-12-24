@@ -62,7 +62,7 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
 {
     uint8_t hold_buffer[CIPHERED_PAGE_SIZE];
     int page = pg->get_page_number();
-    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PAGE_SIZE;
+    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
     off_t offset = (off_t)page * pgsize;
     lseek(fd, offset, SEEK_SET);
     uint8_t * bufptr = ciphering_enabled ? hold_buffer : pg->get_ptr();
@@ -92,7 +92,7 @@ PageIOFileDescriptor :: put_page( PageCachePage * pg )
 {
     uint8_t hold_buffer[CIPHERED_PAGE_SIZE];
     int page = pg->get_page_number();
-    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PAGE_SIZE;
+    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
     off_t offset = (off_t)page * pgsize;
     lseek(fd, offset, SEEK_SET);
     uint8_t * bufptr = NULL;
@@ -118,7 +118,7 @@ int
 PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
 {
     struct stat sb;
-    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PAGE_SIZE;
+    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
     if (fstat(fd, &sb) < 0)
         return -1;
     if ((sb.st_size % pgsize) != 0)
@@ -147,7 +147,7 @@ PageIOFileDescriptor :: get_size(void)
 void
 PageIOFileDescriptor :: truncate_pages(int num_pages)
 {
-    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PAGE_SIZE;
+    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
     off_t size = (off_t)num_pages * pgsize;
     if (ftruncate(fd, size) < 0)
         fprintf(stderr, "PageIOFileDescriptor :: truncate_pages: "

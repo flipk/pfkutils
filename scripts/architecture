@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# the 'tr' is here because cygwin puts parens in the revision string!
+# gross: cygwin puts slashes and parens in the revision string!
 
 os=`uname -s`
-rev=`uname -r | tr -d '()'`
+rev=`uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g'`
 pf=$os-$rev
 
 echo $pf

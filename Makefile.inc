@@ -15,7 +15,10 @@ ifeq ($(OBJDIR),)
 #           of "uname".
 #           if you use OBJDIR := $(shell xxx) then the shell cmd is
 #           executed only once and the output reused for every $(OBJDIR) ref.
-OBJDIR := obj.$(shell uname -m).$(shell uname -s).$(shell uname -r)
+# ugh. cygwin puts slashes and parens in uname -r !!
+
+UNAMER := $(shell uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g')
+OBJDIR := obj.$(shell uname -m).$(shell uname -s).$(UNAMER)
 endif
 
 # additional subdirs of $(OBJDIR) to create, if your source tree

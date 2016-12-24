@@ -1,5 +1,7 @@
 #include "sh.h"
 
+#include <sys/stat.h>
+
 /*
  *	Contains a routine to search a : separated list of
  *	paths (a la CDPATH) and make appropiate file names.
@@ -238,7 +240,7 @@ get_phys_path(path)
 	XString xs;
 	char *xp;
 
-	Xinit(xs, strlen(path) + 1, ATEMP);
+	Xinit(xs, xp, strlen(path) + 1, ATEMP);
 
 	xp = do_phys_path(&xs, xp, path);
 

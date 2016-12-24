@@ -54,10 +54,12 @@ class PageIO {
     aes_context  aesdec_ctx;
     sha256_context hmac_sha256_ctx;
 public:
-    static const int PAGE_SIZE = 4096;
+    // some OS's define a macro called PAGE_SIZE, and that would conflict
+    // so this has to be unique.
+    static const int PCP_PAGE_SIZE = 4096;
 protected:
     static const int HMAC_OVERHD = 32; // sha256 hmac is 32 bytes
-    static const int CIPHERED_PAGE_SIZE = PAGE_SIZE + HMAC_OVERHD;
+    static const int CIPHERED_PAGE_SIZE = PCP_PAGE_SIZE + HMAC_OVERHD;
     PageIO(const std::string &_encryption_password);
     bool ciphering_enabled;
     void encrypt_page(int page_number, uint8_t * out, const uint8_t * in);

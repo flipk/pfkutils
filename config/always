@@ -785,12 +785,15 @@ ifeq ($(PFK_BUILD_sudo),1)
 endif
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
 
+ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
+# note cygwin doesn't support this, so it is disabled on cygwin.
 POSTALL += pfkutils-makelinks
 
 pfkutils-makelinks: $(pfkutils_TARGET)
 	@echo making pfkutils program links in $(OBJDIR)/bin
 	$(Q)cd $(OBJDIR) && rm -rf bin && mkdir bin && cd bin && \
 		ln -s ../pfkutils && ./pfkutils -makelinks
+endif
 
 ##############################################
 

@@ -7,6 +7,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <dirent.h>

@@ -302,10 +302,10 @@ PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
     aes_crypt_cbc( &aesenc_ctx, AES_ENCRYPT,
-                   PAGE_SIZE, IV, in, out);
+                   PCP_PAGE_SIZE, IV, in, out);
     sha256_hmac_reset( &hmac_sha256_ctx );
-    sha256_hmac_update( &hmac_sha256_ctx, out, PAGE_SIZE);
-    sha256_hmac_finish( &hmac_sha256_ctx, out + PAGE_SIZE );
+    sha256_hmac_update( &hmac_sha256_ctx, out, PCP_PAGE_SIZE);
+    sha256_hmac_finish( &hmac_sha256_ctx, out + PCP_PAGE_SIZE );
 }
 
 void
@@ -315,13 +315,13 @@ PageIO :: decrypt_page(int page_number, uint8_t * out, const uint8_t * in)
     make_iv(IV, encryption_password, page_number);
     uint8_t  hmac_buf[32];
     sha256_hmac_reset( &hmac_sha256_ctx );
-    sha256_hmac_update( &hmac_sha256_ctx, in, PAGE_SIZE);
+    sha256_hmac_update( &hmac_sha256_ctx, in, PCP_PAGE_SIZE);
     sha256_hmac_finish( &hmac_sha256_ctx, hmac_buf );
 
-    if (memcmp(hmac_buf, in + PAGE_SIZE, 32) != 0)
+    if (memcmp(hmac_buf, in + PCP_PAGE_SIZE, 32) != 0)
     {
         printf("PageIO :: decrypt_page : HMAC FAILURE!\n");
     }
     aes_crypt_cbc( &aesdec_ctx, AES_DECRYPT,
-                   PAGE_SIZE, IV, in, out);
+                   PCP_PAGE_SIZE, IV, in, out);
 }

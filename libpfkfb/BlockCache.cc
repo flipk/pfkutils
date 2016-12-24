@@ -75,7 +75,7 @@ Next: \ref FileBlock
 BlockCache :: BlockCache( PageIO * _io, int max_bytes )
 {
     io = _io;
-    pc = new PageCache( io, max_bytes / PageIO::PAGE_SIZE );
+    pc = new PageCache( io, max_bytes / PageIO::PCP_PAGE_SIZE );
     bcl = new BlockCacheList;
 }
 
@@ -97,12 +97,12 @@ BlockCache :: get( off_t offset, int size, bool for_write )
 
     ending_offset = offset + size - 1;
 
-    starting_page = offset / PageIO::PAGE_SIZE;
-    ending_page = ending_offset / PageIO::PAGE_SIZE;
+    starting_page = offset / PageIO::PCP_PAGE_SIZE;
+    ending_page = ending_offset / PageIO::PCP_PAGE_SIZE;
     num_pages = ending_page - starting_page + 1;
 
-    offset_in_starting_page = offset % PageIO::PAGE_SIZE;
-    offset_in_ending_page = ending_offset % PageIO::PAGE_SIZE;
+    offset_in_starting_page = offset % PageIO::PCP_PAGE_SIZE;
+    offset_in_ending_page = ending_offset % PageIO::PCP_PAGE_SIZE;
 
     ret = new BCB(offset,size);
     bcl->list.add_tail(ret);
@@ -130,7 +130,7 @@ BlockCache :: get( off_t offset, int size, bool for_write )
     for (pg=starting_page, i=0; i < num_pages; pg++,i++)
     {
         bool for_write_pg = false;
-        if (for_write && size >= PageIO::PAGE_SIZE)
+        if (for_write && size >= PageIO::PCP_PAGE_SIZE)
         {
             if (pg != starting_page && pg != ending_page)
             {
@@ -145,7 +145,7 @@ BlockCache :: get( off_t offset, int size, bool for_write )
                 for_write_pg = true;
             }
             else if (pg == ending_page &&
-                     offset_in_ending_page == (PageIO::PAGE_SIZE-1))
+                     offset_in_ending_page == (PageIO::PCP_PAGE_SIZE-1))
             {
                 // if the block takes up the entire ending page,
                 // get that page for_write.
@@ -158,8 +158,8 @@ BlockCache :: get( off_t offset, int size, bool for_write )
         if (uptr && remaining > 0)
         {
             int to_copy = remaining;
-            if (to_copy > (PageIO::PAGE_SIZE - pg_offset))
-                to_copy = PageIO::PAGE_SIZE - pg_offset;
+            if (to_copy > (PageIO::PCP_PAGE_SIZE - pg_offset))
+                to_copy = PageIO::PCP_PAGE_SIZE - pg_offset;
             memcpy(uptr, p->get_ptr() + pg_offset, to_copy);
             remaining -= to_copy;
             uptr += to_copy;
@@ -198,7 +198,7 @@ BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
     {
         uptr = bcb->ptr;
         remaining = bcb->size;
-        pg_offset = bcb->offset % PageIO::PAGE_SIZE;
+        pg_offset = bcb->offset % PageIO::PCP_PAGE_SIZE;
     }
 
     for (i=0; i < bcb->num_pages; i++)
@@ -207,8 +207,8 @@ BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
         if (uptr && remaining > 0)
         {
             int to_copy = remaining;
-            if (to_copy > (PageIO::PAGE_SIZE - pg_offset))
-                to_copy = PageIO::PAGE_SIZE - pg_offset;
+            if (to_copy > (PageIO::PCP_PAGE_SIZE - pg_offset))
+                to_copy = PageIO::PCP_PAGE_SIZE - pg_offset;
             memcpy(p->get_ptr() + pg_offset, uptr, to_copy);
             remaining -= to_copy;
             uptr += to_copy;
@@ -241,7 +241,7 @@ BlockCache :: truncate( off_t offset )
         }
     }
 
-    int pages = (offset + PageIO::PAGE_SIZE - 1) / PageIO::PAGE_SIZE;
+    int pages = (offset + PageIO::PCP_PAGE_SIZE - 1) / PageIO::PCP_PAGE_SIZE;
 
     pc->truncate_pages(pages);
 }
@@ -256,7 +256,7 @@ BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
         return;
     uint8_t * uptr = bcb->ptr;
     int remaining = bcb->size;
-    int pg_offset = bcb->offset % PageIO::PAGE_SIZE;
+    int pg_offset = bcb->offset % PageIO::PCP_PAGE_SIZE;
     int i;
 
     for (i=0; i < bcb->num_pages; i++)
@@ -265,8 +265,8 @@ BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
         if (remaining > 0)
         {
             int to_copy = remaining;
-            if (to_copy > (PageIO::PAGE_SIZE - pg_offset))
-                to_copy = PageIO::PAGE_SIZE - pg_offset;
+            if (to_copy > (PageIO::PCP_PAGE_SIZE - pg_offset))
+                to_copy = PageIO::PCP_PAGE_SIZE - pg_offset;
             memcpy(p->get_ptr() + pg_offset, uptr, to_copy);
             p->mark_dirty();
             remaining -= to_copy;

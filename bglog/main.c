@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <pty.h>
 #include <utmp.h>
+#include <sys/select.h>
 
 #include "config.h"
 #include "log.h"

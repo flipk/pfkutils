@@ -16,6 +16,8 @@
 	that was originally under case SYSULIMIT in source file "xec.c".
 */
 
+#ifndef __CYGWIN__
+
 #include "sh.h"
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -268,3 +270,5 @@ c_ulimit(wp)
 	}
 	return 0;
 }
+
+#endif /* __CYGWIN__ */
