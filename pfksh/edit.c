@@ -124,7 +124,7 @@ x_read(buf, len)
 #endif /* TIOCGWINSZ */
 
 	x_mode(TRUE);
-	if (Flag(FEMACS) || Flag(FGMACS))
+	if (Flag(FEMACS))
 		i = x_emacs(buf, len);
 	else
 		i = -1;		/* internal error */
@@ -333,19 +333,16 @@ void
 set_editmode(ed)
 	const char *ed;
 {
-	static const enum sh_flag edit_flags[] = {
-			FEMACS, FGMACS,
-		    };
 	char *rcp;
 	int i;
   
 	if ((rcp = ksh_strrchr_dirsep(ed)))
 		ed = ++rcp;
-	for (i = 0; i < NELEM(edit_flags); i++)
-		if (strstr(ed, options[(int) edit_flags[i]].name)) {
-			change_flag(edit_flags[i], OF_SPECIAL, 1);
-			return;
-		}
+
+        if (strstr(ed, options[FEMACS].name)) {
+            change_flag(FEMACS, OF_SPECIAL, 1);
+            return;
+        }
 }
 
 /* ------------------------------------------------------------------------- */

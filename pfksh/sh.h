@@ -343,7 +343,6 @@ enum sh_flag {
 	FCOMMAND,	/* -c: (invocation) execute specified command */
 	FEMACS,		/* emacs command editing */
 	FERREXIT,	/* -e: quit on error */
-	FGMACS,		/* gmacs command editing */
 	FIGNOREEOF,	/* eof does not exit */
 	FTALKING,	/* -i: interactive */
 	FKEYWORD,	/* -k: name=value anywere */

@@ -983,7 +983,7 @@ getsc_line(s)
 		ksh_tmout_state = TMOUT_READING;
 		alarm(ksh_tmout);
 	}
-	if (have_tty && (Flag(FEMACS) || Flag(FGMACS)))
+	if (have_tty && Flag(FEMACS))
 	{
 		int nread;
 

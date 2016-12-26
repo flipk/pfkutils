@@ -1081,7 +1081,7 @@ x_transpose(c)
 	if (xcp == xbuf) {
 		x_e_putc(BEL);
 		return KSTD;
-	} else if (xcp == xep || Flag(FGMACS)) {
+	} else if (xcp == xep) {
 		if (xcp - xbuf == 1) {
 			x_e_putc(BEL);
 			return KSTD;

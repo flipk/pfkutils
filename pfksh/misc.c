@@ -129,7 +129,6 @@ const struct option options[] = {
 	{ (char *) 0, 	'c',	    OF_CMDLINE },
 	{ "emacs",	  0,		OF_ANY },
 	{ "errexit",	'e',		OF_ANY },
-	{ "gmacs",	  0,		OF_ANY },
 	{ "ignoreeof",	  0,		OF_ANY },
 	{ "interactive",'i',	    OF_CMDLINE },
 	{ "keyword",	'k',		OF_ANY },
@@ -261,13 +260,6 @@ change_flag(f, what, newval)
 	if (f == FMONITOR) {
 		if (what != OF_CMDLINE && newval != oldval)
 			j_change();
-	} else
-	if (f == FEMACS || f == FGMACS)
-	{
-		if (newval) {
-			Flag(FEMACS) = Flag(FGMACS) = 0;
-			Flag(f) = newval;
-		}
 	} else
 	/* Turning off -p? */
 	if (f == FPRIVILEGED && oldval && !newval) {
