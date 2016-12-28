@@ -1,0 +1,27 @@
+
+--------------copying
+
+copy in rdesktop (mark, hit ^C)     PRIMARY CLIPBOARD
+mark in rxvt (my version of rxvt)   PRIMARY CLIPBOARD
+mark in rxvt (original version)     PRIMARY
+mark in emacs with or without M-w   PRIMARY           SECONDARY
+kill (ctrl-K) in emacs              PRIMARY           SECONDARY
+mark in gnome-terminal              PRIMARY
+mark in gnome-terminal shft-ctrl-C  PRIMARY CLIPBOARD
+
+--------------pasting
+
+gnome-terminal btn2                 PRIMARY
+gnome-terminal shft-ctrl-V                  CLIPBOARD
+
+emacs btn2                          PRIMARY
+emacs yank (ctrl-Y)                 PRIMARY
+emacs M-x clipboard-yank (f18)              CLIPBOARD
+
+my rxvt btn2                        PRIMARY
+my rxvt alt btn2                            CLIPBOARD
+my rxvt shft btn2                                     SECONDARY
+my rxvt shift-insert                PRIMARY
+
+paste in rdesktop                   PRIMARY
+

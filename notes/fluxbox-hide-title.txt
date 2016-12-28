@@ -1,0 +1,30 @@
+
+to get id of a window, put your mouse in that window, then:
+
+xprop -root | grep _NET_ACTIVE_WINDOW
+
+xprop -id $id
+
+xprop -id $id -f _MOTIF_WM_HINTS 32c -set _MOTIF_WM_HINTS "0,0,0"
+
+first word, value "2" is bit for decorations present.
+decorations are third word.
+in third word, "1" means "all", don't turn that on.
+"8" means title.
+
+turn on all decorations:
+
+xprop -id 0xc005dd -f _MOTIF_WM_HINTS 32c -set _MOTIF_WM_HINTS "2,0,254"
+
+turn off title bar:
+
+xprop -id 0xc005dd -f _MOTIF_WM_HINTS 32c -set _MOTIF_WM_HINTS "2,0,246"
+
+note that fluxbox doesn't modify anything if first word is 0.
+
+also note fluxbox has another way to modify titlebar :
+
+	keys : Mod1 F12 :ToggleDecor
+
+hit alt-F12 and it will toggle decorations.
+

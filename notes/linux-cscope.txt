@@ -1,0 +1,5 @@
+
+find . -name '*.cmd' | xargs cat > 0
+egrep '\.[ch] \\$' 0 > 1
+awk '{print $1}' 1 | sort | uniq > cscope.files
+

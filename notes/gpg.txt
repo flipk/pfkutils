@@ -22,5 +22,5 @@ gpg --export-secret-keys -a
 
 gpg --export -a C8822DA5
 
-gpg --sign --clearsign < plain > signed
+gpg --local-user pfk@pfk.org --sign --clearsign < plain > signed
 

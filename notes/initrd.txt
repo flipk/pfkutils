@@ -1,0 +1,15 @@
+
+unpacking an initrd
+-------------------
+
+mkdir root
+cd root
+gunzip < ../$file | cpio -i
+
+
+packing an initrd
+-----------------
+
+cd root
+find . ! -type d | cpio -o -H newc | gzip -9 > ../$file
+

@@ -1,0 +1,106 @@
+
+DTE = data terminal equipment = terminal or PC
+DCE = communication equipment = modem
+
+     db25 DTE:                 db25 DCE:
+ 1 - protective ground         protective ground
+ 2 - transmit (output)         receive (input)
+ 3 - receive (input)           transmit (output)
+ 4 - request to send (output)  cts (input)
+ 5 - clear to send (input)     rts (output)
+ 6 - data set ready (input)    dsr (output)
+ 7 - signal ground             signal ground
+ 8 - data carrier detect (in)  dcd (output)
+20 - data terminal ready (out) dtr (input)
+22 - ring indicator (input)    RI (output)
+          14 - tx return
+          16 - rx return
+          15 - transmit clock (dir?)
+          17 - receive clock  (dir?)
+          23 - signal rate selector (?)
+          24 - aux clock (dir?)
+          21 - sig qual det/rem loop (dir?)
+          18 - local loopback (dir?)
+          12 - secondary DCD (input)
+          13 - secondary CTS (input)
+          14 - secondary tx  (output)
+          16 - secondary rx  (input)
+          19 - secondary RTS (output)
+
+    db9 DTE:                       db9 DCE:
+1 - data carrier detect (in)       dcd (output)
+2 - receive data (in)              tx (output)
+3 - transmit data (output)         rx (input)
+4 - data terminal ready (output)   dtr (input)
+5 - signal ground                  signal ground
+6 - data set ready (in)            dsr (output)
+7 - request to send (output)       cts (input)
+8 - clear to send (in)             rts (output)
+9 - ring indicator (in)            ri (output)
+
+for a PC to receive DB9/F connector correctly when only
+three lines (rx,tx,gnd) used, may have to wire together DCD,DSR,DTR,
+and wire together RTS,CTS.  (Hyperterm for Windows requires this.)
+
+when fully-wiring DB9s which crossover DTE<-->DTE, should connect:
+DTR to DSR and DCD; TX-RX; CTS-RTS; GND-GND
+
+lantronix serial
+facing the jack with pins on top, leftmost pin is pin 1
+1 - rts out (blue)
+2 - dtr out (orange)
+3 - tx+ (black)
+4 - tx- (red, use for ground for rs232)
+5 - rx- (green, leave open for rs232)
+6 - rx+ (yellow)
+7 - dsr in (brown)
+8 - cts in (gray)
+
+
+vga connector
+1 - red video
+2 - green video
+3 - blue video
+5 - ground
+6 - red return
+7 - green return
+8 - blue return
+10 - sync return
+13 - horiz sync
+14 - vert sync
+
+ethernet
+1 TX+  white/orange
+2 TX-  orange
+3 RX+  white/green
+4      blue
+5      white/blue
+6 RX-  green
+7      white/brown
+8      brown
+
+ethernet crossover
+1-3
+2-6
+3-1
+6-2
+
+cisco catalyst 2900 xl console rj45
+console port	rj45	db9	console device
+RTS		1	8	CTS
+NC		2	6	DSR
+TxD		3	2	RxD
+GND		4	5	GND
+GND		5	5	GND
+RxD		6	3	TxD
+NC		7	4	DTR
+CTS		8	7	RTS
+
+USOC RJ-48C (E1/T1) :
+1	RX1
+2	RX2
+3	FGND
+4	TX1
+5	TX2
+6	FGND
+7-8	unused NC

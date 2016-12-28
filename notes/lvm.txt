@@ -1,0 +1,30 @@
+
+lvm pvcreate /dev/sda2
+lvm vgcreate vg0 /dev/sda2
+lvm lvcreate --size 500M --name swap vg0
+lvm lvcreate -l <extents> --name swap vg0
+(where 'extents' comes from vgdisplay free PE output)
+
+--
+
+lvm pvscan
+lvm pvdisplay /dev/sda2
+
+lvm vgscan
+lvm vgdisplay blade
+lvm vgdisplay fedora
+
+lvm lvscan
+lvm lvdisplay /dev/blade/home
+
+--
+
+you can also run 'gparted' gui to activate and deactivate lvms
+
+ if you vgscan, there should be files left in /etc/lvm/backup/ that
+ have the sdX part as a 'hint'
+
+may need 'vgrename UUID newname' to get rid of volname conflicts
+
+can use gparted to activate/deactivate volumes
+
