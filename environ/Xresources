@@ -101,17 +101,8 @@ Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
 Emacs*font: pfk13
 Emacs*boldFont: pfk13bold
-Emacs*verticalScrollBar.background:  grey85
-Emacs*verticalScrollBar.troughColor: grey50
-Emacs.pane.menubar*foreground:       yellow
-Emacs.fsb_popup*foreground:          black
-Emacs*fsb*foreground:                yellow
-Emacs*menu*foreground:               yellow
-Emacs*foreground:                    yellow
-Emacs*background:                    black
-Emacs*cursorColor:                   white
-Emacs*pointerColor:                  white
-Emacs_Minibuffer*geometry: -0-0
+Emacs*foreground: yellow
+Emacs*background: black
 
 xload*showLabel:      false
 xload*load.update:    5
