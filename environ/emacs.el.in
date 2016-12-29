@@ -366,7 +366,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 ; useful without ivy : (ido-mode)
 
-(require 'go-mode)
+;(require 'go-mode)
 (require 'xcscope)
 (require 'ivy)
 (require 'swiper)
