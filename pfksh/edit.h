@@ -59,8 +59,6 @@ void	x_free_words ARGS((int nwords, char **words));
 int 	x_emacs		ARGS((char *buf, size_t len));
 void 	x_init_emacs	ARGS((void));
 void	x_emacs_keys	ARGS((X_chars *ec));
-/* vi.c */
-int 	x_vi		ARGS((char *buf, size_t len));
 
 
 #ifdef DEBUG
