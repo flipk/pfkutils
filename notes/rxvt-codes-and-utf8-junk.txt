@@ -1,0 +1,80 @@
+
+important rxvt codes (see rxvt.0 for more)
+
+ESC [ s = save cursor
+ESC [ u = restore cursor
+ESC [ NUM A = cursor up NUM times
+ESC [ NUM B = cursor down NUM times
+ESC [ NUM C = cursor forward NUM times
+ESC [ NUM D = cursor backward NUM times
+ESC [ ROW ; COL H = move to position
+ESC [ 6 n = report cursor position with ESC [ ROW ; COL R
+ESC [ 18; t = report window size with ESC [ 8; ROW ; COL t
+ESC [ 24; HEIGHT t = set window height
+ESC [ Pm m = set char attributes
+          Pm = 0    Normal (default)
+          Pm = 1 / 21    On / Off Bold (bright fg)
+          Pm = 3 / 23    On / Off Italic
+          Pm = 4 / 24    On / Off Underline
+          Pm = 5 / 25    On / Off Slow Blink (bright bg)
+          Pm = 6 / 26    On / Off Rapid Blink (bright bg)
+          Pm = 7 / 27    On / Off Inverse
+          Pm = 8 / 27    On / Off Invisible (NYI)
+          Pm = 30 / 40   fg/bg Black
+          Pm = 31 / 41   fg/bg Red
+          Pm = 32 / 42   fg/bg Green
+          Pm = 33 / 43   fg/bg Yellow
+          Pm = 34 / 44   fg/bg Blue
+          Pm = 35 / 45   fg/bg Magenta
+          Pm = 36 / 46   fg/bg Cyan
+          Pm = 37 / 47   fg/bg White
+          Pm = 38;5 / 48;5    set fg/bg to colour #m (ISO 8613-6)
+          Pm = 39 / 49   fg/bg Default
+          Pm = 91 / 101  fg/bg Bright Red
+          Pm = 92 / 102  fg/bg Bright Green
+          Pm = 93 / 103  fg/bg Bright Yellow
+          Pm = 94 / 104  fg/bg Bright Blue
+          Pm = 95 / 105  fg/bg Bright Magenta
+          Pm = 96 / 106  fg/bg Bright Cyan
+          Pm = 97 / 107  fg/bg Bright White
+          Pm = 99 / 109  fg/bg Bright Default
+
+some useful UTF-8 encodings
+
+e28690   ←
+e28692   →
+e28691   ↑
+e28693   ↓
+
+e29480   ─
+e29482   │
+e2948c   ┌
+e29490   ┐
+e29494   └
+e29498   ┘
+
+example usage:
+
+ ┌──────────┐
+ │  thing1  │
+ │ →thing2← │
+ └──────────┘
+
+key inputs
+           up = ESC [ A     = history previous
+         down = ESC [ B     = history next
+        right = ESC [ C     = cursor move right, or complete
+         left = ESC [ D     = cursor move left
+  SHIFT    up = ESC [ a     = move completion selector up
+  SHIFT  down = ESC [ b     = move completion selector down
+  SHIFT right = ESC [ c
+  SHIFT  left = ESC [ d
+   CTRL    up = ESC O a
+   CTRL  down = ESC O b
+   CTRL right = ESC O c     = move cursor right one token
+   CTRL  left = ESC O d     = move cursor left one token
+    ALT    up = ESC ESC [ A
+    ALT  down = ESC ESC [ B
+    ALT right = ESC ESC [ C
+    ALT  left = ESC ESC [ D
+   CTRL     w =             = delete token to left of cursor
