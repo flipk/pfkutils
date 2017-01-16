@@ -1,21 +1,29 @@
 
 all: $(PROGS)
 
+RXVT_VERSION= pfk-2016-0410
+FLUXBOX_VERSION= pfk-1_3_7
+FISH_VERSION= 2.4.0
+
 ######################################################
 
 clone-https:
-	rm -rf rxvt-unicode fluxbox
-	git clone https://github.com/flipk/rxvt-unicode.git
-	git clone https://github.com/flipk/fluxbox.git
-	cd rxvt-unicode && git checkout pfk-2016-0410
-	cd fluxbox && git checkout pfk-1_3_7
+	rm -rf rxvt-unicode fluxbox fish-shell
+	git clone -n https://github.com/flipk/rxvt-unicode.git
+	git clone -n https://github.com/flipk/fluxbox.git
+	git clone -n https://github.com/fish-shell/fish-shell.git
+	cd rxvt-unicode && git checkout $(RXVT_VERSION)
+	cd fluxbox      && git checkout $(FLUXBOX_VERSION)
+	cd fish-shell   && git checkout $(FISH_VERSION)
 
 clone-me:
 	rm -rf rxvt-unicode fluxbox
-	git clone git@github.com:flipk/rxvt-unicode.git
-	git clone git@github.com:flipk/fluxbox.git
-	cd rxvt-unicode && git checkout pfk-2016-0410
-	cd fluxbox && git checkout pfk-1_3_7
+	git clone -n git@github.com:flipk/rxvt-unicode.git
+	git clone -n git@github.com:flipk/fluxbox.git
+	git clone -n https://github.com/fish-shell/fish-shell.git
+	cd rxvt-unicode && git checkout $(RXVT_VERSION)
+	cd fluxbox      && git checkout $(FLUXBOX_VERSION)
+	cd fish-shell   && git checkout $(FISH_VERSION)
 
 ######################################################
 
