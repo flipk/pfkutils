@@ -254,6 +254,11 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
     export PATH
 fi
 
+# help rxvt understand how to display
+# line drawing characters.
+LC_CTYPE=en_US.utf8
+export LC_CTYPE
+
 if [[ -f ${HOME}/.kshrc.local.mot.local ]] ; then
     . ${HOME}/.kshrc.local.mot.local
 fi
