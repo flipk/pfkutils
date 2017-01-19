@@ -1,0 +1,10 @@
+
+complete -c m -s s --description "assembly out"
+complete -c m -s b --description "binary out"
+complete -c m -s B --description "arbitrary base out"
+complete -c m -s d --description "decimal out"
+complete -c m -s u --description "unsigned dec out"
+complete -c m -s h --description "hex out"
+complete -c m -s o --description "octal out"
+complete -c m -s x --description "print help"
+complete -c m -s 4 --description "trunc out to 32 bits"
