@@ -161,6 +161,8 @@ static int  ssinterval;
 static int  ssblanking;
 static int  ssexposures;
 
+static char *my_password_string = "SomeRandomPassword";
+
 #define PASSLENGTH 20
 #define FALLBACK_FONTNAME   "fixed"
 #define ICONW           64
@@ -474,7 +476,7 @@ getPassword()
         if (ReadXString(buffer, PASSLENGTH))
             break;
 
-        if ( strcmp( buffer, "RushIt" ) == 0 )
+        if ( strcmp( buffer, my_password_string ) == 0 )
             done = True;
         else
             done = False;
@@ -629,6 +631,10 @@ main(argc, argv)
     srandom(time(0));  /* random mode needs the seed set. */
 
     GetResources(argc, argv);
+
+    char * password_string = getenv("XLOCK_PASSWORD");
+    if (password_string != NULL)
+        my_password_string = password_string;
 
     font = XLoadQueryFont(dsp, fontname);
     if (font == NULL) {

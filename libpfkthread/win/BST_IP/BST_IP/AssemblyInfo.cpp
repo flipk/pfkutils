@@ -16,7 +16,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyConfigurationAttribute("")];
 [assembly:AssemblyCompanyAttribute("PFK")];
 [assembly:AssemblyProductAttribute("BST_IP")];
-[assembly:AssemblyCopyrightAttribute("Copyright (c) Phillip F Knaack 2011")];
+[assembly:AssemblyCopyrightAttribute("Unlicenced")];
 [assembly:AssemblyTrademarkAttribute("")];
 [assembly:AssemblyCultureAttribute("")];
 
