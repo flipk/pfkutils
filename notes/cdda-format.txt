@@ -1,0 +1,34 @@
+
+how to encode audio onto a music CD (CDDA redbook format):
+
+sample left and right audio channels at 44100 Hz 
+using 16-bit signed linear PCM samples.
+
+analyze frequency response of signal. if insufficient signal to noise ratio
+is present, apply a pre-emphasis filter to boost 20kHz by 9.49dB, and
+set a binary flag in the subcode to instruct the player to apply a de-emphasis
+filter during playback to compensate.
+
+divide the samples streams into "Frames", where each Frame contains 6
+left-channel samples and 6 right-channel samples, interleaved. this is 24
+bytes.
+
+encode each Frame using "cross interleaved reed-solomon coding"
+
+https://en.wikipedia.org/wiki/Cross-interleaved_Reed%E2%80%93Solomon_coding
+
+which adds 64 bits of error correction and 8 bits of subcode, and also
+interleaves each Frame over multiple consecutive 33-byte channel-data frames 
+so that each physical channel-data frame contains some amount of data from 
+several Frames. (if a physical frame is damaged, the audio Frame can be
+reconstructed from the surrounding physical channel-data frames.)
+
+in the channel-data frame,  then take each 8 bit unit and replace it
+with a 14-bit code (EFM, eight to fourteen modulation).
+
+https://en.wikipedia.org/wiki/Eight-to-fourteen_modulation
+
+three "merging bits" are added between each 14-bit unit.
+
+thus 588 bits of physical media decode to 192 bits of audio samples.
+

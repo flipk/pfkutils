@@ -1,0 +1,129 @@
+kaszz writes:
+
+Due to a new set of routes published yesterday, the internet has
+effectively undergone a schism. All routers with a TCAM allocation of
+512k (or less), in particular Cisco Catalyst 6500 and 7600's, have
+started randomly forgetting portions of the internet.
+
+"Cisco also warned its customers in May that this BGP problem was
+coming and that, in particular, a number of routers and networking
+products would be affected. There are workarounds, and, of course the
+equipment could have been replaced. But, in all too many cases this
+was not done.. Unfortunately, we can expect more hiccups on the
+Internet as ISPs continue to deal with the BGP problem." says Steven
+J. Vaughan-Nichols of ZDNet.
+
+Is it time to switch to all IPv6 yet?
+
+Gobo adds:
+
+Earlier today there was a hiccup in the Internet as many routers
+started "flapping". BGPmon.net tracks the BGP activities on the global
+Internet, and came up with the following analysis:
+
+Folks quickly started to speculate that this might be related to a
+known default limitation in older Cisco routers. These routers have a
+default limit of 512K routing entries in their TCAM memory. [...]
+Right now the number of prefixes is still several thousands under the
+512,000 limit so it shouldn't be an issue. However when we take a
+closer look at our BGP telemetry we see that starting at 07:48 UTC
+about 15,000 new prefixes were introduced into the global routing
+table.
+
+Whatever happened internally at Verizon caused aggregation for their
+prefixes to fail which resulted in the introduction of thousands of
+new /24 routes into the global routing table. This caused the routing
+table to temporarily reach 515,000 prefixes and that caused issues for
+older Cisco routers.
+
+Luckily Verizon quickly solved the de-aggregation problem, so we're
+good for now. However the Internet routing table will continue to grow
+organically and we will reach the 512,000 limit soon again. The good
+news is that there's a solution for those operating these older cisco
+routers. The 512,000 route limitation can be increased to a higher
+number, for details see this Cisco doc.
+
+xx
+
+All it takes is on ill-trained person at some obscure ISP to induce
+routing errors that could bring down the net by table flooding, route
+flapping, or null routing huge portions of the net.  This is something
+that is terribly fragile (still). Its an attack vector that very few
+are watching, and every time it happens everybody talks a great deal
+and does just about nothing. Almost all problems have been due to
+mistakes or ignorance, but that might not remain that way.  There are
+entirely too many routes to be managed by BGP, it was never designed
+with Classless Inter-Domain Routing (CIDR) in mind, and its been a
+bolt on patch kludge since CIDR was adopted.  (Oddly CIDR was proposed
+as a method of controlling routing tables size growth, but it has
+proven over time to do the exact opposite. It was proposed so that
+sixteen contiguous /24 networks can be aggregated and advertised to a
+larger network as a single /20 route. Problem is, very few contiguous
+/24 NEED to be routed that way, and more often numerically contiguous
+/8s are geographically scattered all over the globe, and their routes
+have to be advertised to every backbone router because nobody wants to
+handle any traffic but their own regardless of the IP block.
+
+xx
+
+Not entirely correct but not bad. I got to do BGP design/support at a
+regional ISP about a decade ago. Or more accurately thats about when I
+quit after doing it for quite a few years.
+
+Via the joy of route-dampening which everyone has implemented for the
+last 20 or so years, route flapping is quite automatically
+... dampened. Flap and the router puts you on a time out list of
+naughty kids. To the annoyance of my customers who would do stupid
+stuff like flip their router on and off five times in fifteen minutes
+and then wonder why they fell off the net for an hour and why none of
+their upstreams such as myself could do anything whatsoever to help
+them get back online.
+
+As far as flooding and null routing most upstreams have their "moment"
+like ours in the 90s, some earlier some later, where you stop trusting
+your customers and extensively filter anything they advertise. Which
+is easy although a huge waste of cycles. Which means a default-free
+tier 1-ish ISP can still screw up, but they usually know what they're
+doing and we had limited filtering on them anyway. Go ahead, make my
+day, advertise a 0/0 in my general direction while I laugh at you
+(probably not good customer service, but...)
+
+Adding to the confusion null routing is actually good, if we give you
+a /18 I kinda expect you to null route the entire /18 because you
+don't want to waste the bandwidth of playing packet tennis with
+traffic to a temporarily unused /28 and from modesty alone (oh and
+that route dampening thing) you really don't want to air the dirty
+laundry of your internal OSPF meltdown by advertising it to the entire
+network. Then again, inevitably a customer has an ethernet switch port
+fail on the LAN side of their BGP speaking router and blackhole their
+own space this way. There are always tradeoffs.
+
+CIDR helps a lot when ARIN gives you a /20 and you don't want to
+advertise 16 /24s. Aside from the whole class-ful address stuff which
+means ARIN is quite likely to give you a /20 that under the old
+fashioned classFUL notation can't be represented as anything smaller
+than an /8 or something. So yeah CIDR is a net win. NANOG mailing list
+has a weekly summary of routes that need summarization and people who
+ignore them.
+
+High end networking is cool other than the lack of jobs. So I haven't
+done stuff like this in a decade. Just no work. Nothing. There must be
+like 10 CCNP-ish level people with the skills for every individual
+CCNP-ish level job, which is a bummer. There's probably 10-25 guys
+doing something else who can wrangle BGP, for every BGP wranglin'
+job. Kinda sucks.
+
+You missed a good rant about BGP security, I got out of the biz around
+the time the great MD5 crisis was ending. Basically you can/could
+spoof reset BGP connections, unless you add a MD5 hash to each packet
+which makes it about 2 to the power of 128 or whatever harder than
+just sending random TCP RST packets with spoofed source
+addresses. Resetting a connection would be pretty bad, yeah. Expecting
+operators to route in a civilized manner and not allow source addrs
+spoofing on their sh!tty networks is asking too much, so we'll paper
+over the problem by adding a shared secret md5 hash to the
+packets. What a load of BS.
+
+Can't say I miss ISP work all that much.
+
+xx

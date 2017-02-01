@@ -1,0 +1,3 @@
+
+ip addr add 11.0.0.1/24 dev enp0s25 label enp0s25:0
+

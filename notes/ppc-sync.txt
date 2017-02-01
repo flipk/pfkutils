@@ -1,0 +1,27 @@
+
+ppc sync
+
+- 'store' instructions may complete after following 'load'
+  due to speculative execution delaying
+- 'eieio' instruction only stops the load/store unit(s),
+  does not affect instruction fetcher or dispatcher
+- 'mbar0' is the same instruction (same opcode) as eieio
+- 'sync' instruction pauses dispatcher until pipeline is clear
+  (that is, all currently in-progress instructions have retired);
+  although instruction fetches continue beyond the 'sync'
+- 'isync' stops the fetcher too, so no fetches occur beyond
+  the isync until all currently in-progress instructions
+  have retired
+- 'msync' stops dispatching of any new memory access
+  instructions after the msync until after all memory access 
+  instructions prior to the msync are retired
+
+
+self modifying code:
+eieio to ensure 'store' completes
+dcbst / dcbf to ensure modifications are actually pushed into physical ram from the data cache
+msync because i don't know why
+icbi to ensure instruction cache doesn't have an old copy of physical ram
+msync because i don't know why
+isync to ensure no instructions beyond this is fetched until all previous instructions have retired
+

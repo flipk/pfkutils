@@ -1,0 +1,13 @@
+
+// without typing and compiling this, what is this useful for?
+#define WHAT_DOES_THIS_DO(x)  sizeof(struct{long:-!!(x);})
+
+// without typing and compiling this, what will it print?
+int main() {
+    int a[2] = {10,1};
+    while (a[0xFULL?'/0':-1:>>>=a<:!!0x.1P1])
+        printf("?");
+    printf("\n");
+    return 0;
+}
+
