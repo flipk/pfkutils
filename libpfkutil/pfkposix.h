@@ -486,14 +486,14 @@ class pfk_pthread {
         INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE
     } state;
     pthread_t  id;
-    void *arg;
-    static void * _entry(void *arg) {
-        pfk_pthread * th = (pfk_pthread *)arg;
+    void *user_arg;
+    static void * _entry(void *thread_obj) {
+        pfk_pthread * th = (pfk_pthread *)thread_obj;
         pfk_pthread_mutex_lock lock(th->mut);
         th->state = RUNNING;
         lock.unlock();
         th->cond.signal();
-        void * ret = th->entry(arg);
+        void * ret = th->entry(th->user_arg);
         lock.lock();
         th->state = ZOMBIE;
         return ret;
@@ -514,14 +514,14 @@ public:
         // hurt to repeat it here since stop and join both check the state.
         stopjoin();
     }
-    int create(void *_arg=NULL) {
+    int create(void *_user_arg=NULL) {
         pfk_pthread_mutex_lock lock(mut);
         if (state != INIT)
             return -1;
         state = NEWBORN;
         lock.unlock();
         attr.set_detach(false); // this class depends on joinable.
-        arg = _arg;
+        user_arg = _user_arg;
         int ret = pthread_create(&id, attr(), &_entry, this);
         lock.lock();
         if (ret == 0) {
