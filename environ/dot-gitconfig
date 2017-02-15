@@ -8,7 +8,7 @@
 	unstage = reset HEAD --
 	co = checkout
 	cob = checkout -b
-	b = !git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'
+	b = branch
 	ci = commit
 	s = status
 	last = log -1 HEAD
@@ -18,6 +18,9 @@
 	lf = log --decorate --all --numstat --pretty=format:\"%C(yellow)%h%Cred%d %Creset%s %C(bold blue)<%cn>%Creset\"
 	la = !git config -l | grep alias | cut -c 7-
 	k = !gitk --all &
+	sub = submodule
+	subfe = submodule foreach
+	ssub = !git submodule foreach git status
 [diff]
 	tool = meld
 [merge]
