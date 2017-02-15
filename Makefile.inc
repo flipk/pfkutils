@@ -203,14 +203,10 @@ $(target)_LLGENSRCS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(
 $(target)_LLGENDEPS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$($(target)_LLSRCS)))
 $(target)_LLGENOBJS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_LLSRCS)))
 
-$(target)_PROTOGENSRCS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENHDRS = $(patsubst %.proto, $(OBJDIR)/%.pb.h, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENDEPS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc.d, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENOBJS = $(patsubst %.proto, $(OBJDIR)/%.pb.o, \
-				$($(target)_PROTOSRCS))
+$(target)_PROTOGENSRCS = $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc,   $(subst /,_,$($(target)_PROTOSRCS)))
+$(target)_PROTOGENHDRS = $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.h,    $(subst /,_,$($(target)_PROTOSRCS)))
+$(target)_PROTOGENDEPS = $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc.d, $(subst /,_,$($(target)_PROTOSRCS)))
+$(target)_PROTOGENOBJS = $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.o,    $(subst /,_,$($(target)_PROTOSRCS)))
 
 endef
 
@@ -278,11 +274,13 @@ $(foreach src,$($(target)_LSRCS),$(patsubst %.l,  $(OBJDIR)/$(target)-%.o,    $(
 
 )
 
-$($(target)_PROTOGENOBJS) : %.o: %.cc
+$(foreach src,$($(target)_PROTOSRCS),$(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.o,    $(subst /,_,$(src))): $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc,   $(subst /,_,$(src)))
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) -I$(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+
+)
 
 $(foreach src,$($(target)_YYSRCS),$(patsubst %.yy, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(patsubst %.yy, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src)))
 	@echo compiling $$<
@@ -326,10 +324,28 @@ $(foreach src,$($(target)_LLSRCS),$(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $
 
 )
 
-$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
-	@echo making $$@
-	@cd $$(dir $$<) && $(PROTOC_PATH) \
+# note that protoc turns file.proto into file.pb.h and file.pb.cc,
+# but we really want obj/$(target)-directory_directory_file.pb.cc and .h
+# but also note protoc spits out the .pb.cc file with a #include looking for file.pb.h,
+# so we use a sed-expression to replace that with $(target)-dir_dir_file_pb.h
+
+$(foreach src,$($(target)_PROTOSRCS),$(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc,   $(subst /,_,$(src))): $(src)
+	@echo making $$@ PFK2
+	$(Q)cd $$(dir $$<) && $(PROTOC_PATH) \
 		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
+	$(Q)mv $(OBJDIR)/$$(notdir $(src:.proto=.pb.h)) $$(@:.pb.cc=.pb.h)
+	$(Q)sed -e s,$$(notdir $(src:.proto=.pb.h)),$$(notdir $$(@:.pb.cc=.pb.h)), \
+		<  $(OBJDIR)/$$(notdir $(src:.proto=.pb.cc)) \
+		> $$(@).TEMP
+	$(Q)mv $$(@).TEMP $$(@)
+
+)
+
+# here fore reference
+#$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
+#	@echo making $$@
+#	@cd $$(dir $$<) && $(PROTOC_PATH) \
+#		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
 
 $(foreach src,$($(target)_CSRCS),$(patsubst %.c,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$(src))): $(src)
 	@echo depending $$<
@@ -379,11 +395,13 @@ $(foreach src,$($(target)_LLSRCS),$(patsubst %.ll, $(OBJDIR)/$(target)-%.cc.d, $
 
 )
 
-$($(target)_PROTOGENDEPS) : %.cc.d: %.cc
+$(foreach src,$($(target)_PROTOSRCS),$(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc.d, $(subst /,_,$(src))): $(patsubst %.proto, $(OBJDIR)/$(target)-%.pb.cc,   $(subst /,_,$(src)))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
+
+)
 
 endef
 

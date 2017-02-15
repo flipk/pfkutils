@@ -100,9 +100,7 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 ##############################################
 
 OBJDIRS_TOMAKE= \
-	libWebAppServer environ main misc \
-	scripts misc/states contrib \
-	libWebAppServer/proxyTcpServer fonts
+	environ main misc scripts misc/states contrib fonts
 
 ##############################################
 
@@ -531,7 +529,6 @@ wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
 #	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyServer_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
-	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
 	$(PROTOBUF_INC)
 wsProxyServer_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
@@ -542,7 +539,7 @@ wsProxyServer_LIBS = $(PROTOBUF_LIB) -lpthread
 wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 wsProxyServer_INSTALL = 1
 wsProxyServer_EXTRAOBJS = \
-	$(OBJDIR)/libWebAppServer/proxyTcpServer/proxyMsgs.pb.o
+	$(OBJDIR)/wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.o
 endif
 
 ##############################################
