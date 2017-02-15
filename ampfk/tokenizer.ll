@@ -36,7 +36,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <string>
 #include "automake_parser.h"
-#include "parser.hh"
+#include "libampfk-ampfk_parser.hh"
 #include "condition.h"
 
 using namespace std;

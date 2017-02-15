@@ -1,5 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+OBJDIR = obj
+
 PFK_USER_NAME := $(shell whoami)
 PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
@@ -98,10 +100,9 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 ##############################################
 
 OBJDIRS_TOMAKE= \
-	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
-	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfktop pfksh scripts syslog misc/states contrib \
-	libWebAppServer/proxyTcpServer xlock fonts
+	libWebAppServer environ main misc \
+	scripts misc/states contrib \
+	libWebAppServer/proxyTcpServer fonts
 
 ##############################################
 
@@ -200,7 +201,7 @@ LIBPFKUTIL_TEST_TARGETS = \
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
-$(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
+$(t)_TARGET = $(OBJDIR)/libpfkutil-$(t)
 $(t)_CXXSRCS = libpfkutil/$(t).cc
 $(t)_LIBS += -lpthread -lrt
 $(t)_DEPLIBS = $(libpfkutil_TARGET)
@@ -249,7 +250,7 @@ libpfkfb_HDRS = \
 ###################
 
 PROG_TARGETS += fb_testBtree
-fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
+fb_testBtree_TARGET = $(OBJDIR)/libpfkfb-testBtree
 fb_testBtree_INCS = $(libpfkfb_INCS)
 fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
 fb_testBtree_DEPLIBS = \
@@ -257,7 +258,7 @@ fb_testBtree_DEPLIBS = \
 fb_testBtree_LIBS += -lpthread
 
 PROG_TARGETS += fb_testFileBlock
-fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
+fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb-testFileBlock
 fb_testFileBlock_INCS = $(libpfkfb_INCS)
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = \
@@ -295,11 +296,11 @@ libpfkdll2_INSTALL_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
 ###################
 
 PROG_TARGETS += dll2_test_btree
-dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2/test_btree
+dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2-test_btree
 dll2_test_btree_CXXSRCS = libpfkdll2/test_btree.cc
 
 PROG_TARGETS += dll2_test_hash
-dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2/test_hash
+dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2-test_hash
 dll2_test_hash_CXXSRCS = \
 	libpfkdll2/test_hash.cc libpfkdll2/test_hash_add.cc \
 	libpfkdll2/test_hash_del.cc
@@ -485,7 +486,7 @@ LIBWAS_TEST_TARGETS= \
 
 define BUILD_LIBWAS_TEST_TARGET
 PROG_TARGETS += libwas_$(t)
-libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer-$(t)
 libwas_$(t)_INCS = $(libWebAppServer_INCS)
 libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
 libwas_$(t)_LIBS += -lpthread
@@ -585,7 +586,7 @@ LIBPFKTHR_TEST_TARGETS = \
 
 define BUILD_LIBPFKTHR_TEST_TARGET
 PROG_TARGETS += pfkthr_$(t)
-pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
+pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread-$(t)
 pfkthr_$(t)_INCS = $(libpfkthread_INCS)
 pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
 pfkthr_$(t)_LIBS += -lpthread

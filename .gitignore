@@ -1,6 +1,6 @@
 *~
 cscope.files
 cscope.out
-/obj.*
+/obj*
 .tsdb
 /[0-9]*

@@ -181,27 +181,27 @@ objdirs:
 ##############################################
 
 define TARGET_VARS
-$(target)_COBJS    = $(patsubst %.c,  $(OBJDIR)/%.o,    $($(target)_CSRCS))
-$(target)_CDEPS    = $(patsubst %.c,  $(OBJDIR)/%.c.d,  $($(target)_CSRCS))
+$(target)_COBJS    = $(patsubst %.c,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_CSRCS)))
+$(target)_CDEPS    = $(patsubst %.c,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$($(target)_CSRCS)))
 
-$(target)_CXXOBJS  = $(patsubst %.cc, $(OBJDIR)/%.o,    $($(target)_CXXSRCS))
-$(target)_CXXDEPS  = $(patsubst %.cc, $(OBJDIR)/%.cc.d, $($(target)_CXXSRCS))
+$(target)_CXXOBJS  = $(patsubst %.cc, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_CXXSRCS)))
+$(target)_CXXDEPS  = $(patsubst %.cc, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$($(target)_CXXSRCS)))
 
-$(target)_YGENSRCS = $(patsubst %.y,  $(OBJDIR)/%.c,    $($(target)_YSRCS))
-$(target)_YGENDEPS = $(patsubst %.y,  $(OBJDIR)/%.c.d,  $($(target)_YSRCS))
-$(target)_YGENOBJS = $(patsubst %.y,  $(OBJDIR)/%.o,    $($(target)_YSRCS))
+$(target)_YGENSRCS = $(patsubst %.y,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$($(target)_YSRCS)))
+$(target)_YGENDEPS = $(patsubst %.y,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$($(target)_YSRCS)))
+$(target)_YGENOBJS = $(patsubst %.y,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_YSRCS)))
 
-$(target)_LGENSRCS = $(patsubst %.l,  $(OBJDIR)/%.c,    $($(target)_LSRCS))
-$(target)_LGENDEPS = $(patsubst %.l,  $(OBJDIR)/%.c.d,  $($(target)_LSRCS))
-$(target)_LGENOBJS = $(patsubst %.l,  $(OBJDIR)/%.o,    $($(target)_LSRCS))
+$(target)_LGENSRCS = $(patsubst %.l,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$($(target)_LSRCS)))
+$(target)_LGENDEPS = $(patsubst %.l,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$($(target)_LSRCS)))
+$(target)_LGENOBJS = $(patsubst %.l,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_LSRCS)))
 
-$(target)_YYGENSRCS= $(patsubst %.yy, $(OBJDIR)/%.cc,   $($(target)_YYSRCS))
-$(target)_YYGENDEPS= $(patsubst %.yy, $(OBJDIR)/%.cc.d, $($(target)_YYSRCS))
-$(target)_YYGENOBJS= $(patsubst %.yy, $(OBJDIR)/%.o,    $($(target)_YYSRCS))
+$(target)_YYGENSRCS= $(patsubst %.yy, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$($(target)_YYSRCS)))
+$(target)_YYGENDEPS= $(patsubst %.yy, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$($(target)_YYSRCS)))
+$(target)_YYGENOBJS= $(patsubst %.yy, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_YYSRCS)))
 
-$(target)_LLGENSRCS= $(patsubst %.ll, $(OBJDIR)/%.cc,   $($(target)_LLSRCS))
-$(target)_LLGENDEPS= $(patsubst %.ll, $(OBJDIR)/%.cc.d, $($(target)_LLSRCS))
-$(target)_LLGENOBJS= $(patsubst %.ll, $(OBJDIR)/%.o,    $($(target)_LLSRCS))
+$(target)_LLGENSRCS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$($(target)_LLSRCS)))
+$(target)_LLGENDEPS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$($(target)_LLSRCS)))
+$(target)_LLGENOBJS= $(patsubst %.ll, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$($(target)_LLSRCS)))
 
 $(target)_PROTOGENSRCS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc, \
 				$($(target)_PROTOSRCS))
@@ -243,25 +243,40 @@ HDRS += $($(target)_HDRS)
 CSRCS += $($(target)_CSRCS) $($(target)_YGENSRCS) $($(target)_LGENSRCS)
 CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
-$($(target)_COBJS) : $(OBJDIR)/%.o: %.c
+$(foreach src,$($(target)_CSRCS),$(patsubst %.c,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(src)
 	@echo compiling $$<
 	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $(CFLAGS) $$< -o $$@
 
-$($(target)_CXXOBJS) : $(OBJDIR)/%.o: %.cc
+)
+
+$(foreach src,$($(target)_CXXSRCS),$(patsubst %.cc, $(OBJDIR)/$(target)-%.o, $(subst /,_,$(src))): $(src)
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$(CXXFLAGS) $$< -o $$@
 
-$($(target)_YGENOBJS) $($(target)_LGENOBJS) : %.o: %.c
+)
+
+$(foreach src,$($(target)_YSRCS),$(patsubst %.y,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(patsubst %.y,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src)))
 	@echo compiling $$<
 	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$(CFLAGS) $$< -o $$@
+
+)
+
+$(foreach src,$($(target)_LSRCS),$(patsubst %.l,  $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(patsubst %.l,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src)))
+	@echo compiling $$<
+	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
+		$($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		$(CFLAGS) $$< -o $$@
+
+)
 
 $($(target)_PROTOGENOBJS) : %.o: %.cc
 	@echo compiling $$<
@@ -269,63 +284,100 @@ $($(target)_PROTOGENOBJS) : %.o: %.cc
 		$($(target)_INCS) -I$(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
 
-$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) : %.o: %.cc
+$(foreach src,$($(target)_YYSRCS),$(patsubst %.yy, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(patsubst %.yy, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src)))
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
 
-$($(target)_YGENSRCS) : $(OBJDIR)/%.c : %.y
+)
+
+$(foreach src,$($(target)_LLSRCS),$(patsubst %.ll, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))): $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src)))
+	@echo compiling $$<
+	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+		$($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+
+)
+
+$(foreach src,$($(target)_YSRCS),$(patsubst %.y,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src))): $(src)
 	@echo making $$@
 	$(Q)$(BISON) -d $$< -o $$@
 
-$($(target)_YYGENSRCS) : $(OBJDIR)/%.cc : %.yy
+)
+
+$(foreach src,$($(target)_YYSRCS),$(patsubst %.yy, $(OBJDIR)/$(target)-%.cc, $(subst /,_,$(src))): $(src)
 	@echo making $$@
 	$(Q)$(BISON) -d $$< -o $$@
 
-# flex ignores the -o arg !
-$($(target)_LGENSRCS) : $(OBJDIR)/%.c : %.l
-	@echo making $$@
-	$(Q)LLFILE=$$(PWD)/$$< && \
-		cd `dirname $$@` && \
-		$(FLEX) $$$$LLFILE && \
-		mv lex.yy.c `basename $$@`
+)
 
-$($(target)_LLGENSRCS) : $(OBJDIR)/%.cc : %.ll
+# flex ignores the -o arg !  i've only ever been able to make it work with --stdout.
+
+$(foreach src,$($(target)_LSRCS),$(patsubst %.l,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src))): $(src)
 	@echo making $$@
-	$(Q)LLFILE=$$(PWD)/$$< && \
-		cd `dirname $$@` && \
-		$(FLEX) $$$$LLFILE && \
-		mv lex.yy.c `basename $$@`
+	$(Q)$(FLEX) --stdout $$<  > $$@
+
+)
+
+$(foreach src,$($(target)_LLSRCS),$(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src))): $(src)
+	@echo making $$@
+	$(Q)$(FLEX) --stdout $$<  > $$@
+
+)
 
 $($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
 	@echo making $$@
 	@cd $$(dir $$<) && $(PROTOC_PATH) \
 		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
 
-$($(target)_CDEPS) : $(OBJDIR)/%.c.d: %.c
+$(foreach src,$($(target)_CSRCS),$(patsubst %.c,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$(src))): $(src)
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.c=$(OBJDIR)/%.o) -MF $$@
 
-$($(target)_CXXDEPS) : $(OBJDIR)/%.cc.d: %.cc
-	@echo depending $$<
+)
+
+$(foreach src,$($(target)_CXXSRCS),$(patsubst %.cc, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$(src))): $(src)
+	@echo compiling $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.cc=$(OBJDIR)/%.o) -MF $$@
 
-$($(target)_YGENDEPS) $($(target)_LGENDEPS) : %.c.d: %.c
+)
+
+$(foreach src,$($(target)_LSRCS),$(patsubst %.l,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$(src))): $(patsubst %.l,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src)))
+	@echo compiling $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $$(<:%.cc=$(OBJDIR)/%.o) -MF $$@
+
+)
+
+$(foreach src,$($(target)_YSRCS),$(patsubst %.y,  $(OBJDIR)/$(target)-%.c.d,  $(subst /,_,$(src))): $(patsubst %.y,  $(OBJDIR)/$(target)-%.c,    $(subst /,_,$(src)))
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.c=%.o) -MF $$@
 
-$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) : %.cc.d: %.cc
+)
+
+$(foreach src,$($(target)_YYSRCS),$(patsubst %.yy, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$(src))): $(patsubst %.yy, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src)))
+	@echo depending $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(patsubst %.yy, $(OBJDIR)/$(target)-%.o,    $(subst /,_,$(src))) -MF $$@
+
+)
+
+$(foreach src,$($(target)_LLSRCS),$(patsubst %.ll, $(OBJDIR)/$(target)-%.cc.d, $(subst /,_,$(src))): $(patsubst %.ll, $(OBJDIR)/$(target)-%.cc,   $(subst /,_,$(src)))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
+
+)
 
 $($(target)_PROTOGENDEPS) : %.cc.d: %.cc
 	@echo depending $$<
