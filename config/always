@@ -1,7 +1,5 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-OBJDIR = obj
-
 PFK_USER_NAME := $(shell whoami)
 PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
@@ -100,7 +98,7 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 ##############################################
 
 OBJDIRS_TOMAKE= \
-	environ main misc scripts misc/states contrib fonts
+	environ main misc scripts contrib fonts
 
 ##############################################
 
@@ -668,26 +666,26 @@ states_DEFS = \
 	-Dyyout=states_yyout -Dyylineno=states_yylineno \
 	-Dyy_flex_debug=states_yy_flex_debug
 states_EXTRAOBJS = \
-	$(OBJDIR)/misc/states/template_classH.o \
-	$(OBJDIR)/misc/states/template_classC.o \
-	$(OBJDIR)/misc/states/template_header.o \
-	$(OBJDIR)/misc/states/template_code.o \
-	$(OBJDIR)/misc/states/template_skel.o
+	$(OBJDIR)/states-misc_states_template_classH.o \
+	$(OBJDIR)/states-misc_states_template_classC.o \
+	$(OBJDIR)/states-misc_states_template_header.o \
+	$(OBJDIR)/states-misc_states_template_code.o \
+	$(OBJDIR)/states-misc_states_template_skel.o
 
-$(OBJDIR)/misc/states/tmpl_to_c: misc/states/tmpl_to_c.c
+$(OBJDIR)/states-misc_states_tmpl_to_c: misc/states/tmpl_to_c.c
 	@echo making tmpl_to_c
-	$(Q)$(CC) misc/states/tmpl_to_c.c -o $(OBJDIR)/misc/states/tmpl_to_c
+	$(Q)$(CC) $< -o $@
 
 # call STATES_TEMPL_SOURCE, c file, varname, template file
 define STATES_TEMPL_SOURCE
 
-$(OBJDIR)/misc/states/$(1:%.c=%.o): $(OBJDIR)/misc/states/$(1)
+$(OBJDIR)/states-misc_states_$(1:%.c=%.o): $(OBJDIR)/states-misc_states_$(1)
 	@echo compiling misc/states/$(1)
-	$(Q)$(CC) -c $(OBJDIR)/misc/states/$(1) -o $(OBJDIR)/misc/states/$(1:%.c=%.o)
+	$(Q)$(CC) -c $$< -o $$@
 
-$(OBJDIR)/misc/states/$(1): $(OBJDIR)/misc/states/tmpl_to_c misc/states/$(3)
-	@echo making $(OBJDIR)/misc/states/$(1)
-	$(Q)$(OBJDIR)/misc/states/tmpl_to_c misc/states/$(3) $(2) > $(OBJDIR)/misc/states/$(1)
+$(OBJDIR)/states-misc_states_$(1): $(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3)
+	@echo making misc/states/$(3)
+	$(Q)$(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3) $(2) > $(OBJDIR)/states-misc_states_$(1)
 
 endef
 
