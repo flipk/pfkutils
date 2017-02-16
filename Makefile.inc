@@ -420,21 +420,22 @@ $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FRO
 
 endef
 
+define TARGET_OBJ_LIST
+
+$(target)_OBJS = \
+	$($(target)_COBJS)        $($(target)_CXXOBJS) \
+	$($(target)_YGENOBJS)     $($(target)_LGENOBJS) \
+	$($(target)_YYGENOBJS)    $($(target)_LLGENOBJS) \
+	$($(target)_PROTOGENOBJS) $($(target)_EXTRAOBJS)
+
+endef
+
 define LIB_TARGET_RULES
 
-$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
-		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
-		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
-		$($(target)_PROTOGENOBJS) \
-		$($(target)_EXTRAOBJS)
+$($(target)_TARGET): $($(target)_OBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)rm -f $($(target)_TARGET)
-	$(Q)$(AR) cq $($(target)_TARGET) \
-		$($(target)_COBJS) $($(target)_CXXOBJS) \
-		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
-		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
-		$($(target)_PROTOGENOBJS) \
-		$($(target)_EXTRAOBJS)
+	$(Q)$(AR) cq $($(target)_TARGET) $($(target)_OBJS)
 	$(Q)$(RANLIB) $($(target)_TARGET)
 
 $(target)_install: $($(target)_TARGET)
@@ -449,18 +450,10 @@ endef
 
 define PROG_TARGET_RULES
 
-$($(target)_TARGET): $($(target)_COBJS) $($(target)_CXXOBJS) \
-		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
-		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
-		$($(target)_PROTOGENOBJS) \
-		$($(target)_DEPLIBS) $($(target)_EXTRAOBJS)
+$($(target)_TARGET): $($(target)_OBJS) $($(target)_DEPLIBS)
 	@echo linking $($(target)_TARGET)
-	$(Q)$(CXX) -o $($(target)_TARGET) \
-		$($(target)_COBJS) $($(target)_CXXOBJS) \
-		$($(target)_YGENOBJS) $($(target)_LGENOBJS) \
-		$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) \
-		$($(target)_PROTOGENOBJS) $($(target)_DEPLIBS) \
-		$($(target)_EXTRAOBJS) $($(target)_LIBS) \
+	$(Q)$(CXX) -o $($(target)_TARGET) $($(target)_OBJS) \
+		$($(target)_LIBS) $($(target)_DEPLIBS) \
 		$(LDFLAGS) $($(target)_LDFLAGS)
 
 $(target)_install: $($(target)_TARGET)
@@ -476,6 +469,7 @@ $(target)_install: $($(target)_TARGET)
 
 endef
 
+$(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_OBJ_LIST)))
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_RULES)))
 $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
 $(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_RULES)))
