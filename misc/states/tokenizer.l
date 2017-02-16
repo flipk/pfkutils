@@ -5,7 +5,7 @@
 
 #include "wordentry.h"
 #include "parse_actions.h"
-#include "parser.h"
+#include "states-misc_states_parser.h"
 
 #define myinput input
 

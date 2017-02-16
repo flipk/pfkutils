@@ -98,10 +98,7 @@ $(CONFIG_H): Makefile config/always config/$(CONFIG)
 ##############################################
 
 OBJDIRS_TOMAKE= \
-	libWebAppServer libpfkdll2 libpfkfb libpfkthread libpfkutil \
-	ampfk backup bglog diskloader environ i2 main misc \
-	pfkscript pfktop pfksh scripts syslog misc/states contrib \
-	libWebAppServer/proxyTcpServer xlock fonts
+	environ main misc scripts contrib fonts
 
 ##############################################
 
@@ -200,7 +197,7 @@ LIBPFKUTIL_TEST_TARGETS = \
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
-$(t)_TARGET = $(OBJDIR)/libpfkutil/$(t)
+$(t)_TARGET = $(OBJDIR)/libpfkutil-$(t)
 $(t)_CXXSRCS = libpfkutil/$(t).cc
 $(t)_LIBS += -lpthread -lrt
 $(t)_DEPLIBS = $(libpfkutil_TARGET)
@@ -249,7 +246,7 @@ libpfkfb_HDRS = \
 ###################
 
 PROG_TARGETS += fb_testBtree
-fb_testBtree_TARGET = $(OBJDIR)/libpfkfb/testBtree
+fb_testBtree_TARGET = $(OBJDIR)/libpfkfb-testBtree
 fb_testBtree_INCS = $(libpfkfb_INCS)
 fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
 fb_testBtree_DEPLIBS = \
@@ -257,7 +254,7 @@ fb_testBtree_DEPLIBS = \
 fb_testBtree_LIBS += -lpthread
 
 PROG_TARGETS += fb_testFileBlock
-fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb/testFileBlock
+fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb-testFileBlock
 fb_testFileBlock_INCS = $(libpfkfb_INCS)
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = \
@@ -295,11 +292,11 @@ libpfkdll2_INSTALL_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
 ###################
 
 PROG_TARGETS += dll2_test_btree
-dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2/test_btree
+dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2-test_btree
 dll2_test_btree_CXXSRCS = libpfkdll2/test_btree.cc
 
 PROG_TARGETS += dll2_test_hash
-dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2/test_hash
+dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2-test_hash
 dll2_test_hash_CXXSRCS = \
 	libpfkdll2/test_hash.cc libpfkdll2/test_hash_add.cc \
 	libpfkdll2/test_hash_del.cc
@@ -485,7 +482,7 @@ LIBWAS_TEST_TARGETS= \
 
 define BUILD_LIBWAS_TEST_TARGET
 PROG_TARGETS += libwas_$(t)
-libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer/$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer-$(t)
 libwas_$(t)_INCS = $(libWebAppServer_INCS)
 libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
 libwas_$(t)_LIBS += -lpthread
@@ -530,7 +527,6 @@ wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
 #	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyServer_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
-	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
 	$(PROTOBUF_INC)
 wsProxyServer_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
@@ -541,7 +537,7 @@ wsProxyServer_LIBS = $(PROTOBUF_LIB) -lpthread
 wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 wsProxyServer_INSTALL = 1
 wsProxyServer_EXTRAOBJS = \
-	$(OBJDIR)/libWebAppServer/proxyTcpServer/proxyMsgs.pb.o
+	$(OBJDIR)/wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.o
 endif
 
 ##############################################
@@ -585,7 +581,7 @@ LIBPFKTHR_TEST_TARGETS = \
 
 define BUILD_LIBPFKTHR_TEST_TARGET
 PROG_TARGETS += pfkthr_$(t)
-pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread/$(t)
+pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread-$(t)
 pfkthr_$(t)_INCS = $(libpfkthread_INCS)
 pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
 pfkthr_$(t)_LIBS += -lpthread
@@ -670,26 +666,26 @@ states_DEFS = \
 	-Dyyout=states_yyout -Dyylineno=states_yylineno \
 	-Dyy_flex_debug=states_yy_flex_debug
 states_EXTRAOBJS = \
-	$(OBJDIR)/misc/states/template_classH.o \
-	$(OBJDIR)/misc/states/template_classC.o \
-	$(OBJDIR)/misc/states/template_header.o \
-	$(OBJDIR)/misc/states/template_code.o \
-	$(OBJDIR)/misc/states/template_skel.o
+	$(OBJDIR)/states-misc_states_template_classH.o \
+	$(OBJDIR)/states-misc_states_template_classC.o \
+	$(OBJDIR)/states-misc_states_template_header.o \
+	$(OBJDIR)/states-misc_states_template_code.o \
+	$(OBJDIR)/states-misc_states_template_skel.o
 
-$(OBJDIR)/misc/states/tmpl_to_c: misc/states/tmpl_to_c.c
+$(OBJDIR)/states-misc_states_tmpl_to_c: misc/states/tmpl_to_c.c
 	@echo making tmpl_to_c
-	$(Q)$(CC) misc/states/tmpl_to_c.c -o $(OBJDIR)/misc/states/tmpl_to_c
+	$(Q)$(CC) $< -o $@
 
 # call STATES_TEMPL_SOURCE, c file, varname, template file
 define STATES_TEMPL_SOURCE
 
-$(OBJDIR)/misc/states/$(1:%.c=%.o): $(OBJDIR)/misc/states/$(1)
+$(OBJDIR)/states-misc_states_$(1:%.c=%.o): $(OBJDIR)/states-misc_states_$(1)
 	@echo compiling misc/states/$(1)
-	$(Q)$(CC) -c $(OBJDIR)/misc/states/$(1) -o $(OBJDIR)/misc/states/$(1:%.c=%.o)
+	$(Q)$(CC) -c $$< -o $$@
 
-$(OBJDIR)/misc/states/$(1): $(OBJDIR)/misc/states/tmpl_to_c misc/states/$(3)
-	@echo making $(OBJDIR)/misc/states/$(1)
-	$(Q)$(OBJDIR)/misc/states/tmpl_to_c misc/states/$(3) $(2) > $(OBJDIR)/misc/states/$(1)
+$(OBJDIR)/states-misc_states_$(1): $(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3)
+	@echo making misc/states/$(3)
+	$(Q)$(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3) $(2) > $(OBJDIR)/states-misc_states_$(1)
 
 endef
 

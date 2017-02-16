@@ -180,37 +180,53 @@ objdirs:
 
 ##############################################
 
+# $(call FROM_X_TO_Y,cc,o,dirA/dirB/file.cc) == objdir/target-dirA_dirB_file.o
+
+FROM_X_TO_Y = $(patsubst %.$(1), $(OBJDIR)/$(target)-%.$(2), $(subst /,_,$(3)))
+
+FROM_C_TO_O      = $(call FROM_X_TO_Y,c,o,$(1))
+FROM_C_TO_D      = $(call FROM_X_TO_Y,c,c.d,$(1))
+FROM_CC_TO_O     = $(call FROM_X_TO_Y,cc,o,$(1))
+FROM_CC_TO_D     = $(call FROM_X_TO_Y,cc,cc.d,$(1))
+FROM_Y_TO_C      = $(call FROM_X_TO_Y,y,c,$(1))
+FROM_Y_TO_D      = $(call FROM_X_TO_Y,y,c.d,$(1))
+FROM_Y_TO_O      = $(call FROM_X_TO_Y,y,o,$(1))
+FROM_YY_TO_CC    = $(call FROM_X_TO_Y,yy,cc,$(1))
+FROM_YY_TO_D     = $(call FROM_X_TO_Y,yy,cc.d,$(1))
+FROM_YY_TO_O     = $(call FROM_X_TO_Y,yy,o,$(1))
+FROM_L_TO_C      = $(call FROM_X_TO_Y,l,c,$(1))
+FROM_L_TO_D      = $(call FROM_X_TO_Y,l,c.d,$(1))
+FROM_L_TO_O      = $(call FROM_X_TO_Y,l,o,$(1))
+FROM_LL_TO_CC    = $(call FROM_X_TO_Y,ll,cc,$(1))
+FROM_LL_TO_D     = $(call FROM_X_TO_Y,ll,cc.d,$(1))
+FROM_LL_TO_O     = $(call FROM_X_TO_Y,ll,o,$(1))
+FROM_PROTO_TO_CC = $(call FROM_X_TO_Y,proto,pb.cc,$(1))
+FROM_PROTO_TO_H  = $(call FROM_X_TO_Y,proto,pb.h,$(1))
+FROM_PROTO_TO_D  = $(call FROM_X_TO_Y,proto,pb.cc.d,$(1))
+FROM_PROTO_TO_O  = $(call FROM_X_TO_Y,proto,pb.o,$(1))
+
 define TARGET_VARS
-$(target)_COBJS    = $(patsubst %.c,  $(OBJDIR)/%.o,    $($(target)_CSRCS))
-$(target)_CDEPS    = $(patsubst %.c,  $(OBJDIR)/%.c.d,  $($(target)_CSRCS))
 
-$(target)_CXXOBJS  = $(patsubst %.cc, $(OBJDIR)/%.o,    $($(target)_CXXSRCS))
-$(target)_CXXDEPS  = $(patsubst %.cc, $(OBJDIR)/%.cc.d, $($(target)_CXXSRCS))
-
-$(target)_YGENSRCS = $(patsubst %.y,  $(OBJDIR)/%.c,    $($(target)_YSRCS))
-$(target)_YGENDEPS = $(patsubst %.y,  $(OBJDIR)/%.c.d,  $($(target)_YSRCS))
-$(target)_YGENOBJS = $(patsubst %.y,  $(OBJDIR)/%.o,    $($(target)_YSRCS))
-
-$(target)_LGENSRCS = $(patsubst %.l,  $(OBJDIR)/%.c,    $($(target)_LSRCS))
-$(target)_LGENDEPS = $(patsubst %.l,  $(OBJDIR)/%.c.d,  $($(target)_LSRCS))
-$(target)_LGENOBJS = $(patsubst %.l,  $(OBJDIR)/%.o,    $($(target)_LSRCS))
-
-$(target)_YYGENSRCS= $(patsubst %.yy, $(OBJDIR)/%.cc,   $($(target)_YYSRCS))
-$(target)_YYGENDEPS= $(patsubst %.yy, $(OBJDIR)/%.cc.d, $($(target)_YYSRCS))
-$(target)_YYGENOBJS= $(patsubst %.yy, $(OBJDIR)/%.o,    $($(target)_YYSRCS))
-
-$(target)_LLGENSRCS= $(patsubst %.ll, $(OBJDIR)/%.cc,   $($(target)_LLSRCS))
-$(target)_LLGENDEPS= $(patsubst %.ll, $(OBJDIR)/%.cc.d, $($(target)_LLSRCS))
-$(target)_LLGENOBJS= $(patsubst %.ll, $(OBJDIR)/%.o,    $($(target)_LLSRCS))
-
-$(target)_PROTOGENSRCS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENHDRS = $(patsubst %.proto, $(OBJDIR)/%.pb.h, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENDEPS = $(patsubst %.proto, $(OBJDIR)/%.pb.cc.d, \
-				$($(target)_PROTOSRCS))
-$(target)_PROTOGENOBJS = $(patsubst %.proto, $(OBJDIR)/%.pb.o, \
-				$($(target)_PROTOSRCS))
+$(target)_COBJS        = $(call FROM_C_TO_O,$($(target)_CSRCS))
+$(target)_CDEPS        = $(call FROM_C_TO_D,$($(target)_CSRCS))
+$(target)_CXXOBJS      = $(call FROM_CC_TO_O,$($(target)_CXXSRCS))
+$(target)_CXXDEPS      = $(call FROM_CC_TO_D,$($(target)_CXXSRCS))
+$(target)_YGENSRCS     = $(call FROM_Y_TO_C,$($(target)_YSRCS))
+$(target)_YGENDEPS     = $(call FROM_Y_TO_D,$($(target)_YSRCS))
+$(target)_YGENOBJS     = $(call FROM_Y_TO_O,$($(target)_YSRCS))
+$(target)_LGENSRCS     = $(call FROM_L_TO_C,$($(target)_LSRCS))
+$(target)_LGENDEPS     = $(call FROM_L_TO_D,$($(target)_LSRCS))
+$(target)_LGENOBJS     = $(call FROM_L_TO_O,$($(target)_LSRCS))
+$(target)_YYGENSRCS    = $(call FROM_YY_TO_CC,$($(target)_YYSRCS))
+$(target)_YYGENDEPS    = $(call FROM_YY_TO_D,$($(target)_YYSRCS))
+$(target)_YYGENOBJS    = $(call FROM_YY_TO_O,$($(target)_YYSRCS))
+$(target)_LLGENSRCS    = $(call FROM_LL_TO_CC,$($(target)_LLSRCS))
+$(target)_LLGENDEPS    = $(call FROM_LL_TO_D,$($(target)_LLSRCS))
+$(target)_LLGENOBJS    = $(call FROM_LL_TO_O,$($(target)_LLSRCS))
+$(target)_PROTOGENSRCS = $(call FROM_PROTO_TO_CC,$($(target)_PROTOSRCS))
+$(target)_PROTOGENHDRS = $(call FROM_PROTO_TO_H,$($(target)_PROTOSRCS))
+$(target)_PROTOGENDEPS = $(call FROM_PROTO_TO_D,$($(target)_PROTOSRCS))
+$(target)_PROTOGENOBJS = $(call FROM_PROTO_TO_O,$($(target)_PROTOSRCS))
 
 endef
 
@@ -243,95 +259,164 @@ HDRS += $($(target)_HDRS)
 CSRCS += $($(target)_CSRCS) $($(target)_YGENSRCS) $($(target)_LGENSRCS)
 CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
-$($(target)_COBJS) : $(OBJDIR)/%.o: %.c
+
+# handle C files
+
+$(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_O, $(src)): $(src)
 	@echo compiling $$<
 	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $(CFLAGS) $$< -o $$@
+)
 
-$($(target)_CXXOBJS) : $(OBJDIR)/%.o: %.cc
+$(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
+	@echo depending $$<
+	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_C_TO_O,$(src)) -MF $$@
+)
+
+# handle CC files
+
+$(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_O, $(src)): $(src)
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$(CXXFLAGS) $$< -o $$@
+)
 
-$($(target)_YGENOBJS) $($(target)_LGENOBJS) : %.o: %.c
+
+$(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_D, $(src)): $(src)
+	@echo depending $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_CC_TO_O,$(src)) -MF $$@
+)
+
+# handle Y files
+
+$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_O, $(src)): $(call FROM_Y_TO_C, $(src))
 	@echo compiling $$<
 	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$(CFLAGS) $$< -o $$@
+)
 
-$($(target)_PROTOGENOBJS) : %.o: %.cc
-	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
-		$($(target)_INCS) -I$(PROTOBUF_INC) \
-		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)): $(src)
+	@echo making $$@
+	$(Q)$(BISON) -d $$< -o $$@
+)
 
-$($(target)_YYGENOBJS) $($(target)_LLGENOBJS) : %.o: %.cc
+$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C, $(src))
+	@echo depending $$<
+	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_Y_TO_O,$(src)) -MF $$@
+)
+
+# handle YY files
+
+$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_CC, $(src)): $(src)
+	@echo making $$@
+	$(Q)$(BISON) -d $$< -o $$@
+)
+
+$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_TO_CC, $(src))
+	@echo depending $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_YY_TO_O,$(src)) -MF $$@
+)
+
+$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src))
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+)
 
-$($(target)_YGENSRCS) : $(OBJDIR)/%.c : %.y
-	@echo making $$@
-	$(Q)$(BISON) -d $$< -o $$@
+# handle L files
 
-$($(target)_YYGENSRCS) : $(OBJDIR)/%.cc : %.yy
+$(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_C, $(src)): $(src)
 	@echo making $$@
-	$(Q)$(BISON) -d $$< -o $$@
+	$(Q)$(FLEX) --stdout $$<  > $$@
+)
 
-# flex ignores the -o arg !
-$($(target)_LGENSRCS) : $(OBJDIR)/%.c : %.l
-	@echo making $$@
-	$(Q)LLFILE=$$(PWD)/$$< && \
-		cd `dirname $$@` && \
-		$(FLEX) $$$$LLFILE && \
-		mv lex.yy.c `basename $$@`
+$(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C, $(src))
+	@echo depending $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_L_TO_O,$(src)) -MF $$@
+)
 
-$($(target)_LLGENSRCS) : $(OBJDIR)/%.cc : %.ll
-	@echo making $$@
-	$(Q)LLFILE=$$(PWD)/$$< && \
-		cd `dirname $$@` && \
-		$(FLEX) $$$$LLFILE && \
-		mv lex.yy.c `basename $$@`
+$(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C, $(src))
+	@echo compiling $$<
+	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
+		$($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		$(CFLAGS) $$< -o $$@
+)
 
-$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
+# handle LL files
+
+$(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_CC, $(src)): $(src)
 	@echo making $$@
-	@cd $$(dir $$<) && $(PROTOC_PATH) \
+	$(Q)$(FLEX) --stdout $$<  > $$@
+)
+
+$(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_O, $(src)): $(call FROM_LL_TO_CC, $(src))
+	@echo compiling $$<
+	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+		$($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+)
+
+$(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_TO_CC, $(src))
+	@echo depending $$<
+	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+		$(DEFS) $($(target)_DEFS) \
+		-M $$< -MT $(call FROM_LL_TO_O,$(src)) -MF $$@
+)
+
+# handle PROTO files
+
+# note that protoc turns file.proto into file.pb.h and file.pb.cc,
+# but we really want obj/$(target)-directory_directory_file.pb.cc and .h
+# but also note protoc spits out the .pb.cc file with a #include looking for file.pb.h,
+# so we use a sed-expression to replace that with $(target)-dir_dir_file_pb.h
+
+$(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_CC, $(src)): $(src)
+	@echo making $$@
+	$(Q)cd $$(dir $$<) && $(PROTOC_PATH) \
 		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
+	$(Q)mv $(OBJDIR)/$$(notdir $(src:.proto=.pb.h)) $$(@:.pb.cc=.pb.h)
+	$(Q)sed -e s,$$(notdir $(src:.proto=.pb.h)),$$(notdir $$(@:.pb.cc=.pb.h)), \
+		<  $(OBJDIR)/$$(notdir $(src:.proto=.pb.cc)) \
+		> $$(@).TEMP
+	$(Q)mv $$(@).TEMP $$(@)
+)
 
-$($(target)_CDEPS) : $(OBJDIR)/%.c.d: %.c
-	@echo depending $$<
-	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
-		-M $$< -MT $$(<:%.c=$(OBJDIR)/%.o) -MF $$@
+$(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_O, $(src)): $(call FROM_PROTO_TO_CC, $(src))
+	@echo compiling $$<
+	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+		$($(target)_INCS) -I$(PROTOBUF_INC) \
+		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+)
 
-$($(target)_CXXDEPS) : $(OBJDIR)/%.cc.d: %.cc
-	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
-		-M $$< -MT $$(<:%.cc=$(OBJDIR)/%.o) -MF $$@
-
-$($(target)_YGENDEPS) $($(target)_LGENDEPS) : %.c.d: %.c
-	@echo depending $$<
-	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
-		-M $$< -MT $$(<:%.c=%.o) -MF $$@
-
-$($(target)_YYGENDEPS) $($(target)_LLGENDEPS) : %.cc.d: %.cc
-	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
-		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
-
-$($(target)_PROTOGENDEPS) : %.cc.d: %.cc
+$(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) \
-		-M $$< -MT $$(<:%.cc=%.o) -MF $$@
+		-M $$< -MT $(call FROM_PROTO_TO_O,$(src)) -MF $$@
+)
+
+# here fore reference
+#$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
+#	@echo making $$@
+#	@cd $$(dir $$<) && $(PROTOC_PATH) \
+#		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
 
 endef
 
