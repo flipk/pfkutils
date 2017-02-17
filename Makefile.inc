@@ -25,9 +25,6 @@
 # 
 # For more information, please refer to <http://unlicense.org>
 
-# TODO strip relpaths and handle files outside this tree;
-# TODO prepend target-name to product artifacts?
-
 ##############################################
 
 # all artifacts produced by this makefile go under
