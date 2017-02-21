@@ -488,7 +488,7 @@ endif
 _all: $(foreach target,$(LIB_TARGETS) \
 	$(PROG_TARGETS),$($(target)_TARGET)) $(POSTALL)
 
-cscope.files: Makefile config/always config/$(CONFIG)
+cscope.files: Makefile $(INCLUDE_MAKEFILES)
 	@echo making cscope.files
 	@rm -f cscope.files ; touch cscope.files
 	@$(foreach f,$(HDRS) $(CSRCS) $(CXXSRCS),echo $(f) >> cscope.files ;)
