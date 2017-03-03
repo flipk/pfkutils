@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [[ x$TEMP == x ]] ; then
+    echo TEMP not set, defaulting to /tmp
+    TEMP=/tmp
+fi
+
+dmesg > $TEMP/dmesg.out.prev
+while true ; do
+    dmesg > $TEMP/dmesg.out
+    diff $TEMP/dmesg.out.prev $TEMP/dmesg.out
+    mv $TEMP/dmesg.out $TEMP/dmesg.out.prev
+    sleep 1
+done
+
+exit 0

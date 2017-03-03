@@ -1,0 +1,101 @@
+#!/bin/bash
+
+rawgitdir=$(git rev-parse --git-dir 2> /dev/null)
+gitdir=$rawgitdir
+vars=0
+
+if [[ "x$1" == "x-v" ]] ; then
+    vars=1
+fi
+
+if [[ "x$gitdir" == "x" ]] ; then
+    if [[ $vars == 1 ]] ; then
+	echo gr=''
+	echo gitdir=''
+	echo gitsubdir=''
+	echo gitroot=''
+	echo gitrelpath=''
+	echo gitnummods=0
+    fi
+    exit 0
+fi
+
+if [[ "$gitdir" == ".git" ]] ; then
+    realgitdir="${PWD}/.git"
+elif [[ "$gitdir" == "." ]] ; then
+    realgitdir="${PWD}"
+else
+    realgitdir="$gitdir"
+fi
+gitdir=${realgitdir%/.git*}/.git
+gitroot=${gitdir%/.git}
+
+printHEAD() {
+    local index
+    index=$2
+    if [[ "x$index" == "x" ]] ; then
+	varname=gitmainhead
+    else
+	varname=githead[$index]
+    fi
+    (
+	head=$(cat $1/HEAD)
+	IFS="/"
+	set -- $head
+	IFS=" "
+	if [[ "x$1" == "xref: refs" ]] ; then
+	    echo ${varname}=\"$3\"
+	else
+	    echo ${varname}=\"${head:0:7}\"
+	fi
+    )
+}
+
+if [[ $vars == 1 ]] ; then
+    gittoplevel=$(git rev-parse --show-toplevel 2> /dev/null)
+    gitrelpath=${PWD#${gittoplevel}}
+    if [[ "x$gitrelpath" == "x" ]] ; then
+	gitrelpath=.
+    else
+	gitrelpath=${gitrelpath#/}
+    fi
+
+    gitsubdir=${realgitdir#$gitdir}
+    gitsubdir=${gitsubdir#/}
+    if [[ "x$gitsubdir" == "x" ]] ; then
+	gitsubdir=.
+    fi
+
+    echo gitdir=\"$gitdir\"
+    echo gitsubdir=\"$gitsubdir\"
+    echo gitroot=\"$gitroot\"
+    echo gr=\"$gitroot\"
+    echo gitrelpath=\"$gitrelpath\"
+
+    IFS="/"
+    gitsubdircomponents=($gitsubdir)
+    IFS=" "
+    numcomponents=${#gitsubdircomponents[@]}
+    count=1
+    index=0
+    headpath=$gitdir
+    topmodname=${gitdir%/.git}
+    topmodname=${topmodname##*/}
+    echo gitmodname[$index]=\"$topmodname\"
+    printHEAD $headpath $index
+    index=$(( index + 1 ))
+
+    while [[ $count -lt $numcomponents ]] ; do
+	submodname="${gitsubdircomponents[$count]}"
+	echo gitmodname[$index]=\"${submodname}\"
+	headpath=$headpath/modules/$submodname
+	printHEAD $headpath $index
+	count=$(( count + 2 ))
+	index=$(( index + 1 ))
+    done
+    echo gitnummods=$index
+else
+    echo $gitroot
+fi
+
+exit 0

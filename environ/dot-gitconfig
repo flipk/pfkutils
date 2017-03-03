@@ -4,19 +4,13 @@
 	fontui = -family \"Source Code Pro\" -size 8 -weight normal -slant roman -underline 0 -overstrike 0
 	fontdiff = -family \"Source Code Pro\" -size 8 -weight normal -slant roman -underline 0 -overstrike 0
 [alias]
-	ls = log --graph --oneline --decorate
 	unstage = reset HEAD --
 	co = checkout
 	cob = checkout -b
 	b = branch
 	ci = commit
 	s = status
-	last = log -1 HEAD
-	visual = !gitk
-	l = log         --oneline --decorate --all
-	lg = log --graph --oneline --decorate --all
-	lf = log --decorate --all --numstat --pretty=format:\"%C(yellow)%h%Cred%d %Creset%s %C(bold blue)<%cn>%Creset\"
-	la = !git config -l | grep alias | cut -c 7-
+	l = log --graph --oneline --decorate --all
 	k = !gitk --all &
 	sub = submodule
 	subfe = submodule foreach

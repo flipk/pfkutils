@@ -1,0 +1,22 @@
+#!/bin/bash
+
+eval `git root -v`
+if [[ "x$gr" == "x" ]] ; then
+    echo not in a git repo 1>&2
+    exit 1
+fi
+
+cd $gr
+
+# NOTE this does not support nested submodules.
+
+git ls-files -m
+
+git submodule status | while read line ; do
+    IFS=" "
+    set -- $line
+    cd $gr/$2
+    git ls-files -m | sed -e s,^,$2/,
+done
+
+exit 0

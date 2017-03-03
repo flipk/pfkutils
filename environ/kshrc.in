@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2017-01-22.17:31:46
+#      Last update: 2017-03-03.00:32:05
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -331,70 +331,7 @@ alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
 
-#FUNCTIONS: make_file_part emacsn x xsd xsd2 d sd sd2 xless ediff merge3 merge2 sendtree gettree aesenc aesdec
-
-make_file_part() {
-    typeset try dir_part file_part fp load
-    fp="$1"
-
-    if [[ -L "$fp/.base" ]] ; then
-        dir_part="${fp%/*/*}"
-        load="${fp##$dir_part/}"
-        print $2=\"[$load]\"
-        return
-    fi
-
-    if [[ -f .backpath ]] ; then
-        typeset base
-        base=`awk '/^BASE/ { print $2 }' .backpath`
-        base=`command cd "$base" ; pwd`
-        if [[ -d "$base/load" ]] ; then
-            base="$base/load"
-        fi
-        dir_part="${base%/*/*}"
-        load="${base##$dir_part/}"
-        try="${fp##$base/}"
-        print $2="[$load]:$try"
-        return
-    fi
-
-    case $fp in 
-
-        /usr/vob/*)
-            try=${fp#/usr/vob/}
-            typeset vobname
-            vobname=${try%%/*}
-            try=${try#$vobname/}
-            if [[ "x$CLEARCASE_ROOT" == x ]] ; then
-                print $2="[$vobname]:${try#/}"
-            else
-                print $2="${try#/}"
-            fi
-            ;;
-
-        /view/*/usr/vob/*)
-            typeset viewname
-            try=${fp#/view/}
-            viewname=${try%%/*}
-            try=${fp#/view/*/usr/vob/}
-            vobname=${try%%/*}
-            try=${try#$vobname/}
-            print $2="[$viewname]:${try#/}"
-            ;;
-
-        *)
-            dir_part="${fp%/*/*/*/*/*}"
-            file_part="${fp##$dir_part}"
-            file_part="${file_part#/}"
-            if [[ "x$file_part" = x || "x$dir_part" = x ]] ; then
-                file_part="$PWD"
-            fi
-            print $2=\"$file_part\"
-            ;;
-
-    esac
-
-}
+#FUNCTIONS: emacsn x xsd xsd2 d sd sd2 xless ediff merge3 merge2 sendtree gettree aesenc aesdec
 
 emacsn() {
     if [ $# -lt 1 ] ; then
@@ -888,13 +825,22 @@ if __isksh ; then
         else
             bardisp=""
         fi 
-        eval `make_file_part "$PWD" file_part`
-        if [[ "x$CLEARCASE_ROOT" == x || "x$CLEARCASE_ROOT" == x/view/gsdStart ]] ; then
-            bardisp="$bardisp$file_part"
-        else
+        if [[ "x$CLEARCASE_ROOT" != x ]] ; then
             typeset viewname
             viewname="${CLEARCASE_ROOT#/view/}"
-            bardisp="$bardisp[$viewname]:$file_part"
+            bardisp="$bardisp[$viewname]:"
+        fi
+        eval `git-root -v`
+        if [[ "x$gitroot" != "x" ]] ; then
+            typeset count
+            count=0
+            while [[ $count -lt $gitnummods ]] ; do
+                bardisp="$bardisp{${gitmodname[$count]}:${githead[$count]}}:"
+                count=$(( count + 1 ))
+            done
+            bardisp="$bardisp$gitrelpath"
+        else
+            bardisp="$bardisp${PWD}"
         fi
         if [[ "x$IN_PFKSCRIPT" != x ]] ; then
             bardisp="PFKSCRIPT:$IN_PFKSCRIPT:$bardisp"
@@ -914,7 +860,11 @@ if __isksh ; then
                 xtermbar $bardisp
             fi
         fi
-        CDPATH=.:$ti/src:$cpe/src:$HOME
+        if [[ "x$gitroot" == "x" ]] ; then
+            CDPATH=.:$HOME
+        else
+            CDPATH=.:$gitroot:$HOME
+        fi
         # root can't touch homedir files on nfs shares, don't try.
         if [[ $REALUSER == $USER ]] ; then
             echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
