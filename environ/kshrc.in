@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2017-03-03.00:32:05
+#      Last update: 2017-03-03.15:11:58
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -221,7 +221,11 @@ if __isksh ; then
 #    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
         PROMPT_COLOR_INVERT="[7m"
         PROMPT_COLOR_FG_RED="[31;1m"
+        PROMPT_COLOR_FG_YEL="[33;1m"
+        PROMPT_COLOR_FG_BLU="[34;1m"
         PROMPT_COLOR_BG_RED="[41m"
+        PROMPT_COLOR_BG_YEL="[43m"
+        PROMPT_COLOR_BG_BLU="[44m"
         PROMPT_COLOR_NORMAL="[m"
 #    else
 #        PROMPT_COLOR_INVERT=""
@@ -232,7 +236,7 @@ if __isksh ; then
         typeset _ps
         _ps=''
         if [[ "x$1" != x ]] ; then
-            _ps="${_ps}$PROMPT_COLOR_INVERT$1$PROMPT_COLOR_NORMAL
+            _ps="${_ps}$PROMPT_COLOR_FG_YEL$PROMPT_COLOR_BG_BLU$1$PROMPT_COLOR_NORMAL
 "
         fi
         if [[ $REALUSER == "root" ]] ; then
