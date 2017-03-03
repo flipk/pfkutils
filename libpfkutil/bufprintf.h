@@ -47,7 +47,10 @@ public:
             len = (maxsize-1);
         va_end(ap);
     }
-    void write(int fd) { ::write(fd,buf,len); }
+    void write(int fd) {
+        if (::write(fd,buf,len) < 0)
+            fprintf(stderr, "Bufprintf::write failed\n");
+    }
     char * getBuf(void) { return buf; }
     int getLen(void) { return len; }
     void clear(void) { len = 0; }
