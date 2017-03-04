@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# simple mode:
+#     git root - print the root directory of the current repo,
+#                or print nothing if not in a repo.
+
+# script mode:
+#     git root -v - emit several ksh-style variable assignments
+#                   that a script could use for various purposes.
+#
+#              gitdir="/path/to/.git"
+#              gitsubdir="path to submod within .git or . if not submod"
+#              gitroot="root dir of working tree"
+#              gr="same as $gitroot, just a shorter alias"
+#              gitrelpath="current directory relative to $gitroot"
+#              gitnummods=1  --- count of modname[] and head[] entries
+#              gitmodname[0]="directory name of the working tree root"
+#              githead[0]="branch or commit id for HEAD"
+#              gitmodname[greater than 0]="submod directory name"
+#              githead[greater than 0]="branch or commit for submod HEAD"
+#
+
 rawgitdir=$(git rev-parse --git-dir 2> /dev/null)
 gitdir=$rawgitdir
 vars=0
@@ -7,6 +27,8 @@ vars=0
 if [[ "x$1" == "x-v" ]] ; then
     vars=1
 fi
+
+# if not in a git repo, vars get nulled out.
 
 if [[ "x$gitdir" == "x" ]] ; then
     if [[ $vars == 1 ]] ; then
@@ -20,40 +42,53 @@ if [[ "x$gitdir" == "x" ]] ; then
     exit 0
 fi
 
-if [[ "$gitdir" == ".git" ]] ; then
-    realgitdir="${PWD}/.git"
-elif [[ "$gitdir" == "." ]] ; then
-    realgitdir="${PWD}"
-else
-    realgitdir="$gitdir"
-fi
-gitdir=${realgitdir%/.git*}/.git
-gitroot=${gitdir%/.git}
+# probably don't have a use for these, but just in case,
+# i'll leave these here for future reference.
+# git rev-parse --is-inside-work-tree
+# git rev-parse --is-inside-git-dir
 
+isbare=$(git rev-parse --is-bare-repository 2> /dev/null)
+
+# special case for bare repos; the paths are different.
+if [[ "x$isbare" == xtrue ]] ; then
+    if [[ "$gitdir" == ".git" ]] ; then
+	realgitdir="${PWD}/.git"
+    elif [[ "$gitdir" == "." ]] ; then
+	realgitdir="${PWD}"
+    else
+	realgitdir="$gitdir"
+    fi
+    gitdir=${realgitdir}
+    gitroot=${gitdir%/.git}
+else
+    if [[ "$gitdir" == ".git" ]] ; then
+	realgitdir="${PWD}/.git"
+    elif [[ "$gitdir" == "." ]] ; then
+	realgitdir="${PWD}"
+    else
+	realgitdir="$gitdir"
+    fi
+    gitdir=${realgitdir%/.git*}/.git
+    gitroot=${gitdir%/.git}
+fi
+
+# read "HEAD" and parse a ref name or shortened commit ID from it
 printHEAD() {
     local index
     index=$2
-    if [[ "x$index" == "x" ]] ; then
-	varname=gitmainhead
+    head=$(cat $1/HEAD)
+    IFS="/"
+    set -- $head
+    IFS=" "
+    if [[ "x$1" == "xref: refs" ]] ; then
+	echo githead[$index]=\"$3\"
     else
-	varname=githead[$index]
+	echo githead[$index]=\"${head:0:7}\"
     fi
-    (
-	head=$(cat $1/HEAD)
-	IFS="/"
-	set -- $head
-	IFS=" "
-	if [[ "x$1" == "xref: refs" ]] ; then
-	    echo ${varname}=\"$3\"
-	else
-	    echo ${varname}=\"${head:0:7}\"
-	fi
-    )
 }
 
 if [[ $vars == 1 ]] ; then
-    gittoplevel=$(git rev-parse --show-toplevel 2> /dev/null)
-    gitrelpath=${PWD#${gittoplevel}}
+    gitrelpath=${PWD#${gitroot}}
     if [[ "x$gitrelpath" == "x" ]] ; then
 	gitrelpath=.
     else
