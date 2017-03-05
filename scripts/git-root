@@ -9,15 +9,15 @@
 #                   that a script could use for various purposes.
 #
 #              gitdir="/path/to/.git"
-#              gitsubdir="path to submod within .git or . if not submod"
-#              gitroot="root dir of working tree"
-#              gr="same as $gitroot, just a shorter alias"
-#              gitrelpath="current directory relative to $gitroot"
+#              gr="same as ${gitroot[0]}"
 #              gitnummods=1  --- count of modname[] and head[] entries
-#              gitmodname[0]="directory name of the working tree root"
-#              githead[0]="branch or commit id for HEAD"
-#              gitmodname[greater than 0]="submod directory name"
-#              githead[greater than 0]="branch or commit for submod HEAD"
+#
+#              gitroot[x]="root dir of working tree or submod"
+#              gitsubdir[x]="path to repo or submod repo within .git"
+#              gitmodname[x]="dir name of working tree root or submod"
+#              githead[x]="branch or commit id for HEAD"
+#
+#              gitrelpath="current directory relative to last $gitroot"
 #
 
 rawgitdir=$(git rev-parse --git-dir 2> /dev/null)
@@ -28,16 +28,42 @@ if [[ "x$1" == "x-v" ]] ; then
     vars=1
 fi
 
+if [[ "x$2" == "x-d" ]] ; then
+    dbgy() {
+	echo "$@"
+    }
+    dbgn() {
+	true
+    }
+    realy() {
+	echo "$@"
+    }
+    realn() {
+	true
+    }
+else
+    dbgy() {
+	true
+    }
+    dbgn() {
+	true
+    }
+    realy() {
+	echo "$@"
+    }
+    realn() {
+	echo "$@"
+    }
+fi
+
 # if not in a git repo, vars get nulled out.
 
 if [[ "x$gitdir" == "x" ]] ; then
     if [[ $vars == 1 ]] ; then
-	echo gr=''
-	echo gitdir=''
-	echo gitsubdir=''
-	echo gitroot=''
-	echo gitrelpath=''
-	echo gitnummods=0
+	realn gr=''
+	realn gitdir=''
+	realn gitrelpath=''
+	realn gitnummods=0
     fi
     exit 0
 fi
@@ -58,8 +84,22 @@ if [[ "x$isbare" == xtrue ]] ; then
     else
 	realgitdir="$gitdir"
     fi
-    gitdir=${realgitdir}
-    gitroot=${gitdir%/.git}
+    gitdir="${realgitdir}"
+    gitroot[0]="${gitdir%/.git}"
+    gitrelpath="${PWD#$gitdir}"
+    gitrelpath="${gitrelpath#/}"
+    if [[ "x$gitrelpath" == "x" ]] ; then
+	gitrelpath=.
+    fi
+    realn gr=\"${gitroot[0]}\"
+    realn gitdir=\"${gitdir}\"
+    realn gitroot[0]=\"${gitroot[0]}\"
+    realn gitmodname[0]=\"${gitroot[0]##*/}\"
+    realn githead[0]=n/a
+    realn gitsubdir[0]=.
+    realn gitrelpath=\"${gitrelpath}\"
+    realn gitnummods=1
+    exit 0
 else
     if [[ "$gitdir" == ".git" ]] ; then
 	realgitdir="${PWD}/.git"
@@ -68,67 +108,134 @@ else
     else
 	realgitdir="$gitdir"
     fi
-    gitdir=${realgitdir%/.git*}/.git
-    gitroot=${gitdir%/.git}
+    gitdir="${realgitdir%/.git*}/.git"
+    gitroot[0]="${gitdir%/.git}"
 fi
+
+gr="${gitroot[0]}"
+
+gitrootrelpath=".${PWD#$gr}"
+gitrootrelpath="${gitrootrelpath#./}"
+dbgn gitrootrelpath = $gitrootrelpath
+
+if [[ "${gitrootrelpath}" != "${gitrootrelpath#.git}" ]] ; then
+    insidedotgit=1
+else
+    insidedotgit=0
+fi
+
+isrepo() {
+    if [[ ! -d "$1" ]] ; then
+	return 1 # false
+    elif [[ ! -f "$1/HEAD" ]] ; then
+	return 1 # false
+    elif [[ ! -f "$1/config" ]] ; then
+	return 1 # false
+    elif [[ ! -d "$1/refs" ]] ; then
+	return 1 # false
+    fi
+    return 0 # true
+}
 
 # read "HEAD" and parse a ref name or shortened commit ID from it
 printHEAD() {
     local index
     index=$2
-    head=$(cat $1/HEAD)
+    head=$(cat "$1/HEAD" 2> /dev/null)
     IFS="/"
     set -- $head
     IFS=" "
+    headinfo=
     if [[ "x$1" == "xref: refs" ]] ; then
-	echo githead[$index]=\"$3\"
+	headinfo="$3"
     else
-	echo githead[$index]=\"${head:0:7}\"
+	headinfo="${head:0:7}"
     fi
+    realn githead[$index]=\"$headinfo\"
 }
 
-if [[ $vars == 1 ]] ; then
-    gitrelpath=${PWD#${gitroot}}
-    if [[ "x$gitrelpath" == "x" ]] ; then
-	gitrelpath=.
-    else
-	gitrelpath=${gitrelpath#/}
-    fi
+dbgn realgitdir = $realgitdir
 
-    gitsubdir=${realgitdir#$gitdir}
-    gitsubdir=${gitsubdir#/}
+if [[ $vars == 1 ]] ; then
+
+    gitsubdir=".${realgitdir#$gitdir}"
+    gitsubdir="${gitsubdir#/}"
     if [[ "x$gitsubdir" == "x" ]] ; then
 	gitsubdir=.
     fi
 
-    echo gitdir=\"$gitdir\"
-    echo gitsubdir=\"$gitsubdir\"
-    echo gitroot=\"$gitroot\"
-    echo gr=\"$gitroot\"
-    echo gitrelpath=\"$gitrelpath\"
+    realn gitdir=\"$gitdir\"
+    realn gr=\"$gr\"
 
     IFS="/"
     gitsubdircomponents=($gitsubdir)
     IFS=" "
     numcomponents=${#gitsubdircomponents[@]}
-    count=1
+    count=0
     index=0
-    headpath=$gitdir
-    topmodname=${gitdir%/.git}
-    topmodname=${topmodname##*/}
-    echo gitmodname[$index]=\"$topmodname\"
-    printHEAD $headpath $index
-    index=$(( index + 1 ))
-
+    gitsubdir=""
     while [[ $count -lt $numcomponents ]] ; do
-	submodname="${gitsubdircomponents[$count]}"
-	echo gitmodname[$index]=\"${submodname}\"
-	headpath=$headpath/modules/$submodname
-	printHEAD $headpath $index
-	count=$(( count + 2 ))
-	index=$(( index + 1 ))
+
+	repocomponent="${gitsubdircomponents[$count]}"
+
+	if [[ "x$gitsubdir" == "x" ]] ; then
+	    gitsubdir="$repocomponent"
+	else
+	    gitsubdir="$gitsubdir/$repocomponent"
+	fi
+
+	if isrepo "$gitdir/$gitsubdir" ; then
+	    realn gitsubdir[$index]=\"$gitsubdir\"
+	    if [[ $insidedotgit == 1 ]] ; then
+		realn gitroot[$index]=\"$gr\"
+	    fi
+	    modname="${gitsubdir##*/}"
+	    if [[ "$modname" == "." ]] ; then
+		modname="${gr##*/}"
+	    fi
+	    realn gitmodname[$index]=\"$modname\"
+	    printHEAD "$gitdir/$gitsubdir" $index
+	    index=$(( index + 1 ))
+	fi
+
+	count=$(( count + 1 ))
+
     done
-    echo gitnummods=$index
+
+    if [[ $insidedotgit == 0 ]] ; then
+	fullpath="${PWD}"
+	count=$(( index - 1 ))
+	done=0
+	while [[ $done == 0 && "x$fullpath" != "x" ]] ; do
+	    if [[ -f "$fullpath/.git" ]] ; then
+		gitroot[$count]="${fullpath}"
+		realy gitroot[$count]=\"${fullpath}\"
+		count=$(( count - 1 ))
+	    elif [[ -d "$fullpath/.git" ]] ; then
+		gitroot[$count]="${fullpath}"
+		realy gitroot[$count]=\"${fullpath}\"
+		count=$(( count - 1 ))
+		done=1
+	    fi
+	    fullpath="${fullpath%/*}"
+	done
+
+	lastindex=$(( index - 1 ))
+	gitrelpath="${PWD#${gitroot[$lastindex]}}"
+
+    else
+
+	gitrelpath="${PWD#${gr}}"
+
+    fi
+
+    gitrelpath="${gitrelpath#/}"
+    if [[ "x$gitrelpath" == "x" ]] ; then
+	gitrelpath=.
+    fi
+    realy gitrelpath=\"$gitrelpath\"
+
+    realy gitnummods=$index
 else
     echo $gitroot
 fi

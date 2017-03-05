@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2017-03-03.15:11:58
+#      Last update: 2017-03-04.19:34:48
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -835,7 +835,7 @@ if __isksh ; then
             bardisp="$bardisp[$viewname]:"
         fi
         eval `git-root -v`
-        if [[ "x$gitroot" != "x" ]] ; then
+        if [[ "x$gr" != "x" ]] ; then
             typeset count
             count=0
             while [[ $count -lt $gitnummods ]] ; do
