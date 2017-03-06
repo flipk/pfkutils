@@ -44,23 +44,7 @@ to delete a branch on a remote repo:
 
 git push origin --delete pfk-1_3_7
 
-git config --global alias.unstage "reset HEAD --"
-git config --global alias.co  checkout
-git config --global alias.cob 'checkout -b'
-git config --global alias.b branch
-git config --global alias.ci commit
-git config --global alias.s status
-git config --global alias.last 'log -1 HEAD'
-git config --global alias.l  'log         --oneline --decorate --all'
-git config --global alias.lg 'log --graph --oneline --decorate --all'
-git config --global alias.lf 'log --decorate --all --numstat --pretty=format:"%C(yellow)%h%Cred%d %Creset%s %C(bold blue)<%cn>%Creset"'
-git config --global alias.k '!gitk --all &'
-# list branches sorted by last modified
-git config --global alias.b "!git for-each-ref --sort='-authordate' --format='%(authordate)%09%(objectname:short)%09%(refname)' refs/heads | sed -e 's-refs/heads/--'"
-# list aliases
-git config --global  alias.la "!git config -l | grep alias | cut -c 7-"
-git config --global  diff.tool meld
-git config --global merge.tool meld
+see environ/dot-gitconfig for stuff to put in ~/.gitconfig
 
 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
 git://git.denx.de/u-boot.git

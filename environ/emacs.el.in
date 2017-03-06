@@ -31,6 +31,17 @@
  '(file-precious-flag t)
  '(frame-title-format (list "emacs" (getenv "EMACS_NUMBER") "%*%b %m") t)
  '(global-semantic-stickyfunc-mode t)
+ '(ibuffer-formats
+   (quote
+    ((mark modified read-only " "
+	   (name 47 47 :left :elide)
+	   " "
+	   (size 9 -1 :right)
+	   " "
+	   (mode 16 16 :left :elide))
+     (mark " "
+	   (name 16 -1)
+	   " " filename))))
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
  '(inhibit-startup-screen t)

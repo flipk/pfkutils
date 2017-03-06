@@ -1,6 +1,5 @@
 #!/bin/sh
 
-width=`stty size | awk '{print $2}'`
-diff -btyW $width $2 $5 | fmtsdiff $width | less '+/%[<>|]%'
+pfkterm -g 190x50+25+20 -e $SHELL -c "sd2 $2 $5"
 
 exit 0

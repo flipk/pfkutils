@@ -3,6 +3,8 @@
 [gui]
 	fontui = -family \"Source Code Pro\" -size 8 -weight normal -slant roman -underline 0 -overstrike 0
 	fontdiff = -family \"Source Code Pro\" -size 8 -weight normal -slant roman -underline 0 -overstrike 0
+	wmstate = normal
+	geometry = 912x772+34+35 329 391
 [alias]
 	unstage = reset HEAD --
 	co = checkout
@@ -15,7 +17,12 @@
 	sub = submodule
 	subfe = submodule foreach
 	ssub = !git submodule foreach git status
+	la = !git config -l | grep alias | cut -c 7-
+	dt = difftool
+	dtc = difftool --cached
 [diff]
 	tool = meld
 [merge]
 	tool = meld
+[difftool]
+	prompt = no
