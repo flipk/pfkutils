@@ -42,6 +42,7 @@ For more information, please refer to <http://unlicense.org>
 #include <errno.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
@@ -106,7 +107,7 @@ struct pfk_timeval : public timeval
         if (format == NULL)
             format = "%Y-%m-%d %H:%M:%S";
         time_t seconds = tv_sec;
-        struct tm t;
+        tm t;
         localtime_r(&seconds, &t);
         char ymdhms[128], ms[12];
         strftime(ymdhms,sizeof(ymdhms),format,&t);
@@ -213,7 +214,7 @@ struct pfk_timespec : public timespec
         if (format == NULL)
             format = "%Y-%m-%d %H:%M:%S";
         time_t seconds = tv_sec;
-        struct tm t;
+        tm t;
         localtime_r(&seconds, &t);
         char ymdhms[128], ns[12];
         strftime(ymdhms,sizeof(ymdhms),format,&t);
@@ -424,7 +425,7 @@ public:
         lock.unlock();
         cond.signal();
     }
-    bool take(struct timespec *expire = NULL) {
+    bool take(timespec *expire = NULL) {
         pfk_pthread_mutex_lock lock(mut);
         while (value <= 0) {
             if (cond.wait(mut(), expire) < 0)
@@ -700,12 +701,12 @@ class pfk_unix_dgram_socket {
             std::cerr << "socket: " << strerror(e) << std::endl;
             return false;
         }
-        struct sockaddr_un sa;
+        sockaddr_un sa;
         sa.sun_family = AF_UNIX;
         int len = sizeof(sa.sun_path)-1;
         strncpy(sa.sun_path, path.c_str(), len);
         sa.sun_path[len] = 0;
-        if (::bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
+        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
         {
             int e = errno;
             std::cerr << "bind dgram: " << strerror(e) << std::endl;
@@ -732,17 +733,25 @@ public:
         path = _path;
         return init_common(false);
     }
+    void close(void) {
+        if (fd > 0)
+        {
+            ::close(fd);
+            (void) unlink( path.c_str() );
+        }
+        fd = -1;
+    }
     static const int MAX_MSG_LEN = 16384;
-    const std::string &getPath(void) { return path; }
-    int getFd(void) { return fd; }
+    const std::string &getPath(void) const { return path; }
+    int getFd(void) const { return fd; }
     // next 3 are for connected-mode sockets
     void connect(const std::string &remote_path) {
-        struct sockaddr_un addr;
+        sockaddr_un addr;
         addr.sun_family = AF_UNIX;
         int len = sizeof(addr.sun_path)-1;
         strncpy(addr.sun_path, remote_path.c_str(), len);
         addr.sun_path[len] = 0;
-        if (::connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if (::connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
         {
             int e = errno;
             std::cerr << "connect: " << e << ": " << strerror(e) << std::endl;
@@ -766,7 +775,8 @@ public:
     }
     bool recv(std::string &msg) {
         msg.resize(MAX_MSG_LEN);
-        ssize_t msglen = ::recv(fd, (void*) msg.c_str(), MAX_MSG_LEN, /*flags*/0);
+        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+                                MAX_MSG_LEN, /*flags*/0);
         if (msglen <= 0)
         {
             int e = errno;
@@ -786,13 +796,13 @@ public:
                  << MAX_MSG_LEN << std::endl;
             return false;
         }
-        struct sockaddr_un sa;
+        sockaddr_un sa;
         sa.sun_family = AF_UNIX;
         int len = sizeof(sa.sun_path)-1;
         strncpy(sa.sun_path, remote_path.c_str(), len);
         sa.sun_path[len] = 0;
         if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
-                     (struct sockaddr *)&sa, sizeof(sa)) < 0)
+                     (sockaddr *)&sa, sizeof(sa)) < 0)
         {
             int e = errno;
             std::cerr << "sendto: " << e << ": " << strerror(e) << std::endl;
@@ -802,10 +812,10 @@ public:
     }
     bool recv(      std::string &msg,       std::string &remote_path) {
         msg.resize(MAX_MSG_LEN);
-        struct sockaddr_un sa;
+        sockaddr_un sa;
         socklen_t salen = sizeof(sa);
         ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
-                                    /*flags*/0, (struct sockaddr *)&sa, &salen);
+                                    /*flags*/0, (sockaddr *)&sa, &salen);
         if (msglen <= 0)
         {
             int e = errno;
@@ -818,5 +828,248 @@ public:
         return true;
     }
 };
+
+class pfk_udp_socket {
+    int fd;
+public:
+    pfk_udp_socket(void) {
+        fd = -1;
+    }
+    ~pfk_udp_socket(void) {
+        if (fd > 0)
+            ::close(fd);
+    }
+    static const int MAX_MSG_LEN = 16384;
+    int getFd(void) const { return fd; }
+    bool init(void) {
+        return init(-1);
+    }
+    bool init(int port) {
+        fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+        if (fd < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "socket: %d: %s\n", e, strerror(e));
+            return false;
+        }
+        if (port == -1)
+            // no bind needed
+            return true;
+        sockaddr_in sa;
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons((short)port);
+        sa.sin_addr.s_addr = INADDR_ANY;
+        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "bind: %d: %s\n", e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    // next 4 are for connected-mode sockets
+    bool connect(uint32_t addr, short port) {
+        sockaddr_in sa;
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(port);
+        sa.sin_addr.s_addr = htonl(addr);
+        return connect(sa);
+    }
+    bool connect(const sockaddr_in &sa) {
+        if (::connect(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "connect: %d: %s\n", e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    bool send(const std::string &msg) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            std::cerr << "ERROR unix_dgram_socket send msg size of "
+                 << msg.size() << " is greater than max "
+                 << MAX_MSG_LEN << std::endl;
+            return false;
+        }
+        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        {
+            int e = errno;
+            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    bool recv(std::string &msg) {
+        msg.resize(MAX_MSG_LEN);
+        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+                                MAX_MSG_LEN, /*flags*/0);
+        if (msglen <= 0)
+        {
+            int e = errno;
+            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+            msg.resize(0);
+            return false;
+        }
+        msg.resize(msglen);
+        return true;
+    }
+    // next 2 are for promiscuous datagram sockets
+    bool send(const std::string &msg, const sockaddr_in &sa) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            std::cerr << "ERROR unix_dgram_socket send msg size of "
+                 << msg.size() << " is greater than max "
+                 << MAX_MSG_LEN << std::endl;
+            return false;
+        }
+        if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
+                     (sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            std::cerr << "sendto: " << e << ": " << strerror(e) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    bool recv(std::string &msg, sockaddr_in &sa) {
+        msg.resize(MAX_MSG_LEN);
+        socklen_t salen = sizeof(sa);
+        ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
+                                    /*flags*/0, (sockaddr *)&sa, &salen);
+        if (msglen <= 0)
+        {
+            int e = errno;
+            std::cerr << "recvfrom: " << e << ": " << strerror(e) << std::endl;
+            msg.resize(0);
+            return false;
+        }
+        msg.resize(msglen);
+        return true;
+    }
+};
+
+template <int protocolNumber>
+class _pfk_stream_socket {
+    int fd;
+    sockaddr_in sa;
+    _pfk_stream_socket(int _fd, const sockaddr_in &_sa) {
+        fd = _fd;
+        sa = _sa;
+    }
+public:
+    _pfk_stream_socket(void) {
+        fd = -1;
+    }
+    ~_pfk_stream_socket(void) {
+        if (fd > 0)
+            ::close(fd);
+    }
+    int getFd(void) const { return fd; }
+    void close(void) {
+        if (fd > 0)
+            ::close(fd);
+        fd = -1;
+    }
+    static const int MAX_MSG_LEN = 16384;
+    // next 2 methods for connecting socket (calling out)
+    bool init(void) {
+        fd = ::socket(PF_INET, SOCK_STREAM, protocolNumber);
+        if (fd < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "pfk_sctp_stream_socket: init: %d: %s\n",
+                    e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    bool connect(uint32_t addr, short port) {
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(port);
+        sa.sin_addr.s_addr = htonl(addr);
+        if (::connect(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "pfk_sctp_stream_socket: connect: %d: %s\n",
+                    e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    // next 4 methods are for listening socket (waiting for call in)
+    bool init(uint32_t addr, short port) {
+        if (init() == false)
+            return false;
+        sa.sin_family = AF_INET;
+        sa.sin_port = htons(port);
+        sa.sin_addr.s_addr = htonl(addr);
+        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "pfk_sctp_stream_socket: bind: %d: %s\n",
+                    e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    bool init(short port) {
+        return init(INADDR_ANY,port);
+    }
+    void listen(void) {
+        (void) ::listen(fd, 1);
+    }
+    // this one returns a connected socket
+    _pfk_stream_socket *accept(void) {
+        socklen_t sz = sizeof(sa);
+        int fdnew = ::accept(fd, (sockaddr *)&sa, &sz);
+        if (fdnew < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "pfk_sctp_stream_socket: accept: %d: %s\n",
+                    e, strerror(e));
+            return NULL;
+        }
+        _pfk_stream_socket *s = new _pfk_stream_socket(fdnew,sa);
+        if (s)
+            return s;
+        ::close(fdnew);
+        return NULL;
+    }
+    // next 2 methods are for connected sockets
+    bool send(const std::string &msg) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            std::cerr << "ERROR send msg size of "
+                      << msg.size() << " is greater than max "
+                      << MAX_MSG_LEN << std::endl;
+            return false;
+        }
+        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        {
+            int e = errno;
+            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+            return false;
+        }
+        return true;
+    }
+    bool recv(std::string &msg) {
+        msg.resize(MAX_MSG_LEN);
+        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+                                MAX_MSG_LEN, /*flags*/0);
+        if (msglen <= 0)
+        {
+            int e = errno;
+            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+            msg.resize(0);
+            return false;
+        }
+        msg.resize(msglen);
+        return true;
+    }
+};
+
+typedef _pfk_stream_socket<IPPROTO_SCTP> pfk_sctp_stream_socket;
+typedef _pfk_stream_socket<0> pfk_tcp_stream_socket;
 
 #endif /* __pfkposix_h__ */
