@@ -26,9 +26,10 @@ PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=0
 
 KSHRC_LOCAL = kshrc.local.mot
-PROTOC_PATH = PROTOBUF_VERS=2.5.0 /projects/atd_src/tools/bin/protoc.sh
-PROTOBUF_INC = -I/projects/atd_src/tools/protobuf/2.5.0/rhel_5_4/include
-PROTOBUF_LIB = -L/projects/atd_src/tools/protobuf/2.5.0/rhel_5_4/lib -lprotobuf
+PROTOC_PATH = /shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/bin/protoc
+PROTOBUF_INC = -I/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/include
+PROTOBUF_LIB = -L/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/lib -lprotobuf
+
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
 PFK_CONFIG_HAVE_NCURSES_H= 0
