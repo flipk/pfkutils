@@ -385,6 +385,13 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (require 'magit)
 (require 'git-gutter)
 
+(defun isearch-or-swiper ()
+  "calls either isearch-foward or swiper based on size of buffer"
+  (interactive)
+  (if (> (buffer-size) 250000)
+     (isearch-forward)
+   (swiper)))
+
 (cscope-setup)
 ;not sure these ever worked
 ;(global-set-key [f35] 'scroll-up)
@@ -392,7 +399,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 ;(global-set-key [f27] 'beginning-of-buffer)
 ;(global-set-key [f33] 'end-of-buffer)
 (global-set-key (kbd "C-x C-b") 'ibuffer)
-(global-set-key "\C-s" 'swiper)
+(global-set-key (kbd "C-s") 'isearch-or-swiper)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
 (global-set-key (kbd "M-x") 'counsel-M-x)
 (global-set-key (kbd "M-y") 'counsel-yank-pop)
