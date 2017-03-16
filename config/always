@@ -175,7 +175,8 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/msgr.h libpfkutil/pfkposix.h libpfkutil/md5.h \
 	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
 	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
-	libpfkutil/sha256.h libpfkutil/aes.h
+	libpfkutil/sha256.h libpfkutil/aes.h libpfkutil/dll3.tcc \
+	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -781,6 +782,7 @@ ifeq ($(PFK_BUILD_sudo),1)
 	@echo ""
 endif
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
+	$(Q)cp Makefile.inc $(prefix)
 
 ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
 # note cygwin doesn't support this, so it is disabled on cygwin.
