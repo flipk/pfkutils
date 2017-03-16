@@ -647,13 +647,16 @@ public:
         d = NULL;
     }
     ~pfk_readdir(void) {
-        if (d != NULL)
+        close();
+    }
+    void close(void) {
+        if (d)
             ::closedir(d);
+        d = NULL;
     }
     bool open(const std::string &dirstr) { return open(dirstr.c_str()); }
     bool open(const char *dirname) {
-        if (d)
-            ::closedir(d);
+        close();
         d = ::opendir(dirname);
         if (d == NULL)
             return false;
