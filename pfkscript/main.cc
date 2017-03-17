@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org>
 #include "options.h"
 #include "logfile.h"
 #include "bufprintf.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 #include "libpfkscriptutil.h"
 
 #include <stdio.h>
@@ -53,10 +53,10 @@ class Pfkscript_program {
     int listenPortFd;
     int listenDataPortFd;
     bool use_ctrl_sock;
-    pfk_unix_dgram_socket control_sock;
+    pxfe_unix_dgram_socket control_sock;
     struct termios old_tios;
     bool sttyWasRun;
-    pfk_ticker ticker;
+    pxfe_ticker ticker;
     int master_fd;
     pid_t child_pid;
     struct remoteResponseInfo {
@@ -511,7 +511,7 @@ public:
         // parent
         close(slave_fd);
 
-        pfk_select  sel;
+        pxfe_select  sel;
         bool done = false;
 
         fcntl(master_fd, F_SETFL, 

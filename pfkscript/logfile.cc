@@ -46,7 +46,7 @@ For more information, please refer to <http://unlicense.org>
 #include <iomanip>
 #include <algorithm>
 
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 using namespace std;
 
@@ -214,7 +214,7 @@ LogFile::logFileEnt::sortTimestamp(const logFileEnt &a,
 void
 LogFile :: globLogFiles(LogFile::LfeList &list)
 {
-    pfk_readdir  d;
+    pxfe_readdir  d;
     size_t baselen = logFilebase.length();
     if (d.open(logDir.c_str()))
     {

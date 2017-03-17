@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org>
 #include "screen.h"
 #include "options.h"
 #include "pidlist.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 using namespace pfktop;
 using namespace std;
@@ -45,8 +45,8 @@ pfktop_main(int argc, char ** argv)
 
     Screen screen;
     PidList  list(opts, screen);
-    pfk_select sel;
-    pfk_ticker  ticker;
+    pxfe_select sel;
+    pxfe_ticker  ticker;
 
     bool done = false;
 

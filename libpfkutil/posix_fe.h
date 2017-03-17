@@ -26,8 +26,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
-#ifndef __pfkposix_h__
-#define __pfkposix_h__
+#ifndef __posix_fe_h__
+#define __posix_fe_h__
 
 #include <pthread.h>
 #include <sys/select.h>
@@ -48,25 +48,25 @@ For more information, please refer to <http://unlicense.org>
 #include <sstream>
 #include <string>
 
-struct pfk_timeval : public timeval
+struct pxfe_timeval : public timeval
 {
-    pfk_timeval(void) { tv_sec = 0; tv_usec = 0; }
-    pfk_timeval(time_t s, long u) { set(s,u); }
-    pfk_timeval(const pfk_timeval &other) {
+    pxfe_timeval(void) { tv_sec = 0; tv_usec = 0; }
+    pxfe_timeval(time_t s, long u) { set(s,u); }
+    pxfe_timeval(const pxfe_timeval &other) {
         tv_sec = other.tv_sec;  tv_usec = other.tv_usec;
     }
     void set(time_t s, long u) { tv_sec = s; tv_usec = u; }
-    const pfk_timeval& operator=(const timeval &rhs) {
+    const pxfe_timeval& operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
         tv_usec = rhs.tv_usec;
         return *this;
     }
-    const pfk_timeval& operator=(const timespec &rhs) {
+    const pxfe_timeval& operator=(const timespec &rhs) {
         tv_sec = rhs.tv_sec;
         tv_usec = rhs.tv_nsec / 1000;
         return *this;
     }
-    const pfk_timeval& operator-=(const pfk_timeval &rhs) {
+    const pxfe_timeval& operator-=(const pxfe_timeval &rhs) {
         bool borrow = false;
         if (rhs.tv_usec > tv_usec)
             borrow = true;
@@ -79,7 +79,7 @@ struct pfk_timeval : public timeval
         }
         return *this;
     }
-    const pfk_timeval& operator+=(const pfk_timeval &rhs) {
+    const pxfe_timeval& operator+=(const pxfe_timeval &rhs) {
         tv_sec += rhs.tv_sec;
         tv_usec += rhs.tv_usec;
         if (tv_usec > 1000000)
@@ -89,17 +89,17 @@ struct pfk_timeval : public timeval
         }
         return *this;
     }
-    const bool operator==(const pfk_timeval &other) {
+    const bool operator==(const pxfe_timeval &other) {
         if (tv_sec != other.tv_sec)
             return false;
         if (tv_usec != other.tv_usec)
             return false;
         return true;
     }
-    const bool operator!=(const pfk_timeval &other) {
+    const bool operator!=(const pxfe_timeval &other) {
         return !operator==(other);
     }
-    const pfk_timeval &getNow(void) {
+    const pxfe_timeval &getNow(void) {
         gettimeofday(this, NULL);
         return *this;
     }
@@ -128,27 +128,27 @@ struct pfk_timeval : public timeval
     timeval *operator()(void) { return this; }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
-                                       const pfk_timeval &rhs)
+                                       const pxfe_timeval &rhs)
 {
-    ostr << "pfk_timeval(" << rhs.tv_sec << "," << rhs.tv_usec << ")";
+    ostr << "pxfe_timeval(" << rhs.tv_sec << "," << rhs.tv_usec << ")";
     return ostr;
 }
-static inline pfk_timeval operator-(const pfk_timeval &lhs,
-                                    const pfk_timeval &rhs) {
-    return pfk_timeval(lhs).operator-=(rhs);
+static inline pxfe_timeval operator-(const pxfe_timeval &lhs,
+                                    const pxfe_timeval &rhs) {
+    return pxfe_timeval(lhs).operator-=(rhs);
 }
-static inline pfk_timeval operator+(const pfk_timeval &lhs,
-                                    const pfk_timeval &rhs) {
-    return pfk_timeval(lhs).operator+=(rhs);
+static inline pxfe_timeval operator+(const pxfe_timeval &lhs,
+                                    const pxfe_timeval &rhs) {
+    return pxfe_timeval(lhs).operator+=(rhs);
 }
-static inline bool operator>(const pfk_timeval &lhs, const pfk_timeval &other) {
+static inline bool operator>(const pxfe_timeval &lhs, const pxfe_timeval &other) {
    if (lhs.tv_sec > other.tv_sec) 
       return true;
    if (lhs.tv_sec < other.tv_sec) 
       return false;
    return lhs.tv_usec > other.tv_usec;
 }
-static inline bool operator<(const pfk_timeval &lhs, const pfk_timeval &other) {
+static inline bool operator<(const pxfe_timeval &lhs, const pxfe_timeval &other) {
    if (lhs.tv_sec < other.tv_sec) 
       return true;
    if (lhs.tv_sec > other.tv_sec) 
@@ -156,25 +156,25 @@ static inline bool operator<(const pfk_timeval &lhs, const pfk_timeval &other) {
    return lhs.tv_usec < other.tv_usec;
 }
 
-struct pfk_timespec : public timespec
+struct pxfe_timespec : public timespec
 {
-    pfk_timespec(void) { tv_sec = 0; tv_nsec = 0; }
-    pfk_timespec(time_t s, long n) { set(s,n); }
-    pfk_timespec(const pfk_timespec &other) {
+    pxfe_timespec(void) { tv_sec = 0; tv_nsec = 0; }
+    pxfe_timespec(time_t s, long n) { set(s,n); }
+    pxfe_timespec(const pxfe_timespec &other) {
         tv_sec = other.tv_sec; tv_nsec = other.tv_nsec;
     }
     void set(time_t s, long n) { tv_sec = s; tv_nsec = n; }
-    const pfk_timespec &operator=(const pfk_timespec &rhs) {
+    const pxfe_timespec &operator=(const pxfe_timespec &rhs) {
         tv_sec = rhs.tv_sec;
         tv_nsec = rhs.tv_nsec;
         return *this;
     }
-    const pfk_timespec &operator=(const timeval &rhs) {
+    const pxfe_timespec &operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
         tv_nsec = rhs.tv_usec * 1000;
         return *this;
     }
-    const pfk_timespec &operator-=(const pfk_timespec &rhs) {
+    const pxfe_timespec &operator-=(const pxfe_timespec &rhs) {
         bool borrow = false;
         if (rhs.tv_nsec > tv_nsec)
             borrow = true;
@@ -187,7 +187,7 @@ struct pfk_timespec : public timespec
         }
         return *this;
     }
-    const pfk_timespec &operator+=(const pfk_timespec &rhs) {
+    const pxfe_timespec &operator+=(const pxfe_timespec &rhs) {
         tv_sec += rhs.tv_sec;
         tv_nsec += rhs.tv_nsec;
         if (tv_nsec > 1000000000)
@@ -197,17 +197,17 @@ struct pfk_timespec : public timespec
         }
         return *this;
     }
-    const bool operator==(const pfk_timespec &rhs) {
+    const bool operator==(const pxfe_timespec &rhs) {
         return (tv_sec == rhs.tv_sec) && (tv_nsec == rhs.tv_nsec);
     }
-    const bool operator!=(const pfk_timespec &rhs) {
+    const bool operator!=(const pxfe_timespec &rhs) {
         return !operator==(rhs);
     }
-    const pfk_timespec &getNow(clockid_t clk_id = CLOCK_REALTIME) {
+    const pxfe_timespec &getNow(clockid_t clk_id = CLOCK_REALTIME) {
         clock_gettime(clk_id, this);
         return *this;
     }
-    const pfk_timespec &getMonotonic(void) {
+    const pxfe_timespec &getMonotonic(void) {
         return getNow(CLOCK_MONOTONIC);
     }
     const std::string Format(const char *format = NULL) {
@@ -235,29 +235,29 @@ struct pfk_timespec : public timespec
     timespec *operator()(void) { return this; }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
-                                       const pfk_timespec &rhs)
+                                       const pxfe_timespec &rhs)
 {
-    ostr << "pfk_timespec(" << rhs.tv_sec << "," << rhs.tv_nsec << ")";
+    ostr << "pxfe_timespec(" << rhs.tv_sec << "," << rhs.tv_nsec << ")";
     return ostr;
 }
-static inline pfk_timespec operator-(const pfk_timespec &lhs,
-                                     const pfk_timespec &rhs) {
-   return pfk_timespec(lhs).operator-=(rhs);
+static inline pxfe_timespec operator-(const pxfe_timespec &lhs,
+                                     const pxfe_timespec &rhs) {
+   return pxfe_timespec(lhs).operator-=(rhs);
 }
-static inline pfk_timespec operator+(const pfk_timespec &lhs,
-                                     const pfk_timespec &rhs) {
-   return pfk_timespec(lhs).operator+=(rhs);
+static inline pxfe_timespec operator+(const pxfe_timespec &lhs,
+                                     const pxfe_timespec &rhs) {
+   return pxfe_timespec(lhs).operator+=(rhs);
 }
-static inline bool operator>(const pfk_timespec &lhs,
-                             const pfk_timespec &other) {
+static inline bool operator>(const pxfe_timespec &lhs,
+                             const pxfe_timespec &other) {
    if (lhs.tv_sec > other.tv_sec) 
       return true;
    if (lhs.tv_sec < other.tv_sec) 
       return false;
    return lhs.tv_nsec > other.tv_nsec;
 }
-static inline bool operator<(const pfk_timespec &lhs,
-                             const pfk_timespec &other) {
+static inline bool operator<(const pxfe_timespec &lhs,
+                             const pxfe_timespec &other) {
    if (lhs.tv_sec < other.tv_sec) 
       return true;
    if (lhs.tv_sec > other.tv_sec) 
@@ -265,13 +265,13 @@ static inline bool operator<(const pfk_timespec &lhs,
    return lhs.tv_nsec < other.tv_nsec;
 }
 
-class pfk_pthread_mutexattr {
+class pxfe_pthread_mutexattr {
     pthread_mutexattr_t  attr;
 public:
-    pfk_pthread_mutexattr(void) {
+    pxfe_pthread_mutexattr(void) {
         pthread_mutexattr_init(&attr);
     }
-    ~pfk_pthread_mutexattr(void) {
+    ~pxfe_pthread_mutexattr(void) {
         pthread_mutexattr_destroy(&attr);
     }
     pthread_mutexattr_t *operator()(void) { return &attr; }
@@ -301,15 +301,15 @@ public:
     // pthread_mutexattr_setprioceiling
 };
 
-class pfk_pthread_mutex {
+class pxfe_pthread_mutex {
     pthread_mutex_t  mutex;
     bool initialized;
 public:
-    pfk_pthread_mutexattr attr;
-    pfk_pthread_mutex(void) {
+    pxfe_pthread_mutexattr attr;
+    pxfe_pthread_mutex(void) {
         initialized = false;
     }
-    ~pfk_pthread_mutex(void) {
+    ~pxfe_pthread_mutex(void) {
         if (initialized)
             pthread_mutex_destroy(&mutex);
     }
@@ -325,18 +325,18 @@ public:
     void unlock(void) { pthread_mutex_unlock(&mutex); }
 };
 
-class pfk_pthread_mutex_lock {
-    pfk_pthread_mutex &mut;
+class pxfe_pthread_mutex_lock {
+    pxfe_pthread_mutex &mut;
     bool locked;
 public:
-     pfk_pthread_mutex_lock(pfk_pthread_mutex &_mut, bool dolock=true)
+     pxfe_pthread_mutex_lock(pxfe_pthread_mutex &_mut, bool dolock=true)
         : mut(_mut), locked(false) {
         if (dolock) {
             mut.lock();
             locked = true;
         }
     }
-    ~pfk_pthread_mutex_lock(void) {
+    ~pxfe_pthread_mutex_lock(void) {
         if (locked) {
             mut.unlock();
         }
@@ -357,13 +357,13 @@ public:
     }
 };
 
-class pfk_pthread_condattr {
+class pxfe_pthread_condattr {
     pthread_condattr_t attr;
 public:
-    pfk_pthread_condattr(void) {
+    pxfe_pthread_condattr(void) {
         pthread_condattr_init(&attr);
     }
-    ~pfk_pthread_condattr(void) {
+    ~pxfe_pthread_condattr(void) {
         pthread_condattr_destroy(&attr);
     }
     const pthread_condattr_t *operator()(void) { return &attr; }
@@ -376,15 +376,15 @@ public:
     }
 };
 
-class pfk_pthread_cond {
+class pxfe_pthread_cond {
     pthread_cond_t  cond;
     bool initialized;
 public:
-    pfk_pthread_condattr attr;
-    pfk_pthread_cond(void) {
+    pxfe_pthread_condattr attr;
+    pxfe_pthread_cond(void) {
         initialized = false;
     }
-    ~pfk_pthread_cond(void) {
+    ~pxfe_pthread_cond(void) {
         if (initialized)
             pthread_cond_destroy(&cond);
     }
@@ -409,24 +409,24 @@ public:
 };
 
 // classical counting semaphore like P and V from school.
-class pfk_semaphore {
-    pfk_pthread_cond cond;
-    pfk_pthread_mutex mut;
+class pxfe_semaphore {
+    pxfe_pthread_cond cond;
+    pxfe_pthread_mutex mut;
     int value;
 public:
-    pfk_semaphore(int initial) {
+    pxfe_semaphore(int initial) {
         mut.init();
         cond.init();
     }
-    ~pfk_semaphore(void) { /* what */ }
+    ~pxfe_semaphore(void) { /* what */ }
     void give(void) {
-        pfk_pthread_mutex_lock lock(mut);
+        pxfe_pthread_mutex_lock lock(mut);
         value++;
         lock.unlock();
         cond.signal();
     }
     bool take(timespec *expire = NULL) {
-        pfk_pthread_mutex_lock lock(mut);
+        pxfe_pthread_mutex_lock lock(mut);
         while (value <= 0) {
             if (cond.wait(mut(), expire) < 0)
                 return false;
@@ -436,13 +436,13 @@ public:
     }
 };
 
-class pfk_pthread_attr {
+class pxfe_pthread_attr {
     pthread_attr_t _attr;
 public:
-    pfk_pthread_attr(void) {
+    pxfe_pthread_attr(void) {
         pthread_attr_init(&_attr);
     }
-    ~pfk_pthread_attr(void) {
+    ~pxfe_pthread_attr(void) {
         pthread_attr_destroy(&_attr);
     }
     const pthread_attr_t *operator()(void) { return &_attr; }
@@ -461,36 +461,36 @@ public:
     // pthread_attr_setstacksize
 };
 
-class pfk_pipe {
+class pxfe_pipe {
 public:
     int readEnd;
     int writeEnd;
-    pfk_pipe(void)
+    pxfe_pipe(void)
     {
         int fds[2];
         if (pipe(fds) < 0)
-            fprintf(stderr, "pfk_pipe: pipe failed\n");
+            fprintf(stderr, "pxfe_pipe: pipe failed\n");
         readEnd = fds[0];
         writeEnd = fds[1];
     }
-    ~pfk_pipe(void)
+    ~pxfe_pipe(void)
     {
         close(writeEnd);
         close(readEnd);
     }
 };
 
-class pfk_pthread {
-    pfk_pthread_mutex mut;
-    pfk_pthread_cond cond;
+class pxfe_pthread {
+    pxfe_pthread_mutex mut;
+    pxfe_pthread_cond cond;
     enum {
         INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE
     } state;
     pthread_t  id;
     void *user_arg;
     static void * _entry(void *thread_obj) {
-        pfk_pthread * th = (pfk_pthread *)thread_obj;
-        pfk_pthread_mutex_lock lock(th->mut);
+        pxfe_pthread * th = (pxfe_pthread *)thread_obj;
+        pxfe_pthread_mutex_lock lock(th->mut);
         th->state = RUNNING;
         lock.unlock();
         th->cond.signal();
@@ -503,20 +503,20 @@ protected:
     virtual void * entry(void *arg) = 0;
     virtual void send_stop(void) = 0;
 public:
-    pfk_pthread_attr attr;
-    pfk_pthread(void) {
+    pxfe_pthread_attr attr;
+    pxfe_pthread(void) {
         state = INIT;
         mut.init();
         cond.init();
     }
-    ~pfk_pthread(void) {
+    ~pxfe_pthread(void) {
         // derived class destructor really should do stop/join
         // before destroying anything else in derived, but it doesn't
         // hurt to repeat it here since stop and join both check the state.
         stopjoin();
     }
     int create(void *_user_arg=NULL) {
-        pfk_pthread_mutex_lock lock(mut);
+        pxfe_pthread_mutex_lock lock(mut);
         if (state != INIT)
             return -1;
         state = NEWBORN;
@@ -527,8 +527,8 @@ public:
         lock.lock();
         if (ret == 0) {
             while (state == NEWBORN) {
-                pfk_timespec ts(5,0);
-                ts += pfk_timespec().getNow();
+                pxfe_timespec ts(5,0);
+                ts += pxfe_timespec().getNow();
                 cond.wait(mut(), ts());
             }
         } else {
@@ -537,14 +537,14 @@ public:
         return ret;
     }
     void stop(void) {
-        pfk_pthread_mutex_lock lock(mut);
+        pxfe_pthread_mutex_lock lock(mut);
         if (state != RUNNING)
             return;
         state = STOPPING;
         send_stop();
     }
     void * join(void) {
-        pfk_pthread_mutex_lock lock(mut);
+        pxfe_pthread_mutex_lock lock(mut);
         if (state != STOPPING && state != ZOMBIE)
             return NULL;
         lock.unlock();
@@ -558,12 +558,12 @@ public:
     const bool running(void) const { return (state != INIT); }
 };
 
-class pfk_fd_set {
+class pxfe_fd_set {
     fd_set  fds;
     int     max_fd;
 public:
-    pfk_fd_set(void) { zero(); }
-    ~pfk_fd_set(void) { /*nothing for now*/ }
+    pxfe_fd_set(void) { zero(); }
+    ~pxfe_fd_set(void) { /*nothing for now*/ }
     void zero(void) { FD_ZERO(&fds); max_fd=-1; }
     void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
     void clr(int fd) { FD_CLR(fd, &fds); }
@@ -572,13 +572,13 @@ public:
     int nfds(void) { return max_fd + 1; }
 };
 
-struct pfk_select {
-    pfk_fd_set  rfds;
-    pfk_fd_set  wfds;
-    pfk_fd_set  efds;
-    pfk_timeval   tv;
-    pfk_select(void) { }
-    ~pfk_select(void) { }
+struct pxfe_select {
+    pxfe_fd_set  rfds;
+    pxfe_fd_set  wfds;
+    pxfe_fd_set  efds;
+    pxfe_timeval   tv;
+    pxfe_select(void) { }
+    ~pxfe_select(void) { }
     int select(void) {
         int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
         if (n < n2) n = n2;
@@ -587,26 +587,26 @@ struct pfk_select {
     }
 };
 
-class pfk_ticker : public pfk_pthread {
+class pxfe_ticker : public pxfe_pthread {
     int closer_pipe_fds[2];
     int pipe_fds[2];
-    pfk_timeval interval;
+    pxfe_timeval interval;
     /*virtual*/ void * entry(void *arg) {
         char c = 1;
         int clfd = closer_pipe_fds[0];
-        pfk_select   sel;
+        pxfe_select   sel;
         while (1) {
             sel.tv = interval;
             sel.rfds.zero();
             sel.rfds.set(clfd);
             if (sel.select() <= 0) {
                 if (write(pipe_fds[1], &c, 1) < 0)
-                    fprintf(stderr, "pfk_ticker: write failed\n");
+                    fprintf(stderr, "pxfe_ticker: write failed\n");
                 continue;
             }
             if (sel.rfds.isset(clfd)) {
                 if (read(clfd, &c, 1) < 0)
-                    fprintf(stderr, "pfk_ticker: read failed\n");
+                    fprintf(stderr, "pxfe_ticker: read failed\n");
                 break;
             }
         }
@@ -615,17 +615,17 @@ class pfk_ticker : public pfk_pthread {
     /*virtual*/ void send_stop(void) {
         char c = 1;
         if (write(closer_pipe_fds[1], &c, 1) < 0)
-            fprintf(stderr, "pfk_ticker: write failed\n");
+            fprintf(stderr, "pxfe_ticker: write failed\n");
     }
 public:
-    pfk_ticker(void) {
+    pxfe_ticker(void) {
         if (pipe(pipe_fds) < 0)
-            fprintf(stderr, "pfk_ticker: pipe 1 failed\n");
+            fprintf(stderr, "pxfe_ticker: pipe 1 failed\n");
         if (pipe(closer_pipe_fds) < 0)
-            fprintf(stderr, "pfk_ticker: pipe 2 failed\n");
+            fprintf(stderr, "pxfe_ticker: pipe 2 failed\n");
         interval.set(1,0);
     }
-    ~pfk_ticker(void) {
+    ~pxfe_ticker(void) {
         stopjoin();
         close(closer_pipe_fds[0]);
         close(closer_pipe_fds[1]);
@@ -640,13 +640,13 @@ public:
     int fd(void) { return pipe_fds[0]; }
 };
 
-class pfk_readdir {
+class pxfe_readdir {
     DIR * d;
 public:
-    pfk_readdir(void) {
+    pxfe_readdir(void) {
         d = NULL;
     }
-    ~pfk_readdir(void) {
+    ~pxfe_readdir(void) {
         close();
     }
     void close(void) {
@@ -677,7 +677,7 @@ public:
     }
 };
 
-class pfk_unix_dgram_socket {
+class pxfe_unix_dgram_socket {
     static int counter;
     std::string path;
     int fd;
@@ -720,11 +720,11 @@ class pfk_unix_dgram_socket {
         return true;
     }
 public:
-    pfk_unix_dgram_socket(void) {
+    pxfe_unix_dgram_socket(void) {
         path.clear();
         fd = -1;
     }
-    ~pfk_unix_dgram_socket(void) {
+    ~pxfe_unix_dgram_socket(void) {
         if (fd > 0)
         {
             ::close(fd);
@@ -832,13 +832,13 @@ public:
     }
 };
 
-class pfk_udp_socket {
+class pxfe_udp_socket {
     int fd;
 public:
-    pfk_udp_socket(void) {
+    pxfe_udp_socket(void) {
         fd = -1;
     }
-    ~pfk_udp_socket(void) {
+    ~pxfe_udp_socket(void) {
         if (fd > 0)
             ::close(fd);
     }
@@ -953,18 +953,18 @@ public:
 };
 
 template <int protocolNumber>
-class _pfk_stream_socket {
+class _pxfe_stream_socket {
     int fd;
     sockaddr_in sa;
-    _pfk_stream_socket(int _fd, const sockaddr_in &_sa) {
+    _pxfe_stream_socket(int _fd, const sockaddr_in &_sa) {
         fd = _fd;
         sa = _sa;
     }
 public:
-    _pfk_stream_socket(void) {
+    _pxfe_stream_socket(void) {
         fd = -1;
     }
-    ~_pfk_stream_socket(void) {
+    ~_pxfe_stream_socket(void) {
         if (fd > 0)
             ::close(fd);
     }
@@ -981,7 +981,7 @@ public:
         if (fd < 0)
         {
             int e = errno;
-            fprintf(stderr, "pfk_sctp_stream_socket: init: %d: %s\n",
+            fprintf(stderr, "pxfe_sctp_stream_socket: init: %d: %s\n",
                     e, strerror(e));
             return false;
         }
@@ -994,7 +994,7 @@ public:
         if (::connect(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
         {
             int e = errno;
-            fprintf(stderr, "pfk_sctp_stream_socket: connect: %d: %s\n",
+            fprintf(stderr, "pxfe_sctp_stream_socket: connect: %d: %s\n",
                     e, strerror(e));
             return false;
         }
@@ -1010,7 +1010,7 @@ public:
         if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
         {
             int e = errno;
-            fprintf(stderr, "pfk_sctp_stream_socket: bind: %d: %s\n",
+            fprintf(stderr, "pxfe_sctp_stream_socket: bind: %d: %s\n",
                     e, strerror(e));
             return false;
         }
@@ -1023,17 +1023,17 @@ public:
         (void) ::listen(fd, 1);
     }
     // this one returns a connected socket
-    _pfk_stream_socket *accept(void) {
+    _pxfe_stream_socket *accept(void) {
         socklen_t sz = sizeof(sa);
         int fdnew = ::accept(fd, (sockaddr *)&sa, &sz);
         if (fdnew < 0)
         {
             int e = errno;
-            fprintf(stderr, "pfk_sctp_stream_socket: accept: %d: %s\n",
+            fprintf(stderr, "pxfe_sctp_stream_socket: accept: %d: %s\n",
                     e, strerror(e));
             return NULL;
         }
-        _pfk_stream_socket *s = new _pfk_stream_socket(fdnew,sa);
+        _pxfe_stream_socket *s = new _pxfe_stream_socket(fdnew,sa);
         if (s)
             return s;
         ::close(fdnew);
@@ -1072,7 +1072,7 @@ public:
     }
 };
 
-typedef _pfk_stream_socket<IPPROTO_SCTP> pfk_sctp_stream_socket;
-typedef _pfk_stream_socket<0> pfk_tcp_stream_socket;
+typedef _pxfe_stream_socket<IPPROTO_SCTP> pxfe_sctp_stream_socket;
+typedef _pxfe_stream_socket<0> pxfe_tcp_stream_socket;
 
-#endif /* __pfkposix_h__ */
+#endif /* __posix_fe_h__ */

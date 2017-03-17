@@ -26,7 +26,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 #include "pidlist.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 #include <stdlib.h>
 #include <iomanip>
@@ -49,7 +49,7 @@ PidList :: ~PidList(void)
 void
 PidList :: fetch(void)
 {
-    pfk_readdir p;
+    pxfe_readdir p;
     dirent de;
     string procDir = "/proc";
 
@@ -85,7 +85,7 @@ PidList :: fetch(void)
         }
         // this will set the stamp.
         pe->update();
-        pfk_readdir t;
+        pxfe_readdir t;
         string taskDir = procDir + "/" + de_name + "/task";
         t.open(taskDir); // ignore return cuz read will ret false anyway
         while (t.read(de))

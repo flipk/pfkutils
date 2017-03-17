@@ -31,14 +31,14 @@ For more information, please refer to <http://unlicense.org>
 #include <string.h>
 #include <errno.h>
 #include <sys/prctl.h>
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 using namespace std;
 
-class spinnerThread : public pfk_pthread
+class spinnerThread : public pxfe_pthread
 {
     int ind;
-    pfk_pipe pipe;
+    pxfe_pipe pipe;
     void settitle(void) {
         char buf[17];
         memset(buf,0,sizeof(buf));
@@ -48,7 +48,7 @@ class spinnerThread : public pfk_pthread
     /*virtual*/ void * entry(void *arg) {
         cerr << ind << " ";
         settitle();
-        pfk_select sel;
+        pxfe_select sel;
         while (1) {
             sel.rfds.zero();
             sel.rfds.set(pipe.readEnd);
@@ -109,7 +109,7 @@ spinner_main(int argc, char ** argv)
     for (ind = 0; ind < nth; ind++)
         spinners[ind].start(ind);
 
-    pfk_select sel;
+    pxfe_select sel;
 
     while (1)
     {

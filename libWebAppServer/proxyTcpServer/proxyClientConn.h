@@ -28,7 +28,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "WebSocketClient.h"
 #include "fd_mgr.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 #include "wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.h"
 #include <sys/time.h>
 
@@ -44,7 +44,7 @@ private:
     /*virtual*/ ~proxyClientConn(void);
     bool allowReads;
     int sequence;
-    pfk_timeval lastPing;
+    pxfe_timeval lastPing;
     proxyTcp::ProxyMsg  pm_in;
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;

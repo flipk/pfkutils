@@ -49,7 +49,7 @@ For more information, please refer to <http://unlicense.org>
 #include <map>
 
 #include "Btree.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 #include "sha1.h"
 
 #define TSDB_FILENAME ".tsdb"
@@ -201,9 +201,9 @@ private:
         string name;
         struct stat sb;
         bool err;
-        pfk_timeval mtime;
+        pxfe_timeval mtime;
     };
-    pfk_timeval lastScan;
+    pxfe_timeval lastScan;
 public:
     treescan_tree(string dir) {
         tsDbDir = dir;
@@ -232,12 +232,12 @@ public:
     }
 private:
     class deleteDetector : public BtreeIterator {
-        pfk_timeval now;
+        pxfe_timeval now;
         Btree * bt;
         tsdatum *dat;
         /*virtual*/ bool handle_item(uint8_t *keydata, uint32_t keylen,
                                      FB_AUID_T data_fbn) {
-            pfk_timeval ls;
+            pxfe_timeval ls;
             if (dat == NULL)
                 dat = new tsdatum(bt);
             if (dat->key.bst_decode(keydata,keylen) == false)
@@ -272,7 +272,7 @@ private:
             __attribute__ ((format( printf, 2, 3 ))) {
         }
     public:
-        deleteDetector(pfk_timeval _now, Btree *_bt)
+        deleteDetector(pxfe_timeval _now, Btree *_bt)
             : now(_now), bt(_bt) { dat = NULL; }
         ~deleteDetector(void) {
             if (dat) delete dat;
@@ -317,7 +317,7 @@ private:
     }
 public:
     void scan(void) {
-        pfk_timeval now;
+        pxfe_timeval now;
         now.getNow();
         // cd to root of db dir, but guarantee that
         // no matter how we get out of this function,
@@ -407,7 +407,7 @@ public:
                 }
                 else
                 {
-                    pfk_timeval mt;
+                    pxfe_timeval mt;
                     dat.data.fname_to_info.mtime.get(mt);
                     if (mt != item.mtime)
                     {

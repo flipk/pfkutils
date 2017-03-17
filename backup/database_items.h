@@ -246,7 +246,7 @@ format_hash(const std::string &hashbin)
 }
 
 static inline std::string
-format_time(const pfk_timeval &tv)
+format_time(const pxfe_timeval &tv)
 {
     char str[80];
     struct tm tmtime;

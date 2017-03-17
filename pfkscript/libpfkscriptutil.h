@@ -30,7 +30,7 @@ For more information, please refer to <http://unlicense.org>
 #define __pfkscriptlib_h__ 1
 
 #include <string>
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 enum pfkscript_msg_type {
     PFKSCRIPT_CMD_GET_FILE_PATH      =   1, // no args
@@ -67,7 +67,7 @@ struct PfkscriptMsg {
 
 class pfkscript_ctrl {
     bool isOk;
-    pfk_unix_dgram_socket sock;
+    pxfe_unix_dgram_socket sock;
 public:
     static const char * env_var_name;
     pfkscript_ctrl(void);

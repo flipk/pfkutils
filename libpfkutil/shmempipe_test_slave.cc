@@ -85,7 +85,7 @@ main()
 
     while (!connected && !done)
     {
-        pfk_select sel;
+        pxfe_select sel;
         sel.rfds.set(0);
         sel.tv.set(0,100000);
         if (sel.select() <= 0)
@@ -112,7 +112,7 @@ main()
                stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
                stats.alloc_fails, stats.free_buffers);
 
-        pfk_select sel;
+        pxfe_select sel;
         sel.rfds.set(0);
         sel.tv.set(0,100000);
         if (sel.select() <= 0)

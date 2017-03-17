@@ -340,7 +340,7 @@ shmempipe :: closerThread(void)
         }
         while (1)
         {
-            pfk_select sel;
+            pxfe_select sel;
             sel.rfds.set(m_myPipeFd);
             sel.rfds.set(m_closerPipe.readEnd);
             sel.tv.set(1,0);
@@ -405,7 +405,7 @@ shmempipe :: closerThread(void)
             callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
-        pfk_select sel;
+        pxfe_select sel;
         sel.rfds.set(m_myPipeFd);
         sel.rfds.set(m_closerPipe.readEnd);
         sel.tv.set(1,0);

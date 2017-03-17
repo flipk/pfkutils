@@ -35,7 +35,7 @@ For more information, please refer to <http://unlicense.org>
 #include <stdarg.h>
 
 #include "pfkutils_config.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 /** information about what pools should be included in the shared mem */
 struct shmempipePoolInfo {
@@ -192,7 +192,7 @@ class shmempipe {
     int m_shmemFd;
     int m_myPipeFd;
     int m_otherPipeFd;
-    pfk_pipe m_closerPipe;
+    pxfe_pipe m_closerPipe;
     uint32_t m_fileSize;
     uintptr_t m_shmemPtr;
     uintptr_t m_shmemLimit;

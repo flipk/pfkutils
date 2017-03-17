@@ -30,12 +30,12 @@ For more information, please refer to <http://unlicense.org>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "pfkposix.h"
+#include "posix_fe.h"
 
-class readerThread : public pfk_pthread
+class readerThread : public pxfe_pthread
 {
     int which;
-    pfk_pipe closerPipe;
+    pxfe_pipe closerPipe;
     /*virtual*/ void * entry(void *arg)
     {
         // fifo with O_NONBLOCK cannot be opened for write first,
@@ -54,7 +54,7 @@ class readerThread : public pfk_pthread
                 printf("t1 open successful fd %d\n", fd);
             else
                 printf("t1 open failed err %d:%s\n", errno, strerror(errno));
-            pfk_select sel;
+            pxfe_select sel;
             sel.rfds.set(closerPipe.readEnd);
             sel.wfds.set(fd);
             sel.tv.set(5,0);
@@ -90,7 +90,7 @@ class readerThread : public pfk_pthread
                 printf("t2 open successful fd %d\n", fd);
             else
                 printf("t2 open failed err %d:%s\n", errno, strerror(errno));
-            pfk_select sel;
+            pxfe_select sel;
             sel.rfds.set(closerPipe.readEnd);
             sel.rfds.set(fd);
             sel.tv.set(5,0);

@@ -26,7 +26,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 #include "fdThreadLauncher.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -144,8 +144,8 @@ fdThreadLauncher :: threadEntry(void)
     int maxfd;
     int cc;
     int currentPollInterval = -1;
-    pfk_timeval lastPoll;
-    pfk_timeval interval;
+    pxfe_timeval lastPoll;
+    pxfe_timeval interval;
     FD_ZERO(&rfds);
     FD_ZERO(&wfds);
     maxfd = cmdFds[0];
@@ -175,12 +175,12 @@ fdThreadLauncher :: threadEntry(void)
         }
         if (currentPollInterval > 0)
         {
-            pfk_timeval nextPoll, now;
+            pxfe_timeval nextPoll, now;
             nextPoll = lastPoll + interval;
             gettimeofday(&now, NULL);
             if (nextPoll > now)
             {
-                pfk_timeval tv = nextPoll - now;
+                pxfe_timeval tv = nextPoll - now;
                 cc = select(maxfd, &rfds, &wfds, NULL, &tv);
             }
             else

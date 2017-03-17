@@ -34,7 +34,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "childprocessmanager.h"
 #include "bufprintf.h"
-#include "pfkposix.h"
+#include "posix_fe.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -297,7 +297,7 @@ Manager :: _notifyThread(void)
 
     while (!done)
     {
-        pfk_select sel;
+        pxfe_select sel;
 
         sel.rfds.set(signalFds[0]);
         sel.rfds.set(rebuildFds[0]);
