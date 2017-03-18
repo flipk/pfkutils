@@ -1,6 +1,6 @@
 ;;; magit-process.el --- process functionality  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2010-2016  The Magit Project Contributors
+;; Copyright (C) 2010-2017  The Magit Project Contributors
 ;;
 ;; You should have received a copy of the AUTHORS.md file which
 ;; lists all contributors.  If not, see http://magit.vc/authors.
@@ -43,6 +43,9 @@
 (eval-when-compile (require 'dired))
 (declare-function dired-uncache 'dired)
 
+(eval-when-compile (require 'auth-source))
+(declare-function auth-source-search 'auth-source)
+
 ;;; Options
 
 (defcustom magit-git-output-coding-system
@@ -67,18 +70,18 @@ If t, use ptys: this enables Magit to prompt for passphrases when needed."
                  (const :tag "pty" t)))
 
 (defcustom magit-need-cygwin-noglob
-  (when (eq system-type 'windows-nt)
-    (with-temp-buffer
-      (let ((process-environment
-             (append magit-git-environment process-environment)))
-        (condition-case e
-            (process-file magit-git-executable
-                          nil (current-buffer) nil
-                          "-c" "alias.echo=!echo" "echo" "x{0}")
-          (file-error
-           (lwarn 'magit-process :warning
-                  "Could not run Git: %S" e))))
-      (equal "x0\n" (buffer-string))))
+  (and (eq system-type 'windows-nt)
+       (with-temp-buffer
+         (let ((process-environment
+                (append magit-git-environment process-environment)))
+           (condition-case e
+               (process-file magit-git-executable
+                             nil (current-buffer) nil
+                             "-c" "alias.echo=!echo" "echo" "x{0}")
+             (file-error
+              (lwarn 'magit-process :warning
+                     "Could not run Git: %S" e))))
+         (equal "x0\n" (buffer-string))))
   "Whether to use a workaround for Cygwin's globbing behavior.
 
 If non-nil, add environment variables to `process-environment' to
@@ -337,12 +340,12 @@ conversion."
 
 (defun magit-cygwin-env-vars ()
   (append magit-git-environment
-          (when magit-need-cygwin-noglob
-            (mapcar (lambda (var)
-                      (concat var "=" (--if-let (getenv var)
-                                          (concat it " noglob")
-                                        "noglob")))
-                    '("CYGWIN" "MSYS")))))
+          (and magit-need-cygwin-noglob
+               (mapcar (lambda (var)
+                         (concat var "=" (--if-let (getenv var)
+                                             (concat it " noglob")
+                                           "noglob")))
+                       '("CYGWIN" "MSYS")))))
 
 (defvar magit-this-process nil)
 
@@ -417,6 +420,7 @@ current when this function was called (if it is a Magit buffer
 and still alive), as well as the respective Magit status buffer.
 
 See `magit-start-process' and `with-editor' for more information."
+  (magit--record-separated-gitdir)
   (magit-with-editor (magit-run-git-async args)))
 
 (defun magit-run-git-sequencer (&rest args)
@@ -595,7 +599,7 @@ Magit status buffer."
   "Special sentinel used by `magit-run-git-sequencer'."
   (when (memq (process-status process) '(exit signal))
     (magit-process-sentinel process event)
-    (-when-let (process-buf (process-get process 'process-buf))
+    (-when-let (process-buf (process-buffer process))
       (when (buffer-live-p process-buf)
         (-when-let (status-buf (with-current-buffer process-buf
                                  (magit-mode-get-buffer 'magit-status-mode)))
@@ -872,13 +876,5 @@ as argument."
                                        (pop-to-buffer buf))))))
                              process))))))
 
-;;; magit-process.el ends soon
-
-(define-obsolete-variable-alias 'magit-log-output-coding-system
-  'magit-git-output-coding-system "Magit 2.9.0")
-
 (provide 'magit-process)
-;; Local Variables:
-;; indent-tabs-mode: nil
-;; End:
 ;;; magit-process.el ends here

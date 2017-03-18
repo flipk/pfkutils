@@ -1,6 +1,6 @@
 ;;; git-rebase.el --- Edit Git rebase files  -*- lexical-binding: t -*-
 
-;; Copyright (C) 2010-2016  The Magit Project Contributors
+;; Copyright (C) 2010-2017  The Magit Project Contributors
 ;;
 ;; You should have received a copy of the AUTHORS.md file which
 ;; lists all contributors.  If not, see http://magit.vc/authors.
@@ -55,8 +55,11 @@
 ;;   f        Like "s" but don't also edit the commit message.
 ;;   x        Add a script to be run with the commit at point
 ;;            being checked out.
+;;   z        Add noop action at point.
 ;;
-;;   RET      Show the commit at point in another buffer.
+;;   SPC      Show the commit at point in another buffer.
+;;   RET      Show the commit at point in another buffer and
+;;            select its window.
 ;;   C-/      Undo last change.
 
 ;; You should probably also read the `git-rebase' manpage.
@@ -81,6 +84,7 @@
 
 (defgroup git-rebase nil
   "Edit Git rebase sequences."
+  :link '(info-link "(magit)Editing Rebase Sequences")
   :group 'tools)
 
 (defcustom git-rebase-auto-advance t
@@ -125,7 +129,7 @@
 
 (defface git-rebase-comment-heading
   '((t :inherit font-lock-keyword-face))
-  "Face used for headings in rebase message comments."
+  "Face for headings in rebase message comments."
   :group 'git-commit-faces)
 
 ;;; Keymaps
@@ -133,34 +137,50 @@
 (defvar git-rebase-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map special-mode-map)
-    (define-key map (kbd "q")    'undefined)
-    (define-key map [remap undo] 'git-rebase-undo)
-    (define-key map (kbd "RET") 'git-rebase-show-commit)
-    (define-key map (kbd "SPC") 'git-rebase-show-or-scroll-up)
-    (define-key map (kbd "x")   'git-rebase-exec)
-    (define-key map (kbd "c")   'git-rebase-pick)
-    (define-key map (kbd "r")   'git-rebase-reword)
-    (define-key map (kbd "w")   'git-rebase-reword)
-    (define-key map (kbd "e")   'git-rebase-edit)
-    (define-key map (kbd "m")   'git-rebase-edit)
-    (define-key map (kbd "s")   'git-rebase-squash)
-    (define-key map (kbd "f")   'git-rebase-fixup)
-    (define-key map (kbd "y")   'git-rebase-insert)
-    (define-key map (kbd "k")   'git-rebase-kill-line)
-    (define-key map (kbd "C-k") 'git-rebase-kill-line)
-    (define-key map (kbd "p")   'git-rebase-backward-line)
-    (define-key map (kbd "n")   'forward-line)
-    (define-key map (kbd "M-p")      'git-rebase-move-line-up)
-    (define-key map (kbd "M-n")      'git-rebase-move-line-down)
-    (define-key map (kbd "M-<up>")   'git-rebase-move-line-up)
-    (define-key map (kbd "M-<down>") 'git-rebase-move-line-down)
-    (define-key map (kbd "C-x C-t")  'git-rebase-move-line-up)
+    (cond ((featurep 'jkl)
+           (define-key map [return]    'git-rebase-show-commit)
+           (define-key map (kbd   "i") 'git-rebase-backward-line)
+           (define-key map (kbd   "k") 'forward-line)
+           (define-key map (kbd "M-i") 'git-rebase-move-line-up)
+           (define-key map (kbd "M-k") 'git-rebase-move-line-down)
+           (define-key map (kbd   "p") 'git-rebase-pick)
+           (define-key map (kbd   ",") 'git-rebase-kill-line))
+          (t
+           (define-key map (kbd "C-m") 'git-rebase-show-commit)
+           (define-key map (kbd   "p") 'git-rebase-backward-line)
+           (define-key map (kbd   "n") 'forward-line)
+           (define-key map (kbd "M-p") 'git-rebase-move-line-up)
+           (define-key map (kbd "M-n") 'git-rebase-move-line-down)
+           (define-key map (kbd   "c") 'git-rebase-pick)
+           (define-key map (kbd   "k") 'git-rebase-kill-line)
+           (define-key map (kbd "C-k") 'git-rebase-kill-line)))
+    (define-key map (kbd "e") 'git-rebase-edit)
+    (define-key map (kbd "m") 'git-rebase-edit)
+    (define-key map (kbd "f") 'git-rebase-fixup)
+    (define-key map (kbd "q") 'undefined)
+    (define-key map (kbd "r") 'git-rebase-reword)
+    (define-key map (kbd "w") 'git-rebase-reword)
+    (define-key map (kbd "s") 'git-rebase-squash)
+    (define-key map (kbd "x") 'git-rebase-exec)
+    (define-key map (kbd "y") 'git-rebase-insert)
+    (define-key map (kbd "z") 'git-rebase-noop)
+    (define-key map (kbd "SPC")     'git-rebase-show-or-scroll-up)
+    (define-key map (kbd "DEL")     'git-rebase-show-or-scroll-down)
+    (define-key map (kbd "C-x C-t") 'git-rebase-move-line-up)
+    (define-key map [M-up]          'git-rebase-move-line-up)
+    (define-key map [M-down]        'git-rebase-move-line-down)
+    (define-key map [remap undo]    'git-rebase-undo)
     map)
   "Keymap for Git-Rebase mode.")
 
-(put 'git-rebase-reword :advertised-binding "r")
-(put 'git-rebase-move-line-up :advertised-binding (kbd "M-p"))
-(put 'git-rebase-kill-line :advertised-binding "k")
+(cond ((featurep 'jkl)
+       (put 'git-rebase-reword       :advertised-binding "r")
+       (put 'git-rebase-move-line-up :advertised-binding (kbd "M-i"))
+       (put 'git-rebase-kill-line    :advertised-binding ","))
+      (t
+       (put 'git-rebase-reword       :advertised-binding "r")
+       (put 'git-rebase-move-line-up :advertised-binding (kbd "M-p"))
+       (put 'git-rebase-kill-line    :advertised-binding "k")))
 
 (easy-menu-define git-rebase-mode-menu git-rebase-mode-map
   "Git-Rebase mode menu"
@@ -179,15 +199,19 @@
     ["Finish" with-editor-finish t]))
 
 (defvar git-rebase-command-descriptions
-  '((with-editor-finish        . "tell Git to make it happen")
-    (with-editor-cancel        . "tell Git that you changed your mind, i.e. abort")
-    (git-rebase-backward-line  . "move point to previous line")
-    (forward-line              . "move point to next line")
-    (git-rebase-move-line-up   . "move the commit at point up")
-    (git-rebase-move-line-down . "move the commit at point down")
-    (git-rebase-show-commit    . "show the commit at point in another buffer")
-    (undo                      . "undo last change")
-    (git-rebase-kill-line      . "drop the commit at point")))
+  '((with-editor-finish           . "tell Git to make it happen")
+    (with-editor-cancel           . "tell Git that you changed your mind, i.e. abort")
+    (git-rebase-backward-line     . "move point to previous line")
+    (forward-line                 . "move point to next line")
+    (git-rebase-move-line-up      . "move the commit at point up")
+    (git-rebase-move-line-down    . "move the commit at point down")
+    (git-rebase-show-or-scroll-up . "show the commit at point in another buffer")
+    (git-rebase-show-commit
+     . "show the commit at point in another buffer and select its window")
+    (undo                         . "undo last change")
+    (git-rebase-kill-line         . "drop the commit at point")
+    (git-rebase-insert            . "insert a line for an arbitrary commit")
+    (git-rebase-noop              . "add noop action at point")))
 
 ;;; Commands
 
@@ -222,7 +246,7 @@
 (defun git-rebase-set-action (action)
   (goto-char (line-beginning-position))
   (if (and (looking-at git-rebase-line)
-           (not (string-match-p "\\(e\\|exec\\)$" (match-string 1))))
+           (not (string-match-p "\\(e\\|exec\\|noop\\)$" (match-string 1))))
       (let ((inhibit-read-only t))
         (replace-match action t t nil 1)
         (when git-rebase-auto-advance
@@ -353,6 +377,31 @@ remove the command on the current line, if any."
            (forward-line)
          (goto-char (line-beginning-position)))))))
 
+(defun git-rebase-noop (&optional arg)
+  "Add noop action at point.
+
+If the current line already contains a a noop action, leave it
+unchanged.  If there is a commented noop action present, remove
+the comment.  Otherwise add a new noop action.  With a prefix
+argument insert a new noop action regardless what is already
+present on the current line.
+
+A noop action can be used to make git perform a rebase even if
+no commits are selected.  Without the noop action present, git
+would see an empty file and therefore do nothing."
+  (interactive "P")
+  (goto-char (line-beginning-position))
+  ;; The extra space at the end is only there to make the action
+  ;; consistent with the others (action argument). This keeps
+  ;; the regexp `git-rebase-line' from getting complicated.
+  (let ((noop-string "noop \n"))
+    (when (or arg (not (looking-at noop-string)))
+      (let ((inhibit-read-only t))
+        (if (and (not arg)
+                 (looking-at (concat comment-start noop-string)))
+            (delete-char 1)
+          (insert noop-string))))))
+
 (defun git-rebase-undo (&optional arg)
   "Undo some previous changes.
 Like `undo' but works in read-only buffers."
@@ -366,9 +415,10 @@ Like `undo' but works in read-only buffers."
       (goto-char (line-beginning-position))
       (--if-let (and (looking-at git-rebase-line)
                      (match-string 2))
-          (if scroll
-              (magit-diff-show-or-scroll-up)
-            (apply #'magit-show-commit it (magit-diff-arguments)))
+          (pcase scroll
+            (`up   (magit-diff-show-or-scroll-up))
+            (`down (magit-diff-show-or-scroll-down))
+            (_     (apply #'magit-show-commit it (magit-diff-arguments))))
         (ding)))))
 
 (defun git-rebase-show-commit ()
@@ -377,9 +427,24 @@ Like `undo' but works in read-only buffers."
   (git-rebase--show-commit))
 
 (defun git-rebase-show-or-scroll-up ()
-  "Update the commit buffer for commit on current line."
+  "Update the commit buffer for commit on current line.
+
+Either show the commit at point in the appropriate buffer, or if
+that buffer is already being displayed in the current frame and
+contains information about that commit, then instead scroll the
+buffer up."
   (interactive)
-  (git-rebase--show-commit t))
+  (git-rebase--show-commit 'up))
+
+(defun git-rebase-show-or-scroll-down ()
+  "Update the commit buffer for commit on current line.
+
+Either show the commit at point in the appropriate buffer, or if
+that buffer is already being displayed in the current frame and
+contains information about that commit, then instead scroll the
+buffer down."
+  (interactive)
+  (git-rebase--show-commit 'down))
 
 (defun git-rebase-backward-line (&optional n)
   "Move N lines backward (forward if N is negative).
@@ -402,7 +467,7 @@ running 'man git-rebase' at the command line) for details."
   (setq git-rebase-comment-re (concat "^" (regexp-quote comment-start)))
   (setq git-rebase-line
         (concat "^\\(" (regexp-quote comment-start) "?"
-                "\\(?:[fprse]\\|pick\\|reword\\|edit\\|squash\\|fixup\\|exec\\)\\) "
+                "\\(?:[fprse]\\|pick\\|reword\\|edit\\|squash\\|fixup\\|exec\\|noop\\)\\) "
                 "\\(?:\\([^ \n]+\\) \\(.*\\)\\)?"))
   (setq font-lock-defaults (list (git-rebase-mode-font-lock-keywords) t t))
   (unless git-rebase-show-instructions
@@ -509,7 +574,4 @@ By default, this is the same except for the \"pick\" command."
 (add-to-list 'with-editor-file-name-history-exclude git-rebase-filename-regexp)
 
 (provide 'git-rebase)
-;; Local Variables:
-;; indent-tabs-mode: nil
-;; End:
 ;;; git-rebase.el ends here
