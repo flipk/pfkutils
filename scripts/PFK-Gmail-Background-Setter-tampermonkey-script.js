@@ -5,6 +5,7 @@
 // @description  stupid corp config won't let you set a custom background in gmail tab, so this script will set one for you.
 // @author       PFK
 // @version      0.2
+// @updateURL    https://raw.githubusercontent.com/flipk/pfkutils/master/scripts/PFK-Gmail-Background-Setter-tampermonkey-script.js
 // @date         2017-04-22
 // @match        https://mail.google.com/*
 // @run-at       document-end
