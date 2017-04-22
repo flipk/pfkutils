@@ -46,6 +46,14 @@ git push origin --delete pfk-1_3_7
 
 see environ/dot-gitconfig for stuff to put in ~/.gitconfig
 
+
+to see 'git status' for all submodules:
+git status --recursive
+
+git config --global status.submodulesummary 1
+
+
+
 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
 git://git.denx.de/u-boot.git
 https://kernel.googlesource.com/pub/scm/linux/hotplug/udev
