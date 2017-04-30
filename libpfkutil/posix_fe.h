@@ -320,9 +320,26 @@ public:
         initialized = true;
     }
     pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
-    void lock(void) { pthread_mutex_lock(&mutex); }
-    void trylock(void) { pthread_mutex_trylock(&mutex); }
-    void unlock(void) { pthread_mutex_unlock(&mutex); }
+    void lock(void) {
+        if (!initialized)
+            std::cerr << "pxfe_pthread_mutex::lock: not initialized\n";
+        else
+            pthread_mutex_lock(&mutex);
+    }
+    int trylock(void) {
+        if (!initialized) {
+            std::cerr << "pxfe_pthread_mutex::trylock: not initialized\n";
+            return EINVAL;
+        }
+        // else
+        return pthread_mutex_trylock(&mutex);
+    }
+    void unlock(void) {
+        if (!initialized)
+            std::cerr << "pxfe_pthread_mutex::unlock: not initialized\n";
+        else
+            pthread_mutex_unlock(&mutex);
+    }
 };
 
 class pxfe_pthread_mutex_lock {
@@ -396,15 +413,24 @@ public:
     }
     pthread_cond_t *operator()(void) { return initialized ? &cond : NULL; }
     int wait(pthread_mutex_t *mut, timespec *abstime = NULL) {
-        if (abstime == NULL)
+        if (!initialized) {
+            std::cerr << "pxfe_pthread_cond::wait: not initialized\n";
+            return EINVAL;
+        } else if (abstime == NULL)
             return pthread_cond_wait(&cond, mut);
         return pthread_cond_timedwait(&cond, mut, abstime);
     }
     void signal(void) {
-        pthread_cond_signal(&cond);
+        if (!initialized)
+            std::cerr << "pxfe_pthread_cond::signal: not initialized\n";
+        else
+            pthread_cond_signal(&cond);
     }
     void bcast(void) {
-        pthread_cond_broadcast(&cond);
+        if (!initialized)
+            std::cerr << "pxfe_pthread_cond::bcast: not initialized\n";
+        else
+            pthread_cond_broadcast(&cond);
     }
 };
 
