@@ -792,13 +792,9 @@ endif
 
 ##############################################
 
-POSTALL += post_all # TODO doxygen
+POSTALL += # TODO doxygen
 
-post_all:
-	$(Q)+make -C contrib \
-		PROGS="$(CONTRIB_PROGS)" OBJDIR=$(PWD)/$(OBJDIR)/contrib
-
-POSTINSTALL += environ_install scripts_install contrib_install
+POSTINSTALL += environ_install scripts_install
 
 environ_install:
 	@echo installing environ
@@ -840,10 +836,22 @@ scripts_install:
 			ln -s pf_frontend $$f ; \
 		done
 
-contrib_install:
-	@$(foreach prog,$(CONTRIB_PROGS),\
-	    make -C contrib OBJDIR=$(PWD)/$(OBJDIR)/contrib \
-		INSTALL_BIN_DIR=$(INSTALL_BIN_DIR) $(prog)-install &&) true
+## the contribs target is run separately, after the pfkutils-install,
+## because contribs target depends on certain things already installed.
+## it would be nice to not depend on that but unfortunately it does,
+## at least for now.
+
+contribs:
+	$(Q)+make -C contrib \
+		PROGS="$(CONTRIB_PROGS)" \
+		OBJDIR=$(PWD)/$(OBJDIR)/contrib
+
+contribs-install:
+	$(Q)+make -C contrib \
+		PROGS="$(CONTRIB_PROGS)" \
+		OBJDIR=$(PWD)/$(OBJDIR)/contrib \
+		INSTALL_BIN_DIR="$(INSTALL_BIN_DIR)" \
+		install
 
 diffdotfiles:
 	@cd $(prefix) && diff -r etc-backup etc

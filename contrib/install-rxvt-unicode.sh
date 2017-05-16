@@ -12,7 +12,7 @@ if [ ! -d rxvt-unicode ] ; then
     exit 0
 fi
 
-cd rxvt-unicode
+cd "$OBJDIR/urxvt"
 
 make install
 

@@ -41,11 +41,14 @@ case x$PFK_CONFIG_flubox_xinerama in
 	echo please set PFK_CONFIG_flubox_xinerama to yes or no in config
 	exit 1
 	;;
-
 esac
 
+FLUXBOX_DIR="$PWD"
+mkdir -p "$OBJDIR/fluxbox"
+cd "$OBJDIR/fluxbox"
+
 if [ ! -f Makefile ] ; then
-    ./configure --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7 \
+    "$FLUXBOX_DIR/configure" --prefix=$HOME/pfk/$PFKARCH/fluxbox_1.3.7 \
 		--disable-xrandr $xinerama
 fi
 

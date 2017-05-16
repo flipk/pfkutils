@@ -19,8 +19,13 @@ if [ ! -f 00-PFK-CONFIGURE ] ; then
     exit 1
 fi
 
+RXVT_DIR="$PWD"
+
+mkdir -p "$OBJDIR/urxvt"
+cd "$OBJDIR/urxvt"
+
 if [ ! -f Makefile ] ; then
-    ./configure --prefix=$HOME/pfk/$PFKARCH/urxvt-9.22 \
+    "$RXVT_DIR/configure" --prefix=$HOME/pfk/$PFKARCH/urxvt-9.22 \
 		--enable-xft --enable-font-styles --disable-perl \
 		--disable-iso14755 --enable-selectionscrolling \
 		--enable-mousewheel --disable-utmp --disable-wtmp \

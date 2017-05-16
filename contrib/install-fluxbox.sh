@@ -19,6 +19,7 @@ if [ ! -f 00-PFK-CONFIGURE ] ; then
     exit 1
 fi
 
+cd "$OBJDIR/fluxbox"
 make install
 
 cd $HOME/pfk/$PFKARCH/fluxbox_1.3.7/bin
