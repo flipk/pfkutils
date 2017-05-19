@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2017-03-04.19:34:48
+#      Last update: 2017-05-18.22:46:52
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -89,13 +89,42 @@ case $- in
         ;;
 esac
 
+COLOR_INVERT="[7m"
+COLOR_FG_RED="[31;1m"
+COLOR_FG_YEL="[33;1m"
+COLOR_FG_BLU="[34;1m"
+COLOR_BG_RED="[41m"
+COLOR_BG_YEL="[43m"
+COLOR_BG_BLU="[44m"
+COLOR_NORMAL="[m"
+
+# if ksh   : __isksh returns true,  __isbash returns false
+# if bash  : __isksh returns true,  __isbash returns true
+# if other : __isksh returns false, __isbash returns false
+
 if [ -z "$KSH_VERSION" ] ; then
-    __isksh() {
-        return 1
-    }
+    PFKSH_BUILD="bash-$BASH_VERSION"
+    if [ -z "$BASH_VERSION" ] ; then
+        __isksh() {
+            return 1
+        }
+        __isbash() {
+            return 1
+        }
+    else
+        __isksh() {
+            return 0
+        }
+        __isbash() {
+            return 0
+        }
+    fi
 else
     __isksh() {
         return 0
+    }
+    __isbash() {
+        return 1
     }
 fi
 
@@ -216,33 +245,17 @@ if __isksh ; then
     TTY=`tty`
     TTY=${TTY#/dev/}
 
-# no longer need to disable this since emacs 25
-# understands ansi color codes inside a shell buffer!
-#    if [[ "x$INSIDE_EMACS" == "x" ]] ; then
-        PROMPT_COLOR_INVERT="[7m"
-        PROMPT_COLOR_FG_RED="[31;1m"
-        PROMPT_COLOR_FG_YEL="[33;1m"
-        PROMPT_COLOR_FG_BLU="[34;1m"
-        PROMPT_COLOR_BG_RED="[41m"
-        PROMPT_COLOR_BG_YEL="[43m"
-        PROMPT_COLOR_BG_BLU="[44m"
-        PROMPT_COLOR_NORMAL="[m"
-#    else
-#        PROMPT_COLOR_INVERT=""
-#        PROMPT_COLOR_NORMAL=""
-#    fi
-
     _set_prompt() {
         typeset _ps
         _ps=''
         if [[ "x$1" != x ]] ; then
-            _ps="${_ps}$PROMPT_COLOR_FG_YEL$PROMPT_COLOR_BG_BLU$1$PROMPT_COLOR_NORMAL
+            _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL
 "
         fi
         if [[ $REALUSER == "root" ]] ; then
-            _ps="${_ps}$PROMPT_COLOR_INVERT$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
+            _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL"
         else
-            _ps="${_ps}$PROMPT_COLOR_FG_RED$REALUSER@$HOST$PROMPT_COLOR_NORMAL"
+            _ps="${_ps}$COLOR_FG_RED$REALUSER@$HOST$COLOR_NORMAL"
         fi
         if [[ x$CLEARCASE_ROOT != x ]] ; then
             _ps="${_ps} in CC"
@@ -258,7 +271,7 @@ if __isksh ; then
             _set_prompt_first_time=0
         else
             _ps="${_ps}
- $PROMPT_COLOR_INVERT%$PROMPT_COLOR_NORMAL "
+ $COLOR_INVERT%$COLOR_NORMAL "
         fi
         export PS1="$_ps"
     }
@@ -779,11 +792,16 @@ unset ksh_new ksh_final
 if __isksh ; then
    if [[ x$TERM != "dumb" ]] ; then
        # for some reason that i don't sufficiently understand,
-       # emacs ssh tramp doesn't work if these happen. TERM=dumb
-       # seems to be good enough to detect that condition.
-       bind '^I'=complete-list
-       bind '^V'=quote
-       bind '^@'=set-mark-command
+       # one of these 'bind' commands makes the letter 'c'
+       # stop working in bash.  wtf.
+       if ! __isbash ; then
+           # for some reason that i don't sufficiently understand,
+           # emacs ssh tramp doesn't work if these happen. TERM=dumb
+           # seems to be good enough to detect that condition.
+           bind '^I'=complete-list
+           bind '^V'=quote
+           bind '^@'=set-mark-command
+       fi
    fi
 fi
 
@@ -898,8 +916,12 @@ __verbose starting settings
 
 set -o nolog
 set -o emacs
-set -o trackall
-set +o bgnice
+
+if ! __isbash ; then
+    # not supported in bash, these are pdksh specific features.
+    set -o trackall
+    set +o bgnice
+fi
 
 __verbose settings complete
 __verbose done with kshrc, enjoy your shell
