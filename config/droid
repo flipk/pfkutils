@@ -58,7 +58,7 @@ pfkthr_test-2_LIBS += -lrt
 pfkthr_test-3_LIBS += -lrt
 pfkthr_test-4_LIBS += -lrt
 
-CONTRIB_PROGS= cscope # fluxbox-pfk rxvt-unicode-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk fish-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j3
