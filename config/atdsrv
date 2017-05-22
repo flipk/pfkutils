@@ -24,6 +24,7 @@ PFK_BUILD_xlock=0
 PFK_BUILD_fonts=1
 PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=0
+PFK_BUILD_hilite=1
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = /shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/bin/protoc

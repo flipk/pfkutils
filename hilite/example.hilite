@@ -1,0 +1,23 @@
+
+# comment line goes here
+
+"".*"" normal inverse
+
+   # a certain debug print needs to be highlighted in yellow
+ # this has to be before the "color" rule below because that would
+ # match first and prevent this one from matching.
+# "is not a valid (ansi|ANSI) color"	yellow 	bold	
+
+# this is also a comment, in bold red.
+"color" red bold
+
+	# this is the data type "int" in inverse blue
+"int" cyan inverse    
+"char" cyan
+
+# comments appear in white.
+"//.*" white bright
+
+"pattern" blue
+
+# end of file is here.

@@ -79,6 +79,10 @@ PROG(0,pfkstat,"My own stat/ls command")
 PROG(0,deduplifier,"find identical files and link them")
 #endif
 
+#if @PFK_BUILD_hilite@
+PROG(0,hilite,"highlight text matching regex patterns using ANSI colors")
+#endif
+
 // always built
 PROG(0,m,"hex/dec/bin mathematics on command line")
 PROG(0,random_hex,"generate a random hex number")

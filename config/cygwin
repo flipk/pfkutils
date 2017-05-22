@@ -24,6 +24,7 @@ PFK_BUILD_xlock=0
 PFK_BUILD_fonts=0
 PFK_BUILD_pfktop=0
 PFK_BUILD_spinner=0
+PFK_BUILD_hilite=0
 
 KSHRC_LOCAL = kshrc.local.cygwin
 PROTOC_PATH = /usr/bin/protoc
