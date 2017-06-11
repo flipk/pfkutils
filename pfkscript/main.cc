@@ -524,6 +524,22 @@ public:
             sttyWasRun = true;
         }
 
+#if 0
+    struct sigaction act;
+    act.sa_handler = &Screen::sigwinch_handler;
+    sigfillset(&act.sa_mask);
+    act.sa_flags = SA_RESTART;
+    sigaction(SIGWINCH, &act, NULL);
+//static
+void
+Screen :: sigwinch_handler(int sig)
+{
+    int c = 1;
+    if (write(instance->fds[1], &c, 1) < 0)
+        cerr << "Screen::sigwinch: write failed\n";
+}
+#endif
+
         // TODO forward window size changes to child PTY
 
         ticker.start(0,150000);

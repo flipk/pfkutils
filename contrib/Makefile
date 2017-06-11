@@ -118,9 +118,11 @@ fluxbox-pfk-install:
 
 ######################################################
 
+# xxx more
 fish-pfk:
 	@echo making fish
 
+# xxx more
 fish-pfk-install:
 	@echo installing fish
 
