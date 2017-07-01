@@ -141,7 +141,7 @@ PK_Thread :: PK_Thread( void )
 
     name = strdup( "_thread_XXXXXXXX" );
     pthread_create( &id, NULL, _entry, (void*) this );
-    sprintf( name+8, "%#p", (void*)id );
+    sprintf( name+8, "%p", (void*)id );
     th->add( this );
     pthread_detach( id );
 }
