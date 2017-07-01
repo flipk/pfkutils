@@ -185,7 +185,7 @@ v_evaluate(vp, expr, error_ok)
 		if (i == LAEXPR) {
 			if (error_ok == KSH_RETURN_ERROR)
 				return 0;
-			errorf(null);
+			errorf("%s",null);
 		}
 		unwind(i);
 		/*NOTREACHED*/
@@ -490,7 +490,7 @@ token(es)
 			es->val->flag |= EXPRLVALUE;
 		} else {
 			tvar = str_nsave(es->tokp, cp - es->tokp, ATEMP);
-			es->val = global(tvar);
+			es->val = pfksh_global(tvar);
 			afree(tvar, ATEMP);
 		}
 		es->tok = VAR;

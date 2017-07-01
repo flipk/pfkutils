@@ -39,12 +39,12 @@ c_cd(wp)
 		return 1;
 	}
 
-	pwd_s = global("PWD");
-	oldpwd_s = global("OLDPWD");
+	pwd_s = pfksh_global("PWD");
+	oldpwd_s = pfksh_global("OLDPWD");
 
 	if (!wp[0]) {
 		/* No arguments - go home */
-		if ((dir = str_val(global("HOME"))) == null) {
+		if ((dir = str_val(pfksh_global("HOME"))) == null) {
 			bi_errorf("no home directory (HOME not set)");
 			return 1;
 		}
@@ -98,7 +98,7 @@ c_cd(wp)
 	xp = (char *) 0;
         (void)xp;
 
-	cdpath = str_val(global("CDPATH"));
+	cdpath = str_val(pfksh_global("CDPATH"));
 	do {
 		cdnode = make_path(current_wd, dir, &cdpath, &xs, &phys_path);
 #ifdef S_ISLNK
@@ -1178,7 +1178,7 @@ c_kill(wp)
 "Usage: kill [ -s signame | -signum | -signame ] {pid|job}...\n\
        kill -l [exit_status]\n"
 			);
-		bi_errorf(null);
+		bi_errorf("%s", null);
 		return 1;
 	}
 
@@ -1334,7 +1334,7 @@ c_getopts(wp)
 		user_opt.uoptind = user_opt.optind;
 	}
 
-	voptarg = global("OPTARG");
+	voptarg = pfksh_global("OPTARG");
 	voptarg->flag &= ~RDONLY;	/* at&t ksh clears ro and int */
 	/* Paranoia: ensure no bizarre results. */
 	if (voptarg->flag & INTEGER)
@@ -1347,7 +1347,7 @@ c_getopts(wp)
 
 	ret = 0;
 
-	vq = global(var);
+	vq = pfksh_global(var);
 	/* Error message already printed (integer, readonly) */
 	if (!setstr(vq, buf, KSH_RETURN_ERROR))
 	    ret = 1;

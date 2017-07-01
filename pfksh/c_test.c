@@ -231,7 +231,7 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 	  case TO_OPTION: /* -o */
 		if ((not = *opnd1 == '!'))
 			opnd1++;
-		if ((res = option(opnd1)) < 0)
+		if ((res = pfksh_option(opnd1)) < 0)
 			res = 0;
 		else {
 			res = Flag(res);

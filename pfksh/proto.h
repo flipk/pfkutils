@@ -149,14 +149,14 @@ int 	j_stopped_running	ARGS((void));
 int 	pfksh_yylex	ARGS((int cf));
 void 	pfksh_yyerror	ARGS((const char *fmt, ...))
 				GCC_FUNC_ATTR2(noreturn, format(printf, 1, 2));
-Source * pushs		ARGS((int type, Area *areap));
+Source * pfksh_pushs		ARGS((int type, Area *areap));
 void	set_prompt	ARGS((int to, Source *s));
 void 	pprompt		ARGS((const char *cp, int ntruncate));
 /* main.c */
-int 	include		ARGS((const char *name, int argc, char **argv,
+int 	pfksh_include	ARGS((const char *name, int argc, char **argv,
 			      int intr_ok));
-int 	command		ARGS((const char *comm));
-int 	shell		ARGS((Source *volatile s, int volatile toplevel));
+int 	pfksh_command	ARGS((const char *comm));
+int 	pfksh_shell	ARGS((Source *volatile s, int volatile toplevel));
 void 	unwind		ARGS((int i)) GCC_FUNC_ATTR(noreturn);
 void 	newenv		ARGS((int type));
 void 	quitenv		ARGS((void));
@@ -170,7 +170,7 @@ void 	initctypes	ARGS((void));
 char *	ulton		ARGS((unsigned long n, int base));
 char *	str_save	ARGS((const char *s, Area *ap));
 char *	str_nsave	ARGS((const char *s, int n, Area *ap));
-int	option		ARGS((const char *n));
+int	pfksh_option	ARGS((const char *n));
 char *	getoptions	ARGS((void));
 void	change_flag	ARGS((enum sh_flag f, int what, int newval));
 int	parse_args	ARGS((char **argv, int what, int *setargsp));
@@ -242,8 +242,8 @@ void 	tfree		ARGS((struct op *t, Area *ap));
 void 	newblock	ARGS((void));
 void 	popblock	ARGS((void));
 void	initvar		ARGS((void));
-struct tbl *	global	ARGS((const char *n));
-struct tbl *	local	ARGS((const char *n, bool_t copy));
+struct tbl *	pfksh_global	ARGS((const char *n));
+struct tbl *	pfksh_local	ARGS((const char *n, bool_t copy));
 char *	str_val		ARGS((struct tbl *vp));
 long 	intval		ARGS((struct tbl *vp));
 int 	setstr		ARGS((struct tbl *vq, const char *s, int error_ok));

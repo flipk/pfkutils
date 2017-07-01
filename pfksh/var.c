@@ -65,7 +65,7 @@ popblock()
 	e->loc = l->next;	/* pop block */
 	for (i = l->vars.size; --i >= 0; ) {
 		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL)) {
-			if ((vq = global(vp->name))->flag & ISSET)
+			if ((vq = pfksh_global(vp->name))->flag & ISSET)
 				setspec(vq);
 			else
 				unsetspec(vq);
@@ -150,7 +150,7 @@ array_index_calc(n, arrayp, valp)
  * Search for variable, if not found create globally.
  */
 struct tbl *
-global(n)
+pfksh_global(n)
 	const char *n;
 {
 	struct block *l = e->loc;
@@ -233,7 +233,7 @@ global(n)
  * Search for local variable, if not found create locally.
  */
 struct tbl *
-local(n, copy)
+pfksh_local(n, copy)
 	const char *n;
 	bool_t copy;
 {
@@ -351,7 +351,7 @@ setstr(vq, s, error_ok)
 	if (vq->flag & RDONLY) {
 		warningf(TRUE, "%s: is read only", vq->name);
 		if (!error_ok)
-			errorf(null);
+                    errorf("%s",null);
 		return 0;
 	}
 	if (!(vq->flag&INTEGER)) { /* string dest */
@@ -627,11 +627,11 @@ typeset(var, set, clr, field, base)
 				  || strcmp(tvar, "SHELL") == 0))
 		errorf("%s: restricted", tvar);
 
-	vp = (set&LOCAL) ? local(tvar, (set & LOCAL_COPY) ? TRUE : FALSE)
-		: global(tvar);
+	vp = (set&LOCAL) ? pfksh_local(tvar, (set & LOCAL_COPY) ? TRUE : FALSE)
+		: pfksh_global(tvar);
 	set &= ~(LOCAL|LOCAL_COPY);
 
-	vpbase = (vp->flag & ARRAY) ? global(arrayname(var)) : vp;
+	vpbase = (vp->flag & ARRAY) ? pfksh_global(arrayname(var)) : vp;
 
 	/* only allow export flag to be set.  at&t ksh allows any attribute to
 	 * be changed, which means it can be truncated or modified
@@ -704,7 +704,7 @@ typeset(var, set, clr, field, base)
 			}
 		}
 		if (!ok)
-		    errorf(null);
+		    errorf("%s",null);
 	}
 
 	if (val != NULL) {
@@ -1007,7 +1007,7 @@ setspec(vp)
 		set_editmode(str_val(vp));
 		break;
 	  case V_EDITOR:
-		if (!(global("VISUAL")->flag & ISSET))
+		if (!(pfksh_global("VISUAL")->flag & ISSET))
 			set_editmode(str_val(vp));
 		break;
 	  case V_COLUMNS:
@@ -1174,7 +1174,7 @@ set_array(var, reset, vals)
 	int i;
 
 	/* to get local array, use "typeset foo; set -A foo" */
-	vp = global(var);
+	vp = pfksh_global(var);
 
 	/* Note: at&t ksh allows set -A but not set +A of a read-only var */
 	if ((vp->flag&RDONLY))

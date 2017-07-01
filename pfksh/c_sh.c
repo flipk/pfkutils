@@ -201,7 +201,7 @@ c_dot(wp)
 		argc = 0;
 		argv = (char **) 0;
 	}
-	i = include(file, argc, argv, 0);
+	i = pfksh_include(file, argc, argv, 0);
 	if (i < 0) { /* should not happen */
 		bi_errorf("%s: %s", cp, strerror(errno));
 		return 1;
@@ -376,7 +376,7 @@ c_read(wp)
 			       && ctype(cp[-1], C_IFSWS))
 				cp--;
 		Xput(cs, cp, '\0');
-		vp = global(*wp);
+		vp = pfksh_global(*wp);
 		/* Must be done before setting export. */
 		if (vp->flag & RDONLY) {
 			shf_flush(shf);
@@ -416,7 +416,7 @@ c_eval(wp)
 
 	if (ksh_getopt(wp, &builtin_opt, null) == '?')
 		return 1;
-	s = pushs(SWORDS, ATEMP);
+	s = pfksh_pushs(SWORDS, ATEMP);
 	s->u.strv = wp + builtin_opt.optind;
 	if (!Flag(FPOSIX)) {
 		/*
@@ -446,7 +446,7 @@ c_eval(wp)
 		exstat = subst_exstat;
 	}
 
-	return shell(s, FALSE);
+	return pfksh_shell(s, FALSE);
 }
 
 int
@@ -648,7 +648,7 @@ c_unset(wp)
 	wp += builtin_opt.optind;
 	for (; (id = *wp) != NULL; wp++)
 		if (unset_var) {	/* unset variable */
-			struct tbl *vp = global(id);
+			struct tbl *vp = pfksh_global(id);
 
 			if (!(vp->flag & ISSET))
 			    ret = 1;

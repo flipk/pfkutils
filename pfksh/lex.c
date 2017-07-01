@@ -177,7 +177,7 @@ pfksh_yylex(cf)
 					} else {
 						Source *s;
 
-						s = pushs(SREREAD,
+						s = pfksh_pushs(SREREAD,
 							  yysource->areap);
 						s->start = s->str
 							= s->u.freeme = tmp;
@@ -732,7 +732,7 @@ Done:
 				if (s->u.tblp == p)
 					return LWORD;
 			/* push alias expansion */
-			s = pushs(SALIAS, yysource->areap);
+			s = pfksh_pushs(SALIAS, yysource->areap);
 			s->start = s->str = p->val.s;
 			s->u.tblp = p;
 			s->next = yysource;
@@ -832,7 +832,7 @@ pfksh_yyerror(const char *fmt, ...)
 	SH_VA_START(va, fmt);
 	shf_vfprintf(shl_out, fmt, va);
 	va_end(va);
-	errorf(null);
+	errorf("%s",null);
 }
 
 /*
@@ -840,7 +840,7 @@ pfksh_yyerror(const char *fmt, ...)
  */
 
 Source *
-pushs(type, areap)
+pfksh_pushs(type, areap)
 	int type;
 	Area *areap;
 {
@@ -1081,7 +1081,7 @@ set_prompt(to, s)
 			char *ps1;
 			Area *saved_atemp;
 
-			ps1 = str_val(global("PS1"));
+			ps1 = str_val(pfksh_global("PS1"));
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
 				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
 			while (*ps1) {
@@ -1110,7 +1110,7 @@ set_prompt(to, s)
 		break;
 
 	case PS2: /* command continuation */
-		prompt = str_val(global("PS2"));
+		prompt = str_val(pfksh_global("PS2"));
 		break;
 	}
 }
@@ -1247,7 +1247,7 @@ ungetsc(c)
 	else {
 		Source *s;
 
-		s = pushs(SREREAD, yysource->areap);
+		s = pfksh_pushs(SREREAD, yysource->areap);
 		s->ugbuf[0] = c; s->ugbuf[1] = '\0';
 		s->start = s->str = s->ugbuf;
 		s->next = yysource;

@@ -488,7 +488,7 @@ x_file_glob(flags, str, slen, wordsp)
 	 * Convert "foo*" (toglob) to an array of strings (words)
 	 */
 	sold = yysource;
-	s = pushs(SWSTR, ATEMP);
+	s = pfksh_pushs(SWSTR, ATEMP);
 	s->start = s->str = toglob;
 	yysource = s;
 	if (pfksh_yylex(ONEWORD) != LWORD) {
@@ -582,7 +582,7 @@ x_command_glob(flags, str, slen, wordsp)
 		glob_table(pat, &w, &l->funs);
 
 	glob_path(flags, pat, &w, path);
-	if ((fpath = str_val(global("FPATH"))) != null)
+	if ((fpath = str_val(pfksh_global("FPATH"))) != null)
 		glob_path(flags, pat, &w, fpath);
 
 	nwords = XPsize(w);
