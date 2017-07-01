@@ -252,6 +252,6 @@ format_time(const pxfe_timeval &tv)
     struct tm tmtime;
     localtime_r(&tv.tv_sec, &tmtime);
     strftime(str,sizeof(str), "%Y-%m-%d %H:%M:%S", &tmtime);
-    sprintf(str+strlen(str), ".%06d", tv.tv_usec);
+    sprintf(str+strlen(str), ".%06u", (unsigned int) tv.tv_usec);
     return str;
 }

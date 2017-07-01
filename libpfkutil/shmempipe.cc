@@ -193,8 +193,7 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
 
     if (m_pHeader->attachedFlag == true)
     {
-        fprintf(stderr, "shmem is already attached!\n",
-                m_filename.filename, strerror(errno));
+        fprintf(stderr, "shmem is already attached!\n");
         return;
     }
 

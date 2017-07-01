@@ -180,7 +180,7 @@ proxyServerConn :: onMessage(const WebAppServer::WebAppMessage &m)
                 //else cc > 0
                 if (cc != bytes_left)
                 {
-                    printf("NOTE : write of %d != %d\n", bytes_left, cc);
+                    printf("NOTE : write of %u != %d\n", bytes_left, cc);
                     fd_set rfds;
                     FD_ZERO(&rfds);
                     FD_SET(fd, &rfds);

@@ -70,7 +70,7 @@ struct threadstats {
         deletions = other.deletions;
     }
     void print(void) {
-        printf("%5d: f %8d b %11lld c %5lld v %5lld d %5lld\n",
+        printf("%5d: f %8d b %11llu c %5llu v %5llu d %5llu\n",
                seconds, total_files, total_bytes,
                creations, validations, deletions);
         seconds ++;
@@ -123,7 +123,7 @@ diskloader_main(int argc, char ** argv)
         SCALE(filesizeval,fileunit);
         SCALE(totalsizeval,totalunit);
 
-        printf("%d files avgsize %lld %c total %lld %c bytes %d wraps\n",
+        printf("%d files avgsize %llu %c total %llu %c bytes %d wraps\n",
                MAX_NUM_FILES * 2 / 3,
                filesizeval, fileunit,
                totalsizeval, totalunit,

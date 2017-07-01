@@ -450,8 +450,9 @@ define PROG_TARGET_RULES
 $($(target)_TARGET): $($(target)_OBJS) $($(target)_DEPLIBS)
 	@echo linking $($(target)_TARGET)
 	$(Q)$(CXX) -o $($(target)_TARGET) $($(target)_OBJS) \
-		$($(target)_LIBS) $($(target)_DEPLIBS) \
-		$(LDFLAGS) $($(target)_LDFLAGS)
+		$($(target)_DEPLIBS) \
+		$(LDFLAGS) $($(target)_LDFLAGS) \
+		$($(target)_LIBS)
 
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL)" = "x1" ] ; then \

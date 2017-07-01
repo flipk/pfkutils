@@ -91,8 +91,8 @@ main()
     {
         shmempipeStats stats;
         pPipe->getStats(&stats,true);
-        printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
-               "af %lld fb %lld\n",
+        printf("sb %llu sp %llu ss %llu rb %llu rp %llu rs %llu "
+               "af %llu fb %llu\n",
                stats.sent_bytes, stats.sent_packets, stats.sent_signals,
                stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
                stats.alloc_fails, stats.free_buffers);
