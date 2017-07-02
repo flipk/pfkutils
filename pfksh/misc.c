@@ -160,7 +160,7 @@ const struct option options[] = {
  * translate -o option into F* constant (also used for test -o option)
  */
 int
-option(n)
+pfksh_option(n)
 	const char *n;
 {
 	int i;
@@ -346,7 +346,7 @@ parse_args(argv, what, setargsp)
 				printoptions(set);
 				break;
 			}
-			i = option(go.optarg);
+			i = pfksh_option(go.optarg);
 			if (i >= 0 && set == Flag(i))
 				/* Don't check the context if the flag
 				 * isn't changing - makes "set -o interactive"
@@ -947,7 +947,7 @@ ksh_getopt(argv, go, options)
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
-				bi_errorf(null);
+                            bi_errorf("%s",null);
 		}
 		return '?';
 	}
@@ -973,7 +973,7 @@ ksh_getopt(argv, go, options)
 				(go->flags & GF_NONAME) ? "" : argv[0],
 				(go->flags & GF_NONAME) ? "" : ": ", c);
 			if (go->flags & GF_ERROR)
-				bi_errorf(null);
+                            bi_errorf("%s",null);
 			return '?';
 		}
 		go->p = 0;
@@ -1024,7 +1024,7 @@ print_value_quoted(s)
 	}
 	for (p = s; *p; p++) {
 		if (*p == '\'') {
-			shprintf("'\\'" + 1 - inquote);
+                        shprintf("%s","'\\'" + 1 - inquote);
 			inquote = 0;
 		} else {
 			if (!inquote) {

@@ -191,14 +191,14 @@ c_fc(wp)
 	}
 
 	/* Ignore setstr errors here (arbitrary) */
-	setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
+	setstr(pfksh_local("_", FALSE), tf->name, KSH_RETURN_ERROR);
 
 	/* XXX: source should not get trashed by this.. */
 	{
 		Source *sold = yysource;
 		int ret;
 
-		ret = command(editor ? editor : "${FCEDIT:-/bin/ed} $_");
+		ret = pfksh_command(editor ? editor : "${FCEDIT:-/bin/ed} $_");
 		yysource = sold;
 		if (ret)
 			return ret;
@@ -271,7 +271,7 @@ hist_execute(cmd)
 	 */
 	/* XXX: source should not get trashed by this.. */
 	sold = yysource;
-	ret = command(cmd);
+	ret = pfksh_command(cmd);
 	yysource = sold;
 	return ret;
 }
@@ -607,7 +607,7 @@ hist_init(s)
 
 	hist_source = s;
 
-	if ((f = str_val(global("HISTFILE"))) == NULL || *f == '\0') {
+	if ((f = str_val(pfksh_global("HISTFILE"))) == NULL || *f == '\0') {
 		hname = NULL;
 		return;
 	} else

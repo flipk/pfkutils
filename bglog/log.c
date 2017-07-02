@@ -85,8 +85,8 @@ log_open(void)
     strftime(datestr, sizeof(datestr),
              "%Y-%m%d-%H%M%S", &tm_now);
 
-    snprintf(fn, 256, LOGFILE_BASE "-%s-%03d",
-             datestr, tv_now.tv_usec / 1000);
+    snprintf(fn, 256, LOGFILE_BASE "-%s-%03u",
+             datestr, (unsigned int) tv_now.tv_usec / 1000);
 
     logfile = fopen(fn, "w");
     if (logfile == NULL)

@@ -33,6 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #include <unistd.h>
 #include <signal.h>
 
+#include <inttypes.h>
+
 uint32_t MAX_NUM_FILES;
 uint32_t MAX_FILE_SIZE;
 uint32_t MAX_ITERATIONS;
@@ -70,7 +72,8 @@ struct threadstats {
         deletions = other.deletions;
     }
     void print(void) {
-        printf("%5d: f %8d b %11lld c %5lld v %5lld d %5lld\n",
+        printf("%5"PRIu32": f %8"PRIu32" b %11"PRIu64" "
+               "c %5"PRIu64" v %5"PRIu64" d %5"PRIu64"\n",
                seconds, total_files, total_bytes,
                creations, validations, deletions);
         seconds ++;
@@ -123,7 +126,8 @@ diskloader_main(int argc, char ** argv)
         SCALE(filesizeval,fileunit);
         SCALE(totalsizeval,totalunit);
 
-        printf("%d files avgsize %lld %c total %lld %c bytes %d wraps\n",
+        printf("%d files avgsize %"PRIu64" %c "
+               "total %"PRIu64" %c bytes %u wraps\n",
                MAX_NUM_FILES * 2 / 3,
                filesizeval, fileunit,
                totalsizeval, totalunit,

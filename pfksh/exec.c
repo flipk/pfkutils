@@ -107,7 +107,7 @@ execute(t, flags)
 			timex_hook(t, &ap);
 		if (Flag(FXTRACE) && ap[0]) {
 			shf_fprintf(shl_out, "%s",
-				PS4_SUBSTITUTE(str_val(global("PS4"))));
+				PS4_SUBSTITUTE(str_val(pfksh_global("PS4"))));
 			for (i = 0; ap[i]; i++)
 				shf_fprintf(shl_out, "%s%s", ap[i],
 					ap[i + 1] ? space : newline);
@@ -134,7 +134,7 @@ execute(t, flags)
 				 */
 				if (tp && tp->type == CSHELL
 				    && (tp->flag & SPEC_BI))
-					errorf(null);
+                                    errorf("%s",null);
 				/* Deal with FERREXIT, quitenv(), etc. */
 				goto Break;
 			}
@@ -303,7 +303,7 @@ execute(t, flags)
 		rv = 0; /* in case of a continue */
 		if (t->type == TFOR) {
 			while (*ap != NULL) {
-				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
+				setstr(pfksh_global(t->str), *ap++, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
 		}
@@ -314,7 +314,7 @@ execute(t, flags)
 					break;
 				}
 				is_first = FALSE;
-				setstr(global(t->str), cp, KSH_UNWIND_ERROR);
+				setstr(pfksh_global(t->str), cp, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
 		}
@@ -529,7 +529,7 @@ comexec(t, tp, ap, flags)
 		if (Flag(FXTRACE)) {
 			if (i == 0)
 				shf_fprintf(shl_out, "%s",
-					PS4_SUBSTITUTE(str_val(global("PS4"))));
+					PS4_SUBSTITUTE(str_val(pfksh_global("PS4"))));
 			shf_fprintf(shl_out, "%s%s", cp,
 				t->vars[i + 1] ? space : newline);
 			if (!t->vars[i + 1])
@@ -577,7 +577,7 @@ comexec(t, tp, ap, flags)
 				}
 				break;
 			}
-			if (include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
+			if (pfksh_include(tp->u.fpath, 0, (char **) 0, 0) < 0) {
 				warningf(TRUE,
 			    "%s: can't open function definition file %s - %s",
 					cp, tp->u.fpath, strerror(errno));
@@ -718,7 +718,7 @@ scriptexec(tp, ap)
 {
 	char *shell;
 
-	shell = str_val(global(EXECSHELL_STR));
+	shell = str_val(pfksh_global(EXECSHELL_STR));
 	if (shell && *shell)
 		shell = search(shell, path, X_OK, (int *) 0);
 	if (!shell || !*shell)
@@ -879,7 +879,7 @@ findcom(name, flags)
 	if (!tp && (flags & FC_FUNC)) {
 		tp = findfunc(name, h, FALSE);
 		if (tp && !(tp->flag & ISSET)) {
-			if ((fpath = str_val(global("FPATH"))) == null) {
+			if ((fpath = str_val(pfksh_global("FPATH"))) == null) {
 				tp->u.fpath = (char *) 0;
 				tp->u2.errno_ = 0;
 			} else
@@ -930,7 +930,7 @@ findcom(name, flags)
 			tp->val.s = tp == &temp ? npath : str_save(npath, APERM);
 			tp->flag |= ISSET|ALLOC;
 		} else if ((flags & FC_FUNC)
-			   && (fpath = str_val(global("FPATH"))) != null
+			   && (fpath = str_val(pfksh_global("FPATH"))) != null
 			   && (npath = search(name, fpath, R_OK,
 					      &tp->u2.errno_)) != (char *) 0)
 		{
@@ -1090,7 +1090,7 @@ iosetup(iop, tp)
 
 	if (Flag(FXTRACE))
 		shellf("%s%s\n",
-			PS4_SUBSTITUTE(str_val(global("PS4"))),
+			PS4_SUBSTITUTE(str_val(pfksh_global("PS4"))),
 			snptreef((char *) 0, 32, "%R", &iotmp));
 
 	switch (iotype) {
@@ -1242,7 +1242,7 @@ herein(content, sub)
 	}
 	if (sub) {
 		/* Do substitutions on the content of heredoc */
-		s = pushs(SSTRING, ATEMP);
+		s = pfksh_pushs(SSTRING, ATEMP);
 		s->start = s->str = content;
 		yysource = s;
 		if (pfksh_yylex(ONEWORD) != LWORD)
@@ -1287,12 +1287,12 @@ do_selectargs(ap, print_menu)
 		 *	- the user enters a blank line
 		 *	- the REPLY parameter is empty
 		 */
-		if (print_menu || !*str_val(global("REPLY")))
+		if (print_menu || !*str_val(pfksh_global("REPLY")))
 			pr_menu(ap);
-		shellf("%s", str_val(global("PS3")));
+		shellf("%s", str_val(pfksh_global("PS3")));
 		if (call_builtin(findcom("read", FC_BI), (char **) read_args))
 			return (char *) 0;
-		s = str_val(global("REPLY"));
+		s = str_val(pfksh_global("REPLY"));
 		if (*s) {
 			i = atoi(s);
 			return (i >= 1 && i <= argct) ? ap[i - 1] : null;

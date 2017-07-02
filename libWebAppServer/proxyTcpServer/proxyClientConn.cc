@@ -216,7 +216,8 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
                 //else cc > 0
                 if (cc != bytes_left)
                 {
-                    printf("NOTE: write of %d != %d\n", bytes_left, cc);
+                    printf("NOTE: write of %u != %d\n",
+                           (unsigned int) bytes_left, cc);
                     fd_set rfds;
                     FD_ZERO(&rfds);
                     FD_SET(fd_interface::fd, &rfds);
@@ -242,7 +243,7 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
         then.tv_usec = pm_in.ping().time_usec();
         diff = now - then;
         printf("ping round trip delay = %u.%06u\n",
-               diff.tv_sec, diff.tv_usec);
+               (unsigned int) diff.tv_sec, (unsigned int) diff.tv_usec);
         break;
     }
     }

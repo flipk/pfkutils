@@ -94,9 +94,9 @@ pfkstat_main( int argc, char ** argv )
             printf( "stat failed: %s\n", strerror( errno ));
         else
             printf( "%07x" // dev
-                    " %10d" // ino
+                    " %10u" // ino
                     " %6o" // mode
-                    " %4d" // nlink
+                    " %4u" // nlink
                     " %4d" // uid
                     " %4d" // gid
 #if HAVE_STRUCT_STAT_ST_RDEV
@@ -116,17 +116,19 @@ pfkstat_main( int argc, char ** argv )
                     " %4d" // gen
 #endif
                     "\n",
-                    sb.st_dev, sb.st_ino, sb.st_mode, sb.st_nlink,
+                    (unsigned int) sb.st_dev,
+                    (unsigned int) sb.st_ino, sb.st_mode,
+                    (unsigned int) sb.st_nlink,
                     sb.st_uid, sb.st_gid
 #if HAVE_STRUCT_STAT_ST_RDEV
-                    , sb.st_rdev
+                    , (unsigned int) sb.st_rdev
 #endif
                     , (int)sb.st_size
 #if HAVE_STRUCT_STAT_ST_BLOCKS
                     , (int)sb.st_blocks
 #endif
 #if HAVE_STRUCT_STAT_ST_BLKSIZE
-                    , sb.st_blksize
+                    , (int)sb.st_blksize
 #endif
 #if HAVE_STRUCT_STAT_ST_FLAGS
                     , sb.st_flags

@@ -368,14 +368,16 @@ enum sh_flag {
 	FNFLAGS /* (place holder: how many flags are there) */
 };
 
+#define shell_flags pfksh_shell_flags
+#define null pfksh_null
+
 #define Flag(f)	(shell_flags[(int) (f)])
 
 EXTERN	char shell_flags [FNFLAGS];
 
 EXTERN	char	null [] I__("");	/* null value for variable */
-EXTERN	char	space [] I__(" ");
-EXTERN	char	newline [] I__("\n");
-EXTERN	char	slash [] I__("/");
+#define space " "
+#define newline "\n"
 
 enum temp_type {
     TT_HEREDOC_EXP,	/* expanded heredoc */

@@ -65,7 +65,7 @@ substitute(cp, f)
 	struct source *s, *sold;
 
 	sold = yysource;
-	s = pushs(SWSTR, ATEMP);
+	s = pfksh_pushs(SWSTR, ATEMP);
 	s->start = s->str = cp;
 	yysource = s;
 	if (pfksh_yylex(ONEWORD) != LWORD)
@@ -705,7 +705,7 @@ varsub(xp, sp, word, stypep, slenp)
 		/* Check for size of array */
 		if ((p=strchr(sp,'[')) && (p[1]=='*'||p[1]=='@') && p[2]==']') {
 			int n = 0;
-			vp = global(arrayname(sp));
+			vp = pfksh_global(arrayname(sp));
 			if (vp->flag & (ISSET|ARRAY))
 				zero_ok = 1;
 			for (; vp; vp = vp->u.array)
@@ -716,7 +716,7 @@ varsub(xp, sp, word, stypep, slenp)
 		} else if (c == '*' || c == '@')
 			c = e->loc->argc;
 		else {
-			p = str_val(global(sp));
+			p = str_val(pfksh_global(sp));
 			zero_ok = p != null;
 			c = strlen(p);
 		}
@@ -780,7 +780,7 @@ varsub(xp, sp, word, stypep, slenp)
 				return -1;
 			}
 			XPinit(wv, 32);
-			vp = global(arrayname(sp));
+			vp = pfksh_global(arrayname(sp));
 			for (; vp; vp = vp->u.array) {
 				if (!(vp->flag&ISSET))
 					continue;
@@ -802,7 +802,7 @@ varsub(xp, sp, word, stypep, slenp)
 			if ((stype & 0x7f) == '='
 			    && (ctype(*sp, C_VAR1) || digit(*sp)))
 				return -1;
-			xp->var = global(sp);
+			xp->var = pfksh_global(sp);
 			xp->str = str_val(xp->var);
 			state = XSUB;
 		}
@@ -832,7 +832,7 @@ comsub(xp, cp)
 	struct op *t;
 	struct shf *shf;
 
-	s = pushs(SSTRING, ATEMP);
+	s = pfksh_pushs(SSTRING, ATEMP);
 	s->start = s->str = cp;
 	sold = yysource;
 	t = compile(s);
@@ -1192,11 +1192,11 @@ tilde(cp)
 	char *dp;
 
 	if (cp[0] == '\0')
-		dp = str_val(global("HOME"));
+		dp = str_val(pfksh_global("HOME"));
 	else if (cp[0] == '+' && cp[1] == '\0')
-		dp = str_val(global("PWD"));
+		dp = str_val(pfksh_global("PWD"));
 	else if (cp[0] == '-' && cp[1] == '\0')
-		dp = str_val(global("OLDPWD"));
+		dp = str_val(pfksh_global("OLDPWD"));
 	else
 		dp = homedir(cp);
 	/* If HOME, PWD or OLDPWD are not set, don't expand ~ */

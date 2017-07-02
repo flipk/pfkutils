@@ -150,7 +150,7 @@ pfksh_main(argc, argv)
 	 * (import of environment below will probably change this setting).
 	 */
 	{
-		struct tbl *vp = global("PATH");
+		struct tbl *vp = pfksh_global("PATH");
 		/* setstr can't fail here */
 		setstr(vp, def_path, KSH_RETURN_ERROR);
 	}
@@ -184,7 +184,7 @@ pfksh_main(argc, argv)
 	/* Figure out the current working directory and set $PWD */
 	{
 		struct stat s_pwd, s_dot;
-		struct tbl *pwd_v = global("PWD");
+		struct tbl *pwd_v = pfksh_global("PWD");
 		char *pwd = str_val(pwd_v);
 		char *pwdx = pwd;
 
@@ -205,16 +205,16 @@ pfksh_main(argc, argv)
 			setstr(pwd_v, current_wd, KSH_RETURN_ERROR);
 	}
 	ppid = getppid();
-	setint(global("PPID"), (long) ppid);
-	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
+	setint(pfksh_global("PPID"), (long) ppid);
+	setint(pfksh_global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 	/* setstr can't fail here */
 #ifdef BUILD_DATE
-        setstr(global(build_date_param), BUILD_DATE, KSH_RETURN_ERROR);
+        setstr(pfksh_global(build_date_param), BUILD_DATE, KSH_RETURN_ERROR);
         char ksh_version_string[100];
         sprintf(ksh_version_string, "%s %s", ksh_version, BUILD_DATE);
-       	setstr(global(version_param), ksh_version_string, KSH_RETURN_ERROR);
+       	setstr(pfksh_global(version_param), ksh_version_string, KSH_RETURN_ERROR);
 #else
-       	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
+       	setstr(pfksh_global(version_param), ksh_version, KSH_RETURN_ERROR);
 #endif
 
 	/* execute initialization statements */
@@ -228,7 +228,7 @@ pfksh_main(argc, argv)
 	ksheuid = geteuid();
 	safe_prompt = ksheuid ? "$ " : "# ";
 	{
-		struct tbl *vp = global("PS1");
+		struct tbl *vp = pfksh_global("PS1");
 
 		/* Set PS1 if it isn't set, or we are root and prompt doesn't
 		 * contain a #.
@@ -249,13 +249,13 @@ pfksh_main(argc, argv)
 		exit(1);
 
 	if (Flag(FCOMMAND)) {
-		src = pushs(SSTRING, ATEMP);
+		src = pfksh_pushs(SSTRING, ATEMP);
 		if (!(src->start = src->str = argv[argi++]))
 			errorf("-c requires an argument");
 		if (argv[argi])
 			kshname = argv[argi++];
 	} else if (argi < argc && !Flag(FSTDIN)) {
-		src = pushs(SFILE, ATEMP);
+		src = pfksh_pushs(SFILE, ATEMP);
 		src->file = argv[argi++];
 		src->u.shf = shf_open(src->file, O_RDONLY, 0, SHF_MAPHI|SHF_CLEXEC);
 		if (src->u.shf == NULL) {
@@ -265,7 +265,7 @@ pfksh_main(argc, argv)
 		kshname = src->file;
 	} else {
 		Flag(FSTDIN) = 1;
-		src = pushs(SSTDIN, ATEMP);
+		src = pfksh_pushs(SSTDIN, ATEMP);
 		src->file = "<stdin>";
 		src->u.shf = shf_fdopen(0, SHF_RD | can_seek(0),
 				      (struct shf *) 0);
@@ -313,26 +313,26 @@ pfksh_main(argc, argv)
 		warningf(FALSE, "Cannot determine current working directory");
 
 	if (Flag(FLOGIN)) {
-		include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
+		pfksh_include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
 		if (!Flag(FPRIVILEGED))
-			include(substitute("$HOME/.profile", 0), 0,
+			pfksh_include(substitute("$HOME/.profile", 0), 0,
 				(char **) 0, 1);
 	}
 
 	if (Flag(FPRIVILEGED))
-		include("/etc/suid_profile", 0, (char **) 0, 1);
+		pfksh_include("/etc/suid_profile", 0, (char **) 0, 1);
 	else {
 		char *env_file;
 
                 /* include $ENV */
-                env_file = str_val(global("ENV"));
+                env_file = str_val(pfksh_global("ENV"));
 
 		env_file = substitute(env_file, DOTILDE);
 		if (*env_file != '\0')
-			include(env_file, 0, (char **) 0, 1);
+			pfksh_include(env_file, 0, (char **) 0, 1);
 	}
 
-	if (is_restricted(argv[0]) || is_restricted(str_val(global("SHELL"))))
+	if (is_restricted(argv[0]) || is_restricted(str_val(pfksh_global("SHELL"))))
 		restricted = 1;
 	if (restricted) {
 		static const char *const restr_com[] = {
@@ -353,12 +353,12 @@ pfksh_main(argc, argv)
 	} else
 		Flag(FTRACKALL) = 1;	/* set after ENV */
 
-	shell(src, TRUE);	/* doesn't return */
+	pfksh_shell(src, TRUE);	/* doesn't return */
 	return 0;
 }
 
 int
-include(name, argc, argv, intr_ok)
+pfksh_include(name, argc, argv, intr_ok)
 	const char *name;
 	int argc;
 	char **argv;
@@ -419,10 +419,10 @@ include(name, argc, argv, intr_ok)
 		e->loc->argv = argv;
 		e->loc->argc = argc;
 	}
-	s = pushs(SFILE, ATEMP);
+	s = pfksh_pushs(SFILE, ATEMP);
 	s->u.shf = shf;
 	s->file = str_save(name, ATEMP);
-	i = shell(s, FALSE);
+	i = pfksh_shell(s, FALSE);
 	yysource = sold;
 	shf_close(s->u.shf);
 	quitenv();
@@ -434,21 +434,21 @@ include(name, argc, argv, intr_ok)
 }
 
 int
-command(comm)
+pfksh_command(comm)
 	const char *comm;
 {
 	Source *s;
 
-	s = pushs(SSTRING, ATEMP);
+	s = pfksh_pushs(SSTRING, ATEMP);
 	s->start = s->str = comm;
-	return shell(s, FALSE);
+	return pfksh_shell(s, FALSE);
 }
 
 /*
  * run the commands from the input source, returning status.
  */
 int
-shell(s, toplevel)
+pfksh_shell(s, toplevel)
 	Source *volatile s;		/* input source */
 	int volatile toplevel;
 {
@@ -726,6 +726,6 @@ aerror(ap, msg)
 	const char *msg;
 {
 	internal_errorf(1, "alloc: %s", msg);
-	errorf(null); /* this is never executed - keeps gcc quiet */
+	errorf("%s",null); /* this is never executed - keeps gcc quiet */
 	/*NOTREACHED*/
 }
