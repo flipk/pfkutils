@@ -61,21 +61,21 @@ class Lockable {
     friend class Lock;
     pthread_mutex_t  lockableMutex;
     bool   locked;
-    void   lock(void) throw ();
-    void unlock(void) throw ();
+    void   lock(void) /*throw ()*/;
+    void unlock(void) /*throw ()*/;
 public:
     /** constructor initializes the mutex to an unlocked state */
-    Lockable(void) throw ();
+    Lockable(void) /*throw ()*/;
     /** destructor checks that the mutex is not locked.
      * \throw may throw LockableError if the mutex is locked. */
-    ~Lockable(void) throw (LockableError);
+    ~Lockable(void) /*throw (LockableError)*/;
     /** indicates if the lock is held or not. 
      * \return true if the mutex is currently locked.
      * \note this is itself not protected so its only advisory;
      *     by the time you do something based on this return value,
      *     it may have changed. really only useful for catching errors
      *     like not locking something that should be locked. */
-    bool isLocked() const throw ();
+    bool isLocked() const /*throw ()*/;
 };
 
 /** an instance of a lock (a critical region) should be framed
@@ -97,9 +97,9 @@ public:
     /** destructor makes sure the Lockable is unlocked before returning */
     ~Lock(void);
     /** a lock may be locked at any time if it is currently unlocked. */
-    void lock(void) throw ();
+    void lock(void) /*throw ()*/;
     /** a lock may be unlocked at any time if it is currently locked. */
-    void unlock(void) throw (LockableError);
+    void unlock(void) /*throw (LockableError)*/;
 };
 
 /** an object which can be waited for by a waiter. you can either
@@ -175,7 +175,7 @@ public:
 
 // inline impl below this line
 
-inline Lockable::Lockable(void) throw ()
+inline Lockable::Lockable(void) /*throw ()*/
 {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -185,29 +185,29 @@ inline Lockable::Lockable(void) throw ()
     locked = false;
 }
 
-inline Lockable::~Lockable(void) throw (LockableError)
+inline Lockable::~Lockable(void) /*throw (LockableError)*/
 {
-    if (locked)
-        LOCKABLERR(MUTEX_LOCKED_IN_DESTRUCTOR);
+/*    if (locked)
+      LOCKABLERR(MUTEX_LOCKED_IN_DESTRUCTOR);*/
     pthread_mutex_destroy(&lockableMutex);
 }
 
 inline void
-Lockable::lock(void) throw ()
+Lockable::lock(void) /*throw ()*/
 {
     pthread_mutex_lock  (&lockableMutex);
     locked = true;
 }
 
 inline void
-Lockable::unlock(void) throw ()
+Lockable::unlock(void) /*throw ()*/
 {
     locked = false;
     pthread_mutex_unlock(&lockableMutex);
 }
 
 inline bool
-Lockable::isLocked(void) const throw ()
+Lockable::isLocked(void) const /*throw ()*/
 {
     return locked;
 }
@@ -230,14 +230,14 @@ inline Lock::~Lock(void)
 }
 
 inline void
-Lock::lock(void) throw ()
+Lock::lock(void) /*throw ()*/
 {
     if (lockCount++ == 0)
         lobj->lock();
 }
 
 inline void
-Lock::unlock(void) throw (LockableError)
+Lock::unlock(void) /*throw (LockableError)*/
 {
     if (lockCount <= 0)
         LOCKABLERR(RECURSION_ERROR);
