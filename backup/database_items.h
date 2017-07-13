@@ -168,7 +168,7 @@ public:
 
     bool get_data(FB_AUID_T id) {
         FileBlock * datafb = fbi->get(id,false);
-        if (datafb == false)
+        if (datafb == NULL)
         {
             std::cerr << "fbi->get(data_id) failed!\n";
             return false;

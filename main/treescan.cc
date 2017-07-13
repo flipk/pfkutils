@@ -106,7 +106,7 @@ private:
         }
         bool get_data(FB_AUID_T id) {
             FileBlock * datafb = bt->get_fbi()->get(id,false);
-            if (datafb == false)
+            if (datafb == NULL)
             {
                 cout << "bt->get_fbi()->get(data_id) failed!\n";
                 return false;
