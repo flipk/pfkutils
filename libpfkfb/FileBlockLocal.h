@@ -54,7 +54,8 @@ typedef UINT32_t FB_AUN_t;
 
 /** 
  * fundamental size of an allocation unit.  every allocation is
- * a multiple of this.
+ * a multiple of this. note that FB_AUN_T is 31 bits long, therefore
+ * maximum file size is 128 * 0x7ffffff = ~256GB.
  */
 #define AU_SIZE 128
 
