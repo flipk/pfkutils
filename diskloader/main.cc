@@ -72,8 +72,8 @@ struct threadstats {
         deletions = other.deletions;
     }
     void print(void) {
-        printf("%5"PRIu32": f %8"PRIu32" b %11"PRIu64" "
-               "c %5"PRIu64" v %5"PRIu64" d %5"PRIu64"\n",
+        printf("%5" PRIu32 ": f %8" PRIu32 " b %11" PRIu64 " "
+               "c %5" PRIu64 " v %5" PRIu64 " d %5" PRIu64 "\n",
                seconds, total_files, total_bytes,
                creations, validations, deletions);
         seconds ++;
@@ -126,8 +126,8 @@ diskloader_main(int argc, char ** argv)
         SCALE(filesizeval,fileunit);
         SCALE(totalsizeval,totalunit);
 
-        printf("%d files avgsize %"PRIu64" %c "
-               "total %"PRIu64" %c bytes %u wraps\n",
+        printf("%d files avgsize %" PRIu64 " %c "
+               "total %" PRIu64 " %c bytes %u wraps\n",
                MAX_NUM_FILES * 2 / 3,
                filesizeval, fileunit,
                totalsizeval, totalunit,
