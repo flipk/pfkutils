@@ -12,12 +12,12 @@
 	b = branch
 	ci = commit
 	s = status
-	l = log --graph --oneline --decorate --all
+	l = log --graph --oneline --decorate
+	la = log --graph --oneline --decorate --all
 	k = !gitk --all &
 	sub = submodule
 	subfe = submodule foreach
 	ssub = !git submodule foreach git status
-	la = !git config -l | grep alias | cut -c 7-
 	dt = difftool
 	dtc = difftool --cached
 [diff]
