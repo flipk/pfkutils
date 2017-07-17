@@ -14,7 +14,8 @@
 	s = status
 	l = log --graph --oneline --decorate
 	la = log --graph --oneline --decorate --all
-	k = !gitk --all &
+	k = !gitk &
+	ka = !gitk --all &
 	sub = submodule
 	subfe = submodule foreach
 	ssub = !git submodule foreach git status
