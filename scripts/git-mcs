@@ -1,6 +1,12 @@
 #!/bin/bash
 
-find . -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) | grep -v rrc.h > cscope.files
+if [ $# -eq 0 ] ; then
+   dirs="."
+else
+   dirs="$*"
+fi
+
+find $dirs -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) | grep -v rrc.h > cscope.files
 cscope -bk
 
 exit 0
