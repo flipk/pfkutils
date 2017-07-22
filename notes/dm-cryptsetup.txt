@@ -1,0 +1,246 @@
+
+requires 
+   CONFIG_DM or CONFIG_BLK_DEV_DM (depends on linux version)
+   CONFIG_DM_CRYPT (probably should include others)
+   CONFIG_CRYPTO_AES (probably should include others, block modes etc)
+
+
+ $ sudo dmsetup table 
+fedora00-home: 0 376594432 linear 253:0 16558080
+fedora00-swap: 0 16556032 linear 253:0 2048
+fedora00-root: 0 104857600 linear 253:0 393152512
+luks-<uuid>: 0 498014208 crypt aes-xts-plain64 <0s> 0 8:34 4096
+
+*************
+
+ % lsblk 
+NAME                   MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINT
+sdd                      8:48   0 931.5G  0 disk  
+└─sdd1                   8:49   0 931.5G  0 part  /auto/apricorn
+sdb                      8:16   0   1.8T  0 disk  
+└─sdb1                   8:17   0   1.8T  0 part  
+  └─luks-<uuid>        253:5    0   1.8T  0 crypt /vice1
+sr0                     11:0    1  1024M  0 rom   
+sdc                      8:32   0 238.5G  0 disk  
+├─sdc2                   8:34   0 237.5G  0 part  
+│ └─luks-<uuid>        253:0    0 237.5G  0 crypt 
+│   ├─fedora00-root    253:1    0    50G  0 lvm   /
+│   ├─fedora00-swap    253:2    0   7.9G  0 lvm   [SWAP]
+│   └─fedora00-home    253:3    0 179.6G  0 lvm   /home
+└─sdc1                   8:33   0     1G  0 part  /boot
+sda                      8:0    0   1.8T  0 disk  
+└─sda1                   8:1    0   1.8T  0 part  
+  └─luks-<uuid>        253:4    0   1.8T  0 crypt /vice2
+
+ % sudo lvmdiskscan 
+SSD:
+  /dev/sdc1                [       1.00 GiB] 
+  /dev/sdc2                [     237.47 GiB] 
+  /dev/mapper/luks-<uuid>  [     237.47 GiB] LVM physical volume
+  /dev/fedora00/root       [      50.00 GiB] 
+  /dev/fedora00/swap       [       7.89 GiB] 
+  /dev/fedora00/home       [     179.57 GiB] 
+
+VICE1:
+  /dev/sdb1                [       1.82 TiB] 
+
+VICE2:
+  /dev/sda1                [       1.82 TiB] 
+
+*************
+
+ $ sudo cryptsetup luksDump /dev/sdc2
+LUKS header information for /dev/sdc2
+Version:        1
+Cipher name:    aes
+Cipher mode:    xts-plain64
+Hash spec:      sha256
+Payload offset: 4096
+MK bits:        512
+MK digest:      <hex>
+MK salt:        <hex>
+MK iterations:  <value>
+UUID:           <uuid>
+Key Slot 0: ENABLED
+        Iterations:             <value>
+        Salt:                   <hex>
+        Key material offset:    <value>
+        AF stripes:             <value>
+
+*************
+
+to see if TRIM is supported:
+ $ sudo lsblk -D
+
+to make TRIM passthru luks/dm-crypt:
+add 'discard' to /etc/crypttab fourth field (comma separated list)
+and then mkinitrd
+
+to TRIM, once a week maybe?
+   (note ubuntu 14 has a weekly cron to run "fstrim-all"
+    (which doesn't exist on fedora))
+ $ sudo fstrim /
+ $ sudo fstrim /home
+ $ sudo fstrim /boot
+
+you can also add 'discard' to the list of ext4 mount options, but this
+is not generally recommended due to frequency it occurs and synchronicity
+(freezes the FS when it happens)
+
+*************
+
+ % cryptsetup benchmark
+
+*************
+
+setting up an encrypted partition from scratch:
+
+- fdisk (or gparted) create a linux partition
+
+$ sudo cryptsetup -v --cipher aes-xts-plain64 --key-size 256 --hash sha256 \
+  --iter-time 2000 --use-urandom --verify-passphrase luksFormat /dev/sda1
+
+ <enter passphrase>
+
+$ sudo cryptsetup luksDump /dev/sda1
+Cipher name:   	aes
+Cipher mode:   	xts-plain64
+Hash spec:     	sha256
+UUID:          	<uuid>
+Key Slot 0: ENABLED
+   <details>
+
+$ sudo cryptsetup open --type luks /dev/sda1 sda1-crypt
+ <enter passphrase>
+
+************* lvm
+
+       pvcreate      Initialize a disk or partition for use by LVM.
+       pvdisplay     Display attributes of a Physical Volume.
+       pvs           Report information about Physical Volumes.
+       pvscan        Scan all disks for Physical Volumes.
+
+       vgcreate      Create a Volume Group.
+       vgdisplay     Display attributes of Volume Groups.
+       vgextend      Add Physical Volumes to a Volume Group.
+       vgmknodes     Recreate Volume Group directory and Logical Volume special files
+       vgs           Report information about Volume Groups.
+       vgscan        Scan all disks for Volume Groups and rebuild caches.
+
+       lvchange      Change attributes of a Logical Volume.
+       lvcreate      Create a Logical Volume in an existing Volume Group.
+       lvdisplay     Display attributes of a Logical Volume.
+       lvmconfig     Display  the  configuration  information after loading lvm.conf(5) and
+                     any other configuration files.
+       lvmdiskscan   Scan for all devices visible to LVM2.
+       lvs           Report information about Logical Volumes.
+       lvscan        Scan (all disks) for Logical Volumes.
+
+pvcreate   [--commandprofile   ProfileName]   [-d|--debug]  [-h|--help]  [-t|--test]
+[-v|--verbose]  [--version]  [-f[f]|--force  [--force]]  [-y|--yes]  [--labelsector]
+[--bootloaderareasize size] [-M|--metadatatype type] [--[pv]metadatacopies NumberOf‐
+Copies] [--metadatasize size] [--metadataignore {y|n}]  [--dataalignment  alignment]
+[--dataalignmentoffset   alignment_offset]  [--restorefile  file]  [--norestorefile]
+[--reportformat  {basic|json}]  [--setphysicalvolumesize  size]   [-u|--uuid   uuid]
+[-Z|--zero {y|n}] PhysicalVolume [PhysicalVolume...]
+
+ % sudo pvcreate -v /dev/mapper/sda1-crypt  
+
+vgcreate   [--addtag   Tag]   [--alloc   AllocationPolicy]  [-A|--autobackup  {y|n}]
+[-c|--clustered  {y|n}]  [--commandprofile  ProfileName]  [-d|--debug]   [-h|--help]
+[-l|--maxlogicalvolumes  MaxLogicalVolumes] [-M|--metadatatype type] [--metadataprofile
+ProfileName] [-p|--maxphysicalvolumes MaxPhysicalVolumes] [--[vg]metadatacopies
+NumberOfCopies|unmanaged|all] [-s|--physicalextentsize PhysicalExtentSize[bBsSkKmMgGtTpPeE]]
+[--reportformat {basic|json}] [--shared] [--systemid SystemID] [-t|--test]
+[-v|--verbose]  [--version]  [PHYSICAL DEVICE OPTIONS] VolumeGroupName PhysicalDevicePath
+[PhysicalDevicePath...]
+
+
+ % sudo vgcreate -v vgVice2 /dev/mapper/sda1-crypt
+
+lvcreate [-a|--activate [a][e|l|s]{y|n}] [--addtag Tag] [--alloc AllocationPolicy]
+[-A|--autobackup {y|n}] [-H|--cache] [--cachemode {passthrough|writeback|writethrough}]
+[--cachepolicy Policy] [--cachepool CachePoolLogicalVolume]
+[--cachesettings Key=Value] [-c|--chunksize ChunkSize] [--commandprofile ProfileName]
+[-C|--contiguous {y|n}] [-d|--debug] [--discards {ignore|nopassdown|passdown}]
+[--errorwhenfull {y|n}] [{-l|--extents LogicalExtentsNumber[%{FREE|PVS|VG}] |
+-L|--size LogicalVolumeSize} [-i|--stripes Stripes [-I|--stripesize StripeSize]]]
+[-h|-?|--help] [-K|--ignoreactivationskip] [--ignoremonitoring] [--minor Minor
+[-j|--major Major]] [--metadataprofile ProfileName] [-m|--mirrors Mirrors
+[--corelog|--mirrorlog {disk|core|mirrored}] [--nosync] [-R|--regionsize MirrorLogRegionSize]]
+[--monitor {y|n}] [-n|--name LogicalVolume] [--noudevsync]
+[-p|--permission {r|rw}] [-M|--persistent {y|n}] [--poolmetadatasize MetadataVolumeSize]
+[--poolmetadataspare {y|n}] [--[raid]maxrecoveryrate Rate] [--[raid]minrecoveryrate Rate]
+[-r|--readahead {ReadAheadSectors|auto|none}] [--reportformat
+{basic|json}] [-k|--setactivationskip {y|n}] [-s|--snapshot] [-V|--virtualsize VirtualSize]
+[-t|--test] [-T|--thin] [--thinpool ThinPoolLogicalVolume] [--type SegmentType]
+[-v|--verbose] [-W|--wipesignatures {y|n}] [-Z|--zero {y|n}] [VolumeGroup
+| {ExternalOrigin|Origin|Pool}LogicalVolume [PhysicalVolumePath[:PE[-PE]]...]]
+
+ % sudo lvcreate -v --name alt --size 500G vgVice2
+
+ % sudo pvs                    
+  PV                              VG       Fmt  Attr PSize   PFree
+  /dev/mapper/luks-<uuid>         fedora00 lvm2 a--  237.47g    0 
+  /dev/mapper/sda1-crypt          vgVice2  lvm2 a--    1.82t 1.33t
+
+ % sudo lvcreate -v --name flipk --extents 100%FREE vgVice2
+
+ % sudo pvs                                                 
+  PV                              VG       Fmt  Attr PSize   PFree
+  /dev/mapper/luks-<uuid>         fedora00 lvm2 a--  237.47g    0 
+  /dev/mapper/sda1-crypt          vgVice2  lvm2 a--    1.82t    0 
+
+$ sudo mkfs.ext4 -L VICE2ALT /dev/mapper/vgVice2-alt
+$ sudo mkfs.ext4 -L VICE2 /dev/mapper/vgVice2-flipk
+
+$ sudo mount LABEL=VICE2 /vice2
+<use>
+$ sudo umount /vice2
+$ sudo cryptsetup close sda1-crypt
+
+add line to /etc/crypttab and mkinitrd to make it set up the
+dmcrypt luks mapper at boot.
+if password is the same as boot partition, it should ask for
+password only once (use "none" in crypttab).
+
+add line to /etc/fstab to make it auto mount at boot.
+
+*************
+
+======================== dropbox.img
+
+creation:
+
+dd if=/dev/zero of=dropbox.img bs=65536 count=2000000 status=progress
+cryptsetup -v --cipher aes-xts-plain64 --key-size 256 --hash sha256 \
+  --iter-time 2000 --use-urandom --verify-passphrase luksFormat dropbox.img
+cryptsetup luksDump dropbox.img
+cryptsetup open --type luks dropbox.img dropbox-crypt
+mkfs.ext4 -L DROPBOX-CRYPT /dev/mapper/dropbox-crypt
+cryptsetup close dropbox-crypt
+
+use:
+
+cryptsetup open --type luks /....../dropbox.img dropbox-crypt
+cd /auto/dropbox_crypt
+cryptsetup close dropbox-crypt
+
+======================== box.img
+
+creation:
+
+dd if=/dev/zero of=box.img bs=65536 count=836183 status=progress
+cryptsetup -v --cipher aes-xts-plain64 --key-size 256 --hash sha256 \
+  --iter-time 2000 --use-urandom --verify-passphrase luksFormat box.img
+xxx
+cryptsetup luksDump box.img
+cryptsetup open --type luks box.img box-crypt
+mkfs.ext4 -L BOX-CRYPT /dev/mapper/box-crypt
+cryptsetup close box-crypt
+
+use:
+
+cryptsetup open --type luks /....../box.img box-crypt
+cd /auto/box_crypt
+cryptsetup close box-crypt
