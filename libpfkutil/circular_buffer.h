@@ -28,16 +28,18 @@ For more information, please refer to <http://unlicense.org>
 
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
+template <class T>
 class circular_buffer {
-    int size;
-    int used;
-    int in;   /* write data into buf */
-    int out;  /* read  data out of buf */
-    char * buf;
+    uint32_t size;
+    uint32_t used;
+    uint32_t in;   /* write data into buf */
+    uint32_t out;  /* read  data out of buf */
+    T * buf;
 
 public:
-    circular_buffer( int _size ) {
+    circular_buffer( uint32_t _size ) {
         size = _size + 1;
         in = out = used = 0;
         buf = new char[size];
@@ -45,15 +47,17 @@ public:
     }
     ~circular_buffer  ( void ) { delete[] buf; }
 
-    void print ( bool printbody, char * header = NULL ) {
-        if ( !header )  header = (char*)"";
+    void print ( bool printbody, const char * header = NULL ) const
+    {
+        if ( !header )
+            header = (char*)"";
         fprintf( stderr,
                  "%sbuf: s %3d, u %4d, in %4d, out %4d, cw %4d, cr %4d\n",
                  header,
                  size, used, in, out, contig_writeable(), contig_readable() );
         if ( printbody )
         {
-            for ( int i = 0; i < size; i++ )
+            for ( uint32_t i = 0; i < size; i++ )
                 fprintf( stderr,
                          "%c%02x%c ", (i==out)?'o':' ',
                          buf[i],
@@ -62,17 +66,17 @@ public:
         }
     }
 
-    bool   empty      ( void ) { return used == 0;         }
-    bool   full       ( void ) { return used == (size-1);  }
-    int    free_space ( void ) { return (size-1) - used;   }
-    int    used_space ( void ) { return used;              }
+    bool   empty      ( void ) const { return used == 0;         }
+    bool   full       ( void ) const { return used == (size-1);  }
+    int    free_space ( void ) const { return (size-1) - used;   }
+    int    used_space ( void ) const { return used;              }
 
-    int    write      ( char * bp, int bsz ) {
+    int    write      ( T * bp, uint32_t bsz ) {
         /* truncate if there isn't enough space for the whole packet. */
         if ( bsz > free_space() )
             bsz = free_space();
         /* find how much contiguous space is available currently. */
-        int cpy = contig_writeable();
+        uint32_t cpy = contig_writeable();
         /* if contiguous space is less than packet size, we will
            copy in two parts; "cpy" then represents first half. */
         if ( cpy > bsz )
@@ -90,12 +94,12 @@ public:
         record_write( bsz );
         return bsz;
     }
-    int    read       ( char * bp, int bsz ) {
+    int    read       ( T * bp, uint32_t bsz ) {
         /* trim bsz to the data remaining in the buffer. */
         if ( bsz > used_space() )
             bsz = used_space();
         /* find out how much to read is contiguous. */
-        int cpy = contig_readable();
+        uint32_t cpy = contig_readable();
         /* determine if the read is contiguous or if it must
            be done in 2 parts. */
         if ( cpy > bsz )
@@ -116,21 +120,21 @@ public:
         return bsz;
     }
 
-    int contig_writeable (void) {
+    uint32_t contig_writeable (void) const {
         int r = (out >  in) ? (out - in) : (size -  in);
         int f = free_space();
         return (r > f) ? f : r;
     }
-    int contig_readable  (void) {
+    uint32_t contig_readable  (void) const {
         return (in >= out) ? (in - out) : (size - out);
     }
 
-    void record_write( int s ) {
+    void record_write( uint32_t s ) {
         in  += s; if ( in >= size ) in -= size; used += s;
     }
-    void record_read ( int s ) {
+    void record_read ( uint32_t s ) {
         out += s; if ( out >= size ) out -= size; used -= s;
     }
-    char * write_pos ( void ) { return buf + in;  }
-    char * read_pos  ( void ) { return buf + out; }
+    T * write_pos ( void ) const { return buf + in;  }
+    T * read_pos  ( void ) const { return buf + out; }
 };

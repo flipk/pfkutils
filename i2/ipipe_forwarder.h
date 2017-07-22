@@ -59,7 +59,7 @@ class ipipe_forwarder : public fd_interface {
 
     static const int buf_size    = 16000;
     static const int buf_lowater =  1000;
-    circular_buffer * buf;
+    circular_buffer<char> * buf;
 
 #ifdef I2_ZLIB
     z_streamp zs;

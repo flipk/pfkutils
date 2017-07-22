@@ -136,7 +136,7 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
     memcpy(&m_pHeader->slave2master, &pConfig->slave2master, 
            sizeof(shmempipePoolInfo));
     m_bufferSize = pConfig->bufferSize;
-    m_writeBuffer = new circular_buffer( m_bufferSize );
+    m_writeBuffer = new circular_buffer<char>( m_bufferSize );
 
     m_pHeader->masterReleaseQueueSize = pConfig->masterReleaseQueueSize;
     m_pHeader->slaveReleaseQueueSize = pConfig->slaveReleaseQueueSize;
@@ -210,7 +210,7 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
     memcpy(&m_poolInfo, &m_pHeader->slave2master, sizeof(shmempipePoolInfo));
     initPools(m_shmemPtr + m_pHeader->slave2masterPoolOffset);
     m_bufferSize = pConfig->bufferSize;
-    m_writeBuffer = new circular_buffer( m_bufferSize );
+    m_writeBuffer = new circular_buffer<char>( m_bufferSize );
 
     myReleaseQueueSize = m_pHeader->slaveReleaseQueueSize;
     otherReleaseQueueSize = m_pHeader->masterReleaseQueueSize;

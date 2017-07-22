@@ -76,7 +76,7 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                  "dowuncomp && dowcomp\n" );
         exit( 1 );
     }
-    buf         = dowrite ? new circular_buffer( buf_size ) : NULL;
+    buf         = dowrite ? new circular_buffer<char>( buf_size ) : NULL;
 #ifdef I2_ZLIB
     zs            = NULL;
     if ( dowuncomp || dowcomp )

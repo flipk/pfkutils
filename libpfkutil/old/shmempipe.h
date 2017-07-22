@@ -175,7 +175,7 @@ class shmempipe {
     int m_poolCounts[shmempipePoolInfo::maxPools];
     uintptr_t  m_poolMins[shmempipePoolInfo::maxPools];
     uintptr_t  m_poolMaxs[shmempipePoolInfo::maxPools];
-    circular_buffer * m_writeBuffer;
+    circular_buffer<char> * m_writeBuffer;
     int m_bufferSize;
     static const uint32_t  FREE_FLAG   = 0x80000000;
     static const uint32_t  INIT_FLAG   = 0x40000000;
