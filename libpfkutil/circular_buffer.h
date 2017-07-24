@@ -32,17 +32,17 @@ For more information, please refer to <http://unlicense.org>
 
 template <class T>
 class circular_buffer {
-    uint32_t size;
-    uint32_t used;
-    uint32_t in;   /* write data into buf */
-    uint32_t out;  /* read  data out of buf */
+    int size;
+    int used;
+    int in;   /* write data into buf */
+    int out;  /* read  data out of buf */
     T * buf;
 
 public:
-    circular_buffer( uint32_t _size ) {
+    circular_buffer( int _size ) {
         size = _size + 1;
         in = out = used = 0;
-        buf = new char[size];
+        buf = new T[size];
         memset( buf, 0, size );
     }
     ~circular_buffer  ( void ) { delete[] buf; }
@@ -57,7 +57,7 @@ public:
                  size, used, in, out, contig_writeable(), contig_readable() );
         if ( printbody )
         {
-            for ( uint32_t i = 0; i < size; i++ )
+            for ( int i = 0; i < size; i++ )
                 fprintf( stderr,
                          "%c%02x%c ", (i==out)?'o':' ',
                          buf[i],
@@ -71,12 +71,12 @@ public:
     int    free_space ( void ) const { return (size-1) - used;   }
     int    used_space ( void ) const { return used;              }
 
-    int    write      ( T * bp, uint32_t bsz ) {
+    int    write      ( T * bp, int bsz ) {
         /* truncate if there isn't enough space for the whole packet. */
         if ( bsz > free_space() )
             bsz = free_space();
         /* find how much contiguous space is available currently. */
-        uint32_t cpy = contig_writeable();
+        int cpy = contig_writeable();
         /* if contiguous space is less than packet size, we will
            copy in two parts; "cpy" then represents first half. */
         if ( cpy > bsz )
@@ -94,12 +94,12 @@ public:
         record_write( bsz );
         return bsz;
     }
-    int    read       ( T * bp, uint32_t bsz ) {
+    int    read       ( T * bp, int bsz ) {
         /* trim bsz to the data remaining in the buffer. */
         if ( bsz > used_space() )
             bsz = used_space();
         /* find out how much to read is contiguous. */
-        uint32_t cpy = contig_readable();
+        int cpy = contig_readable();
         /* determine if the read is contiguous or if it must
            be done in 2 parts. */
         if ( cpy > bsz )
@@ -120,19 +120,19 @@ public:
         return bsz;
     }
 
-    uint32_t contig_writeable (void) const {
+    int contig_writeable (void) const {
         int r = (out >  in) ? (out - in) : (size -  in);
         int f = free_space();
         return (r > f) ? f : r;
     }
-    uint32_t contig_readable  (void) const {
+    int contig_readable  (void) const {
         return (in >= out) ? (in - out) : (size - out);
     }
 
-    void record_write( uint32_t s ) {
+    void record_write( int s ) {
         in  += s; if ( in >= size ) in -= size; used += s;
     }
-    void record_read ( uint32_t s ) {
+    void record_read ( int s ) {
         out += s; if ( out >= size ) out -= size; used -= s;
     }
     T * write_pos ( void ) const { return buf + in;  }
