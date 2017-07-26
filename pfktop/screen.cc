@@ -38,6 +38,20 @@ For more information, please refer to <http://unlicense.org>
 using namespace pfktop;
 using namespace std;
 
+// "^[[7m"    -> invert
+// "^[[m"     -> normal
+// "^[[%dm"   -> color
+// "^[[%d;1m" -> bold color
+// where %d is 30+x for foreground, 40+x for background
+//     0 = black
+//     1 = red
+//     2 = green
+//     3 = yellow
+//     4 = blue
+//     5 = magenta
+//     6 = something? light blue? teal?
+//     7 = white
+
 //static
 Screen * Screen::instance = NULL;
 
@@ -48,10 +62,26 @@ Screen :: Screen(void)
 
     home = " [H";  // move cursor to home.
     erase = " [J"; // erase to end of screen.
+    nl = "\r\n [K"; // newline, erase to end of line.
+
+    header_color = " [33;7m";
+    zero_cmd_color = " [31m";
+    nonzero_cmd_color = " [31;1m";
+    zero_color = " [34m";
+    nonzero_color = " [31m";
+    normal_color = " [m";
+
+    // add 'esc' to all the above
+
     home[0] = 27;
     erase[0] = 27;
-    nl = "\r\n [K"; // newline, erase to end of line.
     nl[2] = 27;
+    header_color[0] = 27;
+    zero_cmd_color[0] = 27;
+    nonzero_cmd_color[0] = 27;
+    zero_color[0] = 27;
+    nonzero_color[0] = 27;
+    normal_color[0] = 27;
 
 #if 1
     struct termios  new_tios;

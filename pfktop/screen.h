@@ -48,6 +48,12 @@ namespace pfktop {
         std::string home;
         std::string erase;
         std::string nl;
+        std::string header_color;
+        std::string zero_cmd_color;
+        std::string nonzero_cmd_color;
+        std::string zero_color;
+        std::string nonzero_color;
+        std::string normal_color;
         int height(void) const;
         int start_winch(void);
         void stop_winch(void);

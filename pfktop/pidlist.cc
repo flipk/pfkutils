@@ -213,8 +213,10 @@ PidList :: print(void) const
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
     cout
+        << screen.header_color
         << "  pid   tid              cmd    "
-        << "rss prio  time (10 sec history)       10av";
+        << "rss prio  time (10 sec history)       10av"
+        << screen.normal_color;
 
     int totalCpu = 0;
     pidVec_t::iterator vit;
@@ -224,8 +226,15 @@ PidList :: print(void) const
         cout
             << nl
             << setw(5)  << te->pid  << " "
-            << setw(5)  << te->tid  << " "
-            << setw(16) << te->cmd  << " "
+            << setw(5)  << te->tid  << " ";
+
+        if (te->history[0] > 0)
+            cout << screen.nonzero_cmd_color;
+        else
+            cout << screen.zero_cmd_color;
+
+        cout
+            << setw(16) << te->cmd  << " " << screen.normal_color
             << setw(6)  << te->rss  << " "
             << setw(4)  << te->prio << "  ";
 
@@ -257,7 +266,11 @@ PidList :: print(void) const
             else
             {
                 s += v;
-                cout << setw(2) << v << " ";
+                if (v == 0)
+                    cout << screen.zero_color;
+                else
+                    cout << screen.nonzero_color;
+                cout << setw(2) << v << " " << screen.normal_color;
                 c++;
             }
         }
@@ -266,11 +279,21 @@ PidList :: print(void) const
         cout << setw(2) << s; // average
     }
 
-    if (more)
-        cout << " MORE";
+    cout
+        << nl
+        << screen.header_color
+        << "                       TOTAL "
+        << "            " << setw(3) << totalCpu;
 
-    cout << nl << "                       TOTAL ";
-    cout << "            " << setw(3) << totalCpu;
+    if (more)
+        cout
+            << "                         MORE";
+    else
+        cout
+            << "                             ";
+
+    cout
+        << screen.normal_color;
 
     cout << erase;
 }
