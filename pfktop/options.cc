@@ -27,10 +27,21 @@ For more information, please refer to <http://unlicense.org>
 
 #include "options.h"
 
+#include <iostream>
+
+using namespace std;
 using namespace pfktop;
 
-Options :: Options(int argc, const char * const * argv)
+Options :: Options(int argc, const char * const * argv,
+                   Screen &_screen)
+    : screen(_screen)
 {
+    sort = SORT_TIME;
+    background = BG_DARK;
+
+    // ..... we could support command line options here ......
+
+    screen.set_light_background(background == BG_LIGHT);
     isOk = true;
 }
 
@@ -38,8 +49,64 @@ Options :: ~Options(void)
 {
 }
 
-void
-Options :: usage(void)
+bool
+Options :: set_option(char c)
 {
-    // wut?
+    switch (c)
+    {
+    case 'i': // sort by tId
+        sort = SORT_TID;
+        break;
+    case 'p': // sort by Prio
+        sort = SORT_PRIO;
+        break;
+    case 'r': // sort by Rss
+        sort = SORT_RSS;
+        break;
+    case 't': // sort by Time
+        sort = SORT_TIME;
+        break;
+    case 'c': // sort by Cmd
+        sort = SORT_CMD;
+        break;
+    case 'l': // light background
+        background = BG_LIGHT;
+        screen.set_light_background(true);
+        break;
+    case 'd': // dark background
+        background = BG_DARK;
+        screen.set_light_background(false);
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+void
+Options :: usage(bool color)
+{
+    cout
+        << screen.home
+        << screen.header_color
+        << "       options              -pfktop-       "
+        << "                                "
+        << screen.normal_color << screen.nl
+        << screen.nl
+        << "         q : quit" << screen.nl
+        << screen.nl
+        << "         i : sort by tid" << screen.nl
+        << "         p : sort by prio" << screen.nl
+        << "         r : sort by rss" << screen.nl
+        << "         t : sort by time" << screen.nl
+        << "         c : sort by cmd" << screen.nl
+        << screen.nl
+        << "         l : light background mode" << screen.nl
+        << "         d : dark background mode" << screen.nl
+        << screen.nl
+        << screen.header_color
+        << "       options              -pfktop-       "
+        << "                                "
+        << screen.normal_color << screen.erase;
+    cout.flush();
 }

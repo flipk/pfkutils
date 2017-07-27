@@ -45,6 +45,7 @@ namespace pfktop {
     public:
         Screen(void);
         ~Screen(void);
+        void set_light_background(bool light);
         std::string home;
         std::string erase;
         std::string nl;

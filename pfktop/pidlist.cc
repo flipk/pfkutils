@@ -158,17 +158,41 @@ PidList :: fetch(void)
 }
 
 struct mySorterClass {
+    Options::sort_type type;
+    mySorterClass(Options::sort_type _type) : type(_type) { }
     bool operator() (const tidEntry * a,
                      const tidEntry * b) {
-        // sort first by prio
-        if (a->prio < b->prio)
-            return true;
-        if (a->prio > b->prio)
-            return false;
-        // break a prio tie by thread id
-        if (a->tid < b->tid)
-            return true;
-        return false;
+        switch (type) {
+        case Options::SORT_TID:
+            return (a->tid < b->tid);
+        case Options::SORT_PRIO:
+            // sort first by prio
+            if (a->prio < b->prio)
+                return true;
+            if (a->prio > b->prio)
+                return false;
+            // break a prio tie by thread id
+            return (a->tid < b->tid);
+        case Options::SORT_RSS:
+            // first by rss
+            if (a->rss > b->rss)
+                return true;
+            if (a->rss < b->rss)
+                return false;
+            return (a->tid < b->tid);
+        case Options::SORT_TIME:
+            if (a->history[0] > b->history[0])
+                return true;
+            if (a->history[0] < b->history[0])
+                return false;
+            return (a->tid < b->tid);
+        case Options::SORT_CMD:
+            if (a->cmd < b->cmd)
+                return true;
+            if (a->cmd > b->cmd)
+                return false;
+            return (a->tid < b->tid);
+        }
     }
 };
 
@@ -199,7 +223,7 @@ PidList :: print(void) const
     }
 
     // sort the list by priority, highest prio at the top.
-    mySorterClass mySorter;
+    mySorterClass mySorter(opts.sort);
     std::sort(printList.begin(), printList.end(), mySorter);
 
     bool more = false;
@@ -212,11 +236,19 @@ PidList :: print(void) const
     // no, there IS no "nl" here. this code prints a nl
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
-    cout
-        << screen.header_color
-        << "  pid   tid              cmd    "
-        << "rss prio  time (10 sec history)       10av"
-        << screen.normal_color;
+    cout << screen.header_color
+         << "  pid   ";
+    cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
+    cout << "              ";
+    cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
+    cout << "     ";
+    cout << ((opts.sort == Options::SORT_RSS) ? "RSS" : "Rss");
+    cout << " ";
+    cout << ((opts.sort == Options::SORT_PRIO) ? "PRIO" : "Prio");
+    cout << "   ";
+    cout << ((opts.sort == Options::SORT_TIME) ? "TIME" : "Time");
+    cout << " (10 sec history)      10av"
+         << screen.normal_color;
 
     int totalCpu = 0;
     pidVec_t::iterator vit;
@@ -235,7 +267,7 @@ PidList :: print(void) const
 
         cout
             << setw(16) << te->cmd  << " " << screen.normal_color
-            << setw(6)  << te->rss  << " "
+            << setw(7)  << te->rss  << " "
             << setw(4)  << te->prio << "  ";
 
         // sum and count the CPU history, for the 'average' column.
@@ -282,15 +314,15 @@ PidList :: print(void) const
     cout
         << nl
         << screen.header_color
-        << "                       TOTAL "
+        << " 'h' for help          TOTAL "
         << "            " << setw(3) << totalCpu;
 
     if (more)
         cout
-            << "                         MORE";
+            << "                          MORE";
     else
         cout
-            << "                             ";
+            << "                              ";
 
     cout
         << screen.normal_color;

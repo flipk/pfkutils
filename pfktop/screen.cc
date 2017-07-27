@@ -64,24 +64,13 @@ Screen :: Screen(void)
     erase = " [J"; // erase to end of screen.
     nl = "\r\n [K"; // newline, erase to end of line.
 
-    header_color = " [33;7m";
-    zero_cmd_color = " [31m";
-    nonzero_cmd_color = " [31;1m";
-    zero_color = " [34m";
-    nonzero_color = " [31m";
-    normal_color = " [m";
-
     // add 'esc' to all the above
 
     home[0] = 27;
     erase[0] = 27;
     nl[2] = 27;
-    header_color[0] = 27;
-    zero_cmd_color[0] = 27;
-    nonzero_cmd_color[0] = 27;
-    zero_color[0] = 27;
-    nonzero_color[0] = 27;
-    normal_color[0] = 27;
+
+    set_light_background(true);
 
 #if 1
     struct termios  new_tios;
@@ -155,6 +144,37 @@ Screen :: ~Screen(void)
         close(fds[1]);
 
     instance = NULL;
+}
+
+void
+Screen :: set_light_background(bool light)
+{
+    if (light)
+    {
+        /// xxx probably needs tweaking
+        header_color = " [30;7m";
+        zero_cmd_color = " [34m";
+        nonzero_cmd_color = " [34;1m";
+        zero_color = " [34m";
+        nonzero_color = " [31;1m";
+        normal_color = " [m";
+    }
+    else
+    {
+        header_color = " [33;7m";
+        zero_cmd_color = " [31m";
+        nonzero_cmd_color = " [31;1m";
+        zero_color = " [34m";
+        nonzero_color = " [31m";
+        normal_color = " [m";
+    }
+
+    header_color[0] = 27;
+    zero_cmd_color[0] = 27;
+    nonzero_cmd_color[0] = 27;
+    zero_color[0] = 27;
+    nonzero_color[0] = 27;
+    normal_color[0] = 27;
 }
 
 int

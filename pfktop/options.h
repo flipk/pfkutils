@@ -29,15 +29,30 @@ For more information, please refer to <http://unlicense.org>
 #ifndef __options_h__
 #define __options_h__ 1
 
+#include "screen.h"
+
 namespace pfktop {
 
     class Options {
-        void usage(void);
         bool isOk;
+        Screen &screen;
     public:
-        Options(int argc, const char * const * argv);
+        Options(int argc, const char * const * argv, Screen &_screen);
         ~Options(void);
+        void usage(bool color);
+        bool set_option(char c);
         const bool ok(void) const { return isOk; }
+        enum sort_type {
+            SORT_TID,  // 'i'
+            SORT_PRIO, // 'p'
+            SORT_RSS,  // 'r'
+            SORT_TIME, // 't'
+            SORT_CMD   // 'c'
+        } sort;
+        enum {
+            BG_LIGHT,  // 'l'
+            BG_DARK    // 'd'
+        } background;
     };
 
 };

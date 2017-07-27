@@ -37,13 +37,13 @@ using namespace std;
 extern "C" int
 pfktop_main(int argc, char ** argv)
 {
-    Options opts(argc, argv);
+    Screen screen;
+    Options opts(argc, argv, screen);
 
     if (!opts.ok())
         // assume Options printed something nasty already, like usage.
         return 1;
 
-    Screen screen;
     PidList  list(opts, screen);
     pxfe_select sel;
     pxfe_ticker  ticker;
@@ -82,7 +82,20 @@ pfktop_main(int argc, char ** argv)
                 {
                     switch (c)
                     {
-                    case 'q':
+                    case 'h': // help
+                        opts.usage(true);
+                        read(0,&c,1);
+                        break;
+                    case 'i': // sort by pId
+                    case 'p': // sort by Prio
+                    case 'r': // sort by Rss
+                    case 't': // sort by Time
+                    case 'c': // sort by Cmd
+                    case 'l': // light background
+                    case 'd': // dark background
+                        opts.set_option(c);
+                        break;
+                    case 'q': // quit
                         screen.stop_winch();
                         // 0 read from winchfd will stop process
                         break;
