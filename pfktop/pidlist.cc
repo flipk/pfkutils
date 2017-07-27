@@ -237,7 +237,7 @@ PidList :: print(void) const
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
     cout << screen.header_color
-         << "  pid   ";
+         << "   pid    ";
     cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
     cout << "              ";
     cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
@@ -257,8 +257,8 @@ PidList :: print(void) const
         tidEntry * te = *vit;
         cout
             << nl
-            << setw(5)  << te->pid  << " "
-            << setw(5)  << te->tid  << " ";
+            << setw(6)  << te->pid  << " "
+            << setw(6)  << te->tid  << " ";
 
         if (te->history[0] > 0)
             cout << screen.nonzero_cmd_color;
@@ -314,7 +314,7 @@ PidList :: print(void) const
     cout
         << nl
         << screen.header_color
-        << " 'h' for help          TOTAL "
+        << " 'h' for help            TOTAL "
         << "            " << setw(3) << totalCpu;
 
     if (more)
