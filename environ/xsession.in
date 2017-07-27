@@ -11,10 +11,7 @@ export ENV PFKARCH SHELL
 
 if [ -f $HOME/safe-session ] ; then
     xset m 0
-    urxvt -fn fixed -fb fixed
-    gnome-terminal
-    xfce4-terminal
-    xterm
+    urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     exit 0
 else
     xset +fp $HOME/pfk/fonts

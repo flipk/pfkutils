@@ -5,10 +5,7 @@ ENV=$HOME/.kshrc
 export ENV
 
 if [ -f $HOME/safe-session ] ; then
-    urxvt -fn fixed -fb fixed
-    gnome-terminal
-    xfce4-terminal
-    xterm
+    urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
 else
     xset +fp $HOME/pfk/fonts
     xrdb -load .Xresources

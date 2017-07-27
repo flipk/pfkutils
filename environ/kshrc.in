@@ -188,7 +188,6 @@ case x$ENV_SET in
         __extend_path @prefix@/$PFKARCH/bin
         __extend_path @prefix@/bin
         __extend_path ~/bin
-        __extend_path /usr/bin/X11
         __extend_path /usr/misc/X11/bin
         __extend_path /usr/misc/GNU/bin
         __extend_path /opt/site/bin
@@ -223,6 +222,7 @@ case x$ENV_SET in
         __extend_path /usr/vendor/lb/3.3/bin.sol4
         __extend_path /open_source/bin-sun/gcc/bin
         __extend_path /usr/public/sphinx/ITS/IDE
+        __extend_path /usr/bin/X11
 
         unset -f __extend_path
 

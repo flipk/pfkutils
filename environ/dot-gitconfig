@@ -12,6 +12,7 @@
 	b = branch
 	ci = commit
 	s = status
+	f = fetch
 	l = log --graph --oneline --decorate
 	la = log --graph --oneline --decorate --all
 	k = !gitk &
