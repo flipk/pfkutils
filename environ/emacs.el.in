@@ -114,6 +114,11 @@
  '(swiper-match-face-2 ((t (:inherit default :background "#777777"))))
  '(swiper-match-face-3 ((t (:inherit default :background "#7777ff"))))
  '(swiper-match-face-4 ((t (:inherit default :background "#8a498a"))))
+ '(git-gutter:separator ((t (:font "pfk13" :foreground "cyan"    ))))
+ '(git-gutter:modified  ((t (:font "pfk13" :foreground "magenta" ))))
+ '(git-gutter:added     ((t (:font "pfk13" :foreground "green"   ))))
+ '(git-gutter:deleted   ((t (:font "pfk13" :foreground "red"     ))))
+ '(git-gutter:unchanged ((t (:font "pfk13" :foreground "yellow"  ))))
  '(warning ((t (:inherit bold :foreground "pink")))))
 
 (cond (window-system
