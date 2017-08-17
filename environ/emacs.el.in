@@ -389,6 +389,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (require 'counsel)
 (require 'magit)
 (require 'git-gutter)
+(require 'protobuf-mode)
 
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
