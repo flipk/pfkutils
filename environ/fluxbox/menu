@@ -6,7 +6,7 @@
     [exec] (gnome lock) {gnome-screensaver-command --lock}
     [exec] (xlock) {xlock}
     [exec] (google-chrome) {google-chrome}
-    [exec] (firefox) {firefox}
+    [exec] (firefox) {firefox --new-instance}
     [exec] (chromium) {chromium-browser}
     [exec] (MSWIN-1) {$HOME/bin/mswin -1}
     [exec] (MSWIN-2) {$HOME/bin/mswin -2}
