@@ -49,6 +49,10 @@ PROG(0,pfkSessionMgr,"session manager")
 PROG(0,pfkSessionXrandr,"xrandr event monitor")
 #endif
 
+#if @PFK_BUILD_do_fft@
+PROG(0,do_fft,"do an fft, duh")
+#endif
+
 #if @PFK_BUILD_states@
 PROG(0,states,"state machine generator")
 #endif

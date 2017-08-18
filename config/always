@@ -103,7 +103,7 @@ BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat deduplifier libwas \
-	libpfkthread xlock hilite
+	libpfkthread xlock hilite do_fft
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
@@ -749,12 +749,17 @@ pfkutils_CXXSRCS += main/sessionXrandr.cc
 pfkutils_LIBXRANDR= -lXrandr
 pfkutils_LIBX11= -lX11
 endif
+ifeq ($(PFK_BUILD_do_fft),1)
+pfkutils_CXXSRCS += main/do_fft.cc
+pfkutils_LIBFFTW= -lfftw3
+endif
 pfkutils_HDRS = \
 	$(OBJDIR)/main/programs.h
 pfkutils_LIBS += \
 	$(pfkutils_LIBNCURSES) $(pfkutils_LIBZ) \
 	$(pfkutils_LIBXRANDR) $(pfkutils_LIBX11) \
-	$(pfkutils_LIBHILITE) $(pfkutils_LIBUTILS) -lpthread
+	$(pfkutils_LIBHILITE) $(pfkutils_LIBUTILS) $(pfkutils_LIBFFTW) \
+	-lpthread
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
