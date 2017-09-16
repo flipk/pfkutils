@@ -18,10 +18,28 @@ git push origin v3.11
 to reduce the number of files in .git:
    git gc --aggressive
 
+see the space in use in .git:
+
+   find .git -type f | wc -l ; du -ks .git
+(or in a bare repo:)
+   find . -type f | wc -l ; du -ks .
+
 if 'git fsck' says there's dangling blobs, you can clean them with:
 
    git reflog expire --expire=now --all
    git gc --prune=now --aggressive
+   git lfs prune
+
+with submodules:
+
+   git submodule foreach git reflog expire --expire=now --all
+   git submodule foreach git gc --prune=now --aggressive
+   git submodule foreach git lfs prune
+
+you can also force a module to fully populate the entire lfs version
+tree (i.e. for mirroring)
+
+   git lfs fetch --all
 
 if you pushed a commit to github but didn't mean to, you can push again
 to roll it back:
