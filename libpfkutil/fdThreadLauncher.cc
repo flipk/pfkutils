@@ -91,22 +91,40 @@ void
 fdThreadLauncher :: setPollInterval(int _pollInterval)
 {
     pollInterval = _pollInterval;
-    char c = CMD_CHANGEPOLL;
-    if (::write(cmdFds[1], &c, 1) < 0)
-        cerr << "fdThreadLauncher :: setPollInterval: write failed\n";
+    if (state == RUNNING)
+    {
+        char c = CMD_CHANGEPOLL;
+        if (::write(cmdFds[1], &c, 1) < 0)
+            cerr << "fdThreadLauncher :: setPollInterval: write failed\n";
+    }
 }
 
 void
 fdThreadLauncher :: stopFdThread(void)
 {
-    if (state != RUNNING)
-        return;
-    state = STOPPING;
-    char c = CMD_CLOSE;
-    if (::write(cmdFds[1], &c, 1) < 0)
-        cerr << "fdThreadLauncher :: stopFdTHread: write failed\n";
-    void * dummy = NULL;
-    pthread_join(threadId, &dummy);
+    void * dummy;
+    char c;
+    switch (state)
+    {
+    case INIT:     // not started
+    case DEAD:     // already dead
+    case STARTING: // race? two threads calling start or stop?
+    case STOPPING: // two threads calling stop in parallel?
+        // nothing to do
+        break;
+    case RUNNING:
+        state = STOPPING;
+        c = CMD_CLOSE;
+        if (::write(cmdFds[1], &c, 1) < 0)
+            cerr << "fdThreadLauncher :: stopFdTHread: write failed\n";
+        // FALLTHRU INTENTIONAL
+    case DEAD_NEED_JOIN:
+        dummy = NULL;
+        pthread_join(threadId, &dummy);
+        // ensure we don't try to join twice
+        state = DEAD;
+        break;
+    }
 }
 
 //static
@@ -133,7 +151,7 @@ fdThreadLauncher :: _threadEntry(void *arg)
     obj->cmdFds[1] = -1;
     if (obj->state == RUNNING)
         obj->done();
-    obj->state = DEAD;
+    obj->state = DEAD_NEED_JOIN;
     return NULL;
 }
 
@@ -311,6 +329,7 @@ std::ostream &operator<<(std::ostream &ostr,
     case fdThreadLauncher::STARTING: ostr << "STARTING"; break;
     case fdThreadLauncher::RUNNING:  ostr << "RUNNING";  break;
     case fdThreadLauncher::STOPPING: ostr << "STOPPING"; break;
+    case fdThreadLauncher::DEAD_NEED_JOIN: ostr << "DEAD_NEED_JOIN"; break;
     case fdThreadLauncher::DEAD:     ostr << "DEAD";     break;
     default:           ostr << "(" << (int)state << ")"; break;
     }

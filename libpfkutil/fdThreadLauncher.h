@@ -51,7 +51,7 @@ For more information, please refer to <http://unlicense.org>
 class fdThreadLauncher {
 public:
     enum fdThreadState {
-        INIT, STARTING, RUNNING, STOPPING, DEAD
+        INIT, STARTING, RUNNING, STOPPING, DEAD_NEED_JOIN, DEAD
     } state;
 private:
     bool threadRunning;
