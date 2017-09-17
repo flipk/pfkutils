@@ -43,18 +43,27 @@ public:
     }
 };
 
-// an order-40 low pass (0.5) filter using int16 samples
-class fir_filter_int16_lp05_40 : public fir_filter<int16_t> {
-    static const float lp05_40_coeff[41];
-public:
-    fir_filter_int16_lp05_40(void) : fir_filter(40,lp05_40_coeff) { }
-    ~fir_filter_int16_lp05_40(void) { }
-};
+#define FILTERCLASS(sampleType,pass,order)                      \
+    class fir_filter_##sampleType##_lp##pass##_##order          \
+        : public fir_filter<sampleType> {                       \
+        static const float coeff[order + 1];                    \
+    public:                                                     \
+        fir_filter_##sampleType##_lp##pass##_##order(void)      \
+            : fir_filter<sampleType>(order,coeff) { }       \
+        ~fir_filter_##sampleType##_lp##pass##_##order(void) { } \
+    }
 
-// an order-40 low pass (0.5) filter using float samples
-class fir_filter_float_lp05_40 : public fir_filter<float> {
-    static const float lp05_40_coeff[41];
-public:
-    fir_filter_float_lp05_40(void) : fir_filter(40,lp05_40_coeff) { }
-    ~fir_filter_float_lp05_40(void) { }
-};
+#define FILTERCLASS_COEFF(sampleType,pass,order) \
+    const float fir_filter_##sampleType##_lp##pass##_##order::coeff[order+1]
+
+// order-40 low pass (0.5) filter
+FILTERCLASS(int16_t,05,40);
+
+// order-40 low pass (60/325=0.18462)
+FILTERCLASS(int16_t,018,40);
+
+// order-40 low pass (541667/1000000=0.5416)
+FILTERCLASS(int16_t,05416,40);
+
+// order-40 low pass (541667/2000000=0.270833)
+FILTERCLASS(int16_t,02708,40);
