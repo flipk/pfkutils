@@ -91,6 +91,7 @@ pfktop_main(int argc, char ** argv)
                         break;
                     case 'i': // sort by pId
                     case 'p': // sort by Prio
+                    case 'v': // sort by Vsz
                     case 'r': // sort by Rss
                     case 't': // sort by Time
                     case 'c': // sort by Cmd

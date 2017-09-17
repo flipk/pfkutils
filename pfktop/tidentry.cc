@@ -200,6 +200,8 @@ tidEntry :: update(void)
         }
         utime_prev = utime;
         stime_prev = stime;
+        vsz = strtoul(fp[22].c_str(),NULL,10);
+        vsz /= 1024;
         rss = strtoul(fp[23].c_str(),NULL,10);
         prio = strtol(fp[17].c_str(),NULL,10); // signed.
         state = fp[2][0];

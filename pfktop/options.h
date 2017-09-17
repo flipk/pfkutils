@@ -45,6 +45,7 @@ namespace pfktop {
         enum sort_type {
             SORT_TID,  // 'i'
             SORT_PRIO, // 'p'
+            SORT_VSZ,  // 'v'
             SORT_RSS,  // 'r'
             SORT_TIME, // 't'
             SORT_CMD   // 'c'

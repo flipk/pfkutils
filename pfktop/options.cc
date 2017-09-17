@@ -60,6 +60,9 @@ Options :: set_option(char c)
     case 'p': // sort by Prio
         sort = SORT_PRIO;
         break;
+    case 'v': // sort by Vsz
+        sort = SORT_VSZ;
+        break;
     case 'r': // sort by Rss
         sort = SORT_RSS;
         break;

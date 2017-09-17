@@ -68,6 +68,7 @@ namespace pfktop {
         bool stamp;
         bool first_update;
         char state;
+        unsigned long vsz;
         unsigned long rss;
         long prio;
         unsigned long long utime;

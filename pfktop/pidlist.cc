@@ -173,6 +173,13 @@ struct mySorterClass {
                 return false;
             // break a prio tie by thread id
             return (a->tid < b->tid);
+        case Options::SORT_VSZ:
+            // first by vsz
+            if (a->vsz > b->vsz)
+                return true;
+            if (a->vsz < b->vsz)
+                return false;
+            return (a->tid < b->tid);
         case Options::SORT_RSS:
             // first by rss
             if (a->rss > b->rss)
@@ -236,11 +243,12 @@ PidList :: print(void) const
     // no, there IS no "nl" here. this code prints a nl
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
-    cout << screen.header_color
-         << "   pid    ";
+    cout << screen.header_color << "   ";
     cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
     cout << "              ";
     cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
+    cout << "     ";
+    cout << ((opts.sort == Options::SORT_VSZ) ? "VSZ" : "Vsz");
     cout << "     ";
     cout << ((opts.sort == Options::SORT_RSS) ? "RSS" : "Rss");
     cout << " ";
@@ -257,8 +265,12 @@ PidList :: print(void) const
         tidEntry * te = *vit;
         cout
             << nl
-            << setw(6)  << te->pid  << " "
-            << setw(6)  << te->tid  << " ";
+            << setw(6)  << te->tid;
+
+        if (te->tid == te->pid)
+            cout << "+";
+        else
+            cout << " ";
 
         if (te->history[0] > 0)
             cout << screen.nonzero_cmd_color;
@@ -267,6 +279,7 @@ PidList :: print(void) const
 
         cout
             << setw(16) << te->cmd  << " " << screen.normal_color
+            << setw(7)  << te->vsz  << " "
             << setw(7)  << te->rss  << " "
             << setw(4)  << te->prio << "  ";
 
@@ -315,7 +328,7 @@ PidList :: print(void) const
         << nl
         << screen.header_color
         << " 'h' for help            TOTAL "
-        << "            " << setw(3) << totalCpu;
+        << "              " << setw(3) << totalCpu;
 
     if (more)
         cout
