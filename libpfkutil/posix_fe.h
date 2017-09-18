@@ -614,6 +614,7 @@ struct pxfe_select {
 };
 
 class pxfe_ticker : public pxfe_pthread {
+    bool paused;
     int closer_pipe_fds[2];
     int pipe_fds[2];
     pxfe_timeval interval;
@@ -626,8 +627,9 @@ class pxfe_ticker : public pxfe_pthread {
             sel.rfds.zero();
             sel.rfds.set(clfd);
             if (sel.select() <= 0) {
-                if (write(pipe_fds[1], &c, 1) < 0)
-                    fprintf(stderr, "pxfe_ticker: write failed\n");
+                if (paused == false)
+                    if (write(pipe_fds[1], &c, 1) < 0)
+                        fprintf(stderr, "pxfe_ticker: write failed\n");
                 continue;
             }
             if (sel.rfds.isset(clfd)) {
@@ -650,8 +652,10 @@ public:
         if (pipe(closer_pipe_fds) < 0)
             fprintf(stderr, "pxfe_ticker: pipe 2 failed\n");
         interval.set(1,0);
+        paused = false;
     }
     ~pxfe_ticker(void) {
+        paused = true;
         stopjoin();
         close(closer_pipe_fds[0]);
         close(closer_pipe_fds[1]);
@@ -662,7 +666,10 @@ public:
         interval.set(s,us);
         if (!running())
             create();
+        paused = false;
     }
+    void pause(void) { paused = true; }
+    void resume(void) { paused = false; }
     int fd(void) { return pipe_fds[0]; }
 };
 
