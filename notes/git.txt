@@ -71,6 +71,26 @@ git status --recursive
 git config --global status.submodulesummary 1
 
 
+to see all commits affecting a file, you can do:
+  git log filename
+however if the file is renamed or moved to another dir, it will
+lose the thread. to handle renames/moves:
+  git log --follow filename
+you can also add '--all' to include branches other than the
+current branch.
+
+you can make 'gitk' show you all commits affecting a file regardless
+of branch, local, reflog, and remote: (same args can go to git-log)
+
+  gitk --all --first-parent --remotes --reflog --author-date-order -- filename
+
+git log --follow --name-status --format='%H' -- <path>
+git log --follow --name-only --format='%H' -- <path>
+
+you can get all the commits affecting a specific PART of a file, too.
+
+  git log --pretty=short -u -L <upperLimit>,<lowerLimit>:<path_to_filename>
+
 
 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
 git://git.denx.de/u-boot.git
