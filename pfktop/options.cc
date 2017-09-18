@@ -100,6 +100,7 @@ Options :: usage(bool color)
         << screen.nl
         << "         i : sort by tid" << screen.nl
         << "         p : sort by prio" << screen.nl
+        << "         v : sort by vsz" << screen.nl
         << "         r : sort by rss" << screen.nl
         << "         t : sort by time" << screen.nl
         << "         c : sort by cmd" << screen.nl

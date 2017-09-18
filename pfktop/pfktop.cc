@@ -83,11 +83,13 @@ pfktop_main(int argc, char ** argv)
                     switch (c)
                     {
                     case 'h': // help
+                        ticker.pause();
                         opts.usage(true);
                         if (read(0,&c,1) <= 0)
                         {
                             cout << "stdin read error!\n";
                         }
+                        ticker.resume();
                         break;
                     case 'i': // sort by pId
                     case 'p': // sort by Prio
