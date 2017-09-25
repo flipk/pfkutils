@@ -402,6 +402,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (require 'protobuf-mode)
 (require 'git-timemachine)
 
+(add-to-list 'auto-mode-alist '("\\.proto\\'" . protobuf-mode))
+
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
   (interactive)
