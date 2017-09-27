@@ -40,18 +40,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "WebAppMessage.h"
 
-#ifndef ALLOW_THROWS
-#ifdef __GNUC__
-# if __GNUC__ >= 6
-#  define ALLOW_THROWS noexcept(false)
-# else
-#  define ALLOW_THROWS
-# endif
-#else
-# define ALLOW_THROWS
-#endif
-#endif
-
 namespace WebAppServer {
 
 class WebServerConnectionBase;
@@ -74,7 +62,7 @@ public:
     /** user may have a destructor for the derived object which will
      * clean up the application's context for this connection, if 
      * desired. */
-    virtual ~WebAppConnection(void) ALLOW_THROWS;
+    virtual ~WebAppConnection(void);
     /** handle connection */
     virtual void onConnect(void) { }
     /** handle disconnection */

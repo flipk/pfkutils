@@ -26,6 +26,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+#define __DLL3_LISTERR(x)                               \
+do {                                                    \
+    BackTraceUtil::BackTrace  bt;                       \
+    std::cerr << "DLL3 LIST ERROR: " #x << std::endl    \
+              << bt.Format();                           \
+} while (0)
+
 template <__DLL3_LIST_TEMPL>
 __DLL3_LIST::Links::Links(void)
 {
@@ -35,7 +42,7 @@ __DLL3_LIST::Links::Links(void)
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::Links::~Links(void) ALLOW_THROWS
+__DLL3_LIST::Links::~Links(void)
 {
     if (validate && lst != NULL)
         __DLL3_LISTERR(STILL_ON_A_LIST);
@@ -49,7 +56,7 @@ void __DLL3_LIST::Links::checkvalid(__DLL3_LIST * _lst)
         return;
     if (magic != MAGIC)
         __DLL3_LISTERR(ITEM_NOT_VALID);
-    if (_lst == NULL && lst != NULL)
+    else if (_lst == NULL && lst != NULL)
         __DLL3_LISTERR(ALREADY_ON_LIST);
     else if (lst != _lst)
         __DLL3_LISTERR(NOT_ON_THIS_LIST);
@@ -63,7 +70,7 @@ __DLL3_LIST::List(void)
 }
 
 template <__DLL3_LIST_TEMPL>
-__DLL3_LIST::~List(void) ALLOW_THROWS
+__DLL3_LIST::~List(void)
 {
     if (validate && head != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -189,12 +196,9 @@ template <__DLL3_LIST_TEMPL>
 const bool __DLL3_LIST::onlist(Links * item) const
 {
     lockwarn();
-    if (validate)
-    {
-        if (item->magic != Links::MAGIC)
-            __DLL3_LISTERR(ITEM_NOT_VALID);
-    }
-    if (item->lst != NULL)
+    if (validate && item->magic != Links::MAGIC)
+        __DLL3_LISTERR(ITEM_NOT_VALID);
+    else if (item->lst != NULL)
         return true;
     return false;
 }
@@ -203,12 +207,9 @@ template <__DLL3_LIST_TEMPL>
 const bool __DLL3_LIST::onthislist(Links * item) const
 {
     lockwarn();
-    if (validate)
-    {
-        if (item->magic != Links::MAGIC)
-            __DLL3_LISTERR(ITEM_NOT_VALID);
-    }
-    if (item->lst == this)
+    if (validate && item->magic != Links::MAGIC)
+        __DLL3_LISTERR(ITEM_NOT_VALID);
+    else if (item->lst == this)
         return true;
     return false;
 }
@@ -269,7 +270,7 @@ void __DLL3_HASH::Links::checkvalid(__DLL3_HASH * _hsh)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH::Links::~Links(void) ALLOW_THROWS
+__DLL3_HASH::Links::~Links(void)
 {
     if (validate && hsh != NULL)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -287,7 +288,7 @@ __DLL3_HASH :: Hash(void)
 }
 
 template <__DLL3_HASH_TEMPL>
-__DLL3_HASH :: ~Hash(void) ALLOW_THROWS
+__DLL3_HASH :: ~Hash(void)
 {
     delete hash;
 }
@@ -390,7 +391,7 @@ __DLL3_HASHLRU :: Links :: Links(void)
 }
 
 template <__DLL3_HASHLRU_TEMPL>
-__DLL3_HASHLRU :: Links :: ~Links(void) ALLOW_THROWS
+__DLL3_HASHLRU :: Links :: ~Links(void)
 {
     if (validate && (hlru != NULL))
         __DLL3_LISTERR(LIST_NOT_EMPTY);
@@ -461,3 +462,5 @@ T * __DLL3_HASHLRU :: get_oldest(void)
     lockwarn();
     return list.get_head();
 }
+
+#undef __DLL3_LISTERR

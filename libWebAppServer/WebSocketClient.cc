@@ -46,7 +46,9 @@ using namespace WebAppServer;
 
 namespace WebAppClient {
 
-#define __WSERR(e) throw WSClientError(WSClientError::e)
+#define __WSERR(e) do { \
+        WSClientError  wsce(WSClientError::e);  \
+    } while(0)
 
 const std::string WSClientError::errStrings[__NUMERRS] = {
     "URL malformed",
@@ -138,7 +140,10 @@ WebSocketClient :: init_common(const string &proxy,
         regex_t   proxyReg;
         regcomp(&proxyReg, proxyRegexPattern, REG_EXTENDED);
         if (regexec(&proxyReg, proxy.c_str(), MAX_MATCHES, matches, 0) != 0)
+        {
             __WSERR(ERR_PROXY_MALFORMED);
+            return;
+        }
         if (MATCH(PROXY_GROUP_HOSTNAME))
             proxyHost = MATCHSTR(proxy,PROXY_GROUP_HOSTNAME);
         if (MATCH(PROXY_GROUP_IPADDR))
@@ -159,7 +164,10 @@ WebSocketClient :: init_common(const string &proxy,
     regex_t  urlReg;
     regcomp(&urlReg, urlRegexPattern, REG_EXTENDED);
     if (regexec(&urlReg, url.c_str(), MAX_MATCHES, matches, 0) != 0)
+    {
         __WSERR(ERR_URL_MALFORMED);
+        return;
+    }
     if (MATCH(URL_GROUP_HOSTNAME))
         urlHost = MATCHSTR(url,URL_GROUP_HOSTNAME);
     if (MATCH(URL_GROUP_IPADDR))
@@ -169,7 +177,10 @@ WebSocketClient :: init_common(const string &proxy,
     if (MATCH(URL_GROUP_PATH))
         urlPath = MATCHSTR(url,URL_GROUP_PATH);
     else
+    {
         __WSERR(ERR_URL_PATH_MALFORMED);
+        return;
+    }
     regfree(&urlReg);
 
     if (urlHost.length() > 0)
@@ -185,28 +196,40 @@ WebSocketClient :: init_common(const string &proxy,
     {
         struct hostent * he = gethostbyname( proxyHost.c_str() );
         if (he == NULL)
+        {
             __WSERR(ERR_PROXY_HOSTNAME);
+            return;
+        }
         memcpy( &destAddr.s_addr, he->h_addr, he->h_length );
         destPort = proxyPort;
     }
     else if (proxyIp.length() > 0)
     {
         if ( ! inet_aton(proxyIp.c_str(), &destAddr))
+        {
             __WSERR(ERR_PROXY_IP);
+            return;
+        }
         destPort = proxyPort;
     }
     else if (urlHost.length() > 0)
     {
         struct hostent * he = gethostbyname( urlHost.c_str() );
         if (he == NULL)
+        {
             __WSERR(ERR_URL_HOSTNAME);
+            return;
+        }
         memcpy( &destAddr.s_addr, he->h_addr, he->h_length );
         destPort = urlPort;
     }
     else if (urlIp.length() > 0)
     {
         if ( ! inet_aton(urlIp.c_str(), &destAddr))
+        {
             __WSERR(ERR_URL_IP);
+            return;
+        }
         destPort = urlPort;
     }
 
@@ -218,12 +241,14 @@ WebSocketClient :: init_common(const string &proxy,
     if (newfd < 0)
     {
         __WSERR(ERR_SOCKET);
+        return;
     }
 
     if (connect(newfd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
         close(newfd);
         __WSERR(ERR_CONNREFUSED);
+        return;
     }
 
     ostringstream hdrs;
@@ -677,7 +702,10 @@ bool
 WebSocketClient :: sendMessage(const WebAppMessage &m)
 {
     if (state != STATE_CONNECTED)
+    {
         __WSERR(ERR_NOTCONN);
+        return false;
+    }
 
     string msg;
 

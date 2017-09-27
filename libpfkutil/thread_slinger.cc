@@ -84,7 +84,7 @@ _thread_slinger_queue :: _thread_slinger_queue(void)
     pthread_condattr_destroy( &cattr );
 }
 
-_thread_slinger_queue :: ~_thread_slinger_queue(void) ALLOW_THROWS
+_thread_slinger_queue :: ~_thread_slinger_queue(void)
 {
     // cleanup the queue?
     pthread_mutex_destroy( &mutex );

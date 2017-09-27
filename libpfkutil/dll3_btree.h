@@ -57,7 +57,9 @@ struct BtreeError : BackTraceUtil::BackTrace {
     /** return a descriptive string matching the error */
     /*virtual*/ const std::string _Format(void) const;
 };
-#define __DLL3_BTREEERR(e) throw BtreeError(BtreeError::e)
+#define __DLL3_BTREEERR(e) do {                 \
+        BtreeError  bte(BtreeError::e);         \
+    } while(0)
 
 // this is an internal type used by BTREE
 
@@ -300,6 +302,7 @@ public:
         if ( items.onlist(nt))
         {
             __DLL3_BTREEERR(ALREADY_ON_LIST);
+            return;
         }
 
         items.add_tail(nt);
@@ -324,6 +327,7 @@ public:
                 if ( k == 0 )
                 {
                     __DLL3_BTREEERR(DUPLICATE_ITEM);
+                    return;
                 }
                 if ( k <= 0 )
                     break;
@@ -416,6 +420,7 @@ public:
         if ( numitems == 0 )
         {
             __DLL3_BTREEERR(BTREE_EMPTY);
+            return;
         }
         bool exact = false;
 
@@ -448,10 +453,12 @@ public:
         if ( !exact )
         {
             __DLL3_BTREEERR(ITEM_NOT_FOUND);
+            return;
         }
         if ( n->keys[(int)n->cur] != dt )
         {
             __DLL3_BTREEERR(DIDNT_FIND_SAME_ITEM);
+            return;
         }
 
         // store the ref to the node which contains the deleted item.
@@ -522,6 +529,7 @@ public:
             if ( !parent )
             {
                 __DLL3_BTREEERR(SCREWED_UP_ROOT);
+                return;
             }
 
             // check left sib -- if more than half full we can use 
@@ -535,6 +543,7 @@ public:
                 if ( !l_sib )
                 {
                     __DLL3_BTREEERR(SCREWED_UP_LEFT_SIB);
+                    return;
                 }
                 if ( l_sib->numkeys > HALF_ORDER )
                     whichsib_steal = SIB_LEFT;
@@ -556,6 +565,7 @@ public:
                 if ( !r_sib )
                 {
                     __DLL3_BTREEERR(SCREWED_UP_RIGHT_SIB);
+                    return;
                 }
                 if ( r_sib->numkeys > HALF_ORDER )
                     whichsib_steal = SIB_RIGHT;
@@ -567,6 +577,7 @@ public:
                 ( whichsib_coalesce == SIB_NONE ))  // should not happen
             {
                 __DLL3_BTREEERR(CANT_STEAL_OR_COALESCE);
+                return;
             }
 
             if ( whichsib_steal != SIB_NONE )
@@ -723,6 +734,7 @@ public:
                     if ( !parent->root )
                     {
                         __DLL3_BTREEERR(NONROOT_NODE_SHRUNK);
+                        return;
                     }
                     numnodes--;
                     depth--;

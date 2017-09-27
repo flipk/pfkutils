@@ -283,16 +283,6 @@ main()
         std::cout << "caught HSM error:\n"
                   << err.Format();
     }
-    catch (DLL3::ListError le)
-    {
-        std::cout << "caught DLL3 error:\n"
-                  << le.Format();
-    }
-    catch (ThreadSlinger::ThreadSlingerError tse)
-    {
-        std::cout << "caught slinger error:\n"
-                  << tse.Format();
-    }
 #endif
 
     return 0;

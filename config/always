@@ -154,7 +154,7 @@ libpfkutil_CSRCS = \
 	libpfkutil/printbuf.c libpfkutil/regex.c \
 	libpfkutil/sha256.c libpfkutil/aes.c
 libpfkutil_CXXSRCS = \
-	libpfkutil/HSM.cc libpfkutil/LockWait.cc \
+	libpfkutil/HSM.cc \
 	libpfkutil/childprocessmanager.cc libpfkutil/dll3.cc \
 	libpfkutil/dll3_btree.cc libpfkutil/fdThreadLauncher.cc \
 	libpfkutil/fd_mgr.cc libpfkutil/hsmthread.cc \

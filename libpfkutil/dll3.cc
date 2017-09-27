@@ -29,25 +29,6 @@ For more information, please refer to <http://unlicense.org>
 
 using namespace DLL3;
 
-const std::string ListError::errStrings[__NUMERRS] = {
-    "item not valid",
-    "item already on list",
-    "item still on a list",
-    "list not empty",
-    "list not locked",
-    "item not on this list"
-};
-
-//virtual
-const std::string
-ListError::_Format(void) const
-{
-    std::string ret = "LIST ERROR: ";
-    ret += errStrings[err];
-    ret += " at:\n";
-    return ret;
-}
-
 const int DLL3::dll3_hash_primes[dll3_num_hash_primes] = {
     97,     251,     499,
     997,    1999,    4999,

@@ -104,7 +104,7 @@ inline int
 CircularReaderSubstr :: realPos(int _pos, bool _validate /*=true*/) const
 {
     if (_validate && _pos >= len) {
-        throw CircularReaderError("invalid pos in realPos");
+        CircularReaderError cre("invalid pos in realPos");
         return 0;
     }
     int ret = startPos + _pos;
@@ -201,7 +201,8 @@ inline CircularReaderSubstr
 CircularReaderSubstr :: substr(int _pos, int _len /*= npos*/) const
 {
     if (_pos > len) {
-        throw CircularReaderError("invalid pos in substr");
+        CircularReaderError cre("invalid pos in substr");
+        _pos = len;
     }
     int newLen = len - _pos;
     if (_len > newLen)
@@ -418,7 +419,10 @@ CircularReader :: readFd(int _fd)
 {
     int readMax = maxContigWritable();
     if (readMax == 0)
-        throw CircularReaderError("read: full buffer");
+    {
+        CircularReaderError cre("read: full buffer");
+        return 0;
+    }
     uint8_t * readPos = buf + realPos(len,false);
     int cc = ::read(_fd, readPos, readMax);
     if (cc > 0)

@@ -34,7 +34,9 @@ using namespace HSMThread;
 using namespace DLL3;
 using namespace WaitUtil;
 
-#define THROW(e) throw ThreadError(ThreadError::e)
+#define HSMTHROW(e) do {                        \
+        ThreadError  the(ThreadError::e);       \
+    } while(0)
 
 const std::string ThreadError::errStrings[__NUMERRS] = {
     "thread still running during ~Thread destructor",
@@ -64,22 +66,31 @@ Thread::Thread(const std::string &_name)
 Thread::~Thread(void)
 {
     if (state == RUNNING)
-        THROW(RunningInDestructor);
-    join();
-    Threads::instance()->unregisterThread(this);
+    {
+        HSMTHROW(RunningInDestructor);
+    }
+    else
+    {
+        join();
+        Threads::instance()->unregisterThread(this);
+    }
 }
 
 void
 Thread::start(void)
 {
     if (state != NEWBORN)
-        THROW(ThreadStartAlreadyStarted);
+    {
+        HSMTHROW(ThreadStartAlreadyStarted);
+    }
+    else
+    {
+        pthread_attr_t   attr;
 
-    pthread_attr_t   attr;
-
-    pthread_attr_init( &attr );
-    pthread_create( &id, &attr, &__entry, (void*) this );
-    pthread_attr_destroy( &attr );
+        pthread_attr_init( &attr );
+        pthread_create( &id, &attr, &__entry, (void*) this );
+        pthread_attr_destroy( &attr );
+    }
 }
 
 void
@@ -163,7 +174,10 @@ void
 Threads::_start(void)
 {
     if (state == RUNNING)
-        THROW(ThreadsStartAlreadyStarted);
+    {
+        HSMTHROW(ThreadsStartAlreadyStarted);
+        return;
+    }
 
     syncPt.numStarted = 0;
     int numThreads = 0;
