@@ -60,7 +60,11 @@ struct BackTrace {
      * \return multi-line string containing the stack backtrace. */
     const std::string Format(void) const;
 protected:
-    virtual const std::string _Format(void) const = 0;
+    virtual const std::string _Format(void) const {
+        // a derived class may override this if it wishes
+        // to provide more information appended to the backtrace.
+        return "";
+    }
 };
 
 // use this if you dont want to derive another

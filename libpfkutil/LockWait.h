@@ -31,28 +31,12 @@ For more information, please refer to <http://unlicense.org>
 
 #include <pthread.h>
 #include <time.h>
+#include <iostream>
 
 #include "BackTrace.h"
 
 /** a collection of mutex locks and waiter/semaphore abstractions */
 namespace WaitUtil {
-
-/** errors that might be thrown during certain operations */
-struct LockableError : BackTraceUtil::BackTrace {
-    /** the possible errors that might get thrown */
-    enum LockableErrValue {
-        MUTEX_LOCKED_IN_DESTRUCTOR,  //!< dont destroy a lock while its locked
-        RECURSION_ERROR,             //!< this sucks
-        __NUMERRS
-    } err;
-    static const std::string errStrings[__NUMERRS];
-    LockableError(LockableErrValue _e) : err(_e) { }
-    /** returns a descriptive string for the error
-     * \return a descriptive string matching the err */
-    /*virtual*/ const std::string _Format(void) const;
-};
-
-#define LOCKABLERR(e) throw LockableError(LockableError::e)
 
 /** a mutex container. you can either derive from this or
  * instantiate it on its own. */
@@ -61,21 +45,20 @@ class Lockable {
     friend class Lock;
     pthread_mutex_t  lockableMutex;
     bool   locked;
-    void   lock(void) /*throw ()*/;
-    void unlock(void) /*throw ()*/;
+    void   lock(void);
+    void unlock(void);
 public:
     /** constructor initializes the mutex to an unlocked state */
-    Lockable(void) /*throw ()*/;
-    /** destructor checks that the mutex is not locked.
-     * \throw may throw LockableError if the mutex is locked. */
-    ~Lockable(void) /*throw (LockableError)*/;
+    Lockable(void);
+    /** destructor checks that the mutex is not locked. */
+    ~Lockable(void);
     /** indicates if the lock is held or not. 
      * \return true if the mutex is currently locked.
      * \note this is itself not protected so its only advisory;
      *     by the time you do something based on this return value,
      *     it may have changed. really only useful for catching errors
      *     like not locking something that should be locked. */
-    bool isLocked() const /*throw ()*/;
+    bool isLocked() const;
 };
 
 /** an instance of a lock (a critical region) should be framed
@@ -97,9 +80,9 @@ public:
     /** destructor makes sure the Lockable is unlocked before returning */
     ~Lock(void);
     /** a lock may be locked at any time if it is currently unlocked. */
-    void lock(void) /*throw ()*/;
+    void lock(void);
     /** a lock may be unlocked at any time if it is currently locked. */
-    void unlock(void) /*throw (LockableError)*/;
+    void unlock(void);
 };
 
 /** an object which can be waited for by a waiter. you can either
@@ -175,7 +158,7 @@ public:
 
 // inline impl below this line
 
-inline Lockable::Lockable(void) /*throw ()*/
+inline Lockable::Lockable(void)
 {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -185,29 +168,27 @@ inline Lockable::Lockable(void) /*throw ()*/
     locked = false;
 }
 
-inline Lockable::~Lockable(void) /*throw (LockableError)*/
+inline Lockable::~Lockable(void)
 {
-/*    if (locked)
-      LOCKABLERR(MUTEX_LOCKED_IN_DESTRUCTOR);*/
     pthread_mutex_destroy(&lockableMutex);
 }
 
 inline void
-Lockable::lock(void) /*throw ()*/
+Lockable::lock(void)
 {
     pthread_mutex_lock  (&lockableMutex);
     locked = true;
 }
 
 inline void
-Lockable::unlock(void) /*throw ()*/
+Lockable::unlock(void)
 {
     locked = false;
     pthread_mutex_unlock(&lockableMutex);
 }
 
 inline bool
-Lockable::isLocked(void) const /*throw ()*/
+Lockable::isLocked(void) const
 {
     return locked;
 }
@@ -230,19 +211,24 @@ inline Lock::~Lock(void)
 }
 
 inline void
-Lock::lock(void) /*throw ()*/
+Lock::lock(void)
 {
     if (lockCount++ == 0)
         lobj->lock();
 }
 
 inline void
-Lock::unlock(void) /*throw (LockableError)*/
+Lock::unlock(void)
 {
     if (lockCount <= 0)
-        LOCKABLERR(RECURSION_ERROR);
-    if (--lockCount == 0)
-        lobj->unlock();
+    {
+        BackTraceUtil::BackTrace  bt;
+        std::cerr << "Lock::unlock: recursion error!\n"
+                  << bt.Format();
+    }
+    else
+        if (--lockCount == 0)
+            lobj->unlock();
 }
 
 inline Waitable::Waitable(void)
@@ -359,8 +345,6 @@ Semaphore::take(struct timespec * expire)
     value--;
     return true;
 }
-
-#undef   LOCKABLERR
 
 }; // namespace HSMWait
 
