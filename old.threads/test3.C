@@ -51,7 +51,11 @@ int
 main( int argc, char ** argv )
 {
     if ( argc != 6 )
+    {
+        printf( "usage: t3 <my_eid> <my_port> \n"
+                "          <other_eid> <other_ip> <other_port>\n" );
         return 1;
+    }
 
     my_eid     = strtoul( argv[1], 0, 0 );
     my_port    = strtoul( argv[2], 0, 0 );
@@ -59,9 +63,10 @@ main( int argc, char ** argv )
     other_ip   = strtoul( argv[4], 0, 0 );
     other_port = strtoul( argv[5], 0, 0 );
 
-    ThreadParams p;
-    p.my_eid = my_eid;
-    p.max_eids = 10;
+    ThreadParams   p;
+    p.my_eid     = my_eid;
+    p.max_eids   = 10;
+    p.debug      = ThreadParams::DEBUG_MSGSCONTENTS;
 
     Threads th( &p );
     new testThread;
@@ -73,19 +78,20 @@ main( int argc, char ** argv )
 void
 testThread :: entry( void )
 {
-    MessagesUdp * mu = new MessagesUdp( 1, 0, my_port, false );
+    MessagesUdp * mu = new MessagesUdp( 1, 0, my_port, true );
     mu->register_entity( other_ip, other_port, other_eid );
 
-    int mqid;
+    int mqid, other_mq;
+
     if ( register_mq( mqid, "test_mq" ) == false )
     {
         printf( "unable to register mq!\n" );
         return;
     }
 
+    printf( "start sleep 1\n" );
     sleep( 30 );
-
-    int other_mq;
+    printf( "end sleep one, looking up test_mq on other side\n" );
 
     if ( lookup_mq( other_eid, other_mq, "test_mq" ) == false )
     {
@@ -97,9 +103,15 @@ testThread :: entry( void )
                 other_mq, other_eid );
     }
 
+    printf( "lookup complete; starting sleep 2\n" );
     sleep( 10 );
+    printf( "ending sleep 2, shutting down\n" );
+
     mu->unregister_entity( other_eid );
 
+    printf( "unregister complete, starting sleep 3\n" );
     sleep( 10 );
+    printf( "ending sleep 3\n" );
+
     mu->kill();
 }

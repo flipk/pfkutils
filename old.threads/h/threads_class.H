@@ -81,6 +81,9 @@ public:
     static bool lookup_mq( int eid, int &mqid, char * mqname ) {
         return th->msgs->lookup_mq( eid, mqid, mqname );
     }
+    static char * get_mqname( int mqid ) {
+        return th->msgs->get_mqname( mqid );
+    }
     static bool send( Message * m, MessageAddress * ma ) {
         return th->msgs->send( m, ma );
     }

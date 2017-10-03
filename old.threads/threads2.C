@@ -586,6 +586,13 @@ Threads :: tid( void )
     return current->tid;
 }
 
+char *
+Threads :: tid_name( tid_t tid )
+{ 
+    _Thread * t = lookup( tid );
+    return t ? t->name : NULL;
+}
+
 // create a new thread.
 
 Threads :: tid_t

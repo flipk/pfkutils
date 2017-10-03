@@ -131,6 +131,16 @@ public:
     int get_cnt  ( void ) {
         return cnt;
     }
+    T * dequeue_head( void ) {
+        T * ret = head;
+        if ( ret ) remove( ret );
+        return ret;
+    }
+    T * dequeue_tail( void ) {
+        T * ret = tail;
+        if ( ret ) remove( ret );
+        return ret;
+    }
     T * get_head ( void ) {
         return head;
     }
@@ -209,6 +219,16 @@ public:
     void promote( T * t ) { list.remove( t ); list.add( t ); }
     bool onlist( T * t ) { return list.onlist( t ); }
     bool onthislist( T * t ) { return list.onthislist( t ); }
+    T * dequeue_head( void ) { 
+        T * ret = list.get_head();
+        if ( ret ) remove( ret );
+        return ret;
+    }
+    T * dequeue_tail( void ) { 
+        T * ret = list.get_tail();
+        if ( ret ) remove( ret );
+        return ret;
+    }
     T * get_head( void ) { return list.get_head(); }
     T * get_tail( void ) { return list.get_tail(); }
     T * get_next( T * t ) { return list.get_next( t ); }
@@ -230,6 +250,16 @@ public:
     void promote( T * t ) { lru.promote( t ); }
     bool onlist( T * t ) { return lru.onlist( t ); }
     bool onthislist( T * t ) { return lru.onthislist( t ); }
+    T * dequeue_lru_head( void ) {
+        T * ret = lru.get_head();
+        if ( ret ) remove( ret );
+        return ret;
+    }
+    T * dequeue_lru_tail( void ) {
+        T * ret = lru.get_tail();
+        if ( ret ) remove( ret );
+        return ret;
+    }
     T * get_lru_head ( void ) { return lru.get_head(); }
     T * get_lru_tail ( void ) { return lru.get_tail(); }
     T * get_lru_next( T * t ) { return lru.get_next(t); }

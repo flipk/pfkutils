@@ -18,6 +18,9 @@ fi
 
 if [ "x$1" = x--clean ] ; then
     [ -f Makefile ] && make clean
+    cd pdksh-5.2.14 && make distclean  2> /dev/null
+    rm -f ksh_precrunch.o
+    cd ..
     find . -name \*~ -print | xargs rm -f
     rm -f main.h
     exit 0

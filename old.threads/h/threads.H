@@ -51,9 +51,10 @@ struct ThreadParams {
     static const int DEBUG_ENQ             = 2;
     static const int DEBUG_CTXSW           = 4;
     static const int DEBUG_MSGS            = 8;
-    static const int DEBUG_MSGSFD          = 16;
-    static const int DEBUG_CHECKSTACK      = 32;
-    static const int DEBUG_PRINTSTACKINFO  = 64;
+    static const int DEBUG_MSGSCONTENTS    = 16;
+    static const int DEBUG_MSGSFD          = 32;
+    static const int DEBUG_CHECKSTACK      = 64;
+    static const int DEBUG_PRINTSTACKINFO  = 128;
     static const int DEBUG_ALL             = 0xffffffff;
 
     int debug;
@@ -174,6 +175,8 @@ public:
     void printinfo2( FILE * f );
 
     bool valid_tid( tid_t tid ) {
+        if ( tid > max_threads )
+            return false;
         if ( threads[tid] != NULL )
             return true;
         return false;
@@ -189,6 +192,7 @@ public:
 
     // return my threadid
     int tid( void );
+    char * tid_name( tid_t tid );
 
     // yield processor to some other thread of equal priority
     void yield( void ) { reschedule(); }

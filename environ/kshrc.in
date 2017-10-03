@@ -625,7 +625,7 @@ fi
 # what we have.
 #
 
-ksh_new=$HOME/bin/$ARCH/ksh
+ksh_new=$HOME/bin/pdksh
 
 if __isksh ; then
     if [[ x$GOOD_SHELL = x ]] ; then

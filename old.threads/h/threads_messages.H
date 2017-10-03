@@ -80,6 +80,7 @@ private:
 
 public:
     UINT32_t type;
+    UINT32_t source_tid;
     MessageAddress src;
     MessageAddress dest;
 
@@ -137,7 +138,7 @@ public:
 #define MsgDef( classname, typevalue, body ) \
 class classname : public Message { \
 public: \
-    static const int TYPE = typevalue; \
+    static const unsigned int TYPE = typevalue; \
     classname( void ) : Message( sizeof( classname ), TYPE ) { } \
     body \
 }
@@ -145,7 +146,7 @@ public: \
 #define MsgDef2( classname, typevalue, constructorargs, constructor, body ) \
 class classname : public Message { \
 public: \
-    static const int TYPE = typevalue; \
+    static const unsigned int TYPE = typevalue; \
     classname( constructorargs ) : Message( sizeof( classname ), TYPE ) \
         { constructor } \
     body \
@@ -212,6 +213,7 @@ public:
     bool unregister_mq( int mqid );
 
     bool lookup_mq( int eid, int &mqid, char * mqname );
+    char * get_mqname( int mqid );
 
     bool send( Message *, MessageAddress * );
     Message * recv( int numqids, int * mqids,

@@ -121,6 +121,34 @@ ThreadMessages :: send( Message * m, MessageAddress * addr )
     int mqid = -1;
     int eid = addr->eid.get();
 
+    if ( th->debug & ThreadParams::DEBUG_MSGSCONTENTS )
+    {
+        char * dest_mid_name = get_mqname( m->dest.mid.get() );
+        if ( dest_mid_name == NULL   ||
+             strcmp( dest_mid_name, "printer" ) != 0 )
+        {
+            printf( "thread %d(%s) sending msg\n",
+                    th->tid(), th->tid_name(th->tid()));
+            printf( "  type %x src %d:%d(%s) dest %d:%d(%s)\n"
+                    "    ",
+                    m->type.get(),
+                    m->src.eid.get(), m->src.mid.get(),
+                    get_mqname( m->src.mid.get() ),
+                    m->dest.eid.get(), m->dest.mid.get(),
+                    get_mqname( m->dest.mid.get() ));
+
+            UCHAR * body = m->get_body();
+            int s = m->get_size();
+            for ( int i = 0; i < s; i++ )
+            {
+                printf( "%02x ", body[i] );
+                if (( i & 15 ) == 15 )
+                    printf( "\n    " );
+            }
+            printf( "\n" );
+        }
+    }
+
     if ( eid == my_eid || eid == 0 )
     {
         mqid = addr->mid.get();
@@ -152,6 +180,7 @@ ThreadMessages :: send( Message * m, MessageAddress * addr )
         return false;
     }
 
+    m->source_tid.set( th->tid() );
     mqs[mqid]->enqueue( m );
     if ( mqs[mqid]->wait != NULL &&
          mqs[mqid]->wait->whichwoke == -1 )
@@ -234,6 +263,35 @@ ThreadMessages :: recv( int numqids, int * mqids,
         ret = mqs[wtr.whichwoke]->dequeue();
     }
 
+    if ( ret && ( th->debug & ThreadParams::DEBUG_MSGSCONTENTS ))
+    {
+        char * dest_mq_name = get_mqname( ret->dest.mid.get() );
+        if ( dest_mq_name == NULL   ||
+             strcmp( dest_mq_name, "printer" ) != 0 )
+        {
+            printf( "thread %d(%s) received msg from %d(%s):\n",
+                    th->tid(), th->tid_name(th->tid()),
+                    ret->source_tid.get(),
+                    th->tid_name(ret->source_tid.get()));
+            printf( "  type %x src %d:%d(%s) dest %d:%d(%s)\n"
+                    "    ",
+                    ret->type.get(),
+                    ret->src.eid.get(), ret->src.mid.get(),
+                    get_mqname( ret->src.mid.get() ),
+                    ret->dest.eid.get(), ret->dest.mid.get(),
+                    get_mqname( ret->dest.mid.get() ));
+            UCHAR * body = ret->get_body();
+            int s = ret->get_size();
+            for ( int i = 0; i < s; i++ )
+            {
+                printf( "%02x ", body[i] );
+                if (( i & 15 ) == 15 )
+                    printf( "\n    " );
+            }
+            printf( "\n" );
+        }
+    }
+
     return ret;
 }
 
@@ -262,6 +320,14 @@ ThreadMessages :: register_mq( int &mqid, char * mqname )
     return true;
 }
 
+char *
+ThreadMessages :: get_mqname( int mqid )
+{
+    if ( mqid < max_mqids && mqs[mqid] != NULL )
+        return mqs[mqid]->mqname;
+    return NULL;
+}
+
 bool
 ThreadMessages :: lookup_mq( int eid, int &ret_mqid, char * mqname )
 {
@@ -288,48 +354,59 @@ ThreadMessages :: lookup_mq( int eid, int &ret_mqid, char * mqname )
             return false;
         }
 
-        union {
-            Message * m;
-            LookupMqMsg * lmm;
-            LookupMqReplyMsg * lrm;
-        } m;
-        m.lmm = new(mqname) LookupMqMsg(mqname);
-        m.lmm->src.set( my_eid, mqid );
-        m.lmm->dest.set( eid, 0 );
-        if ( send( m.lmm, &m.lmm->dest ) == false )
+        int retries = 0;
+        bool send_req = true;
+
+        while ( retries < 3 )
         {
-            th->printf( "could not send lookup request\n" );
-            delete m.lmm;
-            goto out;
+            union {
+                Message * m;
+                LookupMqMsg * lmm;
+                LookupMqReplyMsg * lrm;
+            } m;
+
+            if ( send_req )
+            {
+                m.lmm = new(mqname) LookupMqMsg(mqname);
+                m.lmm->src.set( my_eid, mqid );
+                m.lmm->dest.set( eid, 0 );
+                if ( send( m.lmm, &m.lmm->dest ) == false )
+                {
+                    th->printf( "could not send lookup request\n" );
+                    delete m.lmm;
+                    break;
+                }
+                send_req = false;
+            }
+
+            m.m = recv( 1, &mqid, NULL, th->timers->get_tps() );
+            if ( m.m == NULL )
+            {
+                th->printf( "lookup reply timeout\n" );
+                retries++;
+                send_req = true;
+                continue;
+            }
+
+            switch ( m.m->type.get() )
+            {
+            case LookupMqReplyMsg::TYPE:
+                retries = 99;
+                ret_mqid = m.lrm->mqid.get();
+                if ( ret_mqid == -1 )
+                    th->printf( "lookup reply : mq %s not found\n", mqname );
+                else
+                    ret = true;
+                break;
+
+            default:
+                th->printf( "lookup reply was type %x!\n", 
+                            m.m->type.get() );
+            }
+
+            delete m.m;
         }
 
-        m.m = recv( 1, &mqid, NULL, th->timers->get_tps() * 5 );
-        if ( m.m == NULL )
-        {
-            th->printf( "lookup reply timeout\n" );
-            goto out;
-        }
-
-        if ( m.m->type.get() != LookupMqReplyMsg::TYPE )
-        {
-            th->printf( "lookup reply was type %x!\n", 
-                        m.m->type.get() );
-            goto out2;
-        }
-
-        if ( m.lrm->mqid.get() == (unsigned int)-1 )
-        {
-            th->printf( "lookup reply : mq %s not found\n",
-                        mqname );
-            goto out2;
-        }
-
-        ret = true;
-        ret_mqid = m.lrm->mqid.get();
-
-    out2:
-        delete m.m;
-    out:
         (void) unregister_mq( mqid );
     }
     return ret;

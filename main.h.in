@@ -21,6 +21,7 @@
 	PROG(0,treescan,scan a tree of files and produce a treediff)
 	PROG(1,itsfssvr,ITS file system server)
 	PROG(0,xlock,xlock screen)
+	PROG(0,pdksh,pdksh shell)
 #endif
 	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,tcpgate2,TCP gateways for bridging)

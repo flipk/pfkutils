@@ -32,6 +32,8 @@ ELIBS+= states/libstates.a
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a
 DIRS+= bt qcam xlock
+
+ELIBS+= pdksh-5.2.14/ksh_precrunch.o
 #endif
 
 #ifdef solaris
@@ -82,6 +84,12 @@ subdirs::
 
 .C.o:
 	gcc $(CFLAGS) -c $*.C
+
+#ifdef freebsd
+pdksh-5.2.14/ksh_precrunch.o::
+	cd pdksh-5.2.14/ && sh PK_MAKE_PDKSH
+#endif
+
 
 depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
 	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
