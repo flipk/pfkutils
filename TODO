@@ -1,8 +1,4 @@
 
- - btree needs to delete blocks from cache if they've been
-   there for a while.
- - a 'close' command to itsfs needs to delete keys from the database
-   for that mount in a backgrounded way
  - itsfs needs a cache tree to sit in front of the remote inode trees
  - why does 'tar zxf somefile.tar' in a remotely mounted tree sometimes
    produce garbage files?

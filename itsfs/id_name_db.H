@@ -32,6 +32,8 @@
 class id_name_db {
     Btree * bt;
     char fname[ 64 ];
+    bool purge_active;
+    int purging_id;
 
     static char * btdump_sprint( void * arg, int noderec,
                                  int keyrec, void * key, int keylen,
@@ -44,6 +46,7 @@ class id_name_db {
                                       int datrec, void * dat, int datlen );
     static void   btdump_real_sprintfree( void * arg, char * s );
     static void   btdump_real_print( void * arg, char * format, ... );
+    void _periodic_purge( bool all, int id );
 
 public:
     id_name_db( void );
@@ -73,6 +76,8 @@ public:
         }
 
     void flush( void ) { bt->flush(); }
+    void periodic_purge( void ) { _periodic_purge( false, purging_id ); }
+    bool need_periodic_purge( void ) { return purge_active; }
 };
 
 #endif /* __ID_NAME_DB_H_ */

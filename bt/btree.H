@@ -198,7 +198,7 @@ public:
 
     void dumptree( printinfo * );
 private:
-    void dumpnode( printinfo *, int recno );
+    bool dumpnode( printinfo *, int recno ); // return false to stop
 
 public:
     void  unlock_rec( rec * );

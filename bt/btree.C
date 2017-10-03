@@ -231,7 +231,7 @@ Btree :: dumptree( printinfo * pi )
     dumpnode( pi, bti->rootblockno );
 }
 
-void
+bool
 Btree :: dumpnode( printinfo * pi, int recno )
 {
     int i;
@@ -257,19 +257,34 @@ Btree :: dumpnode( printinfo * pi, int recno )
     for ( i = 0; i < n->nd->get_numitems(); i++ )
     {
         if ( !n->nd->is_leaf() )
-            dumpnode( pi, n->nd->d[i].ptr );
+            if ( dumpnode( pi, n->nd->d[i].ptr ) == false )
+            {
+                unlock_node( n );
+                return false;
+            }
         rec * r = fetch_rec( n->nd->d[i].key,
                              n->nd->d[i].data );
         char * s = pi->spr( pi->arg, recno,
                             r->key.recno, r->key.ptr, r->key.len,
                             r->data.recno, r->data.ptr, r->data.len );
+        if ( s == NULL )
+        {
+            unlock_rec( r );
+            unlock_node( n );
+            return false;
+        }
         pi->pr( pi->arg, "%s", s );
         pi->sprf( pi->arg, s );
         unlock_rec( r );
     }
     if ( !n->nd->is_leaf() )
-        dumpnode( pi, n->nd->d[i].ptr );
+        if ( dumpnode( pi, n->nd->d[i].ptr ) == false )
+        {
+            unlock_node( n );
+            return false;
+        }
     unlock_node( n );
+    return true;
 }
 
 // this returns a rec where ptrs are valid and fileblocks are locked.

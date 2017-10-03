@@ -312,8 +312,16 @@ _itsfssvr_main( int argc, char ** argv )
 
         max = globs.fdset( &rfds );
 
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        if ( indb.need_periodic_purge() )
+        {
+            tv.tv_sec = 0;
+            tv.tv_usec = 50000;
+        }
+        else
+        {
+            tv.tv_sec = 1;
+            tv.tv_usec = 0;
+        }
 
         r = select( max, &rfds, NULL, NULL, &tv );
 
@@ -322,6 +330,9 @@ _itsfssvr_main( int argc, char ** argv )
 
         if ( globs.exit_command )
             break;
+
+        if ( r == 0 && indb.need_periodic_purge() )
+            indb.periodic_purge();
 
         // periodically clean the server's cache
 

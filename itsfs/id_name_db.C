@@ -33,6 +33,8 @@ id_name_db :: id_name_db( void )
     Btree::new_file( fbn, 15 );
     bt = LOGNEW Btree( fbn );
     chmod( (char*)fname, 0600 );
+    purge_active = false;
+    purging_id = 0;
 }
 
 id_name_db :: ~id_name_db( void )
@@ -147,9 +149,11 @@ id_name_db :: fetch( int mount_id, uchar * path, inode_file_type &ftype )
 
 struct btcollect {
     uchar cmpkey[ 5 ];
+    int deleted_count;
     int numalloc;
     int numused;
     int * ids;
+    bool finished;
     btcollect( void )
         {
             numalloc = 100;
@@ -182,11 +186,16 @@ id_name_db :: btdump_sprint( void * arg, int noderec,
                              int datrec, void * dat, int datlen )
 {
     btcollect * btc = (btcollect *)arg;
+
     if ( memcmp( btc->cmpkey, key, 5 ) == 0 )
     {
         int id;
         memcpy( &id, (uchar*)dat + 1, 4 );
         btc->add( id );
+        if ( btc->deleted_count == 0 )
+            return 0;
+        btc->deleted_count--;
+        btc->finished = false;
     }
 
     // return non-null so dumptree doesn't stop here.
@@ -210,18 +219,40 @@ id_name_db :: btdump_print( void * arg, char * format, ... )
 void
 id_name_db :: purge_mount( int mount_id )
 {
+    if ( purge_active )
+    {
+        // if a backgrounded period purge is already active,
+        // don't attempt to background this one, just do it now.
+        // the backgrounded one will continue when this one is done.
+        // (note, it would actually be better to background this one
+        //  too but it makes the implementation more complicated)
+        _periodic_purge( true, mount_id );
+        return;
+    }
+    purging_id = mount_id;
+    purge_active = true;
+}
+
+void
+id_name_db :: _periodic_purge( bool all, int id )
+{
     Btree::printinfo pi;
     uchar cmpstr[ 5 ];
     btcollect btc;
 
     btc.cmpkey[0] = 'P';
-    memcpy( btc.cmpkey + 1, &mount_id, 4 );
+    memcpy( btc.cmpkey + 1, &id, 4 );
 
     pi.spr   = &btdump_sprint;
     pi.sprf  = &btdump_sprintfree;
     pi.pr    = &btdump_print;
     pi.arg   = &btc;
     pi.debug = false;
+    btc.finished = true;
+    if ( all )
+        btc.deleted_count = -1;
+    else
+        btc.deleted_count = 250;
 
     bt->dumptree( &pi );
 
@@ -230,6 +261,8 @@ id_name_db :: purge_mount( int mount_id )
         del( btc.ids[i] );
     }
 
+    if ( btc.finished )
+        purge_active = false;
 }
 #include <stdarg.h>
 
