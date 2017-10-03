@@ -8,7 +8,7 @@ swe=$sw/Embedded_Software
 swpb=$sw/Common/protocol_buffers/protobuf-2.3.0/installed
 swcp=$swe/Call_Proc
 
-#FUNCTIONS: lsv lsco sv zeroversion makeorig ccdiff ccdiff2 
+#FUNCTIONS: lsv lsco lscol lspr lsprl lsprf lsprfl sv zeroversion makeorig ccdiff ccdiff2 
 
 xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
@@ -59,8 +59,32 @@ lspr() {
     ct lsprivate | grep -v '\[checkedout\]'
 }
 
+lsprl() {
+    ct lsprivate | grep -v checkedout | grep $PWD | sed -e s,$PWD/,,
+}
+
+lsprf() {
+    for f in $( lspr ) ; do
+	if [[ -f $f ]] ; then
+	    echo $f
+	fi
+    done
+}
+
+lsprfl() {
+    for f in $( lsprl ) ; do
+	if [[ -f $f ]] ; then
+	    echo $f
+	fi
+    done
+}
+
 lsco() {
-     ct lsco -cview -avobs -short
+    ct lsco -cview -avobs -short
+}
+
+lscol() {
+    ct lsco -cview -avobs -short | grep $PWD | sed -e s,$PWD/,,
 }
 
 sv() {
@@ -104,7 +128,7 @@ efp() {
     if [[ x${1} != x${1#/} ]] ; then
         path=${1}
     else
-        path=`pwd`/${1}
+        path=$PWD/${1}
     fi
 
     if [[ ${path#/vob} != $path ]] ; then
