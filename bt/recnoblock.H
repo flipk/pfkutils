@@ -20,6 +20,7 @@ class FileBlockNumber {
     static const int     recs_per_page = pagesize    / recordsize;
     static const int  recs_per_segment = segmentsize / recordsize;
     static const int     reserved_bits = pagesize    / recordsize;
+    static const int           max_age = 15;  // in seconds
 
     struct page;         // private
     typedef LListHashLRU<page,BT_DLL2_HASH,BT_DLL2_LRU> page_lru;

@@ -28,6 +28,7 @@ struct FileBlockNumber :: page {
     LListLinks<FileBlockNumber::page>  links[ BT_DLL2_COUNT ];
     int key_value;
     int refcount;
+    int reftime;
     int fd;
     int pagenum;
     UCHAR buf[pagesize];
@@ -44,6 +45,7 @@ struct FileBlockNumber :: page {
             printf( "read file failed: %s\n", strerror( errno ));
             kill(0,6); }
         if ( cc != pagesize ) memset( buf+cc, 0, pagesize-cc );
+        reftime = (int) time( NULL );
     }
     void clean( void ) {
         if ( dirty )
@@ -54,7 +56,11 @@ struct FileBlockNumber :: page {
         }
     }
     int hash_key( void ) { return key_value; }
-    bool   ref( void ) { return (refcount++ == 0); } // true if first ref
+    int age(void) { return (int)time(0) - reftime; }
+    bool   ref( void ) {
+        reftime = (int)time(0);
+        return (refcount++ == 0); // true if first ref
+    }
     bool deref( void ) {
         if ( refcount == 0 )
             kill( 0, 6 );
@@ -540,7 +546,18 @@ FileBlockNumber :: flush( void )
            (int(*)(const void*,const void*))&FileBlockNumber::compare );
 
     for ( i = 0; i < len; i++ )
-        pgs[i]->clean();
+    {
+        p = pgs[i];
+        p->clean();
+        if ( p->refcount == 0 && p->age() > max_age )
+        {
+            if ( bitmaps.onthislist(p))
+                bitmaps.remove( p );
+            if ( data.onthislist(p))
+                data.remove( p );
+            delete p;
+        }
+    }
 
     delete[] pgs;
     time( &last_sync );

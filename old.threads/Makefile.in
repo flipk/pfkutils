@@ -25,11 +25,11 @@ OBJS= $(_OBJS:.c=.o)
 #ifdef solaris
 CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSOLARIS
 LINKFL= -lsocket
-SRCS+= vsnprintf.c
+SRCS+= vsnprintf.c malloclock_stub.C
 #elifdef sunos
 CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSUNOS
 LINKFL=
-SRCS+= vsnprintf.c
+SRCS+= vsnprintf.c malloclock_stub.C
 #elifdef cygwin32
 CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DCYGWIN
 LINKFL=
