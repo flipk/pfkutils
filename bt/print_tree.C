@@ -13,9 +13,12 @@ void
 print_hex( void * _buf, int len )
 {
     unsigned char * buf = (unsigned char *) _buf;
-    while ( len-- > 0 )
+    int pos;
+    for ( pos = 0; pos < len; pos++ )
     {
-        printf( "%02x ", *buf++ );
+        if (( pos % 24 ) == 0 )
+            printf( "\n" );
+        printf( " %02x", buf[pos] );
     }
     printf( "\n" );
 }
@@ -37,14 +40,17 @@ public:
         print_hex( dat, datlen );
         printf( "\n" );
 
-        return (char*) 1;
+        return (char*) "";
     }
     /*virtual*/ void sprint_element_free( char * s ) {
         // nothing
     }
     virtual void print( char * format, ... )
         __attribute__ ((format( printf, 2, 3 ))) {
-        // nothing
+        va_list ap;
+        va_start( ap, format );
+        vprintf( format, ap );
+        va_end( ap );
     }
 };
 
@@ -81,17 +87,39 @@ main( int argc, char ** argv )
 
     FileBlockNumber * fbn = new FileBlockNumber( argv[2], 100 );
 
+    int num_segments, recs_in_use, recs_free;
+    fbn->file_info( &num_segments, &recs_in_use, &recs_free );
+
     if ( flag == GENERIC )
     {
-        int num_segments, recs_in_use, recs_free;
-        fbn->file_info( &num_segments, &recs_in_use, &recs_free );
         printf( "recno info:\n"
                 "num_segments = %d, recs_in_use = %d, recs_free = %d\n\n",
                 num_segments, recs_in_use, recs_free );
     }
     if ( flag == RECNO )
     {
-        //xxx
+        UINT32 bn;
+        UINT32 maxbn = sb.st_size / 16;
+        for ( bn = 0; bn < maxbn; bn++ )
+        {
+            int bsize;
+            UINT32 magic;
+            UCHAR * bp = fbn->__get_block( bn, &bsize, &magic );
+            if ( bp )
+            {
+                int pos;
+                printf( "rec %d sz %d:", bn, bsize );
+                for ( pos = 0; pos < bsize; pos++ )
+                {
+                    if (( pos % 24 ) == 0 )
+                        printf( "\n" );
+                    printf( " %02x", bp[pos] );
+                }
+                printf( "\n" );
+                fbn->unlock_block( magic, false );
+            }
+        }
+
         delete fbn;
         return 0;
     }

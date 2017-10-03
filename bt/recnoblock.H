@@ -55,7 +55,7 @@ class FileBlockNumber {
         return recs;
     }
     UCHAR * _get_block( UINT32 blockno, int *size,
-                        UINT32 *magic, bool for_write );
+                        UINT32 *magic, bool for_write, bool do_error );
 
     static int compare( page ** a, page ** b );
 
@@ -80,14 +80,17 @@ public:
     int max_block_size( void ) { return (65536 - size_overhead); }
     UINT32 alloc( int bytes );   // return a blockno
     void free( UINT32 blockno );
+    UCHAR * __get_block( UINT32 blockno, int *size, UINT32 *magic ) {
+        return _get_block( blockno, size, magic, false, false );
+    }
     UCHAR * get_block( UINT32 blockno, int *size, UINT32 *magic ) {
-        return _get_block( blockno, size, magic, false );
+        return _get_block( blockno, size, magic, false, true );
     }
     UCHAR * get_block( UINT32 blockno, UINT32 *magic ) {
-        return _get_block( blockno, NULL, magic, false );
+        return _get_block( blockno, NULL, magic, false, true );
     }
     UCHAR * get_block_for_write( UINT32 blockno, int *size, UINT32 *magic ) {
-        return _get_block( blockno, size, magic, true );
+        return _get_block( blockno, size, magic, true, true );
     }
     void unlock_block( UINT32 magic, bool dirty );
     // returns number of pages written

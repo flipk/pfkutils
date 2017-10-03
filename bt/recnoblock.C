@@ -245,7 +245,7 @@ FileBlockNumber :: release_page ( page * p )
 
 UCHAR *
 FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
-                               UINT32 *magic, bool for_write )
+                               UINT32 *magic, bool for_write, bool do_error )
 {
     // which file segment is this block in?
     int seg_num        = blockno / recs_per_segment;
@@ -257,8 +257,19 @@ FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
     int rec_in_pag     = blockno - pag_num_in_fil * recs_per_page;
 
     page *    bm = get_segment_bitmap( seg_num );
+    if ( rec_in_seg < reserved_bits )
+    {
+        // this is the address of a bitmap area which is wrong.
+        if ( !do_error )
+            return NULL;
+        fprintf( stderr, "error, block %d is a bitmap area!\n", blockno );
+        kill(0,6);
+    }
     if ( !bm->getbit( rec_in_seg ))
     {
+        if ( !do_error )
+            return NULL;
+        // else
         fprintf( stderr, "error, block %d marked as free!\n", blockno );
         kill(0,6);
     }
@@ -271,6 +282,8 @@ FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
 
     if ( sig->get() != block_signature )
     {
+        if ( !do_error )
+            return NULL;
         fprintf( stderr, "error in get, block %d "
                  "does not have signature!\n", blockno );
         kill(0,6);
@@ -734,6 +747,11 @@ FileBlockNumber :: file_info( int * _num_segments,
        extend that far. */
 
     count0 -= ((count0+count1) - num_recs);
+
+    /* also, every segment has one page of bitmap, so don't 
+       count those records either. */
+
+    count0 -= (num_segments * recs_per_page);
 
     *_num_segments = num_segments;
     *_recs_in_use = count1;
