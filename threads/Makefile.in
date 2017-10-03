@@ -3,7 +3,8 @@ LIB= libpkthr.a
 CPPFLAGS= -Ih -Iint -I.. -I../dll2
 GCC= gcc $(CPPFLAGS) -O3
 GCCLINK= g++ $(CPPFLAGS) $(LINKFL)
-SRCS=  pk_messages.C pk_semaphores.C pk_threads.C pk_timers.C stringhash.C
+SRCS=  pk_messages.C pk_semaphores.C pk_threads.C pk_timers.C stringhash.C \
+	pk_filedescs.C pk_filedescs_thread.C
 HDRS= h/pk_messages.H h/pk_semaphores.H h/pk_threads.H \
 	h/pk_timers.H h/stringhash.H int/pk_messages_internal.H \
 	int/pk_threads_internal.H int/pk_timers_internal.H
@@ -26,7 +27,7 @@ LINKFL+= -lrt
 #  ?
 #endif
 
-all: $(LIB) t1 
+all: $(LIB) t1 t2
 
 $(LIB): $(OBJS)
 	rm -f $(LIB)
@@ -35,6 +36,9 @@ $(LIB): $(OBJS)
 
 t1: $(LIB) test-1.C
 	$(GCCLINK) -g3 test-1.C -Ih $(LIB) ../dll2/libdll2.a -o t1
+
+t2: $(LIB) test-2.C
+	$(GCCLINK) -g3 test-2.C -Ih $(LIB) ../dll2/libdll2.a -o t2
 
 .C.o:
 	$(GCC) -c $*.C

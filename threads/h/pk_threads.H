@@ -11,6 +11,7 @@
 #include "pk_messages.H"
 #include "pk_semaphores.H"
 #include "pk_timers.H"
+#include "pk_filedescs.H"
 
 class PK_Thread;
 class PK_Thread_List;
@@ -115,6 +116,11 @@ public:
     static int tps( void ) { return PK_Timers_global->tps(); }
     static void sleep( int ticks ) { return PK_Timers_global->sleep( ticks ); }
     static int get_time( void ) { return PK_Timers_global->get_time(); }
+    static int /*pkfdid*/ register_fd( int fd, PK_FD_RW rw,
+                                       int qid, void * obj ) {
+        return PK_File_Descriptors_global->register_fd( fd, rw, qid, obj ); }
+    static void * unregister_fd( int pkfdid ) {
+        return PK_File_Descriptors_global->unregister_fd( pkfdid ); }
 };
 
 #endif /* __THREADS_H__ */

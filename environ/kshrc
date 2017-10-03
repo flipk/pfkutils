@@ -112,8 +112,9 @@ if __isksh ; then
     fi
     if [[ x$LOGIN_LOGGED == x ]] ; then
         REMOTE_HOST=${SSH_CONNECTION%% *}
+        __verbose logging REMOTE_HOST=$REMOTE_HOST to lastlog
         echo `hostname` `date` pid $$ term $TERM from $REMOTE_HOST >> .lastlog
-        export LOGIN_LOGGED=yes
+        export LOGIN_LOGGED=yes REMOTE_HOST
     fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
@@ -216,6 +217,7 @@ esac
 
 ARCH=`$HOME/bin/architecture`
 export ARCH
+__verbose ARCH=$ARCH
 
 # reverse mode : rev or mr      \E[7m
 # exit attributes: sgr0 or me   \E[m
@@ -432,6 +434,7 @@ sd() {
     if cmp -s $1 $2 ; then
         echo The files are identical.  | l
     else
+        xtermbar "sd $1 $2"
         diff -bdNsyw --width $cols $* 2>&1 | l
     fi
 }
@@ -442,6 +445,7 @@ cvsd2() {
 }
 
 sd2() {
+    xtermbar "sd2 $1 $2"
     width=`stty size | awk '{print $2}'`
     diff -btyW $width $* | fmtsdiff $width | less '+/%.%'
 }
@@ -640,6 +644,11 @@ fp() {
     print $PWD/$1
 }
 
+title() {
+    shellstring "$*"
+    xtermbar $*
+}
+
 sendtree() {
     if [[ $# -lt 3 ]] ; then
         echo 'usage: sendtree host port dir [dir..]'
@@ -649,7 +658,7 @@ sendtree() {
     host=$1
     port=$2
     shift 2
-    tar cf - $* | ipipe -v $host $port
+    tar cf - $* | i2 -v $host $port
 }
 
 gettree() {
@@ -657,7 +666,7 @@ gettree() {
         echo 'usage: gettree port'
         return 1
     fi
-    ipipe -v $1 | tar xf -
+    i2 -v $1 | tar xf -
 }
 
 if __isksh ; then
@@ -786,12 +795,12 @@ if __isksh ; then
         xrdb -load .Xresources
         ctwm -W&
 	xconsole_hook
-        SHELLFILESTRING=shell,$HOST,$$,$TTY,console
+        SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,console
     else
         if [[ x$WINDOW = x ]] ; then
-            SHELLFILESTRING=shell,$HOST,$$,$TTY
+            SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY
         else
-            SHELLFILESTRING=shell,$HOST,$$,$TTY,w$WINDOW,sty$STY
+            SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,w$WINDOW,sty$STY
         fi
     fi
     SHELLFILE=$HOME/.y.shell.$HOST.$$
@@ -820,7 +829,11 @@ if __isksh ; then
 	    fi
 	fi
 	CDPATH=.:$ti/src:$cpe/src:$HOME
-	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD > $SHELLFILE
+	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD,$SHELLFILESPECIAL > $SHELLFILE
+    }
+    shellstring() {
+        SHELLFILESPECIAL=$1
+        cd .
     }
     shells() {
 	cat $HOME/.y.*

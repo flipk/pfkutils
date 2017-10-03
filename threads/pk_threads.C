@@ -21,12 +21,13 @@ PK_Threads :: PK_Threads( int _tps )
     thread_list = new PK_Thread_List;
     running = false;
     pthread_cond_init( &runner_wakeup, NULL );
-
     th = this;
+    new PK_File_Descriptor_Manager;
 }
 
 PK_Threads :: ~PK_Threads( void )
 {
+    delete PK_File_Descriptors_global;
     pthread_cond_destroy( &runner_wakeup );
     th = NULL;
     delete thread_list;
@@ -45,6 +46,8 @@ void
 PK_Threads :: remove( PK_Thread * t )
 {
     thread_list->remove( t );
+    if ( thread_list->get_cnt() == 1 )
+        PK_File_Descriptors_global->stop();
     if ( thread_list->get_cnt() == 0 )
         pthread_cond_signal( &runner_wakeup );
 }
@@ -82,6 +85,7 @@ PK_Threads :: run( void )
     pthread_mutex_t  mut;
     pthread_mutex_init( &mut, NULL );
     running = true;
+
     while ( thread_list->get_cnt() > 0 )
         pthread_cond_wait( &runner_wakeup, &mut );
     running = false;

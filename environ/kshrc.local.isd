@@ -13,7 +13,20 @@ alias abs='cd /vob/wibb_cpe/src/abs_layer/src'
 alias vend='cd $vend'
 alias drv='cd $Drv'
 alias lib='cd $Lib'
+alias ssh='myssh'
 alias q='ssh qcomm.cig.mot.com'
+
+odin() {
+    shellstring "ssh odin"
+    \ssh 10.19.173.30
+    shellstring ""
+}
+
+myssh() {
+    shellstring "ssh $*"
+    \ssh $1
+    shellstring ""
+}
 
 xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase

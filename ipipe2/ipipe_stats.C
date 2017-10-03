@@ -133,7 +133,7 @@ tick_func( void * arg )
 
             if ( arg == NULL )
             {
-                ADD_STRING( "(5s avg %d bps)", (int) wr5s );
+                ADD_STRING( "(5s avg %d/%d bps)", (int) wr5s, (int)(wr5s*8) );
             }
         }
         else

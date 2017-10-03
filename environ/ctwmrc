@@ -170,9 +170,7 @@ menu "defops"
 	"MANUAL"	f.exec "xterm -fg black -bg gray85 -geometry 80x55 &"
 	"Firefox"	f.exec "firefox &"
 	"Thunderbird"	f.exec "thunderbird &"
-	"Lap"		!"lap&"
-	"Runner"	!"run0&"
-	":2"		!"colon2&"
+	"Emacs-Lone"	f.exec "emacs-lone &"
 	"Lock"		!"xlock&"
         ""		f.nop
 	"Iconify"	f.iconify

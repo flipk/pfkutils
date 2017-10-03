@@ -1,22 +1,27 @@
 
+#if INCLUDE_BASE64_HEADERS
+
 /* return 4 if ok, 0 if not ok */
 int b64_encode_quantum( unsigned char * in3, int in_len,
                         unsigned char * out4 );
+
 /* return 0 if ok, return -1 if error (out_len too small) */
 int
 b64_encode_buffer( unsigned char * in,  int in_len,
                    unsigned char * out, int * arg_out_len );
+
 /* return length of bytes decoded, or 0 if not ok */
 int b64_decode_quantum( unsigned char * in4, unsigned char * out3 );
+
 /* return 0 if ok, return -1 if error
    (out_len too small or invalid b64 char) */
 int
 b64_decode_buffer( unsigned char * in,  int in_len,
                    unsigned char * out, int * arg_out_len );
 
+#endif /* INCLUDE_BASE64_HEADERS */
 
-
-#ifdef INCLUDE_BASE64_IMPL
+#if INCLUDE_BASE64_IMPL
 
 static unsigned char value_to_b64[] = 
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -179,7 +184,7 @@ b64_decode_buffer( unsigned char * in,  int in_len,
 
 #endif /* INCLUDE_BASE64_IMPL */
 
-#ifdef INCLUDE_BASE64_TEST
+#if INCLUDE_BASE64_TEST
 
 /*
 
