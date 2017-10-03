@@ -126,10 +126,6 @@ private:
     void    rename_2     ( void );
     void    statfs_2     ( void );
 
-// these are the functions for symlinks and hard links.
-// we do not yet support symlinks or hard links.  we must
-// one day support them, however.
-
     void    link_2       ( void );
     void    symlink_2    ( void );
     void    readlink_2   ( void );
