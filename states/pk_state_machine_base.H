@@ -5,7 +5,7 @@
 class PK_STATE_MACHINE_BASE {
 public:
     PK_STATE_MACHINE_BASE( char * _name );
-    ~PK_STATE_MACHINE_BASE( void );
+    virtual ~PK_STATE_MACHINE_BASE( void );
 
     enum transition_return {
         TRANSITION_OK, TRANSITION_EXIT
