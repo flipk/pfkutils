@@ -233,9 +233,15 @@ shmempipeBufferList :: init(void)
     pthread_condattr_t  cattr;
     pthread_mutexattr_init( &mattr );
     pthread_condattr_init( &cattr );
+#if HAVE_PTHREAD_MUTEXATTR_SETPSHARED
     pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
+#endif
+#if HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP
     pthread_mutexattr_setrobust_np(&mattr, PTHREAD_MUTEX_ROBUST_NP);
+#endif
+#if HAVE_PTHREAD_CONDATTR_SETPSHARED
     pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);
+#endif
     pthread_mutex_init( &mutex, &mattr );
     pthread_cond_init( &empty_cond, &cattr );
     pthread_mutexattr_destroy( &mattr );

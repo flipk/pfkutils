@@ -119,6 +119,7 @@ if test $pfk_have_whoami = "no" ; then
 fi
 
 # Checks for libraries.
+
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
    [AC_MSG_ERROR([pthreads is required for pfkutils])], [])
 AC_SEARCH_LIBS([clock_gettime], [rt], [],
@@ -191,7 +192,7 @@ AC_CHECK_SIZEOF(int)
 # AC_FUNC_MALLOC
 # AC_FUNC_MBRTOWC
 # AC_FUNC_REALLOC
-AC_CHECK_FUNCS([btowc bzero clock_gettime dup2 ftruncate gethostbyaddr gethostbyname gethostname gettimeofday isascii localtime_r memmove memset mkdir pow putenv re_comp regcomp rmdir select setlocale socket sqrt strchr strdup strerror strncasecmp strrchr strstr strtoul inet_aton lseek64 _lseek64 lseek])
+AC_CHECK_FUNCS([btowc bzero clock_gettime dup2 ftruncate gethostbyaddr gethostbyname gethostname gettimeofday isascii localtime_r memmove memset mkdir pow putenv re_comp regcomp rmdir select setlocale socket sqrt strchr strdup strerror strncasecmp strrchr strstr strtoul inet_aton lseek64 _lseek64 lseek pthread_mutex_consistent_np pthread_mutexattr_setrobust_np pthread_mutexattr_setpshared pthread_condattr_setpshared])
 
 AC_CHECK_FUNC([regexec], [pfk_need_regex=false], [pfk_need_regex=true])
 

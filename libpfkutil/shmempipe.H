@@ -26,6 +26,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "pfkutils_config.h"
+
 struct shmempipePoolInfo {
     static const int maxPools = 64;
     uint8_t numPools;
@@ -112,7 +114,7 @@ private:
     pthread_cond_t  empty_cond;
     volatile bool needspoke;
     volatile bool bIsWaiting;
-    inline bool   lock(int dummy);
+    inline bool   lock(void);
     inline void unlock(void);
 public:
     void init(void);
@@ -245,14 +247,19 @@ shmempipeStats :: shmempipeStats(void)
 }
 
 inline bool
-shmempipeBufferList :: lock(int dummy)
+shmempipeBufferList :: lock(void)
 {
     int ret;
     ret = pthread_mutex_lock( &mutex );
-    if (ret == EOWNERDEAD)
+    if (ret < 0)
     {
-        pthread_mutex_consistent_np(&mutex);
-        pthread_mutex_unlock( &mutex );
+#if HAVE_PTHREAD_MUTEX_CONSISTENT_NP
+        if (ret == EOWNERDEAD)
+        {
+            pthread_mutex_consistent_np(&mutex);
+            pthread_mutex_unlock( &mutex );
+        }
+#endif
         return false;
     }
     return true;
@@ -273,7 +280,7 @@ shmempipeBufferList :: empty(void)
 inline void
 shmempipeBufferList :: poke(void)
 {
-    lock(0);
+    lock();
     needspoke = true;
     unlock();
     pthread_cond_signal( &empty_cond );
@@ -296,7 +303,7 @@ shmempipeBufferList :: enqueue( uintptr_t base,
     bool signal = false;
     msg->next = 0;
     if (needlock)
-        if (lock(0) == false)
+        if (lock() == false)
             return false;
     if (tail != 0)
     {
@@ -328,7 +335,7 @@ shmempipeBufferList :: dequeue(uintptr_t base, bool *pSignalled,
 {
     uint32_t msgoff;
     shmempipeMessage * pMsg = NULL;
-    if (lock(0) == false)
+    if (lock() == false)
         return NULL;
     if (head == 0 && !needspoke)
     {
