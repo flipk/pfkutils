@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+// NOTE: BST_FIXED_BINARY type was removed, thus possibly breaking
+//       all of the 'md5hash' fields in this program. if you see weird
+//       bus faults in this code around that field, that is probably why.
+//       i never got around to fixing it.
+
 /** \file update_backup.C
  * \brief update or freshen a backup: add a generation.
  * \author Phillip F Knaack

@@ -56,8 +56,6 @@ struct PfkBakDbKeys : public BST {
                                 any derived type. */
 };
 
-typedef BST_FIXED_BINARY <MD5_DIGEST_SIZE> BST_MD5;
-
 /** key class for the list of backups in the db.
  * This is a singleton (there exists only one of these in the database).
  */
@@ -192,7 +190,7 @@ struct PfkBackupVersion : public BST {
         BST(parent),
         gen_number(this), md5hash(this) { }
     BST_UINT32_t    gen_number;
-    BST_MD5         md5hash;
+    BST_BINARY      md5hash;
 };
 
 /** one of these for each "piece" of a file in a backup.
@@ -228,7 +226,7 @@ struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     BST_UINT32_t    backup_number;
     BST_UINT32_t    file_number;
     BST_UINT32_t    piece_number;
-    BST_MD5         md5hash;
+    BST_BINARY      md5hash;
 };
 
 /** one of these for each version of each piece of each file in a backup.
