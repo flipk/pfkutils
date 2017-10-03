@@ -18,15 +18,25 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// utility
+/** \file protos.H
+ * \brief prototypes of various functions in the pfkbak tool.
+ * \author Phillip F Knaack
+ */
 
+#ifndef __PFKBAK_PROTOS_H__
+#define __PFKBAK_PROTOS_H__
+
+/** @name utility function prototypes */
+//@{
 bool   pfkbak_get_info    ( PfkBackupDbInfo * info );
 UINT32 pfkbak_find_backup ( Btree * bt, char * bakname );
 void   pfkbak_md5_buffer  ( UCHAR * buf, int buflen, UCHAR * md5 );
 void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
 #define MD5_STRING_LEN 34
+//@}
 
-// ops
+/** @name command-line triggered operations */
+//@{
 
 void pfkbak_create_file   ( char * filename, Btree * bt );
 void pfkbak_list_backups  ( Btree * bt );
@@ -43,3 +53,7 @@ void pfkbak_extract       ( Btree * bt, UINT32 baknum, UINT32 gen_num,
                             int argc, char ** argv );
 void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, UINT32 gen_num,
                             char * list_file );
+
+//@}
+
+#endif /* __PFKBAK_PROTOS_H__ */

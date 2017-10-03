@@ -18,6 +18,12 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+/** \file delete_gen.C
+ * \brief Defines method to delete a generation or a range of generations
+ *        from a backup.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +32,13 @@
 
 #include <stdlib.h>
 
+/** delete a generation or a range of generations from a backup.
+ *
+ * @param bt    The btree database.
+ * @param baknum  The backup ID number of the backup to change.
+ * @param gen_num_s  The starting range of generations to delete.
+ * @param gen_num_e  The ending range of generations to delete.
+ */
 void
 pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
                     UINT32 gen_num_s, UINT32 gen_num_e )

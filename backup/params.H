@@ -18,6 +18,15 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file params.H
+ * \brief defines and enums dealing with configuration and command line options
+ *        for the pfkbak tool.
+ * \author Phillip F Knaack
+ */
+
+#ifndef __PFKBAK_PARAMS_H__
+#define __PFKBAK_PARAMS_H__
+
 #define CACHE_SIZE (256*1024*1024)
 #define BTREE_ORDER  15
 
@@ -45,3 +54,5 @@ extern verblevel pfkbak_verb;
 extern char * pfkbak_file;
 extern char * pfkbak_name;
 extern int    pfkbak_gen;
+
+#endif /* __PFKBAK_PARAMS_H__ */

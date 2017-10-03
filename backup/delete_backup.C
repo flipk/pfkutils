@@ -18,6 +18,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file delete_backup.C
+ * \brief Defines method for deleting all data in a database associated with
+ *        a particular backup.
+ * \author Phillip F Knaack 
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +32,11 @@
 
 #include <stdlib.h>
 
+/** delete a backup from a backup database.
+ * 
+ * @param bt    The btree database.
+ * @param baknum The backup ID number of the backup to delete.
+ */
 void
 pfkbak_delete_backup ( Btree * bt, UINT32 baknum )
 {

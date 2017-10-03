@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file get_info.C
+ * \brief Fetch database info from the database.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +31,11 @@
 
 #include <stdlib.h>
 
+/** fetch database info from the database.
+ *
+ * @param info  pointer to caller's structure to populate when data is fetched.
+ * @return  true if data was retrieved, false if some error occurred.
+ */
 bool
 pfkbak_get_info( PfkBackupDbInfo * info )
 {

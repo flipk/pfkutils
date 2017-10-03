@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file update_backup.C
+ * \brief update or freshen a backup: add a generation.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -31,10 +36,35 @@
 #include <fcntl.h>
 #include <zlib.h>
 
-/** \todo Add support for verbose mode to update_backup. */
+/** identifier for the detected state of the file, according to
+ * its timestamp and size field. */
+enum file_state {
+    STATE_NEW,         /**< the file appears to be new, no previous record
+                          of it in the database. */
+    STATE_MODIFIED,    /**< the file appears to be modified, its timestamp
+                          and/or size does not match the database. */
+    STATE_UNMODIFIED   /**< the file appears to have exactly the same 
+                          timestamp and size as recorded in the database. */
+};
 
-enum file_state { STATE_NEW, STATE_MODIFIED, STATE_UNMODIFIED };
-
+/** add the data for a file piece to the database.
+ * this function will also compress the data before adding it,
+ * if compression seems relevant; if compression results in expansion,
+ * (because file appears already compressed) just skip compression for
+ * the remainder of the file to save time.
+ * 
+ * @param bt      the Btree database
+ * @param baknum  the backup ID
+ * @param file_number the file being worked on in the backup.
+ * @param piece_number the piece number of this file.
+ * @param md5hash the calculated m5 hash of this piece
+ * @param buffer a pointer to the data for the piece
+ * @param usize the (uncompressed) size of this buffer
+ * @param do_compression pointer to caller's bool indicating if we should
+ *              be compressing this file.
+ *
+ * @return true if data added okay, false if there was an error.
+ */
 static bool
 put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
                 UINT32 piece_number, UCHAR * md5hash,
@@ -63,6 +93,12 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
             final_buffer = buffer;
             final_size = usize;
             *do_compression = false;
+
+            if (pfkbak_verb > VERB_QUIET)
+            {
+                printf(" (STORE)");
+                fflush(stdout);
+            }
         }
         else
         {
@@ -115,7 +151,21 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
     return true;
 }
 
-static bool
+/** do all work required for updating one file in the database.
+ * This function will open the file if required, read in all the
+ * pieces, calculate md5 hashes, and update all pieces if required.
+ * If not required, it will just reference the last copy of each
+ * piece in the database.
+ *
+ * @param state   the state of the file according to timestamps
+ * @param bt      the Btree database
+ * @param baknum  the backup ID
+ * @param file_number the file being worked on in the backup.
+ * @param gen_num  the generation number being created.
+ * @param file_info  the information from the database about this file
+ * @param fef     the information from treescan about this file.
+ */
+static void
 walk_file( file_state state, Btree * bt,
            UINT32 baknum, UINT32 file_number, UINT32 gen_num,
            PfkBackupFileInfo * file_info, TSFileEntryFile * fef )
@@ -354,7 +404,8 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
     }
 
     gen_num = bakinfo.data.next_generation_number.v++;
-    printf("creating generation %d\n", gen_num);
+    printf("creating generation %d for backup '%s'\n",
+           gen_num, bakinfo.data.name.string);
 
     int gen_index = bakinfo.data.generations.num_items;
     bakinfo.data.generations.alloc(gen_index+1);
@@ -445,21 +496,24 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             fel->remove(fe.fe);
             hash.remove(fe.fe);
 
-            if (pfkbak_verb > VERB_QUIET)
-            {
-                printf("%s", fe.fef->path);
-                fflush(stdout);
-            }
-
             // file found!
             if ( (fe.fef->size  != file_info.data.size.v )  ||
                  (fe.fef->mtime != file_info.data.mtime.v)  )
             {
                 // file was modified!
 
+                if (pfkbak_verb > VERB_QUIET)
+                {
+                    printf("%s", fe.fef->path);
+                    fflush(stdout);
+                }
+
                 walk_file( STATE_MODIFIED, bt,
                            baknum, file_number, gen_num,
                            &file_info, fe.fef );
+
+                if (pfkbak_verb > VERB_QUIET)
+                    printf("\n");
             }
             else
             {
@@ -482,9 +536,6 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             file_info.data.generations.array[gen_index]->v = gen_num;
             
             file_info.put(true);
-
-            if (pfkbak_verb > VERB_QUIET)
-                printf("\n");
 
             delete fe.fe;
         }

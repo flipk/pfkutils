@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file extract.C
+ * \brief Extract files from a backup.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -36,7 +41,15 @@
     return; \
     } while (0)
 
-
+/** a helper function which ensures directories exist when opening a file.
+ * if the component directories don't exist, this function creates them.
+ * it's sort of like "mkdir -p <path>".
+ *
+ * @param in_path   the path (relative to current working dir) to file to open.
+ * @param mode      the file mode to open the file with.
+ * @return a file descriptor or negative if there was a failure. errno is 
+ *         set in the event of a failure.
+ */
 static int
 openfile( char *in_path, UINT16 mode )
 {
@@ -71,7 +84,18 @@ openfile( char *in_path, UINT16 mode )
     return open( comps[i], O_WRONLY | O_CREAT, mode );
 }
 
-// recall if argc==0, it means extract everything.
+/** extract files from a backup. 
+ *  
+ * \todo currently argc and argv are ignored, this should be implemented.
+ *
+ * @param bt  the Btree database.
+ * @param baknum the backup ID number.
+ * @param gen_num which generation number to extract from the backup.
+ * @param argc  count of arguments following on the command line. if argc is 
+ *              zero, it means extract everything.
+ * @param argv  array of arguments on the command line; each arg represents
+ *              a file to be extracted.
+ */
 void
 pfkbak_extract       ( Btree * bt, UINT32 baknum,
                        UINT32 gen_num, int argc, char ** argv )

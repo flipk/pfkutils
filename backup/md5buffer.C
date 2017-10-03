@@ -18,12 +18,23 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file md5buffer.C
+ * \brief utility functions to deal with md5 hashes.
+ * \author Phillip F Knaack
+ */
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
 
 #include <pk-md5.h>
 
+/** calculate md5 hash for a buffer of bytes.
+ *
+ * @param buf   pointer to a buffer of data.
+ * @param buflen number of bytes in the buf pointer.
+ * @param md5    pointer to an md5hash buffer to be filled in by this
+ *               function.
+ */
 void
 pfkbak_md5_buffer( UCHAR * buf, int buflen, UCHAR * md5 )
 {
@@ -37,6 +48,13 @@ pfkbak_md5_buffer( UCHAR * buf, int buflen, UCHAR * md5 )
     memcpy(md5, digest.digest, MD5_DIGEST_SIZE);
 }
 
+/** convert an md5 hash into an ascii string for debug displays.
+ * 
+ * @param md5hash  pointer to an md5 hash
+ * @param string   pointer to a buffer of size MD5_STRING_LEN which 
+ *                 will be filled by this function with an ascii string
+ *                 of hex digits, terminated with a nul (no newline).
+ */
 void
 pfkbak_sprint_md5  ( UCHAR * md5hash, char * string )
 {

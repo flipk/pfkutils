@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file list_backups.C
+ * \brief list all the backups found in a backup database.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +31,10 @@
 
 #include <stdlib.h>
 
+/** list all backups found in a database.
+ *
+ * @param bt the Btree database
+ */
 void
 pfkbak_list_backups  ( Btree * bt )
 {
@@ -35,10 +44,11 @@ pfkbak_list_backups  ( Btree * bt )
     if (!pfkbak_get_info( &info ))
         return;
 
-    printf("tool version: %d\n"
-           "number of backups: %d\n",
-           info.data.tool_version.v,
-           info.data.backups.num_items);
+    if (pfkbak_verb > VERB_QUIET)
+        printf("tool version: %d\n"
+               "number of backups: %d\n",
+               info.data.tool_version.v,
+               info.data.backups.num_items);
 
     for (i=0; i < info.data.backups.num_items; i++)
     {
@@ -54,25 +64,28 @@ pfkbak_list_backups  ( Btree * bt )
             return;
         }
 
-        printf("backup number %d:\n"
-               "   root dir: %s\n"
-               "   name: %s\n"
-               "   comment: %s\n"
-               "   number of files: %d\n"
-               "   next generation number: %d\n"
-               "   generations:\n",
-               backup_number,
-               binf.data.root_dir.string,
-               binf.data.name.string,
-               binf.data.comment.string,
-               binf.data.file_count.v,
-               binf.data.next_generation_number.v);
+        printf("name: %s\n", binf.data.name.string);
+
+        if (pfkbak_verb > VERB_QUIET)
+        {
+            printf("   backup number %d:\n"
+                   "   root dir: %s\n"
+                   "   comment: %s\n"
+                   "   number of files: %d\n"
+                   "   next generation number: %d\n",
+                   backup_number,
+                   binf.data.root_dir.string,
+                   binf.data.comment.string,
+                   binf.data.file_count.v,
+                   binf.data.next_generation_number.v);
+        }
+
 
         for (j=0; j < binf.data.generations.num_items; j++)
         {
             PfkBakGenInfo * gen = binf.data.generations.array[j];
 
-            printf("      %d: date/time: %s\n",
+            printf("   %d: date/time: %s\n",
                    gen->generation_number.v,
                    gen->date_time.string);
         }

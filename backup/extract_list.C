@@ -18,6 +18,12 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file extract_list.C
+ * \brief specify a text file listing filenames that should be extracted
+ *        from the backup.
+ * \author Phillip F Knaack 
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +32,15 @@
 
 #include <stdlib.h>
 
+/** extract files from a backup using a list of filenames from a file.
+ *
+ * \todo This function is not implemented.
+ *
+ * @param bt  the Btree database.
+ * @param baknum the backup ID number.
+ * @param gen_num the generation number in the backup to extract.
+ * @param list_file path to a file containing file names to extract.
+ */
 void
 pfkbak_extract_list  ( Btree * bt, UINT32 baknum,
                        UINT32 gen_num, char * list_file )

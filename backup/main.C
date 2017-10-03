@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file main.C
+ * \brief the "main" entry point for pfkbak tool.
+ * \author Phillip F Knaack
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -28,8 +33,12 @@
 #include "database_elements.H"
 #include "protos.H"
 
+/** the btree key for the database info uses this string constant.
+ */
 const char * PfkBackupDbInfoKey::INFO_KEY = "PfkBakDbInfo";
 
+/** display command line help for this tool, and exit.
+ */
 static void
 usage(void)
 {
@@ -52,8 +61,14 @@ usage(void)
     exit(1);
 }
 
+/** describe what -v or -V command line options were specified. 
+ */
 verblevel  pfkbak_verb;
 
+/** the main function of this tool.
+ * it is not called 'main' because it is referenced by the pfkutils
+ * tool's main function.
+ */
 extern "C" int
 pfkbak_main(int argc, char ** argv)
 {

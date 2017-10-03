@@ -92,9 +92,6 @@ struct PfkBackupDbInfoData : public FileBlockBST {
  * derived from DB_ITEM. */
 DB_ITEM_CLASS(PfkBackupDbInfo);
 
-// PfkBackupInfo - one of these for each backup, describing 
-//   the backup and number of files and list of generations.
-
 /** key class for information about each backup.
  * the data class lists the root dir, list of generations, comment,
  * next generation number, etc.
@@ -138,11 +135,11 @@ struct PfkBackupInfoData : public FileBlockBST {
  * derived from DB_ITEM. */
 DB_ITEM_CLASS(PfkBackupInfo);
 
-// PfkBackupFileInfo - One of these for each file in a backup,
-//   file_number walks from 0 to PfkBackupInfoData::file_count-1.
-//   this is used to opimize tree-walking, for comparing size and mtime
-//   to determine if a file has changed since the last backup run.
-
+/** One of these for each file in a backup.
+ * file_number walks from 0 to PfkBackupInfoData::file_count-1.
+ * this is used to opimize tree-walking, for comparing size and mtime
+ * to determine if a file has changed since the last backup run.
+ */
 struct PfkBackupFileInfoKey : public PfkBakDbKeys {
     PfkBackupFileInfoKey(void) :
         PfkBakDbKeys(PREFIX_FILE_INFO),
@@ -151,6 +148,10 @@ struct PfkBackupFileInfoKey : public PfkBakDbKeys {
     BST_UINT32_t   file_number;
 };
 
+/** One of these for each file in a backup.
+ * Stores data about each file such as its path, mode, size, last mtime,
+ * and the list of what generations this file is a part of.
+ */
 struct PfkBackupFileInfoData : public FileBlockBST {
     PfkBackupFileInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
@@ -164,12 +165,16 @@ struct PfkBackupFileInfoData : public FileBlockBST {
     BST_ARRAY  <BST_UINT32_t>  generations;
 };
 
+/** \class PfkBackupFileInfo
+ * This is a container for PfkBackupFileInfoKey and PfkBackupFileInfoData,
+ * derived from DB_ITEM.
+ */
 DB_ITEM_CLASS(PfkBackupFileInfo);
 
-// PfkBackupFilePieceInfo - one of these for each "piece" of a file
-//   in a backup, describing all of the different versions of this
-//   piece and their md5 hashes.
-
+/** one of these for each "piece" of a file in a backup.
+ * describing all of the different versions of this
+ * piece and their md5 hashes.
+ */
 struct PfkBackupFilePieceInfoKey : public PfkBakDbKeys {
     PfkBackupFilePieceInfoKey(void) :
         PfkBakDbKeys(PREFIX_FILE_PIECE_INFO),
@@ -179,6 +184,9 @@ struct PfkBackupFilePieceInfoKey : public PfkBakDbKeys {
     BST_UINT32_t   piece_number;
 };
 
+/** a list of these is found in PfkBackupFilePieceInfoData,
+ * one for each generation.
+ */
 struct PfkBackupVersion : public BST {
     PfkBackupVersion(BST *parent) :
         BST(parent),
@@ -187,6 +195,10 @@ struct PfkBackupVersion : public BST {
     BST_MD5         md5hash;
 };
 
+/** one of these for each "piece" of a file in a backup.
+ * describing all of the different versions of this
+ * piece and their md5 hashes.
+ */
 struct PfkBackupFilePieceInfoData : public FileBlockBST {
     PfkBackupFilePieceInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
@@ -195,15 +207,19 @@ struct PfkBackupFilePieceInfoData : public FileBlockBST {
     BST_ARRAY <PfkBackupVersion> versions;
 };
 
+/** \class PfkBackupFilePieceInfo
+ * This is a container for PfkBackupFilePieceInfoKey and
+ * PfkBackupFilePieceInfoData. derived from DB_ITEM.
+ */
 DB_ITEM_CLASS(PfkBackupFilePieceInfo);
 
-// PfkBackupFilePieceData - one of these for each version of each piece
-//    of each file in a backup. contains a reference count and a pointer 
-//    to the data.  the data is stored directly as an AUID in the FileBlock,
-//    to make access more efficient when a file has not changed from one
-//    generation to the next (simply increase the refcount without actually
-//    retrieving and storing the data).
-
+/** one of these for each version of each piece of each file in a backup.
+ * contains a reference count and a pointer 
+ * to the data.  the data is stored directly as an AUID in the FileBlock,
+ * to make access more efficient when a file has not changed from one
+ * generation to the next (simply increase the refcount without actually
+ * retrieving and storing the data).
+ */
 struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     PfkBackupFilePieceDataKey(void) : 
         PfkBakDbKeys(PREFIX_FILE_PIECE_DATA),
@@ -215,6 +231,13 @@ struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     BST_MD5         md5hash;
 };
 
+/** one of these for each version of each piece of each file in a backup.
+ * contains a reference count and a pointer 
+ * to the data.  the data is stored directly as an AUID in the FileBlock,
+ * to make access more efficient when a file has not changed from one
+ * generation to the next (simply increase the refcount without actually
+ * retrieving and storing the data).
+ */
 struct PfkBackupFilePieceDataData : public FileBlockBST {
     PfkBackupFilePieceDataData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
@@ -228,6 +251,10 @@ struct PfkBackupFilePieceDataData : public FileBlockBST {
     static const int PIECE_SIZE = 60000;
 };
 
+/** \class PfkBackupFilePieceData
+ * This is a container for PfkBackupFilePieceDataKey and
+ * PfkBackupFilePieceDataData. derived from DB_ITEM.
+ */
 DB_ITEM_CLASS(PfkBackupFilePieceData);
 
 #endif /* __DATABASE_ELEMENTS_H__ */

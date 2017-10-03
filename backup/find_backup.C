@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file find_backup.C
+ * \brief Define utility function for finding a backup in a file.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,8 +31,13 @@
 
 #include <stdlib.h>
 
-// note that 0 is an invalid backup number.
-
+/** lookup a backup in the database by name and return ID number.
+ *
+ * @param bt  the Btree database
+ * @param bakname the short text name of the database
+ * @return the backup ID of the backup, if found; if not found, returns 0,
+ *         which is an invalid backup ID. 
+ */
 UINT32
 pfkbak_find_backup( Btree * bt, char * bakname )
 {

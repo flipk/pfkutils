@@ -425,17 +425,57 @@ The following entries exist in the database file:
          </ul>
       <li> else
          <ul>
-         <li> 
+         <li> Open the file and read in pieces of size PIECE_SIZE,
+              calculate the md5 hash of each piece.
+         <li> For each piece:
+            <ul>
+            <li> Check to see if an entry for this piece with this md5
+                 already exists. If it does:
+               <ul>
+               <li> Update database to indicate this same existing piece
+                    is referenced by the new generation as well, and bump
+                    the reference count on the data to indicate it is 
+                    referenced by more than one generation.
+               </ul>
+            <li> else
+               <ul>
+               <li> Compress the piece using libz, and then add the piece
+                    data to the database; also add a new entry to the list
+                    for this piece in the database that maps to the new md5.
+               </ul>
+            </ul>
          </ul>
       </ul>
    </ul>
 <li> Deleting a generation
    <ul>
-   <li> Step 1
+   <li> Walk the list of all files in the backup. For each file:
+      <ul>
+      <li> Remove this generation from the list of generations that
+           file is a part of.
+      <li> For each data piece in this file:
+         <ul>
+         <li> Remove this generation from the list of generations that
+              piece is a part of; also look up the data info for that
+              generation and decrement the reference count value.
+         <li> If the reference count for this data info has reached zero,
+              delete the data info and the data block.
+         </ul>
+      </ul>
    </ul>
 <li> Extraction of a generation
    <ul>
-   <li> Step 1
+   <li> Walk the list of all files in the backup. For each file:
+      <ul>
+      <li> If this file is not a part of this generation, skip it.
+      <li> else, for each piece in this file:
+         <ul>
+         <li> Find the generation number and look up the matching md5.
+         <li> Use the md5 to look up the data info.
+         <li> Use the data info to fetch the data block.
+         <li> Uncompress the data block and write it to the file.
+         </ul>
+      </ul>
    </ul>
 </ul>
 
