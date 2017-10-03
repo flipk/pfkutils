@@ -1,3 +1,9 @@
-#!/bin/ksh
+#!/bin/sh
 
-emacsclient --no-wait $*
+if [ x$EMACSCLIENT_SOCKET == x ] ; then
+    socketarg=""
+else
+    socketarg="-s $EMACSCLIENT_SOCKET"
+fi
+
+emacsclient $socketarg --no-wait $*

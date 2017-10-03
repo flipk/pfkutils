@@ -46,6 +46,7 @@ fi
 
 USER=`whoami`
 if [ ! -f /home/$USER/bin/architecture ] ; then
+   # i forgot why i ever needed this.
     if [ -f /home/pknaack1/bin/architecture ] ; then
         USER=pknaack1
     elif [ -f /home/knaack/bin/architecture ] ; then
@@ -272,8 +273,16 @@ case x$ENV_SET in
         ;;
 esac
 
-PFKARCH=`$HOME/bin/architecture`
-export PFKARCH
+if __isksh ; then
+    if [[ x$PFKARCH == x ]] ; then
+	PFKARCH=`$HOME/bin/architecture`
+	export PFKARCH
+    fi
+else
+    PFKARCH=`$HOME/bin/architecture`
+    export PFKARCH
+fi
+
 __verbose PFKARCH=$PFKARCH
 
 # reverse mode : rev or mr      \E[7m
@@ -378,7 +387,6 @@ alias lt='l -n +G'
 alias zl='zcat \!* | less'
 alias zt='l -n +G ~/.messages'
 alias p='rm -f *~'
-alias ec='emacsclient --no-wait '
 alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
@@ -921,7 +929,9 @@ if __isksh ; then
 	if [[ "x$DISPLAY" != x ]] ; then
 	    bardisp="`whoami`@$HOST:$bardisp"
 	    if [[ x$I_AM_XCONSOLE == x ]] ; then
-		xtermbar "$bardisp"
+		if [[ x$INSIDE_EMACS == x ]] ; then
+		    xtermbar "$bardisp"
+		fi
 	    fi
 	fi
 	CDPATH=.:$ti/src:$cpe/src:$HOME

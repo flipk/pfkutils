@@ -1,6 +1,9 @@
 #!/bin/ksh
 
 echo '***'
+rm -f $1.orig
+echo cp $1 $1.orig
+cp $1 $1.orig
 echo ct co -nc $1
 cleartool co -nc $1
 echo '***'

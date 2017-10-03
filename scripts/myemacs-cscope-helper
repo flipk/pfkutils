@@ -1,12 +1,15 @@
-#!/bin/ksh
+#!/bin/sh
+
+echo press enter to start
+read crap
 
 found=0
-while [[ $found -eq 0 ]] ; do
-    if [[ -f cscope.out ]] ; then
+while [ $found -eq 0 ] ; do
+    if [ -f cscope.out ] ; then
 	found=1
     else
 	cd ..
-	if [[ $PWD = "/" ]] ; then
+	if [ $PWD = "/" ] ; then
 	    echo no cscope.out found
 	    echo hit enter
 	    read crap

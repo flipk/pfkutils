@@ -12,7 +12,7 @@
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)
  '(inhibit-startup-buffer-menu t)
- '(inhibit-startup-echo-area-message "flipk")
+ '(inhibit-startup-echo-area-message (getenv "USER"))
  '(inhibit-startup-screen t)
  '(initial-buffer-choice t)
  '(initial-scratch-message "")
@@ -55,9 +55,15 @@
 	  hilit-inhibit-hooks     nil
 	  hilit-inhibit-rebinding nil
 	  hilit-quietly           t)
-;         (require 'hilit19)
-         ; (load "~/.elisp/myserver.el")
-         (server-start)))
+	 (let ((desktop (getenv "EMACS_NUMBER")))
+	   (if desktop
+	       (setq server-socket-dir
+		     (concat "/tmp/"
+			     (getenv "USER")
+			     "/emacs-"
+			     desktop))))
+         (server-start)
+	 ))
       ((not window-system)
        (progn
          (menu-bar-mode -1))))
@@ -106,7 +112,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (defun showhelp () "Show help string"
   (interactive)
-  (message " f1=help f2=fill-region f3=make-big f4=setcmode f5=speedbar f6=eval f9=make-frame f10=delete-frame"))
+  (message " f1=help f2=fill-region f3=make-big f4=setcmode f5=speedbar f6=eval f9=make-frame f10=delete-frame Cg=goto-line CxCw=dumb CxCy=co Cxy=cscope CxY=rebuild"))
 
 (global-set-key [f1]  'showhelp)
 (global-set-key [f2]  'fill-region)
@@ -137,14 +143,18 @@ nEnter c-mode-tabwidth value (4 or 8):")
   (interactive)
   (call-process "xterm" nil 0 nil
 		"-g" "140x45+225+20"
-		"-e" "/home/pknaack1/bin/myemacs-cscope-helper"))
+		"-e" 
+		(concat "/home/" (getenv "USER")
+			"/bin/myemacs-cscope-helper")))
 
 (defun cscope-rebuild ()
   "rebuild cscope database"
   (interactive)
   (call-process "xterm" nil 0 nil
 		"-g" "80x10+200+200"
-		"-e" "/home/pknaack1/bin/myemacs-cscope-rebuild-helper"))
+		"-e" 
+		(concat "/home/" (getenv "USER")
+			"/bin/myemacs-cscope-rebuild-helper")))
 
 (defun clearcase-checkout-file ()
   "checkout a clearcase file"
@@ -156,9 +166,10 @@ nEnter c-mode-tabwidth value (4 or 8):")
 	  (message "About to checkout file %s..." fname)
 	  (call-process "xterm" nil 0 nil
 			"-g" "80x10+200+200" "-e"
-			(concat
-			 "/home/pknaack1/bin/myemacs-checkout-helper "
-			 (buffer-file-name)))
+			(concat "/home/"
+				(getenv "USER")
+				"/bin/myemacs-checkout-helper "
+				(buffer-file-name)))
 	  (message "Checked out file %s." fname))
       (message "File is already checked out?"))))
 

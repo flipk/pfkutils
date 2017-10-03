@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/sh
 
 usage() {
 	echo usage:
@@ -6,14 +6,14 @@ usage() {
 	echo '   cs -ec  [use emacsclient]'
 	echo '   cs -l   [use less]'
 	echo '   cs -xl  [use xless]'
-	if [[ x$CSCOPE_IN_XTERM = x1 ]] ; then
+	if [ x$CSCOPE_IN_XTERM = x1 ] ; then
 	    echo press enter to close...
 	    read crap
 	fi
 	exit 1
 }
 
-if [[ $# -ne 1 ]] ; then
+if [ $# -ne 1 ] ; then
 	usage
 fi
 
@@ -37,11 +37,11 @@ esac
 
 export CSCOPE_EDITOR
 
-while [[ `pwd` != '/' ]] ; do
-    if [[ -f cscope.out || -f ncscope.out ]] ; then
+while [ `pwd` != '/' ] ; do
+    if [ -f cscope.out ] ; then
         xtermbar CSCOPE-$PWD
         cscope -dp 3
-        if [[ x$CSCOPE_IN_XTERM = x1 ]] ; then
+        if [ x$CSCOPE_IN_XTERM = x1 ] ; then
 	    echo press enter to close...
 	    read crap
         fi
