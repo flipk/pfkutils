@@ -52,14 +52,16 @@ thread_slinger_semaphore :: give(void)
     pthread_cond_signal(&waiter);
 }
 
-// return false if timeout
+// return false if timeout; if expire==NULL, wait forever.
 bool
 thread_slinger_semaphore :: take(struct timespec * expire)
 {
     lock();
     while (value <= 0)
     {
-        int ret = pthread_cond_timedwait( &waiter, &mutex, expire );
+        int ret = expire ?
+            pthread_cond_timedwait( &waiter, &mutex, expire ) :
+            pthread_cond_wait( &waiter, &mutex );
         if (ret != 0)
         {
             unlock();
@@ -73,9 +75,11 @@ thread_slinger_semaphore :: take(struct timespec * expire)
 
 //
 
-static inline void
+static inline struct timespec *
 setup_abstime(int uSecs, struct timespec *abstime)
 {
+    if (uSecs < 0)
+        return NULL;
     clock_gettime( CLOCK_REALTIME, abstime );
     abstime->tv_sec  +=  uSecs / 1000000;
     abstime->tv_nsec += (uSecs % 1000000) * 1000;
@@ -84,6 +88,7 @@ setup_abstime(int uSecs, struct timespec *abstime)
         abstime->tv_nsec -= 1000000000;
         abstime->tv_sec ++;
     }
+    return abstime;
 }
 
 _thread_slinger_queue :: _thread_slinger_queue(void)
@@ -192,6 +197,7 @@ _thread_slinger_queue :: _dequeue(int uSecs)
     return pMsg;
 }
 
+//static
 thread_slinger_message *
 _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
                                   int num_queues, int uSecs,
@@ -201,7 +207,7 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
     thread_slinger_semaphore * sem = &queues[0]->_waiter_sem;
     int ind;
     struct timespec abstime;
-    setup_abstime(uSecs, &abstime);
+    struct timespec * pTime = setup_abstime(uSecs, &abstime);
     // add sem to all queues
     for (ind = 0; ind < num_queues; ind++)
         queues[ind]->waiter_sem = sem;
@@ -221,7 +227,7 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
             }
         }
         if (pMsg == NULL)
-            if (sem->take(&abstime) == false)
+            if (sem->take(pTime) == false)
                 break;
     } while (pMsg == NULL);
     // remove sem from all queues

@@ -83,9 +83,10 @@ public:
     // the priority of the queues relative to each other
     // is specified by the order of the queues array. first
     // queue is highest priority, etc.
-    static T * dequeue(_thread_slinger_queue ** queues, int num_queues,
-                       int uSecs=0, int *which_queue=NULL) {
-        return (T *) _dequeue(queues,
+    static T * dequeue(thread_slinger_queue<T> * queues[],
+                       int num_queues,
+                       int uSecs, int *which_queue=NULL) {
+        return (T *) _dequeue((_thread_slinger_queue **) queues,
                               num_queues, uSecs, which_queue);
     }
 };

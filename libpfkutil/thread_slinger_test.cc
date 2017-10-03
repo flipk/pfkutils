@@ -140,7 +140,7 @@ void * t3( void * dummy )
 
 void * t4(void * dummy)
 {
-    _thread_slinger_queue * qs[2];
+    myMsgQ * qs[2];
 
     qs[0] = &q;
     qs[1] = &q2;
@@ -148,11 +148,13 @@ void * t4(void * dummy)
     while (1)
     {
         int which;
-        myMessage * m = myMsgQ::dequeue((_thread_slinger_queue**)&qs,
-                                         2,(int)(random()%1000),&which);
+        myMessage * m = myMsgQ::dequeue(qs,2,(int)(random()%1000),&which);
         if (m)
         {
-            printf(".");
+            if (which == 0)
+                printf(".");
+            else
+                printf(",");
             p.release(m);
         }
         else
