@@ -83,13 +83,18 @@ public:
      *         object is modified. */
     virtual bool get( _BTDatum * key, _BTDatum * data ) = 0;
     /** store the key and data into the file.  If the given key already exists
-     * in the file, the data will be replaced by the data argument here. 
+     * in the file, the behavior depends on the replace argument.  If replace
+     * is false, this function will return false.  If replace is true, the 
+     * old data will be freed from the file and the data argument will replace
+     * it in the file.
      * \note This function should /em only be used for /em new items;
      * it should not be used to replace existing items.
      * \param key the BDatum object with key data.
      * \param data the BDatum object with data.
-     * \return true if the item was put in the database; false if an error. */
-    virtual bool put( _BTDatum * key, _BTDatum * data ) = 0;
+     * \param replace indicate whether to replace (overwrite) or fail.
+     * \return true if the item was put in the database; false if the key
+     *         already exists and replace argument is false. */
+    virtual bool put( _BTDatum * key, _BTDatum * data, bool replace=false ) = 0;
     /** delete an item from the database given only the key.
      * this function will search for the key/data pair using the key,
      * and then free all disk space associated with the key and its data.

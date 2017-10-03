@@ -252,7 +252,7 @@ public:
 class BtreeInternal : public Btree {
     /** maximum number of nodes to hold in the cache.
      * \note this number needs fiddling. */
-    static const int MAX_NODES = 200; 
+    static const int MAX_NODES = 2000; 
     /** the order of the tree (maximum number of pointers
      * at each node; must be an odd number <= MAX_ORDER */
     int BTREE_ORDER;
@@ -312,11 +312,11 @@ class BtreeInternal : public Btree {
      *                 upon return, *data_fbn will be updated to point to
      *                 the data assocated with the pivot key.
      * \param rightnode a FileBlock ID of the node to the right of the item
-     * \param index the index into node n where this item goes (from walknode)
+     * \param idx the index into node n where this item goes (from walknode)
      * \return the FileBlock ID of the new right node that was created.
      */
     UINT32 splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
-                   UINT32 rightnode, int index );
+                   UINT32 rightnode, int idx );
     /** walk thru all the data in a node, recursing on the pointers, and
      * calling a user-specified function for each key and data (item).
      * \param bti the user's BtreeIterator object.
@@ -354,7 +354,7 @@ public:
      * back to the file. */
     /*virtual*/ ~BtreeInternal( void );
     /*virtual*/ bool get( _BTDatum * key, _BTDatum * data );
-    /*virtual*/ bool put( _BTDatum * key, _BTDatum * data );
+    /*virtual*/ bool put( _BTDatum * key, _BTDatum * data, bool replace );
     /*virtual*/ bool del( _BTDatum * key  );
     /*virtual*/ bool iterate( BtreeIterator * bti );
 };

@@ -14,22 +14,31 @@
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
 
 #define TEST 2
 
 #define TEST_FILE "testfile.db"
 #define MAX_BYTES (16*1024*1024)
 
-
 class myIterator : public BtreeIterator {
+    FileBlockInterface * fbi;
 public:
+    myIterator(FileBlockInterface * _fbi) { fbi = _fbi; }
     /*virtual*/ bool handle_item( UCHAR * keydata, UINT32 keylen,
                                   UINT32 data_fbn ) {
         printf( "key len %d: ", keylen);
-        UINT32 i;
-        for (i=0; i < keylen; i++)
-            printf("%02x ", keydata[i]);
-        printf("\ndata fbn: %08x\n", data_fbn);
+        int i;
+        for (i=0; i < (int)keylen; i++)
+            printf("%02x", keydata[i]);
+        printf("\ndata fbn: %08x: ", data_fbn);
+//        FileBlock * fb = fbi->get(data_fbn);
+//        for (i=0; i < fb->get_size(); i++)
+//            printf("%02x", fb->get_ptr()[i]);
+//        fbi->release(fb);
+        printf("\n");
         // print contents of data?
         return true; // ok to continue iterating
     }
@@ -136,7 +145,7 @@ main()
 #if 1
     Btree * bt = Btree::open( fbi );
 
-    myIterator iter;
+    myIterator iter(fbi);
     bt->iterate( &iter );
 
     delete bt;
@@ -152,13 +161,113 @@ main()
 }
 #elif TEST==2
 
-int
-main()
+struct fileid {
+    char prefix;
+    UINT32_t id;
+    //
+    fileid(void) { prefix = 'i'; }
+    UCHAR * get_ptr (void) { return (UCHAR*) this; }
+    int get_size (void) { return 5; }
+    static int get_max_size (void) { return 5; }
+};
+struct filecount {
+    char prefix;
+    UINT32_t count;
+    //
+    filecount(void) { prefix = 'c'; }
+    UCHAR * get_ptr (void) { return (UCHAR*) this; }
+    int get_size (void) { return 5; }
+    static int get_max_size (void) { return 5; }
+};
+struct fileinfo {
+    UINT32_t id;
+    UINT32_t count;
+    UINT64_t size;
+    char name[512];
+    struct fileinfo * next;
+    //
+    UCHAR * get_ptr (void) { return (UCHAR*) this; }
+    int get_size (void) {
+        return  
+            sizeof(fileinfo)
+            - 4  // account for 'next'
+            - sizeof(name) + strlen(name) // length of name.
+            + 1; // trailing nul on name. 
+    }
+    static int get_max_size (void) {
+        return
+            sizeof(fileinfo)
+            - 4; // account for 'next'
+    }
+};
+
+struct fileinfo *
+scanfiles( char * infile )
 {
+    fileinfo * head = NULL;
+    fileinfo ** next = &head;
+    fileinfo * fi;
+
+    FILE * in = fopen(infile, "r");
+    if (!in)
+        return NULL;
+
+    while (1)
+    {
+        fi = new fileinfo;
+        unsigned int id;
+        unsigned long long size;
+        fi->name[0] = 'a';
+        fi->name[1] = 0;
+        int cc = fscanf(
+            in,
+            "%u %*10s %*d %*s %*s %llu %*s %*d %*s %[ -ÿ]\n",
+            &id, &size, fi->name);
+        if (cc != 3)
+            break;
+        fi->id.set( id );
+        fi->size.set( size );
+        fi->next = NULL;
+        *next = fi;
+        next = &fi->next;
+    }
+    delete fi;
+    fclose(in);
+    return head;
+}
+
+int
+main( int argc, char ** argv )
+{
+    if (argc != 2)
+    {
+    bail:
+        fprintf(stderr, "usage: t2 getid|getcnt|put\n");
+        return 1;
+    }
+
+    enum { OP_GETID, OP_GETCNT, OP_PUT } op;
+
+    if (strcmp(argv[1],"getid")==0)
+        op = OP_GETID;
+    else if (strcmp(argv[1],"getcnt")==0)
+        op = OP_GETCNT;
+    else if (strcmp(argv[1],"put")==0)
+        op = OP_PUT;
+    else
+        goto bail;
+
     int fd, options;
 
-    (void) unlink( TEST_FILE );
-    options = O_RDWR | O_CREAT | O_LARGEFILE;
+    if (op == OP_PUT)
+    {
+        (void) unlink( TEST_FILE );
+        options = O_RDWR | O_CREAT | O_LARGEFILE;
+    }
+    else
+    {
+        options = O_RDWR | O_LARGEFILE;
+    }
 
     fd = open( TEST_FILE, options, 0644 );
     if ( fd < 0 )
@@ -169,15 +278,104 @@ main()
 
     PageIO * pageio = new PageIOFileDescriptor(fd);
     BlockCache * bc = new BlockCache( pageio, MAX_BYTES );
-    FileBlockInterface::init_file(bc);
+    if (op == OP_PUT)
+        FileBlockInterface::init_file(bc);
     FileBlockInterface * fbi = FileBlockInterface::open(bc);
-    Btree::init_file( fbi, 5 );
+    if (op == OP_PUT)
+        Btree::init_file( fbi, 13 );
     Btree * bt = Btree::open( fbi );
 
-    bt->get(NULL,NULL);
+    fileinfo * files = scanfiles( (char*)"/home/flipk/filelist.txt" );
+    fileinfo * fi;
+    int count = 0;
+    for (fi = files; fi; fi = fi->next)
+        count++;
+    printf("scanned %d files\n", count);
 
-    myIterator iter;
-    bt->iterate( &iter );
+    BTDatum <fileid>    btid(bt);
+    BTDatum <filecount> btcount(bt);
+    BTDatum <fileinfo>  btinfo(bt);
+
+    if (op == OP_PUT)
+    {
+        btid.alloc();
+        btcount.alloc();
+        btinfo.alloc();
+
+        count = 0;
+        for (fi = files; fi; fi = fi->next)
+        {
+            count++;
+            fi->count.set( count );
+            btid.d->id = fi->id;
+            btcount.d->count.set( count );
+            *(btinfo.d) = *fi;
+            if (bt->put( &btcount, &btid ) == false)
+                printf("put failed on %s\n", fi->name);
+            if (bt->put( &btid, &btinfo ) == false)
+                printf("put failed on %s\n", fi->name);
+        }
+
+        myIterator iter(fbi);
+        bt->iterate( &iter );
+    }
+    else if (op == OP_GETID)
+    {
+        btid.alloc();
+
+        for (fi=files; fi; fi=fi->next)
+        {
+            btid.d->id = fi->id;
+            if (bt->get( &btid, &btinfo ) == false)
+            {
+                printf("failed to retrieve id %d\n", fi->id.get());
+            }
+            else
+            {
+                printf("id %d -> %d %d %lld %s\n",
+                       btid.d->id.get(),
+                       btinfo.d->id.get(),
+                       btinfo.d->count.get(),
+                       btinfo.d->size.get(),
+                       btinfo.d->name);
+            }
+        }
+    }
+    else if (op == OP_GETCNT)
+    {
+        btcount.alloc();
+
+        count = 0;
+        for (fi=files; fi; fi=fi->next)
+        {
+            count++;
+            btcount.d->count.set(count);
+            if (bt->get( &btcount, &btid ) == false)
+            {
+                printf("failed to retrieve count %d\n", count);
+            }
+            else
+            {
+                if (bt->get( &btid, &btinfo ) == false)
+                {
+                    printf("failed to retrieve id %d\n", btid.d->id.get());
+                }
+                else
+                {
+                    printf("id %d -> %d %d %lld %s\n",
+                           btid.d->id.get(),
+                           btinfo.d->id.get(),
+                           btinfo.d->count.get(),
+                           btinfo.d->size.get(),
+                           btinfo.d->name);
+                }
+            }
+        }
+    }
+
+    btid.release();
+    btcount.release();
+    btinfo.release();
 
     delete bt;
     delete fbi;

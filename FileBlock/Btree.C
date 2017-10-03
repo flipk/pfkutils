@@ -154,7 +154,7 @@ BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
     int i,res = 0;
     for (i=0; i < n->numitems; i++)
     {
-        res = compare_keys( n->keys[i], key );
+        res = compare_keys( key, n->keys[i] );
         if (res <= 0)
             break;
     }
@@ -166,17 +166,17 @@ BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
 
 UINT32
 BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
-                            UINT32 rightptr, int index )
+                            UINT32 rightptr, int idx )
 {
     int i;
     enum { R_PIVOT, R_LEFT, R_RIGHT } where = R_PIVOT;
 
-    if (index < HALF_ORDER)
+    if (idx < HALF_ORDER)
         // the key belongs in the left node; the pivot record for the two
         // nodes (to be promoted to the parent node) will be in the middle
         // of the old node.
         where = R_LEFT;
-    else if (index == HALF_ORDER)
+    else if (idx == HALF_ORDER)
         // the provided key IS the pivot record, and will itself be promoted
         // to the parent node.
         where = R_PIVOT;
@@ -187,11 +187,13 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
 
     // nr short for 'new right'
     BTNode * nr = node_cache->new_node();
+    info.d->numnodes.set( info.d->numnodes.get() + 1 );
 
     nr->leaf = n->leaf;
     nr->root = false;
     n->numitems = HALF_ORDER;
     nr->numitems = HALF_ORDER;
+    n->mark_dirty();
 
     switch (where)
     {
@@ -206,10 +208,11 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         for (i=0; i < HALF_ORDER; i++)
         {
             nr->keys[i] = n->keys[i + HALF_ORDER];
-            n->keys[i + HALF_ORDER] = NULL;
             nr->datas[i] = n->datas[i + HALF_ORDER];
-            n->datas[i + HALF_ORDER] = 0;
             nr->ptrs[i + 1] = n->ptrs[i + HALF_ORDER + 1];
+
+            n->keys[i + HALF_ORDER] = NULL;
+            n->datas[i + HALF_ORDER] = 0;
             n->ptrs[i + HALF_ORDER + 1] = 0;
         }
         break;
@@ -220,10 +223,11 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         for (i=0; i < HALF_ORDER; i++)
         {
             nr->keys[i] = n->keys[i + HALF_ORDER];
-            n->keys[i + HALF_ORDER] = NULL;
             nr->datas[i] = n->datas[i + HALF_ORDER];
-            n->datas[i + HALF_ORDER] = 0;
             nr->ptrs[i] = n->ptrs[i + HALF_ORDER];
+
+            n->keys[i + HALF_ORDER] = NULL;
+            n->datas[i + HALF_ORDER] = 0;
             n->ptrs[i + HALF_ORDER] = 0;
         }
         // pick up one trailing ptr
@@ -232,7 +236,7 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         // now slide over remaining components of left
         // node that must move to accomodate new item.
 
-        for (i = HALF_ORDER-1; i >= index; i--)
+        for (i = (HALF_ORDER-1); i >= idx; i--)
         {
             n->keys[i+1] = n->keys[i];
             n->datas[i+1] = n->datas[i];
@@ -241,9 +245,9 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
 
         // insert new item.
 
-        n->keys[index] = *key;
-        n->datas[index] = *data_fbn;
-        n->ptrs[index+1] = rightptr;
+        n->keys[idx] = *key;
+        n->datas[idx] = *data_fbn;
+        n->ptrs[idx+1] = rightptr;
 
         // pivot record to promote is left in leftnode.
         break;
@@ -253,7 +257,7 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         // when we come to the place where the pivot is
         // supposed to go, insert it.
 
-        index -= HALF_ORDER+1;
+        idx -= HALF_ORDER+1;
         int j = HALF_ORDER+1;
 
         nr->ptrs[0] = n->ptrs[j];
@@ -261,22 +265,23 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
 
         for (i=0; i < HALF_ORDER; i++)
         {
-            if (i == index)
+            if (i == idx)
             {
                 // this is where pivot rec goes.
                 nr->keys[i] = *key;
                 nr->datas[i] = *data_fbn;
                 nr->ptrs[i+1] = rightptr;
-                continue;
             }
-            // else
-            nr->keys[i] = n->keys[j];
-            n->keys[j] = NULL;
-            nr->datas[i] = n->datas[j];
-            n->datas[j] = 0;
-            nr->ptrs[i+1] = n->ptrs[j+1];
-            n->ptrs[j+1] = 0;
-            j++;
+            else
+            {
+                nr->keys[i] = n->keys[j];
+                nr->datas[i] = n->datas[j];
+                nr->ptrs[i+1] = n->ptrs[j+1];
+                n->keys[j] = NULL;
+                n->datas[j] = 0;
+                n->ptrs[j+1] = 0;
+                j++;
+            }
         }
 
         // pivot record to promote is left in the leftnode.
@@ -288,8 +293,8 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         // highest remaining element of leftnode becomes
         // the new promoted pivot record.
         *key = n->keys[HALF_ORDER];
-        n->keys[HALF_ORDER] = NULL;
         *data_fbn = n->datas[HALF_ORDER];
+        n->keys[HALF_ORDER] = NULL;
         n->datas[HALF_ORDER] = 0;
     }
 
@@ -305,17 +310,55 @@ BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
     int keysz = _key->get_size();
     BTKey * key = new(keysz) BTKey(keysz);
     bool ret = false;
+    bool exact;
+    int idx;
+    UINT32 curfbn;
+    BTNode * curn;
+    UINT32 data_fbn = 0;
 
-    
+    memcpy(key->data, _key->get_ptr(), keysz);
 
-    /** \todo implement */
+    curfbn = info.d->root_fbn.get();
+
+    while (data_fbn == 0 && curfbn != 0)
+    {
+        curn = node_cache->get(curfbn);
+        idx = walknode( curn, key, &exact );
+        if (exact)
+            data_fbn = curn->datas[idx];
+        if (curn->leaf)
+            curfbn = 0;
+        else
+            curfbn = curn->ptrs[idx];
+        node_cache->release(curn);
+    }
+
+    if (data_fbn != 0)
+    {
+        FileBlock * fb = fbi->get(data_fbn);
+        data->setfb(fb);
+        ret = true;
+    }
+
     delete key;
     return ret;
 }
 
+struct nodewalker {
+    struct nodewalker * next;
+    UINT32 fbn;
+    BTNode * node;
+    int idx;
+    //
+    nodewalker(struct nodewalker * _nxt, UINT32 _fbn,
+               BTNode * _n, int _idx) {
+        next = _nxt; fbn = _fbn; node = _n; idx = _idx;
+    }
+};
+
 //virtual
 bool
-BtreeInternal :: put( _BTDatum * _key, _BTDatum * data )
+BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
 {
     if (iterate_inprogress)
     {
@@ -324,14 +367,164 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data )
         exit(1);
     }
 
-    int keysz = _key->get_size();
+    int i, keysz = _key->get_size();
     BTKey * key = new(keysz) BTKey(keysz);
     bool ret = false;
+    nodewalker * nodes = NULL, * nw = NULL;
+    UINT32 curfbn, right_fbn = 0, data_fbn;
+    BTNode * curn;
+    int curidx;
+    FileBlock * fb = NULL;
 
-    
+    memcpy(key->data, _key->get_ptr(), keysz);
+
+    // start walking down from the rootnode a level at a time,
+    // until we either find an exact match or we hit a leaf.
+    // each time we go down a level, add an element to the nodstor
+    // linked-list (head-first) so that we can trace our path
+    // back up the tree if we need to split and promote.
+
+    curfbn = info.d->root_fbn.get();
+    curn = node_cache->get( curfbn );
+
+    while(1)
+    {
+        bool exact;
+        curidx = walknode( curn, key, &exact );
+        nodes = new nodewalker(nodes, curfbn, curn, curidx);
+
+        if (exact)
+        {
+            // found an exact match in the tree.
+            // realloc the data for this item and copy in
+            // our new data but only if replace is set.
+
+            if (replace == false)
+                goto out;
+
+            fbi->realloc(curn->datas[curidx], data->get_size());
+            fb = fbi->get(curn->datas[curidx], /*for_write*/ true);
+            memcpy(fb->get_ptr(), data->get_ptr(), data->get_size());
+            fbi->release(fb);
+            ret = true;
+            goto out;
+        }
+
+        // break out if we're at the leaf node, or
+        // proceed to the next level down the tree.
+
+        if (curn->leaf)
+            break;
+
+        curfbn = curn->ptrs[curidx];
+        curn = node_cache->get( curfbn );
+    }
+
+    // if we hit this point that means we haven't seen an
+    // exact match, so we should insert at the leaf level.
+    // if we overflow a node here, split the node and start
+    // promoting up the tree. keep splitting and promoting up
+    // until we reach a node where we're not overflowing a node.
+    // if we reach the root and we overflow the root, split the
+    // root and create a new root with the promoted item.
+
+    data_fbn = fbi->alloc(data->get_size());
+    fb = fbi->get(data_fbn, true);
+    memcpy(fb->get_ptr(), data->get_ptr(), data->get_size());
+    fbi->release(fb);
+    ret = true;
+    info.d->numrecords.set( info.d->numrecords.get() + 1 );
+    info.mark_dirty();
+
+    nw = nodes;
+    nodes = nw->next;
+    curfbn = nw->fbn;
+    curn = nw->node;
+    curidx = nw->idx;
+    delete nw;
+
+    while(1)
+    {
+        if (curn->numitems < ORDER_MO)
+        {
+            // this node is not full, so we can insert
+            // into this node at the appropriate index,
+            // and be done. slide over recs in this node
+            // to make room for the new rec.
+
+            curn->numitems ++;
+            for (i = ORDER_MO; i > curidx; i--)
+                curn->ptrs[i] = curn->ptrs[i-1];
+
+            for (i = ORDER_MO-1; i >= curidx; i--)
+            {
+                curn->keys[i] = curn->keys[i-1];
+                curn->datas[i] = curn->datas[i-1];
+            }
+
+            curn->keys[curidx] = key;
+            curn->datas[curidx] = data_fbn;
+            curn->ptrs[curidx+1] = right_fbn;
+            curn->mark_dirty();
+
+            node_cache->release(curn);
+
+            break;
+        }
+
+        // this node is full, so split it and prepare to 
+        // promote a pivot record. split_node locates the pivot
+        // and updates 'newr' to point to the pivot.
+
+        right_fbn = splitnode( curn, &key, &data_fbn, right_fbn, curidx );
+
+        nw = nodes;
+        if (nw)
+        {
+            node_cache->release(curn);
+            nodes = nw->next;
+            curfbn = nw->fbn;
+            curn = nw->node;
+            curidx = nw->idx;
+            delete nw;
+        }
+        else
+        {
+            // we're at the root node, so we must create
+            // a new root node and insert the pivot record
+            // by itself here.
+
+            BTNode * newroot = node_cache->new_node();
+            newroot->numitems = 1;
+            newroot->ptrs[0] = info.d->root_fbn.get();
+            newroot->ptrs[1] = right_fbn;
+            newroot->keys[0] = key;
+            newroot->datas[0] = data_fbn;
+            curn->root = false;
+            newroot->root = true;
+            newroot->leaf = false;
+            info.d->root_fbn.set(newroot->get_fbn());
+            info.d->numnodes.set( info.d->numnodes.get() + 1 );
+            info.d->depth.set( info.d->depth.get() + 1 );
+            node_cache->release(curn);
+            node_cache->release(newroot);
+            break;
+        }
+    }
+
+out:
+    while(nodes)
+    {
+        nw = nodes;
+        nodes = nw->next;
+        node_cache->release(nw->node);
+        delete nw;
+    }
 
     /** \todo implement */
-    delete key;
+
+    if (ret == false)
+        delete key;
     return ret;
 }
 
@@ -358,21 +551,23 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
     BTNode * n;
     n = node_cache->get(node_fbn);
 
-    bti->print( "node ID %08x:  %d items\n",
-               node_fbn, n->numitems);
+    bti->print( "node ID %08x:  %d items %s %s\n",
+                node_fbn, n->numitems,
+                n->root ? ", root" : "",
+                n->leaf ? ", leaf" : "");
     int i;
     for (i=0; i < n->numitems; i++)
     {
         if (!n->leaf)
         {
-printf("node %08x recurse ptr %d -> ", node_fbn, i);
+            printf("node %08x recurse ptr %d -> ", node_fbn, i);
             if (iterate_node(bti, n->ptrs[i]) == false)
             {
                 ret = false;
                 break;
             }
         }
-printf("node %08x item %d: ", node_fbn, i);
+        printf("node %08x item %d: ", node_fbn, i);
         if (bti->handle_item( n->keys[i]->data,
                               n->keys[i]->keylen,
                               n->datas[i] ) == false)
@@ -383,7 +578,7 @@ printf("node %08x item %d: ", node_fbn, i);
     }
     if (n->numitems > 0 && !n->leaf)
     {
-printf("node %08x recurse ptr %d -> ", node_fbn, i);
+        printf("node %08x recurse ptr %d -> ", node_fbn, i);
         if (iterate_node(bti, n->ptrs[i]) == false)
             ret = false;
     }
@@ -402,18 +597,19 @@ BtreeInternal :: iterate( BtreeIterator * bti )
     node_fbn = info.d->root_fbn.get();
 
     bti->print( "bti fbn : %08x\n"
-               "root fbn : %08x\n"
-               "numnodes : %d\n"
-               "numrecords : %d\n"
-               "depth : %d\n"
-               "order : %d\n\n",
-               info.d->bti_fbn.get(),
-               node_fbn,
-               info.d->numnodes.get(),
-               info.d->numrecords.get(),
-               info.d->depth.get(),
-               info.d->order.get());
+                "root fbn : %08x\n"
+                "numnodes : %d\n"
+                "numrecords : %d\n"
+                "depth : %d\n"
+                "order : %d\n\n",
+                info.d->bti_fbn.get(),
+                node_fbn,
+                info.d->numnodes.get(),
+                info.d->numrecords.get(),
+                info.d->depth.get(),
+                info.d->order.get());
 
+printf("root node: ");
     ret = iterate_node(bti, node_fbn);
     iterate_inprogress = false;
 

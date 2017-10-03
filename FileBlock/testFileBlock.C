@@ -105,8 +105,8 @@ main(int argc, char ** argv)
     int loop;
     for (loop = 0; loop < LOOPS; loop++)
     {
-        int index = random() % ITEMS;
-        info * i = &infos[index];
+        int idx = random() % ITEMS;
+        info * i = &infos[idx];
 
         if (testFileBlockSignalOccurred)
             break;
