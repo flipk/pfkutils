@@ -1,3 +1,4 @@
+#include <string.h>
 
 void
 malloclock_die( void )

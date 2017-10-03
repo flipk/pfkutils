@@ -33,6 +33,7 @@ SRCS+= vsnprintf.c malloclock_stub.C
 #elifdef cygwin32
 CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DCYGWIN
 LINKFL=
+SRCS+= malloclock_stub.C
 #else
 SRCS+= 	malloclock.C malloc.c
 LINKFL=
