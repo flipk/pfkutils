@@ -46,7 +46,6 @@ public:
     Inode_virtual_tree * itv;
     int                  nfs_rpc_udp_fd;
     int                  slave_rendevous_fd;
-    int                  slave2_rendevous_fd;
     treeinfo             trees[ maxvs ];
     int                  source_port;
     int                  nfs_rpc_call_count;

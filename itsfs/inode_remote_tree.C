@@ -516,6 +516,7 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
     if (( rict.clnt.lstat( olddirpath, &sb1 ) < 0 ) ||
         ( rict.clnt.lstat( newdirpath, &sb2 ) < 0 ))
     {
+        // should update name_db
         errno = ENOENT;
         return -1;
     }
@@ -523,6 +524,7 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
     if ((( sb1.st_mode & S_IFMT ) != S_IFDIR ) ||
         (( sb2.st_mode & S_IFMT ) != S_IFDIR ))
     {
+        // should update name_db
         errno = ENOTDIR;
         return -1;
     }

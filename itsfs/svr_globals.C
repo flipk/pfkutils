@@ -104,7 +104,6 @@ svr_globals :: svr_globals( nfssrv * _server, Inode_virtual_tree * _itv )
     int i;
     nfs_rpc_udp_fd = 0;
     slave_rendevous_fd = 0;
-    slave2_rendevous_fd = 0;
     for ( i = 0; i < maxvs; i++ )
         trees[i].init();
     source_port = 0;
@@ -177,7 +176,6 @@ svr_globals :: fdset( fd_set * rfds )
 #define SET(fd)  FD_SET(fd,rfds); if ( fd >= max ) max = fd+1
     SET( nfs_rpc_udp_fd );
     SET( slave_rendevous_fd );
-    SET( slave2_rendevous_fd );
     for ( int i = 0; i < maxvs; i++ )
         if ( trees[i].valid() && trees[i].inot->valid() )
         {
