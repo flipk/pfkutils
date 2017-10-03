@@ -32,7 +32,34 @@ public:
             pattern_len = 0;
     }
     virtual ~list_iterator( void ) { }
+    static int sort_comparator( const void * a, const void * b );
+    void sort( void );
 };
+
+//static
+int
+list_iterator :: sort_comparator( const void * _a, const void * _b )
+{
+    file_info * a = *(file_info **)_a;
+    file_info * b = *(file_info **)_b;
+    return strcmp( a->fname, b->fname );
+}
+
+void
+list_iterator :: sort( void )
+{
+    file_info ** fs, * f;
+    int fsindex = 0, i, cnt;
+
+    cnt = list.get_cnt();
+    fs = new file_info*[ cnt ];
+    while (( f = list.dequeue_head() ) != NULL )
+        fs[fsindex++] = f;
+    qsort( fs, cnt, sizeof(void*), &sort_comparator );
+    for ( i = 0; i < cnt; i++ )
+        list.add( fs[i] );
+    delete[] fs;
+}
 
 void
 usage( void )
@@ -113,6 +140,7 @@ list_mtar( char * dbname, char * pattern )
         return 1;
     list_iterator  li(pattern);
     db->iterate( &li );
+    li.sort();
     while ( file_info * fi = li.list.dequeue_head() )
     {
         printf( "%9lld %s\n", fi->size, fi->fname );

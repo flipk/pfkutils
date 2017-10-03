@@ -50,7 +50,13 @@ extract_file( file_db * db, char * fname )
 
     for ( piece = 0; ; piece++ )
     {
-        char buf[ file_db::PIECE_SIZE ];
+        // build in some extra space in the buffer,
+        // because if the file was originally compressed,
+        // the data stored in the db might actually be larger
+        // than the original file (compressing a file which is
+        // already compressed may make it bigger rather than smaller)
+
+        char buf[ file_db::PIECE_SIZE + 100 ];
         int buflen = sizeof(buf);
         db->extract_piece( inf->id, piece, buf, &buflen );
         if ( buflen == 0 )

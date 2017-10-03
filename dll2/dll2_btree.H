@@ -385,7 +385,8 @@ public:
             // now in the leaf, slide over the remaining items 
             // to take up the space of the item that was removed.
             // don't need to mess with ptrs because we know
-            // that this is a leaf.
+            // that this is a leaf.  note that there is no init
+            // of 'i', this is intentional; see above.
 
             for ( ; i < ORDER_MO; i++ )
                 n->keys[ i ] = n->keys[ i+1 ];

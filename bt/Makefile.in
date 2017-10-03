@@ -28,19 +28,19 @@ t1: test.C $(LIB)
 
 t2: test.C $(LIB)
 	g++ test.C -DTEST=2 $(INCS) $(FLAGS) $(LIB) -o $*
-				 
+
 t3: test.C $(LIB)		 
 	g++ test.C -DTEST=3 $(INCS) $(FLAGS) $(LIB) -o $*
-				 
+
 t4: test.C $(LIB)		 
 	g++ test.C -DTEST=4 $(INCS) $(FLAGS) $(LIB) -o $*
-				 
+
 t5: test.C $(LIB)		 
 	g++ test.C -DTEST=5 $(INCS) $(FLAGS) $(LIB) -o $*
-				 
+
 t6: test.C $(LIB)		 
 	g++ test.C -DTEST=6 $(INCS) $(FLAGS) $(LIB) -o $*
-				 
+
 t7: test.C $(LIB)		 
 	g++ test.C -DTEST=7 $(INCS) $(FLAGS) $(LIB) -o $*
 

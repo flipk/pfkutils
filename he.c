@@ -5,6 +5,8 @@
 #include <sys/time.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
 #include "m.h"
 
 #if defined(sparc)
@@ -24,6 +26,7 @@ static int         file_descriptor;
 static char *      file_name;
 static off_t       file_size;
 static off_t       file_position;
+static int         pos_width;
 static int         cursor_line;
 static int         charsperline;
 static int         insert_mode;
@@ -37,6 +40,7 @@ static enum { ESC_NORMAL, ESC_GOT1B, ESC_GOT5B,
 #define MAX_MARKS 26
 static off_t mark_locations[ MAX_MARKS ];
 
+static int    get_pos_width( void );
 static void   update_screen( void );
 static void   handle_character( int c );
 static void   do_help( void );
@@ -56,7 +60,7 @@ static void   put_file_byte( off_t pos, int data );
 #if 0
 static FILE * debug_fd = NULL;
 #define DEBUG(x) if ( debug_fd != NULL ) fprintf x
-#define OPEN_TTY "/dev/ttyp2"
+#define OPEN_TTY "/dev/pts/1"
 #else
 #define DEBUG(x)
 #endif
@@ -105,6 +109,7 @@ he_main( int argc, char ** argv )
     fstat( file_descriptor, &sb );
 
     file_size = sb.st_size;
+    pos_width = get_pos_width();
     file_position = 0;
     cursor_line = 0;
     ed = ed_HEX;
@@ -125,6 +130,19 @@ he_main( int argc, char ** argv )
     endwin();
 
     return 0;
+}
+
+int
+get_pos_width( void )
+{
+    off_t v = file_size;
+    int width = 0;
+    while (v != 0)
+    {
+        width++;
+        v /= 16;
+    }
+    return width;
 }
 
 int
@@ -233,7 +251,7 @@ update_screen( void )
                 int pos = newls[n] + 1;
                 off_t file_pos = file_position + pos - middle;
 
-                printw( "%10s: ",
+                printw( "%*s: ", pos_width,
                         m_dump_number( file_pos, 16 ));
 
                 for ( i = 0; i < charsperline; i++, file_pos++ )
@@ -268,7 +286,7 @@ update_screen( void )
         if ( disp == disp_HEX )
         {
 /* 
- * 10 chars for the number
+ * 1-10 chars for the number (pos_width)
  *  3 for colon and spaces
  *  1 space after every 4 byte group
  *  1 more space after every 8 byte group
@@ -278,9 +296,9 @@ update_screen( void )
  *  thus there are remaining :
  *  3.375 for each byte
  *
- *    (COLS - 22) / 3.375     *note that 3.375 = 27 / 8
+ *    (COLS - (12 + pos_width)) / 3.375     *note that 3.375 = 27 / 8
  */
-            charsperline = (COLS - 22) * 8 / 27;
+            charsperline = (COLS - (12 + pos_width)) * 8 / 27;
             charsperline &= ~3;
         }
         else if ( disp == disp_TEXTW )
@@ -309,7 +327,7 @@ update_screen( void )
                 continue;
             }
 
-            printw( "%10s: ", m_dump_number( pos, 16 ));
+            printw( "%*s: ", pos_width, m_dump_number( pos, 16 ));
 
             for ( byte = 0; byte < charsperline; byte++ )
             {

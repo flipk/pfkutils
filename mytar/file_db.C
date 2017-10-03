@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#define MULTIPLE_FILES 1
+
 file_db :: file_db( char * fname, bool create_it )
 {
     struct stat sb;
@@ -20,6 +22,7 @@ file_db :: file_db( char * fname, bool create_it )
 
     int fnamelen = strlen(fname);
     char fname0[ fnamelen + 6 ]; // ".nodes"
+#if MULTIPLE_FILES
     char fname1[ fnamelen + 5 ]; // ".keys"
     char fname2[ fnamelen + 5 ]; // ".data"
     char fname3[ fnamelen + 5 ]; // ".cont"
@@ -28,6 +31,9 @@ file_db :: file_db( char * fname, bool create_it )
     sprintf( fname1, "%s.keys",  fname );
     sprintf( fname2, "%s.data",  fname );
     sprintf( fname3, "%s.cont",  fname );
+#else
+    strcpy( fname0, fname );
+#endif
 
     if ( create_it )
     {
@@ -50,7 +56,7 @@ file_db :: file_db( char * fname, bool create_it )
     }
 
     fbn_nodes     = new FileBlockNumber( fname0, c1, 32, 32768 );
-#if 1
+#if MULTIPLE_FILES
     fbn_keys      = new FileBlockNumber( fname1, c1, 32, 32768 );
     fbn_data      = new FileBlockNumber( fname2, c1, 32, 32768 );
     fbn_contents  = new FileBlockNumber( fname3, c1, 32, 32768 );
@@ -82,7 +88,9 @@ file_db :: file_db( char * fname, bool create_it )
 file_db :: ~file_db( void )
 {
     delete bt;   // this also deletes fbns
+#if MULTIPLE_FILES
     delete fbn_contents;
+#endif
 }
 
 class file_db_iterate_pi : public btree_printinfo {
