@@ -28,7 +28,7 @@ alias ps2='/bin/ps -u $USER -o pid,tty,pri,vsz,osz,rss,comm'
 alias fi=find_include
 alias whom='/usr/test/bsstools/bin/whom'
 
-#FUNCTIONS: lsv lsvp sv lbsub lbsol lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile
+#FUNCTIONS: lsv lsvp sv lbsub lbsol lbapp lbappccs lbappcmbps lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile
 
 lsv() {
 	typeset prefix
@@ -87,6 +87,11 @@ lbsol() {
 
 lbappccs() {
     export RUN_CCS=1
+    lbsub gsdapp28 $*
+}
+
+lbappcmbps() {
+    export RUN_CMBPS=1
     lbsub gsdapp28 $*
 }
 
@@ -289,6 +294,17 @@ if [[ x$RUN_CCS = x1 ]] ; then
       unset GOOD_SHELL
       __verbose RUN_CCS being honored
       exec $HOME/bin/ccs
+      # NOTREACHED
+  fi
+fi
+if [[ x$RUN_CMBPS = x1 ]] ; then
+  if __noninteractive ; then
+    __verbose not honoring RUN_CMBPS due to noninteractive shell
+  else
+      unset RUN_CMBPS
+      unset GOOD_SHELL
+      __verbose RUN_CMBPS being honored
+      exec $HOME/bin/cmbps
       # NOTREACHED
   fi
 fi
