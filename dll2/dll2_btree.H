@@ -188,7 +188,7 @@ public:
                     v = t->btree_key();
                     if ( v == key )
                         return t;
-                    if ( v > key )
+                    if ( v < key )
                         break;
                 }
                 if ( n->leaf )
@@ -222,7 +222,7 @@ public:
                     int k = n->keys[n->cur]->btree_key();
                     if ( k == key )
                         BAIL(( "ERROR! LListBTREE item is duplicate!\n" ));
-                    if ( k >= key )
+                    if ( k <= key )
                         break;
                 }
 
@@ -325,7 +325,7 @@ public:
                     int k = n->keys[i]->btree_key();
                     if ( k == key )
                         exact = true;
-                    if ( k >= key )
+                    if ( k <= key )
                         break;
                 }
 

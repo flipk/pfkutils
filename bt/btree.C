@@ -1095,9 +1095,9 @@ Btree :: delete_rec( rec * del_rec )
 
                 // slide down items in right sib
 
-                for ( i = 0; i <= ORDER_MO; i++ )
+                for ( i = 0; i < ORDER_MO; i++ )
                 {
-                    if ( i != ORDER_MO )
+                    if ( i != (ORDER_MO-1))
                     {
                         r_sibling->nd->d[ i ].key  =
                             r_sibling->nd->d[ i+1 ].key;
