@@ -336,6 +336,9 @@ struct FileBlockT
 #include "bst.H"
 #include <signal.h>
 
+struct BST_FB_AUID_t : public BST_UINT32_t {
+};
+
 /** A base class for a data type which uses the ByteSTream interface.
  */
 class FileBlockBST : public BST {
@@ -419,6 +422,10 @@ public:
      * \return true if there is a corresponding block.
      */
     bool idvalid(void) { return id!=0; }
+    /** return the FileBlockInterface.
+     * \return the FileBlockInterface.
+     */
+    FileBlockInterface * get_fbi(void) { return fbi; }
     /** return the AUID of the block in the file.
      * \return the AUID of the block in the file.
      */

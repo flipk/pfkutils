@@ -501,7 +501,7 @@ BtreeInternal :: put( UCHAR * key, int keylen, FB_AUID_T data_id,
 
     if (replace)
     {
-        if (replaced == NULL)
+        if (replaced == NULL || old_data_id == NULL)
         {
             fprintf(stderr, "ERROR: Btree::put: must provide "
                     "replaced/old data ptrs\n");
@@ -678,6 +678,12 @@ bool
 BtreeInternal :: del( UCHAR * key, int keylen, FB_AUID_T *old_data_id )
 {
     bool ret = false;
+
+    if (old_data_id == NULL)
+    {
+        fprintf(stderr, "ERROR: Btree::del: must provide old data ptr\n");
+        exit(1);
+    }
 
     if (iterate_inprogress)
     {

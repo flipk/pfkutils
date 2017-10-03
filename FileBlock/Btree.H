@@ -201,7 +201,8 @@ public:
         bool retval = false;
         if (keybuf)
         {
-            retval = put( keybuf, keylen, data_id, replace );
+            retval = put( keybuf, keylen, data_id, replace,
+                          replaced, old_data_id );
             delete[] keybuf;
         }
         return retval;
