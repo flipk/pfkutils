@@ -106,7 +106,7 @@ PK_Message_Manager :: send( int qid, pk_msg_int * msg )
 {
     PK_Message_Queue * mq;
     bool ret = true;
-    pthread_cond_t waiter = NULL;
+    pthread_cond_t * waiter = NULL;
 
     _lock();
     mq = queues->find( qid );
@@ -117,7 +117,7 @@ PK_Message_Manager :: send( int qid, pk_msg_int * msg )
     _unlock();
 
     if ( waiter )
-        pthread_cond_signal( &waiter );
+        pthread_cond_signal( waiter );
 
     return ret;
 }
@@ -126,7 +126,7 @@ pk_msg_int * // return NULL if timeout
 PK_Message_Manager :: recv( int num_qids, int * qids,
                             int * retqidind, int ticks )
 {
-    pthread_cond_t       cond = NULL;
+    pthread_cond_t * cond = NULL;
     PK_Message_Queue * mqs[ num_qids ];
     pk_msg_int * ret = NULL;
     int i;
@@ -163,13 +163,14 @@ PK_Message_Manager :: recv( int num_qids, int * qids,
         // none of the specified mqs has a msg, so pend.
         if ( cond == NULL )
         {
-            pthread_cond_init( &cond, NULL );
+            cond = new pthread_cond_t;
+            pthread_cond_init( cond, NULL );
             for ( i = 0; i < num_qids; i++ )
                 mqs[i]->set_waiter( cond );
         }
 
         if ( ticks == -1 )
-            pthread_cond_wait( &cond, &mutex );
+            pthread_cond_wait( cond, &mutex );
         else
         {
             struct timespec abstime;
@@ -185,7 +186,7 @@ PK_Message_Manager :: recv( int num_qids, int * qids,
                 abstime.tv_sec ++;
             }
 
-            if ( pthread_cond_timedwait( &cond, &mutex,
+            if ( pthread_cond_timedwait( cond, &mutex,
                                          &abstime ) == ETIMEDOUT )
                 break;
          }
@@ -196,7 +197,10 @@ PK_Message_Manager :: recv( int num_qids, int * qids,
     _unlock();
 
     if ( cond )
-        pthread_cond_destroy( &cond );
+    {
+        pthread_cond_destroy( cond );
+        delete cond;
+    }
 
     return ret;
 }

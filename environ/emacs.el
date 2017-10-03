@@ -6,8 +6,6 @@
   ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
   ;; Your init file should contain only one such instance.
  '(blink-matching-paren-distance nil)
-; the following is required on isd
-; '(dired-listing-switches "-ao")
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)

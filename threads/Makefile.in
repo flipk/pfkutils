@@ -14,12 +14,13 @@ LINKFL= -lpthread
 
 #ifdef solaris
 CPPFLAGS+= -DSOLARIS
-LINKFL+= -lsocket
+LINKFL+= -lsocket -lrt
 #elifdef sunos
 CPPFLAGS+= -DSUNOS
 #elifdef cygwin32
 CPPFLAGS+= -DCYGWIN
 #else
+# linux: LINKFL+= -lrt
 #endif
 
 all: $(LIB) t1 

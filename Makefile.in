@@ -24,7 +24,7 @@ DIRS= implode itsfs tags.make tags.view ipipe2 enctelgate dll2 mytar
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
 	itsfs/libitsfs.a ipipe2/libi2.a enctelgate/libetg.a \
-	dll2/libdll2.a mytar/libmytar.a
+	mytar/libmytar.a
 
 DIRS+= states
 ELIBS+= states/libstates.a
@@ -70,6 +70,9 @@ CPPFLAGS+= -DCYGWIN
 #else
 CPPFLAGS+=
 #endif
+
+# needs to be last
+ELIBS+=	dll2/libdll2.a
 
 all: subdirs $(PROG)
 

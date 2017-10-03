@@ -5,6 +5,13 @@
 #include <string.h>
 #include <fcntl.h>
 
+/* the purpose of this program is to examine a disk device
+   and determine the number of sectors it possesses (since
+   you can't just query the size of a disk device by any
+   sort of ioctl or lseek that i know of) by attempting 
+   reads from different sector numbers until we find
+   sector numbers that we can't access and then back-pedalling. */
+
 int
 main( int argc, char ** argv )
 {

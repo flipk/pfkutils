@@ -1,9 +1,9 @@
 
-TitleFont        "-adobe-utopia-medium-r-normal-*-14-*-*-*-*-*-*-*"
-ResizeFont       "-adobe-utopia-medium-r-normal-*-14-*-*-*-*-*-*-*"
-MenuFont         "-adobe-utopia-medium-r-normal-*-14-*-*-*-*-*-*-*"
-IconFont         "-adobe-utopia-medium-r-normal-*-14-*-*-*-*-*-*-*"
-IconManagerFont  "-adobe-utopia-medium-r-normal-*-14-*-*-*-*-*-*-*"
+TitleFont        "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconManagerFont  "-adobe-helvetica-bold-r-normal--*-120-*-*-*"
 IconManagerGeometry   "150x100+0+94"
 
 UsePPosition "nonzero"

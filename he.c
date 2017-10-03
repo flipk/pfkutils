@@ -267,8 +267,21 @@ update_screen( void )
 
         if ( disp == disp_HEX )
         {
-            charsperline = (COLS - 17) * 2 / 7;
-            charsperline &= ~7;
+/* 
+ * 10 chars for the number
+ *  3 for colon and spaces
+ *  1 space after every 4 byte group
+ *  1 more space after every 8 byte group
+ *  3 more spaces before text
+ *  2 asterisks around text
+ *  2 more spaces before end of line
+ *  thus there are remaining :
+ *  3.375 for each byte
+ *
+ *    (COLS - 22) / 3.375     *note that 3.375 = 27 / 8
+ */
+            charsperline = (COLS - 22) * 8 / 27;
+            charsperline &= ~3;
         }
         else if ( disp == disp_TEXTW )
             charsperline = COLS-16;

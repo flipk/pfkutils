@@ -12,6 +12,7 @@
 #include <string.h>
 #include <termios.h>
 #include <errno.h>
+#include <netinet/in.h>
 
 #include "m.h"
 

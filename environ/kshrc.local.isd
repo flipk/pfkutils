@@ -7,7 +7,7 @@ ti=/vobs/sb/ti_sip_linux
 vend=/vob/wibb_vendor/Beceem
 cpe=/vob/wibb_cpe
 
-export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q'
+export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
 export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
 
 lsv() {
@@ -128,3 +128,6 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
     export PATH
 fi
 
+if [[ -f $HOME/.laptop ]] ; then
+    . $HOME/.laptop
+fi

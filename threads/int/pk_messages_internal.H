@@ -9,7 +9,7 @@ enum { PK_MSG_LIST, PK_MSG_IDHASH, PK_MSG_NAMEHASH, PK_MSG_NUMLISTS };
 
 class PK_Message_Queue {
     LList <pk_msg_int,0>  messages;
-    pthread_cond_t waiter;
+    pthread_cond_t * waiter;
 public:
     LListLinks <PK_Message_Queue> links[PK_MSG_NUMLISTS];
     PK_Message_Queue( char *_name ) {
@@ -19,14 +19,14 @@ public:
     int    qid;
     char * name;
     // return not-null if someone waiting
-    pthread_cond_t enqueue( pk_msg_int * msg ) {
-        pthread_cond_t w = waiter;
+    pthread_cond_t * enqueue( pk_msg_int * msg ) {
+        pthread_cond_t * w = waiter;
         waiter = NULL;
         messages.add( msg );
         return w;
     }
     pk_msg_int * dequeue( void ) { return messages.dequeue_head(); }
-    void set_waiter( pthread_cond_t w ) {
+    void set_waiter( pthread_cond_t * w ) {
         if ( waiter != NULL )
         {
             fprintf( stderr, "more than one thread waiting "

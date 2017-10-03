@@ -138,9 +138,6 @@ PK_Thread :: resume( void )
 {
     bool send_sig = false;
 
-    if ( th->running )
-        pthread_yield();
-
     pthread_mutex_lock( &startup->mutex );
     if ( startup->waiting )
         send_sig = true;
