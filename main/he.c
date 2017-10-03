@@ -19,6 +19,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <pfkutils_config.h>
 #define _GNU_SOURCE 
 #define _FILE_OFFSET_BITS 64
 
@@ -35,13 +36,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "m.h"
-
-#if defined(sparc)
-#include "curses.h"
+#ifdef HAVE_NCURSES_CURSES_H
+#include <ncurses/curses.h>
 #else
-#include "/usr/include/curses.h"
+#ifdef HAVE_NCURSES_H
+#include <ncurses.h>
+#else
+#ifdef HAVE_CURSES_H
+#include <curses.h>
+#else
+#error need some kind of curses.h
 #endif
+#endif
+#endif
+
+#include "m.h"
 
 #ifdef __CYGWIN__
 /* wtf?? apparently no prototype in system headers. */
@@ -207,14 +216,17 @@ get_file_data( off_t pos, unsigned char *data, int len )
     }
     else
     {
-#ifdef __CYGWIN__
-        /* ??? wtf? */
-        _lseek64( file_descriptor, pos, SEEK_SET );
-#else
-#ifdef FreeBSD
+#ifdef HAVE_LSEEK64
         lseek64( file_descriptor, pos, SEEK_SET );
 #else
+#ifdef HAVE__LSEEK64
+        _lseek64( file_descriptor, pos, SEEK_SET );
+#else
+#ifdef HAVE_LSEEK
         lseek( file_descriptor, pos, SEEK_SET );
+#else
+#error no lseek definition
+#endif
 #endif
 #endif
         rlen = len;

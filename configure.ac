@@ -1,5 +1,5 @@
 
-AC_INIT([pfkutils], [3.2], [pknaack@netscape.net])
+AC_INIT([pfkutils], [3.3], [pknaack@netscape.net])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 AC_CONFIG_SRCDIR([main/main.C])
@@ -110,6 +110,8 @@ AC_SEARCH_LIBS([gethostbyname], [nsl], [], [], [])
 
 # Checks for header files.
 
+AC_CHECK_HEADERS([curses.h ncurses.h ncurses/curses.h])
+
 # xxx update this whole area
 
 #    AH_TEMPLATE(key, description) ?
@@ -153,7 +155,7 @@ AC_CHECK_SIZEOF(int)
 # AC_FUNC_MALLOC
 # AC_FUNC_MBRTOWC
 # AC_FUNC_REALLOC
-AC_CHECK_FUNCS([btowc bzero clock_gettime dup2 ftruncate gethostbyaddr gethostbyname gethostname gettimeofday isascii localtime_r memmove memset mkdir pow putenv re_comp regcomp rmdir select setlocale socket sqrt strchr strdup strerror strncasecmp strrchr strstr strtoul inet_aton])
+AC_CHECK_FUNCS([btowc bzero clock_gettime dup2 ftruncate gethostbyaddr gethostbyname gethostname gettimeofday isascii localtime_r memmove memset mkdir pow putenv re_comp regcomp rmdir select setlocale socket sqrt strchr strdup strerror strncasecmp strrchr strstr strtoul inet_aton lseek64 _lseek64 lseek])
 
 AC_CHECK_FUNC([regexec], [pfk_need_regex=false], [pfk_need_regex=true])
 
