@@ -1,4 +1,9 @@
 
+/** \file testBtree.C
+ * \brief test harness for Btree and BtreeInternal objects
+ * \author Phillip F Knaack
+ */
+
 #include "Btree.H"
 #include "FileBlockLocal.H"
 

@@ -1,4 +1,10 @@
 
+/** \file Btree_internal.H
+ * \brief declaration of nitty gritty guts of Btree / BtreeInternal objects.
+ * \author Phillip F Knaack
+ */
+
+/** a Btree information block as it appears on disk. */
 struct _BTInfo {
     static const UINT32 MAGIC = 0x0d83f387;
     UINT32_t magic;
@@ -9,9 +15,11 @@ struct _BTInfo {
     UINT32_t depth;       /**< depth of the btree */
     UINT32_t order;       /**< order number of the btree */
 };
+/** a FileBlock shortcut for accessing Btree information blocks */
 typedef FileBlockT <_BTInfo> BTInfo;
 
-/** \todo optimize nodes and performance by putting key data
+/** an item within a _BTNode.
+ * \todo optimize nodes and performance by putting key data
  * inline with the nodes?   investigate. */
 struct BTNodeItem {
     UINT32_t ptr;   /**< fileblock number of a left-child node */
@@ -19,17 +27,21 @@ struct BTNodeItem {
     UINT32_t data;  /**< fileblock number of the data */
 };
 
-/** \note this structure is variable-sized. */
+/** a Btree node as it appears on disk, plus access methods.
+ * \note this structure is variable-sized. */
 struct _BTNode {
     static const UINT32 MAGIC = 0x4463ab2d;
     UINT32_t    magic;
+private:
     UINT32_t    _numitems;  /**< count of items, also encode leaf and root */
     enum ITEM_CONSTANTS {
         LEAF_MASK = 0x8000,
         ROOT_MASK = 0x4000,
         NUM_MASK  = 0x3fff
     };
-    /** \note must be last item */
+public:
+    /** the 'items' in this node (keys, data, and node pointers)
+     * \note must be last item */
     BTNodeItem  items[ 0 ];
     int get_numitems(void) { return _numitems.get() & NUM_MASK; }
     bool is_root(void) { return (_numitems.get() & ROOT_MASK) == ROOT_MASK; }
@@ -64,16 +76,33 @@ struct _BTNode {
 };
 typedef FileBlockT <_BTNode> BTNode;
 
+/** internal implementation of Btree.
+ * the existence of this class hides a lot of internal implementation
+ * details from the user, who doesn't care to have his namespace
+ * polluted with all the other data types we have to pull in to make
+ * this work.
+ */
 class BtreeInternal : public Btree {
+    /** the order of the tree (maximum number of pointers
+     * at each node; must be an odd number <= MAX_ORDER */
     int BTREE_ORDER;
+    /** half of the order (rounded down) */
     int HALF_ORDER;
-    int ORDER_MO;   /**< order minus one */
+    /** order minus one, used frequently enough to require its
+     * own constant */
+    int ORDER_MO;
+    /** the size in bytes of a node, depends on order; this is
+     * a constant for a given order, but used often enough to benefit
+     * from calculating once during init and storing */
     int node_size;
+    /** the FileBlock ID of the BTInfo block in the file */
     UINT32 info_fbn;
+    /** a pointer to the FileBlock containing the BTInfo; this 
+     * object is always live. */
     BTInfo info;
     static int compare_items( _BTDatum * one, _BTDatum * two );
-    /** return false if printing should stop */
     bool printnode( BtreePrintinfo * pi, UINT32 node_fbn );
+    int walknode( _BTNode * n, _BTDatum * key, bool *exact );
 public:
     static const char BTInfoFileInfoName[];
     static const int MAX_ORDER = 51;    /**< maximum order supported */

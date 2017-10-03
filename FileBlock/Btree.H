@@ -11,7 +11,9 @@ class BtreeInternal;
 
 /** helper class for Btree::printinfo.  the user should populate
  * one of these before calling Btree::printinfo to help it decide
- * how to format the data. */
+ * how to format the data.
+ * \todo convert this to an iterator-interface.
+ */
 class BtreePrintinfo {
 public:
     static const int NODE_INFO       = 1;
@@ -186,12 +188,6 @@ public:
         if (fb) { bt->get_fbi()->release(fb); fb = NULL; d = NULL; }
         if (d) { delete d; d = NULL; }
     }
-#if 0 // xxx necessary?
-    /*virtual*/ void  setptr (UCHAR *ptr) {
-        release();
-        d = (T *) ptr;
-    }
-#endif
     /*virtual*/ void  setfb (FileBlock * _fb) {
         release();
         fb = _fb;
