@@ -154,7 +154,7 @@ SUF ChCodeAsc[]= {
 #define MAXREP       (MINREP+(8*1)+2+4+8+16+32+64+128+256-4)
 #define SIZE_LIT     (256+MAXREP+2)
 #define EOF_CODE     (SIZE_LIT-1)
-#define ABORT_CODE   (EOF_CODE+1)
+#define ABORT_CODE   0xFFFF
 
 #include "implode.h"
 

@@ -95,11 +95,6 @@ if __isksh ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
 	unset ENV_SET
     fi
-    if [[ x$SHELL_LEVEL == x ]] ; then
-        export SHELL_LEVEL=1
-    else
-	SHELL_LEVEL=$(( $SHELL_LEVEL + 1 ))
-    fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
@@ -203,6 +198,8 @@ export TMP TMPDIR TEMP
 
 if __isksh ; then
     _set_prompt_first_time=1
+    TTY=`tty`
+    TTY=${TTY#/dev/}
 
     _set_prompt() {
 	typeset _ps
@@ -215,7 +212,7 @@ if __isksh ; then
 	if [[ x$WORK_GROUP != x ]] ; then
 	    _ps="${_ps}:$WORK_GROUP"
 	fi
-        _ps="${_ps}:s$SHELL_LEVEL"
+        _ps="${_ps}:$$:$TTY"
 	if [[ x$WINDOW != x ]] ; then
 	    _ps="${_ps}:w$WINDOW"
 	fi
@@ -283,7 +280,7 @@ alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
 
-#FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2
+#FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d0 d1
 
 make_file_part() {
     typeset try dir_part file_part fp load
@@ -406,18 +403,18 @@ sd() {
     if cmp -s $1 $2 ; then
         echo The files are identical.  | l
     else
-        diff -dNsyw --width $cols $* 2>&1 | l
+        diff -bdNsyw --width $cols $* 2>&1 | l
     fi
 }
 
 cvsd2() {
     width=`stty size | awk '{print $2}'`
-    cvs diff -tyW $width $* | fmtsdiff $width | less '+/%.%'
+    cvs diff -btyW $width $* | fmtsdiff $width | less '+/%.%'
 }
 
 sd2() {
     width=`stty size | awk '{print $2}'`
-    diff -tyW $width $* | fmtsdiff $width | less '+/%.%'
+    diff -btyW $width $* | fmtsdiff $width | less '+/%.%'
 }
 
 xless() {
@@ -582,6 +579,14 @@ EOF
     rm -f $lisp
 }
 
+d0() {
+    DISPLAY=${DISPLAY%%:*}:0.0 $* &
+}
+
+d1() {
+    DISPLAY=${DISPLAY%%:*}:0.1 $* &
+}
+
 myemacs() {
     typeset started
 
@@ -714,7 +719,6 @@ bind '^V'=quote
 bind '^@'=set-mark-command
 
 if __isksh ; then
-    TTY=`tty`
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
         xtermbar Console
