@@ -18,9 +18,14 @@ main( int argc, char ** argv )
     db = new file_db( "0.db", false );
 #endif
 
+#if 1
     update_file( db, "1" );
+    update_file( db, "test.C" );
+    update_file( db, "t" );
+#else
+    /**/
+#endif
 
- dead:
     delete db;
 
     return 0;

@@ -10,12 +10,11 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <zlib.h>
 
 file_db :: file_db( char * fname, bool create_it )
 {
     struct stat sb;
-    int    h1 = 1000;  // ?
-    int    h2 = 1000;  // ?
     int    c1 = 1000;  // ?
     int order =   29;  // ?
 
@@ -39,7 +38,7 @@ file_db :: file_db( char * fname, bool create_it )
         }
     }
 
-    fbn = new FileBlockNumber( fname, h1, h2, c1 );
+    fbn = new FileBlockNumber( fname, c1 );
     if ( !fbn )
     {
         fprintf( stderr, 
@@ -412,13 +411,20 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
         }
     }
 
+    UCHAR outbuf[ buflen + 64 ];
+    UINT32 outlen = sizeof(outbuf);
+
+    (void) compress( outbuf, (uLongf*)&outlen, (const Bytef*)buf, buflen );
+
+    printf( "file %d compressed %d to %d\n", id, buflen, outlen );
+
     blockno = d3->blockno.get();
-    if ( buflen != d3->size.get() )
+    if ( outlen != d3->size.get() )
     {
         if ( d3->size.get() != 0 )
             bt->get_fbn()->free( blockno );
-        blockno = bt->get_fbn()->alloc( buflen );
-        d3->size.set( buflen );
+        blockno = bt->get_fbn()->alloc( outlen );
+        d3->size.set( outlen );
         d3->blockno.set( blockno );
     }
     memcpy( &d3->digest, &dig, sizeof(dig) );
@@ -430,7 +436,7 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
         bt->put_rec( d3rec );
 
     ptr = bt->get_fbn()->get_block_for_write( blockno, NULL, &block_magic );
-    memcpy( ptr, buf, buflen );
+    memcpy( ptr, outbuf, outlen );
     bt->get_fbn()->unlock_block( block_magic, true );
 
     return true;
@@ -474,6 +480,7 @@ file_db :: extract_piece( UINT32 id, UINT32 piece_num,
             fprintf( stderr, "internal error in extract_piece!\n" );
             kill(0,6);
         }
+        (void) uncompress( (Bytef*)buf, (uLongf*)buflen, ptr, db_len );
         memcpy( buf, ptr, db_len );
         bt->get_fbn()->unlock_block( magic, false );
     }

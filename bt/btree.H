@@ -3,6 +3,7 @@
 #define __BTREE_H__
 
 #include <stdarg.h>
+#include <string.h>
 
 #include "recnoblock.H"
 
@@ -86,6 +87,16 @@ public:
         field key;
         field data;
     };
+    struct btreeinfo {
+        // this is the btree info block on disk.
+        UINT32 magic;
+        UINT32 bti_recno;
+        UINT32 rootblockno;
+        int numnodes;
+        int numrecords;
+        int depth;
+        int order;
+    };
 
 private:
     static const UINT32 BTI_MAGIC = 0x0d83f386;
@@ -131,16 +142,6 @@ private:
         return  sizeof(_node) + sizeof(int) + 
             ((order-1) * sizeof(_node::node_data));
     }
-    struct btreeinfo {
-        // this is the btree info block on disk.
-        UINT32 magic;
-        UINT32 bti_recno;
-        UINT32 rootblockno;
-        int numnodes;
-        int numrecords;
-        int depth;
-        int order;
-    };
     struct node {
         _node * nd;
         UINT32 magic;
@@ -193,6 +194,10 @@ public:
 
     Btree( FileBlockNumber * ) throw ( constructor_failed );
     ~Btree( void );
+
+    void query( btreeinfo * _bti ) {
+        memcpy( _bti, bti, sizeof(btreeinfo) );
+    }
 
     int flush( void ) {
         UINT32 bn = bti->bti_recno;

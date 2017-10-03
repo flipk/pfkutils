@@ -7,7 +7,7 @@
 #define TREESYNC_CONFLICT_FILE      TREESYNC_FILE_PREFIX "conflict"
 
 #define TREESYNC_ORDER        15
-#define TREESYNC_CACHE_INFO   10, 100, 1000
+#define TREESYNC_CACHE_INFO   1000
 
 #include <sys/stat.h>
 

@@ -211,11 +211,13 @@ read_write( int fd )
 
             if (FD_ISSET(0, &fds))
             {
+                infd = 0;
                 outfd = fd;
             }
             else
             {
                 infd = fd;
+                outfd = 1;
             }
 
             if (infd == fd && ISSET(OPT_PINGACK))

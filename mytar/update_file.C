@@ -40,20 +40,31 @@ update_file( file_db * db, char * fname )
     }
     else
     {
+        bool updated = false;
+
         // file found in archive, compare info.
-        inf->uid = sb.st_uid;
-        inf->gid = sb.st_gid;
-        inf->mode = sb.st_mode & 0777;
+        if ( inf->uid != sb.st_uid  ||
+             inf->gid != sb.st_gid  ||
+             inf->mode != (sb.st_mode & 0777) )
+        {
+            updated = true;
+            inf->uid = sb.st_uid;
+            inf->gid = sb.st_gid;
+            inf->mode = sb.st_mode & 0777;
+        }
 
         if ( (UINT64)sb.st_size != inf->size   ||
              sb.st_mtime != inf->mtime )
-            changed = true;
-        inf->size = sb.st_size;
-        inf->mtime = sb.st_mtime;
+        {
+            changed = updated = true;
+            inf->size = sb.st_size;
+            inf->mtime = sb.st_mtime;
+        }
         id = inf->id;
-        db->update_info( inf );
-        printf( "updating new file '%s' (%s)\n",
-                fname, changed ? "modified" : "not modified" );
+        if ( updated )
+            db->update_info( inf );
+        printf( "updating new file '%s' info %s, contents %s\n",
+                fname, updated ? "Y" : "N", changed ? "Y" : "N" );
     }
 
     if ( !changed )

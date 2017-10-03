@@ -34,7 +34,7 @@ struct db_file_entry {
 #define DBFILENEW  "00TREEINFO.NEW.DB"
 
 #define DBFILEPREFIX "00TREE"
-#define DBCACHEPARMS 100, 1000, 10000
+#define DBCACHEPARMS 1000
 #define DIGESTS_PER_KEY 4
 #define SEGMENT_SIZE 32768
 #define CALC_NUM_SEGMENTS(sz)   ((sz==0)?0:(((sz-1) / SEGMENT_SIZE) + 1))

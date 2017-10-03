@@ -47,5 +47,5 @@
 
 /* id_name_db.H */
 
-#define CACHESIZE 64,16,256
+#define CACHESIZE 256
 

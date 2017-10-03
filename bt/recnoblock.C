@@ -648,6 +648,8 @@ FileBlockNumber :: file_info( int * _num_segments,
     if (( sb.st_size % segmentsize ) != 0 )
         num_segments++;
 
+    int num_recs = sb.st_size / recordsize;
+
     page * p;
     int i, j, count0=0, count1=0;
 
@@ -666,6 +668,11 @@ FileBlockNumber :: file_info( int * _num_segments,
                 count0++;
     }
     delete p;
+
+    /* don't count records as 'free' if the file does not even
+       extend that far. */
+
+    count0 -= ((count0+count1) - num_recs);
 
     *_num_segments = num_segments;
     *_recs_in_use = count1;

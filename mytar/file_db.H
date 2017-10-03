@@ -69,7 +69,7 @@ public:
     file_db( char * fname, bool create_it );
     ~file_db( void );
 
-    static const int PIECE_SIZE = 1024 * 16;
+    static const int PIECE_SIZE = 1024 * 32;
     // calculate how many total pieces will be required
     // to store this file, and also calculate how
     // many bytes are in the final piece.
