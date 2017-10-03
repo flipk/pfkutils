@@ -5,6 +5,7 @@
 #include "adm_gate.H"
 #include "adm_hookup.H"
 #include "tunnel.H"
+#include "d3encdec.H"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -29,8 +30,11 @@ public:
 class Adm_User_Hookup_Factory : public Adm_Hookup_Factory_iface {
     fd_mgr * mgr;
     Tunnel_fd * tun_fdi;
+    d3des_crypt * crypt;
 public:
-    Adm_User_Hookup_Factory( Tunnel_fd * _tunfdi ) { tun_fdi = _tunfdi; }
+    Adm_User_Hookup_Factory( Tunnel_fd * _tunfdi,
+                             d3des_crypt * _crypt ) {
+        tun_fdi = _tunfdi; crypt = _crypt; }
     /*virtual*/ ~Adm_User_Hookup_Factory( void ) { delete tun_fdi; }
     /*virtual*/ void new_gateway( int fd_ear, int fd_outfd, fd_mgr * fdmgr )
     {
@@ -42,9 +46,8 @@ public:
                                false,            // connecting
                                true, true,       // doread / dowrite
                                false,            // doencode
-                               NULL,             // encrypter
-                               NULL,             // decoder
-                               NULL );           // decrypter
+                               NULL,             // encrypt/decrypter
+                               NULL);            // decoder
 
         // this one is reading and writing the outgoing
         // network interface to the worker.
@@ -57,9 +60,8 @@ public:
                                true,             // connecting
                                true, true,       // doread / dowrite
                                true,             // doencode
-                               NULL,             // encrypter
-                               decoder,          // decoder
-                               NULL );           // decrypter
+                               crypt,            // encrypt/decrypter
+                               decoder );        // decoder
 
         tun_fdi->register_encoder_fd( gfd2 );
         gfd1->setup_other( gfd2 );
@@ -70,8 +72,8 @@ public:
     }
 };
 
-int
-main( int argc, char ** argv )
+extern "C" int
+etg_proxy_main( int argc, char ** argv )
 {
     if ( argc != 8 )
     {
@@ -105,7 +107,9 @@ main( int argc, char ** argv )
     // when established, it will form an outgoing telnet
     // connection (eventually) going to the worker host.
 
-    Adm_User_Hookup_Factory  hookup( tun_fdi );
+    d3des_crypt   * crypt  = d3des_crypt_loadkey();
+
+    Adm_User_Hookup_Factory  hookup( tun_fdi, crypt );
     fdi = new Adm_Hookup_fd( &hookup, proxy_port, worker_host, worker_port );
     mgr.register_fd( fdi );
 

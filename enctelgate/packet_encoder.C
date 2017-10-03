@@ -6,7 +6,7 @@
 #include <string.h>
 
 packet_encoder :: packet_encoder( packet_encoder_io * _io,
-                                  packet_encoder_encrypter_io * _encrypter )
+                                  packet_encrypt_decrypt_io * _encrypter )
 {
     io = _io;
     encrypter = _encrypter;
@@ -36,9 +36,11 @@ packet_encoder :: add_byte( uchar c )
         {
             encoded_packet[ encoded_len++ ] = '\n';
             linectr = 0;
+            stats.out_bytes ++;
         }
         b64_in = 0;
     }
+    stats.out_bytes ++;
 }
 
 void
@@ -54,6 +56,8 @@ packet_encoder :: end_packet( void )
     }
     encoded_packet[ encoded_len++ ] = '\n';
     io->outbytes( encoded_packet, encoded_len );
+    stats.out_packets ++;
+    print_stats();
 }
 
 void

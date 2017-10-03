@@ -24,6 +24,9 @@
 	PROG(0,xlock,xlock screen)
 	PROG(0,pdksh,pdksh shell)
 	PROG(0,ts,treesync server)
+	PROG(0,etg_genkey,encrypted telnet gate key generator)
+	PROG(0,etg_proxy,encrypted telnet gate key proxy)
+	PROG(0,etg_worker,encrypted telnet gate key worker)
 #endif
 #ifdef cygwin32
 	PROG(0,ts,treesync server)

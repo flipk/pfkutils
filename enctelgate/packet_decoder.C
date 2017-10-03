@@ -5,7 +5,7 @@
 #include "base64.h"
 
 packet_decoder :: packet_decoder( packet_decoder_io * _io,
-                                  packet_decoder_decrypter_io * _decrypter )
+                                  packet_encrypt_decrypt_io * _decrypter )
 {
     io = _io;
     decrypter = _decrypter;
@@ -67,6 +67,8 @@ packet_decoder :: flush_output( void )
 void
 packet_decoder :: input_byte( uchar c )
 {
+    stats.in_bytes ++;
+
     if ( first_char_after_packet > 0 )
     {
         if ( c == '\n' )
@@ -194,6 +196,8 @@ packet_decoder :: input_decoded_byte( uchar c )
                 else
                     io->outpacket( input_packet, input_packet_length );
                 first_char_after_packet = 1;
+                stats.in_packets ++;
+                print_stats();
             }
         }
         return;

@@ -12,16 +12,9 @@ public:
     virtual void outpacket( uchar *, int ) = 0;
 };
 
-class packet_decoder_decrypter_io {
-public:
-    virtual ~packet_decoder_decrypter_io( void ) { /* placeholder */ }
-    virtual bool decrypt_packet( uchar * in,  int in_len,
-                                 uchar * out, int * out_len ) = 0;
-};
-
 class packet_decoder {
     packet_decoder_io * io;
-    packet_decoder_decrypter_io * decrypter;
+    packet_encrypt_decrypt_io * decrypter;
 
     enum { STATE_HDR_HUNT,
            STATE_GET_LENGTH,
@@ -57,7 +50,7 @@ class packet_decoder {
 
 public:
     packet_decoder( packet_decoder_io * _io,
-                    packet_decoder_decrypter_io * _decrypter );
+                    packet_encrypt_decrypt_io * _decrypter );
     void input_bytes( uchar * buffer, int len ) {
         while ( len-- > 0 )
             input_byte( *buffer++ );

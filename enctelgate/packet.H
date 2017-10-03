@@ -39,4 +39,23 @@
     PACKET_LENGTH_LENGTH + PACKET_PIPENO_LENGTH + \
     PACKET_CHECKSUM_LENGTH + NUM_NEWLINES + 4)
 
+struct etg_stats {
+    int out_packets;
+    int out_bytes;
+    int in_packets;
+    int in_bytes;
+};
+
+extern struct etg_stats stats;
+void print_stats( void );
+
+class packet_encrypt_decrypt_io {
+public:
+    virtual ~packet_encrypt_decrypt_io( void ) { /* placeholder */ }
+    virtual bool decrypt_packet( uchar * in,  int in_len,
+                                 uchar * out, int * out_len ) = 0;
+    virtual void encrypt_packet( uchar * in,  int in_len,
+                                 uchar * out, int * out_len ) = 0;
+};
+
 #endif /* __PACKET_H__ */

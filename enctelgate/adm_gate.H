@@ -41,9 +41,8 @@ public:
     Adm_Gate_fd( int fd, bool connecting,
                  bool doread, bool dowrite,
                  bool _doencode,
-                 packet_encoder_encrypter_io * _encrypter,
-                 Adm_pkt_decoder_io * _decoder,
-                 packet_decoder_decrypter_io * _decrypter );
+                 packet_encrypt_decrypt_io * _enc_dec,
+                 Adm_pkt_decoder_io * _decoder );
     /*virtual*/ ~Adm_Gate_fd( void );
     /*       */ void setup_other( class Adm_Gate_fd * _other );
     /*virtual*/ rw_response read ( fd_mgr * );

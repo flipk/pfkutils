@@ -20,10 +20,10 @@ CPPSRCS= rmstar.C tcpgate.C pk_msg.C lognew.C fd_mgr.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
 LIBS= -lcurses -lm -lpthread -lz
 
-DIRS= implode itsfs tags.make tags.view ipipe2
+DIRS= implode itsfs tags.make tags.view ipipe2 enctelgate
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
-	itsfs/libitsfs.a ipipe2/libi2.a
+	itsfs/libitsfs.a ipipe2/libi2.a enctelgate/libetg.a
 
 DIRS+= states
 ELIBS+= states/libstates.a

@@ -5,6 +5,7 @@
 #include "adm_gate.H"
 #include "adm_hookup.H"
 #include "tunnel.H"
+#include "d3encdec.H"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -26,8 +27,8 @@ public:
     }
 };
 
-int
-main( int argc, char ** argv )
+extern "C" int
+etg_worker_main( int argc, char ** argv )
 {
     if ( argc != 5 )
     {
@@ -52,20 +53,22 @@ main( int argc, char ** argv )
     system( "stty -echo" );
     tun_fdi = new Tunnel_fd( tundev, my_ip, other_ip, netmask );
 
-    // this fd receives input data on fd0 which comes from the proxy
-    // and decodes and forwards packets to my tunnel.
-
     Adm_pkt_decoder_io * decoder
         = new Telgate_pkt_decoder_io( tun_fdi );
+
+
+    d3des_crypt   * crypt  = d3des_crypt_loadkey();
+
+    // this fd receives input data on fd0 which comes from the proxy
+    // and decodes and forwards packets to my tunnel.
 
     Adm_Gate_fd * gfd1
         = new Adm_Gate_fd( 0,                  // fd
                            false,              // connecting
                            true, false,        // doread / dowrite
                            false,              // doencode
-                           NULL,               // encrypter
-                           decoder,            // decoder
-                           NULL );             // decrypter
+                           crypt,              // encrypt/decrypter
+                           decoder );          // decoder
 
     // this fd takes packets from the tunnel and encodes them, writing
     // them on fd 1 to the proxy.
@@ -75,9 +78,8 @@ main( int argc, char ** argv )
                            false,           // connecting
                            false, true,     // doread / dowrite
                            true,            // doencode
-                           NULL,            // encrypter
-                           NULL,            // decoder
-                           NULL );          // decrypter
+                           crypt,           // encrypt/decrypter
+                           NULL );          // decoder
 
     tun_fdi->register_encoder_fd( gfd2 );
     gfd1->setup_other( gfd2 );

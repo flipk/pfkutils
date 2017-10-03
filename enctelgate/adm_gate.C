@@ -41,9 +41,8 @@ Adm_pkt_decoder_io :: outbytes ( uchar * buf, int len )
 Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
                             bool _doread, bool _dowrite,
                             bool _doencode,
-                            packet_encoder_encrypter_io * _encrypter,
-                            Adm_pkt_decoder_io * _decoder,
-                            packet_decoder_decrypter_io * _decrypter )
+                            packet_encrypt_decrypt_io * _enc_dec,
+                            Adm_pkt_decoder_io * _decoder )
     : write_buf( max_write )
 {
     fd         = _fd;
@@ -59,7 +58,7 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     if ( encode_io )
     {
         encode_io->setup_me( this );
-        encoder = new packet_encoder( encode_io, _encrypter );
+        encoder = new packet_encoder( encode_io, _enc_dec );
     }
     else
         encoder = NULL;
@@ -68,20 +67,15 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     if ( decode_io )
     {
         decode_io->setup_me( this );
-        decoder = new packet_decoder( decode_io, _decrypter );
+        decoder = new packet_decoder( decode_io, _enc_dec );
     }
     else
         decoder   = NULL;
-
-    printf( "gate created on fd %d : cn=%d, rd=%d wr=%d enc=%d dec=%d\n",
-            fd, connecting, doread, dowrite,
-            encoder != NULL,  decoder != NULL );
 }
 
 Adm_Gate_fd :: ~Adm_Gate_fd( void )
 {
     close( fd );
-    printf( "gate deleted on fd %d\n", fd );
     if ( encoder )
         delete encoder;
     if ( encode_io )
@@ -111,8 +105,6 @@ Adm_Gate_fd :: read( fd_mgr * )
     int     cc;
 
     cc = ::read( fd, read_buf, sizeof( read_buf ));
-
-//    printf( "read fd=%d returns %d\n", fd, cc );
 
     if ( connecting && cc <= 0 )
     {
@@ -158,7 +150,6 @@ Adm_Gate_fd :: write( fd_mgr * )
 {
     if ( connecting )
     {
-        printf( "connection succeeded\n" );
         connecting = false;
         return OK;
     }
@@ -166,8 +157,6 @@ Adm_Gate_fd :: write( fd_mgr * )
     int wr = write_buf.contig_readable();
     int cc;
     cc = ::write( fd, write_buf.read_pos(), wr );
-
-//    printf( "write fd=%d %d returns %d\n", fd, wr, cc );
 
     if ( cc <= 0 )
     {
