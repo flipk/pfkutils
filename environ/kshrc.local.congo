@@ -1,8 +1,6 @@
 
 xconsole_hook() {
     xhost +
-    myemacs 
-    zwgc &
 }
 
 tty=`tty`
