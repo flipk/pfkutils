@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>
+#include <zlib.h>
 
 #define BAIL() \
     do { \
@@ -97,6 +98,8 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
             return;
         }
     }
+
+    (void) umask( 000 );
 
     if (mkdir( back_info.data.name.string, 0700 ) < 0)
     {
@@ -194,20 +197,32 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
                 else
                 {
                     UINT32 fbn = piece_data.data.data_fbn.v;
-                    UINT16 size = piece_data.data.usize.v;
-                    /** \todo support decompression */
+                    UINT16 usize = piece_data.data.usize.v;
+                    UINT16 csize = piece_data.data.csize.v;
 
-                    FileBlock * data_fb = bt->get_fbi()->get( fbn );
+                    FileBlock * fb = bt->get_fbi()->get( fbn );
 
-                    if (!data_fb)
+                    if (!fb)
                     {
                         printf(": unable to fetch data for piece %d\n",
                                piece_number);
                     }
                     else
                     {
-                        (void) write( fd, data_fb->get_ptr(), size );
-                        bt->get_fbi()->release( data_fb );
+                        UCHAR ubuf[ usize ];
+                        uLongf ulen = usize;
+
+                        if (usize == csize)
+                        {
+                            (void) write( fd, fb->get_ptr(), csize );
+                        }
+                        else
+                        {
+                            (void) uncompress( (Bytef*)ubuf, &ulen,
+                                               fb->get_ptr(), csize );
+                            (void) write( fd, ubuf, ulen );
+                        }
+                        bt->get_fbi()->release( fb );
                     }
                 }
             }

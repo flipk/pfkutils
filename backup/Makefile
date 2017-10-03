@@ -1,7 +1,7 @@
 
 TARG=	libpfkbak.a
 SRCS=	create_backup.C create_file.C \
-	delete_backup.C delete_gens.C \
+	delete_backup.C delete_gens.C delete_gen.C \
 	extract.C extract_list.C \
 	get_info.C update_backup.C \
 	list_backups.C list_files.C \
@@ -13,7 +13,8 @@ CC= g++
 INCS= -I ../h -I ../util -I ../treesync -I ../dll2 -I ../FileBlock 
 DEFS= -D_FILE_OFFSET_BITS=64
 OPTS= -g3
-LIBS= ../FileBlock/libFileBlock.a ../treesync/libtreesync.a ../dll2/libdll2.a
+LIBS= ../FileBlock/libFileBlock.a ../treesync/libtreesync.a \
+	../dll2/libdll2.a -lz
 
 TESTSRCS= t.C
 EXTRAS= t

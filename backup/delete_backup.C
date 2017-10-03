@@ -29,5 +29,5 @@
 void
 pfkbak_delete_backup ( Btree * bt, UINT32 baknum )
 {
-    // xxx
+    /** \todo support deleting backup from a database. */
 }

@@ -30,5 +30,7 @@ void
 pfkbak_extract_list  ( Btree * bt, UINT32 baknum,
                        UINT32 gen_num, char * list_file )
 {
-    // xxx
+    /** \todo modify extract.C to make a generic function for
+     * extracting by file number, and then call it from both
+     * extract_list and extract. */
 }

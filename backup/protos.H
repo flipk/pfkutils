@@ -36,6 +36,8 @@ void pfkbak_delete_backup ( Btree * bt, UINT32 baknum );
 void pfkbak_update_backup ( Btree * bt, UINT32 baknum );
 void pfkbak_delete_gens   ( Btree * bt, UINT32 baknum,
                             int argc, char ** argv );
+void pfkbak_delete_gen    ( Btree * bt, UINT32 baknum,
+                            UINT32 gen_num_s, UINT32 gen_num_e );
 void pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num );
 void pfkbak_extract       ( Btree * bt, UINT32 baknum, UINT32 gen_num,
                             int argc, char ** argv );

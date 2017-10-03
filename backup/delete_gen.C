@@ -1,0 +1,175 @@
+/*
+  This file is part of the "pfkutils" tools written by Phil Knaack
+  (pknaack1@netscape.net).
+  Copyright (C) 2008  Phillip F Knaack
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
+
+#include "database_elements.H"
+#include "params.H"
+#include "protos.H"
+
+#include <FileList.H>
+
+#include <stdlib.h>
+
+void
+pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
+                    UINT32 gen_num_s, UINT32 gen_num_e )
+{
+    UINT32 in, out;
+
+    printf("deleting generations %d thru %d\n", gen_num_s, gen_num_e);
+
+    PfkBackupInfo backup_info(bt);
+
+    backup_info.key.backup_number.v = baknum;
+
+    if (!backup_info.get())
+    {
+        fprintf(stderr, "unable to fetch backup info\n");
+        return;
+    }
+
+    {
+        BST_ARRAY <PfkBakGenInfo> * genlist = &backup_info.data.generations;
+
+        // delete generations from the backup_info
+        for (in = out = 0; in < genlist->num_items; in++)
+        {
+            PfkBakGenInfo * gi = genlist->array[in];
+            if (gi->generation_number.v < gen_num_s  ||
+                gi->generation_number.v > gen_num_e)
+            {
+                if (in != out)
+                {
+                    genlist->array[in] = genlist->array[out];
+                    genlist->array[out] = gi;
+                }
+                out++;
+            }
+        }
+        genlist->alloc(out);
+    }
+    backup_info.put(true);
+
+    UINT32 file_number;
+
+    for (file_number = 0;
+         file_number < backup_info.data.file_count.v;
+         file_number++)
+    {
+        PfkBackupFileInfo  file_info(bt);
+
+        file_info.key.backup_number.v = baknum;
+        file_info.key.file_number.v = file_number;
+
+        if (!file_info.get())
+            // skip the hole.
+            continue;
+
+        {
+            BST_ARRAY  <BST_UINT32_t> * genlist = &file_info.data.generations;
+            for (in = out = 0; in < genlist->num_items; in++)
+            {
+                UINT32 g = genlist->array[in]->v;
+                if (g < gen_num_s  ||  g > gen_num_e)
+                {
+                    if (in != out)
+                    {
+                        genlist->array[in]->v = genlist->array[out]->v;
+                        genlist->array[out]->v = g;
+                    }
+                    out++;
+                }
+            }
+            genlist->alloc(out);
+        }
+        if (out > 0)
+            file_info.put(true);
+        else
+            file_info.del();
+
+        UINT32 piece_number;
+        for (piece_number = 0; ; piece_number++)
+        {
+            PfkBackupFilePieceInfo piece_info(bt);
+
+            piece_info.key.backup_number.v = baknum;
+            piece_info.key.file_number.v = file_number;
+            piece_info.key.piece_number.v = piece_number;
+
+            if (!piece_info.get())
+                // probably end of file.
+                break;
+
+
+            BST_ARRAY <PfkBackupVersion> * verlist =
+                &piece_info.data.versions;
+
+            for (in = out = 0; in < verlist->num_items; in++)
+            {
+                PfkBackupVersion * ver = verlist->array[in];
+                if (ver->gen_number.v < gen_num_s  ||
+                    ver->gen_number.v > gen_num_e)
+                {
+                    if (in != out)
+                    {
+                        verlist->array[in] = verlist->array[out];
+                        verlist->array[out] = ver;
+                    }
+                    out++;
+                }
+                else
+                {
+                    PfkBackupFilePieceData piece_data(bt);
+
+                    piece_data.key.backup_number.v = baknum;
+                    piece_data.key.file_number.v = file_number;
+                    piece_data.key.piece_number.v = piece_number;
+                    memcpy( piece_data.key.md5hash.binary,
+                            ver->md5hash.binary,
+                            MD5_DIGEST_SIZE );
+
+                    if (!piece_data.get())
+                    {
+                        fprintf(stderr,
+                                "%s:%s:%d: ERROR should not be here\n",
+                                __FILE__, __FUNCTION__, __LINE__);
+                    }
+                    else
+                    {
+                        if (--piece_data.data.refcount.v == 0)
+                        {
+                            bt->get_fbi()->free(
+                                piece_data.data.data_fbn.v );
+                            piece_data.del();
+                        }
+                        else
+                        {
+                            piece_data.put(true);
+                        }
+                    }
+                }
+            }
+            verlist->alloc(out);
+            if (out > 0)
+                piece_info.put(true);
+            else
+                piece_info.del();
+        }
+    }
+}

@@ -32,6 +32,10 @@
 #include "BtreeDbClasses.H"
 #include "pk-md5.h"
 
+/** every time the database structure layout changes, 
+    the tool version should be incremented! */
+#define PFK_BACKUP_TOOL_VERSION 2
+
 /** base type for database keys used in the backup database.
  * This type makes it easier to encapsulate a type field using
  * an enum. All derived classes must call the base class constructor
@@ -52,61 +56,86 @@ struct PfkBakDbKeys : public BST {
                                 any derived type. */
 };
 
-/** describe the list of backups in the file and the tool version.
+typedef BST_FIXED_BINARY <MD5_DIGEST_SIZE> BST_MD5;
+
+/** key class for the list of backups in the db.
  * This is a singleton (there exists only one of these in the database).
  */
 struct PfkBackupDbInfoKey : public PfkBakDbKeys {
     PfkBackupDbInfoKey(void) :
         PfkBakDbKeys(PREFIX_BACKUP_DB_INFO),
         info_key(this) { }
-    BST_STRING  info_key;
-    static const char * INFO_KEY;
+    BST_STRING  info_key;   /**< this should always be INFO_KEY */
+    static const char * INFO_KEY;  /**< the constant string "PfkBakDbInfo" */
 };
 
+/** data class for the list of backups in the db.
+ * This is a singleton (there exists only one of these in the database).
+ */
 struct PfkBackupDbInfoData : public FileBlockBST {
     PfkBackupDbInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
         tool_version(this), backups(this) { }
     ~PfkBackupDbInfoData(void) { bst_free(); }
+    /** every time the database structure layout changes, 
+        the tool version should be incremented! */
     BST_UINT32_t              tool_version;
+    /** a list of all the backup ids used in this database.
+        these values are the keys in all other data structures
+        which have 'backup_number' in their keys. */ 
     BST_ARRAY <BST_UINT32_t>  backups;
-    static const int TOOL_VERSION = 1;
+    static const int TOOL_VERSION = PFK_BACKUP_TOOL_VERSION;
 };
 
+/** \class PfkBackupDbInfo
+ * This is a container for PfkBackupDbInfoKey and PfkBackupDbInfoData,
+ * derived from DB_ITEM. */
 DB_ITEM_CLASS(PfkBackupDbInfo);
 
 // PfkBackupInfo - one of these for each backup, describing 
 //   the backup and number of files and list of generations.
 
+/** key class for information about each backup.
+ * the data class lists the root dir, list of generations, comment,
+ * next generation number, etc.
+ */
 struct PfkBackupInfoKey : public PfkBakDbKeys {
     PfkBackupInfoKey(void) :
         PfkBakDbKeys(PREFIX_BACKUP_INFO),
         backup_number(this) {}
-    BST_UINT32_t   backup_number;
+    BST_UINT32_t   backup_number;   /**< from PfkBackupDbInfoData.backups */
 };
 
+/** information about one generation in this backup. */
 struct PfkBakGenInfo : public BST {
     PfkBakGenInfo(BST *parent) :
         BST(parent),
         date_time(this), generation_number(this) { }
-    BST_STRING    date_time;
+    BST_STRING    date_time;   /**< formatted string of the date */
     BST_UINT32_t  generation_number;
 };
 
+/** data class for information about each backup.
+ * the data class lists the root dir, list of generations, comment,
+ * next generation number, etc.
+ */
 struct PfkBackupInfoData : public FileBlockBST {
     PfkBackupInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
         root_dir(this), name(this), comment(this), file_count(this),
         next_generation_number(this), generations(this) {}
     ~PfkBackupInfoData(void) { bst_free(); }
-    BST_STRING    root_dir;
-    BST_STRING    name;
-    BST_STRING    comment;
-    BST_UINT32_t  file_count;
+    BST_STRING    root_dir;   /**< root directory for this backup */
+    BST_STRING    name;       /**< short text name for the backup */
+    BST_STRING    comment;    /**< comment string */
+    BST_UINT32_t  file_count;  /**< number of files in this backup */
     BST_UINT32_t  next_generation_number;
-    BST_ARRAY <PfkBakGenInfo> generations;
+    BST_ARRAY <PfkBakGenInfo> generations;  /**< list of generations */
 };
 
+/** \class PfkBackupInfo
+ * This is a container for PfkBackupInfoKey and PfkBackupInfoData,
+ * derived from DB_ITEM. */
 DB_ITEM_CLASS(PfkBackupInfo);
 
 // PfkBackupFileInfo - One of these for each file in a backup,
@@ -155,7 +184,7 @@ struct PfkBackupVersion : public BST {
         BST(parent),
         gen_number(this), md5hash(this) { }
     BST_UINT32_t    gen_number;
-    BST_FIXED_BINARY <MD5_DIGEST_SIZE>  md5hash;
+    BST_MD5         md5hash;
 };
 
 struct PfkBackupFilePieceInfoData : public FileBlockBST {
@@ -183,7 +212,7 @@ struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     BST_UINT32_t    backup_number;
     BST_UINT32_t    file_number;
     BST_UINT32_t    piece_number;
-    BST_FIXED_BINARY <MD5_DIGEST_SIZE>  md5hash;
+    BST_MD5         md5hash;
 };
 
 struct PfkBackupFilePieceDataData : public FileBlockBST {
@@ -196,7 +225,7 @@ struct PfkBackupFilePieceDataData : public FileBlockBST {
     BST_UINT16_t   usize;
     BST_UINT32_t   data_fbn;
 
-    static const int PIECE_SIZE = 32768;
+    static const int PIECE_SIZE = 60000;
 };
 
 DB_ITEM_CLASS(PfkBackupFilePieceData);

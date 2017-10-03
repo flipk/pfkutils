@@ -64,7 +64,8 @@ pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num )
 
         if (!file_info.get())
         {
-            fprintf(stderr, "unused file number %d\n", file_number);
+            if (pfkbak_verb > VERB_QUIET)
+                printf("unused file number %d\n", file_number);
             continue;
         }
 

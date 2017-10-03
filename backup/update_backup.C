@@ -29,6 +29,7 @@
 #include <errno.h>
 #include <time.h>
 #include <fcntl.h>
+#include <zlib.h>
 
 /** \todo Add support for verbose mode to update_backup. */
 
@@ -37,12 +38,45 @@ enum file_state { STATE_NEW, STATE_MODIFIED, STATE_UNMODIFIED };
 static bool
 put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
                 UINT32 piece_number, UCHAR * md5hash,
-                UCHAR * buffer, int piece_len )
+                UCHAR * buffer, int usize, bool * do_compression )
 {
     PfkBackupFilePieceData   piece_data(bt);
     UINT32 data_fbn = 0;
 
-    data_fbn = bt->get_fbi()->alloc( piece_len );
+    // unfortunately, we have to compress to a temp buffer
+    // and then copy it to the FileBlock, because we don't know
+    // how big to make the FileBlock until the compression is
+    // complete! bummer.
+
+    UCHAR cbuf[ usize + 64 ];
+    uLongf csize = usize + 64;
+
+    UCHAR * final_buffer;
+    UINT16  final_size;
+
+    if (*do_compression)
+    {
+        (void) compress( cbuf, &csize, (const Bytef*)buffer, usize );
+
+        if (csize >= usize)
+        {
+            final_buffer = buffer;
+            final_size = usize;
+            *do_compression = false;
+        }
+        else
+        {
+            final_buffer = cbuf;
+            final_size = csize;
+        }
+    }
+    else
+    {
+        final_buffer = buffer;
+        final_size = usize;
+    }
+
+    data_fbn = bt->get_fbi()->alloc( final_size );
     if (data_fbn == 0)
     {
         fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
@@ -60,7 +94,7 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
         }
         else
         {
-            memcpy( data_fb->get_ptr(), buffer, piece_len );
+            memcpy( data_fb->get_ptr(), final_buffer, final_size );
             data_fb->mark_dirty();
             bt->get_fbi()->release( data_fb );
         }
@@ -72,8 +106,8 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
     memcpy( piece_data.key.md5hash.binary, md5hash, MD5_DIGEST_SIZE );
 
     piece_data.data.refcount.v = 1;
-    piece_data.data.csize.v = 0; /** \todo support compression */
-    piece_data.data.usize.v = piece_len;
+    piece_data.data.csize.v = final_size;
+    piece_data.data.usize.v = usize;
     piece_data.data.data_fbn.v = data_fbn;
 
     piece_data.put(true);
@@ -113,6 +147,7 @@ walk_file( file_state state, Btree * bt,
     UCHAR buffer[PIECE_SIZE];
     UCHAR  md5hash[MD5_DIGEST_SIZE];
     PfkBackupFilePieceInfo   piece_info(bt);
+    bool do_compression = true;
 
     // walk all the pieces.
     for (piece_number = 0; ; piece_number++)
@@ -151,7 +186,7 @@ walk_file( file_state state, Btree * bt,
             // put data fbn.
 
             put_piece_data( bt, baknum, file_number, piece_number,
-                            md5hash, buffer, piece_len );
+                            md5hash, buffer, piece_len, &do_compression );
         }
         else
         {
@@ -232,7 +267,8 @@ walk_file( file_state state, Btree * bt,
                     piece_info.put(true);
 
                     put_piece_data( bt, baknum, file_number, piece_number,
-                                    md5hash, buffer, piece_len );
+                                    md5hash, buffer, piece_len,
+                                    &do_compression );
                 }
 
                 break;
@@ -409,6 +445,12 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             fel->remove(fe.fe);
             hash.remove(fe.fe);
 
+            if (pfkbak_verb > VERB_QUIET)
+            {
+                printf("%s", fe.fef->path);
+                fflush(stdout);
+            }
+
             // file found!
             if ( (fe.fef->size  != file_info.data.size.v )  ||
                  (fe.fef->mtime != file_info.data.mtime.v)  )
@@ -441,6 +483,9 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             
             file_info.put(true);
 
+            if (pfkbak_verb > VERB_QUIET)
+                printf("\n");
+
             delete fe.fe;
         }
     }
@@ -454,6 +499,12 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         fel->remove(fe.fe);
 
         // file created!
+
+        if (pfkbak_verb > VERB_QUIET)
+        {
+            printf("%s", fe.fef->path);
+            fflush(stdout);
+        }
 
         if (unused_head != NULL)
         {
@@ -483,6 +534,9 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
                    &file_info, fe.fef );
 
         file_info.put(true);
+
+        if (pfkbak_verb > VERB_QUIET)
+            printf("\n");
 
         delete fe.fe;
     }
