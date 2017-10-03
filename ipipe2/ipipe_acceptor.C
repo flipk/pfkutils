@@ -14,7 +14,7 @@ ipipe_acceptor :: ipipe_acceptor( short port, ipipe_new_connection * _factory )
     fd = socket( AF_INET, SOCK_STREAM, 0 );
     if ( fd < 0 )
     {
-        fprintf( stderr, "socket: %s\n", strerror( errno ));
+        fprintf( stderr, "\nsocket: %s\n", strerror( errno ));
         exit( 1 );
     }
     int v = 1;
@@ -25,7 +25,7 @@ ipipe_acceptor :: ipipe_acceptor( short port, ipipe_new_connection * _factory )
     sa.sin_addr.s_addr = INADDR_ANY;
     if ( bind( fd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
     {
-        fprintf( stderr, "bind: %s\n", strerror( errno ));
+        fprintf( stderr, "\nbind: %s\n", strerror( errno ));
         exit( 1 );
     }
     listen( fd, 1 );
@@ -60,7 +60,7 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
     if ( new_fd < 0 )
     {
         if ( errno != EAGAIN )
-            fprintf( stderr, "accept: %s\n", strerror( errno ));
+            fprintf( stderr, "\naccept: %s\n", strerror( errno ));
         return OK;
     }
 

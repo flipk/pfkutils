@@ -39,7 +39,6 @@
 	PROG(0,itsfsriw,ITS file system remote inode worker)
 #endif
 	PROG(0,xtermbar,change title in the xterm)
-	PROG(0,gmarc,get me a real copy)
 	PROG(0,fmtsdiff,format sdiff output)
 	PROG(0,rmstar,recursive rm -rf but verbosely)
 	PROG(0,waitpid,wait for some process ids to exit)

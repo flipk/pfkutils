@@ -6,7 +6,8 @@
 #include "ipipe_forwarder.H"
 
 void stats_init     ( fd_mgr * mgr,
-                      bool _shortform, bool _verbose, bool _final );
+                      bool _shortform, bool _verbose, bool _final,
+                      bool is_proxy );
 void stats_add_conn ( void );
 void stats_del_conn ( void );
 void stats_add      ( int r, int w );

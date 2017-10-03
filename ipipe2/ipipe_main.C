@@ -158,7 +158,7 @@ i2_main( int argc,  char ** argv )
 
     stats_init( &mgr,
                 (!rcvunz && !txz),  // short form if no libz involved
-                verbose, stats );
+                verbose, stats, tcpgate );
 
     if ( tcpgate )
     {

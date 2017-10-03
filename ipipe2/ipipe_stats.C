@@ -23,7 +23,7 @@ static         UINT64 last5sr    [ TICKS_IN_5 ];
 static         UINT64 last5sw    [ TICKS_IN_5 ];
 
 static int connections;
-
+static bool is_proxy = true;
 static struct timeval time_start;
 
 static int
@@ -48,9 +48,10 @@ difftimevals( struct timeval * a, struct timeval * b )
 static void
 tick_func( void * arg )
 {
-    int rdbps, wrbps, ratio1000 = 1000;
+    int rdbps, wrbps, ratio1000 = 1000, ratio10005s = 1000;
     UINT64 rd5s, wr5s;
     int elapsed100ths;
+    bool stalled = false;
     static bool printed_header = false;
     struct timeval time_now;
 
@@ -71,6 +72,10 @@ tick_func( void * arg )
         rd5s /= diff5s;
         wr5s /= diff5s;
 
+        if ( rd5s == 0 && wr5s == 0 )
+            if ( bytes_read != 0 || bytes_written != 0 )
+                stalled = true;
+
         last5sr    [last5pos] = bytes_read;
         last5sw    [last5pos] = bytes_written;
         last5times [last5pos] = time_now;
@@ -83,6 +88,10 @@ tick_func( void * arg )
                 ratio1000 = (bytes_written * 1000) / bytes_read;
             else
                 ratio1000 = (bytes_read * 1000) / bytes_written;
+            if ( rd5s > wr5s )
+                ratio10005s = rd5s > 0 ? ((wr5s * 1000) / rd5s) : 0;
+            else
+                ratio10005s = wr5s > 0 ? ((rd5s * 1000) / wr5s) : 0;
         }
 
         if ( !printed_header )
@@ -91,64 +100,68 @@ tick_func( void * arg )
                 fprintf( stderr,
                          "  read (rate, 5s rate)"
                          "  written (rate, 5s rate)"
-                         "  ratio  time\n" );
+                         "  ratio (5s ratio) time\n" );
             printed_header = true;
         }
 
-        char outstring[ 160 ];
+        char outstring[ 160 ], *outs_pos = outstring;
+        int slen, outs_remain = sizeof(outstring);
+#define ADD_STRING(args...) \
+        do { \
+            slen = snprintf( outs_pos, outs_remain, args ); \
+            outs_remain -= slen; \
+            outs_pos += slen; \
+        } while(0)
+
+        ADD_STRING("\r " );
+
+        if ( is_proxy )
+            ADD_STRING("%d cn%s ",
+                       connections, connections==1 ? "" : "s");
+        else
+            if ( stalled )
+                ADD_STRING( "stalled:" );
 
         if ( shortform )
         {
-            if ( arg != NULL )
+            ADD_STRING( "%lld bytes in %d.%02ds "
+                        "(%d bps)",
+                        bytes_written,
+                        elapsed100ths / 100,
+                        elapsed100ths % 100,
+                        wrbps );
+
+            if ( arg == NULL )
             {
-                snprintf( outstring, 159,
-                          "\r" " %d cn%s %lld bytes in %d.%02d s "
-                          "(%d bps)",
-                          connections, connections==1?"":"s",
-                          bytes_written,
-                          elapsed100ths / 100,
-                          elapsed100ths % 100,
-                          wrbps );
-            }
-            else
-            {
-                snprintf( outstring, 159,
-                          "\r" " %d cn%s %lld bytes in %d.%02d s "
-                          "(%d bps) (5s avg %d bps)",
-                          connections, connections==1?"":"s",
-                          bytes_written,
-                          elapsed100ths / 100,
-                          elapsed100ths % 100,
-                          wrbps, (int) wr5s );
+                ADD_STRING( "(5s avg %d bps)", (int) wr5s );
             }
         }
         else
         {
-            if ( arg != NULL )
+            if ( arg != NULL || stalled )
             {
-                snprintf( outstring, 159,
-                          "\r" " %lld (%d bps) "
-                          "%lld (%d bps) %d.%d%% %d.%02d s",
-                          bytes_read,    rdbps,
-                          bytes_written, wrbps,
-                          ratio1000 / 10,  ratio1000 % 10,
-                          elapsed100ths / 100,
-                          elapsed100ths % 100 );
+                ADD_STRING( "%lld (%d bps) "
+                            "%lld (%d bps) %d.%d%% %d.%02ds",
+                            bytes_read,    rdbps,
+                            bytes_written, wrbps,
+                            ratio1000   / 10,  ratio1000   % 10,
+                            elapsed100ths / 100,
+                            elapsed100ths % 100 );
             }
             else
             {
-                snprintf( outstring, 159,
-                          "\r" " %lld (%d/%d) "
-                          "%lld (%d/%d) %d.%d%% %d.%02d s",
-                          bytes_read,    rdbps, (int) rd5s,
-                          bytes_written, wrbps, (int) wr5s,
-                          ratio1000 / 10,  ratio1000 % 10,
-                          elapsed100ths / 100,
-                          elapsed100ths % 100 );
+                ADD_STRING( "%lld %d/%d "
+                            "%lld %d/%d %d.%d%% %d.%d%% %d.%02ds",
+                            bytes_read,    rdbps, (int) rd5s,
+                            bytes_written, wrbps, (int) wr5s,
+                            ratio1000   / 10,  ratio1000   % 10,
+                            ratio10005s / 10,  ratio10005s % 10,
+                            elapsed100ths / 100,
+                            elapsed100ths % 100 );
             }
         }
 
-        int slen = strlen(outstring);
+        slen = strlen(outstring);
         if ( slen < 79 )
         {
             memset( outstring + slen, ' ', 79 - slen );
@@ -163,7 +176,8 @@ tick_func( void * arg )
 }
 
 void
-stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose, bool _final )
+stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose,
+             bool _final, bool _is_proxy )
 {
     int i;
 
@@ -183,6 +197,7 @@ stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose, bool _final )
     shortform = _shortform;
     verbose = _verbose;
     final = _final;
+    is_proxy = _is_proxy;
 
     if ( verbose )
         final = true;

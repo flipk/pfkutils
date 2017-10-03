@@ -17,7 +17,7 @@ ipipe_connector :: ipipe_connector( struct sockaddr_in * sa,
     fd = socket( AF_INET, SOCK_STREAM, 0 );
     if ( fd < 0 )
     {
-        fprintf( stderr, "socket: %s\n", strerror( errno ));
+        fprintf( stderr, "\nsocket: %s\n", strerror( errno ));
         exit( 1 );
     }
 
@@ -27,7 +27,7 @@ ipipe_connector :: ipipe_connector( struct sockaddr_in * sa,
 
     if ( cc < 0  &&  errno != EINPROGRESS )
     {
-        fprintf( stderr, "connect: %s\n", strerror( errno ));
+        fprintf( stderr, "\nconnect: %s\n", strerror( errno ));
         exit( 1 );
     }
 }
@@ -63,7 +63,7 @@ ipipe_connector :: write( fd_mgr * mgr )
 
     if ( cc < 0 )
     {
-        fprintf( stderr, "connect: Unable to connect\n" );
+        fprintf( stderr, "\nconnect: Unable to connect\n" );
         return DEL;
     }
 

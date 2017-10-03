@@ -127,10 +127,20 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
         if ( errno == EAGAIN )
             return OK;
 
-        fprintf( stderr, "ipipe_forwarder :: read : %s\n",
+        fprintf( stderr, "\nipipe_forwarder :: read : %s\n",
                  strerror( errno ));
     }
     
+    if ( cc == 0 )
+    {
+        if ( buf->used_space() > 0  ||
+             zs && zs->avail_in > 0 )
+        {
+            fprintf( stderr, "\nipipe_forwarder :: "
+                     "closed unexpectedly during read!\n" );
+        }
+    }
+
     if ( cc <= 0 )
     {
         do_close = true;
@@ -170,9 +180,13 @@ ipipe_forwarder :: write( fd_mgr * mgr )
             if ( errno == EAGAIN )
                 return OK;
 
-            fprintf( stderr, "ipipe_forwarder :: write: %s\n",
+            fprintf( stderr, "\nipipe_forwarder :: write: %s\n",
                      strerror( errno ));
         }
+
+        if ( cc == 0 )
+            fprintf( stderr, "\nipipe_forwarder :: "
+                     "closed unexpectedly during write!\n" );
 
         if ( cc <= 0 )
         {
@@ -269,7 +283,7 @@ ipipe_forwarder :: zloop( void )
             ret = inflate( zs, flush );
             if ( ret < 0  &&  ret != Z_BUF_ERROR )
             {
-                fprintf( stderr, "libz: %d: %s\n", ret, zs->msg );
+                fprintf( stderr, "\nlibz: %d: %s\n", ret, zs->msg );
                 exit( 1 );
             }
         }
