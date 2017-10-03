@@ -11,6 +11,11 @@
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)
+ '(inhibit-startup-buffer-menu t)
+ '(inhibit-startup-echo-area-message "flipk")
+ '(inhibit-startup-screen t)
+ '(initial-buffer-choice t)
+ '(initial-scratch-message "")
  '(menu-bar-mode t)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
@@ -95,16 +100,22 @@ nEnter c-mode-tabwidth value (4 or 8):")
         (untabify (point-min) (point-max)))
     (indent-region (point-min) (point-max) nil)))
 
+(defun my-make-big () "make window font bigger"
+  (interactive)
+  (set-frame-font "10x20"))
+
 (defun showhelp () "Show help string"
   (interactive)
-  (message " f1=help f2=fill-region f4=setcmode f6=eval f7=list-buffers f8=execute f9=make-frame f10=delete-frame"))
+  (message " f1=help f2=fill-region f3=make-big f4=setcmode f5=speedbar f6=eval f9=make-frame f10=delete-frame"))
 
 (global-set-key [f1]  'showhelp)
 (global-set-key [f2]  'fill-region)
+(global-set-key [f3]  'my-make-big)
 (global-set-key [f4]  'set-c-mode)
+(global-set-key [f5]  'speedbar)
 (global-set-key [f6]  'eval-last-sexp)
-(global-set-key [f7]  'list-buffers)
-(global-set-key [f8]  'execute-extended-command)
+; f7 useless in my window manager
+; f8 useless in a vnc session
 (global-set-key [f9]  'make-frame)
 (global-set-key [f10] 'delete-frame)
 (global-set-key "\C-g" 'goto-line)
