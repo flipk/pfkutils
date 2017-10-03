@@ -32,6 +32,12 @@ public:
     virtual void unlock_block( FileBlockCookie * cookie ) = 0;
     virtual void flush(void) = 0;
 
+    // compact the file. time_limit is the maximum number
+    // of seconds it is allowed to spend trying; when this
+    // amount of time passes, compact should give up and return.
+    // 0 means continue until the file is just about contiguous.
+    virtual void compact(int time_limit) = 0;
+
     UCHAR * get_block( UINT32 block, int * size, FileBlockCookie ** cookie ) {
         return _get_block( block, size, cookie, false );
     }

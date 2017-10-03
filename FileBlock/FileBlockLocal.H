@@ -31,6 +31,7 @@ public:
                                     FileBlockCookie **cookie, bool for_write );
     /*virtual*/ void unlock_block( FileBlockCookie * cookie );
     /*virtual*/ void flush(void);
+    /*virtual*/ void compact(int time_limit);
 
 };
 

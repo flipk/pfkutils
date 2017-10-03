@@ -161,19 +161,18 @@ FileBlockLocalCache :: flush( void )
     FBLB * blocks[count];
     i = 0;
     for (b = list.get_head(); b; b = list.get_next(b))
-        blocks[i++] = b;
+        if (b->dirty)
+            blocks[i++] = b;
+    count = i;
 
     qsort( blocks, count, sizeof(FBLB*),
            (int(*)(const void *, const void *))block_compare);
 
-    for (i = 0; i < list.get_cnt(); i++)
+    for (i = 0; i < count; i++)
     {
         b = blocks[i];
-        if (b->dirty)
-        {
-            lseek(fd, b->offset, SEEK_SET);
-            write(fd, b->ptr, b->size);
-            b->dirty = false;
-        }
+        lseek(fd, b->offset, SEEK_SET);
+        write(fd, b->ptr, b->size);
+        b->dirty = false;
     }
 }

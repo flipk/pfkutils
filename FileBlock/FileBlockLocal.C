@@ -87,3 +87,9 @@ void
 FileBlockLocal :: flush(void)
 {
 }
+
+//virtual
+void
+FileBlockLocal :: compact(int time_limit)
+{
+}
