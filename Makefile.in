@@ -37,8 +37,8 @@ ELIBS+= pdksh-5.2.14/ksh_precrunch.o
 #endif
 
 #ifdef cygwin32
-ELIBS+= treesync/libts.a
-DIRS+= treesync
+ELIBS+= bt/libbt.a treesync/libts.a
+DIRS+= bt treesync
 #endif
 
 #ifdef solaris
