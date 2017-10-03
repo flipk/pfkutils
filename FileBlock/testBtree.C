@@ -77,22 +77,16 @@ public:
 #if TEST==1
 
 struct crapkey : public BST {
+    crapkey(void) : BST(NULL), key(this) { }
     ~crapkey(void) { bst_free(); }
     BST_UINT32_t key;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &key, NULL };
-        return bst_do_fields( str, fields );
-    }
 };
 
 struct crapdata : public FileBlockBST {
-    crapdata(FileBlockInterface * _fbi) : FileBlockBST(_fbi) { }
+    crapdata(FileBlockInterface * _fbi) :
+        FileBlockBST(NULL,_fbi), data(this) { }
     ~crapdata(void) { bst_free(); }
     BST_UINT32_t data;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &data, NULL };
-        return bst_do_fields( str, fields );
-    }
 };
 
 struct ramcopy {

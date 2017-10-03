@@ -21,7 +21,7 @@ xmakefile: Makefile $(SRCS) $(HDRS)
 	$(CC) $(INCS) $(DEFS) -M $(SRCS) >> tmp
 	mv tmp xmakefile
 
-$(TARG): $(OBJS)
+$(TARG): $(OBJS) $(LIBS)
 	$(CC) $(OBJS) $(LIBS) -o $(TARG)
 
 .C.o:

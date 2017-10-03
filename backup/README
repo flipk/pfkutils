@@ -1,81 +1,26 @@
 
-this is a tool for archiving a set of files or a directory tree into
-an archive file, much like 'tar' does.  the difference is that this
-tool can selectively replace/update individual files in the archive in
-a space- and time-efficient manner.  in a 'tar' file, if you want to
-update one file in the archive, you must re-create the entire archive.
-even 'zip' files have this problem.
-
-another problem is during extraction, if you want only one file or a
-directory of files extracted, you must wait while the entire archive
-is read linearly from start to finish.  this is true with TAR files,
-although it is not true with ZIP and some other formats.  with this
-tool, you can extract a single file or directory instantly because it
-can seek directly to the part of the archive which stores that file.
-
-this version also includes compression, for example using libz to
-block-compress each file.
-
-this version also includes incremental backups with file versioning,
-so that the contents of a file from several backups previously can be
-recovered.  it attempts to be extremely efficient with the file in
-order to minimize the amount of time required to 'freshen' the backup.
-the idea being that backups may be freshened daily or perhaps even
-hourly.  if a file is modified or even deleted, and then a backup is
-run, the file's previous contents are kept in the backup and can be
-retrieved by specfifying a previous 'generation number'.
-
-each time that a backup is run, the generation number is incremented
-by 1.  every bit of data in the backup is tagged with a generation
-number of when it was added to the backup.  the backup also maintains
-a list of all generations still present in the file (as well as the
-date when that particular backup session was run).  the user may
-retrieve a list of all generations in the file, and selectively delete
-them.  if a file in the backup has a version of data associated with
-that generation, the data may be freed from the backup.  (unless of
-course that particular data is associated with additional
-generations.)
-
-
-
-
-
-
-command line forms:
-
-
-create file:    pfkbak -C[Vv] BACKUP-FILE
-
-list backups:   pfkbak -L[Vv] BACKUP-FILE
-create backup:  pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR
-update backup:  pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME DIR
-
-delete gens:    pfkbak -d[Vv] BACKUP-FILE BACKUP-NAME GenN A-B -B
-
-list files:     pfkbak -l[Vv] BACKUP-FILE BACKUP-NAME GenN
-
-extract:        pfkbak -e[Vv] BACKUP-FILE BACKUP-NAME GenN [FILE...]
-extract list:   pfkbak -E[Vv] BACKUP-FILE BACKUP-NAME GenN LIST-FILE
-
 database entries:
 
 - max 255 backups in a file
 - max 255 generations in a backup
 
-   BackupInfoList:
-      key : singleton
-      data : uint32 backup_ids[]
+   BackupFileInfo:
+      key :  <none> (singleton)
+      data : uint32 tool_version
+             uint32 backup_numbers[]
 
    BackupInfo:
-      key : backup_id
+      key : backup_number
       data : string backup_name
-             uint32 next_generation_id
-             GenerationInfo generations[]
-                uint32 generation_id
-                uint32 num_files
-                uint64 num_bytes
-                string date_time
-                uint32 GenerationFileList_fbn
+             string comment
+             uint32 generation_numbers[]
+
+   GenerationInfo:
+      key : backup_number, generation_number
+      data : string date_time
+             uint64 num_bytes
+             uint32 num_files
+             uint32 GenerationFileList_fbn
 
     GenerationFileList
         
@@ -103,3 +48,12 @@ database entries:
    BinaryData: (not btree!!)
       uint32 next_data
       binary data[]
+
+
+ALGORITHMS
+----------
+
+there is a singleton object which stores the tool version (used only
+for validation that the tool can open this file properly in the event
+that the data structure format has changed) and a list of the backup
+identifiers in the file.  when a backup is created or deleted, 

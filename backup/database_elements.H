@@ -24,62 +24,34 @@
 
 #include "bst.H"
 #include "Btree.H"
-#include "FileBlock_iface.H"
+#include "BtreeDbClasses.H"
 
-/** \mainpage PFK BAK Database Elements
-
- \dot
-  digraph junk {
-    node [shape=record, fontname=Helvetica, fontsize=10];
-    edge [ arrowhead="open", style="solid" ];
-    a [ label="BackupInfoList.backup_id" URL="\ref BackupInfoListData" ];
-    b [ label="BackupInfo.generations[n].root_dir_id"  URL="\ref BackupInfoData" ];
-    c [ label="BackupInfo...."  URL="\ref BackupInfoData" ];
-    d [ label="BackupInfo...."  URL="\ref BackupInfoData" ];
-    e [ label="DirectoryInfo 1.entries[n].info.*_id"  URL="\ref DirectoryInfoData" ];
-    f [ label="DirectoryInfo 1...."  URL="\ref DirectoryInfoData" ];
-    g [ label="DirectoryInfo 1...."  URL="\ref DirectoryInfoData" ];
-    h [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
-    i [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
-    j [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
-    k [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
-    l [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
-    m [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
-    n [ label="FileInfo 1"  URL="\ref FileInfoData" ];
-    o [ label="FileInfo 2"  URL="\ref FileInfoData" ];
-    p [ label="BinaryData 1" URL="\ref BinaryData" ];
-    q [ label="BinaryData 2" URL="\ref BinaryData" ];
-    r [ label="BinaryData 3" URL="\ref BinaryData" ];
-    s [ label="BinaryData 1" URL="\ref BinaryData" ];
-    t [ label="BinaryData 2" URL="\ref BinaryData" ];
-    u [ label="FileInfoExtended"  URL="\ref FileInfoExtended" ];
-    a -> b;    a -> c;    a -> d;    b -> e;    b -> f;    b -> g;
-    e -> h;    e -> i;    f -> j;    f -> k;    g -> l;    g -> m;
-    e -> n;    f -> n;    g -> n;    h -> o;    j -> o;    l -> o;
-    o -> p;    o -> q;    o -> u;    u -> r;    n -> s;    n -> t;
-  }
- \enddot
-*/
+#define TOOL_VERSION 1
 
 /** base type for any btree key. every btree key will have a prefix
  * byte which is unique to the type.  This struct's constructor ensures
- * that the prefix byte is populated. */
+ * that the prefix byte is populated.
+ * \note Every type which derives from this MUST include the "prefix"
+ *    field in the BST_FIELD_LIST.
+ */
 struct DatabaseKeys : public BST {
     enum Prefix {
         PREFIX_BACKUP_INFO_LIST,   /**< used by BackupInfoListKey */
         PREFIX_BACKUP_INFO,        /**< used by BackupInfoKey     */
+        PREFIX_GENERATION_INFO,
         PREFIX_DIR_INFO,           /**< used by DirectoryInfoKey  */
         PREFIX_FILE_INFO           /**< used by FileInfoKey       */
     };
     DatabaseKeys( Prefix _p ) { prefix.v = _p; }
-    BST_UINT8_t    prefix;
+    BST_UINT8_t    prefix;   /**< MUST be included in BSG_FIELD_LIST of
+                                any derived type. */
 };
 
 /** this is the very first data structure in the heirarchy of data
  * structures found in a backup.  this maps to BackupInfoListData
  * which will list all the individual backups found in this file. */
-struct BackupInfoListKey : public DatabaseKeys {
-    BackupInfoListKey(void) : DatabaseKeys(PREFIX_BACKUP_INFO_LIST) { }
+struct BackupFileInfoKey : public DatabaseKeys {
+    BackupFileInfoKey(void) : DatabaseKeys(PREFIX_BACKUP_INFO_LIST) { }
     // no additional data required for this key
     BST_FIELD_LIST( &prefix );
 };
@@ -87,30 +59,22 @@ struct BackupInfoListKey : public DatabaseKeys {
 /** companion to BackupInfoListKey, this lists all the backup identifiers
  * found in the file.  look each backup ID individually using
  * BackupInfoKey. */
-struct BackupInfoListData : public FileBlockBST {
-    BackupInfoListData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    ~BackupInfoListData(void) { bst_free(); }
-    BST_VAR_ARRAY <BST_UINT32_t>   backup_ids;
-    BST_FIELD_LIST( &backup_ids );
+struct BackupFileInfoData : public FileBlockBST {
+    BackupFileInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~BackupFileInfoData(void) { bst_free(); }
+    BST_UINT32_t   tool_version;  /**< version# of pfkbak that created it */
+    BST_VAR_ARRAY <BST_UINT32_t> backup_numbers;
+    BST_FIELD_LIST( &tool_version, &backup_numbers );
 };
+
+DB_ITEM_CLASS(BackupFileInfo);
 
 /** linked from BackupInfoListData, this lets you locate
  * a BackupInfoData which lists all the generations found in a backup. */
 struct BackupInfoKey : public DatabaseKeys {
     BackupInfoKey(void) : DatabaseKeys(PREFIX_BACKUP_INFO) { }
-    BST_UINT32_t   backup_id;
-    BST_FIELD_LIST( &prefix, &backup_id );
-};
-
-/** contained within a BackupInfoData. */
-struct GenerationInfo : public BST {
-    BST_UINT32_t   generation_id;   /**< identifier of generation       */
-    BST_UINT32_t   num_files;       /**< number of files in generation  */
-    BST_UINT64_t   num_bytes;       /**< number of bytes in generation  */
-    BST_STRING     date_time;       /**< when was this generation taken */
-    BST_UINT32_t   root_dir_id;     /**< pointer to DirectoryInfoKey    */
-    BST_FIELD_LIST( &generation_id, &num_files,
-                    &root_dir_id, &num_bytes, &date_time );
+    BST_UINT32_t   backup_number;
+    BST_FIELD_LIST( &prefix, &backup_number );
 };
 
 /** companion to BackupInfoKey, this lists info about a backup, such
@@ -120,9 +84,26 @@ struct BackupInfoData : public FileBlockBST {
     BackupInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
     ~BackupInfoData(void) { bst_free(); }
     BST_STRING     backup_name;            /**< text name of this backup. */
-    BST_UINT32_t   next_generation_id;     /**< next id# to use           */
-    BST_VAR_ARRAY <GenerationInfo>  generations; /**< list of all gens    */
-    BST_FIELD_LIST( &backup_name, &next_generation_id, &generations );
+    BST_STRING     comment;
+    BST_VAR_ARRAY <BST_UINT32_t>   generation_numbers;
+    BST_FIELD_LIST( &backup_name, &comment, &generation_numbers );
+};
+
+DB_ITEM_CLASS(BackupInfo);
+
+struct GenerationInfoKey : public DatabaseKeys {
+    GenerationInfoKey(void) : DatabaseKeys(PREFIX_GENERATION_INFO) { }
+    BST_UINT32_t  backup_number;
+    BST_UINT32_t  generation_number;
+    BST_FIELD_LIST( &prefix, &backup_number, &generation_number );
+};
+
+struct GenerationInfoData : public BST {
+    BST_STRING     date_time;       /**< when was this generation taken */
+    BST_UINT64_t   num_bytes;       /**< number of bytes in generation  */
+    BST_UINT32_t   num_files;       /**< number of files in generation  */
+//xxx
+    BST_FIELD_LIST( &date_time, &num_bytes, &num_files /*xxx*/ );
 };
 
 /** linked from GenerationInfo as well as from other DirectoryEntry. 
@@ -183,7 +164,7 @@ struct PieceVersions : public BST {
     BST_MD5_HASH   md5;       /**< hash of this piece */
     BST_UINT16_t   csize;     /**< compressed size of this piece */
     BST_UINT16_t   usize;     /**< uncompressed size of this piece */
-    BST_UINT32_t   data_fbn;  /**< fbn of the BinaryData */
+    BST_FB_AUID_t  data_fbn;  /**< fbn of the BinaryData */
     BST_FIELD_LIST(&generations, &md5, &csize, &usize, &data_fbn);
 };
 
@@ -192,13 +173,13 @@ struct PieceVersions : public BST {
  * found in FileInfoData. */
 struct FilePieces : public BST {
     BST_VAR_ARRAY <PieceVersions> pieces;    /**< a group of pieces */
-    BST_UINT32_t  next_pieces_fbn;    /**< pointer to FileInfoExtended */
+    BST_FB_AUID_t  next_pieces_fbn;    /**< pointer to FileInfoExtended */
     BST_FIELD_LIST(&pieces, &next_pieces_fbn);
 };
 
 /** data companion to FileInfoKey.  everything you ever wanted to know
  * about a file except its name (which is in the directory). */
-struct FileInfoData : public BST {
+struct FileInfoData : public FileBlockBST {
     FileInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
     ~FileInfoData(void) { bst_free(); }
     BST_UINT64_t  size;          /**< size of this file in bytes */
@@ -207,7 +188,7 @@ struct FileInfoData : public BST {
     BST_UINT16_t  refcount;      /**< how many directories (generations)
                                     reference this file */
     BST_UINT16_t  file_mode;     /**< as in chmod kind of mode */
-    BST_FIELD_LIST( &size, &atime, &num_pieces, &refcount, &first_pieces );
+    BST_FIELD_LIST( &size, &atime, &num_pieces, &refcount, &file_mode );
 };
 
 /** if there wasn't enough room in FileInfoData for all the pieces of a 
@@ -228,58 +209,6 @@ struct BinaryData : public FileBlockBST {
     BST_FIELD_LIST( &data );
 };
 
-class DB_ITEM {
-    Btree * bt;
-protected:
-    DB_ITEM(Btree * _bt) { bt = _bt; }
-    bool _put(BST * key, FileBlockBST * data, bool replace) {
-        UINT32 data_fbn;
-        if (!data->idvalid())
-        {
-            if (data->putnew( &data_fbn ) == false)
-            {
-                printf("putnew failure\n");
-                return false;
-            }
-        }
-        else
-        {
-            if (data->put() == false)
-            {
-                printf("put failure\n");
-                return false;
-            }
-            data_fbn = data->get_id();
-        }
-        if (bt->put(key, data_fbn, replace) == false)
-        {
-            printf("bt put failure\n");
-            return false;
-        }
-        return true;
-    }
-    bool _get(BST * key, FileBlockBST * data) {
-        UINT32 data_fbn;
-        if (bt->get(key, &data_fbn) == false)
-            return false;
-        if (data->get(data_fbn) == false)
-            return false;
-        return true;
-    }
-};
-
-#define DB_ITEM_CLASS(datum)                                            \
-    class datum : public DB_ITEM {                                      \
-    public:                                                             \
-        datum(Btree * _bt) : DB_ITEM(_bt), data(_bt->get_fbi()) { }     \
-        datum##Key key;                                                 \
-        datum##Data data;                                               \
-        bool put(bool repl=false) { return _put(&key, &data, repl); }   \
-        bool get(void) { return _get(&key, &data); }                    \
-    }
-
-DB_ITEM_CLASS(BackupInfoList);
-DB_ITEM_CLASS(BackupInfo);
 DB_ITEM_CLASS(DirectoryInfo);
 DB_ITEM_CLASS(FileInfo);
 

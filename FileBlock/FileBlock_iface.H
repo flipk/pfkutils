@@ -336,6 +336,7 @@ struct FileBlockT
 #include <signal.h>
 
 struct BST_FB_AUID_t : public BST_UINT32_t {
+    BST_FB_AUID_t(BST *parent) : BST_UINT32_t(parent) { }
 };
 
 /** A base class for a data type which uses the ByteSTream interface.
@@ -347,7 +348,7 @@ class FileBlockBST : public BST {
     /** set a reminder to ourselves indicating if we need to free something. */
     bool meminuse;
 public:
-    FileBlockBST(FileBlockInterface * _fbi) {
+    FileBlockBST(BST *parent, FileBlockInterface * _fbi) : BST(parent) {
         fbi = _fbi;
         id = 0;
         meminuse = false;
@@ -355,10 +356,9 @@ public:
     /** destructor for this object.  it is illegal to delete it 
      * without calling bst_free. the destructor will throw an error. */
     ~FileBlockBST(void) {
-        if (meminuse)
-        {
+        if (meminuse) {
             fprintf(stderr,"ERROR: types derived from FileBlockBST must "
-                    "call free in their destructors!\n");
+                    "call bst_free in their destructors!\n");
             kill(0,SIGABRT);
         }
     }

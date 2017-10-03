@@ -23,6 +23,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
     UINT32  index;
     FileEntryQueue   workq;
 
+    dbinf.key.info_key.set((char*)INFO_KEY);
     if (!dbinf.get())
     {
         fprintf(stderr, "failure fetching dbinfo\n");
@@ -47,9 +48,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         }
     }
 
-
     FileSeq  fiseq(db);
-    int i;
 
     // first identify the files deleted, modified, and unchanged.
 
@@ -73,8 +72,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
                 // recalculate the md5 of the file and update
                 // both the list entry and the database.
                 calc_md5( root_dir, fe.fe->path, fe.fef->md5 );
-                for (i=0; i < 16; i++)
-                    fiseq.data.md5hash.array[i].v = fe.fef->md5[i];
+                memcpy(fiseq.data.md5hash.binary, fe.fef->md5, 16);
                 fiseq.data.size.v = fe.fef->size;
                 fiseq.data.mtime.v = fe.fef->mtime;
                 fiseq.put(true);
@@ -84,8 +82,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
             {
                 // file is not modified.  optimize out the md5 
                 // calculation by copying out of the database.
-                for (i=0; i < 16; i++)
-                    fe.fef->md5[i] = fiseq.data.md5hash.array[i].v;
+                memcpy(fe.fef->md5, fiseq.data.md5hash.binary, 16);
             }
         }
         else
@@ -130,8 +127,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         fiseq.data.file_path.set(fe.fe->path);
         fiseq.data.size.v = fe.fef->size;
         fiseq.data.mtime.v = fe.fef->mtime;
-        for (i=0; i < 16; i++)
-            fiseq.data.md5hash.array[i].v = fe.fef->md5[i];
+        memcpy(fiseq.data.md5hash.binary, fe.fef->md5, 16);
         if (!fiseq.put())
             fprintf(stderr, "error putting created entry\n");
     }

@@ -115,18 +115,31 @@ public:
 
 // base class for any type which can be represented as a ByteStream
 class BST {
-protected:
-    bool bst_do_fields( BST_STREAM *str, BST ** fields ) {
-        for (int i=0; fields[i] != NULL; i++)
-            if (!fields[i]->bst_op(str))
-                return false;
-        return true;
-    }
+    BST * head;
+    BST * tail;
+    BST * next;
+    friend class BST_UNION;
 public:
+    BST(BST *parent) {
+        head = tail = next = NULL;
+        if (parent) {
+            if (parent->tail) {
+                parent->tail->next = this;
+                parent->tail = this;
+            } else {
+                parent->head = parent->tail = this;
+            }
+        }
+    }
     virtual ~BST(void) { /*placeholder*/ }
     // return true if operation was successful; 
     // return false if some problem (out of buffer, etc)
-    virtual bool bst_op( BST_STREAM *str ) = 0;
+    virtual bool bst_op( BST_STREAM *str ) {
+        for (BST * b = head; b; b = b->next)
+            if (!b->bst_op(str))
+                return false;
+        return true;
+    }
     int bst_calc_size(void) {
         BST_STREAM_BUFFER str(NULL,65536);
         str.start(BST_OP_CALC_SIZE);
@@ -164,21 +177,10 @@ public:
     }
 };
 
-#define BST_FIELD_LIST(list...)                     \
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {   \
-        BST * fields[] = { list, NULL };            \
-        return bst_do_fields( str, fields );        \
-    }
-
-#define BST_UNION_LIST(list...)                     \
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {   \
-        BST * fields[] = { list };                  \
-        return bst_do_union( str, fields );         \
-    }
-
 // BST base types follow.
 
 struct BST_UINT64_t : public BST {
+    BST_UINT64_t(BST *parent) : BST(parent) { }
     unsigned long long v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
@@ -222,6 +224,7 @@ struct BST_UINT64_t : public BST {
 };
 
 struct BST_UINT32_t : public BST {
+    BST_UINT32_t(BST *parent) : BST(parent) { }
     unsigned int v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
@@ -255,6 +258,7 @@ struct BST_UINT32_t : public BST {
 };
 
 struct BST_UINT16_t : public BST {
+    BST_UINT16_t(BST *parent) : BST(parent) { }
     unsigned short v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
@@ -285,6 +289,7 @@ struct BST_UINT16_t : public BST {
 };
 
 struct BST_UINT8_t : public BST {
+    BST_UINT8_t(BST *parent) : BST(parent) { }
     unsigned char v;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
@@ -316,6 +321,7 @@ struct BST_UINT8_t : public BST {
 
 template <int dim>
 struct BST_FIXED_BINARY : public BST {
+    BST_FIXED_BINARY(BST *parent) : BST(parent) { }
     unsigned char binary[dim];
     /*virtual*/ bool bst_op( BST_STREAM * str ) {
         UCHAR * ptr;
@@ -347,14 +353,16 @@ struct BST_FIXED_BINARY : public BST {
 
 
 struct BST_VAR_BINARY : public BST {
-    BST_VAR_BINARY(void) { binary = NULL; size = 0; }
+    BST_VAR_BINARY(BST *parent) : BST(parent) { binary = NULL; size = 0; }
     ~BST_VAR_BINARY(void) { if (binary) delete[] binary; }
     int size;
     unsigned char * binary;
     void alloc(int c) {
         if (size == c)
             return;
-        unsigned char * newbin = new unsigned char[c];
+        unsigned char * newbin = NULL;
+        if (c > 0)
+            newbin = new unsigned char[c];
         if (c > size)
         {
             memcpy(newbin, binary, size);
@@ -362,7 +370,8 @@ struct BST_VAR_BINARY : public BST {
         }
         else // c < size
         {
-            memcpy(newbin, binary, c);
+            if (c > 0)
+                memcpy(newbin, binary, c);
         }
         if (binary)
             delete[] binary;
@@ -371,10 +380,12 @@ struct BST_VAR_BINARY : public BST {
     }
     /*virtual*/ bool bst_op( BST_STREAM * str ) {
         UCHAR * ptr;
-        BST_UINT32_t   count;
+        BST_UINT32_t   count(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
+            if (!binary)
+                return false;
             count.v = size;
             if (!count.bst_op(str))
                 return false;
@@ -384,6 +395,8 @@ struct BST_VAR_BINARY : public BST {
             memcpy(ptr, binary, size);
             return true;
         case BST_OP_CALC_SIZE:
+            if (!binary)
+                return false;
             if (!count.bst_op(str))
                 return false;
             ptr = str->get_ptr(size);
@@ -397,13 +410,11 @@ struct BST_VAR_BINARY : public BST {
             ptr = str->get_ptr(size);
             if (!ptr)
                 return false;
+            alloc(size);
             memcpy(binary, ptr, size);
             return true;
         case BST_OP_MEM_FREE:
-            if (binary)
-                delete[] binary;
-            binary = NULL;
-            size = 0;
+            alloc(0);
             return true;
         }
         return false;
@@ -413,12 +424,12 @@ struct BST_VAR_BINARY : public BST {
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
 struct BST_STRING : public BST {
-    BST_STRING(void) { string = NULL; }
+    BST_STRING(BST *parent) : BST(parent) { string = NULL; }
     virtual ~BST_STRING(void) { if (string) delete[] string; }
     char * string;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
-        BST_UINT32_t  len;
+        BST_UINT32_t  len(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -447,6 +458,8 @@ struct BST_STRING : public BST {
         case BST_OP_DECODE:
             if (!len.bst_op(str))
                 return false;
+            if (string)
+                delete[] string;
             string = new char[len.v + 1];
             if (len.v > 0)
             {
@@ -480,11 +493,11 @@ struct BST_STRING : public BST {
 template <class T>
 class BST_POINTER : public BST {
 public:
-    BST_POINTER(void) { pointer = NULL; }
+    BST_POINTER(BST *parent) : BST(parent) { pointer = NULL; }
     virtual ~BST_POINTER(void) { if (pointer) delete pointer; }
     T * pointer;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        BST_UINT8_t  flag;
+        BST_UINT8_t  flag(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -503,7 +516,8 @@ public:
                 pointer = NULL;
             else
             {
-                pointer = new T;
+                if (!pointer)
+                    pointer = new T;
                 if (!pointer->bst_op(str))
                     return false;
             }
@@ -522,23 +536,11 @@ public:
     }
 };
 
-template <class T, int dim>
-class BST_FIXED_ARRAY : public BST {
-public:
-    T array[dim];
-    /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        for (int i=0; i < dim; i++)
-            if (!array[i].bst_op(str))
-                return false;
-        return true;
-    }
-};
-
 template <class T>
-class BST_VAR_ARRAY : public BST {
+class BST_ARRAY : public BST {
 public:
-    BST_VAR_ARRAY(void) { array = NULL; num_items = 0; }
-    virtual ~BST_VAR_ARRAY(void) { bst_var_array_free(); }
+    BST_ARRAY(BST *parent) : BST(parent) { array = NULL; num_items = 0; }
+    virtual ~BST_ARRAY(void) { bst_var_array_free(); }
     int num_items;
     T ** array;
     void alloc(int c) {
@@ -548,15 +550,12 @@ public:
         T ** narray = NULL;
         if (c > 0)
             narray = new T*[c];
-        if (c > num_items)
-        {
+        if (c > num_items) {
             for (i=0; i < num_items; i++)
                 narray[i] = array[i];
             for (; i < c; i++)
-                narray[i] = new T;
-        }
-        else // c < num_items
-        {
+                narray[i] = new T(NULL);
+        } else {// c < num_items
             for (i=0; i < c; i++)
                 narray[i] = array[i];
             for (;i < num_items; i++)
@@ -568,8 +567,7 @@ public:
         num_items = c;
     }
     void bst_var_array_free(void) {
-        if (array)
-        {
+        if (array) {
             for (int i=0; i < num_items; i++)
                 delete array[i];
             delete array;
@@ -579,7 +577,7 @@ public:
     }
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         int i;
-        BST_UINT32_t  count;
+        BST_UINT32_t  count(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -611,16 +609,36 @@ public:
 };
 
 // base class for an object with a union in it.
-#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 class BST_UNION : public BST {
     int max;
+    BST ** fields;
+    void flatten(void) {
+        if (fields)
+            return;
+        fields = new BST*[max];
+        BST * b; int i=0;
+        for (b = head; b; b = b->next) {
+            if (i >= max) {
+            enum_mismatch:
+                fprintf(stderr, "\nERROR IN UNION: enum mismatch!!\n\n");
+                exit(1);
+            }
+            fields[i++] = b;
+        }
+        if (i != max) goto enum_mismatch;
+    }
 public:
     BST_UINT8_t  which;
-    BST_UNION( int _max ) { max = _max; which.v = max; }
-    virtual ~BST_UNION(void) { bst_free(); }
-    bool bst_do_union( BST_STREAM *str, BST ** fields ) {
+    BST_UNION( BST *parent, int _max )
+        : BST(parent), which(NULL) {
+        max = _max; which.v = max; fields = NULL;
+    }
+    virtual ~BST_UNION(void) { delete[] fields; }
+    /*virtual*/ bool bst_op( BST_STREAM *str ) {
+        flatten();
         if (!which.bst_op(str))
             return false;
         if (which.v >= max)
@@ -633,59 +651,71 @@ public:
     }
 };
 
-/* example class using multiple fields, and a union:
+/* examples:
 
-class CrapUnion : public BST_UNION {
-public:
-    enum { ONE, TWO, MAX };
-    CrapUnion(void) : BST_UNION(MAX) { }
-    // recall that you can also use BST_POINTER <> template too,
-    // if you want to save space in the Union type.
-    BST_UINT32_t   one;
-    BST_STRING     two;
-    BST_UNION_LIST(&one, &two);
+
+struct myUnion : public BST_UNION {
+    enum { AYE, BEE, CEE, DEE, MAX };
+    myUnion(BST *parent) :
+        BST_UNION(parent,MAX),
+        a(this), b(this), c(this), d(this) { }
+    BST_UINT64_t  a;
+    BST_UINT32_t  b;
+    BST_UINT16_t  c;
+    BST_UINT8_t   d;
 };
 
-class CrapType : public BST {
-public:
-    ~CrapType(void) { bst_free(); }
-    BST_UINT32_t one;
-    BST_UINT32_t two;
-    CrapUnion un;
-    BST_FIELD_LIST(&one, &two, &un);
+struct myStruct1 : public BST {
+    myStruct1(BST * parent) :
+        BST(parent),
+        one(this), two(this) { }
+    BST_UINT32_t  one;
+    BST_UINT32_t  two;
 };
 
-
-another useful example:
-
-struct JunkType : public BST {
-    ~JunkType(void) { bst_free(); }
-    BST_UINT32_t one;
-    BST_STRING   two;
-    BST_FIELD_LIST(&one, &two);
+struct myStruct2 : public BST {
+    myStruct2(BST *parent)
+        : BST(parent),
+          thing(this), three(this), un(this) {}
+    myStruct1     thing;
+    BST_UINT32_t  three;
+    myUnion     un;
 };
 
-void func(void) {
-    JunkType  j, k;
-    j.one.v = 24;
-    j.two.strdup((char*)"this is a stupid test");
-    int jlen = 0;
-    UCHAR * jptr = j.bst_encode( &jlen );
-    if (!jptr)
-        printf("encode failure\n");
-    else
-    {
-        for (int i = 0; i < jlen; i++)
-            printf("%02x", jptr[i]);
-        printf("\n");
-        if (!k.bst_decode(jptr,jlen))
-            printf("decode failure\n");
-        else
-            printf("%d %s\n", k.one.v, k.two.string);
-        delete[] jptr;
+int main() {
+    myStruct2  x(NULL);
+    myStruct2  y(NULL);
+    UCHAR * buffer;
+    int len;
+
+    x.thing.one.v = 4;
+    x.thing.two.v = 8;
+    x.three.v = 12;
+    x.un.which.v = myUnion::CEE;
+    x.un.c.v = 127;
+    buffer = x.bst_encode(&len);
+    if (!buffer) {
+        printf("encode error\n");
+        return 1;
     }
+    for (int i=0; i < len; i++)
+        printf("%02x ", buffer[i]);
+    printf("\n");
+    if (!y.bst_decode(buffer,len)) {
+        printf("decode error\n");
+        return 1;
+    }
+    printf("%d %d %d %d ", x.thing.one.v, x.thing.two.v,
+           x.three.v, x.un.which.v);
+    switch (x.un.which.v) {
+    case myUnion::AYE:  printf("a=%lld\n", x.un.a.v); break;
+    case myUnion::BEE:  printf("b=%d\n"  , x.un.b.v); break;
+    case myUnion::CEE:  printf("c=%d\n"  , x.un.c.v); break;
+    case myUnion::DEE:  printf("d=%d\n"  , x.un.d.v); break;
+    }
+    delete[] buffer;
+    return 0;
 }
-
 
  */
 

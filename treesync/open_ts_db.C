@@ -32,8 +32,25 @@ open_ts_db(char *dir)
             return NULL;
         }
         DbInfo  dbi(ret);
+        dbi.key.info_key.set((char*)INFO_KEY);
         dbi.data.num_files.v = 0;
+        dbi.data.tool_version.v = TOOL_VERSION;
         dbi.put(true);
+    }
+
+    DbInfo  dbi(ret);
+    dbi.key.info_key.set((char*)INFO_KEY);
+    if (!dbi.get())
+    {
+        fprintf(stderr,"DB INFO key not found in database!!\n");
+        delete ret;
+        return NULL;
+    }
+    if (dbi.data.tool_version.v != TOOL_VERSION)
+    {
+        fprintf(stderr, "Tool version mismatch error!!\n");
+        delete ret;
+        return NULL;
     }
 
     return ret;
