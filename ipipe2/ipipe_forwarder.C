@@ -7,15 +7,17 @@
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp )
 {
-    fd          = _fd;
-    doread      = _doread;
-    dowrite     = _dowrite;
-    dowuncomp   = _dowuncomp;
-    dowcomp     = _dowcomp;
-
-    reader_done = false;
-    writer_done = false;
-    reader      = NULL;
+    fd            = _fd;
+    doread        = _doread;
+    dowrite       = _dowrite;
+    dowuncomp     = _dowuncomp;
+    dowcomp       = _dowcomp;
+    reader_done   = false;
+    writer_done   = false;
+    reader        = NULL;
+    bytes_read    = 0;
+    bytes_written = 0;
+    zs            = NULL;
 
     if ( dowuncomp && dowcomp )
     {
@@ -37,8 +39,6 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
         zs->avail_in  = 0;
         zs->avail_out = zbuf_size;
     }
-    else
-        zs = NULL;
     if ( dowuncomp )
         inflateInit( zs );
     else if ( dowcomp )
@@ -49,13 +49,9 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
 ipipe_forwarder :: ~ipipe_forwarder( void )
 {
     if ( zs && dowuncomp )
-    {
         inflateEnd( zs );
-    }
     if ( zs && dowcomp )
-    {
         deflateEnd( zs );
-    }
     if ( zs )
     {
         delete[] inbuf;
@@ -113,6 +109,7 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
         return DEL;
     }
 
+    bytes_read += cc;
     writer->record_write( cc );
 
     return OK;
@@ -158,6 +155,7 @@ ipipe_forwarder :: write( fd_mgr * mgr )
                 reader->do_close = true;
             return DEL;
         }
+        bytes_written += cc;
         buf->record_read( cc );
         return OK;
     }

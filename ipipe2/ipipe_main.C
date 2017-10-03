@@ -7,6 +7,7 @@
 #include "ipipe_factories.H"
 #include "ipipe_acceptor.H"
 #include "ipipe_connector.H"
+#include "ipipe_forwarder.H"
 #include "ipipe_tick.H"
 
 const char * help_msg =
@@ -26,23 +27,21 @@ const char * help_msg =
 "    -f: forward local port to remote host/port\n"
 ;
 
-static void
+//static
+void
 tick_func( void * )
 {
-    printf( "tick\n" );
 }
 
 int
 main( int argc,  char ** argv )
 {
-    fd_mgr         mgr( false, 1 );
+    fd_mgr         mgr( true, 0 );
     fd_interface * fdi;
-    tick_fd  *     tick_fd_ptr;
 
-    tick_fd_ptr = new tick_fd( 10 );
-    mgr.register_fd( tick_fd_ptr );
-
-    tick_fd_ptr->register_tick( tick_func, 0 );
+//    tick_fd * tick_fd_ptr = new tick_fd( 10 );
+//    mgr.register_fd( tick_fd_ptr );
+//    tick_fd_ptr->register_tick( tick_func, 0 );
 
 #if 0
     /* tcpgate mode */

@@ -27,6 +27,9 @@ class ipipe_forwarder : public fd_interface {
     static const int zbuf_size   = 5000;
     char *  inbuf;
     void zloop( void );
+
+    int bytes_read;
+    int bytes_written;
 public:
     ipipe_forwarder( int _fd, bool doread, bool dowrite,
                      bool dowuncomp, bool dowcomp );
@@ -36,6 +39,10 @@ public:
     int write_space_remaining( void );
     char * write_space( void );
     void record_write( int len );
+
+    void query_stats( int * _read, int * _written ) {
+        *_read = bytes_read;  *_written = bytes_written;
+    }
 
     /*virtual*/ ~ipipe_forwarder( void );
     /*virtual*/ rw_response read ( fd_mgr * );
