@@ -12,19 +12,38 @@
 
 #undef  DEBUG
 
+Btree :: Btree( FileBlockNumber * _nodes,
+                FileBlockNumber * _keys,
+                FileBlockNumber * _data )
+    throw ( constructor_failed )
+{
+    fbn_nodes = _nodes;
+    fbn_keys = _keys;
+    fbn_data = _data;
+    Btree_common();
+}
+
 Btree :: Btree( FileBlockNumber * _fbn )
     throw ( constructor_failed )
 {
+    fbn_nodes = _fbn;
+    fbn_keys = _fbn;
+    fbn_data = _fbn;
+    Btree_common();
+}
+
+void
+Btree :: Btree_common( void )
+{
     UINT32 bn;
     int len;
-    fbn = _fbn;
 
     // find btreeinfo node somewhere at the beginning
     // of the file.
 
-    for ( bn = fbn->min_block_no(); bn < MAX_BTI_HUNT; bn++ )
+    for ( bn = fbn_nodes->min_block_no(); bn < MAX_BTI_HUNT; bn++ )
     {
-        bti = (btreeinfo*) fbn->get_block( bn, &len, &bti_magic );
+        bti = (btreeinfo*) fbn_nodes->get_block( bn, &len, &bti_magic );
 
         if ( bti == NULL )
             continue;
@@ -32,7 +51,7 @@ Btree :: Btree( FileBlockNumber * _fbn )
         if ( bti->magic == BTI_MAGIC )
             break;
 
-        fbn->unlock_block( bti_magic, false );
+        fbn_nodes->unlock_block( bti_magic, false );
     }
 
     constructor_failed::failure_reason res =
@@ -55,8 +74,13 @@ Btree :: ~Btree( void )
     // record still locked. if not, the fileblocknumber
     // will complain and make it obvious that something is wrong.
 
-    fbn->unlock_block( bti_magic, true );
-    delete fbn;
+    fbn_nodes->unlock_block( bti_magic, true );
+    delete fbn_nodes;
+    if ( fbn_keys != fbn_nodes )
+        delete fbn_keys;
+    if ( fbn_data != fbn_keys && 
+         fbn_data != fbn_nodes )
+        delete fbn_data;
 }
 
 void
@@ -97,7 +121,7 @@ Btree :: fetch_node( UINT32 blockno, bool newnode )
     int dummylen;
     node * r = LOGNEW node;
     r->dirty = false;
-    r->nd = (_node*) fbn->get_block( blockno, &dummylen, &r->magic );
+    r->nd = (_node*) fbn_nodes->get_block( blockno, &dummylen, &r->magic );
     if ( r->nd == NULL )
     {
         delete r;
@@ -112,7 +136,7 @@ Btree :: fetch_node( UINT32 blockno, bool newnode )
     if (( r->nd->magic != NODE_MAGIC ) ||
         ( dummylen != node_size( bti->order )))
     {
-        fbn->unlock_block( r->magic, false );
+        fbn_nodes->unlock_block( r->magic, false );
         delete r;
         return NULL;
     }
@@ -122,7 +146,7 @@ Btree :: fetch_node( UINT32 blockno, bool newnode )
 void
 Btree :: unlock_node( node * n )
 {
-    fbn->unlock_block( n->magic, n->dirty );
+    fbn_nodes->unlock_block( n->magic, n->dirty );
     delete n;
 }
 
@@ -141,7 +165,7 @@ Btree :: fetch_rec( UINT32 keyblockno, UINT32 datablockno )
 
     if ( ret->key.recno != INVALID_BLK )
     {
-        ret->key.ptr = fbn->get_block( ret->key.recno,
+        ret->key.ptr = fbn_keys->get_block( ret->key.recno,
                                        &ret->key.len,
                                        &ret->key.magic );
         if ( ret->key.ptr == NULL )
@@ -155,12 +179,12 @@ Btree :: fetch_rec( UINT32 keyblockno, UINT32 datablockno )
 
     if ( ret->data.recno != INVALID_BLK )
     {
-        ret->data.ptr = fbn->get_block( ret->data.recno,
+        ret->data.ptr = fbn_data->get_block( ret->data.recno,
                                         &ret->data.len,
                                         &ret->data.magic );
         if ( ret->data.ptr == NULL )
         {
-            fbn->unlock_block( ret->key.magic, false );
+            fbn_keys->unlock_block( ret->key.magic, false );
             delete ret;
             return NULL;
         }
@@ -311,14 +335,14 @@ Btree :: alloc_rec( int keylen, int datalen )
     rec * ret = LOGNEW rec;
 
     ret->key.len = keylen;
-    ret->key.recno = fbn->alloc( keylen );
-    ret->key.ptr = fbn->get_block( ret->key.recno,
+    ret->key.recno = fbn_keys->alloc( keylen );
+    ret->key.ptr = fbn_keys->get_block( ret->key.recno,
                                    &keylen, &ret->key.magic );
     ret->key.dirty = true;
 
     ret->data.len = datalen;
-    ret->data.recno = fbn->alloc( datalen );
-    ret->data.ptr = fbn->get_block( ret->data.recno,
+    ret->data.recno = fbn_data->alloc( datalen );
+    ret->data.ptr = fbn_data->get_block( ret->data.recno,
                                     &datalen, &ret->data.magic );
     ret->data.dirty = true;
 
@@ -336,10 +360,10 @@ void
 Btree :: unlock_rec( rec * r )
 {
     if (( r->key.recno != INVALID_BLK ) && ( r->key.ptr != NULL ))
-        fbn->unlock_block( r->key.magic,  r->key.dirty  );
+        fbn_keys->unlock_block( r->key.magic,  r->key.dirty  );
 
     if (( r->data.recno != INVALID_BLK ) && ( r->data.ptr != NULL ))
-        fbn->unlock_block( r->data.magic, r->data.dirty );
+        fbn_data->unlock_block( r->data.magic, r->data.dirty );
 
     delete r;
 }
@@ -439,10 +463,10 @@ Btree :: walk_node( node * n, rec * r, bool &exact )
         // compare_recs only needs the key portion
         // so optimize by not fetching the data portion
         tmp.key.recno = bn;
-        tmp.key.ptr = fbn->get_block( bn, &tmp.key.len,
+        tmp.key.ptr = fbn_keys->get_block( bn, &tmp.key.len,
                                       &tmp.key.magic );
         cmpres = compare_recs( r, &tmp );
-        fbn->unlock_block( tmp.key.magic, false );
+        fbn_keys->unlock_block( tmp.key.magic, false );
         if ( cmpres <= 0 )
             break;
     }
@@ -468,7 +492,7 @@ Btree :: split_node( node *n, rec *r, UINT32 rightnode, int index )
     int i;
 
     bti->numnodes++;
-    newrightnode = fbn->alloc( node_size( bti->order ));
+    newrightnode = fbn_nodes->alloc( node_size( bti->order ));
     right = fetch_node( newrightnode, true );
 
     right->dirty = true;
@@ -598,10 +622,10 @@ Btree :: split_node( node *n, rec *r, UINT32 rightnode, int index )
         // abbreviated versions of unlock_rec and fetch_rec here.
 
         if (( r->key.recno != INVALID_BLK ) && ( r->key.ptr != NULL ))
-            fbn->unlock_block( r->key.magic,  r->key.dirty  );
+            fbn_keys->unlock_block( r->key.magic,  r->key.dirty  );
 
         if (( r->data.recno != INVALID_BLK ) && ( r->data.ptr != NULL ))
-            fbn->unlock_block( r->data.magic, r->data.dirty );
+            fbn_data->unlock_block( r->data.magic, r->data.dirty );
 
         // the second half of the put() method and the 
         // split_node() algorithm do not require the pointer
@@ -659,10 +683,10 @@ Btree :: put_rec( rec * newr )
             // new data portion, and delete our new key
             // since its really a duplicate of the old key.
 
-            fbn->free( curnod->nd->d[index].data );
+            fbn_data->free( curnod->nd->d[index].data );
             curnod->nd->d[index].data = newr->data.recno;
-            fbn->unlock_block( newr->key.magic, false );
-            fbn->free( newr->key.recno );
+            fbn_keys->unlock_block( newr->key.magic, false );
+            fbn_keys->free( newr->key.recno );
             newr->key.recno = INVALID_BLK;
             curnod->dirty = true;
             ret = PUT_OVERWRITE;
@@ -743,7 +767,7 @@ Btree :: put_rec( rec * newr )
             // a new root node and insert the pivot record
             // by itself here.
 
-            UINT32 newrootbn = fbn->alloc( node_size( bti->order ));
+            UINT32 newrootbn = fbn_nodes->alloc( node_size( bti->order ));
             node * newroot = fetch_node( newrootbn, true );
             newroot->dirty = true;
             newroot->nd->set_numitems( 1 );
@@ -872,8 +896,8 @@ Btree :: delete_rec( rec * del_rec )
             curnod->nd->d[index].key, 
             curnod->nd->d[index].data );
 #endif
-    fbn->free( curnod->nd->d[index].key  );
-    fbn->free( curnod->nd->d[index].data );
+    fbn_keys->free( curnod->nd->d[index].key  );
+    fbn_data->free( curnod->nd->d[index].data );
 
     nodstor * ndstptr;
 
@@ -1278,7 +1302,7 @@ Btree :: delete_rec( rec * del_rec )
             {
             case SIB_LEFT:
                 unlock_node( l );
-                fbn->free( l_sibblockno );
+                fbn_nodes->free( l_sibblockno );
 #ifdef DEBUG
                 printf( "freed left %d\n", l_sibblockno );
 #endif
@@ -1290,7 +1314,7 @@ Btree :: delete_rec( rec * del_rec )
                 // instead, copy contents over and rename.
                 memcpy( curnod->nd, r->nd, node_size( bti->order ));
                 unlock_node( r );
-                fbn->free( r_sibblockno );
+                fbn_nodes->free( r_sibblockno );
 #ifdef DEBUG
                 printf( "freed right %d\n", r_sibblockno );
 #endif
@@ -1323,7 +1347,7 @@ Btree :: delete_rec( rec * del_rec )
 
     if ( oldrootfree )
     {
-        fbn->free( oldrootblockno );
+        fbn_nodes->free( oldrootblockno );
 #ifdef DEBUG
         printf( "freed root %d\n", oldrootblockno );
 #endif

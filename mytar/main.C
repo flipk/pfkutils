@@ -90,6 +90,7 @@ mytar_main( int argc, char ** argv )
             return extract_multiple_mtar( argv[2], argc-3, argv+3 );
     }
     usage();
+    return 1;
 }
 
 int

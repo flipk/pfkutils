@@ -68,7 +68,10 @@ public:
 };
 
 class file_db {
-    FileBlockNumber * fbn;
+    FileBlockNumber * fbn_nodes;
+    FileBlockNumber * fbn_keys;
+    FileBlockNumber * fbn_data;
+    FileBlockNumber * fbn_contents;
     Btree * bt;
     UINT32 current_mark;
     file_info_list  update_list;

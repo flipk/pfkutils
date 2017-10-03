@@ -178,7 +178,10 @@ private:
 
     rec  * fetch_rec( UINT32 keyblockno, UINT32 datablockno );
 
-    FileBlockNumber * fbn;
+    FileBlockNumber * fbn_nodes;
+    FileBlockNumber * fbn_keys;
+    FileBlockNumber * fbn_data;
+    void Btree_common( void );
 public:
     class constructor_failed { 
     public:
@@ -188,11 +191,14 @@ public:
         } reason;
         constructor_failed( failure_reason x ) { reason = x; }
     };
-    FileBlockNumber * get_fbn(void) { return fbn; }
+    FileBlockNumber * get_fbn_data(void) { return fbn_data; }
 
     static void new_file( FileBlockNumber * fbn, int order );
 
     Btree( FileBlockNumber * ) throw ( constructor_failed );
+    Btree( FileBlockNumber * nodes,
+           FileBlockNumber * keys,
+           FileBlockNumber * data ) throw ( constructor_failed );
     ~Btree( void );
 
     void query( btreeinfo * _bti ) {
@@ -201,9 +207,13 @@ public:
 
     int flush( void ) {
         UINT32 bn = bti->bti_recno;
-        fbn->unlock_block( bti_magic, true );
-        int ret = fbn->flush();
-        bti = (btreeinfo*) fbn->get_block( bn, &bti_magic );
+        fbn_nodes->unlock_block( bti_magic, true );
+        int ret = fbn_nodes->flush();
+        if ( fbn_keys != fbn_nodes )
+            ret += fbn_keys->flush();
+        if ( fbn_data != fbn_nodes && fbn_data != fbn_keys )
+            ret += fbn_data->flush();
+        bti = (btreeinfo*) fbn_nodes->get_block( bn, &bti_magic );
         return ret;
     }
 

@@ -18,9 +18,20 @@ file_db :: file_db( char * fname, bool create_it )
     int    c1 = 1000;  // ?
     int order =   29;  // ?
 
+    int fnamelen = strlen(fname);
+    char fname0[ fnamelen + 6 ]; // ".nodes"
+    char fname1[ fnamelen + 5 ]; // ".keys"
+    char fname2[ fnamelen + 5 ]; // ".data"
+    char fname3[ fnamelen + 5 ]; // ".cont"
+
+    sprintf( fname0, "%s.nodes", fname );
+    sprintf( fname1, "%s.keys",  fname );
+    sprintf( fname2, "%s.data",  fname );
+    sprintf( fname3, "%s.cont",  fname );
+
     if ( create_it )
     {
-        if ( stat( fname, &sb ) == 0 )
+        if ( stat( fname0, &sb ) == 0 )
         {
             fprintf( stderr, 
                      "file '%s' already exists\n", fname );
@@ -29,7 +40,7 @@ file_db :: file_db( char * fname, bool create_it )
     }
     else
     {
-        if ( stat( fname, &sb ) < 0 )
+        if ( stat( fname0, &sb ) < 0 )
         {
             fprintf( stderr,
                      "unable to stat '%s': %s\n",
@@ -38,8 +49,15 @@ file_db :: file_db( char * fname, bool create_it )
         }
     }
 
-    fbn = new FileBlockNumber( fname, c1, 32, 32768 );
-    if ( !fbn )
+    fbn_nodes     = new FileBlockNumber( fname0, c1, 32, 32768 );
+#if 1
+    fbn_keys      = new FileBlockNumber( fname1, c1, 32, 32768 );
+    fbn_data      = new FileBlockNumber( fname2, c1, 32, 32768 );
+    fbn_contents  = new FileBlockNumber( fname3, c1, 32, 32768 );
+#else
+    fbn_keys = fbn_data = fbn_contents = fbn_nodes;
+#endif
+    if ( !fbn_nodes || !fbn_keys || !fbn_data || !fbn_contents )
     {
         fprintf( stderr, 
                  "opening '%s': %s\n", fname, strerror(errno) );
@@ -47,9 +65,9 @@ file_db :: file_db( char * fname, bool create_it )
     }
 
     if ( create_it )
-        Btree::new_file( fbn, order );
+        Btree::new_file( fbn_nodes, order );
 
-    bt = new Btree( fbn );
+    bt = new Btree( fbn_nodes, fbn_keys, fbn_data );
     if ( !bt )
     {
         fprintf( stderr, 
@@ -63,19 +81,20 @@ file_db :: file_db( char * fname, bool create_it )
 
 file_db :: ~file_db( void )
 {
-    delete bt;   // this also deletes fbn
+    delete bt;   // this also deletes fbns
+    delete fbn_contents;
 }
 
 class file_db_iterate_pi : public btree_printinfo {
 public:
     file_db * me;
-    FileBlockNumber * fbn;
+    FileBlockNumber * fbn_data;
     file_db_iterator * it;
     file_db_iterate_pi( file_db * _me,
-                        FileBlockNumber * _fbn,
+                        FileBlockNumber * _fbn_data,
                         file_db_iterator * _it ) :
         btree_printinfo( KEY_REC_PTR /* | DATA_REC_PTR */ ) {
-        me = _me; fbn = _fbn; it = _it;
+        me = _me; fbn_data = _fbn_data; it = _it;
     }
     // sprintelement should return null if dumptree/dumpnode should stop.
     virtual char * sprint_element( UINT32 noderec,
@@ -87,10 +106,11 @@ public:
         {
             UINT32 magic;
             int data_size;
-            UCHAR * data_block = fbn->get_block( datrec, &data_size, &magic );
+            UCHAR * data_block =
+                fbn_data->get_block( datrec, &data_size, &magic );
             file_info * fi = me->_get_info_from_block(
                 d2k->id.get(), data_block, data_size );
-            fbn->unlock_block( magic, false );
+            fbn_data->unlock_block( magic, false );
             if ( fi )
                 it->file( fi );
         }
@@ -111,7 +131,7 @@ public:
 void
 file_db :: iterate( file_db_iterator * it )
 {
-    file_db_iterate_pi  fdipi( this, bt->get_fbn(), it );
+    file_db_iterate_pi  fdipi( this, fbn_data, it );
     bt->dumptree( &fdipi );
 }
 
@@ -290,7 +310,7 @@ public:
         datum_2_key * d2k = (datum_2_key *) key;
         if ( d2k->prefix_i == 'i' )
         {
-            FileBlockNumber * fbn = bt->get_fbn();
+            FileBlockNumber * fbn = bt->get_fbn_data();
             UINT32 magic;
             int d2size;
             datum_2 * d2 = (datum_2 *)
@@ -380,7 +400,7 @@ file_db :: delete_old( void )
                 break;
             d3 = (datum_3 *) d3rec->data.ptr;
             if ( d3->size.get() > 0 )
-                bt->get_fbn()->free( d3->blockno.get() );
+                fbn_contents->free( d3->blockno.get() );
             bt->delete_rec( d3rec );
         }
     }
@@ -411,7 +431,7 @@ file_db :: truncate_pieces( UINT32 id, UINT32 num_pieces )
             break;
         d3 = (datum_3 *) d3rec->data.ptr;
         if ( d3->size.get() > 0 )
-            bt->get_fbn()->free( d3->blockno.get() );
+            fbn_contents->free( d3->blockno.get() );
         bt->delete_rec( d3rec );
     }
 }
@@ -467,8 +487,8 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     if ( outlen != d3->size.get() )
     {
         if ( d3->size.get() != 0 )
-            bt->get_fbn()->free( blockno );
-        blockno = bt->get_fbn()->alloc( outlen );
+            fbn_contents->free( blockno );
+        blockno = fbn_contents->alloc( outlen );
         d3->size.set( outlen );
         d3->blockno.set( blockno );
     }
@@ -480,9 +500,9 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     else
         bt->put_rec( d3rec );
 
-    ptr = bt->get_fbn()->get_block_for_write( blockno, NULL, &block_magic );
+    ptr = fbn_contents->get_block_for_write( blockno, NULL, &block_magic );
     memcpy( ptr, outbuf, outlen );
-    bt->get_fbn()->unlock_block( block_magic, true );
+    fbn_contents->unlock_block( block_magic, true );
 
     return true;
 }
@@ -524,14 +544,14 @@ file_db :: extract_piece( UINT32 id, UINT32 piece_num,
         UCHAR * ptr;
 
         blockno = d3->blockno.get();
-        ptr = bt->get_fbn()->get_block( blockno, &magic );
+        ptr = fbn_contents->get_block( blockno, &magic );
         if ( !ptr )
         {
             fprintf( stderr, "internal error in extract_piece!\n" );
             kill(0,6);
         }
         (void) uncompress( (Bytef*)buf, (uLongf*)buflen, ptr, db_len );
-        bt->get_fbn()->unlock_block( magic, false );
+        fbn_contents->unlock_block( magic, false );
     }
 
     bt->unlock_rec( d3rec );

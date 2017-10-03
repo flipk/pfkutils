@@ -531,11 +531,16 @@ FileBlockNumber :: alloc( int bytes )
 
             for ( bit = reserved_bits; bit < recs_per_segment; )
             {
+                int c;
                 bool v = bm->getbit( bit );
-                int c = bm->countbits( bit, recs, pagesize );
 
-                if ( !v )
+                if ( v )
                 {
+                    c = bm->countbits( bit, pagesize*8, pagesize );
+                }
+                else
+                {
+                    c = bm->countbits( bit, recs, pagesize );
                     if ( c >= recs )
                     {
                         seg_num = bm->key_value;
