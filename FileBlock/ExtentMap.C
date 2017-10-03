@@ -31,14 +31,14 @@ public:
  * This class manages free Extent objects.  They're small so the
  * malloc/free overhead would be terrible.  Make a list of ExtentsPages
  * and a list of free Extent objects, and deliver them upon request. */
-class ExtentPool {
+class ExtentFreePool {
     /** a list of all free Extent objects. */
-    LList <Extent,EXTENT_LIST> list;
+    ExtentOrderedList    list;
     /** a list of all ExtentsPage objects. */
     LList <ExtentsPage,0> pages;
 public:
     /** destructor; empties list and deletes all ExtentsPage objs */
-    ~ExtentPool(void) {
+    ~ExtentFreePool(void) {
         Extent * e;
         ExtentsPage * p;
         while ((e = list.dequeue_head()) != NULL)
@@ -75,7 +75,7 @@ public:
 };
 
 /** here is the pool of all free Extent objects */
-static ExtentPool extent_pool;
+static ExtentFreePool extent_pool;
 
 Extents :: Extents( void )
 {
@@ -92,7 +92,10 @@ Extents :: ~Extents( void )
         ne = list.get_next(e);
         list.remove(e);
         if (e->used)
-            hash.remove(e);
+        {
+            idhash.remove(e);
+            offsethash.remove(e);
+        }
         else
             remove_from_bucket(e);
         extent_pool.free(e);
@@ -124,7 +127,7 @@ Extents :: alloc_id( void )
         do {
             id = random();
         } while (id == 0 || id == 0xFFFFFFFFU);
-        e = hash.find(id);
+        e = idhash.find(id);
     } while (e != NULL);
 
     return id;
@@ -144,14 +147,21 @@ Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
 {
     Extent * e = extent_pool.alloc( _offset, _size, _id );
     list.add(e);
-    hash.add(e);
+    idhash.add(e);
+    offsethash.add(e);
     count_used ++;
 }
 
 Extent *
 Extents :: find( UINT32 id )
 {
-    return hash.find(id);
+    return idhash.find(id);
+}
+
+Extent *
+Extents :: find( off_t offset )
+{
+    return offsethash.find(offset);
 }
 
 /** \note Sizes are always rounded up to the nearest 32-byte boundary. */
@@ -198,7 +208,8 @@ Extents :: alloc( UINT32 size )
         // flip this one to used and return it.
         e->used = 1;
         e->id = id;
-        hash.add(e);
+        idhash.add(e);
+        offsethash.add(e);
         count_free --;
         return e;
     }
@@ -209,7 +220,8 @@ Extents :: alloc( UINT32 size )
     e->offset += size;
     list.add_before(ne, e);
     add_to_bucket(e);
-    hash.add(ne);
+    idhash.add(ne);
+    offsethash.add(ne);
 
     return ne;
 }
@@ -229,7 +241,8 @@ Extents :: free( Extent * e )
         return;
 
     // remove from hash before clearing id!
-    hash.remove(e);
+    idhash.remove(e);
+    offsethash.remove(e);
     e->id = 0;
     e->used = 0;
     count_used --;

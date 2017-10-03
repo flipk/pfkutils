@@ -111,8 +111,26 @@ Next: \ref FileBlock
 
 */
 
-/** DLL2 enum for definint the lists used by Extent objects */
-enum EXTENT_MAP_LIST_INDICES { EXTENT_LIST, EXTENT_HASH, NUM_LISTS };
+/** DLL2 enum for defining the lists used by Extent objects */
+enum EXTENT_MAP_LIST_INDICES {
+    EXTENT_LIST,         /**< if an Extent is in the ExtentFreePool, this 
+                            list is used for the ExtentFreePool list.  if
+                            an Extent object is in the Extents map, this 
+                            index is used for the ordered Extent list.
+                            \see ExtentOrderedList */
+    EXTENT_ID_HASH,      /**< an Extent representing a 'used' block is on
+                            the id hash using this index.  an Extent 
+                            representing a 'free' block is on the bucket
+                            list using this index.  this index is not used
+                            for an Extent in the ExtentFreePool.
+                            \see ExtentBucketList, ExtentIDHash */
+    EXTENT_OFFSET_HASH,  /**< an Extent representing a 'used' block is on
+                            the offset hash using this index.  'free' 
+                            Extent objects and Extent objects on the
+                            ExtentFreePool do not use this index. 
+                            \see ExtentOffsetHash */
+    NUM_LISTS            /**< dimension of the links array in Extent */
+};
 
 /** an "extent" : a position and a size.
  * 
@@ -144,8 +162,9 @@ public:
     UINT32 size : 31;
 };
 
-/** DLL2 helper class for Extent objects in a hash table */
-class ExtentHashComparator {
+/** DLL2 helper class for Extent objects in a hash table,
+    where the hash key is the Identifier */
+class ExtentIDHashComparator {
 public:
     /** how to get a key from an item */
     static int hash_key( Extent * item ) {
@@ -161,9 +180,43 @@ public:
     }
 };
 
-/** a typedef for a DLL2 hash list of Extent objects,
+/** DLL2 helper class for Extent objects in a hash table,
+    where the hash key is the start offset */
+class ExtentOffsetHashComparator {
+public:
+    /** how to get a key from an item */
+    static int hash_key( Extent * item ) {
+        return (int)((item->offset >> 5) & 0x7FFFFFFF);
+    }
+    /** how to get a key from a Key_Type */
+    static int hash_key( off_t key ) {
+        return (int)((key >> 5) & 0x7FFFFFFF);
+    }
+    /** how to compare a Key_Type to an item */
+    static bool hash_key_compare( Extent * item, off_t key ) {
+        return (item->offset == key);
+    }
+};
+
+/** a typedef for a DLL2 list of ordered Extent objects.
  * \see EXTENT_MAP_LIST_INDICES */
-typedef LList <Extent, EXTENT_HASH> ExtentBucketList;
+typedef LList <Extent, EXTENT_LIST>            ExtentOrderedList;
+
+/** a typedef for a DLL2 list of Extent objects used for free-bucket lists.
+ * \see EXTENT_MAP_LIST_INDICES */
+typedef LList <Extent, EXTENT_ID_HASH>         ExtentBucketList;
+
+/** a typedef for a DLL2 hash on the identifier.
+ * \see EXTENT_MAP_LIST_INDICES */
+typedef LListHash <Extent, UINT32,
+                   ExtentIDHashComparator,
+                   EXTENT_ID_HASH>             ExtentIDHash;
+
+/** a typedef for a DLL2 hash on the start offset.
+ * \see EXTENT_MAP_LIST_INDICES */
+typedef LListHash <Extent, off_t,
+                   ExtentOffsetHashComparator,
+                   EXTENT_OFFSET_HASH>         ExtentOffsetHash;
 
 /** manages a list of Extent objects.
  *
@@ -174,20 +227,28 @@ typedef LList <Extent, EXTENT_HASH> ExtentBucketList;
 class Extents {
     /** @name Extent lists */
     // @{
-    /** a list of all Extent objects.
+    /** an ordered list of all Extent objects.
      * 
      * All Extent objects are on this list, at all times.  Also, at
      * all times, the offset+size of one member must equal the offset
      * of the following member.
      * \see EXTENT_MAP_LIST_INDICES */
-    LList <Extent, EXTENT_LIST> list;
-    /** hash list of used blocks.
+    ExtentOrderedList   list;
+    /** hash list of used blocks, where hash key is block id.
      *
      * If an Extent is marked as used, the identifier field will be
      * valid, and the Extent will be on this hash list.  The search
      * key for the hash is the identifier.
      * \see EXTENT_MAP_LIST_INDICES */
-    LListHash <Extent, UINT32, ExtentHashComparator, EXTENT_HASH> hash;
+    ExtentIDHash idhash;
+    /** hash list of used blocks, where hash key is start offset.
+     *
+     * If an Extent is marked as used, the identifier field will be
+     * valid, and the Extent will be on this hash list.  The search
+     * key for the hash is the start offset.
+     * \see EXTENT_MAP_LIST_INDICES */
+    ExtentOffsetHash  offsethash;
+
     /** count of Extent objects in the 'used' state */
     int count_used;
     /** count of Extent objects in the 'free' state */
@@ -336,6 +397,16 @@ public:
      *  performing any other manipulations on the Extents object, because
      *  this Extent object may have been altered or deleted. */
     Extent * find( UINT32 id );
+    /** locate an Extent by its start offset.
+     * \param offset the 64-bit start offset of the Extent.
+     * \return a pointer to the Extent.
+     * \note The returned Extent object is still on an internal linked
+     *  list.  The user does not have to do anything to release the Extent
+     *  back to this object when the user is done with it.
+     * \note The user must not reference this Extent pointer after
+     *  performing any other manipulations on the Extents object, because
+     *  this Extent object may have been altered or deleted. */
+    Extent * find( off_t offset );
     /** allocate a new Extent of a certain size.
      * \param size The size of the Extent required.
      * \return a pointer to the Extent.
