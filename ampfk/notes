@@ -1,0 +1,54 @@
+
+{noinst,bin,lib}_{LIBRARIES,PROGRAMS} = thingy
+
+{bin}_{SCRIPTS} = 
+
+{man}_{MANS} = thingy.1
+
+{libname,progname}_SOURCES = 
+
+{libname,progname}_HEADERS =
+
+{libname,progname}_INCLUDES = 
+
+{libname,progname}_LDADD = file.a
+
+{libname,progname}_LDFLAGS = ?
+
+AM_INCLUDES = -I../libpfkutil
+AM_CPPFLAGS = -DCRAP
+
+CC = gcc
+CFLAGS =
+CXX = g++
+CXXFLAGS =
+LDFLAGS =
+CPPFLAGS =
+LD = g++
+AR = ar
+
+dist_pkgdata_DATA += custom.ini simple.ini
+
+EXTRA_cscope_SOURCES = ? what does this mean
+
+EXTRA_DIST = ? what does this mean
+
+SUBDIRS = doc src contrib
+
+srcdir = ?
+
+all-local:
+
+install-data-local: 
+
+install-data-hook:
+
+# need to support all, clean
+
+gcc -MT $@ -MD -MP -MF $(DEPDIR)/file.Tpo -c -o $@ $<
+mv $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+-MT tells it what object name to use
+-MD
+-MP add phony target for things other than main file
+-MF file to create
+-E stop after preprocessing stage

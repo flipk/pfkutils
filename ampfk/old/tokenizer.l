@@ -24,10 +24,10 @@ static int myinput( char *buf, int len );
 #define YY_INPUT(buf,result,max_size) result = myinput(buf, max_size)
 #endif
 
-void handle_if(const char *text, int len);
-void handle_else(void);
-void handle_endif(void);
-int maybe_ret(void);
+static void handle_if(const char *text, int len);
+static void handle_else(void);
+static void handle_endif(void);
+static int maybe_ret(void);
 
 %}
 
@@ -43,7 +43,7 @@ int maybe_ret(void);
 (\r|\n)		{ if (maybe_ret()) return NL; }
 ^\t		{ if (maybe_ret()) return TAB; }
 \\(\r|\n)[ \t]*	{ if (maybe_ret()) return BSNL; }
-#.*(\r|\n)	{ /* skip comments */ }
+#.*(\r|\n)	{ return NL; /* skip comments */ }
 [ \t]+		{ /* skip */ }
 [^ \t\r\n:=#]+	{
 		    if (maybe_ret()) {
@@ -60,6 +60,7 @@ tokenizer_dummy_function(void)
 {
     // with this, you can build with -Wall silently
     yyunput(0,0);
+    input();
 }
 
 /* the return from this function needs to be free'd
@@ -123,7 +124,7 @@ tokenizer_init(FILE *in)
     if_stack_conditions[0] = 1;
 }
 
-void
+static void
 handle_if(const char *text, int len)
 {
     if (if_stack_level == 9)
@@ -135,7 +136,7 @@ handle_if(const char *text, int len)
     if_stack_conditions[if_stack_level] = check_condition_name(text,len);
 }
 
-void
+static void
 handle_else(void)
 {
     if (if_stack_level == 0)
@@ -147,7 +148,7 @@ handle_else(void)
     if_stack_conditions[if_stack_level] ^= 1;
 }
 
-void
+static void
 handle_endif(void)
 {
     if (if_stack_level == 0)
@@ -159,7 +160,7 @@ handle_endif(void)
     if_stack_level--;
 }
 
-int
+static int
 maybe_ret(void)
 {
     return if_stack_conditions[if_stack_level];
