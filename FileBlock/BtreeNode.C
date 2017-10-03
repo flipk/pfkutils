@@ -204,7 +204,22 @@ BTNodeCache :: delete_node( BTNode * n )
 
     hash.remove(n);
     UINT32 fbn = n->get_fbn();
+
+    // clear the node's keys to prevent it
+    // deleting all memory associated with those
+    // keys; if the node is being deleted, the
+    // keys were most assuredly moved to another
+    // node and their memory is still valid.
+    int i;
+    for (i=0; i < (btorder-1); i++)
+        n->keys[i] = NULL;
+
+    // clear the node's dirty flag to prevent
+    // an unnecessary store() invocation during
+    // the delete.
+    n->dirty = false;
     delete n;
-    // xxx verify this is correct!
+
+    // free the space in the file consumed by the node.
     fbi->free(fbn);
 }

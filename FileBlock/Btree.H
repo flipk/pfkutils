@@ -71,7 +71,7 @@ public:
      * data is modified, always remember to call mark_dirty before releasing.
      * \param key a BTDatum object which is populated with a ram-pointer and
      *            the data to search for.
-     * \param data a BDatum object which will, upon return, contain the data
+     * \param data a BTDatum object which will, upon return, contain the data
      *             that was being searched for.  The date of this object prior
      *             to calling is irrelevant--it will be reinitialized before
      *             return.
@@ -87,10 +87,8 @@ public:
      * is false, this function will return false.  If replace is true, the 
      * old data will be freed from the file and the data argument will replace
      * it in the file.
-     * \note This function should /em only be used for /em new items;
-     * it should not be used to replace existing items.
-     * \param key the BDatum object with key data.
-     * \param data the BDatum object with data.
+     * \param key the BTDatum object with key data.
+     * \param data the BTDatum object with data.
      * \param replace indicate whether to replace (overwrite) or fail.
      * \return true if the item was put in the database; false if the key
      *         already exists and replace argument is false. */

@@ -962,6 +962,9 @@ BtreeInternal :: del( _BTDatum * _key  )
                 }
                 // and one more ptr.
                 curn->ptrs[i] = r->ptrs[i];
+                curn->numitems = r->numitems;
+                curn->leaf = r->leaf;
+                curn->root = r->root;
                 node_cache->delete_node( r );
                 rsib = NULL;
                 parent->ptrs[parentidx] = curn->get_fbn();
@@ -996,6 +999,7 @@ BtreeInternal :: del( _BTDatum * _key  )
     }
 
     info.d->numrecords.set( info.d->numrecords.get() - 1 );
+    info.mark_dirty();
 
     delete key;
     return ret;
