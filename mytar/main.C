@@ -143,7 +143,7 @@ mytar_main( int argc, char ** argv )
 int
 update_mtar( char * dbname, bool create_it )
 {
-    file_db * db = new file_db( dbname, create_it );
+    file_db * db = new file_db( dbname, create_it, !create_it );
     if ( !db )
         return 1;
     update_dir( db, (char*)"." );
@@ -155,7 +155,7 @@ update_mtar( char * dbname, bool create_it )
 int
 list_mtar( char * dbname, char * pattern )
 {
-    file_db * db = new file_db( dbname, false );
+    file_db * db = new file_db( dbname, false, false );
     if ( !db )
         return 1;
     list_iterator  li(pattern);
@@ -187,7 +187,7 @@ list_multiple_mtar( char * dbname, int argc, char ** argv )
 int
 extract_mtar( char * dbname, char * pattern )
 {
-    file_db * db = new file_db( dbname, false );
+    file_db * db = new file_db( dbname, false, false );
     if ( !db )
         return 1;
     list_iterator  li(pattern);

@@ -1,5 +1,8 @@
 
 TODO:
+   - there is something wrong with extract.  an update after an
+     extract seems to corrupt the whole database, every file becomes
+     one byte smaller!!
    - delete files which are gone, first, before writing anything.
    - if you can't open a file because its busy or something, just
      skip it, mark it as up to date and leave it.

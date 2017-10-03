@@ -102,7 +102,7 @@ class file_db {
     void write_signature( struct mytar_sig * );
     file_info * _get_info_from_block( UINT32 id, UCHAR * data_block, int len );
 public:
-    file_db( char * fname, bool create_it );
+    file_db( char * fname, bool create_it, bool validate_sig );
     ~file_db( void );
 
     static const int PIECE_SIZE = 1024 * 50;
