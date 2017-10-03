@@ -714,6 +714,7 @@ bind '^V'=quote
 bind '^@'=set-mark-command
 
 if __isksh ; then
+    TTY=`tty`
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
         xtermbar Console
@@ -721,16 +722,15 @@ if __isksh ; then
         xrdb -load .Xresources
         ctwm -W&
 	xconsole_hook
-        SHELLFILESTRING=shell,$HOST,$$,$TTY,console,$DISPLAY,$viewname
+        SHELLFILESTRING=shell,$HOST,$$,$TTY,console
     else
         if [[ x$WINDOW = x ]] ; then
-            SHELLFILESTRING=shell,$HOST,$$,$TTY,$DISPLAY,$viewname
+            SHELLFILESTRING=shell,$HOST,$$,$TTY
         else
-            SHELLFILESTRING=shell,$HOST,$$,$TTY,w$WINDOW,sty$STY$DISPLAY,$viewname
+            SHELLFILESTRING=shell,$HOST,$$,$TTY,w$WINDOW,sty$STY
         fi
     fi
     SHELLFILE=$HOME/.y.shell.$HOST.$$
-    TTY=`tty`
     trap "rm -f $SHELLFILE         "          EXIT
     trap "rm -f $SHELLFILE ; exit 0" HUP TERM EXIT
     cd() {
@@ -759,9 +759,11 @@ if __isksh ; then
 	    xtermbar "$bardisp"
 	fi
 	if [[ x$td != x ]] ; then
-	    CDPATH=.:$td/src/exec:$td/src/exec/os:$td/src:$td/src/exec/tornado101/target/config
+	    CDPATH=.:$HOME:$td/src/exec:$td/src/exec/os:$td/src:$td/src/exec/tornado101/target/config
+        else
+	    CDPATH=.:$HOME
 	fi
-	echo $SHELLFILESTRING:$PWD > $SHELLFILE
+	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD > $SHELLFILE
     }
     shells() {
 	cat $HOME/.y.*
