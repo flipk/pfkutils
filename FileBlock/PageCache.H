@@ -20,6 +20,7 @@ public:
     static const int PAGE_SIZE = 1024; // xxx testing
     PageCache( PageIO * _io, int _max_pages );
     ~PageCache(void);
+    PageIO * get_io(void) { return io; }
     PageCachePage * get(int page_number, bool for_write);
     void release( PageCachePage * p, bool dirty );
     void flush(void);
@@ -46,8 +47,10 @@ class PageIO {
 public:
     virtual ~PageIO(void) { /* placeholder */ }
     // return false if some error occurred
-    virtual bool get_page( PageCachePage * pg ) = 0;
-    virtual bool put_page( PageCachePage * pg ) = 0;
+    virtual bool  get_page( PageCachePage * pg ) = 0;
+    virtual bool  put_page( PageCachePage * pg ) = 0;
+    virtual int   get_num_pages(void) = 0;
+    virtual off_t get_size(void) = 0;
 };
 
 // following is an example of how to create a PageIO object.
@@ -57,24 +60,14 @@ public:
 class PageIOFileDescriptor : public PageIO {
     int fd;
 public:
-    PageIOFileDescriptor(int _fd) { fd = _fd; }
+    PageIOFileDescriptor(int _fd);
     // note destructor does NOT close fd!
-    ~PageIOFileDescriptor(void) { /* nothing */ }
+    ~PageIOFileDescriptor(void);
     // return false if some error occurred
-    bool get_page( PageCachePage * pg ) {
-        lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
-        if (read(fd, pg->get_ptr(), PageCache::PAGE_SIZE) < 0)
-            return false;
-        return true;
-    }
-    bool put_page( PageCachePage * pg ) {
-        lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
-        if (write(fd, pg->get_ptr(),
-                  PageCache::PAGE_SIZE) != PageCache::PAGE_SIZE)
-            return false;
-        return true;
-    }
-
+    bool get_page( PageCachePage * pg );
+    bool put_page( PageCachePage * pg );
+    int get_num_pages(void);
+    off_t get_size(void);
 };
 
 #endif /* __PAGE_CACHE_H__ */

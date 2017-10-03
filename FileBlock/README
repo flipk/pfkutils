@@ -104,6 +104,13 @@ entry, if a free region, is also on a bucket-list.  There a
 significant number of bucket lists, each corresponding to free regions
 of different sizes.
 
+The extent-map is stored on the disk starting with the first page.
+The first few bytes of the first page contains a unique signature
+which identifies the file as a FileBlock file.  This signature must be
+added when the file is first created.
+
+xxx
+
 The list of buckets is configurable by the user when the FileBlock
 object is created.  The reason, is that the bucket-list which is
 useful varies greatly by application.  If a given application uses
@@ -116,12 +123,16 @@ be desirable to define a much larger bucket-list with small increments
 between them.  This will be slower to search for appropriate sizes,
 but will dramatically improve file space utilization.
 
+Another option which needs investigation, is to arrange the bucket-list
+as an indexable array, where the index is derived from a few bits of
+the piece size.
+
 Any block which is currently in-use, is also on a hash list.  The hash
-key is the unique identifier key.
+key is the unique identifier.
 
 A flush-operation becomes rather expensive, because the entire linked
 list of all extent-map entries must be serially written to the list of
-extent-map file pages.
+extent-map file pages.  This is the only disadvantage of this technique.
 
 One benefit of the unique identifier key method of retrieval, is that
 the file can be compacted by moving entries near the end of the file

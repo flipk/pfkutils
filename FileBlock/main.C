@@ -1,12 +1,15 @@
 #if 0
 files="PageCache.C BlockCache.C FileBlockLocal.C ../dll2/dll2_hash.C main.C"
+defs="-D_FILE_OFFSET_BITS=64"
+opts="-Wall -Werror -g3"
+incs="-I../h -I../dll2"
 set -e
 set -x
 rm -f *.o
 for f in $files ; do 
-  g++ -g3 -I../h -I../dll2 -Wall -Werror -c $f
+  g++ $incs $opts $defs -c $f
 done
-g++ -g3 *.o -o a.out
+g++ $opts *.o -o a.out
 exit 0
     ;
 #endif
@@ -27,7 +30,7 @@ main(int argc, char ** argv)
     BlockCache  * bc;
     FileBlockInterface * fbi;
 
-    fd = open("testfile.db", O_RDWR | O_CREAT, 0644);
+    fd = open("testfile.db", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
     if (fd < 0)
     {
         fprintf(stderr, "unable to open file\n");

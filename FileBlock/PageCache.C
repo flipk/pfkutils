@@ -2,6 +2,9 @@
 #include "PageCache.H"
 #include "PageCache_internal.H"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <string.h>
 
 PageCache :: PageCache( PageIO * _io, int _max_pages )
@@ -119,4 +122,57 @@ PageCache :: flush(void)
         // the page is now synced with the file.
         p->dirty = false;
     }
+}
+
+
+// PageIOFileDescriptor implementation follows
+
+PageIOFileDescriptor :: PageIOFileDescriptor( int _fd )
+{
+    fd = _fd;
+}
+
+PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
+{
+    // nothing-- note this does NOT close fd!
+}
+
+bool
+PageIOFileDescriptor :: get_page( PageCachePage * pg )
+{
+    lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
+    if (read(fd, pg->get_ptr(), PageCache::PAGE_SIZE) < 0)
+        return false;
+    return true;
+}
+
+bool
+PageIOFileDescriptor :: put_page( PageCachePage * pg )
+{
+    lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
+    if (write(fd, pg->get_ptr(),
+              PageCache::PAGE_SIZE) != PageCache::PAGE_SIZE)
+        return false;
+    return true;
+}
+
+int
+PageIOFileDescriptor :: get_num_pages(void)
+{
+    struct stat sb;
+    if (fstat(fd, &sb) < 0)
+        return -1;
+    if ((sb.st_size & (PageCache::PAGE_SIZE -1 )) != 0)
+        return (sb.st_size / PageCache::PAGE_SIZE) + 1;
+    // else
+    return (sb.st_size / PageCache::PAGE_SIZE);
+}
+
+off_t
+PageIOFileDescriptor :: get_size(void)
+{
+    struct stat sb;
+    if (fstat(fd, &sb) < 0)
+        return -1;
+    return sb.st_size;
 }
