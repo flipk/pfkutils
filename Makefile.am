@@ -30,6 +30,8 @@ install-data-hook:
 	mkdir -p $(CONFIG_HDR_DEST) || true
 	cp $(CONFIG_HEADER) $(CONFIG_HDR_DEST)/$(CONFIG_HEADER)
 	chmod 644 $(CONFIG_HDR_DEST)/$(CONFIG_HEADER)
+	cp pfkutils_version.h $(CONFIG_HDR_DEST)/pfkutils_version.h
+	chmod 644 $(CONFIG_HDR_DEST)/pfkutils_version.h
 if PFK_AM_BUILD_sudo
 	@echo ""
 	@echo "*** also, if not already done, perform the following as root:"

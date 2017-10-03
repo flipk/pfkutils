@@ -1,9 +1,17 @@
 
-AC_INIT([pfkutils], [3.4], [pknaack@netscape.net])
+m4_define([PFKUTILS_MAJOR_VERSION], 3)
+m4_define([PFKUTILS_MINOR_VERSION], 5)
+
+AC_INIT([pfkutils],
+        [PFKUTILS_MAJOR_VERSION.PFKUTILS_MINOR_VERSION],
+        [pknaack1@netscape.net])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 AC_CONFIG_SRCDIR([main/main.C])
 AC_CONFIG_MACRO_DIR([m4])
+
+AC_SUBST([PFKUTILS_MAJOR_VERSION_NUM], [PFKUTILS_MAJOR_VERSION])
+AC_SUBST([PFKUTILS_MINOR_VERSION_NUM], [PFKUTILS_MINOR_VERSION])
 
 AC_ARG_ENABLE(environ,
     [  --enable-environ=ENV   set ENV to blade, isd, atd, or none],
@@ -92,6 +100,16 @@ if test $pfk_build_ctwm = "yes" ; then
   fi
 fi
 
+AC_PATH_PROG(pfk_shell_path1, bash, no)
+if test $pfk_shell_path1 = "no" ; then
+  AC_PATH_PROG(pfk_shell_path2, sh, no)
+  pfk_shell_path=$pfk_shell_path2
+else
+  pfk_shell_path=$pfk_shell_path1
+fi
+
+AC_SUBST([PFK_SHELL_PATH], [$pfk_shell_path])
+
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
    [AC_MSG_ERROR([pthreads is required for pfkutils])], [])
@@ -176,6 +194,7 @@ fi
 AC_SUBST([PFK_USER_NAME], [`whoami`])
 
 AC_CONFIG_FILES([ 
+    pfkutils_version.h
     Makefile
     libpfkdll2/Makefile
     libpfkfb/Makefile

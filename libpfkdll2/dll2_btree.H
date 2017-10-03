@@ -34,7 +34,13 @@ struct LListBTREENode {
     T * keys[ORDER-1];
     LListBTREENode( void )
     {
-        memset( this, 0, sizeof( *this ));
+        int i;
+        numkeys = cur = 0;
+        leaf = root = false;
+        for (i=0; i < (ORDER); i++)
+            nodes[i] = NULL;
+        for (i=0; i < (ORDER-1); i++)
+            keys[i] = NULL;
     }
 };
 

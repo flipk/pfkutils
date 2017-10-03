@@ -24,6 +24,7 @@ install-data-local:
 	cd $(DESTDIR)$(sysconfdir) && \
 		chmod 644 $(DOT_FILES) $(ELISP_FILES) $(KSHRC_LOCALS)
 	sed \
+		-e "s,@SHELL_PATH@,@PFK_SHELL_PATH@," \
 		-e "s,@ENVIRON@,@PFK_ENVIRON@," \
 		-e "s,@ETCDIR@,$(sysconfdir)," \
 		-e "s,@KSHRC_LOCAL@,$(KSHRC_LOCAL)," \
