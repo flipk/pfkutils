@@ -186,7 +186,6 @@ dis() {
     fi
 }
 
-
 tman() {
     typeset base manpath
     base=/usr/test/bssdata2/tornado3/pcore750.7

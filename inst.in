@@ -3,7 +3,7 @@
 valid_hosts="blade congo laptop login dell ka"
 files="Xresources Xresources-codetest Xresources-remote ctwmrc kshrc"
 files="$files profile screenrc screenrc.3 xinitrc xsession zephyr.subs"
-files="$files zephyr.vars zwgc.desc"
+files="$files zephyr.vars zwgc.desc hexdump_format"
 efiles="emacs.el myserver.el myshell.el myfiles.el"
 scripts="architecture pf_frontend myshell myshell-launcher"
 

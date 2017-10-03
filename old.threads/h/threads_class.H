@@ -31,7 +31,7 @@
 //       class defn at the end of this file.
 
 class ThreadShortCuts {
-protected:
+public:
     typedef Threads::tid_t tid_t;
     enum constants {
         NUM_PRIOS        = Threads::NUM_PRIOS,

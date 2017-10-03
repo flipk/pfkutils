@@ -21,6 +21,7 @@
 (cond (window-system
        (progn
          (setq
+;for login, start commenting here
 	  default-frame-alist '((minibuffer . nil))
 	  initial-frame-alist 'nil
 	  minibuffer-frame-alist
@@ -29,8 +30,8 @@
 	    (vertical-scroll-bars . nil)
 	    (name . "Emacs Minibuffer")
 	    (title . "Emacs Minibuffer"))
+;for login, end commenting here
 	  special-display-buffer-names
-;	  '("*compilation*" "*shell*" "*Buffer List*")
 	  '("*compilation*" "*shell*")
 	  )
          (setq
@@ -121,3 +122,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (garbage-collect)
 (message "Press F1 for a list of local keybindings.")
+
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
