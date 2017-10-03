@@ -30,15 +30,13 @@ extern "C" int pipe_main( int argc, char ** argv );
 FDMAP_LIST * list;
 
 FDMAP_DATA :: FDMAP_DATA( int _fd, bool connecting )
+    : buf( BUFSIZE )
 {
     fd              = _fd;
     can_read        = connecting;
     want_write      = connecting;
     waitfor_connect = connecting;
     want_close      = false;
-    buf_in          = 0;
-    buf_out         = 0;
-    buf_free        = BUFSIZE;
 }
 
 #if defined(SUNOS) || defined(SOLARIS) || defined(CYGWIN)
@@ -137,10 +135,10 @@ FDMAP_DATA :: handle_select_w( void )
     if ( !want_close )
         other_fd->can_read = true;
 
-    int bufsize = write_size();
+    int bufsize = buf.contig_read();
     if ( bufsize > 0 )
     {
-        int cc = write( fd, write_pos(), bufsize );
+        int cc = write( fd, buf.read_pos(), bufsize );
 #if VERBOSE
         printf( "wrote %d of %d bytes\n", cc, bufsize );
 #endif
@@ -148,10 +146,10 @@ FDMAP_DATA :: handle_select_w( void )
         if ( cc <= 0 )
             closeit();
         else
-            record_write( cc );
+            buf.record_read( cc );
     }
 
-    if ( empty() )
+    if ( buf.empty() )
     {
         want_write = false;
         if ( want_close )
@@ -179,8 +177,8 @@ FDMAP_DATA :: handle_select_r( void )
 void
 FDMAP_DATA :: _handle_select_r( void )
 {
-    int bufsize = read_size();
-    int cc = read( other_fd->fd, read_pos(), bufsize );
+    int bufsize = buf.contig_write();
+    int cc = read( other_fd->fd, buf.write_pos(), bufsize );
     int e = cc < 0 ? errno : 0;
 #if VERBOSE
     printf( "read %d of %d: %s\n",
@@ -207,11 +205,11 @@ FDMAP_DATA :: _handle_select_r( void )
     }
     else
     {
-        record_read( cc );
+        buf.record_write( cc );
         want_write = true;
     }
 
-    if ( full() )
+    if ( buf.full() )
         other_fd->can_read = false;
 }
 

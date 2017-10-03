@@ -38,46 +38,15 @@ public:
     /*virtual*/ void handle_select_w( void ) { /* noop */ }
 };
 
+#include "circular_buffer.H"
+
 class FDMAP_DATA : public FDMAP {
 
     FDMAP_DATA * other_fd;
 
-    static const int BUFSIZE = 32768;
-    char buf[BUFSIZE];
-    int buf_in;
-    int buf_out;
-    int buf_free;
-    int buf_used;
+    static const int BUFSIZE = 16384;
 
-    bool   empty       ( void  ) { return buf_free == BUFSIZE; }
-    bool   full        ( void  ) { return buf_free < 10; }
-    char * write_pos   ( void  ) { return buf + buf_out; }
-    char * read_pos    ( void  ) { return buf + buf_in; }
-
-    void   record_write( int s )
-        { buf_out += s; buf_out %= BUFSIZE; buf_free += s; }
-    void   record_read ( int s )
-        { buf_in  += s; buf_in  %= BUFSIZE; buf_free -= s; }
-
-    int write_size( void ) {
-        if ( buf_free == BUFSIZE )
-            return 0;
-        /* if out < in, then the space in between needs writing. */
-        if ( buf_out < buf_in )
-            return buf_in - buf_out;
-        /* otherwise we want to write up to the end of the buffer */
-        return BUFSIZE - buf_out;
-    }
-
-    int read_size( void ) {
-        if ( buf_free == 0 )
-            return 0;
-        /* if out < in, then we can read only up to end of buffer. */
-        if ( buf_out <= buf_in )
-            return BUFSIZE - buf_in;
-        /* otherwise the space in between is eligible */
-        return buf_out - buf_in;
-    }
+    circular_buffer buf;
 
     bool can_read;
     bool want_write;

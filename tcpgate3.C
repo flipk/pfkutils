@@ -28,15 +28,27 @@ exit 0
 #define setsockoptcast void*
 #endif
 
+#if 0
+#include "circular_buffer.H"
+#endif
+
 struct conn {
+    static const int bufsiz = 8192;
     LListLinks<conn> links[1];
     bool listen;
     int fds[2];
     struct in_addr addr;
     int port;
     int bytes;
+#if 0
+    circular_buffer * conn021;
+    circular_buffer * conn120;
+#endif
 
     conn( int fd, struct in_addr _addr, int _port ) {
+#if 0
+        conn021 = conn120 = NULL;
+#endif
         listen = true;
         fds[0] = fd; fds[1] = -1;
         addr = _addr;
@@ -44,12 +56,20 @@ struct conn {
         bytes = 0;
     }
     conn( int fd1, int fd2 ) {
+#if 0
+        conn021 = new circular_buffer( bufsiz );
+        conn120 = new circular_buffer( bufsiz );
+#endif
         listen = false;
         fds[0] = fd1;
         fds[1] = fd2;
         bytes = 0;
     }
     ~conn(void) {
+#if 0
+        if ( conn021 ) delete conn021;
+        if ( conn120 ) delete conn120;
+#endif
         close( fds[0] );
         if ( !listen )
             fds[1];

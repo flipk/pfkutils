@@ -412,7 +412,8 @@ ThreadMessages :: register_fd_mq( int fd, void * arg,
         return false;
     }
 
-    if ( fd_mqids[fd].mqid != -1 )
+    if ( fd_mqids[fd].mqid != -1  &&
+         ( fd_mqids[fd].mqid != mqid  ||  fd_mqids[fd].arg != arg ))
     {
         DEBUG1(( 0, "thmsgs", "register_read_fd_mq : "
                  "fd %d already registered!", fd ));
