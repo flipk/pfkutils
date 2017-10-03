@@ -1,0 +1,4 @@
+#!/bin/sh
+
+cd $HOME
+exec emacs --no-init-file -l proj/pfkutils/environ/emacs-lone.el $*

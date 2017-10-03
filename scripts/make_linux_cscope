@@ -1,0 +1,15 @@
+#!/bin/sh
+
+rm -f cscope*
+
+echo building cscope
+find . -name '*.o.cmd' | \
+    xargs cat | \
+    awk '/[hcS] \\/ { print $1 }' | \
+    egrep -v '^/|tmp_kallsyms' | \
+    sort | uniq > cscope.files
+
+cscope -k
+echo done
+
+exit 0

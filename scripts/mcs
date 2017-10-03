@@ -1,0 +1,26 @@
+#!/bin/ksh
+
+exclusions="$*"
+
+echo searching for C files
+find . -name '*.[chCH]' -print > 0
+find . -name '*.cc' -print >> 0
+count=`cat 0 | wc -l`
+echo found $count C files
+if [[ "x$exclusions" != x ]] ; then
+  egrep -v "$exclusions" 0 > cscope.files
+  count=`cat cscope.files | wc -l`
+  echo with exclusions, found $count C files
+else
+  cat 0 > cscope.files
+fi
+rm -f 0
+if [[ $count -eq 0 ]] ; then
+	echo not building database
+	exit
+fi
+echo making database
+rm -f cscope.out
+cscope -bk
+echo done
+

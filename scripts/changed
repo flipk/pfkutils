@@ -1,0 +1,51 @@
+#!/bin/ksh
+
+if [[ $# -eq 0 ]] ; then
+    show_eclipsed=1
+    branches=`cleartool catcs | awk -F/ '/^element.*LATEST/ { print $2 }'`
+    inactive_branches=`cleartool catcs | awk -F/ '/^# *element.*LATEST/ { print $2 }'`
+else
+    show_eclipsed=0
+    branches="$*"
+    inactive_branches=""
+fi
+
+if [[ "x$branches" = x ]] ; then
+    echo 'no branch?'
+    exit 1
+fi
+
+print_branch() {
+    descr=$1
+    branch=$2
+    if [[ $branch = main || $branch = vobs || $branch = vob || $branch = wimax_r1.0-main ]] ; then
+	return 0
+    fi
+    echo '' 1>&2
+    echo ' ***** ' dirs on $descr branch $branch 1>&2
+    cleartool find -avobs -branch "brtype($branch)" -type d -print | cut -d@ -f1
+    echo ' ***** ' files on $descr branch $branch 1>&2
+    cleartool find -avobs -branch "brtype($branch)" -type f -print | cut -d@ -f1
+}
+
+if [[ $show_eclipsed -gt 0 ]] ; then
+    eclipsed_files=`ct catcs | grep -v lost+found | awk '/-none/ { print $2 }'`
+
+    if [[ x"$eclipsed_files" != x ]] ; then
+	echo '' 1>&2
+	echo ' ***** private (eclipsed) files' 1>&2
+	for file in $eclipsed_files ; do
+	    echo $file
+	done
+    fi
+fi
+
+for branch in $branches ; do
+    print_branch active $branch
+done
+
+for branch in $inactive_branches ; do
+    print_branch inactive $branch
+done
+
+exit 0

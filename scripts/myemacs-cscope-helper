@@ -1,0 +1,21 @@
+#!/bin/ksh
+
+found=0
+while [[ $found -eq 0 ]] ; do
+    if [[ -f cscope.out ]] ; then
+	found=1
+    else
+	cd ..
+	if [[ $PWD = "/" ]] ; then
+	    echo no cscope.out found
+	    echo hit enter
+	    read crap
+	    exit 1
+	fi
+    fi
+done
+
+CSCOPE_EDITOR=$HOME/bin/ec
+export CSCOPE_EDITOR
+cscope -dp 3
+exit 0

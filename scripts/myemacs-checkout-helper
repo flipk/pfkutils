@@ -1,0 +1,9 @@
+#!/bin/ksh
+
+echo '***'
+echo ct co -nc $1
+cleartool co -nc $1
+echo '***'
+sleep 2
+exit 0
+

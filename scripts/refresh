@@ -1,0 +1,39 @@
+#!/bin/sh
+
+if [ $# -ne 2 ] ; then
+	echo usage: rebase FROM_TAG TO_BRANCH
+	exit 1
+fi
+
+domerge=1
+from_tag=$1
+to_branch=$2
+
+echo from: $from_tag
+echo to: $to_branch
+
+dirs=`ct find -avobs -branch "brtype($to_branch)" -type d -print | cut -d@ -f1`
+
+if [ $domerge -eq 1 ] ; then
+   echo ct findmerge $dirs -d -ftag $from_tag -merge -nc
+   ct findmerge $dirs -d -ftag $from_tag -merge -nc
+else
+   echo ct findmerge $dirs -d -ftag $from_tag -print
+   ct findmerge $dirs -d -ftag $from_tag -print
+fi
+
+files=`ct find -avobs -branch "brtype($to_branch)" -type f -print | cut -d@ -f1`
+
+if [ $domerge -eq 1 ] ; then
+   echo ct findmerge $files -ftag $from_tag -merge -gmerge -nc
+   ct findmerge $files -ftag $from_tag -merge -gmerge -nc
+else
+   echo ct findmerge $files -ftag $from_tag -print
+   ct findmerge $files -ftag $from_tag -print
+fi
+
+echo ''
+echo reminder: examine your checkouts
+echo ''
+
+exit 0

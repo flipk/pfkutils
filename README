@@ -1,6 +1,8 @@
 
 The following packages are required in order to build pfkutils:
 
+(fedora)
+
 bash
 make
 cvs
@@ -10,4 +12,16 @@ zlib-devel
 ncurses-devel
 byacc
 flex
+
+(ubuntu 10.01)
+
+g++
+cvs
+libncurses5-dev
+zlib1g-dev
+flex
+byacc
+
+also, -Werror is busticated on ubuntu 10 and will have to be removed from 
+all Makefiles
 
