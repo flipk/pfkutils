@@ -1,0 +1,31 @@
+
+
+how to use mot web proxy
+------------------------
+
+on home computer:
+    pfkteld 1234
+- configure router to pass port 1234 to your linux host
+
+on work computer:
+    etg_proxy 2701 136.182.158.100 1080
+    telnet 127.1 2701
+    CONNECT flipk.homelinux.net:1234
+    do challenge/response
+    ssh flipk@11.2
+
+how to use mot tngate0
+----------------------
+
+on home computer:
+    pfkteld 23
+- configure router to pass port 23
+
+on work computer:
+    etg_proxy 2701 129.188.33.199 23
+    telnet 127.1 2701
+    oneit login/password
+    telnet flipk.homelinux.net
+    do challenge/response
+    ssh flipk@11.2
+

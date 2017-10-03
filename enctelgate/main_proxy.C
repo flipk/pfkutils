@@ -77,11 +77,11 @@ public:
 extern "C" int
 etg_proxy_main( int argc, char ** argv )
 {
-    if ( argc != 3 )
+    if ( argc != 4 )
     {
         fprintf( stderr,
                  "usage:\n"
-                 "   etg_proxy <proxy_port> <worker_host> \n"
+                 "   etg_proxy <proxy_port> <worker_host> <worker_port>\n"
                  "\n" );
         exit( 1 );
     }
@@ -91,7 +91,7 @@ etg_proxy_main( int argc, char ** argv )
     char *     netmask = (char*) "255.255.255.0";
     short   proxy_port = atoi( argv[1] );
     char * worker_host =       argv[2];
-    short  worker_port = 23;
+    short  worker_port = atoi( argv[3] );
 
     fd_mgr  mgr( /*debug*/ false, /*threshold*/ 0 );
     Tunnel_fd * tun_fdi;

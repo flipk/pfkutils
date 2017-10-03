@@ -36,12 +36,18 @@ sigchld(int s)
 }
 
 extern "C" int
-pfkteld_main()
+pfkteld_main( int argc, char ** argv )
 {
     int v, fd, sock;
     struct sockaddr_in sa;
     struct sigaction sigact;
     pid_t np;
+
+    if ( argc != 2 )
+    {
+        fprintf(stderr, "usage: pfkteld <port>\n");
+        return 1;
+    }
 
     fd = socket(PF_INET, SOCK_STREAM, 0);
     if (fd < 0)
@@ -54,7 +60,7 @@ pfkteld_main()
     setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*) &v, sizeof( v ));
 
     sa.sin_family = PF_INET;
-    sa.sin_port = htons(23);
+    sa.sin_port = htons(atoi(argv[1]));
     sa.sin_addr.s_addr = INADDR_ANY;
 
     if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
