@@ -50,7 +50,7 @@
 	  hilit-inhibit-hooks     nil
 	  hilit-inhibit-rebinding nil
 	  hilit-quietly           t)
-         (require 'hilit19)
+;         (require 'hilit19)
          ; (load "~/.elisp/myserver.el")
          (server-start)))
       ((not window-system)
