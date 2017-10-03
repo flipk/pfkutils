@@ -32,7 +32,6 @@
 //
 //
 //  TODO:  - fix the "xxx" above.
-//         - make the file format endian-independent.
 //
 // note also that with "get_fbn" public you are allowed to store
 // other data in this file as well, but you are required to do your

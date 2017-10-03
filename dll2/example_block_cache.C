@@ -56,8 +56,7 @@ class block_cache {
     int max_blocks;
     int fd;
 public:
-    block_cache( int _fd, int _max_blocks, int _hash_size )
-        : hash( _hash_size ) {
+    block_cache( int _fd, int _max_blocks ) {
         fd = _fd; max_blocks = _max_blocks;
     }
     ~block_cache( void ) {
@@ -158,7 +157,7 @@ main()
     block       * b;
 
     fd = open( "testfile", O_RDWR | O_CREAT, 0644 );
-    bc = new block_cache( fd, 5000, 200 );
+    bc = new block_cache( fd, 5000 );
 
     b = bc->get( 12 );
     b->buf[ 4 ] = 5;

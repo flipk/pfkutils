@@ -6,7 +6,7 @@ LIB= libdll2.a
 FLAGS= -O3
 INCS= 
 
-all: $(LIB) test_hash # test_btree
+all: $(LIB) test_hash test_btree
 
 $(LIB): $(OBJS)
 	rm -f $(LIB)

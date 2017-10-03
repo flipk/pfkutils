@@ -50,7 +50,7 @@ typedef LListHash < macro_item, char *,
 int
 main()
 {
-    Macro_List   macro_list(100);
+    Macro_List   macro_list;
     macro_item   * mi;
 
     mi = new macro_item( "one" );

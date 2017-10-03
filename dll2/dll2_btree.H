@@ -1,16 +1,5 @@
 
-
-#ifndef DLL2_INCLUDE_LOGNEW
-#define DLL2_INCLUDE_LOGNEW 0
-#endif
-
 #include <string.h>
-
-#if DLL2_INCLUDE_LOGNEW
-#include "lognew.H"
-#else
-#define LOGNEW new
-#endif
 
 //  LListBTREE
 //     - int btree_key( void )
@@ -69,7 +58,7 @@ class LListBTREE {
 
     NODE * splitnode( NODE * n, T ** nt, NODE * right )
         {
-            NODE * newright = LOGNEW NODE;
+            NODE * newright = new NODE;
             int i;
 
             numnodes++;
@@ -177,7 +166,7 @@ class LListBTREE {
 public:
     LListBTREE( void )
         {
-            root = LOGNEW NODE;
+            root = new NODE;
             root->leaf = root->root = true;
             numnodes = 1;
             numitems = 0;
@@ -293,7 +282,7 @@ public:
                     // a new root node and insert the pivot record
                     // by itself here.
 
-                    NODE * newroot = LOGNEW NODE;
+                    NODE * newroot = new NODE;
                     newroot->root = true;
                     newroot->numkeys = 1;
                     root ->root = false;

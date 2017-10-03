@@ -1,9 +1,8 @@
 #if 0
 set -x -e
-g++ -O3 -c test_btree.C
-g++ -O3 -c dll2_hash.C
-g++ -O3 test_btree.o dll2_hash.o -o tb
-MALLOC_OPTIONS=A ./t
+g++ -g3 -c test_btree.C
+g++ -g3 -c dll2_hash.C
+g++ -g3 test_btree.o dll2_hash.o -o tb
 exit 0
 #endif
 
@@ -12,6 +11,8 @@ exit 0
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#define DLL2_CHECKSUMS      0
+#define DLL2_INCLUDE_BTREE  1
 #include "dll2.H"
 
 /*
@@ -21,14 +22,6 @@ exit 0
    - 149000 inserts per second
    - 243902 lookups per second
 */
-
-extern "C" void
-malloclock( int x )
-{
-    // nothing
-}
-
-extern "C" void print_malloc( char * s );
 
 struct thing {
     LListBTREELink btree_link;
@@ -61,23 +54,32 @@ main()
 {
     BT * bt;
     int i, j, s;
+    time_t last, now;
 
     s = getpid() * time(0);
     s = -2141375889;
     srandom( s );
 
-    printf( "S %d\n", s );
+//    printf( "S %d\n", s );
 
-    a = LOGNEW thing*[ MAX ];
+    time( &last );
+    a = new thing*[ MAX ];
 
     for ( i = 0; i < MAX; i++ )
-        a[i] = LOGNEW thing( i );
+        a[i] = new thing( i );
 
-    bt = LOGNEW BT;
+    bt = new BT;
 
     for ( i = 0; i < REPS; i++ )
     {
         j = random() % MAX;
+
+        time( &now );
+        if ( now != last )
+        {
+            printf( "reps %d\n", i );
+            last = now;
+        }
 
         if ( a[j]->inlist )
         {
@@ -111,7 +113,6 @@ main()
 
     delete bt;
 
-    print_malloc( "btree test" );
     fflush(stdout);
     fflush(stderr);
 
@@ -150,7 +151,7 @@ main()
 
     gettimeofday( tv+1, 0 );
     for ( i = 0; i < MAX; i++ )
-        bt.add( LOGNEW thing( vals[i] ));
+        bt.add( new thing( vals[i] ));
     gettimeofday( tv+2, 0 );
     for ( i = 0; i < MAX; i++ )
     {
