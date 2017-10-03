@@ -202,7 +202,12 @@ pfkbak_extract       ( UINT32 baknum,
 
             if (idx == v->num_items)
             {
-                printf(": piece %d info not found\n", piece_number);
+                // this is not really a bug; if a file gets shorter
+                // from one gen to the next, later pieces will not be
+                // tagged with this generation#, and so this is an
+                // expected result.
+                if (pfkbak_verb > VERB_QUIET)
+                    printf(": piece %d info not found\n", piece_number);
             }
             else
             {
