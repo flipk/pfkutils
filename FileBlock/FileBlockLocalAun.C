@@ -24,6 +24,44 @@
  * \author Phillip F Knaack
  */
 
+/** \page AUNMGMT  FileBlock AUN Management
+
+The first level of management in the file is lists of regions.  Every 
+region is on a global ordered list.  When a region is freed, this allows
+fast lookups of previous and successive regions, to determine if coalescing
+of free space is possible.
+
+Each region encodes the following information:
+
+<ul>
+<li> The AUN of the previous region.  If this is the first region in the
+     file, this value is zero.
+<li> The size of the region, in AUs.  This field is 31-bits, therefore
+     the largest region which can be expressed in this field is 2^31*32=64GB.
+     The size value of 0 is reserved for the last region in the file, also
+     known as an end-of-file marker.
+<li> There is one bit for a used/free indicator.
+<li> A used region contains:
+   <ul>
+   <li> The AUID value used to represent this item.  The value of 0 is
+        reserved to indicate a stack L2 or L3 page.
+   </ul>
+<li> A free region contains:
+   <ul>
+   <li> A bucket_prev pointer for the bucket linked list.
+   <li> A bucket_next pointer for the bucket linked list.
+   </ul>
+</ul>
+
+Note that an AUN of 0 (zero) indicates an invalid AUN or an end-of-list
+marker.
+
+Next: \ref AUNBuckets
+
+*/
+
+
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>

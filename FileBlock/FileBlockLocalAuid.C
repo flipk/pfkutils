@@ -25,6 +25,86 @@
  * \author Phillip F Knaack
  */
 
+
+/** \page AUIDMGMT  FileBlock AUID Management
+
+The next level of management is management of the AUID identifiers. 
+Every data block in a file must be identified with a unique identifier
+which does not change if the data is moved to a different position in 
+the file.  Therefore, there must be a mechanism to store and retrieve
+the translation of identifier to position.
+
+This is done with a set of tables.  There are two tables, one for managing
+the AUID-to-AUN translation, and one for managing free AUIDs.  The first 
+is known as the AUID table, the second is known as the AUID free-stack.
+
+The AUID is the index in the first table.  AUIDs are allocated bottom
+up, starting at 1.  Zero is an invalid AUID.  The value auid_top in
+the InfoBlock indicates the next available AUID value.  When an AUID
+is freed, the entry in the table indexed by that AUID is set to zero,
+creating a hole in the table.  The AUID value is then added to the
+AUID free-stack for reclamation the next time an AUID must be
+allocated.
+
+The index in the free-stack is the value auid_stack_top in the InfoBlock.
+This corresponds to the next slot in the free-stack which could be written
+with a new AUID.  If auid_stack_top is zero, the stack is empty.  This also
+implies that every AUID from 1 thru auid_top is currently in use.
+
+When an AUID allocation is requested, the free-stack is checked first.
+If the stack is not empty, the top value is taken and used.  If the
+stack is empty, then auid_top is incremented and its previous value is
+the AUID returned.
+
+When an AUID is freed, the entry in the AUID table is set to zero and the
+AUID is added to the pointer stack.
+
+Next: \ref AUIDTable
+
+*/
+
+
+/** \page AUIDTable  FileBlock AUID Three-level table
+
+A given data file could have thousands or millions or even a billion
+used regions, and thus a great many AUIDs to manage.  Thus, it is not
+feasable to implement the AUID table and free-stack as flat tables.
+
+Thus they are implemented as a three-level table system.  A 32-bit
+value is divided into three fields: the top 12 bits become a level 1
+(L1) index, the next 10 bits are the L2 index, and the bottom 10 are
+the L3 index.
+
+The FileHeader structure includes the two L1 tables.  Each entry in
+each L1 table is an AUN identifying the location of an L2 table.
+
+Each entry in the L2 table is an AUN specifying a location of an L3
+table.
+
+For the AUID table, each entry in the L3 table is an AUN specifying
+the location of the region identified by the AUID value.
+
+For the AUID free stack, each entry represents an AUID value currently
+unused in the AUID table.
+
+L2 and L3 tables are allocated dynamically as required by calling AUN
+allocation functions.
+
+\note There is no attempt to reclaim L2 or L3 tables if the free-stack
+size decreases, nor is there any attempt to reclaim tables from the
+AUID table if large blocks of contiguous AUIDs are freed.
+
+\note L2 and L3 tables are allocated using the AUN management interface,
+but the AUID field is never populated.  The AUID value is set to 0 for
+all L2 and L3 tables.  L2 and L3 tables are located using AUN values
+instead of AUID values.  This is because the tables themselves provide
+the translation of AUID-to-AUN, thus AUID cannot be used.
+
+Next: \ref FileBlockCompacting
+
+*/
+
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>

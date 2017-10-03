@@ -24,6 +24,32 @@
  */
 
 
+/** \page FileBlockAccess FileBlock Access Methods: Allocation
+
+There are two separate phases in accessing a FileBlock file.  First there
+is allocation management, in which there are three methods:
+ FileBlockInterface::alloc, FileBlockInterface::realloc, and
+FileBlockInterface::free.
+
+These functions deal only in FileBlock AUID numbers.  An AUID does not
+exist until an alloc call, and ceases to exist after a free call.
+When allocating an AUID, the size must also be specified.  After the
+alloc call, there now exists a region within the disk file of the
+specified size which is associated with this ID.
+
+The realloc method is basically a free followed by another alloc of
+the new size, except that the new allocation has the same AUID number as
+the old one.  Note that it will copy the data from the old region to the
+new region; if the new size is smaller, the data is truncated, but if the
+new size is bigger, the new space at the end of the allocation is memset
+to zeroes.
+
+Next: \ref FileBlockAccessR
+
+*/
+
+
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>

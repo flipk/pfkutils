@@ -24,6 +24,33 @@
  * \author Phillip F Knaack
  */
 
+/** \page FileBlockDataInfoBlock Fileblock DataInfoBlocks
+
+An application might like to store a bookmark of some kind, informing
+where to start looking for data.  For instance if the file is being
+used to store a B-tree, the btree may require an info block containing
+information such as the order of the tree and a pointer to the root
+node.  It may also be convenient to store more than one set of data in
+the same file.  For example it may be reasonable to store multiple
+independent B-trees in the same file.  This could be as easy as having
+two separate info blocks pointing to two separate root nodes.
+
+Thus the API provides a mechanism to associate a text string with an
+AUID value.  The application provides the string name and an AUID and
+an association as formed.  The next time the file is opened, the
+string name can be used to search for the AUID.
+
+To enter a file block association into the file, the user specifies
+the unique string and provides an AUID of the info block when calling
+FileBlockInterface::set_data_info_block.
+
+To retrieve this information later, the user specifies the unique
+string and then calls FileBlockInterface::get_data_info_block.
+
+If this information is no longer needed, the user should delete the
+association by calling FileBlockInterface::del_data_info_block.
+
+*/
 
 #include "FileBlockLocal.H"
 

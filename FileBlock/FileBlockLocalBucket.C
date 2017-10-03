@@ -24,6 +24,42 @@
  * \author Phillip F Knaack
  */
 
+
+/** \page AUNBuckets  FileBlock AUN Bucket Lists
+
+Every free region is on a bucket list.  There are 2048 bucket lists,
+each one representing regions of a particular size, from 1 to 2047 AUs
+in size.  Each bucket list is a doubly-linked list.
+
+There is also a bucket bitmap.  Each bucket list head pointer has a
+corresponding bit in this bitmap.  If the list is empty, the bit is zero.
+If the list is nonempty, the bit is one.
+
+When an allocation of a particular size is requested, that specific
+bucket is checked first for a region of exactly the right size.  If
+that bucket list is empty, the search proceeds up to the next bucket
+list for regions of the next size.  The bucket bitmap is used to
+accelerate this search.  The final bucket list (2048) is reserved for
+an end-of-file marker, whose size is considered infinite.
+
+When a matching free region is found (even if it is the infinite-sized
+end-of-file marker), this free region is split into two regions: a
+used region for the allocation, and another region containing the
+remainder of the original free region.  (For the end-of-file marker,
+the new region continues to be marked as infinite.)
+
+When a region is freed, the next and previous regions are checked to
+see if they are also free.  If they are, the current region is
+combined with them to make one contiguous free region.
+
+The resulting free region is then inserted into the head of a bucket
+list, corresponding to the size of the region.
+
+Next: \ref AUIDMGMT
+
+*/
+
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>

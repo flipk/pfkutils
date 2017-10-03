@@ -24,6 +24,21 @@
  * \author Phillip F Knaack
  */
 
+/** \page FileBlockAccessR FileBlock Access Methods: Retrieval
+
+The second phase is to actually access that region.  This is done with two
+more methods, FileBlockInterface::get and FileBlockInterface::release.  The
+first takes an AUID number created by the alloc method, and returns a
+FileBlock, which contains a memory buffer the user can read and modify.
+The release method takes this FileBlock object back, and ensures the memory
+buffer's contents are synchronized with the actual disk file.
+
+See the section \ref Templates for an example of the access methods.
+
+Next: \ref AUNMGMT
+
+*/
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>
