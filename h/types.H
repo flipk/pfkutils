@@ -49,12 +49,6 @@
 #define UINT8   unsigned char
 #define UCHAR   unsigned char
 
-#if 0
-#define uint    UINT32
-#define ushort  UINT16
-#define uchar   UCHAR
-#endif
-
 #ifdef __cplusplus
 class UINT64_t {
 private:
