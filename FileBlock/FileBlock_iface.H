@@ -61,38 +61,97 @@ public:
  *
  * This is a pure-virtual class whose purpose is to abstract the
  * access of files.  
- *
- * \todo document file-info block stuff.
  */
 class FileBlockInterface {
 public:
+    /** @name Constructor/Destructor */
+    // @{
     /** Destructor.
-     *
      * This destructor is a placeholder; so that objects derived from
      * this class can implement their own virtual destructors. */
     virtual ~FileBlockInterface(void) { }
+    // @}
 
+    /** checks for signature etc, returns true if file appears to
+     * be valid.  this function is static so that it can be called
+     * prior to the constructor.
+     * \see FileBlockLocal::valid_file
+     * \param bc the interface to the file to check
+     * \return true if file has signature, false if it does not */
+    static bool valid_file( BlockCache * bc );
+
+    /** open a FileBlockLocal object and return it.
+     * the purpose of this method is to hide the FileBlockLocal
+     * object from the user.
+     * \param bc the BlockCache object to access the file
+     * \return the newly-created FileBlockLocal object downcast to
+     *         the FileBlockInterface type. */
+    static FileBlockInterface * open( BlockCache * bc );
+
+    /** takes a new file, and writes a signature etc to initialize
+     * the file.  this function is static, because it needs to be called
+     * before the class can be constructed.
+     * \param bc the interface to the file to check. */
+    static void init_file( BlockCache * bc );
+
+    /** @name Allocation management */
+    // @{
     /** allocate a block of space in a file.
+     * \param size the size of the block to allocate.
+     * \return a unique identifier that can be passed to get_block,
+     *   or returns 0 if an error occurred.
+     * \note This function does NOT initialize the block allocated to
+     *       Any known values.  If there was old data present in the file
+     *       at this position, it will be present in a get operation.
      *
      * This function allocates space in the file.
-     * \return a unique identifier that can be passed to get_block,
-     *   or returns 0 if an error occurred. */
+     */
     virtual UINT32 alloc( int size ) = 0;
 
     /** free a block in a file.
+     * \param id the identifier of the block to free.
      *
      * frees the part of the file used by a block, so this part of the
      * file can be allocated later.
-     * \param id the identifier of the block to free.
      */
     virtual void   free( UINT32 id ) = 0;
 
-    // retrieve an information block from the file
-    // identified by some unique name.
-    virtual UINT32 get_data_info_block( char * info_name ) = 0;
-    virtual void   set_data_info_block( UINT32 id, char *info_name ) = 0;
-    virtual void   del_data_info_block( char * info_name ) = 0;
+    /** change the size of an allocation.
+     * \param id the old block identifier to resize.
+     * \param new_size the new size desired.
+     * \return the ID of the new block (the same as the ID passed in)
+     * \note This function does NOT copy data from the old block to the
+     * new block!
+     *
+     * This will free the old block, and allocate a new block of the new
+     * size, but it will retain the same block id.  
+     */
+    virtual UINT32 realloc( UINT32 id, int new_size ) = 0;
+    // @}
 
+    /** @name File Info Block API
+     * retrieve an information block from the file
+     * identified by some unique name.
+     */
+    // @{
+    /** provide a unique text string, and return back a FileBlock ID
+     * of the info block for that type, if it exists.
+     * \param info_name a unique text string up to 128 characters long
+     * \return a FileBlock ID of the corresponding info block. */
+    virtual UINT32 get_data_info_block( char * info_name ) = 0;
+    /** add an association of a string with an info block.
+     * \param id the FileBlock ID of the info block.
+     * \param info_name a unique text string up to 128 characters long
+     */
+    virtual void   set_data_info_block( UINT32 id, char *info_name ) = 0;
+    /** delete an association
+     * \param info_name a unique text string up to 128 characters long
+     */
+    virtual void   del_data_info_block( char * info_name ) = 0;
+    // @}
+
+    /** @name Block Access */
+    // @{
     /** retrieve a block from the file.
      *
      * This function retrieves data from the file and returns a
@@ -117,7 +176,10 @@ public:
      *  passing dirty=true is equivalent to calling FileBlock::mark_dirty
      *  prior to releasing. */
     virtual void release( FileBlock * blk, bool dirty=false ) = 0;
+    // @}
 
+    /** @name Coherence */
+    // @{
     /** flush the cache to the disk.
      *
      * This function sychronizes the in-memory copy of any cached blocks or
@@ -130,8 +192,11 @@ public:
      * defragmentation and compaction.  If this much time passes and the file
      * isn't completely defragmented, this function will give up and return.
      * 0 means continue until the file is completely defragmented.
+     *
+     * \note This function is currently unimplemented!
      */
     virtual void compact(int time_limit) = 0;
+    // @}
 };
 
 /** provide a brief way to access a disk block with a type struct.

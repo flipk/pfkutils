@@ -12,20 +12,12 @@ class BtreeInternal;
 /** helper class for Btree::printinfo.  the user should populate
  * one of these before calling Btree::printinfo to help it decide
  * how to format the data.
- * \todo convert this to an iterator-interface.
  */
-class BtreePrintinfo {
+class BtreeIterator {
 public:
-    static const int NODE_INFO       = 1;
-    static const int BTREE_INFO      = 2;
-    static const int KEY_REC_PTR     = 4;
-    static const int DATA_REC_PTR    = 8;
-    static const int _FIRST_USER_OPT = 16;
-    int options;
-    BtreePrintinfo( int _options ) { options = _options; }
-    virtual ~BtreePrintinfo(void) { /* placeholder */ }
-    /** format an item */
-    virtual bool print_item( UINT32 key_fbn, UINT32 data_fbn ) = 0;
+    virtual ~BtreeIterator(void) { /* placeholder */ }
+    virtual bool handle_item( UCHAR * keydata, UINT32 keylen,
+                              UINT32 data_fbn ) = 0;
     virtual void print( const char * format, ... )
         __attribute__ ((format( printf, 2, 3 ))) = 0;
 };
@@ -65,6 +57,7 @@ public:
     /** Return a pointer to the FileBlockInterface backend.  This allows the
      * user of Btree to store their own data directly in the file without
      * going only through the Btree API.
+     * \see BtreeInternal::valid_file
      * \return a pointer to the FileBlockInterface object. */
     FileBlockInterface * get_fbi(void) { return fbi; }
     /** the destructor closes the Btree portion of the file, but does NOT 
@@ -103,14 +96,16 @@ public:
      * \param key  the key to locate the item that should be deleted.
      * \return true if the item was deleted, false if not found or error. */
     virtual bool del  ( _BTDatum * key  ) = 0;
-    /** display debugging information about a file. uses the BtreePrintinfo
-     * to help it display items and print strings.  pi->print_item should
-     * return false if it wants walking the tree to stop.  this function
-     * returns false if pi->print_item returned false for some item.
-     * \param pi the BtreePrintinfo helper object
-     * \return true if walked all the way to the end of the database,
-     *         false if pi->print_item returned false and caused it to stop. */
-    virtual bool printinfo( BtreePrintinfo * pi ) = 0;
+    /** iterate over an entire btree, producing debug data and then
+     * calling a user supplied function once for each item in the tree.
+     * the tree is walked in key-order.  the user-supplied function must
+     * return 'true' if the walk is to continue; if it ever returns 'false',
+     * the walk is terminated at its current point.
+     * \param bti the user's BtreeIterator object
+     * \return true if the entire btree was walked, or false if it was aborted
+     *         due to BtreeIterator::handle_item returning false.
+     */
+    virtual bool iterate( BtreeIterator * bti ) = 0;
 };
 
 /** a base class for a BTREE unit of data (key or contents).

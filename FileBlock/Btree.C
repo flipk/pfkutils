@@ -13,8 +13,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-/** the FileBlockInterface::get_data_info_block string name
- * for the info field which describes the Btree. */
 const char BtreeInternal::BTInfoFileInfoName[] = "PFKBTREEINFO";
 
 //static
@@ -31,18 +29,14 @@ bool
 Btree :: init_file( FileBlockInterface * _fbi, int order )
 {
     UINT32  root_fbn;
-    BTNodeDisk  rootnode(_fbi);
 
     if (order < 0 || order > BtreeInternal::MAX_ORDER || 
         (order & 1) == 0)
         return false;
 
-    root_fbn = _fbi->alloc( rootnode.d->node_size(order) );
-    rootnode.get(root_fbn,true);
-    rootnode.d->magic.set( _BTNodeDisk::MAGIC );
-    rootnode.d->set_numitems( 0 );
-    rootnode.d->set_root(true);
-    rootnode.d->set_leaf(true);
+    BTNode n(_fbi, order, 0);
+    root_fbn = n.get_fbn();
+    n.store();
 
     UINT32  info_fbn;
     BTInfo  info(_fbi);
@@ -53,7 +47,7 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
     info.d->bti_fbn.set( info_fbn );
     info.d->root_fbn.set( root_fbn );
     info.d->numnodes.set( 1 );
-    info.d->numrecords.set( 1 );
+    info.d->numrecords.set( 0 );
     info.d->depth.set( 1 );
     info.d->order.set( order );
 
@@ -63,7 +57,6 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
     return true;
 }
 
-/** \see BtreeInternal::valid_file */
 //static
 bool
 Btree :: valid_file( FileBlockInterface * fbi )
@@ -71,15 +64,6 @@ Btree :: valid_file( FileBlockInterface * fbi )
     return BtreeInternal::valid_file(fbi);
 }
 
-/** check if a file is a valid btree file.
- * this function checks a number of things: first that it can locate the
- * BTInfo block, then that the _BTInfo::MAGIC matches, then that the order
- * is sensible, then that the bti_fbn number matches.  If all these tests
- * pass, then the likelihood that this is a valid Btree file is pretty
- * high, so it returns true.
- * \param _fbi the FileBlockInterface to access the file.
- * \return true if the file appears to be a valid btree file,
- *              false if not. */
 //static
 bool
 BtreeInternal :: valid_file( FileBlockInterface * _fbi )
@@ -107,12 +91,6 @@ BtreeInternal :: valid_file( FileBlockInterface * _fbi )
     return true;
 }
 
-/** constructor of BtreeInternal class which takes the FileBlockInterface
- * as an argument.  This function attempts to locate and read the BTInfo
- * structure from the file and validate it.  It also learns the Btree order
- * and precalculates some constants.
- * \param _fbi  the interface to the file containing the btree
- */
 BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
     : info(_fbi)
 {
@@ -134,33 +112,27 @@ BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
     ORDER_MO = BTREE_ORDER - 1;
     if (info.d->bti_fbn.get() != info_fbn)
         goto error;
-    BTNodeDisk node(fbi);
-    node_size = node.d->node_size(BTREE_ORDER);
+    node_size = _BTNodeDisk::node_size(BTREE_ORDER);
+    node_cache = new BTNodeCache( fbi, BTREE_ORDER, MAX_NODES );
+    iterate_inprogress = false;
 }
 
 //virtual
 BtreeInternal :: ~BtreeInternal(void)
 {
-    //xxx
+    delete node_cache;
 }
 
-/** compare two btree keys, and return -1, 0, or 1 depending on
- * what order they should be placed in.
- * \param one the first key to compare
- * \param two the second key to compare
- * \return -1 if one is "less than" two, 0 if one is binary equivalent
- *         to two, 1 if one is "greator than" two.
- */
 //static
 int
-BtreeInternal :: compare_items( _BTDatum * one, _BTDatum * two )
+BtreeInternal :: compare_keys( BTKey * one, BTKey * two )
 {
-    int onesize = one->get_size();
-    int twosize = two->get_size();
+    int onesize = one->keylen;
+    int twosize = two->keylen;
     int comparelen = (onesize > twosize) ? twosize : onesize;
     int result;
 
-    result = memcmp( one->get_ptr(), two->get_ptr(), comparelen );
+    result = memcmp( one->data, two->data, comparelen );
     if (result != 0)
         return (result > 0) ? 1 : -1;
     if (onesize > twosize)
@@ -170,67 +142,41 @@ BtreeInternal :: compare_items( _BTDatum * one, _BTDatum * two )
     return 0;
 }
 
-#if 0
-/** compare key to each key in node.
- * if exact match is found, *exact is set to true.
- * \param n the node to walk through
- * \param key the key to compare to each key in the node
- * \param exact a pointer to a bool, which this function will set to
- *              true or false prior to returning to indicate if the key
- *              matches a key in the node exactly or not.
- * \return  index into node's items array; <ul> <li> if 'key' were
- *  inserted into node, this would be the index where it should go.
- *  <li> if this is a non-leaf, the pointer at that index should be
- * followed to get closer to the desired item. </ul>
- */
 int
-BtreeInternal :: walknode( _BTNodeDisk * n, _BTDatum * key, bool *exact )
+BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
 {
-    int i, cmpres = 0, max;
-
-    max = n->get_numitems();
-    if (max == 0)
+    if (n->numitems == 0)
     {
         *exact = false;
         return 0;
     }
 
-    for (i = 0; i < max; i++)
+    int i,res = 0;
+    for (i=0; i < n->numitems; i++)
     {
-        BTDatum  <BTGeneric>  g(this);
-        FileBlock * fb;
-
-        fb = fbi->get(n->items[i].key.get());
-        if (!fb)
-        {
-            fprintf(stderr, "internal error in walknode!\n");
-            kill(0,6);
-        }
-
-        g.setfb(fb);
-        cmpres = compare_items( key, &g );
-        if (cmpres <= 0)
+        res = compare_keys( n->keys[i], key );
+        if (res <= 0)
             break;
     }
 
-    *exact = (cmpres == 0);
+    *exact = (res == 0);
 
-    return 0;
+    return i;
 }
 
 int
-BtreeInternal :: splitnode( _BTNodeDisk * n, _BTDatum * key, 
+BtreeInternal :: splitnode( BTNode * n, BTKey * key, UINT32 data_fbn,
                             UINT32 rightnode, int index )
 {
-    //xxx
+    /** \todo implement */
     return 0;
 }
-#endif
 
 //virtual
 bool
 BtreeInternal :: get( _BTDatum * key, _BTDatum * data )
 {
+    /** \todo implement */
     return false;
 }
 
@@ -238,6 +184,15 @@ BtreeInternal :: get( _BTDatum * key, _BTDatum * data )
 bool
 BtreeInternal :: put( _BTDatum * key, _BTDatum * data )
 {
+    if (iterate_inprogress)
+    {
+        fprintf(stderr, "ERROR: cannot modify database while iterate "
+                "is in progress!\n");
+        exit(1);
+    }
+
+    /** \todo implement */
+
     return false;
 }
 
@@ -245,56 +200,63 @@ BtreeInternal :: put( _BTDatum * key, _BTDatum * data )
 bool
 BtreeInternal :: del( _BTDatum * key  )
 {
+    if (iterate_inprogress)
+    {
+        fprintf(stderr, "ERROR: cannot modify database while iterate "
+                "is in progress!\n");
+        exit(1);
+    }
+
+    /** \todo implement */
+
     return false;
 }
 
-/** recursive function which prints the contents of a node, and also
- * calls itself to follow node pointers and print children nodes.
- * also calls BtreePrintinfo::print_item for each data item as it goes.
- * as a consequence of this structure, print_item will receive all items
- * in the file exactly in key-order.  BtreePrintinfo::print_item should
- * return false, if it wants this algorithm to terminate before reaching
- * the end of the btree.
- * \param pi  a pointer to the user's BtreePrintinfo object
- * \param node_fbn  the FileBlock ID of the node to walk
- * \return true if the entire node was printed uninterrupted, or false 
- *         if BtreePrintinfo::print_item returned false, indicating that
- *         the entire tree-walk should be terminated.
- */
 bool
-BtreeInternal :: printnode( BtreePrintinfo * pi, UINT32 node_fbn )
+BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
 {
-    BTNodeDisk node(fbi);
-    node.get(node_fbn);
+    bool ret = true;
+    BTNode * n;
+    n = node_cache->get(node_fbn);
 
-    int numitems = node.d->get_numitems();
-    pi->print( "node at %#x:  %d items\n",
-               node_fbn, numitems);
+    bti->print( "node ID %08x:  %d items\n",
+               node_fbn, n->numitems);
     int i;
-    for (i=0; i < numitems; i++)
+    for (i=0; i < n->numitems; i++)
     {
-        if (!node.d->is_leaf())
-            if (printnode(pi, node.d->items[i].ptr.get()) == false)
-                return false;
-//xxx        if (pi->print_item(node.d->items[i].key.get(),
-//                           node.d->items[i].data.get()) == false)
-            return false;
+        if (!n->leaf)
+            if (iterate_node(bti, n->ptrs[i]) == false)
+            {
+                ret = false;
+                break;
+            }
+        if (bti->handle_item( n->keys[i]->data,
+                              n->keys[i]->keylen,
+                              n->datas[i] ) == false)
+        {
+            ret = false;
+            break;
+        }
     }
-    if (numitems > 0 && !node.d->is_leaf())
-        return printnode(pi, node.d->items[i].ptr.get());
-    // else
+    if (n->numitems > 0 && !n->leaf)
+        if (iterate_node(bti, n->ptrs[i]) == false)
+            ret = false;
+    node_cache->release(n);
     return true;
 }
 
+// virtual
 bool
-BtreeInternal :: printinfo( BtreePrintinfo * pi )
+BtreeInternal :: iterate( BtreeIterator * bti )
 {
     UINT32 node_fbn;
+    bool ret = true;
+    iterate_inprogress = true;
 
     node_fbn = info.d->root_fbn.get();
 
-    pi->print( "bti fbn : 0x%x\n"
-               "root fbn : 0x%x\n"
+    bti->print( "bti fbn : %08x\n"
+               "root fbn : %08x\n"
                "numnodes : %d\n"
                "numrecords : %d\n"
                "depth : %d\n"
@@ -306,5 +268,8 @@ BtreeInternal :: printinfo( BtreePrintinfo * pi )
                info.d->depth.get(),
                info.d->order.get());
 
-    return printnode(pi, node_fbn);
+    ret = iterate_node(bti, node_fbn);
+    iterate_inprogress = false;
+
+    return ret;
 }

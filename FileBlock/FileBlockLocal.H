@@ -61,9 +61,10 @@ public:
     /** checks for signature etc, returns true if file appears to
      * be valid.  this function is static so that it can be called
      * prior to the constructor.
+     * \see FileBlockInterface::valid_file
      * \param bc the interface to the file to check
      * \return true if file has signature, false if it does not */
-    static bool is_valid_file( BlockCache * bc );
+    static bool valid_file( BlockCache * bc );
     /** takes a new file, and writes a signature etc to initialize
      * the file.  this function is static, because it needs to be called
      * before the class can be constructed.
@@ -74,12 +75,17 @@ public:
     /*virtual*/ void   set_data_info_block( UINT32 id, char *info_name );
     /*virtual*/ void   del_data_info_block( char * info_name );
 
+    /*virtual*/ UINT32 realloc( UINT32 id, int new_size );
     /*virtual*/ UINT32 alloc( int size );
     /*virtual*/ void free( UINT32 id );
     /*virtual*/ FileBlock * get( UINT32 id, bool for_write = false );
     /*virtual*/ void release( FileBlock * blk, bool dirty );
     /*virtual*/ void flush(void);
     /*virtual*/ void compact(int time_limit);
+
+
+    /** this function is for debug purposes. */
+    void dump_extents( void );
 };
 
 #endif /* __FILE_BLOCK_LOCAL_H__ */

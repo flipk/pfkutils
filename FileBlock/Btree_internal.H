@@ -4,6 +4,8 @@
  * \author Phillip F Knaack
  */
 
+#include "dll2.H"
+
 class BtreeInternal;
 
 /** a Btree information block as it appears on disk. */
@@ -20,31 +22,37 @@ struct _BTInfo {
 /** a FileBlock shortcut for accessing Btree information blocks */
 typedef FileBlockT <_BTInfo> BTInfo;
 
-/** an item within a _BTNodeDisk.
- * \todo optimize nodes and performance by putting key data
- * inline with the nodes?   investigate. */
+/** an item within a _BTNodeDisk */
 struct BTNodeItem {
-    UINT32_t ptr;   /**< fileblock number of a left-child node */
-    UINT16_t keystart;   /**< offset where key data starts */
-    UINT16_t keysize;    /**< length of key data */
-    UINT32_t data;  /**< fileblock number of the data */
+    UINT32_t ptr;       /**< fileblock number of a left-child node */
+    UINT16_t keystart;  /**< offset where key data starts */
+    UINT16_t keysize;   /**< length of key data */
+    UINT32_t data;      /**< fileblock number of the data */
 };
 
 /** a Btree node as it appears on disk, plus access methods.
  * \note this structure is variable-sized. */
 struct _BTNodeDisk {
     static const UINT32 MAGIC = 0x4463ab2d;
-    UINT32_t    magic;
+    UINT32_t    magic;      /**< must equal _BTNodeDisk::MAGIC */
 private:
-    UINT16_t    _numitems;  /**< count of items, also encode leaf and root */
+    UINT16_t    _numitems;  /**< count of items, also encode leaf and root
+                               using _BTNodeDisk::ITEM_CONSTANTS enum */
+    /** bitfields of _BTNodeDisk::_numitems */
     enum ITEM_CONSTANTS {
-        LEAF_MASK = 0x8000,
-        ROOT_MASK = 0x4000,
-        NUM_MASK  = 0x3fff
+        LEAF_MASK = 0x8000,  /**< this node is a leaf */
+        ROOT_MASK = 0x4000,  /**< this node is the root node */
+        NUM_MASK  = 0x3fff   /**< remaining bits for the number of items */
     };
 public:
-    /** the 'items' in this node (keys, data, and node pointers)
-     * \note must be last item */
+    /** the 'items' in this node (keys, data, and node pointers).
+     * This member is zero-length because it is the start of a variable-
+     * length array.  The dimension of the array depends on the order of
+     * the btree: the dimension is order-1.
+     * \note Must be last item.
+     * \note A btree of order N has N-1 items, but N pointers. 
+     *       Thus There is an additional 'ptr' after this.
+     */
     BTNodeItem  items[ 0 ];
     int get_numitems(void) { return _numitems.get() & NUM_MASK; }
     bool is_root(void) { return (_numitems.get() & ROOT_MASK) == ROOT_MASK; }
@@ -70,14 +78,53 @@ public:
         if (v) _numitems.set( _numitems.get() |  LEAF_MASK );
         else   _numitems.set( _numitems.get() & ~LEAF_MASK );
     }
-    int node_size( int _order ) {
+    static int node_size( int _order ) {
         // add in order-1 items plus one more ptr.
         return sizeof(_BTNodeDisk) +
             sizeof(BTNodeItem)*(_order-1) +
             sizeof(UINT32_t);
     }
+    UCHAR * get_key_data(int _order) {
+        return ((UCHAR*)this) + node_size(_order);
+    }
 };
 typedef FileBlockT <_BTNodeDisk> BTNodeDisk;
+
+/** generic data structure for comparing keys etc.
+ * this is a variable-sized structure, so the syntax to construct it
+ * is a little different:
+ * <pre>
+ *    BTKey * key = new(keylen) BTKey(keylen);
+ * </pre>
+ * The "keylen" parameter must be specified both to the operator and to
+ * the constructor so that the right amount of memory may be allocated.
+ */
+struct BTKey {
+    UINT32 keylen;     /**< the length of the key data */
+    UCHAR data[0];     /**< the key data itself */
+    //
+    /** constructor will populate the keylen field from its parameter */
+    BTKey( UINT32 _keylen ) { keylen = _keylen; }
+    /** operator allocates memory based on size of key.
+     * \param sz  the compiler provides this as sizeof(BTKey) however this 
+     *            parameter is not used by this method.
+     * \param keylen the length of the key data.
+     * \return enough memory for BTKey and the key data combined. */
+    void * operator new( size_t sz, int keylen ) {
+        return (void*) new UCHAR[ sizeof(BTKey) + keylen ];
+    }
+    /** operator which matches the custom new operator to free memory. */
+    void operator delete( void * ptr ) {
+        delete[] (UCHAR*)ptr;
+    }
+};
+
+/** an enum for the LList declarations for BTNode cache */
+enum BTNodeLists { 
+    BTNODE_LRU,      /**< unused BTNodes are on a least-recently used list */
+    BTNODE_HASH,     /**< all BTNodes are on a hash by fbn */
+    BTNODE_NUMLISTS  /**< dimension of the links array */
+};
 
 /** a type for managing nodes.  if you haven't noticed, _BTNodeDisk is
  * a little clumsy to use, especially considering the key-data is stored
@@ -86,25 +133,101 @@ typedef FileBlockT <_BTNodeDisk> BTNodeDisk;
  * variable-sized also.  this structure simplifies all the accesses
  * to the node. */
 class BTNode {
-    FileBlockInterface * fbi;
-    int btorder;
-    UINT32 * fbnp;
+    friend class BTNodeHashComparator;
+    friend class BTNodeCache;
+    FileBlockInterface * fbi;   /**< how to access the disk file. */
+    int btorder;                /**< the order of the btree, used to calc
+                                   the size of the variable-sized portions
+                                   of the node on disk. */
+    UINT32 fbn;                 /**< FileBlock ID of the node on disk */
+    int refcount;               /**< BTNodeCache keeps track of # users */
+    bool dirty;
 public:
-    BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 * _fbnp );
+    /** BTNodeCache keeps BTNodes in an LRU and a Hash */
+    LListLinks <BTNode> links[BTNODE_NUMLISTS];
+    // let the public (BtreeInternal) access these fields.
+    int numitems;    /**< number of items in this node */
+    bool leaf;       /**< this is a leaf node */
+    bool root;       /**< this is a root node */
+    UINT32 * ptrs;   /**< array of FileBlock IDs of ptrs to nodes */
+    UINT32 * datas;  /**< array of FileBlock IDs of ptrs to data */
+    BTKey ** keys;   /**< array of keys */
+    /** constructor for a node. 
+     * \param _fbi  the FileBlockInterface to get the node in and out
+     * \param _btorder  the Btree order, so that the size of a node can be
+     *                  calculated.
+     * \param _fbn  the FileBlock ID of the node; if this is specified as
+     *              zero, a new block will be allocated on a store.
+     */
+    BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 _fbn );
+    /** destructor frees memory consumed by the node */
     ~BTNode( void );
+    /** return the fbn. */
+    UINT32 get_fbn(void) { return fbn; }
+    /** mark this node as modified */
+    void mark_dirty(void) { dirty = true; }
+    /** realloc the fbn and store the node data into the file. */
     void store( void );
 };
 
-/** generic data structure for comparing keys etc.
- */
-struct BTGeneric {
-    UCHAR data[0];
-    //
-    UCHAR * get_ptr (void) { return (UCHAR*) this; }
-    /** this method is useless in BTGeneric, here to satisfy the template */
-    int get_size (void) { return sizeof(BTGeneric); }
-    /** this method is useless in BTGeneric, here to satisfy the template */
-    static int get_max_size (void) { return sizeof(BTGeneric); }
+/** a DLL2 helper to help sort BTNode objects into the BTNodeCache hash. */
+class BTNodeHashComparator {
+public:
+    /** how to access a BTNode and return a hash index */
+    static int hash_key( BTNode * item ) {
+        return item->fbn & 0x7FFFFFFF;
+    }
+    /** how to access a key (fbn) and return a hash index */
+    static int hash_key( UINT32 key ) {
+        return key & 0x7FFFFFFF;
+    }
+    /** how to compare a key (fbn) to an item (BTNode) */
+    static bool hash_key_compare( BTNode * item, UINT32 key ) {
+        return (item->fbn == key);
+    }
+};
+
+/** typedef for a least-recently used list of BTNode */
+typedef LListLRU <BTNode, BTNODE_LRU>  BTNodeLRU;
+/** typedef for a hash on fbn of BTNode */
+typedef LListHash <BTNode, UINT32,
+                   BTNodeHashComparator, BTNODE_HASH>   BTNodeHash;
+
+/** a cache of BTNode objects, with least-recently used list, cap on
+ * max number of nodes, and a hash searchable by fbn.  All accesses to
+ * read and write nodes should go through this interface. */
+class BTNodeCache {
+    BTNodeLRU   lru;           /**< the least-recently-used list of BTNode */
+    BTNodeHash  hash;          /**< a hash on fbn of BTNode */
+    FileBlockInterface * fbi;  /**< the file to access for nodes */
+    int btorder;               /**< the order of the btree, to assist in 
+                                * calculating node sizes */
+    int max_nodes;             /**< a cap on the max size of the LRU */
+public:
+    /** constructor for the cache.
+     * \param _fbi the file to access for nodes
+     * \param _btorder the order of the btree
+     * \param _max_nodes the maximum number of nodes to keep in the LRU cache */
+    BTNodeCache( FileBlockInterface * _fbi, int _btorder, int _max_nodes );
+    /** destructor frees all memory used by all nodes */
+    ~BTNodeCache( void );
+    /** retrieve a node either from the cache or from disk if not found
+     * in the cache.
+     * \param fbn  the FileBlock ID number of the node.  This may be specified
+     *             as zero for a brand new node.  the ID will be allocated. 
+     *             you will need to fetch the ID using BTNode::get_fbn.
+     * \return the node, either from cache or a new one just read and parsed
+     *         from the FileBlockInterface.
+     * \note This method returns a node with a nonzero reference count.  When
+     *       done with the node, do NOT delete it!
+     *       instead call BTNodeCache::release. */
+    BTNode * get( UINT32 fbn );
+    /** return a node to the cache.
+     * \param n the node to return
+     * \note This method decreases the node's reference count.  If the refcount
+     *       reaches zero, the node is put back in the LRU and is eligible for
+     *       flushing if it eventually hits the end of the LRU. */
+    void release( BTNode * n );
 };
 
 /** internal implementation of Btree.
@@ -114,6 +237,9 @@ struct BTGeneric {
  * this work.
  */
 class BtreeInternal : public Btree {
+    /** maximum number of nodes to hold in the cache.
+     * \note this number needs fiddling. */
+    static const int MAX_NODES = 200; 
     /** the order of the tree (maximum number of pointers
      * at each node; must be an odd number <= MAX_ORDER */
     int BTREE_ORDER;
@@ -131,17 +257,78 @@ class BtreeInternal : public Btree {
     /** a pointer to the FileBlock containing the BTInfo; this 
      * object is always live. */
     BTInfo info;
-    static int compare_items( _BTDatum * one, _BTDatum * two );
-    bool printnode( BtreePrintinfo * pi, UINT32 node_fbn );
-    int walknode( _BTNodeDisk * n, _BTDatum * key, bool *exact );
+    /** the cache of all nodes currently in use. */
+    BTNodeCache  * node_cache;
+    /** compare two btree keys, and return -1, 0, or 1 depending on
+     * what order they should be placed in.
+     * \param one the first key to compare
+     * \param two the second key to compare
+     * \return -1 if one is "less than" two, 0 if one is binary equivalent
+     *         to two, 1 if one is "greator than" two.
+     */
+    static int compare_keys( BTKey * one, BTKey * two );
+    /** compare key to each key in node.
+     * if exact match is found, *exact is set to true.
+     * \param n the node to walk through
+     * \param key the key to compare to each key in the node
+     * \param exact a pointer to a bool, which this function will set to
+     *              true or false prior to returning to indicate if the key
+     *              matches a key in the node exactly or not.
+     * \return  index into node's items array; <ul> <li> if 'key' were
+     *  inserted into node, this would be the index where it should go.
+     *  <li> if this is a non-leaf, the pointer at that index should be
+     * followed to get closer to the desired item. </ul>
+     */
+    int walknode( BTNode * n, BTKey * key, bool *exact );
+    /** take full node plus 1 item and split into 2 nodes
+     * plus 1 "pivot" item between them.
+     * \param n the full BTNode
+     * \param key the key of the item to insert
+     * \param data_fbn the data of the item to insert
+     * \param rightnode a FileBlock ID of the node to the right of the item
+     * \param index the index into node n where this item goes (from walknode)
+     * \return the FileBlock ID of the new right node that was created.
+     */
+    int splitnode( BTNode * n, BTKey * key, UINT32 data_fbn,
+                   UINT32 rightnode, int index );
+    /** walk thru all the data in a node, recursing on the pointers, and
+     * calling a user-specified function for each key and data (item).
+     * \param bti the user's BtreeIterator object.
+     * \param node_fbn the FileBlock ID of the node to walk.
+     * \return true if the entire node was handled uninterrupted, or false 
+     *         if BtreePrintinfo returned false, indicating that
+     *         the entire tree-walk should be terminated.
+     */
+    bool iterate_node( BtreeIterator * bti, UINT32 node_fbn );
+    bool iterate_inprogress;    /**< cannot modify during an iterate method */
 public:
+    /** the FileBlockInterface::get_data_info_block string name
+     * for the info field which describes the Btree. */
     static const char BTInfoFileInfoName[];
     static const int MAX_ORDER = 51;    /**< maximum order supported */
+    /** constructor of BtreeInternal class which takes the FileBlockInterface
+     * as an argument.  This function attempts to locate and read the BTInfo
+     * structure from the file and validate it.  It also learns the Btree order
+     * and precalculates some constants.
+     * \param _fbi  the interface to the file containing the btree
+     */
     BtreeInternal( FileBlockInterface * _fbi );
-    /*virtual*/ ~BtreeInternal( void );
+    /** check if a file is a valid btree file.
+     * this function checks a number of things: first that it can locate the
+     * BTInfo block, then that the _BTInfo::MAGIC matches, then that the order
+     * is sensible, then that the bti_fbn number matches.  If all these tests
+     * pass, then the likelihood that this is a valid Btree file is pretty
+     * high, so it returns true.
+     * \see Btree::valid_file
+     * \param _fbi the FileBlockInterface to access the file.
+     * \return true if the file appears to be a valid btree file,
+     *              false if not. */
     static bool valid_file( FileBlockInterface * _fbi );
+    /** free all memory associated with the btree and sync all nodes
+     * back to the file. */
+    /*virtual*/ ~BtreeInternal( void );
     /*virtual*/ bool get( _BTDatum * key, _BTDatum * data );
     /*virtual*/ bool put( _BTDatum * key, _BTDatum * data );
     /*virtual*/ bool del( _BTDatum * key  );
-    /*virtual*/ bool printinfo( BtreePrintinfo * pi );
+    /*virtual*/ bool iterate( BtreeIterator * bti );
 };

@@ -20,7 +20,7 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 {
     bc = _bc;
 
-    if ( !is_valid_file(bc) )
+    if ( !valid_file(bc) )
     {
         fprintf(stderr, "not a valid FileBlockLocal file!\n");
         exit(1);
@@ -42,8 +42,22 @@ FileBlockLocal :: ~FileBlockLocal( void )
 }
 
 //static
+FileBlockInterface *
+FileBlockInterface :: open( BlockCache * bc )
+{
+    return new FileBlockLocal( bc );
+}
+
+//static
 bool
-FileBlockLocal :: is_valid_file( BlockCache * bc )
+FileBlockInterface :: valid_file( BlockCache * bc )
+{
+    return FileBlockLocal::valid_file( bc );
+}
+
+//static
+bool
+FileBlockLocal :: valid_file( BlockCache * bc )
 {
     BlockCacheT <FileBlockLocalHeader>  fbh(bc);
     bool ret = false;
@@ -56,6 +70,13 @@ FileBlockLocal :: is_valid_file( BlockCache * bc )
         ret = true;
 
     return ret;
+}
+
+//static
+void
+FileBlockInterface :: init_file( BlockCache * bc )
+{
+    FileBlockLocal::init_file(bc);
 }
 
 //static
@@ -200,6 +221,22 @@ FileBlockLocal :: del_data_info_block( char * info_name )
 
 //virtual
 UINT32
+FileBlockLocal :: realloc( UINT32 id, int new_size )
+{
+    if (map_present)
+    {
+        BlockCacheT <FileBlockLocalHeader>  fbh(bc);
+        fbh.get( FILE_BLOCK_HEADER_POSITION );
+        free_map( fbh.d );
+        map_present = false;
+    }
+    Extent * e;
+    e = map.realloc( id, new_size );
+    return e->id;
+}
+
+//virtual
+UINT32
 FileBlockLocal :: alloc( int size )
 {
     if (map_present)
@@ -289,4 +326,21 @@ FileBlockLocal :: compact(int time_limit)
     // so that allocations start early in the file?
     // free_map
     // store_map
+}
+
+void
+FileBlockLocal :: dump_extents( void )
+{
+    Extent * e;
+
+    printf("dumping extents:\n");
+    for (e = map.get_head(); e; e = map.get_next(e))
+    {
+        printf( "offset: %lld, size: %d",
+                e->offset, e->size );
+        if (e->used)
+            printf( ", ID = %08x\n", e->id );
+        else
+            printf( ", FREE\n" );
+    }
 }

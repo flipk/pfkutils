@@ -156,15 +156,22 @@ Extents :: find_id( UINT32 id )
     return idhash.find(id);
 }
 
-/** \note Sizes are always rounded up to the nearest 32-byte boundary. */
+/** \note Sizes are always rounded up to the nearest 32-byte boundary.
+ *  The bucket-list search algorithm depends on this (it uses a 5-bit
+ *  shift to index the bucket-list).  Without this guarantee, the allocation
+ *  algorithm may return overlapping allocations.
+ */
 Extent *
-Extents :: alloc( UINT32 size )
+Extents :: _alloc( UINT32 id, UINT32 size )
 {
     // round up to next 32-byte boundary.
     size = ((((size - 1) >> 5) + 1) << 5);
 
+    if (id != 0)
+        // free the old one before we look for a new one
+        free_id( id );
+
     int b;
-    UINT32 id;
     Extent * e = NULL;
 
     for ( b = size_to_bucket(size);
@@ -187,7 +194,9 @@ Extents :: alloc( UINT32 size )
     if (buckets[b].get_cnt() == 0)
         clear_bit(b);
 
-    id = alloc_id();
+    // allocate a new id if we don't already have one.
+    if (id == 0)
+        id = alloc_id();
 
     // regardless of what happens next, we have
     // created a new 'used' extent.  if we are
@@ -210,7 +219,7 @@ Extents :: alloc( UINT32 size )
     // split this one in two.
     Extent * ne = extent_pool.alloc( e->offset, size, id );
     // the last entry on the list represents 
-    // the 'remaindiner' of the file (basically out to
+    // the 'remainder' of the file (basically out to
     // infinity) so its size never really decreases.
     if (list.get_tail() != e)
         e->size -= size;

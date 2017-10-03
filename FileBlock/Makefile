@@ -13,12 +13,12 @@ CC=	g++
 INCS=	-I../h -I../dll2
 DEFS=	-D_FILE_OFFSET_BITS=64 \
 	-DDLL2_INCLUDE_BTREE=1 -DDLL2_CHECKSUMS=0 -DDLL2_STRICT_WALKING=0
-OPTS=	-Wall -Werror -O6
+OPTS=	-Wall -Werror -g3
 LIBS=	../dll2/dll2_hash.o
 TESTSRCS= testFileBlock.C testBtree.C
 
 all: xmakefile
-	@make -f xmakefile $(TARG) t1 t2
+	@make -f xmakefile $(TARG) t1 t2 t3
 
 
 xmakefile: Makefile $(TESTSRCS) $(SRCS) $(HDRS)
@@ -39,6 +39,9 @@ t1: $(TARG)   testFileBlock.o
 t2: $(TARG)   testBtree.o
 	$(CC) testBtree.o     $(TARG) $(LIBS) -o $@
 
+t3: $(TARG)   testExtents.o
+	$(CC) testExtents.o   $(TARG) $(LIBS) -o $@
+
 doc::
 	doxygen
 
@@ -48,5 +51,5 @@ doc::
 depend: xmakefile
 
 clean:
-	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1 t2
+	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1 t2 t3
 	rm -rf doc

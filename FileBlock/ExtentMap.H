@@ -166,12 +166,26 @@ class Extents {
      *  to prevent possible collision (two Extent objects with same id). */
     UINT32 alloc_id(void);
 
+    /** implementation of both alloc and realloc 
+     * \param id The identifier of the old Extent to modify.  May be specified
+     *           as zero to indicate no previous Extent (alloc).
+     * \param size the (new) size desired for the Extent. 
+     * \return The Extent allocated.
+     */
+    Extent * _alloc( UINT32 id, UINT32 size );
+
     /** @name Bucket List
      * The bucket list is for Extent objects which are free;
      * Extent objects are grouped by their size for optimal searching
      * during an alloc operation.  Buckets are divided up by 32-byte
      * sizes; i.e. buffers from 1-31 bytes are bucket 0, buffers of size
-     * 32-63 are bucket 1, etc. */
+     * 32-63 are bucket 1, etc.
+     * \note The bucket-list heavily depends on the 32-byte roundup in
+     *  Extents::alloc which guarantees that all Extent objects start on
+     *  a 32-byte boundary.  (This algorithm uses a 5-bit shift to index
+     *  the bucket array.)  Without that guarantee, the allocation algorithm
+     *  may incorrectly return overlapping allocations.
+     */
     // @{
     /** 2048 buckets for any size up to 65536 bytes. */
     static const int NUM_BUCKETS = 2048;
@@ -314,7 +328,25 @@ public:
      * It attempts to find a best-matched Extent.  If it can't find an
      * exact match, it looks higher in the list until a free region is
      * found that can be fragmented. */
-    Extent * alloc( UINT32 size );
+    Extent * alloc( UINT32 size ) {
+        return _alloc( 0, size );
+    }
+    /** change the size of an allocation. 
+     * \param id The identifier of the old Extent to modify.
+     * \param new_size the new size desired for the Extent. 
+     * \return a pointer to the Extent.
+     * \note This does not resize the existing extent!  It will in most cases
+     *  free the old Extent and create a new one in a completely different
+     *  place.
+     *
+     * This method frees an old Extent and allocates a new Extent of a
+     * different size, but re-uses the same identifier.  This method is 
+     * useful for applications which store Extent IDs within other data
+     * blocks, and would prefer not to update the parent object if the
+     * child object has to be resized. */
+    Extent * realloc( UINT32 id, UINT32 new_size ) {
+        return _alloc(id,new_size);
+    }
     /** Free up an Extent that is no longer needed.
      * \param id The unique 32-bit identifier of the Extent.
      * 

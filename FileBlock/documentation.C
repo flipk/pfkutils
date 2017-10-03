@@ -4,11 +4,11 @@
  * \author Phillip F Knaack
  */
 
-/** \mainpage FileBlock Interface
+/** \mainpage FileBlock Interface and Btree
 
-The purpose of the FileBlock interface is to manage allocation of file
+The purpose of the FileBlockInterface is to manage allocation of file
 space within a file.  An excellent analogy to the FileBlockInterface 
-object are the standard unix functions \c malloc and \c free, except that
+object are the standard unix functions \em malloc and \em free, except that
 it is for file space rather than memory space.
 
  \section FileBlockObjects FileBlock component objects
@@ -23,12 +23,21 @@ types.  Click on the following links to read about each of them.
 <li> \ref ExtentMap (see classes Extent and Extents)
 <li> \ref FileBlock (see classes FileBlock, FileBlockInterface, FileBlockLocal)
 <li> \ref FileBlockLocalFileFormat
-<li> \ref BtreeStructure (see Btree and BTDatum)
-<li> \ref BtreeInternalStructure (see BtreeInternal, BTInfo,
-                    BTNodeItem, BTNodeDisk, BTNode)
-<li> \ref Templates (see templates FileBlockT, BlockCacheT, and BTDatum)
 </ul>
 
+\section BtreeObjects Btree component objects
+
+<ul>
+<li> \ref BtreeStructure (see Btree and BTDatum)
+<li> \ref BtreeInternalStructure (see BtreeInternal, _BTInfo,
+          BTNodeItem, _BTNodeDisk, BTKey, BTNode, BTNodeCache)
+</ul>
+
+\section TemplatesObjects Templates
+
+<ul>
+<li> \ref Templates (see templates FileBlockT, BlockCacheT, and BTDatum)
+</ul>
 
 
 Author: Phillip F Knaack <pknaack1@netscape.net>
@@ -321,11 +330,38 @@ position.
 
 \section FileBlockAccess FileBlock Access Methods
 
-\todo document the access methods.
+There are two separate phases in accessing a FileBlock file.  First there
+is allocation management, in which there are three methods:
+ FileBlockInterface::alloc, FileBlockInterface::realloc, and
+FileBlockInterface::free.
+
+These functions deal only in FileBlock ID numbers, and manipulating the 
+Extents map.  An ID does not exist until an alloc call, and ceases to exist
+after a free call.  When allocating an ID, the size must also be specified.
+After the alloc call, there now exists a region within the disk file of the
+specified size which is associated with this ID.
+
+The realloc method is basically a free followed by another alloc of the new
+size, except that the new allocation has the same ID number as the old one.
+Note that this function does NOT copy the data from the old allocation to the
+new one, the user is responsible for that.  (The reason is that the user may
+wish to completely repopulate the new block, thus it is more efficient in that
+case to let the user skip the copy step.)
+
+The second phase is to actually access that region.  This is done with two
+more methods, FileBlockInterface::get and FileBlockInterface::release.  The
+first takes an ID number created by the alloc method, and returns a
+FileBlock, which contains a memory buffer the user can read and modify.
+The release method takes this FileBlock object back, and ensures the memory
+buffer's contents are synchronized with the actual disk file.
+
+See the section \ref Templates for an example of the access methods.
 
 \section Compacting
 
-\todo document the compaction algorithm.
+\note At this time the Compaction algorithm does not yet exist.
+
+\todo design and implement the compaction algorithm.
 
 Next: \ref FileBlockLocalFileFormat
 
@@ -349,12 +385,25 @@ value is 32KB; however they must not be more than 64KB in size.
 The next 12 bytes contain an 8-byte offset and 4-byte size describing
 a portion of the file containing a piece-map, described below.
 
+\section FileBlockFileInfoBlock File Info Blocks
+
 Following this are 64 4-byte units identifying block ids where file-
 information blocks exist.  The value 0 means no information block is
-populated in this slot.  The file information block functionality is
-not yet designed or implemented.
+populated in this slot.  A nonzero value indicates the presence of a
+FileInfoBlockId structure.  This structure is 132 bytes in size.  The
+first 4 bytes are a block id identifying the location of the user's 
+info block.  The remaining 128 bytes are a character string uniquely
+identifying the info block.
 
-\todo document file-information block system.
+To enter a file block association into the file, the user specifies
+the unique string and provides a FileBlock ID of the info block when
+calling FileBlockInterface::set_data_info_block.
+
+To retrieve this information later, the user specifies the unique string
+and then calls FileBlockInterface::get_data_info_block.
+
+If this information is no longer needed, the user should delete the 
+association by calling FileBlockInterface::del_data_info_block.
 
 \section FileBlockLocalFileFormatFileHeaderPieceMap Piece Map
 

@@ -39,7 +39,7 @@ public:
  * the caller provides a unique string to identify it, and we
  * return the unique block id they should fetch. */
 struct FileInfoBlockId {
-    static const int max_string_len = 512;
+    static const int max_string_len = 128;
     UINT32_t  id;
     char      string[ max_string_len ];
 };

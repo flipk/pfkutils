@@ -6,7 +6,7 @@
  * This file is the test harness for the components of FileBlock.
  * It is used to test anything and everything during development. */
 
-#include "FileBlockLocal.H"
+#include "FileBlock_iface.H"
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -52,6 +52,7 @@ int
 main(int argc, char ** argv)
 {
     int           fd;
+    int           options;
     PageIO      * io;
     BlockCache  * bc;
     FileBlockInterface * fbi;
@@ -59,7 +60,11 @@ main(int argc, char ** argv)
     srandom( getpid() * time(NULL) );
 
     (void) unlink( TESTFILE );
-    fd = open(TESTFILE, O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+    options = O_RDWR | O_CREAT;
+#ifdef O_LARGEFILE
+    options |= O_LARGEFILE;
+#endif
+    fd = open(TESTFILE, options, 0644);
     if (fd < 0)
     {
         fprintf(stderr, "unable to open file\n");
@@ -68,8 +73,8 @@ main(int argc, char ** argv)
 
     io = new PageIOFileDescriptor(fd);
     bc = new BlockCache(io, 256*1024*1024);
-    FileBlockLocal::init_file( bc );
-    fbi = new FileBlockLocal( bc );
+    FileBlockInterface::init_file( bc );
+    fbi = FileBlockInterface::open( bc );
 
 #if 1
 #define ITEMS 1000000
@@ -218,19 +223,21 @@ int
 main( int argc, char ** argv )
 {
     int           fd;
+    int           options;
     PageIO      * io;
     BlockCache  * bc;
     FileBlockInterface * fbi;
 
+    options = O_RDWR;
+#ifdef O_LARGEFILE
+    options |= O_LARGEFILE;
+#endif
     if (strcmp(argv[1], "init") == 0)
     {
+        options |= O_CREAT;
         (void) unlink( TESTFILE );
-        fd = open(TESTFILE, O_RDWR | O_CREAT | O_LARGEFILE, 0644);
     }
-    else
-    {
-        fd = open(TESTFILE, O_RDWR | O_LARGEFILE);
-    }
+    fd = open(TESTFILE, options, 0644);
 
     if (fd < 0)
     {
