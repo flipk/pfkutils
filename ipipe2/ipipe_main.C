@@ -175,12 +175,16 @@ i2_main( int argc,  char ** argv )
     if ( inp_file )
     {
         int cc;
+        int flags = O_RDONLY;
         close( 0 );
-#ifdef O_LARGEFILE
-        cc = open( inp_file, O_RDONLY | O_LARGEFILE );
-#else
-        cc = open( inp_file, O_RDONLY );
+
+#ifdef O_BINARY  // cygwin
+        flags |= O_BINARY;
 #endif
+#ifdef O_LARGEFILE  // linux
+        flags |= O_LARGEFILE;
+#endif
+        cc = open( inp_file, flags );
         if ( cc != 0 )
         {
             fprintf( stderr,
@@ -193,13 +197,18 @@ i2_main( int argc,  char ** argv )
     if ( out_file )
     {
         int cc;
+        int flags = O_WRONLY | O_CREAT;
+
         close( 1 );
-#ifdef O_LARGEFILE
-        cc = open( out_file,
-                   O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, 0644 );
-#else
-        cc = open( out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644 );
+
+#ifdef O_LARGEFILE // cygwin
+        flags |= O_LARGEFILE;
 #endif
+#ifdef O_BINARY // linux
+        flags |= O_BINARY;
+#endif
+
+        cc = open( out_file, flags, 0644 );
         if ( cc != 1 )
         {
             fprintf( stderr,
