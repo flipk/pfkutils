@@ -17,15 +17,14 @@
 
 static const char *helpmsg =
 "\n"
-"ipipe [-i infile] [-o outfile] [-pqsve] [-l delay] port     (passive)\n"
-"ipipe [-i infile] [-o outfile] [-pqsve] [-l delay] host port    (active)\n"
+"ipipe [-i infile] [-o outfile] [-pqsve] port     (passive)\n"
+"ipipe [-i infile] [-o outfile] [-pqsve] host port    (active)\n"
 "ipipe [-i infile] [-o outfile] [-psve] host port pty (redirect to pty)\n"
 "    -i: redirect fd 0 to input file\n"
 "    -o: redirect fd 1 to output file\n"
 "    -q: set raw qcomm mode\n"
-"    -l: insert carefully timed delays\n"
 "    -s: display stats of transfer at end\n"
-"    -v: display stats live, during transfer (1 second updates)\n"
+"    -v: display stats live, during transfer (1 second updates) implies -s\n"
 "    -e: echo a hex dump of the transfer in each dir to stderr\n"
 "    -d: delete 0x00's and 0x0D's from the input stream\n"
 "    -n: do not read from stdin\n"
@@ -40,14 +39,11 @@ static int options;
 #define OPT_ECHO     ( 2 << 3 )
 #define OPT_RAWQ     ( 2 << 4 )
 #define OPT_PINGACK  ( 2 << 5 )
-#define OPT_DELAYS   ( 2 << 6 )
-#define OPT_NOSTDIN  ( 2 << 7 )
-#define OPT_DELNULS  ( 2 << 8 )
+#define OPT_NOSTDIN  ( 2 << 6 )
+#define OPT_DELNULS  ( 2 << 7 )
 
 #define SET(x)    options |= x
 #define ISSET(x) (options &  x)
-
-static int low_delay;
 
 int do_connect(char *, int);
 static void read_write(int);
@@ -88,7 +84,6 @@ ipipe_main( int argc, char ** argv )
         case 'n': SET(OPT_NOSTDIN); break;
         case 'd': SET(OPT_DELNULS); break;
         case 'p': SET(OPT_PINGACK); break;
-        case 'l': SET(OPT_DELAYS);  low_delay = atoi( optarg );  break;
         case 'i':   input_file = optarg;  break;
         case 'o':  output_file = optarg;  break;
         default:  usage();
@@ -167,8 +162,7 @@ read_write( int fd )
 {
     fd_set fds;
     char buf[BUFSIZE];
-    int cc, infd, outfd;
-    int zsynced = 1;
+    int cc, infd = 0, outfd = 1;
 
     M_INT64 total_bytes;
     time_t start_time, last_time, time_now;
@@ -218,11 +212,9 @@ read_write( int fd )
             if (FD_ISSET(0, &fds))
             {
                 outfd = fd;
-                infd = 0;
             }
             else
             {
-                outfd = 1;
                 infd = fd;
             }
 
@@ -333,9 +325,6 @@ read_write( int fd )
 
             if (ISSET(OPT_ECHO))
                 dumphex(infd, buf, cc);
-
-            if (ISSET(OPT_DELAYS))
-                usleep(low_delay);
 
             if (outfd == fd && ISSET(OPT_PINGACK))
             {
