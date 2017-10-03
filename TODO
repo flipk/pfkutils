@@ -1,4 +1,6 @@
 
+ - itsfs needs a control command
+
  - pkstgen needs input A,B,C { ... } syntax
  - pkstgen needs input * { ... } syntax
    (document difference!)

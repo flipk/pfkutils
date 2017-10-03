@@ -22,12 +22,13 @@
 #include <dirent.h>
 #include "inode.H"
 #include "id_name_db.H"
+#include "control_pipe.H"
 
 class Inode_virtual;
 
 class Inode_virtual_tree : public Inode_tree {
     friend class Inode_virtual;
-    Inode_virtual * inos;
+    LList <Inode_virtual,0>  inos;
     uchar * (*update_status_info)( void );
     void (*command_handler)( char *, int );
     char * help_string;
@@ -71,17 +72,20 @@ public:
         INO_TREE_VIRT_STATUS_FILE,
         INO_TREE_VIRT_CMD_FILE,
         INO_TREE_VIRT_HELP_FILE,
-        INO_TREE_VIRT_TREE
+        INO_TREE_VIRT_TREE,
+        INO_TREE_VIRT_CONTROL_COMM
     };
 
+public:
+    LListLinks<Inode_virtual>  links[1];
 private:
-    Inode_virtual * n;
     uchar * name;
     ITVT itype;
     Inode_virtual_tree * it;
     int dirposval;
     bool bad;
     Inode_tree * owned_tree;
+    Control_Pipe * cpipe;
 
     uchar * status_info;
     void update_status_info( void );
@@ -90,6 +94,9 @@ private:
 public:
     Inode_virtual               ( Inode_virtual_tree * it,
                                   int file_id, ITVT itype );
+    Inode_virtual               ( Inode_virtual_tree * it,
+                                  int file_id,
+                                  uchar * path );
     Inode_virtual               ( Inode_virtual_tree * it,
                                   int file_id, uchar * path,
                                   Inode_tree * owned_tree );

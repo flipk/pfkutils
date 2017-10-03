@@ -594,11 +594,13 @@ update_status_info( void )
 #define UPDATE(f) f += strlen( f )
 
     sprintf( f,
+             "PID: %d\n"
              "NFS RPC file destriptor: %d\n"
              "remino_worker rendevous descriptor: %d\n"
              "NFS client UDP port: %d\n"
              "NFS RPC calls total: %d\n"
              "server uptime: %d.%06d\n\n",
+             getpid(),
              _globs->nfs_rpc_udp_fd, _globs->slave_rendevous_fd,
              _globs->source_port,
              _globs->nfs_rpc_call_count, uptime.tv_sec, uptime.tv_usec );

@@ -6,11 +6,11 @@ INODE_SRCS= \
 	inode_remote.C inode_remote_tree.C \
 	inode_virtual.C inode_virtual_tree.C
 
-HDRS=	filehandle.H id_name_db.H svr.H remote_ino.H \
+HDRS=	filehandle.H id_name_db.H svr.H remote_ino.H control_pipe.H \
 	nfssrv.H mytypes.h nfs_prot.h rpc.h xdr.h remote_ino_prot.h \
 	$(INODE_HEADERS)
 CSRCS=	nfs_prot.c rpc.c remote_ino_prot.c do_mount.c xdr.c
-CPPSRCS=filehandle.C id_name_db.C nfssrv.C \
+CPPSRCS=filehandle.C id_name_db.C nfssrv.C control_pipe.C \
 	svr.C svr_globals.C remote_ino_client.C $(INODE_SRCS)
 
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o)
@@ -48,7 +48,7 @@ $(TARG): $(TOBJS2)
 #elifdef cygwin32
 $(TARG): $(TOBJS2)
 #else
-$(TARG): $(OBJS) $(TOBJS)
+$(TARG): $(OBJS) $(TOBJS) bf
 #endif
 	rm -f $(TARG)
 #ifdef solaris
@@ -77,6 +77,9 @@ remote_ino_prot.h: remote_ino_prot.x
 remote_ino_prot.o: remote_ino_prot.c remote_ino_prot.h
 	$(CC) $(OPTS) -c remote_ino_prot.c
 
+bf: bf.C xdr.o rpc.o
+	g++ bf.C -o bf xdr.o rpc.o
+
 .c.o:
 	$(CC) $(INCS) $(OPTS) -c $*.c
 
@@ -91,6 +94,6 @@ depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
 clean:
 	rm -f *.o remote_ino_prot.[ch] \
 		*.core *~ M.cyg M.sol *.exe \
-		$(TARG) Makefile
+		$(TARG) Makefile bf
 
 #DEPENDENCIES

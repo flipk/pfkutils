@@ -30,20 +30,17 @@ Inode_virtual_tree :: Inode_virtual_tree
   char *_help_string )
     : Inode_tree( INODE_VIRTUAL, _tree_id )
 {
-    inos = NULL;
     Inode_virtual * i;
     update_status_info = _update_status_info;
     command_handler = _command_handler;
     help_string = _help_string;
-
-#define ADD(i)   i->n = inos; inos = i; deref( i )
 
 #define ADD2( fileno, id )                                              \
     do {                                                                \
         int newid = id;                                                 \
         i = LOGNEW Inode_virtual( this, newid, Inode_virtual::fileno ); \
         inode_name_db->add( mount_id, i->name, i->ftype, newid );       \
-        ADD(i); newid = inode_name_db->alloc_id();                      \
+        inos.add( i ); deref( i ); newid = inode_name_db->alloc_id();   \
     } while ( 0 )
 
     ADD2( INO_TREE_VIRT_ROOT_DIR       , ROOT_INODE_ID             );
@@ -63,29 +60,24 @@ Inode_virtual_tree :: register_tree( uchar * name, Inode_tree * newtree )
 {
     Inode_virtual * i;
     i = LOGNEW Inode_virtual( this, newtree->ROOT_INODE_ID, name, newtree );
-    ADD( i );
+    inos.add( i );
+    deref( i );
     return newtree->ROOT_INODE_ID;
 }
 
 Inode_tree *
 Inode_virtual_tree :: kill_tree( int id )
 {
-    Inode_virtual *i, *pi;
+    Inode_virtual * i;
 
-    for ( pi = NULL, i = inos; i; pi = i, i = i->n )
+    for ( i = inos.get_head();  i;  i = inos.get_next(i) )
         if ( i->file_id == id )
             break;
 
     if ( !i )
         return NULL;
 
-    if ( pi )
-        pi->n = i->n;
-    else
-        inos = i->n;
-
-    i->n = NULL;
-
+    inos.remove( i );
     Inode_tree * ret = i->owned_tree;
     delete i;
     return ret;
@@ -93,21 +85,20 @@ Inode_virtual_tree :: kill_tree( int id )
 
 Inode_virtual_tree :: ~Inode_virtual_tree( void )
 {
-    Inode_virtual * i, * ni;
-    for ( i = inos; i; i = ni )
-    {
-        ni = i->n;
+    Inode_virtual * i;
+    while ( i = inos.dequeue_head() )
         delete i;
-    }
 }
 
 Inode *
 Inode_virtual_tree :: get( int file_id )
 {
     Inode_virtual * i;
-    for ( i = inos; i; i = i->n )
+
+    for ( i = inos.get_head();  i;  i = inos.get_next(i) )
         if ( i->file_id == file_id )
             break;
+
     if ( i )
         if ( i->owned_tree )
             i = (Inode_virtual*) i->owned_tree->get( file_id );
@@ -127,7 +118,7 @@ Inode_virtual_tree :: get( int dir_id, uchar * filename )
         return NULL;
 
     Inode_virtual * i;
-    for ( i = inos; i; i = i->n )
+    for ( i = inos.get_head();  i;  i = inos.get_next(i) )
         if ( strcmp( (char*)i->name, (char*)filename ) == 0 )
             break;
 
@@ -155,15 +146,18 @@ Inode_virtual_tree :: get_parent( int file_id )
         errno = EPERM;
         return NULL;
     }
+
     Inode_virtual * i;
-    for ( i = inos; i; i = i->n )
+    for ( i = inos.get_head();  i;  i = inos.get_next(i) )
         if ( i->file_id == file_id )
             break;
+
     if ( !i )
     {
         errno = ENOENT;
         return NULL;
     }
+
     return get( ROOT_INODE_ID );
 }
 
@@ -176,8 +170,19 @@ Inode_virtual_tree :: deref( Inode * i )
 Inode *
 Inode_virtual_tree :: create( int dirid, uchar * name, inode_file_type ftype )
 {
-    errno = EPERM;
-    return NULL;
+    if ( strncmp( (char*) name, "control-pipe-", 13 ) != 0 )
+    {
+        errno = EPERM;
+        return NULL;
+    }
+    // else
+
+    int newid = inode_name_db->alloc_id();
+    Inode_virtual * i = LOGNEW Inode_virtual( this, newid, name );
+    inode_name_db->add( mount_id, i->name, i->ftype, newid );
+    inos.add(i);
+
+    return i;
 }
 
 Inode *
@@ -196,10 +201,44 @@ Inode_virtual_tree :: createhlink( int dirid, uchar * name, int fileid )
 }
 
 int
-Inode_virtual_tree :: destroy( int fileid, inode_file_type )
+Inode_virtual_tree :: destroy( int fileid, inode_file_type ft )
 {
-    errno = EPERM;
-    return NULL;
+    Inode_virtual * i;
+
+    for ( i = inos.get_head(); i; i = inos.get_next(i) )
+        if ( i->file_id == fileid )
+            break;
+
+    if ( i == NULL )
+    {
+        errno = ENOENT;
+        return -1;
+    }
+
+    if ( i->refget() != 0 )
+    {
+        errno = EACCES;
+        return -1;
+    }
+
+    // only type we support deleting is a control comm
+
+    if ( i->itype != Inode_virtual::INO_TREE_VIRT_CONTROL_COMM )
+    {
+        errno = EPERM;
+        return -1;
+    }
+
+    if ( ft != INODE_FILE )
+    {
+        errno = ENOTDIR;
+        return -1;
+    }
+
+    inos.remove( i );
+    delete i;
+    errno = 0;
+    return 0;
 }
 
 int
