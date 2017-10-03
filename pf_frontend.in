@@ -18,4 +18,4 @@ if [ ! -f $mydir/$pf/$prog ] ; then
 	exit 1
 fi
 
-exec $mydir/$pf/$prog $*
+exec $mydir/$pf/$prog "$@"

@@ -75,12 +75,17 @@ Xmessage*foreground: green
 Xmessage*background: black
 Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
-Emacs*foreground:    yellow
-Emacs*background:    black
-Emacs*cursorColor:   white
-Emacs*pointerColor:  white
-Emacs*font:          -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
-
+Emacs*verticalScrollBar.background:  grey85
+Emacs*verticalScrollBar.troughColor: grey50
+Emacs.pane.menubar*foreground:       black
+Emacs.fsb_popup*foreground:          black
+Emacs*fsb*foreground:                black
+Emacs*menu*foreground:               black
+Emacs*foreground:                    yellow
+Emacs*background:                    black
+Emacs*cursorColor:                   white
+Emacs*pointerColor:                  white
+Emacs*font:             -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 Emacs_Minibuffer*geometry: -0-0
 
 xload*showLabel:      false

@@ -102,3 +102,8 @@ if [ -f proj/pkutils/environ/$localrc ] ; then
     rm -f .kshrc.local
     ln -s proj/pkutils/environ/$localrc .kshrc.local
 fi
+
+if [ $HOST = "login" ] ; then
+    echo remember to edit emacs.el for minibuffer stuff!
+fi
+

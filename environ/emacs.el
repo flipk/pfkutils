@@ -3,20 +3,31 @@
 ;
 
 (custom-set-variables
+  ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
+  ;; Your init file should contain only one such instance.
+ '(blink-matching-paren-distance nil)
  '(display-time-format "%H:%M")
- '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
- '(file-precious-flag t)
  '(display-time-mail-file (quote false))
+ '(file-precious-flag t)
+ '(menu-bar-mode t)
+ '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
- '(blink-matching-paren-distance nil))
+; for login start commenting here
+ '(tool-bar-mode nil nil (tool-bar))
+; for login end comments here
+)
 
-(custom-set-faces)
+(custom-set-faces
+  ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
+  ;; Your init file should contain only one such instance.
+ )
 
 (load "~/.elisp/myshell.el")
 (load "~/.elisp/myfiles.el")
 
 (line-number-mode 1)
 (column-number-mode 1)
+(display-time)
 
 (cond (window-system
        (progn
@@ -42,8 +53,7 @@
 	  hilit-quietly           t)
          (require 'hilit19)
          (load "~/.elisp/myserver.el")
-         (server-start)
-         (display-time)))
+         (server-start)))
       ((not window-system)
        (progn
          (menu-bar-mode -1))))
@@ -76,7 +86,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (add-hook 'c-mode-hook   'set-c-mode-thingies)
 (add-hook 'c++-mode-hook 'set-c-mode-thingies)
-(global-set-key [f4]  'set-c-mode)
 
 (defun fix-buffer-my-way ()
   ""
@@ -93,6 +102,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (global-set-key [f1]  'showhelp)
 (global-set-key [f2]  'fill-region)
+(global-set-key [f4]  'set-c-mode)
 (global-set-key [f6]  'eval-last-sexp)
 (global-set-key [f7]  'list-buffers)
 (global-set-key [f8]  'execute-extended-command)
@@ -100,7 +110,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key [f10] 'delete-frame)
 (global-set-key "\C-g" 'goto-line)
 (global-set-key "\C-x\C-w" 'make-dumb-frame)
-(global-set-key "\C-x\C-m" 'compile)
 
 (defun make-dumb-frame ()
   "Make a frame with no menu bar and no scroll bar."
@@ -113,15 +122,13 @@ nEnter c-mode-tabwidth value (4 or 8):")
   "overwrite emacs default version of this function"
   't)
 
-;; (global-set-key [f19] 'make-frame)
-;;(global-set-key [f20] 'delete-frame)
 (global-set-key [f35] 'scroll-up)
 (global-set-key [f29] 'scroll-down)
 (global-set-key [f27] 'beginning-of-buffer)
 (global-set-key [f33] 'end-of-buffer)
 
-(garbage-collect)
-(message "Press F1 for a list of local keybindings.")
-
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+
+(garbage-collect)
+(message "Press F1 for a list of local keybindings.")
