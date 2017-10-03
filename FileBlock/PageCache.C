@@ -36,6 +36,8 @@ PageCache :: get(int page_number, bool for_write)
     if (ret != NULL)
     {
         pgs->ref(ret);
+        if (for_write)
+            ret->dirty = true;
         return ret;
     }
     ret = new PCPInt( page_number );
@@ -60,7 +62,7 @@ PageCache :: release( PageCachePage * _p, bool dirty )
     PCPInt * p = (PCPInt *)_p;
     if (dirty)
         p->dirty = true;
-    p->deref();
+    pgs->deref(p);
     while (pgs->get_lru_cnt() > max_pages)
     {
         p = pgs->get_oldest();
@@ -114,5 +116,7 @@ PageCache :: flush(void)
                     p->get_page_number());
             exit( 1 );
         }
+        // the page is now synced with the file.
+        p->dirty = false;
     }
 }

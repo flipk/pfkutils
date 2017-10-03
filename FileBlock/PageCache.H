@@ -39,6 +39,7 @@ protected:
 public:
     int get_page_number(void) { return page_number; }
     UCHAR * get_ptr(void) { return ptr; }
+    void mark_dirty(void) { dirty = true; }
 };
 
 class PageIO {

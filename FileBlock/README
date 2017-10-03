@@ -1,0 +1,87 @@
+
+The lowest layer is a derived object from PageIO.  This object knows
+only how to read and write PageCachePage objects, whose body is of
+size PageCache::PAGE_SIZE.  An example implementation of PageIO is the
+object PageIOFileDescriptor, which uses a file descriptor (presumably
+an open file) to read and write offsets in the file.
+
+If the user wishes some other storage mechanism (such as a file on a
+remote server, accessed via RPC/TCP for example) then the user may
+implement another PageIO backend which performs the necessary
+interfacing.  This new PageIO object may be passed to the PageCache
+constructor.
+
+--
+
+This PageIO interface is consumed by a PageCache object.  This is a
+cache of PageCachePage objects up to a maximum number.  The method
+PageCache::get() will retrieve a page from the cache if it is in
+cache, or fetch it from the PageIO interface if it is not (and add it
+to the cache).  A page returned by get() is in the "locked" state with
+a "reference count" greator than 0.  When the caller is done using the
+page object, it must call PageCache::release() to return the page to
+the cache.  This decreases the reference count on the page.  When the
+PageCache::flush() method is called, all pages currently in cache are
+synced up with the backend storage, by invoking the PageIO interface
+to write any pages marked as dirty.
+
+If the number of pages cached in PageCache reaches the maximum, then a
+true Least-Recently-Used (LRU) algorithm is used to determine which
+old page to remove from cache.  If the oldest page is clean (in sync
+with the PageIO backend storage) then the memory is simply freed.  If
+the oldest page is dirty, then PageIO::put_page() is invoked prior to
+freeing the page memory.
+
+When the "for_write" flag is set on a "get" operation, this indicates
+that the user has no intention of using any data currently stored in
+the page, and instead intends to write data to the whole page.  This
+results in an optimization where the PageIO::get_page method is not
+called, instead an empty PageCachePage is built and returned to the
+user.  (Why read a page from the file if you're just going to throw
+the data away and write the whole page with new data anyway?)
+
+Note that the maximum count only applies to unlocked pages.  A locked
+page does not count against the limit.
+
+Be sure to call PageCachePage::mark_dirty to ensure that flushes are
+written to the file properly.
+
+--
+
+The PageCache object is consumed by the BlockCache object.  This
+object abstracts the concept of arbitrarily-sized blocks in a file.
+When the "get" method is called, it determines how many pages are
+required to satisfy the request.  If the entire request is within a
+single page, the returned object is optimized by returning a pointer
+directly into the PageCachePage object.  Since pages are generally
+pretty large, most Block operations are thus within a single page.
+Thus, this optimization results in dramatic zero-copy speedup.  If the
+request spans more than one page, then a separate memory buffer is
+allocated, and the block object maintains references to both pages.
+
+Various optimizations are also done when the "for_write" parameter is
+specified.  Obviously if the user is requesting only a portion of a
+page, then for_write cannot be passed to PageCache, because this could
+trash the remainder of the page which is not being modified.  However
+in multi-block fetches, for_write does have an effect if complete
+pages are involved in the block.
+
+When the BlockCache "flush" method is invoked, it will eventually call
+the PageCache "flush" method.  This will automatically synchronize all
+single-page blocks with the data file; however for multi-page blocks,
+some additional work must be done before flushing the PageCache.  All
+portions of the multi-page blocks are copied to their respective pages
+prior to calling the PageCache::flush method.
+
+Be sure to call BlockCacheBlock::mark_dirty to ensure that flushes are
+written to the containing pages properly.
+
+Note that while it is legal for PageCache users to call "get" on the
+same page twice (because of internal reference counts, etc), this is
+NOT legal for BlockCache blocks.  Undefined behavior and data
+corruption will occur if the same or overlapping blocks are requested
+from BlockCache at the same time.
+
+--
+
+The next layer is FileBlock, which needs to be documented here.

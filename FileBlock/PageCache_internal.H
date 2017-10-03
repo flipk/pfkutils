@@ -7,10 +7,9 @@ enum { PAGE_LIST, PAGE_HASH, PAGE_LRU_LOCK, NUM_PAGE_LISTS };
 
 class PCPInt : public PageCachePage {
     int refcount;
-public:
-    LListLinks<PCPInt>  links[NUM_PAGE_LISTS];
-    PCPInt(int _page_number) : PageCachePage(_page_number) { refcount = 0; }
-    bool is_locked(void) { return (refcount != 0); }
+    friend class PageCachePageList;
+    // only PageCachePageList can change reference counts on
+    // this object.
     int ref(void) { return ++refcount; }
     int deref(void) {
         if (refcount == 0)
@@ -20,6 +19,10 @@ public:
         }
         return --refcount;
     }
+public:
+    LListLinks<PCPInt>  links[NUM_PAGE_LISTS];
+    PCPInt(int _page_number) : PageCachePage(_page_number) { refcount = 0; }
+    bool is_locked(void) { return (refcount != 0); }
 };
 
 class PCPIntHashCompare {

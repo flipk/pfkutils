@@ -69,31 +69,31 @@ BlockCache :: get( off_t offset, int size, bool for_write )
 
     for (pg=starting_page, i=0; i < num_pages; pg++,i++)
     {
-        bool for_write = false;
+        bool for_write_pg = false;
         if (for_write && size >= PageCache::PAGE_SIZE)
         {
             if (pg != starting_page && pg != ending_page)
             {
                 // if its a multi-page block and we're in a middle
                 // block, do get_for_write
-                for_write = true;
+                for_write_pg = true;
             }
             else if (pg == starting_page && offset_in_starting_page == 0)
             {
                 // if the block takes up the entire first page, 
                 // get that page for_write.
-                for_write = true;
+                for_write_pg = true;
             }
             else if (pg == ending_page &&
                      offset_in_ending_page == (PageCache::PAGE_SIZE-1))
             {
                 // if the block takes up the entire ending page,
                 // get that page for_write.
-                for_write = true;
+                for_write_pg = true;
             }
             // else must read+modify+write.
         }
-        PageCachePage * p = pc->get(pg, for_write);
+        PageCachePage * p = pc->get(pg, for_write_pg);
         ret->pages[i] = p;
         if (uptr && remaining > 0)
         {
@@ -151,4 +151,55 @@ BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
         delete[] bcb->ptr;
 
     delete bcb;
+}
+
+void
+BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
+{
+    BCB * bcb = (BCB *)_bcb;
+    if (bcb->num_pages == 1 || bcb->dirty == false)
+        // if its a single-page object, then the ptr points
+        // directly into a page, so there's nothing to sync up.
+        return;
+    UCHAR * uptr = bcb->ptr;
+    int remaining = bcb->size;
+    int pg_offset = bcb->offset % PageCache::PAGE_SIZE;
+    int i;
+
+    for (i=0; i < bcb->num_pages; i++)
+    {
+        PageCachePage * p = bcb->pages[i];
+        if (remaining > 0)
+        {
+            int to_copy = remaining;
+            if (to_copy > (PageCache::PAGE_SIZE - pg_offset))
+                to_copy = PageCache::PAGE_SIZE - pg_offset;
+            memcpy(p->get_ptr() + pg_offset, uptr, to_copy);
+            p->mark_dirty();
+            remaining -= to_copy;
+            uptr += to_copy;
+            pg_offset = 0;
+        }
+    }
+
+    // the pages are now synced with the bcb.
+    bcb->dirty = false;
+}
+
+void
+BlockCache :: flush( void )
+{
+    BCB * bcb;
+
+    // first copyback all multi-page bcb's to their respective
+    // page objects; then sync up the page cache.
+
+    for (bcb = bcl->list.get_head();
+         bcb;
+         bcb = bcl->list.get_next(bcb))
+    {
+        flush_bcb(bcb);
+    }
+
+    pc->flush();
 }
