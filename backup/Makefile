@@ -5,16 +5,16 @@ SRCS=	create_backup.C create_file.C \
 	extract.C extract_list.C \
 	get_info.C update_backup.C \
 	list_backups.C list_files.C \
-	find_backup.C main.C md5buffer.C
+	find_backup.C main.C md5buffer.C \
+	FileList.C
 HDRS=	database_elements.H params.H protos.H
 
 OBJS= $(SRCS:.C=.o)
 CC= g++
-INCS= -I.. -I ../h -I ../util -I ../treesync -I ../dll2 -I ../FileBlock 
+INCS= -I.. -I ../h -I ../util -I ../dll2 -I ../FileBlock 
 DEFS= -D_FILE_OFFSET_BITS=64
 OPTS= -g3
-LIBS= ../FileBlock/libFileBlock.a ../treesync/libtreesync.a \
-	../dll2/libdll2.a -lz
+LIBS= ../FileBlock/libFileBlock.a ../dll2/libdll2.a -lz
 
 TESTSRCS= t.C
 EXTRAS= t

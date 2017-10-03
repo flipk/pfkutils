@@ -20,10 +20,10 @@ OBJS= $(CSRCS:.c=.o)
 LIBS= -lcurses -lm -lpthread -lz
 
 DIRS=	implode tags.make tags.view ipipe2 dll2 \
-	util syslog states FileBlock treesync backup
+	util syslog states FileBlock backup
 ELIBS=	implode/libimplode.a tags.make/libmaketags.a \
 	tags.view/libviewtags.a ipipe2/libi2.a util/libutil.a \
-	syslog/libsyslog.a states/libstates.a treesync/libtreesync.a \
+	syslog/libsyslog.a states/libstates.a \
 	FileBlock/libFileBlock.a backup/libpfkbak.a
 
 implode/libimplode.a:
@@ -47,9 +47,6 @@ syslog/libsyslog.a:
 states/libstates.a:
 	cd states && make
 
-treesync/libtreesync.a: FileBlock/libFileBlock.a
-	cd treesync && make
-
 FileBlock/libFileBlock.a: dll2/libdll2.a
 	cd FileBlock && make
 
@@ -57,20 +54,17 @@ backup/libpfkbak.a: FileBlock/libFileBlock.a
 	cd backup && make
 
 #ifdef freebsd
-ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
-DIRS+= bt qcam xlock threads mytar
-ELIBS+= mytar/libmytar.a
+ELIBS+= qcam/libqcam.a xlock/libxlock.a 
+DIRS+= qcam xlock threads
+ELIBS+= 
 #endif
 
 #ifdef linux
 CSRCS+=	sudo.c
-ELIBS+= bt/libbt.a xlock/libxlock.a enctelgate/libetg.a teld/libteld.a
-DIRS+=  bt xlock mytar enctelgate teld
-ELIBS+=  mytar/libmytar.a
+ELIBS+= xlock/libxlock.a enctelgate/libetg.a teld/libteld.a
+DIRS+=  xlock enctelgate teld
+ELIBS+=
 LIBS+= -L/usr/X11R6/lib -lX11
-
-bt/libbt.a:
-	cd bt && make
 
 xlock/libxlock.a:
 	cd xlock && make
@@ -80,27 +74,24 @@ enctelgate/libetg.a:
 
 teld/libteld.a:
 	cd teld && make
-
-mytar/libmytar.a:
-	cd mytar && make
 #endif
 
 #ifdef cygwin32
-DIRS+= bt itsfs mytar threads
-ELIBS+= bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
+DIRS+= itsfs threads
+ELIBS+= itsfs/libitsfs.a
 #endif
 
 #ifdef solaris
 LIBS+= -lsocket -lnsl
 CSRCS+= util/vsnprintf_stub.c
-DIRS+= itsfs bt mytar
-ELIBS+= bt/libbt.a itsfs/libitsfs.a  mytar/libmytar.a
+DIRS+= itsfs
+ELIBS+= itsfs/libitsfs.a
 #endif
 
 #ifdef sunos
 LIBS+= -ltermcap
-DIRS+= itsfs bt
-ELIBS+= bt/libbt.a itsfs/libitsfs.a 
+DIRS+= itsfs
+ELIBS+= itsfs/libitsfs.a 
 #endif
 
 #ifdef freebsd

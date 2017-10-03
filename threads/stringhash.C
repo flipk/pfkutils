@@ -23,15 +23,16 @@
 
 // #include <stdio.h>
 
+/* djb2 string hash algorithm */
+
 int
 string_hash( char * string )
 {
-    int ret = 5, mult = 1; char * p = string;
-    for ( ; *p; p++ )
-    {
-        ret += ( (int)(*p) * mult );
-        mult++;
-    }
-//    fprintf( stderr, "string '%s' hashes to key %d\n", string, ret );
-    return ret;
+    unsigned int ret = 5381;
+    unsigned int c;
+
+    while ((c = (unsigned int) *string++) != 0)
+        ret = ((ret << 5) + ret) + c;  /* hash * 33 + c */
+
+    return (int) ret;
 }

@@ -52,10 +52,10 @@ struct info {
     info(void) { inuse = false; }
 };
 
-//#define TESTFILE "testfile.db"
-#define TESTFILE "fbserver:127.0.0.1:2440"
+#define TESTFILE "testfile.db"
+//#define TESTFILE "fbserver:127.0.0.1:2440"
 
-#define VERBOSE 0
+#define VERBOSE 1
 #define XOR_CONSTANT 0x12345678
 
 #define TEST 1
