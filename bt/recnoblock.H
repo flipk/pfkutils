@@ -16,6 +16,9 @@
 
 enum { BT_DLL2_LRU,  BT_DLL2_HASH,  BT_DLL2_EXTRA, BT_DLL2_COUNT };
 
+#define FBN_DEFAULT_RECORD_SIZE    16
+#define FBN_DEFAULT_PAGE_SIZE    4096
+
 class FileBlockNumber {
     int        recordsize;    // number of bytes in a record
     int          pagesize;    // number of bytes in a page
@@ -61,19 +64,13 @@ class FileBlockNumber {
 
 public:
     class constructor_failed { };
-private:
-    void init( char * file, int c1,
-                     int _record_size, int _page_size )
-        throw ( constructor_failed );
-public:
     int get_recordsize (void) { return recordsize; }
     int get_pagesize   (void) { return pagesize; }
     int get_segmentsize(void) { return segmentsize; }
     static const int     size_overhead = 4;    // two for sig, two for size
     FileBlockNumber( char * file, int c1,
-                     int _record_size, int _page_size )
-        throw ( constructor_failed );
-    FileBlockNumber( char * file, int c1 )
+                     int _record_size = FBN_DEFAULT_RECORD_SIZE,
+                     int _page_size = FBN_DEFAULT_PAGE_SIZE )
         throw ( constructor_failed );
     ~FileBlockNumber( void );
     int min_block_no( void ) { return reserved_bits; }

@@ -45,22 +45,6 @@
 #define RECNOBLOCK_INTERNAL
 #include "recnoblock.H"
 
-#define FBN_DEFAULT_RECORD_SIZE    16
-#define FBN_DEFAULT_PAGE_SIZE    4096
-
-FileBlockNumber :: FileBlockNumber( char * file, int c1,
-                                    int _record_size, int _page_size )
-    throw ( constructor_failed )
-{
-    init( file, c1, _record_size, _page_size );
-}
-
-FileBlockNumber :: FileBlockNumber( char * file, int c1 )
-    throw ( constructor_failed )
-{
-    init( file, c1, FBN_DEFAULT_RECORD_SIZE, FBN_DEFAULT_PAGE_SIZE );
-}
-
 static bool
 power_of_2( int value )
 {
@@ -69,9 +53,9 @@ power_of_2( int value )
     return true;
 }
 
-void
-FileBlockNumber :: init( char * file, int c1,
-                         int _record_size, int _page_size )
+FileBlockNumber :: FileBlockNumber( char * file, int c1,
+                         int _record_size /* = FBN_DEFAULT_RECORD_SIZE */,
+                         int _page_size /* = FBN_DEFAULT_PAGE_SIZE */ )
     throw ( constructor_failed )
 {
     recnoblock_header   rbh;
