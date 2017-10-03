@@ -93,14 +93,8 @@ quick start:
 
 regen configure.tar:
 
-cd ~/proj
-rm -rf pfkutils
-cvs -d /home/flipk/Dropbox/Public/philcvs get pfkutils
-cd pfkutils
-find . -type f > ../0
+touch configure.tar
+sleep 2
 autoreconf -i -f -v
-find . -type f > ../1
-files=`diff ../0 ../1 | awk '/>/ { print $2 }'`
+files=`find . -type f -newer configure.tar`
 tar cf configure.tar $files
-rm -f ../0 ../1
-cvs commit -m sync configure.tar
