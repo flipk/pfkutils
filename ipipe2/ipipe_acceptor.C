@@ -40,6 +40,14 @@ ipipe_acceptor :: ~ipipe_acceptor( void )
 
 //virtual
 bool
+ipipe_acceptor :: select_for_read( fd_mgr * mgr )
+{
+    // always
+    return true;
+}
+
+//virtual
+fd_interface :: rw_response
 ipipe_acceptor :: read ( fd_mgr * mgr )
 { 
     struct sockaddr_in sa;
@@ -51,29 +59,16 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
     if ( new_fd < 0 )
     {
         fprintf( stderr, "accept: %s\n", strerror( errno ));
-        return true;
+        return OK;
     }
 
-    if ( connection_factory->new_conn( mgr, new_fd ) == false )
-        return false;
+    if ( connection_factory->new_conn( mgr, new_fd ) ==
+         ipipe_new_connection::CONN_DONE )
+    {
+        return DEL;
+    }
 
-    return true;
-}
-
-//virtual
-bool
-ipipe_acceptor :: write( fd_mgr * mgr )
-{
-    //error
-    return false;
-}
-
-//virtual
-bool
-ipipe_acceptor :: select_for_read( fd_mgr * mgr )
-{
-    // always
-    return true;
+    return OK;
 }
 
 //virtual
@@ -85,17 +80,9 @@ ipipe_acceptor :: select_for_write( fd_mgr * mgr )
 }
 
 //virtual
-bool
-ipipe_acceptor :: over_write_threshold( void )
+fd_interface :: rw_response
+ipipe_acceptor :: write( fd_mgr * mgr )
 {
-    // nothing
-    return true;
-}
-
-//virtual
-bool
-ipipe_acceptor :: write_to_fd( char * buf, int len )
-{
-    // nothing
-    return false;
+    //error
+    return DEL;
 }

@@ -16,23 +16,10 @@ fd_mgr :: loop( void )
         FD_ZERO( &wfds );
 
         max = -1;
+
         for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
         {
             nfdi = ifds.get_next(fdi);
-            if ( fdi->do_close )
-            {
-                if ( debug )
-                    fprintf( stderr,
-                             "deleting fd %d due to do_close flag\n",
-                             fdi->fd );
-                ifds.remove( fdi );
-                delete fdi;
-            }
-        }
-        if ( ifds.get_cnt() == 0 )
-            break;
-        for ( fdi = ifds.get_head(); fdi; fdi = ifds.get_next(fdi) )
-        {
             if ( fdi->select_for_read(this))
             {
                 if ( debug )
@@ -51,7 +38,18 @@ fd_mgr :: loop( void )
                 if ( fdi->fd > max )
                     max = fdi->fd;
             }
+            if ( fdi->do_close )
+            {
+                if ( debug )
+                    fprintf( stderr,
+                             "deleting fd %d due to do_close flag\n",
+                             fdi->fd );
+                ifds.remove( fdi );
+                delete fdi;
+            }
         }
+        if ( ifds.get_cnt() == 0 )
+            break;
 
         if ( max == -1 )
         {
@@ -76,7 +74,7 @@ fd_mgr :: loop( void )
             {
                 if ( debug )
                     fprintf( stderr, "servicing read on fd %d\n", fdi->fd );
-                if ( fdi->read(this) == false )
+                if ( fdi->read(this) != fd_interface::OK )
                 {
                     if ( debug )
                         fprintf( stderr,
@@ -88,13 +86,20 @@ fd_mgr :: loop( void )
             {
                 if ( debug )
                     fprintf( stderr, "servicing write on fd %d\n", fdi->fd );
-                if ( fdi->write(this) == false )
+                if ( fdi->write(this) != fd_interface::OK )
                 {
                     if ( debug )
                         fprintf( stderr,
                                  "deleting %d due to false write\n", fdi->fd );
                     del = true;
                 }
+            }
+            if ( !del && fdi->do_close )
+            {
+                del = true;
+                if ( debug )
+                    fprintf( stderr,
+                             "deleting %d due to do_close\n", fdi->fd );
             }
             if ( del )
             {

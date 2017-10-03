@@ -29,7 +29,7 @@ int
 main( int argc,  char ** argv )
 {
     fd_interface * fdi;
-    fd_mgr  mgr( true );
+    fd_mgr  mgr( false );
 
 #if 0
     /* tcpgate mode */
@@ -53,7 +53,16 @@ main( int argc,  char ** argv )
     sa.sin_family = AF_INET;
     sa.sin_port = htons( 2500 );
     sa.sin_addr.s_addr = htonl( 0x7f000001 );
+#if 1
+    /* compress */
+    ipipe_new_connection * inc = new ipipe_forwarder_factory( false, true  );
+#elif 0
+    /* decompress */
+    ipipe_new_connection * inc = new ipipe_forwarder_factory(  true, false );
+#else
+    /* raw */
     ipipe_new_connection * inc = new ipipe_forwarder_factory( false, false );
+#endif
     fdi = new ipipe_connector( &sa, inc );
 #endif
 

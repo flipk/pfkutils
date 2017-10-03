@@ -48,37 +48,17 @@ ipipe_connector :: ~ipipe_connector( void )
 
 //virtual
 bool
-ipipe_connector :: read ( fd_mgr * )
-{
-    int cc;
-    char buf[ 1 ];
-    
-    cc = ::read( fd, buf, 1 );
-    if ( cc >= 0 )
-    {
-        fprintf( stderr, "connector read returned %d??\n", cc );
-        exit( 1 );
-    }
-    fprintf( stderr, "connect: %s\n", strerror( errno ));
-    exit( 1 );
-}
-
-//virtual
-bool
-ipipe_connector :: write( fd_mgr * mgr )
-{
-    connection_factory->new_conn( mgr, fd );
-    do_close = true;
-    return false;
-}
-
-//virtual
-bool
 ipipe_connector :: select_for_read( fd_mgr * )
 {
-    if ( !do_close )
-        return true;
+    // never
     return false;
+}
+
+//virtual
+fd_interface :: rw_response
+ipipe_connector :: read ( fd_mgr * )
+{
+    return DEL;
 }
 
 //virtual
@@ -91,17 +71,16 @@ ipipe_connector :: select_for_write( fd_mgr * )
 }
 
 //virtual
-bool
-ipipe_connector :: over_write_threshold( void )
+fd_interface :: rw_response
+ipipe_connector :: write( fd_mgr * mgr )
 {
-    // not applicable
-    return false;
-}
-
-//virtual
-bool
-ipipe_connector :: write_to_fd( char * buf, int len )
-{
-    // not applicable
-    return false;
+    int cc;
+    char buf[1];
+    // BIG XXX BIG XXX    does this work on other OS's ???
+    cc = ::read( fd, buf, 0 );
+    if ( cc < 0 )
+        fprintf( stderr, "connect: %s\n", strerror( errno ));
+    else
+        (void) connection_factory->new_conn( mgr, fd );
+    return DEL;
 }

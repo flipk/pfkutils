@@ -20,12 +20,14 @@ public:
     int fd;
     bool do_close;
 
+    enum rw_response {  OK,  DEL };
+
     // true means it was ok, false means delete this object.
-    virtual bool read ( fd_mgr * ) = 0;
-    virtual bool write( fd_mgr * ) = 0;
+    virtual rw_response read ( fd_mgr * ) = 0;
+    virtual rw_response write( fd_mgr * ) = 0;
 
     // true means select, false means dont
-    virtual bool select_for_read( fd_mgr * ) = 0;
+    virtual bool select_for_read ( fd_mgr * ) = 0;
     virtual bool select_for_write( fd_mgr * ) = 0;
 };
 

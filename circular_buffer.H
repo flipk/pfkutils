@@ -89,8 +89,12 @@ public:
         return (in >= out) ? (in - out) : (size - out);
     }
 
-    void record_write( int s ) { in  += s; in  %= size; used += s; }
-    void record_read ( int s ) { out += s; out %= size; used -= s; }
+    void record_write( int s ) {
+        in  += s; if ( in >= size ) in -= size; used += s;
+    }
+    void record_read ( int s ) {
+        out += s; if ( out >= size ) out -= size; used -= s;
+    }
     char * write_pos ( void ) { return buf + in;  }
     char * read_pos  ( void ) { return buf + out; }
 };

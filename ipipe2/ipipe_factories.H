@@ -9,8 +9,9 @@
 class ipipe_new_connection {
 public:
     virtual ~ipipe_new_connection( void ) { /* placeholder */ }
-    // return false if the acceptor should die off
-    virtual bool new_conn( fd_mgr *, int new_fd ) = 0;
+
+    enum new_conn_response { CONN_CONTINUE, CONN_DONE };
+    virtual new_conn_response new_conn( fd_mgr *, int new_fd ) = 0;
 };
 
 
@@ -22,7 +23,7 @@ public:
     ipipe_forwarder_factory( bool dowuncomp, bool dowcomp );
     virtual ~ipipe_forwarder_factory( void ) { /* nothing */ }
     // return false if the acceptor should die off
-    virtual bool new_conn( fd_mgr *, int new_fd );
+    virtual new_conn_response new_conn( fd_mgr *, int new_fd );
 };
 
 // concrete factory for a proxy connection
@@ -32,7 +33,7 @@ public:
     ipipe_proxy_factory( struct sockaddr_in * );
     virtual ~ipipe_proxy_factory( void );
     // return false if the acceptor should die off
-    virtual bool new_conn( fd_mgr *, int new_fd );
+    virtual new_conn_response new_conn( fd_mgr *, int new_fd );
 };
 
 // concrete factory for a proxy connection
@@ -42,7 +43,7 @@ public:
     ipipe_proxy2_factory( int fda );
     virtual ~ipipe_proxy2_factory( void ) { /* nothing */ }
     // return value irrelevant to connector
-    virtual bool new_conn( fd_mgr *, int new_fd );
+    virtual new_conn_response new_conn( fd_mgr *, int new_fd );
 };
 
 #endif /* __ipipe_factories_H__ */

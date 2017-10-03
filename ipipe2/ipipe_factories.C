@@ -15,15 +15,17 @@ ipipe_forwarder_factory :: ipipe_forwarder_factory( bool _dowuncomp,
 }
 
 //virtual
-bool
+ipipe_new_connection :: new_conn_response
 ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
     ipipe_forwarder * ifn, * if0, * if1;
 
+    //                             fd   read  write   w_uncomp   w_comp
     if0 = new ipipe_forwarder(      0,  true, false,     false,   false );
     ifn = new ipipe_forwarder( new_fd,  true,  true,     false, dowcomp );
     if1 = new ipipe_forwarder(      1, false,  true, dowuncomp,   false );
 
+    //                   writer reader
     if0->register_others(  ifn, NULL );
     ifn->register_others(  if1,  if0 );
     if1->register_others( NULL,  ifn );
@@ -32,7 +34,7 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
     mgr->register_fd( ifn );
     mgr->register_fd( if1 );
 
-    return false;
+    return CONN_DONE;
 }
 
 //////////// ipipe_proxy_factory
@@ -50,7 +52,7 @@ ipipe_proxy_factory :: ~ipipe_proxy_factory( void )
 }
 
 //virtual
-bool
+ipipe_new_connection :: new_conn_response
 ipipe_proxy_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
     ipipe_new_connection * inc = new ipipe_proxy2_factory( new_fd );
@@ -59,7 +61,7 @@ ipipe_proxy_factory :: new_conn( fd_mgr * mgr, int new_fd )
 
     mgr->register_fd( fdi );
 
-    return true;
+    return CONN_CONTINUE;
 }
 
 //////////// ipipe_proxy2_factory
@@ -70,7 +72,7 @@ ipipe_proxy2_factory :: ipipe_proxy2_factory( int _fda )
 }
 
 //virtual
-bool
+ipipe_new_connection :: new_conn_response
 ipipe_proxy2_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
     ipipe_forwarder * ifa, * ifb;
@@ -84,5 +86,5 @@ ipipe_proxy2_factory :: new_conn( fd_mgr * mgr, int new_fd )
     mgr->register_fd( ifa );
     mgr->register_fd( ifb );
 
-    return false;
+    return CONN_DONE;
 }
