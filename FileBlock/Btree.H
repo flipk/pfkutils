@@ -131,21 +131,25 @@ public:
     /** the destructor is empty and virtual just in case the derived
      * objects needs cleanup. */
     virtual ~_BTDatum(void) { /*placeholder*/ }
-    /** if we have created or found a FileBlock for this data,
-     * Btree will call this to assign the FileBlock pointer. */
-    virtual void  setfb (FileBlock *) = 0;
-    /** this returns a pointer to the datum; this will either be
-     * an internal heap-based object, or a pointer into the FileBlock. */
-    virtual UCHAR *  get_ptr (void) = 0;
-    /** this returns the size of the datum; this method must account
-     * for the contents of the object, if the object is variable sized. */
-    virtual int     get_size (void) = 0;
-    /** this returns the maximum size of the datum; this method must not
-     * depend on the contents of the object, as it might be called before
-     * the memory for the object is allocated. */
-    virtual int get_max_size (void) = 0;
+    /** when a FileBlock has been retrieved during a Get, 
+     * Btree will call this method.  The datum is given the FileBlock,
+     * Btree does no more with it, i.e., it is assumed that the datum
+     * object will eventually release the FileBlock back to the fbi,
+     * as Btree will not release it. The datum object is free to release
+     * it once decode is complete, or the datum may keep the FileBlock
+     * as long as it desires. */
+    virtual void      decode (FileBlock *) = 0;
+    /** Btree will call this method when it needs to access the
+     * data; Btree will then ensure the destination for the encoding
+     * is large enough prior to calling the encode method below. */
+    virtual int  encode_size (void) = 0;
+    /** Btree will call this method to encode the data for this key
+     * into a FileBlock buffer.  Btree will never call this without calling 
+     * encode_size() first. */
+    virtual void      encode (UCHAR *) = 0;
 };
 
+#if 0
 /** a template for cleanly encapsulating a user type into a datum.
  * it is a derived type from _BTDatum and thus is suitable as an argument
  * to Btree methods.
@@ -155,7 +159,6 @@ public:
  * <pre>
  *    UCHAR * get_ptr (void) { return (UCHAR*) this; }
  *    int get_size (void) { return sizeof(T); }
- *    static int get_max_size (void) { return sizeof(T); }
  * </pre>
  * if type T has a constructor, it must take no arguments.
  */
@@ -193,9 +196,9 @@ public:
     }
     /*virtual*/ UCHAR *  get_ptr (void) { return (UCHAR*) d; }
     /*virtual*/ int     get_size (void) { return d->get_size(); }
-    /*virtual*/ int get_max_size (void) { return T::get_max_size(); }
     /** the actual data pointer; this will either point into the heap
      * if this is a heap-based object, or it will point into a FileBlock
      * if this data is in the file. */
     T * d;
 };
+#endif

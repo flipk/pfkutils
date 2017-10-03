@@ -307,8 +307,8 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
 bool
 BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
 {
-    int keysz = _key->get_size();
-    BTKey * key = new(keysz) BTKey(keysz);
+    int keysz;
+    BTKey * key;
     bool ret = false;
     bool exact;
     int idx;
@@ -316,7 +316,9 @@ BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
     BTNode * curn;
     UINT32 data_fbn = 0;
 
-    memcpy(key->data, _key->get_ptr(), keysz);
+    keysz = _key->encode_size();
+    key = new(keysz) BTKey(keysz);
+    _key->encode(key->data);
 
     curfbn = info.d->root_fbn.get();
 
@@ -336,7 +338,7 @@ BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
     if (data_fbn != 0)
     {
         FileBlock * fb = fbi->get(data_fbn);
-        data->setfb(fb);
+        data->decode(fb);
         ret = true;
     }
 
@@ -367,8 +369,8 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
         exit(1);
     }
 
-    int i, keysz = _key->get_size();
-    BTKey * key = new(keysz) BTKey(keysz);
+    int i, keysz, datasz;
+    BTKey * key;
     bool ret = false;
     nodewalker * nodes = NULL, * nw = NULL;
     UINT32 curfbn, right_fbn = 0, data_fbn;
@@ -376,7 +378,10 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
     int curidx;
     FileBlock * fb = NULL;
 
-    memcpy(key->data, _key->get_ptr(), keysz);
+    keysz = _key->encode_size();
+    key = new(keysz) BTKey(keysz);
+    _key->encode(key->data);
+    datasz = data->encode_size();
 
     // start walking down from the rootnode a level at a time,
     // until we either find an exact match or we hit a leaf.
@@ -402,9 +407,9 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
             if (replace == false)
                 goto out;
 
-            fbi->realloc(curn->datas[curidx], data->get_size());
+            fbi->realloc(curn->datas[curidx], datasz);
             fb = fbi->get(curn->datas[curidx], /*for_write*/ true);
-            memcpy(fb->get_ptr(), data->get_ptr(), data->get_size());
+            data->encode(fb->get_ptr());
             fbi->release(fb);
             ret = true;
             goto out;
@@ -428,9 +433,9 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
     // if we reach the root and we overflow the root, split the
     // root and create a new root with the promoted item.
 
-    data_fbn = fbi->alloc(data->get_size());
+    data_fbn = fbi->alloc(datasz);
     fb = fbi->get(data_fbn, true);
-    memcpy(fb->get_ptr(), data->get_ptr(), data->get_size());
+    data->encode(fb->get_ptr());
     fbi->release(fb);
     ret = true;
     info.d->numrecords.set( info.d->numrecords.get() + 1 );
@@ -539,10 +544,9 @@ BtreeInternal :: del( _BTDatum * _key  )
         exit(1);
     }
 
-    int keysz = _key->get_size();
+    int keysz = _key->encode_size();
     BTKey * key = new(keysz) BTKey(keysz);
-
-    memcpy(key->data, _key->get_ptr(), keysz);
+    _key->encode(key->data);
 
     nodewalker * nodes = NULL, * nw = NULL;
     bool exact;
