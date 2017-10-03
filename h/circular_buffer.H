@@ -19,7 +19,7 @@ public:
     ~circular_buffer  ( void ) { delete[] buf; }
 
     void print ( bool printbody, char * header = NULL ) {
-        if ( !header )  header = "";
+        if ( !header )  header = (char*)"";
         fprintf( stderr,
                  "%sbuf: s %3d, u %4d, in %4d, out %4d, cw %4d, cr %4d\n",
                  header,

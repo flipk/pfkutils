@@ -26,14 +26,13 @@ ELIBS= implode/libimplode.a \
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
 DIRS+= bt qcam xlock threads itsfs mytar
-ELIBS+= pdksh-5.2.14/ksh.o itsfs/libitsfs.a mytar/libmytar.a
+ELIBS+= itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
 #ifdef linux
 CSRCS+=	sudo.c
 ELIBS+= bt/libbt.a xlock/libxlock.a
 DIRS+=  bt xlock threads mytar
-# ELIBS+= pdksh-5.2.14/ksh.o
 ELIBS+=  mytar/libmytar.a
 LIBS+= -L/usr/X11R6/lib -lX11
 #endif
@@ -102,9 +101,8 @@ subdirs::
 .C.o:
 	gcc $(CFLAGS) -c $*.C
 
-pdksh-5.2.14/ksh.o::
-	cd pdksh-5.2.14/ && sh PK_MAKE_PDKSH
-
+ksh::
+	cd pdksh-5.2.14 && ./configure && make
 
 cscope::
 	find . -name '*.[chCH]' > cscope.files
@@ -121,7 +119,7 @@ depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
 
 clean:
 	rm -rf t
-	rm -f $(OBJS) $(PROG) pdksh-5.2.14/*.o
+	rm -f $(OBJS) $(PROG)
 	@for d in $(DIRS) ; do \
 		echo cleaning in $$d ; \
 		( cd $$d && make clean ) ; \

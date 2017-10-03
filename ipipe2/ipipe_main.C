@@ -143,7 +143,7 @@ i2_main( int argc,  char ** argv )
         {
         case 's':  stats    = true;        break;
         case 'v':  verbose  = true;        break;
-        case 'n':  inp_file = "/dev/null"; break;
+        case 'n':  inp_file = (char*)"/dev/null"; break;
         case 'f':  tcpgate  = true;        break;
         case 'd':  debug    = true;        break;
         case 'z':  zarg     = optarg;      break;
@@ -190,7 +190,7 @@ i2_main( int argc,  char ** argv )
                      "-I and -i are mutually exclusive\n" );
             exit( 1 );
         }
-        inp_file = "/dev/zero";
+        inp_file = (char*)"/dev/zero";
         switch ( *Iarg )
         {
         case 'r':  inrand = true; break;
@@ -203,7 +203,7 @@ i2_main( int argc,  char ** argv )
 
     if ( tcpgate )
     {
-        inp_file = "/dev/null";
+        inp_file = (char*)"/dev/null";
         if ( stats )
         {
             fprintf( stderr,

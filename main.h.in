@@ -19,7 +19,6 @@
 #ifdef linux
 	PROG(1,sudo,do a command as the superuser)
 	PROG(0,xlock,xlock screen)
-/*	PROG(0,pdksh,pdksh shell) */
 #endif
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)
@@ -27,7 +26,6 @@
 	PROG(0,qcmex,quickcam movie extractor)
 	PROG(1,itsfssvr,ITS file system server)
 	PROG(0,xlock,xlock screen)
-	PROG(0,pdksh,pdksh shell)
 #endif
 #ifndef linux
 	PROG(0,itsfsriw,ITS file system remote inode worker)

@@ -22,9 +22,9 @@ class rmstar_item {
 public:
     LListLinks<rmstar_item> links[1];
     char item[0];
-    static rmstar_item * new_item_va( char * format, va_list ap )
+    static rmstar_item * new_item_va( const char * format, va_list ap )
         __attribute__ (( format( printf, 1, 0 )));
-    static rmstar_item * new_item( char * format, ... )
+    static rmstar_item * new_item( const char * format, ... )
         __attribute__ (( format( printf, 1, 2 )));
     void operator delete( void * ptr ) {
         char * p = (char*) ptr;
@@ -34,7 +34,7 @@ public:
 
 // static
 rmstar_item *
-rmstar_item :: new_item_va( char * format, va_list ap )
+rmstar_item :: new_item_va( const char * format, va_list ap )
 {
     static char data[2048];
     vsnprintf( data, 2047, format, ap );
@@ -45,7 +45,7 @@ rmstar_item :: new_item_va( char * format, va_list ap )
 
 // static
 rmstar_item * 
-rmstar_item :: new_item( char * format, ... )
+rmstar_item :: new_item( const char * format, ... )
 {
     va_list ap;
     va_start( ap, format );
@@ -58,11 +58,11 @@ typedef LList<rmstar_item,0> RMSTAR_LIST;
 
 static RMSTAR_LIST log;
 
-void logit( char * format, ... )
+void logit( const char * format, ... )
     __attribute__ (( format( printf, 1, 2 )));
 
 void
-logit( char * format, ... )
+logit( const char * format, ... )
 {
     va_list ap;
     va_start( ap, format );

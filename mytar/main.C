@@ -126,7 +126,7 @@ update_mtar( char * dbname, bool create_it )
     file_db * db = new file_db( dbname, create_it );
     if ( !db )
         return 1;
-    update_dir( db, "." );
+    update_dir( db, (char*)"." );
     db->delete_old();
     delete db;
     return 0;
