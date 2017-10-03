@@ -363,6 +363,8 @@ get_removed(void)
     MaxPkMsgType        mpmt;
     RemovedFileName   * rfn;
     SyncDone          * sd;
+    bool                checked_trash = false;
+    static bool         trashdir = false;
 
     printf( "getting remove list\n" );
 
@@ -372,8 +374,49 @@ get_removed(void)
             kill(0,6);
         if ( mpmt.convert( &rfn ))
         {
-//            fprintf( stderr, "removing '%s'\n", rfn->filename );
-            unlink( rfn->filename );
+            if ( !checked_trash )
+            {
+                if ( mkdir( ".trash", 0700 ) == 0 )
+                    trashdir = true;
+                else if ( errno == EEXIST )
+                    trashdir = true;
+                else
+                    fprintf( stderr, "mkdir .trash: %s\n", strerror( errno ));
+                checked_trash = true;
+            }
+
+            if ( trashdir )
+            {
+                int counter, cc;
+                char * n = new char[ strlen( rfn->filename ) + 20 ];
+                char * p;
+
+                for ( counter = 1; counter < 300; counter++ )
+                {
+                    sprintf( n, ".trash/%s-%d", rfn->filename+1, counter );
+
+                    for ( p = n; *p != '/'; p++ )
+                        ;
+                    for ( p++; *p; p++ )
+                        if ( *p == '/' ) 
+                            *p = '-';
+
+                    struct stat sb;
+                    if ( stat( n, &sb ) == 0 )
+                        continue;
+
+                    if ( rename( rfn->filename, n ) == 0 )
+                        break;
+
+                    fprintf( stderr, "remove '%s': rename ->%s: %s\n",
+                             rfn->filename, n, strerror( errno ));
+                    break;
+                }
+
+                delete[] n;
+            }
+            else
+                fprintf( stderr, "remove '%s': trash\n", rfn->filename );
         }
         else if ( mpmt.convert( &sd ))
         {

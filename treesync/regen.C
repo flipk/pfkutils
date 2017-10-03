@@ -267,7 +267,10 @@ regenerate_database( void )
                             FileEntry::NEW,
                             entry->sb.st_size ));
 
-//                    printf( "new: %s\n", entry->filename );
+#define DEB_PR 0
+#if DEB_PR
+                    printf( "new: %s\n", entry->filename );
+#endif
                 }
                 else
                 {
@@ -281,7 +284,9 @@ regenerate_database( void )
                         dfe->sb = entry->sb;
                         memcpy( dfe->digest, digest, sizeof(digest) );
 
-//                        printf( "changed: %s\n", entry->filename );
+#if DEB_PR
+                        printf( "changed: %s\n", entry->filename );
+#endif
 
                         file_list.add( 
                             FileEntry::new_entry(
@@ -289,8 +294,10 @@ regenerate_database( void )
                                 FileEntry::CHANGED,
                                 entry->sb.st_size ));
                     }
-//                    else
-//                        printf( "same: %s\n", entry->filename );
+#if DEB_PR
+                    else
+                        printf( "same: %s\n", entry->filename );
+#endif
 
                     // signature update causes all entries to be dirty
                     rec->data.dirty = true;
