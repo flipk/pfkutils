@@ -1,6 +1,9 @@
 
 xconsole_hook() {
     xhost +
+    sleep 1
+    xterm -g +504+400 -e lg9 x &
+    emacs -g 80x58-0-23 login/notes/todo &
 }
 
 tty=`tty`
