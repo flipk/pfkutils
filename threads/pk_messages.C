@@ -79,7 +79,15 @@ PK_Message_Manager :: destroy( int qid )
         ret = false;
     _unlock();
     if ( mq )
+    {
+        pk_msg_int * m; 
+        while ( m = mq->dequeue() )
+            // note the caveat : if you're going to destroy a 
+            // msgq that isn't empty, you can only use 'new'
+            // to allocate messages for it.
+            delete m;
         delete mq;
+    }
     return ret;
 }
 

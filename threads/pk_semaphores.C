@@ -18,6 +18,12 @@ PK_Semaphores :: PK_Semaphores( int _hashsize )
 
 PK_Semaphores :: ~PK_Semaphores( void )
 {
+    PK_Semaphore * s;
+    while ( s = list.dequeue_head() )
+    {
+        hash.remove( s );
+        delete s;
+    }
     PK_Semaphores_global = NULL;
     pthread_mutex_destroy( &mutex );
 }

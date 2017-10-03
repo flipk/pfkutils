@@ -109,7 +109,9 @@ public:
     static int timer_create( int ticks, PK_Timeout_Obj * pkto ) {
         return PK_Timers_global->create( ticks, pkto );
     }
-    static bool timer_cancel( int tid ) { return timer_cancel( tid ); }
+    static bool timer_cancel( int tid ) {
+        return PK_Timers_global->cancel( tid );
+    }
     static bool timer_cancel( int tid, pk_msg_int ** ptr, int * remaining ) {
         return PK_Timers_global->cancel( tid, ptr, remaining );
     }

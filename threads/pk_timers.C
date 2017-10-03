@@ -35,6 +35,14 @@ PK_Timer_Manager :: ~PK_Timer_Manager( void )
     pthread_cancel( th1 );
     pthread_cancel( th2 );
     PK_Timers_global = NULL;
+
+    PK_Timer * t;
+    while ( t = timers->get_head() )
+    {
+        timers->remove( t );
+        delete t;
+    }
+
     pthread_mutex_destroy( &mutex );
     delete timers;
     close( fds[0] );
@@ -59,6 +67,7 @@ PK_Timer_Manager :: _create( PK_Timer * nt, int ticks )
     nt->expire_time = global_time + nt->ordered_queue_key;
     timers->add( nt );
     _unlock();
+//    printf( "timer %d created\n", tid );
     return tid;
 }
 
@@ -109,6 +118,8 @@ PK_Timer_Manager :: cancel( int tid,
     if ( t )
         timers->remove( t );
     _unlock();
+
+//    printf( "cancel timer %d: %s\n", tid, t ? "found" : "not found" );
 
     if ( t )
     {
@@ -178,6 +189,7 @@ PK_Timer_Manager :: _thread1( void )
 void
 PK_Timer_Manager :: expire( PK_Timer * t )
 {
+//    printf( "expiring timer %d\n", t->tid );
     switch ( t->type )
     {
     case PK_TIMER_MSG:
