@@ -1,29 +1,11 @@
 autoconf:
-  - syslog ini files
   - autoconfize pfkstat
-  - autoconfize treescan
   - d3des implementation duplication (util & etg)
-  - runemacs (optional)
-  - runrxvt (optional)
 
 threads:
  - implement external tcp messaging in threads
-   - messages based on BST framework
-   - base type
-     - magic / length / type / checksum
-     - method for encoding to fd
-   - object or thread which gateways fd Rx data to
-     callback/handler methods.
-     - perhaps a base class which accepts buffers of
-       received data, and which calls virtual derived methods
-       to handle the received & decoded messages.
-     - if it can be tied into PK_Message_Manager, that would
-       be best, to allow design of message-based main loops which
-       include remote TCP messages in its event processing.
    - perhaps a connection manager object which has standard defined
      messages for indicating connection established & connection lost,
      as well as requests for establishing outgoing connections.
    - perhaps support TCP & UDP as well.
 
-
-treesync:
