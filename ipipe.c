@@ -147,7 +147,7 @@ ipipe_main( int argc, char ** argv )
 
     if ( output_file )
     {
-        int fd2 = open( output_file, O_RDONLY | O_BINARY, 0600 );
+        int fd2 = open( output_file, O_WRONLY | O_CREAT | O_BINARY, 0600 );
         if ( fd2 < 0 )
         {
             fprintf( stderr, "error %d opening output file\n", errno );

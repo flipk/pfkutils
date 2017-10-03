@@ -12,14 +12,6 @@ typedef struct DLL2_LIST {
     int index;
 } DLL2_LIST;
 
-#if 0
-typedef struct {
-    int count;
-    int array_size;
-    DLL2_LIST array[0];
-}  DLL2_HASH;
-#endif
-
 /*
   some compilers (like gcc version 3) don't allow you to 
   use the traditional "offsetof" operator:
@@ -48,8 +40,8 @@ typedef struct {
 
 #define DLL2_ADD(list,item) \
     dll2_list_add((list),DLL2_LINKS_OFFSET(item),(item),__FILE__,__LINE__)
-#define DLL2_DEL(list,item) \
-    dll2_list_del((list),DLL2_LINKS_OFFSET(item),(item),__FILE__,__LINE__)
+#define DLL2_REMOVE(list,item) \
+    dll2_list_remove((list),DLL2_LINKS_OFFSET(item),(item),__FILE__,__LINE__)
 #define DLL2_ADD_AFTER(list,existing,item)   \
     dll2_list_add_after((list),DLL2_LINKS_OFFSET(item), \
                         (existing),(item),__FILE__,__LINE__)
@@ -72,8 +64,8 @@ typedef struct {
 
 extern void dll2_list_add( DLL2_LIST * list, int links_offset,
                            void * item, char * file, int line );
-extern void dll2_list_del( DLL2_LIST * list, int links_offset,
-                           void * item, char * file, int line );
+extern void dll2_list_remove( DLL2_LIST * list, int links_offset,
+                              void * item, char * file, int line );
 extern void dll2_list_add_after( DLL2_LIST * list, int links_offset,
                                  void * existing, void * item,
                                  char * file, int line );

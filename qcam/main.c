@@ -203,7 +203,8 @@ qcam_main( int argc, char ** argv )
 		qs = qcam_new();
 		if (strcmp(infile, "-") == 0)
 			infilef = stdin;
-		else if (l > 3 && strcmp(infile+l-3, ".gz") == 0)
+		else if ((l > 3 && strcmp(infile+l-3, ".gz")  == 0) ||
+                 (l > 4 && strcmp(infile+l-4, ".bz2") == 0))
 		{
 			int fd, pid, pipefds[2];
 			pipe(pipefds);
@@ -232,7 +233,10 @@ qcam_main( int argc, char ** argv )
 					dup2(fd, 0);
 					close(fd);
 				}
-				execl("/usr/bin/gzip", "gzip", "-dc", NULL);
+                if (strcmp(infile+l-3, ".gz")  == 0)
+                    execl("/usr/bin/gzip", "gzip", "-dc", NULL);
+                else
+                    execl("/usr/bin/bzip2", "bzip2", "-dc", NULL);
 				close(0);
 				close(1);
 				errx(1, "cannot exec");
@@ -376,7 +380,7 @@ keyinput()
 		return 0;
 }
 
-#define SCANSIZE QC_S160x120
+#define SCANSIZE QC_S320x240
 
 static void
 motion_detect(pth, fth)
@@ -385,6 +389,7 @@ motion_detect(pth, fth)
 	struct qcam_softc *qs = NULL;
 	struct motion_location ml;
 	FILE *out;
+    time_t last, now;
 
 	qs = qcam_open(QCAM);
 	if (qs == NULL)
@@ -407,6 +412,7 @@ motion_detect(pth, fth)
 		qcam_scan(qs);
 	} while (qcam_adjustpic(qs));
 
+    last = time(0);
 	while (!keyinput())
 	{
 		qcam_setsize(qs, SCANSIZE);
@@ -417,7 +423,18 @@ motion_detect(pth, fth)
 
 		qcam_detect_motion2(qs, &ml, pth, fth);
 
+#if 0
 		dispartial(qs, &ml, out);
+#else
+        now = time(0);
+        if (now != last)
+        {
+            last = now;
+            xwindisp(qs);
+        }
+        if (ml.detected)
+            pgm_write(qs, out);
+#endif
 
 		usleep(100000);
 	}

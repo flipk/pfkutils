@@ -49,13 +49,14 @@ main()
 
     for ( i = 0; i < NUMITEMS; i++ )
     {
-        if ( i != 4 )
-            DLL2_ADD( &lists[ DLL2_LIST_ONE ], &a[ i ] );
-        if ( i != 6 )
-            DLL2_ADD( &lists[ DLL2_LIST_TWO ], &a[ i ] );
+        DLL2_ADD( &lists[ DLL2_LIST_ONE ], &a[ i ] );
+        DLL2_ADD( &lists[ DLL2_LIST_TWO ], &a[ i ] );
     }
 
+    DLL2_REMOVE( &lists[ DLL2_LIST_ONE ], &a[ 4 ] );
     DLL2_ADD_AFTER(  &lists[ DLL2_LIST_ONE ], &a[ 5 ], &a[ 4 ] );
+
+    DLL2_REMOVE( &lists[ DLL2_LIST_TWO ], &a[ 6 ] );
     DLL2_ADD_BEFORE( &lists[ DLL2_LIST_TWO ], &a[ 4 ], &a[ 6 ] );
 
 /* and now, two examples of how to walk a list, one

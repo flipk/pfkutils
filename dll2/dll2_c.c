@@ -27,13 +27,13 @@ dll2_list_add( DLL2_LIST * list, int links_offset, void * item,
 }
 
 void
-dll2_list_del( DLL2_LIST * list, int links_offset, void * item,
-               char * file, int line )
+dll2_list_remove( DLL2_LIST * list, int links_offset, void * item,
+                  char * file, int line )
 {
     DLL2_LINKS * ll = LINKS(list,item);
     DLL2_LINKS * el;
     if ( ll->onlist != list )
-        dll2_error( file, line, "dll2_list_del wrong list" );
+        dll2_error( file, line, "dll2_list_remove wrong list" );
     ll->onlist = 0;
     if ( ll->next != 0 )
     {
