@@ -4,6 +4,8 @@
  * \author Phillip F Knaack
  */
 
+class BtreeInternal;
+
 /** a Btree information block as it appears on disk. */
 struct _BTInfo {
     static const UINT32 MAGIC = 0x0d83f387;
@@ -18,22 +20,23 @@ struct _BTInfo {
 /** a FileBlock shortcut for accessing Btree information blocks */
 typedef FileBlockT <_BTInfo> BTInfo;
 
-/** an item within a _BTNode.
+/** an item within a _BTNodeDisk.
  * \todo optimize nodes and performance by putting key data
  * inline with the nodes?   investigate. */
 struct BTNodeItem {
     UINT32_t ptr;   /**< fileblock number of a left-child node */
-    UINT32_t key;   /**< fileblock number of the key */
+    UINT16_t keystart;   /**< offset where key data starts */
+    UINT16_t keysize;    /**< length of key data */
     UINT32_t data;  /**< fileblock number of the data */
 };
 
 /** a Btree node as it appears on disk, plus access methods.
  * \note this structure is variable-sized. */
-struct _BTNode {
+struct _BTNodeDisk {
     static const UINT32 MAGIC = 0x4463ab2d;
     UINT32_t    magic;
 private:
-    UINT32_t    _numitems;  /**< count of items, also encode leaf and root */
+    UINT16_t    _numitems;  /**< count of items, also encode leaf and root */
     enum ITEM_CONSTANTS {
         LEAF_MASK = 0x8000,
         ROOT_MASK = 0x4000,
@@ -69,12 +72,40 @@ public:
     }
     int node_size( int _order ) {
         // add in order-1 items plus one more ptr.
-        return sizeof(_BTNode) +
+        return sizeof(_BTNodeDisk) +
             sizeof(BTNodeItem)*(_order-1) +
             sizeof(UINT32_t);
     }
 };
-typedef FileBlockT <_BTNode> BTNode;
+typedef FileBlockT <_BTNodeDisk> BTNodeDisk;
+
+/** a type for managing nodes.  if you haven't noticed, _BTNodeDisk is
+ * a little clumsy to use, especially considering the key-data is stored
+ * contiguously after the items-- and items is variable-size depending
+ * on the btree's order-- and of course don't forget each key is
+ * variable-sized also.  this structure simplifies all the accesses
+ * to the node. */
+class BTNode {
+    FileBlockInterface * fbi;
+    int btorder;
+    UINT32 * fbnp;
+public:
+    BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 * _fbnp );
+    ~BTNode( void );
+    void store( void );
+};
+
+/** generic data structure for comparing keys etc.
+ */
+struct BTGeneric {
+    UCHAR data[0];
+    //
+    UCHAR * get_ptr (void) { return (UCHAR*) this; }
+    /** this method is useless in BTGeneric, here to satisfy the template */
+    int get_size (void) { return sizeof(BTGeneric); }
+    /** this method is useless in BTGeneric, here to satisfy the template */
+    static int get_max_size (void) { return sizeof(BTGeneric); }
+};
 
 /** internal implementation of Btree.
  * the existence of this class hides a lot of internal implementation
@@ -102,7 +133,7 @@ class BtreeInternal : public Btree {
     BTInfo info;
     static int compare_items( _BTDatum * one, _BTDatum * two );
     bool printnode( BtreePrintinfo * pi, UINT32 node_fbn );
-    int walknode( _BTNode * n, _BTDatum * key, bool *exact );
+    int walknode( _BTNodeDisk * n, _BTDatum * key, bool *exact );
 public:
     static const char BTInfoFileInfoName[];
     static const int MAX_ORDER = 51;    /**< maximum order supported */

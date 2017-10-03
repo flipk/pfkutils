@@ -1,7 +1,7 @@
 
 TARG=	libFileBlock.a
 SRCS=	PageIO.C PageCache.C BlockCache.C ExtentMap.C \
-	FileBlockLocalMap.C FileBlockLocal.C Btree.C
+	FileBlockLocalMap.C FileBlockLocal.C Btree.C BtreeNode.C
 HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 	BlockCache.H BlockCache_internal.H \
 	FileBlock_iface.H \

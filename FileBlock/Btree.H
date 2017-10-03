@@ -194,8 +194,8 @@ public:
         d = (T *) fb->get_ptr();
     }
     /*virtual*/ UCHAR *  get_ptr (void) { return (UCHAR*) d; }
-    /*virtual*/ int     get_size (void) { return d->size(); }
-    /*virtual*/ int get_max_size (void) { return T::max_size(); }
+    /*virtual*/ int     get_size (void) { return d->get_size(); }
+    /*virtual*/ int get_max_size (void) { return T::get_max_size(); }
     /** the actual data pointer; this will either point into the heap
      * if this is a heap-based object, or it will point into a FileBlock
      * if this data is in the file. */

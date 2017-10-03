@@ -24,7 +24,8 @@ types.  Click on the following links to read about each of them.
 <li> \ref FileBlock (see classes FileBlock, FileBlockInterface, FileBlockLocal)
 <li> \ref FileBlockLocalFileFormat
 <li> \ref BtreeStructure (see Btree and BTDatum)
-<li> \ref BtreeInternalStructure (see BtreeInternal, BTInfo, BTNodeItem, BTNode)
+<li> \ref BtreeInternalStructure (see BtreeInternal, BTInfo,
+                    BTNodeItem, BTNodeDisk, BTNode)
 <li> \ref Templates (see templates FileBlockT, BlockCacheT, and BTDatum)
 </ul>
 
@@ -478,6 +479,64 @@ Next: \ref BtreeInternalStructure
 /** \page BtreeInternalStructure BTREE Internal Structure
 
 \todo document btree internals
+
+\section BtreeNodeOnDisk Btree node, on-disk layout
+
+The BTREE node, on disk, has the following layout:
+
+<ul>
+<li> UINT32_t magic
+     <ul>
+     <li> which must be set to _BTNodeDisk::MAGIC
+     </ul>
+<li> UINT16_t numitems
+     <ul>
+     <li> the bottom 14 bits (13-0) of this value encodes the number of items
+     	  stored in this node.  this can be no greator than order-1, and
+	  must be greator than or equal to order/2 (except in the root node,
+	  where the number of items can be anywhere from 0 to order-1).
+     <li> bit 14 indicates if this is a root node.  obviously this can be
+     	  determined by the fact that the BTInfo points to this node, but
+	  it is an extra sanity check.
+     <li> bit 15 indicates if this is a leaf node.  in this case the pointers
+     	  should not be followed, and inserts should take place here.
+     </ul>
+<li> BTNodeItem items[order-1]:
+     <ul>
+     <li> UINT32_t ptr
+     	  <ul>
+	  <li> this is a FileBlock ID number of a pointer to a child node.
+	  </ul>
+     <li> UINT16_t keystart
+     <li> UINT16_t keysize
+     	  <ul>
+	  <li> these indicate where the key data for this item begin within
+	       the keydata element below.
+     	  </ul>
+     <li> UINT32_t data
+     	  <ul>
+	  <li> this is a FileBlock ID number of the data corresponding to
+	       the key above.
+	  </ul>
+     </ul>
+<li> UINT32_t ptr
+     <ul>
+     <li> the number of ptrs in a node is \em order, however the number
+     	  of key/data items in a node is \em order-1.  so there is an
+	  extra ptr at the end of the array to round out the node.
+     <li> since \em ptr is the first element of the items array, it thus
+     	  works to access items[order].ptr (even though the dimension of the
+	  array is order-1), to access this extra ptr.
+     </ul>
+<li> UCHAR keydata[]
+     <ul>
+     <li> this is a variable-length array of data where the key data for
+     	  all the items begins.  the \em keystart and \em keysize elements
+	  indicate offsets and sizes in this array.  all of the key data
+	  are contiguous in this array, thus the total size of this
+	  array is items[order-2].keystart + items[order-1].keysize.
+     </ul>
+</ul>
 
 Next: \ref Templates
 

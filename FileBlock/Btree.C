@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <signal.h>
 
 /** the FileBlockInterface::get_data_info_block string name
  * for the info field which describes the Btree. */
@@ -29,7 +31,7 @@ bool
 Btree :: init_file( FileBlockInterface * _fbi, int order )
 {
     UINT32  root_fbn;
-    BTNode  rootnode(_fbi);
+    BTNodeDisk  rootnode(_fbi);
 
     if (order < 0 || order > BtreeInternal::MAX_ORDER || 
         (order & 1) == 0)
@@ -37,7 +39,7 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
 
     root_fbn = _fbi->alloc( rootnode.d->node_size(order) );
     rootnode.get(root_fbn,true);
-    rootnode.d->magic.set( _BTNode::MAGIC );
+    rootnode.d->magic.set( _BTNodeDisk::MAGIC );
     rootnode.d->set_numitems( 0 );
     rootnode.d->set_root(true);
     rootnode.d->set_leaf(true);
@@ -132,7 +134,7 @@ BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
     ORDER_MO = BTREE_ORDER - 1;
     if (info.d->bti_fbn.get() != info_fbn)
         goto error;
-    BTNode node(fbi);
+    BTNodeDisk node(fbi);
     node_size = node.d->node_size(BTREE_ORDER);
 }
 
@@ -168,6 +170,7 @@ BtreeInternal :: compare_items( _BTDatum * one, _BTDatum * two )
     return 0;
 }
 
+#if 0
 /** compare key to each key in node.
  * if exact match is found, *exact is set to true.
  * \param n the node to walk through
@@ -181,11 +184,48 @@ BtreeInternal :: compare_items( _BTDatum * one, _BTDatum * two )
  * followed to get closer to the desired item. </ul>
  */
 int
-BtreeInternal :: walknode( _BTNode * n, _BTDatum * key, bool *exact )
+BtreeInternal :: walknode( _BTNodeDisk * n, _BTDatum * key, bool *exact )
+{
+    int i, cmpres = 0, max;
+
+    max = n->get_numitems();
+    if (max == 0)
+    {
+        *exact = false;
+        return 0;
+    }
+
+    for (i = 0; i < max; i++)
+    {
+        BTDatum  <BTGeneric>  g(this);
+        FileBlock * fb;
+
+        fb = fbi->get(n->items[i].key.get());
+        if (!fb)
+        {
+            fprintf(stderr, "internal error in walknode!\n");
+            kill(0,6);
+        }
+
+        g.setfb(fb);
+        cmpres = compare_items( key, &g );
+        if (cmpres <= 0)
+            break;
+    }
+
+    *exact = (cmpres == 0);
+
+    return 0;
+}
+
+int
+BtreeInternal :: splitnode( _BTNodeDisk * n, _BTDatum * key, 
+                            UINT32 rightnode, int index )
 {
     //xxx
     return 0;
 }
+#endif
 
 //virtual
 bool
@@ -224,7 +264,7 @@ BtreeInternal :: del( _BTDatum * key  )
 bool
 BtreeInternal :: printnode( BtreePrintinfo * pi, UINT32 node_fbn )
 {
-    BTNode node(fbi);
+    BTNodeDisk node(fbi);
     node.get(node_fbn);
 
     int numitems = node.d->get_numitems();
@@ -236,8 +276,8 @@ BtreeInternal :: printnode( BtreePrintinfo * pi, UINT32 node_fbn )
         if (!node.d->is_leaf())
             if (printnode(pi, node.d->items[i].ptr.get()) == false)
                 return false;
-        if (pi->print_item(node.d->items[i].key.get(),
-                           node.d->items[i].data.get()) == false)
+//xxx        if (pi->print_item(node.d->items[i].key.get(),
+//                           node.d->items[i].data.get()) == false)
             return false;
     }
     if (numitems > 0 && !node.d->is_leaf())
