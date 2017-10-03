@@ -82,17 +82,14 @@ PkTcpMsgDef( MaxPkMsgType, 0x0,
     );
 
 class pk_tcp_msgr {
-    enum states { HEADER, BODY };
-    int fd;
-    void * user_arg;
-    typedef int (*user_func)(void *arg, int fd, void * buf, int buflen);
-    user_func  user_read;
-    user_func  user_write;
+protected:
+    virtual int reader( void * buf, int buflen ) = 0;
+    virtual int writer( void * buf, int buflen ) = 0;
+    virtual bool read_pending( void ) = 0;
 public:
-    pk_tcp_msgr( user_func rdr, user_func wrtr, void * _user_arg, int _fd );
-    ~pk_tcp_msgr( void );
+    virtual ~pk_tcp_msgr( void ) { /* placeholder */ }
     bool send( pk_tcp_msg * m );
-    bool recv_pending( void );
+    bool recv_pending( void ) { return read_pending(); }
     bool recv( pk_tcp_msg * m, int max_size );
 };
 

@@ -17,31 +17,52 @@
 
 MESSAGE_LIST;
 
-bool            tcp_closed = false;
-pk_tcp_msgr   * tcp_channel;
-bool            trade_first;
-FILE          * conflict_list;
+class trade_tcp_msgr : public pk_tcp_msgr {
+private:
+    /*virtual*/ int reader( void * buf, int buflen );
+    /*virtual*/ int writer( void * buf, int buflen );
+    /*virtual*/ bool read_pending( void );
+    int fd;
+public:
+    trade_tcp_msgr( int _fd ) { fd = _fd; }
+    virtual ~trade_tcp_msgr( void ) { close( fd ); }
+};
 
-static int
-trade_read( void * arg, int fd, void * buf, int buflen )
+trade_tcp_msgr * tcp_channel;
+bool             trade_first;
+FILE           * conflict_list;
+
+int
+trade_tcp_msgr :: reader( void * buf, int buflen )
 {
     int cc = read( fd, buf, buflen );
-    if ( cc <= 0 )
-        tcp_closed = true;
     return cc;
 }
 
-static int
-trade_write( void * arg, int fd, void * buf, int buflen )
+int
+trade_tcp_msgr :: writer( void * buf, int buflen )
 {
     int cc = write( fd, buf, buflen );
     return cc;
 }
 
+bool
+trade_tcp_msgr :: read_pending( void )
+{
+    fd_set  rfds;
+    struct timeval tv = { 0, 0 };
+    FD_ZERO( &rfds );
+    FD_SET( fd, &rfds );
+    select( fd+1, &rfds, NULL, NULL, &tv );
+    if ( FD_ISSET( fd, &rfds ))
+        return true;
+    return false;
+}
+
 void
 trade_init( int fd, bool _first )
 {
-    tcp_channel = new pk_tcp_msgr( trade_read, trade_write, NULL, fd );
+    tcp_channel = new trade_tcp_msgr( fd );
 
     trade_first = _first;
 

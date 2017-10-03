@@ -7,20 +7,6 @@
 
 #include "pk_tcp_msg.H"
 
-pk_tcp_msgr :: pk_tcp_msgr( user_func rdr, user_func wrtr,
-                            void * _user_arg, int _fd )
-{
-    fd         = _fd;
-    user_read  = rdr;
-    user_write = wrtr;
-    user_arg   = _user_arg;
-}
-
-pk_tcp_msgr :: ~pk_tcp_msgr( void )
-{
-    close( fd );
-}
-
 bool
 pk_tcp_msgr :: send( pk_tcp_msg * m )
 {
@@ -29,7 +15,7 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
     char * p = m->get_ptr();
     while ( l > 0 )
     {
-        int cc = user_write( user_arg, fd, p, l );
+        int cc = writer( p, l );
         if ( cc <= 0 )
             return false;
         p += cc;
@@ -38,18 +24,7 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
     return true;
 }
 
-bool
-pk_tcp_msgr :: recv_pending( void )
-{
-    fd_set  rfds;
-    struct timeval tv = { 0, 0 };
-    FD_ZERO( &rfds );
-    FD_SET( fd, &rfds );
-    select( fd+1, &rfds, NULL, NULL, &tv );
-    if ( FD_ISSET( fd, &rfds ))
-        return true;
-    return false;
-}
+enum states { HEADER, BODY };
 
 bool
 pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
@@ -60,7 +35,7 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
 
     while ( 1 )
     {
-        int cc = user_read( user_arg, fd, buf, stateleft );
+        int cc = reader( buf, stateleft );
 
         if ( cc <= 0 )
             return false;
@@ -107,19 +82,26 @@ PkTcpMsgDef( TestMessage, 0x12345,
              int b;
     );
 
-int read_func ( void *, int, void *, int );
-int write_func( void *, int, void *, int );
-
-struct user_data {
+class my_tcp_msgr : public pk_tcp_msgr {
+private:
+    /*virtual*/ int reader( void * buf, int buflen ) {
+    }
+    /*virtual*/ int writer( void * buf, int buflen ) {
+    }
+    /*virtual*/ bool read_pending( void ) {
+    }
+    int fd;
     int junk;
+public:
+    my_tcp_msgr( int _fd, int _junk ) { fd = _fd; junk = _junk; }
+    ~my_tcp_msgr( void ) { close( fd ); }
 };
 
 int
 testfunc( void )
 {
-    user_data ud;
     TestMessage tm;
-    pk_tcp_msgr mgr( read_func, write_func, &ud, 1 );
+    pk_tcp_msgr mgr( /*fd*/ 1, /*junk*/ 4 );
 
     mgr.send( &tm );
 }
