@@ -1520,9 +1520,9 @@ do_rel_move( void )
                          "  re-edit (y or n) ? ", which );
                 goto reedit_ask;
             }
-            bcopy( formula_calc+i+2,
-                   formula_calc+i+11,
-                   formlen_calc - i - 1 );
+            memmove( formula_calc+i+11,
+		    formula_calc+i+2,
+		    formlen_calc - i - 1 );
             sprintf( formula_calc+i, "%10sh", m_dump_number( whichval, 16 ));
             formula_calc[i+11] = ' ';
             formlen_calc += 9;

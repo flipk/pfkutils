@@ -124,6 +124,11 @@
 
 #include <stdlib.h>
 
+#ifdef __sun__
+/* for bcopy! */
+#include <strings.h>
+#endif
+
 /* When used in Emacs's lib-src, we need to get bzero and bcopy somehow.
    If nothing else has been done, use the method below.  */
 #  ifdef INHIBIT_STRING_HEADER

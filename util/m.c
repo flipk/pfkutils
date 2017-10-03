@@ -714,7 +714,7 @@ m_parse_number( M_INT64 * result, char * string, int len, int base )
         int val = 0;
 
         c = *string++;
-        if ( base <= 36 && islower(c) )
+        if ( base <= 36 && islower((int)c) )
             c = toupper(c);
         if ( c < '0' )
             return -1;

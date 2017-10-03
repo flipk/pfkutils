@@ -150,6 +150,7 @@ pfkbak_list_files    ( Btree * bt, char * gen )
 {
 }
 
+// recall if argc==0, it means extract everything.
 void
 pfkbak_extract       ( Btree * bt, char * gen, int argc, char ** argv )
 {

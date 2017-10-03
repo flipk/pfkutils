@@ -70,7 +70,7 @@ maketags_do_logit( char * tagname, int taglen )
 {
     struct _dont_log_tags * dltp;
 
-    if ( isdigit( tagname[0] ))
+    if ( isdigit( (int)tagname[0] ))
         return 0;
 
     for ( dltp = dont_log_tags; dltp->len != 0; dltp++ )

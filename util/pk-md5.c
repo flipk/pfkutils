@@ -1,6 +1,7 @@
 
 #include "pk-md5.h"
 #include <string.h>
+#include <stdio.h>
 
 static void MD5Transform(u_int32_t [4], const unsigned char [64]);
 
@@ -47,10 +48,15 @@ static void
 Decode (u_int32_t *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i;
-	const u_int32_t *ip = (const u_int32_t *)input;
+	u_int32_t word;
 
 	for (i = 0; i < len / 4; i++)
-		output[i] = le32toh(ip[i]);
+	  {
+	    /* don't assume user's input buffer is word-aligned,
+	       this will cause a bus error on a sparc. */
+	    memcpy( &word, &input[i*4], 4 );
+	    output[i] = le32toh(word);
+	  }
 }
 #endif
 

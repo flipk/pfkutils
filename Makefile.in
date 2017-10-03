@@ -44,7 +44,7 @@ ELIBS+= bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
 
 #ifdef solaris
 LIBS+= -lsocket -lnsl
-CSRCS+= vsnprintf_stub.c
+CSRCS+= util/vsnprintf_stub.c
 DIRS+= itsfs bt mytar
 ELIBS+= bt/libbt.a itsfs/libitsfs.a  mytar/libmytar.a
 #endif
@@ -96,10 +96,10 @@ subdirs::
 	done
 
 .c.o:
-	gcc $(CFLAGS) -c $*.c
+	gcc $(CFLAGS) -c $*.c -o $*.o
 
 .C.o:
-	gcc $(CFLAGS) -c $*.C
+	gcc $(CFLAGS) -c $*.C -o $*.o
 
 ksh::
 	cd pdksh-5.2.14 && make

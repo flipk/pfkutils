@@ -34,16 +34,16 @@ usage(void)
 "create file:    pfkbak -C[Vv] BACKUP-FILE\n"
 "\n"
 "list backups:   pfkbak -L[Vv] BACKUP-FILE\n"
-"create backup:  pfkbak -c[Vv] BACKUP-FILE:BACKUP-NAME DIR\n"
-"delete backup:  pfkbak -D[Vv] BACKUP-FILE:BACKUP-NAME\n"
-"update backup:  pfkbak -u[Vv] BACKUP-FILE:BACKUP-NAME DIR\n"
+"create backup:  pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR\n"
+"delete backup:  pfkbak -D[Vv] BACKUP-FILE BACKUP-NAME\n"
+"update backup:  pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME DIR\n"
 "\n"
-"delete gens:    pfkbak -d[Vv] BACKUP-FILE:BACKUP-NAME GenN A-B -B\n"
+"delete gens:    pfkbak -d[Vv] BACKUP-FILE BACKUP-NAME GenN A-B -B\n"
 "\n"
-"list files:     pfkbak -l[Vv] BACKUP-FILE:BACKUP-NAME GenN\n"
+"list files:     pfkbak -l[Vv] BACKUP-FILE BACKUP-NAME GenN\n"
 "\n"
-"extract:        pfkbak -e[Vv] BACKUP-FILE:BACKUP-NAME GenN [FILE...]\n"
-"extract list:   pfkbak -E[Vv] BACKUP-FILE:BACKUP-NAME GenN LIST-FILE\n"
+"extract:        pfkbak -e[Vv] BACKUP-FILE BACKUP-NAME GenN [FILE...]\n"
+"extract list:   pfkbak -E[Vv] BACKUP-FILE BACKUP-NAME GenN LIST-FILE\n"
             "\n"
         );
     exit(1);
@@ -54,31 +54,6 @@ verblevel  pfkbak_verb;
 char *     pfkbak_file;
 char *     pfkbak_name;
 int        pfkbak_gen;
-
-static void
-parse_filename(char * arg)
-{
-    pfkbak_file = strdup(arg);
-
-    char * colon = strchr(pfkbak_file, ':');
-    if (colon)
-    {
-        *colon = 0;
-        pfkbak_name = colon+1;
-    }
-    else
-        pfkbak_name = NULL;
-
-    fprintf(stderr,"backup file: %s\n", pfkbak_file);
-    fprintf(stderr,"backup name: %s\n",
-            pfkbak_name ? pfkbak_name : "(not specified)");
-    fprintf(stderr,"verbose level: %s\n",
-            pfkbak_verb == VERB_QUIET ? "quiet" :
-            pfkbak_verb == VERB_1 ? "print filenames" :
-            pfkbak_verb == VERB_2 ? "print filenames and blocks" : 
-            "(unknown)");
-    fprintf(stderr,"\n");
-}
 
 int
 main(int argc, char ** argv)
@@ -95,7 +70,13 @@ main(int argc, char ** argv)
     else if (cmd[1] == 'V')
         pfkbak_verb = VERB_2;
 
-    parse_filename(argv[2]);
+    // in every command format, argv[2] is the backup file.
+    // in every command which has argv[3], it is the backup name.
+    pfkbak_file = argv[2];
+    if (argc > 3)
+        pfkbak_name = argv[3];
+    else
+        pfkbak_name = NULL;
 
     // assign pfkbak_op
 #define OP(c,op) case c: pfkbak_op = BAK_##op; break;
@@ -120,22 +101,24 @@ main(int argc, char ** argv)
     {
     case BAK_CREATE_FILE:
     case BAK_LIST_BACKUPS:
-    case BAK_DELETE_BACKUP:
         if (argc != 3) usage(); break;
+
+    case BAK_DELETE_BACKUP:
+        if (argc != 4) usage(); break;
 
     case BAK_CREATE_BACKUP:
     case BAK_UPDATE_BACKUP:
     case BAK_LIST_FILES:
-        if (argc != 4) usage(); break;
+        if (argc != 5) usage(); break;
 
     case BAK_DELETE_GENS:
-        if (argc < 4)  usage(); break;
+        if (argc < 5)  usage(); break;
 
     case BAK_EXTRACT:
         if (argc < 5)  usage(); break;
 
     case BAK_EXTRACT_LIST:
-        if (argc != 5) usage(); break;
+        if (argc != 6) usage(); break;
 
     case BAK_NONE:
     default:
@@ -192,25 +175,25 @@ main(int argc, char ** argv)
         pfkbak_list_backups( bt );
         break;
     case BAK_CREATE_BACKUP:
-        pfkbak_create_backup( bt, argv[3] );
+        pfkbak_create_backup( bt, argv[4] );
         break;
     case BAK_DELETE_BACKUP:
         pfkbak_delete_backup( bt );
         break;
     case BAK_UPDATE_BACKUP:
-        pfkbak_update_backup( bt, argv[3] );
+        pfkbak_update_backup( bt, argv[4] );
         break;
     case BAK_DELETE_GENS:
-        pfkbak_delete_gens( bt, argc-3, argv+3 );
+        pfkbak_delete_gens( bt, argc-4, argv+4 );
         break;
     case BAK_LIST_FILES:
-        pfkbak_list_files( bt, argv[3] );
+        pfkbak_list_files( bt, argv[4] );
         break;
     case BAK_EXTRACT:
-        pfkbak_extract( bt, argv[3], argc-4, argv+4 );
+        pfkbak_extract( bt, argv[4], argc-5, argv+5 );
         break;
     case BAK_EXTRACT_LIST:
-        pfkbak_extract_list( bt, argv[3], argv[4] );
+        pfkbak_extract_list( bt, argv[4], argv[5] );
         break;
     case BAK_NONE:
     default:
@@ -218,8 +201,6 @@ main(int argc, char ** argv)
         usage();
     }
 
-
     delete bt;
-
     return 0;
 }

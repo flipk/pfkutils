@@ -38,6 +38,12 @@
 #include "process_line.h"
 #include "regex.h"
 
+#ifdef __sun__
+/* i see this in time.h but i didn't investigate why
+   this particular prototype doesn't get in scope */
+extern struct tm *localtime_r(const time_t *, struct tm *);
+#endif
+
 int
 syslogd_main( int argc, char ** argv )
 {

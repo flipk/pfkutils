@@ -198,7 +198,7 @@ struct FilePieces : public BST {
 
 /** data companion to FileInfoKey.  everything you ever wanted to know
  * about a file except its name (which is in the directory). */
-struct FileInfoData : public FileBlockBST {
+struct FileInfoData : public BST {
     FileInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
     ~FileInfoData(void) { bst_free(); }
     BST_UINT64_t  size;          /**< size of this file in bytes */
@@ -207,9 +207,6 @@ struct FileInfoData : public FileBlockBST {
     BST_UINT16_t  refcount;      /**< how many directories (generations)
                                     reference this file */
     BST_UINT16_t  file_mode;     /**< as in chmod kind of mode */
-    FilePieces    first_pieces;  /**< the first set of pieces for this file;
-                                    if not enough room, follow next_pieces_fbn
-                                    to find a FileInfoExtended. */
     BST_FIELD_LIST( &size, &atime, &num_pieces, &refcount, &first_pieces );
 };
 

@@ -68,7 +68,7 @@ viewtags_tags_open( char * file )
         if ( numargs != 2 )
             bail();
 
-        if ( !isdigit( viewtags_lineargs[0][0] ))
+        if ( !isdigit( (int)viewtags_lineargs[0][0] ))
             bail();
 
         if ( atoi( viewtags_lineargs[0] ) != i )

@@ -33,6 +33,14 @@
 #############################################################################
 
 #
+# do nothing if invoking a child shell from wuce.
+#
+
+if [ x$WUCE_HOST != x ] ; then
+    return
+fi
+
+#
 # always ensure this file is specified as ENV.
 #
 
@@ -53,9 +61,20 @@ HOME=/home/$USER
 ENV=$HOME/.kshrc
 HOST=`hostname`
 HOST=${HOST%%\.*}
-TMP=/tmp
+TMP=/tmp/$USER
 TMPDIR=$TMP
 TEMP=$TMP
+
+if [ ! -d $TMP ] ; then
+    mkdir -p $TMP
+    chmod 700 $TMP
+fi
+
+if [ -f /usr/xpg4/bin/id ] ; then
+    GROUP=`/usr/xpg4/bin/id -g -n`
+else
+    GROUP=`id -g -n`
+fi
 
 export USER HOME ENV HOST TMP TMPDIR TEMP
 
