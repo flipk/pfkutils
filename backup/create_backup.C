@@ -25,6 +25,8 @@
 #include <FileList.H>
 
 #include <stdlib.h>
+#include <strings.h>
+#include <errno.h>
 
 void
 pfkbak_create_backup ( Btree * bt, char * bakname,
@@ -32,6 +34,20 @@ pfkbak_create_backup ( Btree * bt, char * bakname,
 {
     PfkBackupDbInfo   info(bt);
     UINT32  baknum;
+
+    if (root_dir[0] != '/')
+    {
+        fprintf(stderr, "ERROR: root directory of a backup must be an "
+                "absolute path.\n");
+        return;
+    }
+
+    if (chdir(root_dir) < 0)
+    {
+        fprintf(stderr, "chdir to '%s': %s\n",
+                root_dir, strerror(errno));
+        return;
+    }
 
     if (!pfkbak_get_info( &info ))
         return;
@@ -46,11 +62,10 @@ pfkbak_create_backup ( Btree * bt, char * bakname,
             baknum = 0;
     } while (baknum == 0);
 
-    printf("new backup number %d allocated\n", baknum);
-
     binf.data.root_dir.set(root_dir);
     binf.data.name.set(bakname);
     binf.data.comment.set(comment);
+    binf.data.file_count.v = 0;
     binf.data.next_generation_number.v = 1;
     binf.data.generations.alloc(0);
 
@@ -67,4 +82,7 @@ pfkbak_create_backup ( Btree * bt, char * bakname,
     {
         printf("error putting new info\n");
     }
+
+    printf("created backup '%s' using backup number %d\n",
+           bakname, baknum);
 }

@@ -20,12 +20,13 @@
 
 // utility
 
-bool   pfkbak_get_info( PfkBackupDbInfo * info );
-UINT32 pfkbak_find_backup( Btree * bt, char * bakname );
+bool   pfkbak_get_info    ( PfkBackupDbInfo * info );
+UINT32 pfkbak_find_backup ( Btree * bt, char * bakname );
+void   pfkbak_md5_buffer  ( UCHAR * buf, int buflen, UCHAR * md5 );
 
 // ops
 
-void pfkbak_create_file   ( Btree * bt );
+void pfkbak_create_file   ( char * filename, Btree * bt );
 void pfkbak_list_backups  ( Btree * bt );
 void pfkbak_create_backup ( Btree * bt, char * bakname,
                             char * root_dir, char * comment );

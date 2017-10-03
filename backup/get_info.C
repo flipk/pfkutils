@@ -29,7 +29,7 @@
 bool
 pfkbak_get_info( PfkBackupDbInfo * info )
 {
-    info->key.info_key.set((char*)INFO_KEY);
+    info->key.info_key.set((char*)PfkBackupDbInfoKey::INFO_KEY);
 
     if (!info->get())
     {
@@ -37,7 +37,7 @@ pfkbak_get_info( PfkBackupDbInfo * info )
         return false;
     }
 
-    if (info->data.tool_version.v != TOOL_VERSION)
+    if (info->data.tool_version.v != PfkBackupDbInfoData::TOOL_VERSION)
     {
         fprintf(stderr, "tool version mismatch!!\n");
         return false;

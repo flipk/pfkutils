@@ -27,11 +27,11 @@
 #include "BtreeDbClasses.H"
 #include "pk-md5.h"
 
-#define TOOL_VERSION 1
-#define INFO_KEY  "PfkBakDbInfo"
+// key base type
 
 struct PfkBakDbKeys : public BST {
     enum Prefix {
+        PREFIX_NONE,
         PREFIX_BACKUP_DB_INFO,
         PREFIX_BACKUP_INFO,
         PREFIX_FILE_INFO,
@@ -43,12 +43,15 @@ struct PfkBakDbKeys : public BST {
                                 any derived type. */
 };
 
+// PfkBackupDbInfo - singleton data item which describes the 
+//   list of backups in the file and the tool version.
+
 struct PfkBackupDbInfoKey : public PfkBakDbKeys {
     PfkBackupDbInfoKey(void) :
         PfkBakDbKeys(PREFIX_BACKUP_DB_INFO),
         info_key(this) { }
     BST_STRING  info_key;
-    // no additional data required for this key
+    static const char * INFO_KEY;
 };
 
 struct PfkBackupDbInfoData : public FileBlockBST {
@@ -58,9 +61,13 @@ struct PfkBackupDbInfoData : public FileBlockBST {
     ~PfkBackupDbInfoData(void) { bst_free(); }
     BST_UINT32_t              tool_version;
     BST_ARRAY <BST_UINT32_t>  backups;
+    static const int TOOL_VERSION = 1;
 };
 
 DB_ITEM_CLASS(PfkBackupDbInfo);
+
+// PfkBackupInfo - one of these for each backup, describing 
+//   the backup and number of files and list of generations.
 
 struct PfkBackupInfoKey : public PfkBakDbKeys {
     PfkBackupInfoKey(void) :
@@ -80,17 +87,23 @@ struct PfkBakGenInfo : public BST {
 struct PfkBackupInfoData : public FileBlockBST {
     PfkBackupInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        root_dir(this), name(this), comment(this),
+        root_dir(this), name(this), comment(this), file_count(this),
         next_generation_number(this), generations(this) {}
     ~PfkBackupInfoData(void) { bst_free(); }
     BST_STRING    root_dir;
     BST_STRING    name;
     BST_STRING    comment;
+    BST_UINT32_t  file_count;
     BST_UINT32_t  next_generation_number;
     BST_ARRAY <PfkBakGenInfo> generations;
 };
 
 DB_ITEM_CLASS(PfkBackupInfo);
+
+// PfkBackupFileInfo - One of these for each file in a backup,
+//   file_number walks from 0 to PfkBackupInfoData::file_count-1.
+//   this is used to opimize tree-walking, for comparing size and mtime
+//   to determine if a file has changed since the last backup run.
 
 struct PfkBackupFileInfoKey : public PfkBakDbKeys {
     PfkBackupFileInfoKey(void) :
@@ -103,14 +116,19 @@ struct PfkBackupFileInfoKey : public PfkBakDbKeys {
 struct PfkBackupFileInfoData : public FileBlockBST {
     PfkBackupFileInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        file_path(this), size(this), mtime(this) { }
+        file_path(this), size(this), mtime(this), generations(this) { }
     ~PfkBackupFileInfoData(void) { bst_free(); }
     BST_STRING     file_path;
     BST_UINT64_t   size;
     BST_UINT32_t   mtime;
+    BST_ARRAY  <BST_UINT32_t>  generations;
 };
 
 DB_ITEM_CLASS(PfkBackupFileInfo);
+
+// PfkBackupFilePieceInfo - one of these for each "piece" of a file
+//   in a backup, describing all of the different versions of this
+//   piece and their md5 hashes.
 
 struct PfkBackupFilePieceInfoKey : public PfkBakDbKeys {
     PfkBackupFilePieceInfoKey(void) :
@@ -139,6 +157,13 @@ struct PfkBackupFilePieceInfoData : public FileBlockBST {
 
 DB_ITEM_CLASS(PfkBackupFilePieceInfo);
 
+// PfkBackupFilePieceData - one of these for each version of each piece
+//    of each file in a backup. contains a reference count and a pointer 
+//    to the data.  the data is stored directly as an AUID in the FileBlock,
+//    to make access more efficient when a file has not changed from one
+//    generation to the next (simply increase the refcount without actually
+//    retrieving and storing the data).
+
 struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
     PfkBackupFilePieceDataKey(void) : 
         PfkBakDbKeys(PREFIX_FILE_PIECE_DATA),
@@ -153,10 +178,14 @@ struct PfkBackupFilePieceDataKey : public PfkBakDbKeys {
 struct PfkBackupFilePieceDataData : public FileBlockBST {
     PfkBackupFilePieceDataData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        refcount(this), data_fbn(this) { }
+        refcount(this), csize(this), usize(this), data_fbn(this) { }
     ~PfkBackupFilePieceDataData(void) { bst_free(); }
     BST_UINT32_t   refcount;
+    BST_UINT16_t   csize;
+    BST_UINT16_t   usize;
     BST_UINT32_t   data_fbn;
+
+    static const int PIECE_SIZE = 32768;
 };
 
 DB_ITEM_CLASS(PfkBackupFilePieceData);

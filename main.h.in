@@ -40,6 +40,7 @@
     PROG(0,fbcompact,FileBlock compacter)
     PROG(0,btdump,FileBlock Btree dumper)
     PROG(0,treesync,synchronize trees of files)
+    PROG(0,pfkbak,Incremental and full-history backup tool)
 #ifdef linux
 	PROG(1,sudo,do a command as the superuser)
 	PROG(0,xlock,xlock screen)

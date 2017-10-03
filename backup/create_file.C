@@ -27,15 +27,17 @@
 #include <stdlib.h>
 
 void
-pfkbak_create_file   ( Btree * bt )
+pfkbak_create_file   ( char * filename, Btree * bt )
 {
     PfkBackupDbInfo   info(bt);
 
-    info.key.info_key.set((char*)INFO_KEY);
-    info.data.tool_version.v = TOOL_VERSION;
+    info.key.info_key.set((char*)PfkBackupDbInfoKey::INFO_KEY);
+    info.data.tool_version.v = PfkBackupDbInfoData::TOOL_VERSION;
     info.data.backups.alloc(0);
     if (info.put() == false)
     {
         fprintf(stderr,"error writing backup info list\n");
     }
+
+    printf("database file '%s' created.\n", filename);
 }

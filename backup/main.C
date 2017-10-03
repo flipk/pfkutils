@@ -28,6 +28,8 @@
 #include "database_elements.H"
 #include "protos.H"
 
+const char * PfkBackupDbInfoKey::INFO_KEY = "PfkBakDbInfo";
+
 static void
 usage(void)
 {
@@ -191,7 +193,7 @@ pfkbak_main(int argc, char ** argv)
     switch (pfkbak_op)
     {
     case BAK_CREATE_FILE:
-        pfkbak_create_file( bt );
+        pfkbak_create_file( pfkbak_file, bt );
         break;
     case BAK_LIST_BACKUPS:
         pfkbak_list_backups( bt );

@@ -58,12 +58,14 @@ pfkbak_list_backups  ( Btree * bt )
                "   root dir: %s\n"
                "   name: %s\n"
                "   comment: %s\n"
+               "   number of files: %d\n"
                "   next generation number: %d\n"
                "   generations:\n",
                backup_number,
                binf.data.root_dir.string,
                binf.data.name.string,
                binf.data.comment.string,
+               binf.data.file_count.v,
                binf.data.next_generation_number.v);
 
         for (j=0; j < binf.data.generations.num_items; j++)

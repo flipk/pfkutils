@@ -180,6 +180,8 @@ The pfkbak tool supports the following features:
    backup, it displays the backup name, comment, and a list of all
    existing generations in that backup, as well as some information
    about each generation.
+\todo implement the [BACKUP-NAME] argument to this command.
+
 <li> <b> pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR COMMENT </b>
    <br> This creates a new backup in a database. Specify the name of the
    backup, the root directory of the backup, and a comment string
@@ -193,6 +195,8 @@ The pfkbak tool supports the following features:
    This requires user confirmation (unless the -confirm option is
    present).  It deletes the backup info, all generations, and all
    file contents.
+\todo implement the -confirm option to this command.
+
 <li> <b> pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME </b>
    <br> This 'updates' a backup to the latest version of all files.  It
    creates a new 'generation' in the backup with the current time
@@ -213,7 +217,7 @@ The pfkbak tool supports the following features:
    <br> The command line may contain any number of generation specifiers.
 <li> <b> pfkbak -l[Vv] BACKUP-FILE BACKUP-NAME GenN </b>
    <br> This lists all the files present in a generation, and some information
-   about each one.
+   about each file.
 <li> <b> pfkbak -e[Vv] BACKUP-FILE BACKUP-NAME GenN [FILE...] </b>
    <br> This extracts files from a specified generation.  If a limited set
    of files are desired, they may be listed individually on the
@@ -235,27 +239,55 @@ The pfkbak tool supports the following features:
  */
 /** \page DatabaseEntries Database Entries
 
+<img src="backup-database-design.gif">
+
+The following data types are used in the database file:
+
+<ul>
+<li>  <b> backup number </b>
+      <br>  This is a 32-bit random number.  It identifies each backup,
+      and is guaranteed to be unique when it is generated.
+<li>  <b> file number </b>
+      <br>  This is a 32-bit value which counts from 0 to 
+      PfkBakupInfoData::file_count-1.  It uniquely identifies a file,
+      whether that file exists in a particular generation or not.
+      File numbers are never reused.  If all generations which contains
+      a file are freed, no database entries will exist which use this
+      file number, but the number itself will not be freed or reused.
+<li>  <b> file piece </b>
+      <br>  This is a 32 kilobyte unit of data from a file.
+<li>  <b> piece number </b>
+      <br>  This is a 32-bit number which describes a file piece.  A
+      piece number may be translated into a file offset by multiplying
+      by 32k.
+<li>  <b> generation number </b>
+      <br>  This is a 32-bit number which starts at 1 and increases 
+      each time a new run is executed.  The next generation number is
+      stored in PfkBackupInfoData.
+</ul>
+
 The following entries exist in the database file:
 
 <ul>
-<li> <b> BackupFileInfo </b>
-   <br> There exists exactly one BackupFileInfo member in the entire file.
+<li> <b> PfkBackupDbInfo </b>
+   <br> There exists exactly one of these in the entire database.
    It is only updated when a backup set is created or deleted, or when
    a new tool version upgrades the data structures in the file.
    <ul>
    <li> Key prefix: 1
-   <li> Key: none (singleton)
+   <li> Key: string info_key
+      <ul>
+      <li> this is a constant string (the data element is a singleton).
+           the key's purpose is to ensure the tool is looking at a database
+           created by this tool.
+      </ul>
    <li> Data:
       <ul>
       <li> uint32 tool_version
            <br> This field is used to prevent access by the wrong version of
            the tool, in case the data structure layouts have changed 
            between versions.
-      <li> uint8 next_backup_number
-           <br> Each time a new backup is created, this number is used and
-           incremented.  It starts at 1 when the file is created and
-           never decreases.
-      <li> uint8 backup_numbers[]
+      <li> uint32 backups[]
            <br> This array lists all the valid backups currently in the file.
            When a new backup is created, the list is grown by one and the
            new entry added at the end.  When a backup is deleted, the last
@@ -264,15 +296,19 @@ The following entries exist in the database file:
            information about that particular backup.
       </ul>
    </ul>
-<li> <b> BackupInfo </b>
+<li> <b> PfkBackupInfo </b>
    <br> There exists one of these data structures for each backup in the 
    database.  It is modified whenever a generation is created or deleted.
    <ul>
    <li> Key prefix: 2
-   <li> Key:  uint8 backup_number
+   <li> Key:  uint32 backup_number
    <li> Data: 
       <ul>
-      <li> string backup_name
+      <li> string root_dir
+           <br> This is the root directory of this backup.  This is kept
+           here so that the user does not have to specify the root directory
+           each time an 'update' is performed. 
+      <li> string name
            <br> This is a text name for the backup.  The best format for a 
            backup name is string which can be represented as a single
            command line argument in a unix shell (i.e. no whitespaces or
@@ -282,126 +318,90 @@ The following entries exist in the database file:
            from the command line when a backup is created, and displayed
            when the contents of a database file are requested.  The contents
            are not used for any other purpose.
+      <li> uint32 file_count
+           <br> This is the count of the number of files found in this
+           backup.  The values 0 thru this number minus one are used in
+           the key to the following date type.
       <li> uint32 next_generation_number
            <br> This field is used when creating a new generation, and
            incremented each time.
-      <li> uint32 generation_numbers[]
-           <br> This field lists all the generation numbers currently
+      <li> uint32 generations[]
+           <br> This field lists all the generations currently
            existing in the backup.  When a new generation is created,
            the list is grown by one and the new entry added at the
            end.  When a generation is deleted, the last entry is
            pulled down into the hole created.  The generation number
-           is used in the key of a GenerationInfo.
+           is used in the key of a GenerationInfo. For each generation,
+           the date and time of creation is stored as well as the generation
+           number.
       </ul>
    </ul>
-<li> <b> GenerationInfo </b>
-   <br> For each backup, there are a set of these.  Each one represents one
-   update run of the tool.  
+<li> <b> PfkBackupFileInfo </b>
+   <br> There exists one of these for each file in a backup.
    <ul>
    <li> Key prefix: 3
-   <li> Key: uint8 backup_number, uint32 generation_number
+   <li> Key: uint32 backup_number, uint32 file_number
    <li> Data:
       <ul>
-      <li> string date_time
-         <br> This is a string representation of the date and time
-         that this backup run was done.
-      <li> uint64 num_bytes
-         <br> This is the total number of bytes of all files found in this 
-         backup run.
-      <li> uint32 num_files
-         <br> This is the number of files found in the backup.  The
-         files are numbered 0 through num_files-1.  Refer to the
-         GenerationFileList entries and GenerationFileName entries for
-         information about the files themselves.
+      <li> string file_path
+         <br> This is the full path to the file, relative to the
+         root directory of this backup.
+      <li> uint64 size
+         <br> This is the size of this file in bytes, at the time of
+         the most recent backup run.
+      <li> uint32 mtime
+         <br> This is the time (in unix time_t format) of the last
+         modification time of this file.
+      <li> uint32 generations[]
+         <br> This lists all the generations that this file name is
+         a part of.  This is used only to determine when it is okay
+         to free up the file_number (when the last generation referencing
+         a file has been freed).
       </ul>
    </ul>
-<li> <b> GenerationFileList </b>
-   <br> For each generation, there are a set of these.  Each of these
-   holds information about a maximum of MAX_GEN_FILE_LIST_ENTRIES
-   files.  The list_piece field increments in each of these objects to
-   contain the full list of files.  The number of ListPieces can be
-   calculated from GenerationInfo.data.num_files.
+<li> <b> PfkBackupFilePieceInfo </b>
+   <br> 
    <ul>
    <li> Key prefix: 4
-   <li> Key: uint8 backup_number, uint32 generation_number,
-             uint32 list_piece_number
+   <li> Key: uint32 backup_number, uint32 file_number, uint32 piece_number
    <li> Data: 
       <ul>
-      <li> array of GenerationFileInfo[]:
+      <li> array PfkBackupVersions:
          <ul>
-         <li> string file_path
-            <br> This is the path relative to the backup base path
-            of the file being described.
-         <li> uint64 size
-            <br> This is the size of the file, in bytes.
-         <li> uint32 mtime
-            <br> This is the last modification time of the file, as
-            determined from a 'stat' call.
-         <li> FB_AUID_T version_list
-            <br> This points to a FilePieceVersionList containing all
-            the version numbers of all the pieces.
+         <li> uint32 gen_number
+              <br> The generation number of this version of this piece.
+         <li> uchar md5hash[16]
+              <br> The md5 hash of this version of this piece.  Use this
+              value in the key of the next data type to locate the data
+              for this version.
          </ul>
       </ul>
    </ul>
-<li> <b> FilePieceVersionList </b>
-   <br> There is one of these for every file in every generation. It is
-   not in the btree, it is directly accessed by FB_AUID_T in a
-   GenerationFileList.
-   <ul>
-   <li> Data:
-      <ul>
-      <li> FB_AUID_T  next
-         <br> This is a pointer to the next FilePieceVersionList
-         object.
-      <li> uint16 versions[]
-         <br> This is an array of versions for pieces.  It has a
-         maximum size, so multiple FilePieceVersionList objects 
-         must be strung together in a linked list to describe all
-         the pieces of a large file.
-      </ul>
-   </ul>
-<li> <b> FilePieceInfo </b>
-   <br> There is one of these for every 32k file piece.  It describes
-   the unique md5 hash and compressed size of this block for each
-   version of that block.  It also has a version number which is
-   incremented each time a new version is created.  There is no need
-   to store the 'next version' value anywhere, because the algorithm
-   must necessary check every previous version anyway whenever there
-   is an md5 mismatch, so the algorithm will always determine the next
-   version value each time anyway.
+<li> <b> PfkBackupFilePieceData </b>
+   <br> 
    <ul>
    <li> Key prefix: 5
-   <li> Key: uint8 backup_number, string file_path, uint32 piece_number
+   <li> Key: uint32 backup_number, uint32 file_number,
+             uint32 piece_number, uchar md5hash[16]
    <li> Data:
       <ul>
-      <li> FilePieceVersionInfo array[]
-         <ul>
-         <li> uint16 version_number
-         <li> uint16 refcount
-            <br>This indicates how many generations reference this piece.  If a
-            new generation is being created, and a file piece is found to still
-            have the same md5 hash as during the previous generation, this 
-            reference count may simply be increased.
-         <li> md5hash
-            <br> This is a 16-byte unit storing the MD5 hash of this piece.
-         <li> binary_data_auid
-            <br> This is the FB_AUID_T where the binary data for this
-            piece is found.
-         </ul>
+      <li> uint32 refcount
+           <br> This is a count of the number of generations which refer
+           to the data in this piece version.  If this ever is decreased
+           to zero, the data must be deleted from the file because no 
+           version information references this data any longer.
+      <li> uint16 compressed_size
+           <br> This is the compressed size of the libz-compressed data.
+           This is required because an exact value cannot be extracted
+           from the FileBlock API (the FileBlock number is always rounted
+           up to the nearest 32-byte boundary).
+      <li> uint16 uncompressed_size
+           <br> This is the uncompressed size of the libz-compressed data.
+           This is always exactly 32kb except in the last piece of a file.
+      <li> FB_AUID_t data_fbn
+           <br> This is an AUID to access the libz-compressed body of the
+           data for this piece.  
       </ul>
-   </ul>
-<li> <b> BinaryData </b>
-   <br> There is one of these for every 32k segment of every file.  This
-   object is not in the btree.  It is addressed directly by FB_AUID_T in
-   the FilePieceInfo objects.
-   <ul>
-   <li> Data:
-     <ul>
-     <li> uint8 data[]
-        <br> This is the compressed data.  The compressed size is stored
-        in the BST encoding data, and the uncompressed size can be recovered
-        after passing the data through the libz decompressor.
-     </ul>
    </ul>
 </ul>
 

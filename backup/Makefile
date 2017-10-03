@@ -5,7 +5,7 @@ SRCS=	create_backup.C create_file.C \
 	extract.C extract_list.C \
 	get_info.C update_backup.C \
 	list_backups.C list_files.C \
-	find_backup.C main.C 
+	find_backup.C main.C md5buffer.C
 HDRS=	database_elements.H params.H protos.H
 
 OBJS= $(SRCS:.C=.o)
