@@ -6,7 +6,7 @@
 #include "dll2.H"
 #include "types.H"
 
-enum { BT_DLL2_LRU,  BT_DLL2_HASH,  BT_DLL2_COUNT };
+enum { BT_DLL2_LRU,  BT_DLL2_HASH,  BT_DLL2_EXTRA, BT_DLL2_COUNT };
 
 class FileBlockNumber {
     static const int        recordsize = 16;
@@ -23,6 +23,7 @@ class FileBlockNumber {
 
     struct page;         // private
     typedef LListHashLRU<page,BT_DLL2_HASH,BT_DLL2_LRU> page_lru;
+    typedef LList<page,BT_DLL2_EXTRA> extra_list;
     page_lru bitmaps;    // key is segment number
     page_lru data;       // key is page number
 

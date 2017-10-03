@@ -20,6 +20,7 @@
  */
 
 #include "xdr.h"
+#include "lognew.H"
 
 void * malloc( int size );
 void free( void * );
@@ -41,7 +42,7 @@ myxdr_bytes( XDR * xdr, uchar ** data, u_int * data_len, u_int max_data )
         if ( *data_len > max_data )
             return FALSE;
         if ( *data == NULL )
-            *data = (uchar*)malloc( *data_len );
+            *data = (uchar*)MALLOC( *data_len );
         /* fallthru */
 
     case XDR_ENCODE:
@@ -111,7 +112,7 @@ myxdr_reference( XDR * xdr, uchar ** data, u_int size, xdrproc_t method )
             return TRUE;
 
         case XDR_DECODE:
-            *data = (uchar*)malloc( size );
+            *data = (uchar*)MALLOC( size );
             memset( *data, 0, size );
             break;
         }
@@ -175,7 +176,7 @@ myxdr_string( XDR * xdr, uchar ** str, u_int max )
     {
     case XDR_DECODE:
         if ( *str == NULL )
-            *str = (uchar*)malloc( size+1 );
+            *str = (uchar*)MALLOC( size+1 );
         (*str)[size] = 0;
         /* fallthru */
 

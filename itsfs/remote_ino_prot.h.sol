@@ -38,7 +38,8 @@ enum remino_callnum {
 	UTIMES = 18,
 	READLINK = 19,
 	LINK_H = 20,
-	LINK_S = 21
+	LINK_S = 21,
+	READDIR2 = 22
 };
 typedef enum remino_callnum remino_callnum;
 
@@ -87,6 +88,12 @@ struct remino_dirptr_args {
 };
 typedef struct remino_dirptr_args remino_dirptr_args;
 
+struct remino_dirptr2_args {
+	u_int dirptr;
+	int pos;
+};
+typedef struct remino_dirptr2_args remino_dirptr2_args;
+
 struct remino_path_mode_args {
 	filepath path;
 	int mode;
@@ -125,6 +132,7 @@ struct remino_call {
 		remino_truncate_args truncate;
 		remino_path_args path_only;
 		remino_dirptr_args dirptr_only;
+		remino_dirptr2_args dirptr2;
 		remino_path_mode_args path_mode;
 		remino_rename_args rename;
 		remino_chown_args chown;
@@ -166,12 +174,17 @@ struct remino_opendir_reply {
 };
 typedef struct remino_opendir_reply remino_opendir_reply;
 
-struct remino_readdir_reply {
-	int err;
-	int retval;
+struct remino_readdir_entry {
 	int ftype;
 	filepath name;
 	int fileid;
+};
+typedef struct remino_readdir_entry remino_readdir_entry;
+
+struct remino_readdir_reply {
+	int err;
+	int retval;
+	remino_readdir_entry entry;
 };
 typedef struct remino_readdir_reply remino_readdir_reply;
 
@@ -197,6 +210,21 @@ struct remino_stat_reply {
 };
 typedef struct remino_stat_reply remino_stat_reply;
 
+struct remino_readdir2_entry {
+	remino_readdir_entry dirent;
+	remino_stat_reply stat;
+	struct remino_readdir2_entry *next;
+};
+typedef struct remino_readdir2_entry remino_readdir2_entry;
+
+struct remino_readdir2_reply {
+	int err;
+	int retval;
+	remino_readdir2_entry *list;
+	bool_t eof;
+};
+typedef struct remino_readdir2_reply remino_readdir2_reply;
+
 struct remino_readlink_reply {
 	int err;
 	int retval;
@@ -213,6 +241,7 @@ struct remino_reply {
 		remino_write_reply write;
 		remino_opendir_reply opendir;
 		remino_readdir_reply readdir;
+		remino_readdir2_reply readdir2;
 		remino_stat_reply stat;
 		remino_readlink_reply readlink;
 	} remino_reply_u;
@@ -231,6 +260,7 @@ extern  bool_t myxdr_remino_write_args(XDR *, remino_write_args*);
 extern  bool_t myxdr_remino_truncate_args(XDR *, remino_truncate_args*);
 extern  bool_t myxdr_remino_path_args(XDR *, remino_path_args*);
 extern  bool_t myxdr_remino_dirptr_args(XDR *, remino_dirptr_args*);
+extern  bool_t myxdr_remino_dirptr2_args(XDR *, remino_dirptr2_args*);
 extern  bool_t myxdr_remino_path_mode_args(XDR *, remino_path_mode_args*);
 extern  bool_t myxdr_remino_rename_args(XDR *, remino_rename_args*);
 extern  bool_t myxdr_remino_chown_args(XDR *, remino_chown_args*);
@@ -241,8 +271,11 @@ extern  bool_t myxdr_remino_errno_reply(XDR *, remino_errno_reply*);
 extern  bool_t myxdr_remino_read_reply(XDR *, remino_read_reply*);
 extern  bool_t myxdr_remino_write_reply(XDR *, remino_write_reply*);
 extern  bool_t myxdr_remino_opendir_reply(XDR *, remino_opendir_reply*);
+extern  bool_t myxdr_remino_readdir_entry(XDR *, remino_readdir_entry*);
 extern  bool_t myxdr_remino_readdir_reply(XDR *, remino_readdir_reply*);
 extern  bool_t myxdr_remino_stat_reply(XDR *, remino_stat_reply*);
+extern  bool_t myxdr_remino_readdir2_entry(XDR *, remino_readdir2_entry*);
+extern  bool_t myxdr_remino_readdir2_reply(XDR *, remino_readdir2_reply*);
 extern  bool_t myxdr_remino_readlink_reply(XDR *, remino_readlink_reply*);
 extern  bool_t myxdr_remino_reply(XDR *, remino_reply*);
 
@@ -256,6 +289,7 @@ extern bool_t myxdr_remino_write_args();
 extern bool_t myxdr_remino_truncate_args();
 extern bool_t myxdr_remino_path_args();
 extern bool_t myxdr_remino_dirptr_args();
+extern bool_t myxdr_remino_dirptr2_args();
 extern bool_t myxdr_remino_path_mode_args();
 extern bool_t myxdr_remino_rename_args();
 extern bool_t myxdr_remino_chown_args();
@@ -266,8 +300,11 @@ extern bool_t myxdr_remino_errno_reply();
 extern bool_t myxdr_remino_read_reply();
 extern bool_t myxdr_remino_write_reply();
 extern bool_t myxdr_remino_opendir_reply();
+extern bool_t myxdr_remino_readdir_entry();
 extern bool_t myxdr_remino_readdir_reply();
 extern bool_t myxdr_remino_stat_reply();
+extern bool_t myxdr_remino_readdir2_entry();
+extern bool_t myxdr_remino_readdir2_reply();
 extern bool_t myxdr_remino_readlink_reply();
 extern bool_t myxdr_remino_reply();
 

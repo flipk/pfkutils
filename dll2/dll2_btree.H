@@ -1,5 +1,6 @@
 
 #include <string.h>
+#include "lognew.H"
 
 //  LListBTREE
 //     - int btree_key( void )
@@ -58,7 +59,7 @@ class LListBTREE {
 
     NODE * splitnode( NODE * n, T ** nt, NODE * right )
         {
-            NODE * newright = new NODE;
+            NODE * newright = LOGNEW NODE;
             int i;
 
             numnodes++;
@@ -166,7 +167,7 @@ class LListBTREE {
 public:
     LListBTREE( void )
         {
-            root = new NODE;
+            root = LOGNEW NODE;
             root->leaf = root->root = true;
             numnodes = 1;
             numitems = 0;
@@ -282,7 +283,7 @@ public:
                     // a new root node and insert the pivot record
                     // by itself here.
 
-                    NODE * newroot = new NODE;
+                    NODE * newroot = LOGNEW NODE;
                     newroot->root = true;
                     newroot->numkeys = 1;
                     root ->root = false;

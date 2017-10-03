@@ -20,17 +20,18 @@
  */
 
 #include "id_name_db.H"
+#include "lognew.H"
+#include "config.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include "config.h"
 
 id_name_db :: id_name_db( void )
 {
     sprintf( fname, "/tmp/itsfsdb%d.db", random());
-    FileBlockNumber * fbn = new FileBlockNumber( fname, CACHESIZE );
+    FileBlockNumber * fbn = LOGNEW FileBlockNumber( fname, CACHESIZE );
     Btree::new_file( fbn, 15 );
-    bt = new Btree( fbn );
+    bt = LOGNEW Btree( fbn );
     chmod( (char*)fname, 0600 );
 }
 
@@ -86,7 +87,7 @@ id_name_db :: del( int id )
         return;
 
     int datkeylen = rec->data.len;
-    uchar * datkey = new uchar[ datkeylen ];
+    uchar * datkey = LOGNEW uchar[ datkeylen ];
     memcpy( datkey, rec->data.ptr, datkeylen );
     bt->delete_rec( rec );
 
@@ -111,7 +112,7 @@ id_name_db :: fetch( int id, inode_file_type &ftype )
     if ( !rec )
         return NULL;
 
-    ret = new uchar[ rec->data.len ];
+    ret = LOGNEW uchar[ rec->data.len ];
 
     ftype = (inode_file_type) rec->data.ptr[0];
     memcpy( ret, rec->data.ptr + 5, rec->data.len - 5 );
@@ -127,7 +128,7 @@ id_name_db :: fetch( int mount_id, uchar * path, inode_file_type &ftype )
     Btree::rec * rec;
     int ret = -1;
 
-    pkey = new uchar[ pathlen + 5 ];
+    pkey = LOGNEW uchar[ pathlen + 5 ];
     pkey[0] = 'P';
     memcpy( pkey + 1, &mount_id, 4 );
     memcpy( pkey + 5, path, pathlen );
@@ -144,8 +145,6 @@ id_name_db :: fetch( int mount_id, uchar * path, inode_file_type &ftype )
     return ret;
 }
 
-
-
 struct btcollect {
     uchar cmpkey[ 5 ];
     int numalloc;
@@ -155,7 +154,7 @@ struct btcollect {
         {
             numalloc = 100;
             numused = 0;
-            ids = (int*) malloc( sizeof( int ) * numalloc );
+            ids = (int*) MALLOC( sizeof( int ) * numalloc );
         }
     ~btcollect( void )
         {
@@ -165,9 +164,12 @@ struct btcollect {
         {
             if ( numalloc == numused )
             {
-                numalloc *= 2;
-                ids = (int *) realloc( ids, 
-                                       sizeof( int ) * numalloc );
+                int newnumalloc = numalloc * 2;
+                int * newids = (int*) MALLOC( sizeof( int ) * newnumalloc );
+                memcpy( newids, ids, sizeof( int ) * numalloc );
+                free( ids );
+                ids = newids;
+                numalloc = newnumalloc;
             }
             ids[numused++] = id;
         }
@@ -227,5 +229,76 @@ id_name_db :: purge_mount( int mount_id )
     {
         del( btc.ids[i] );
     }
+
+}
+#include <stdarg.h>
+
+//static
+char *
+id_name_db :: btdump_real_sprint( void * arg, int noderec,
+                                  int keyrec, void * _key, int keylen,
+                                  int datrec, void * _dat, int datlen )
+{
+    int i;
+    unsigned char * key = (unsigned char*) _key;
+    unsigned char * dat = (unsigned char*) _dat;
+    char * out;
+    char * outp;
+
+    out = new char[ keylen * 3 + datlen * 3 + 50 ];
+    outp = out;
+
+    outp += sprintf( outp, "key:" );
+    for ( i = 0; i < keylen; i++ )
+        outp += sprintf( outp, " %02x", key[i] );
+    outp += sprintf( outp, "\ndat: " );
+    for ( i = 0; i < datlen; i++ )
+        outp += sprintf( outp, " %02x", dat[i] );
+    outp += sprintf( outp, "\n" );
+
+    // return non-null so dumptree doesn't stop here.
+    return out;
+}
+
+//static
+void
+id_name_db :: btdump_real_sprintfree( void * arg, char * s )
+{
+    delete[] s;
+}
+
+//static
+void
+id_name_db :: btdump_real_print( void * arg, char * format, ... )
+{
+    va_list ap;
+    va_start( ap, format );
+    vfprintf( (FILE*)arg, format, ap );
+    va_end( ap );
+}
+
+void
+id_name_db :: dump_btree( void )
+{
+    Btree::printinfo pi;
+    FILE * f;
+
+#define DUMPFILE "BTREEDUMP"
+
+    f = fopen( DUMPFILE, "w" );
+
+    pi.spr   = &btdump_real_sprint;
+    pi.sprf  = &btdump_real_sprintfree;
+    pi.pr    = &btdump_real_print;
+    pi.arg   = (void*)f;
+    pi.debug = false;
+
+    bt->dumptree( &pi );
+
+    fclose( f );
+    chown( DUMPFILE, 1000, 1000 );
+    chmod( DUMPFILE, 0666 );
+
+#undef DUMPFILE
 
 }

@@ -68,6 +68,7 @@ for each 19-byte group of input.
 
 #include "encrypt_rubik4.H"
 #include "threads.H"
+#include "lognew.H"
 
 rubik4_key :: rubik4_key( void )
 {
@@ -115,7 +116,7 @@ rubik4_key :: key_parse( char * key )
     if ( numkeys > 99 )
         key ++;
 
-    UINT * local_keys = new UINT[numkeys];
+    UINT * local_keys = LOGNEW UINT[numkeys];
 
     for ( int i = 0; i < numkeys; i++ )
     {
@@ -430,7 +431,7 @@ rubik4_key :: key_dump( void )
     if ( numkeys == 0 )
         return "rubik4:0,0";
 
-    cp = ret = new char[45 + (numkeys * 8)];
+    cp = ret = LOGNEW char[45 + (numkeys * 8)];
 
     UINT * xp = (UINT*) &xorpattern[0];
 
@@ -456,7 +457,7 @@ rubik4_key :: random_key( int _numkeys )
     if ( numkeys != 0 )
         delete[] keys;
     numkeys = _numkeys;
-    keys = new UINT[numkeys];
+    keys = LOGNEW UINT[numkeys];
     for ( int i = 0; i < numkeys; i++ )
         keys[i] = random();
     compile();

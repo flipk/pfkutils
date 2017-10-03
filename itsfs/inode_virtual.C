@@ -20,6 +20,7 @@
  */
 
 #include "inode_virtual.H"
+#include "lognew.H"
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -40,26 +41,26 @@ Inode_virtual :: Inode_virtual( Inode_virtual_tree * _it,
     switch ( itype )
     {
     case INO_TREE_VIRT_ROOT_DIR:
-        name = (uchar*)strdup( "." );
+        name = (uchar*)STRDUP( "." );
         break;
 
     case INO_TREE_VIRT_ROOT_PARENT_DIR:
-        name = (uchar*)strdup( ".." );
+        name = (uchar*)STRDUP( ".." );
         break;
 
     case INO_TREE_VIRT_STATUS_FILE:
         ftype = INODE_FILE;
-        name = (uchar*)strdup( "status" );
+        name = (uchar*)STRDUP( "status" );
         break;
 
     case INO_TREE_VIRT_CMD_FILE:
         ftype = INODE_FILE;
-        name = (uchar*)strdup( "command" );
+        name = (uchar*)STRDUP( "command" );
         break;
 
     case INO_TREE_VIRT_HELP_FILE:
         ftype = INODE_FILE;
-        name = (uchar*)strdup( "help" );
+        name = (uchar*)STRDUP( "help" );
         break;
 
     case INO_TREE_VIRT_TREE:
@@ -82,7 +83,7 @@ Inode_virtual :: Inode_virtual( Inode_virtual_tree * _it,
     bad = false;
     status_info = NULL;
     owned_tree = _owned_tree;
-    name = (uchar*)strdup( (char*)path );
+    name = (uchar*)STRDUP( (char*)path );
 }
 
 Inode_virtual :: ~Inode_virtual( void )
@@ -232,7 +233,7 @@ Inode_virtual :: update_status_info( void )
     if ( status_info )
         free( status_info );
 
-    status_info = (uchar*) malloc( strlen( fullstatus ) + 1 );
+    status_info = (uchar*) MALLOC( strlen( fullstatus ) + 1 );
     strcpy( (char*)status_info, fullstatus );
 }
 

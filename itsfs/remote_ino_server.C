@@ -21,21 +21,12 @@
  */
 
 #include "remote_ino.H"
+#include "lognew.H"
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#if defined(CYGWIN)
-char * strdup( char * s )
-{
-    char * r;
-    r = (char*) malloc( strlen( s ) + 1 );
-    strcpy( r, s );
-    return r;
-}
-#endif
 
 #if defined(SOLARIS)
 extern "C" {
@@ -51,7 +42,7 @@ struct opendir_path {
         {
             int len = strlen( (char*)_p );
             opendir_path * ret =
-                (opendir_path *) malloc( sizeof( opendir_path ) + len + 256 );
+                (opendir_path *) MALLOC( sizeof( opendir_path ) + len + 256 );
             memcpy( ret->path, _p, len );
             ret->filepos = &ret->path[len];
             return (void*) ret;
@@ -71,6 +62,84 @@ struct opendir_path {
         }
 };
 
+int
+remote_inode_server :: readdirstat( opendir_path * op,
+                                    struct stat * sb,
+                                    remino_readdir_entry * ent )
+{
+    struct dirent * de = readdir( op->dir );
+    if ( !de )
+        return 0;
+
+    ent->name = (uchar*) STRDUP( de->d_name );
+    char * fullpath = op->addfile( ent->name );
+
+    if ( symlinks )
+    {
+        int r = lstat( fullpath, sb );
+
+        if ( r == 0 && !dirsymlinks &&
+             ( sb->st_mode & S_IFMT ) == S_IFLNK )
+        {
+            struct stat sb2;
+            r = stat( fullpath, &sb2 );
+            if ( r == 0 && ( sb2.st_mode & S_IFMT ) == S_IFDIR )
+                *sb = sb2;
+        }
+    }
+    else
+        if ( stat( fullpath, sb ) < 0 )
+            return -1;
+
+#if defined(CYGWIN)
+    ent->fileid = 0;
+#elif defined(SOLARIS)
+    ent->fileid = de->d_ino;
+#else
+    ent->fileid = de->d_fileno;
+#endif
+
+    switch ( sb->st_mode & S_IFMT )
+    {
+    case S_IFLNK:
+        if ( symlinks )
+            ent->ftype = INODE_LINK;
+        else
+            ent->ftype = INODE_FILE;
+        break;
+    case S_IFDIR:
+        ent->ftype = INODE_DIR;
+        break;
+    default:
+        ent->ftype = INODE_FILE;
+        break;
+    }
+
+    return 1;
+}
+
+void
+remote_inode_server :: stat_to_xdrstat( remino_stat_reply * rst,
+                                        struct stat * sb )
+{
+    rst->mode      = sb->st_mode;
+    rst->nlink     = sb->st_nlink;
+    rst->uid       = sb->st_uid;
+    rst->gid       = sb->st_gid;
+    rst->size      = sb->st_size;
+    rst->blocksize = sb->st_blksize;
+    rst->rdev      = sb->st_rdev;
+    rst->blocks    = sb->st_blocks;
+    rst->fsid      = sb->st_dev;
+    rst->asec      = sb->st_atime;
+    rst->ausec     = 0;
+    rst->msec      = sb->st_mtime;
+    rst->musec     = 0;
+    rst->csec      = sb->st_ctime;
+    rst->cusec     = 0;
+    rst->fileid    = sb->st_ino;
+}
+
 #define printf( x ) if ( verbose ) printf x
 
 uchar *
@@ -81,7 +150,6 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
     XDR xdrs;
     uchar * ret = replydata;
     struct stat sb;
-    struct dirent * de;
     struct timeval tv[2];
 
     memset( &call, 0, sizeof( call ));
@@ -100,6 +168,7 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
     }
 
     reply.reply = call.call;
+    errno = 0;
 
 #define  C  call.remino_call_u
 #define  R  reply.remino_reply_u
@@ -145,7 +214,7 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
 
     case READ:
         R.read.data.data_val =
-            (uchar*)malloc( MAX_REQ );
+            (uchar*)MALLOC( MAX_REQ );
 
         if ( lseek( C.read.fd,
                     C.read.pos, SEEK_SET ) >= 0 )
@@ -156,8 +225,9 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
                       C.read.len );
         }
         R.read.err = errno;
-        printf(( "READ %d sz %d -> %d errno %d\n",
-                 C.read.fd, C.read.len, R.read.data.data_len, R.read.err ));
+        printf(( "READ %d pos %d sz %d -> %d errno %d\n",
+                 C.read.fd, C.read.pos, C.read.len,
+                 R.read.data.data_len, R.read.err ));
         break;
 
     case WRITE:
@@ -170,8 +240,8 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
                        C.write.data.data_len );
         }
         R.write.err = errno;
-        printf(( "WRITE %d sz %d -> %d errno %d\n",
-                 C.write.fd, C.write.data.data_len,
+        printf(( "WRITE %d pos %d sz %d -> %d errno %d\n",
+                 C.write.fd, C.write.pos, C.write.data.data_len,
                  R.write.size, R.write.err ));
         break;
 
@@ -223,60 +293,106 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
     case READDIR:
     {
         opendir_path * op = (opendir_path *)C.dirptr_only.dirptr;
-        de = readdir( op->dir );
-        if ( de )
+
+        struct stat sb;
+        R.readdir.retval = readdirstat( op, &sb, &R.readdir.entry );
+        R.readdir.err = errno;
+        if ( R.readdir.retval <= 0 )
         {
-            struct stat sb;
-            R.readdir.name = (uchar*) strdup( de->d_name );
-            if ( symlinks )
-            {
-                int r;
-                r = lstat( op->addfile( R.readdir.name ), &sb );
-                if ( r == 0 && !dirsymlinks &&
-                     ( sb.st_mode & S_IFMT ) == S_IFLNK )
-                {
-                    struct stat sb2;
-                    r = stat( op->addfile( R.readdir.name ), &sb2 );
-                    if ( r == 0 && ( sb2.st_mode & S_IFMT ) == S_IFDIR )
-                        sb = sb2;
-                }
-            }
-            else
-                stat( op->addfile( R.readdir.name ), &sb );
-#if defined(CYGWIN)
-            R.readdir.fileid = 0;
-#elif defined(SOLARIS)
-            R.readdir.fileid = de->d_ino;
-#else
-            R.readdir.fileid = de->d_fileno;
-#endif
-            switch ( sb.st_mode & S_IFMT )
-            {
-            case S_IFLNK:
-                if ( symlinks )
-                    R.readdir.ftype = INODE_LINK;
-                else
-                    R.readdir.ftype = INODE_FILE;
-                break;
-            case S_IFDIR:
-                R.readdir.ftype = INODE_DIR;
-                break;
-            default:
-                R.readdir.ftype = INODE_FILE;
-                break;
-            }
-            R.readdir.retval = 0;
-        }
-        else
-        {
-            R.readdir.name = (uchar*) strdup( "" );
-            R.readdir.fileid = -1;
+            R.readdir.entry.name = (uchar*) STRDUP( "" );
+            R.readdir.entry.fileid = -1;
+            // 0 is not ok to return to caller
             R.readdir.retval = -1;
         }
-        R.readdir.err = errno;
         printf(( "READDIR %d -> %s %d ret %d\n",
-                 C.dirptr_only.dirptr, R.readdir.name,
-                 R.readdir.fileid, R.readdir.retval ));
+                 C.dirptr_only.dirptr, R.readdir.entry.name,
+                 R.readdir.entry.fileid, R.readdir.retval ));
+        break;
+    }
+
+    case READDIR2:
+    {
+        opendir_path * op = (opendir_path *)C.dirptr2.dirptr;
+        int pos = C.dirptr2.pos;
+        int entries = 0;
+        int bytes = MAX_REQ - (MAX_PATH*2);
+        remino_readdir_entry dummy;
+        remino_readdir2_entry * ent, * nent, ** nentp;
+        struct stat sb;
+
+        R.readdir2.list = 0;
+        R.readdir2.eof = FALSE;
+
+        // perform a whole series of readdirs, walking forward
+        // to 'pos' in the directory; then do more readdirs,
+        // filling up 'R' until its either out of space to
+        // hold this entry or we hit the end of the directory.
+
+        rewinddir( op->dir );
+        while ( pos-- > 0 )
+        {
+            if ( readdirstat( op, &sb, &dummy ) <= 0 )
+                goto readdir2_error_done;
+            free( dummy.name );
+        }
+
+        bytes -= sizeof( remino_readdir2_reply );
+
+        nentp = &R.readdir2.list;
+
+        for ( ;; )
+        {
+            if ( bytes < 0 )
+                break;
+
+            int r = readdirstat( op, &sb, &dummy );
+            if ( r < 0 )
+                goto readdir2_error_done;
+
+            if ( r == 0 )
+            {
+                R.readdir2.eof = TRUE;
+                break;
+            }
+
+            bytes -= sizeof( remino_readdir2_entry );
+            bytes -= strlen( (char*)dummy.name ) + 4;
+
+            if ( bytes < 0 )
+                break;
+
+            ent = (remino_readdir2_entry *)
+                MALLOC( sizeof( remino_readdir2_entry ));
+
+            ent->dirent = dummy;
+            stat_to_xdrstat( &ent->stat, &sb );
+            ent->next = 0;
+
+            entries++;
+            *nentp = ent;
+            nentp = &ent->next;
+        }
+
+        R.readdir2.err = errno;
+        R.readdir2.retval = 0;
+        goto readdir2_done;
+
+    readdir2_error_done:
+        R.readdir2.err = errno;
+        R.readdir2.retval = -1;
+        R.readdir2.eof = TRUE;
+        for ( ent = R.readdir2.list; ent; ent = nent )
+        {
+            nent = ent->next;
+            free( ent->dirent.name );
+            free( ent );
+        }
+        R.readdir2.list = 0;
+
+    readdir2_done:
+        printf(( "READDIR2 %d pos %d -> entries %d ret %d\n", 
+                 C.dirptr2.dirptr, C.dirptr2.pos,
+                 entries, R.readdir2.retval ));
         break;
     }
 
@@ -333,24 +449,8 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
 
         R.stat.err = errno;
         if ( R.stat.retval == 0 )
-        {
-            R.stat.mode      = sb.st_mode;
-            R.stat.nlink     = sb.st_nlink;
-            R.stat.uid       = sb.st_uid;
-            R.stat.gid       = sb.st_gid;
-            R.stat.size      = sb.st_size;
-            R.stat.blocksize = sb.st_blksize;
-            R.stat.rdev      = sb.st_rdev;
-            R.stat.blocks    = sb.st_blocks;
-            R.stat.fsid      = sb.st_dev;
-            R.stat.asec      = sb.st_atime;
-            R.stat.ausec     = 0;
-            R.stat.msec      = sb.st_mtime;
-            R.stat.musec     = 0;
-            R.stat.csec      = sb.st_ctime;
-            R.stat.cusec     = 0;
-            R.stat.fileid    = sb.st_ino;
-        }
+            stat_to_xdrstat( &R.stat, &sb );
+
         printf(( "LSTAT %s -> %d mode %o errno %d\n",
                  (char*)C.path_only.path,
                  R.stat.retval,
@@ -359,7 +459,7 @@ remote_inode_server :: dispatch( uchar * inpkt, int inlen, int &outlen )
         break;
 
     case READLINK:
-        R.readlink.path = (uchar*)malloc( 750 );
+        R.readlink.path = (uchar*)MALLOC( 750 );
         R.readlink.retval = readlink( (char*)C.path_only.path,
                                       (char*)R.readlink.path, 750 );
         // NOTE: readlink(2) does NOT append a NUL to the string!

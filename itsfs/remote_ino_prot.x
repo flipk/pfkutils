@@ -46,7 +46,8 @@ enum remino_callnum {
     UTIMES    = 18,
     READLINK  = 19,
     LINK_H    = 20,
-    LINK_S    = 21
+    LINK_S    = 21,
+    READDIR2  = 22
 };
 
 struct remino_open_args {
@@ -84,6 +85,12 @@ struct remino_path_args {
 /* used for closedir, readdir, rewinddir */
 struct remino_dirptr_args {
     unsigned dirptr;
+};
+
+/* used for readdir2 */
+struct remino_dirptr2_args {
+    unsigned dirptr;
+    int pos;
 };
 
 /* used for mkdir and chmod */
@@ -133,6 +140,8 @@ union remino_call switch (remino_callnum call) {
  case READDIR:
  case REWINDDIR:
      remino_dirptr_args dirptr_only;
+ case READDIR2:
+     remino_dirptr2_args dirptr2;
  case MKDIR:
  case CHMOD:
      remino_path_mode_args path_mode;
@@ -173,12 +182,16 @@ struct remino_opendir_reply {
     unsigned dirptr;
 };
 
-struct remino_readdir_reply {
-    int err;
-    int retval;
+struct remino_readdir_entry {
     int ftype;  /* actually inode_file_type */
     filepath name;
     int fileid;
+};
+
+struct remino_readdir_reply {
+    int err;
+    int retval;
+    remino_readdir_entry entry;
 };
 
 struct remino_stat_reply {
@@ -200,6 +213,19 @@ struct remino_stat_reply {
     int csec;
     int cusec;
     int fileid;
+};
+
+struct remino_readdir2_entry {
+    remino_readdir_entry    dirent;
+    remino_stat_reply       stat;
+    remino_readdir2_entry * next;
+};
+
+struct remino_readdir2_reply {
+    int err;
+    int retval;
+    remino_readdir2_entry * list;
+    bool eof;
 };
 
 struct remino_readlink_reply {
@@ -233,6 +259,8 @@ union remino_reply switch (remino_callnum reply) {
      remino_opendir_reply opendir;
  case READDIR:
      remino_readdir_reply readdir;
+ case READDIR2:
+     remino_readdir2_reply readdir2;
  case LSTAT:
      remino_stat_reply stat;
  case READLINK:

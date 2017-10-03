@@ -34,8 +34,8 @@ private:
 
     remote_inode_client_tcp rict;
 
-    static const int  MAX_HASH = 500;
-    static const int HASH_SIZE = 100;
+    static const int  MAX_HASH = 60;
+    static const int HASH_SIZE = 30;
 
     int zerorefs; // count of members whose refcount is zero
     bool bad_fd;
@@ -44,25 +44,32 @@ private:
 
     friend class Inode_remote;
 
-    Inode         *   _create     ( int dirid,
+    Inode *     _create           ( int dirid,
                                     uchar * name, uchar * target,
                                     inode_file_type nftype, bool hardlink );
+    bool        get_stats_somehow ( char * path, int fileid,
+                                    struct stat * sb );
+    Inode *     _get              ( bool hashonly, int file_id );
+    Inode *     _get_parent       ( bool hashonly, int file_id );
 
 public:
-    Inode_remote_tree             ( int tree_id,
+    /**/        Inode_remote_tree ( int tree_id,
                                     uchar * path, int fd );
-    virtual ~Inode_remote_tree    ( void );
+    virtual    ~Inode_remote_tree ( void );
 
-    virtual Inode *   get         ( int file_id );
+    virtual Inode *   get         ( int file_id )
+        { return _get( false, file_id ); }
     virtual Inode *   get         ( int dir_id, uchar * filename );
-    virtual Inode *   get_parent  ( int file_id );
-    virtual int       deref       ( Inode * );
+    virtual Inode *   get_parent  ( int file_id )
+        { return _get_parent( false, file_id ); }
 
+    virtual int       deref       ( Inode * );
     virtual Inode *   create      ( int dirid, uchar * name, inode_file_type );
     virtual Inode *   createslink ( int dirid,
                                     uchar * name, uchar * target );
     virtual Inode *   createhlink ( int dirid,
                                     uchar * name, int fileid );
+
     virtual int       destroy     ( int fileid, inode_file_type );
     virtual int       rename      ( int olddir, uchar * oldfile,
                                     int newdir, uchar * newfile );
@@ -77,18 +84,21 @@ class Inode_remote : public Inode {
     uchar * path;
     int fd;
     DIR * dir;
-    int dirpos;
     Inode_remote_tree * it;
     struct stat sb;
     int last_stat;
+    bool refresh_directory;
+    remino_readdir2_entry * dirlist;
+    remino_readdir2_entry * curdir;
+    void free_dirlist( void );
 
     friend class Inode_remote_tree;
 public:
     LListLinks<Inode_remote> links[ Inode_remote_tree::NUM_DLL2 ];
-    int hash_key( void ) { return file_id; }
-    Inode_remote                ( Inode_remote_tree * it, uchar * path,
+    /**/    int       hash_key  ( void ) { return file_id; }
+    /**/          Inode_remote  ( Inode_remote_tree * it, uchar * path,
                                   int _fileid, inode_file_type );
-    virtual ~Inode_remote       ( void );
+    virtual      ~Inode_remote  ( void );
 
     virtual int       isattr    ( sattr & );
     virtual int       ifattr    ( fattr & );

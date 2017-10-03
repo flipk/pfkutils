@@ -1,6 +1,4 @@
 
- - ipipe.c should roll up into tcpgate.C
- - itsfs needs a remote inode worker that is much more efficient
  - itsfs needs a cache tree to sit in front of the remote inode trees
  - why does 'tar zxf somefile.tar' in a remotely mounted tree sometimes
    produce garbage files?

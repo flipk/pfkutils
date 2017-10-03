@@ -54,6 +54,8 @@ public:
     static const int READ_FLAG   = 2;
     static const int WRITE_FLAG  = 4;
 
+    void  xdrstat_to_stat( remino_stat_reply * rst, struct stat * sb );
+
     int   open      ( uchar * path, int flags, int mode );
     int   close     ( int fd );
     int   read      ( int fd, int pos, uchar * buf, int sz );
@@ -66,6 +68,7 @@ public:
     int   closedir  ( DIR * );
     int   readdir   ( uchar * name, int &fileid,
                       inode_file_type &ftype, DIR * );
+    int   readdir2  ( remino_readdir2_entry *** list, int * pos, DIR * );
     int   rewinddir ( DIR * );
 
     int   mkdir     ( uchar * path, int mode );
@@ -82,11 +85,15 @@ public:
     int   link      ( uchar * target, uchar * path );
 };
 
+class opendir_path;
+
 class remote_inode_server {
     uchar replydata[ MAX_REQ ];
     bool verbose;
     bool symlinks;
     bool dirsymlinks;
+    void stat_to_xdrstat( remino_stat_reply * rst, struct stat * sb );
+    int readdirstat( opendir_path *, struct stat *, remino_readdir_entry * );
 public:
     remote_inode_server( bool _verbose, bool _symlinks, bool _dirsymlinks )
         {

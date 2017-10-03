@@ -145,7 +145,8 @@ private:
     // return blockno for new rightnode. used by put()
     int    split_node( node *, rec *, int rightnode, int index );
 
-    node * fetch_node( int blockno );
+    node * fetch_node( int blockno )
+        { return fetch_node( blockno, false ); }
     node * fetch_node( int blockno, bool newnode );
     void   unlock_node( node * );
 

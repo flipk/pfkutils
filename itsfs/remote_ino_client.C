@@ -205,12 +205,69 @@ remote_inode_client :: readdir( uchar * name, int &fileid,
     EN( errno = EINVAL ; return -1 ; );
     SR( errno = EINVAL ; return -1 ; );
     DEC( errno = EINVAL ; return -1 ; );
-    strcpy( (char*)name, (char*)R.readdir.name );
-    fileid = R.readdir.fileid;
-    ftype = (inode_file_type) R.readdir.ftype;
+    strcpy( (char*)name, (char*)R.readdir.entry.name );
+    fileid = R.readdir.entry.fileid;
+    ftype = (inode_file_type) R.readdir.entry.ftype;
     FR;
     errno = R.readdir.err;
     return R.readdir.retval;
+}
+
+// pos initialized to zero by caller;
+// list initialized to point to the head pointer of the caller's list;
+// pos is moved forward by this call for each entry;
+// list is moved forward to the empty 'next' pointer of the last entry;
+// pos is returned as -1 if the eof of the directory is reached.
+
+int
+remote_inode_client :: readdir2( remino_readdir2_entry *** list,
+                                 int * pos, DIR * d )
+{
+    Z( READDIR2 );
+    C.dirptr2.dirptr = (unsigned) d;
+    C.dirptr2.pos = *pos;
+
+    EN( errno = EINVAL ; return -1 ; );
+    SR( errno = EINVAL ; return -1 ; );
+    DEC( errno = EINVAL ; return -1 ; );
+
+    // NOTE that we don't call FR unless there was an error!
+    //      we get a long linked-list back, but we actually
+    //      pass that along to the caller,
+    //      so they'll free it when they're done.
+
+    if ( R.readdir2.retval == 0 )
+    {
+        **list = R.readdir2.list;
+
+        // nuke pointer from R so that it can't be mistaken 
+        // for anything important.
+
+        R.readdir2.list = 0;
+
+        if ( R.readdir2.eof == FALSE )
+        {
+            remino_readdir2_entry * ent;
+
+            // must walk *list forward to point to the &next of the
+            // last entry returned; must walk pos forward too.
+
+            for ( ent = **list; ent; ent = ent->next )
+            {
+                *list = &ent->next;
+                (*pos)++;
+            }
+        }
+        else
+            *pos = -1;
+    }
+    else
+    {
+        FR;
+    }
+
+    errno = R.readdir2.err;
+    return R.readdir2.retval;
 }
 
 int
@@ -259,35 +316,42 @@ remote_inode_client ::  lstat( uchar * path, struct stat * sb )
 
 #include "../sudo.h"
 
+void
+remote_inode_client :: xdrstat_to_stat( remino_stat_reply * rst,
+                                        struct stat * sb )
+{
+    sb->st_mode               = rst->mode;
+    sb->st_nlink              = rst->nlink;
+    sb->st_uid                = MY_UID;
+    sb->st_gid                = MY_GID;
+    sb->st_size               = rst->size;
+    sb->st_blksize            = rst->blocksize;
+    sb->st_rdev               = rst->rdev;
+    sb->st_blocks             = rst->blocks;
+    sb->st_dev                = rst->fsid;
+#if defined(CYGWIN) || defined(SOLARIS)
+    sb->st_atime              = rst->asec;
+    sb->st_mtime              = rst->msec;
+    sb->st_ctime              = rst->csec;
+#else
+    sb->st_atimespec.tv_sec   = rst->asec;
+    sb->st_atimespec.tv_nsec  = rst->ausec * 1000;
+    sb->st_mtimespec.tv_sec   = rst->msec;
+    sb->st_mtimespec.tv_nsec  = rst->musec * 1000;
+    sb->st_ctimespec.tv_sec   = rst->csec;
+    sb->st_ctimespec.tv_nsec  = rst->cusec * 1000;
+#endif
+    sb->st_ino                = rst->fileid;
+}
+
 int
-remote_inode_client ::  _stat( uchar * path, struct stat * sb )
+remote_inode_client :: _stat( uchar * path, struct stat * sb )
 {
     C.path_only.path = path;
     EN( errno = EINVAL ; return -1 ; );
     SR( errno = EINVAL ; return -1 ; );
     DEC( errno = EINVAL ; return -1 ; );
-    sb->st_mode               = R.stat.mode;
-    sb->st_nlink              = R.stat.nlink;
-    sb->st_uid                = MY_UID;
-    sb->st_gid                = MY_GID;
-    sb->st_size               = R.stat.size;
-    sb->st_blksize            = R.stat.blocksize;
-    sb->st_rdev               = R.stat.rdev;
-    sb->st_blocks             = R.stat.blocks;
-    sb->st_dev                = R.stat.fsid;
-#if defined(CYGWIN) || defined(SOLARIS)
-    sb->st_atime   = R.stat.asec;
-    sb->st_mtime   = R.stat.msec;
-    sb->st_ctime   = R.stat.csec;
-#else
-    sb->st_atimespec.tv_sec   = R.stat.asec;
-    sb->st_atimespec.tv_nsec  = R.stat.ausec * 1000;
-    sb->st_mtimespec.tv_sec   = R.stat.msec;
-    sb->st_mtimespec.tv_nsec  = R.stat.musec * 1000;
-    sb->st_ctimespec.tv_sec   = R.stat.csec;
-    sb->st_ctimespec.tv_nsec  = R.stat.cusec * 1000;
-#endif
-    sb->st_ino                = R.stat.fileid;
+    xdrstat_to_stat( &R.stat, sb );
     errno = R.stat.err;
     return R.stat.retval;
 }

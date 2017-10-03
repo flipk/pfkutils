@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "btree.H"
+#include "lognew.H"
 
 #undef  DEBUG
 
@@ -55,7 +56,7 @@ Btree :: ~Btree( void )
 void
 Btree :: add_nodstor( node * _n, int _noderecno, int _index )
 {
-    nodstor * x = new nodstor;
+    nodstor * x = LOGNEW nodstor;
     x->n = _n;
     x->index = _index;
     x->noderecno = _noderecno;
@@ -79,12 +80,6 @@ Btree :: get_nodstor( int &_noderecno, int &_index )
     return ret;
 }
 
-Btree :: node *
-Btree :: fetch_node( int blockno )
-{
-    return fetch_node( blockno, false );
-}
-
 // read in the file blocks holding a node.
 // if this node is brand-new, instead of verifying 
 // that the correct magic# exists, fill one in and 
@@ -94,7 +89,7 @@ Btree :: node *
 Btree :: fetch_node( int blockno, bool newnode )
 {
     int dummylen;
-    node * r = new node;
+    node * r = LOGNEW node;
     r->dirty = false;
     r->nd = (_node*) fbn->get_block( blockno, dummylen, r->magic );
     if ( r->nd == NULL )
@@ -130,7 +125,7 @@ Btree :: unlock_node( node * n )
 Btree :: rec *
 Btree :: fetch_rec( int keyblockno, int datablockno )
 {
-    rec * ret = new rec;
+    rec * ret = LOGNEW rec;
 
     ret->key.dirty = false;
     ret->data.dirty = false;
@@ -282,7 +277,7 @@ Btree :: dumpnode( printinfo * pi, int recno )
 Btree :: rec *
 Btree :: alloc_rec( int keylen, int datalen )
 {
-    rec * ret = new rec;
+    rec * ret = LOGNEW rec;
 
     ret->key.len = keylen;
     ret->key.recno = fbn->alloc( keylen );
@@ -759,7 +754,7 @@ Btree :: delete_rec( UCHAR * keyptr, int keylen )
 {
     rec * r;
 
-    r = new rec;
+    r = LOGNEW rec;
     r->key.ptr = keyptr;
     r->key.len = keylen;
     r->key.magic = 0;

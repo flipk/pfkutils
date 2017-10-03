@@ -20,6 +20,7 @@
  */
 
 #include "inode_remote.H"
+#include "lognew.H"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -31,11 +32,12 @@ Inode_remote :: Inode_remote( Inode_remote_tree * _it, uchar * _path,
                               int _fileid, inode_file_type _ft )
     : Inode( INODE_REMOTE, _fileid, _it->tree_id, _ft )
 {
-    path = (uchar*)strdup( (char*)_path );
-    dirpos = 0;
+    path = (uchar*)STRDUP( (char*)_path );
     dir = NULL;
     fd = -1;
     it = _it;
+    refresh_directory = true;
+    dirlist = 0;
     last_stat = 0;
 }
 
@@ -52,6 +54,7 @@ Inode_remote :: ~Inode_remote( void )
         if ( fd != -1 )
             it->rict.clnt.close( fd );
     }
+    free_dirlist();
 }
 
 int
@@ -241,32 +244,36 @@ Inode_remote :: setdirpos( int cookie )
         return -1;
     }
 
-    if ( dir == NULL )
+    if ( cookie == 0 )
     {
-        dir = it->rict.clnt.opendir( path );
-        if ( dir == NULL )
-            return -1;
+        refresh_directory = true;
+        errno = 0;
+        return 0;
     }
 
-    if ( dirpos > cookie )
-    {
-        it->rict.clnt.rewinddir( dir );
-        dirpos = 0;
-    }
-
-    while ( dirpos < cookie )
-    {
-        uchar fnamedummy[ 1000 ];
-        int fileiddummy;
-        inode_file_type filenftypedummy;
-        if ( it->rict.clnt.readdir( fnamedummy, fileiddummy, 
-                                    filenftypedummy, dir ) == NULL )
-            break;
-        dirpos++;
-    }
+    curdir = dirlist;
+    while ( cookie-- > 0 )
+        if ( curdir )
+            curdir = curdir->next;
 
     errno = 0;
     return 0;
+}
+
+void
+Inode_remote :: free_dirlist( void )
+{
+    remino_readdir2_entry * e, * ne;
+
+    // free dirlist;
+
+    for ( e = dirlist; e; e = ne )
+    {
+        ne = e->next;
+        free( e->dirent.name );
+        free( e );
+    }
+    dirlist = 0;
 }
 
 int
@@ -279,12 +286,41 @@ Inode_remote :: readdir( int &fileno, uchar * filename )
         dir = it->rict.clnt.opendir( path );
         if ( dir == NULL )
             return -1;
+        refresh_directory = true;
     }
 
-    if ( it->rict.clnt.readdir( filename, fileno, read_nftype, dir ) < 0 )
+    if ( refresh_directory )
+    {
+        free_dirlist();
+
+        int pos = 0;
+        remino_readdir2_entry ** listptr = &dirlist;
+
+        do {
+            // repeat the following line until pos is -1 after this call
+
+            if ( it->rict.clnt.readdir2( &listptr, &pos, dir ) < 0 )
+            {
+                int e = errno;
+                free_dirlist();
+                errno = e;
+                return -1;
+            }
+
+        } while ( pos != -1 );
+
+        curdir = dirlist;
+        refresh_directory = false;
+    }
+
+    if ( !curdir )
         return -1;
 
-    dirpos++;
+    strcpy( (char*)filename, (char*)curdir->dirent.name );
+    fileno = curdir->dirent.fileid;
+    read_nftype = (inode_file_type)curdir->dirent.ftype;
+
+    curdir = curdir->next;
 
     uchar fullpath[ Inode_tree::MAX_PATH_LENGTH ];
 

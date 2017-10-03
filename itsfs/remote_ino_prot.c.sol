@@ -104,6 +104,17 @@ myxdr_remino_dirptr_args(register XDR *xdrs, remino_dirptr_args *objp)
 }
 
 bool_t
+myxdr_remino_dirptr2_args(register XDR *xdrs, remino_dirptr2_args *objp)
+{
+
+	if (!myxdr_u_int(xdrs, &objp->dirptr))
+		return (FALSE);
+	if (!myxdr_int(xdrs, &objp->pos))
+		return (FALSE);
+	return (TRUE);
+}
+
+bool_t
 myxdr_remino_path_mode_args(register XDR *xdrs, remino_path_mode_args *objp)
 {
 
@@ -196,6 +207,10 @@ myxdr_remino_call(register XDR *xdrs, remino_call *objp)
 		if (!myxdr_remino_dirptr_args(xdrs, &objp->remino_call_u.dirptr_only))
 			return (FALSE);
 		break;
+	case READDIR2:
+		if (!myxdr_remino_dirptr2_args(xdrs, &objp->remino_call_u.dirptr2))
+			return (FALSE);
+		break;
 	case MKDIR:
 	case CHMOD:
 		if (!myxdr_remino_path_mode_args(xdrs, &objp->remino_call_u.path_mode))
@@ -277,6 +292,19 @@ myxdr_remino_opendir_reply(register XDR *xdrs, remino_opendir_reply *objp)
 }
 
 bool_t
+myxdr_remino_readdir_entry(register XDR *xdrs, remino_readdir_entry *objp)
+{
+
+	if (!myxdr_int(xdrs, &objp->ftype))
+		return (FALSE);
+	if (!myxdr_filepath(xdrs, &objp->name))
+		return (FALSE);
+	if (!myxdr_int(xdrs, &objp->fileid))
+		return (FALSE);
+	return (TRUE);
+}
+
+bool_t
 myxdr_remino_readdir_reply(register XDR *xdrs, remino_readdir_reply *objp)
 {
 
@@ -284,11 +312,7 @@ myxdr_remino_readdir_reply(register XDR *xdrs, remino_readdir_reply *objp)
 		return (FALSE);
 	if (!myxdr_int(xdrs, &objp->retval))
 		return (FALSE);
-	if (!myxdr_int(xdrs, &objp->ftype))
-		return (FALSE);
-	if (!myxdr_filepath(xdrs, &objp->name))
-		return (FALSE);
-	if (!myxdr_int(xdrs, &objp->fileid))
+	if (!myxdr_remino_readdir_entry(xdrs, &objp->entry))
 		return (FALSE);
 	return (TRUE);
 }
@@ -332,6 +356,34 @@ myxdr_remino_stat_reply(register XDR *xdrs, remino_stat_reply *objp)
 	if (!myxdr_int(xdrs, &objp->cusec))
 		return (FALSE);
 	if (!myxdr_int(xdrs, &objp->fileid))
+		return (FALSE);
+	return (TRUE);
+}
+
+bool_t
+myxdr_remino_readdir2_entry(register XDR *xdrs, remino_readdir2_entry *objp)
+{
+
+	if (!myxdr_remino_readdir_entry(xdrs, &objp->dirent))
+		return (FALSE);
+	if (!myxdr_remino_stat_reply(xdrs, &objp->stat))
+		return (FALSE);
+	if (!myxdr_pointer(xdrs, (uchar **)&objp->next, sizeof (remino_readdir2_entry), (xdrproc_t) myxdr_remino_readdir2_entry))
+		return (FALSE);
+	return (TRUE);
+}
+
+bool_t
+myxdr_remino_readdir2_reply(register XDR *xdrs, remino_readdir2_reply *objp)
+{
+
+	if (!myxdr_int(xdrs, &objp->err))
+		return (FALSE);
+	if (!myxdr_int(xdrs, &objp->retval))
+		return (FALSE);
+	if (!myxdr_pointer(xdrs, (uchar **)&objp->list, sizeof (remino_readdir2_entry), (xdrproc_t) myxdr_remino_readdir2_entry))
+		return (FALSE);
+	if (!myxdr_bool(xdrs, &objp->eof))
 		return (FALSE);
 	return (TRUE);
 }
@@ -390,6 +442,10 @@ myxdr_remino_reply(register XDR *xdrs, remino_reply *objp)
 		break;
 	case READDIR:
 		if (!myxdr_remino_readdir_reply(xdrs, &objp->remino_reply_u.readdir))
+			return (FALSE);
+		break;
+	case READDIR2:
+		if (!myxdr_remino_readdir2_reply(xdrs, &objp->remino_reply_u.readdir2))
 			return (FALSE);
 		break;
 	case LSTAT:

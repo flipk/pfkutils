@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <signal.h>
+#include "lognew.H"
 
 // NOTE:  - LList::add adds at the 'tail' of the list.
 //        - 'next' pointers point towards the tail, 'prev' towards head.
@@ -156,7 +157,7 @@ private:
 public:
     LListHash ( int _hashsize ) {
         hashsize = _hashsize;
-        hash = new theLListHash[ hashsize ];
+        hash = LOGNEW theLListHash[ hashsize ];
         count = 0;
     }
     ~LListHash ( void ) {

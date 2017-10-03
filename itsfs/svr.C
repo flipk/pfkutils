@@ -38,6 +38,7 @@
 #include "config.h"
 #include "svr.H"
 #include "id_name_db.H"
+#include "lognew.H"
 
 static bool    check_ascii         ( uchar *, int );
 static uchar * update_status_info  ( void );
@@ -188,10 +189,8 @@ _itsfssvr_main( int argc, char ** argv )
 
     treenumber = server.reserve_treeid();
 
-    itv = new Inode_virtual_tree( treenumber,
-                                  update_status_info,
-                                  command_handler,
-                                  command_help_string );
+    itv = LOGNEW Inode_virtual_tree( treenumber, update_status_info,
+                                     command_handler, command_help_string );
 
     it = itv;
     server.register_tree( treenumber, it );
@@ -465,7 +464,7 @@ _itsfssvr_main( int argc, char ** argv )
             itsfs_addlog( "connecting new tree '%s'", newfsname );
 
             treenumber = server.reserve_treeid();
-            irt = new Inode_remote_tree( treenumber, (uchar*)".", newfd );
+            irt = LOGNEW Inode_remote_tree( treenumber, (uchar*)".", newfd );
 
             // really we should check for -1 return from register_tree,
             // but since we just reserved it above, there's almost no
@@ -504,6 +503,9 @@ _itsfssvr_main( int argc, char ** argv )
             }
         }
     }
+
+// debug only
+//    inode_name_db->dump_btree();
 
     return 0;
 }

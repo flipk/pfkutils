@@ -20,6 +20,7 @@
  */
 
 #include "inode_remote.H"
+#include "lognew.H"
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -39,7 +40,7 @@ Inode_remote_tree :: Inode_remote_tree( int tree_id,
 
     bad_fd = false;
 
-    rootpath = (uchar*) strdup( (char*)_path );
+    rootpath = (uchar*) STRDUP( (char*)_path );
     zerorefs = 0;
 
     inode_name_db->add( mount_id, rootpath, INODE_DIR, ROOT_INODE_ID );
@@ -60,7 +61,7 @@ Inode_remote_tree :: ~Inode_remote_tree( void )
 }
 
 Inode *
-Inode_remote_tree :: get( int file_id )
+Inode_remote_tree :: _get( bool hash_only, int file_id )
 {
     if ( rict.bad_fd )
         bad_fd = true;
@@ -76,6 +77,12 @@ Inode_remote_tree :: get( int file_id )
         return ino;
     }
 
+    if ( hash_only )
+    {
+        errno = ENOENT;
+        return NULL;
+    }
+
     inode_file_type nftype;
     uchar * p = inode_name_db->fetch( file_id, nftype );
 
@@ -86,50 +93,49 @@ Inode_remote_tree :: get( int file_id )
     }
 
     struct stat sb;
-    if ( rict.clnt.lstat( p, &sb ) == 0 )
-    {
-        bool changedb = false;
-        if ((( sb.st_mode & S_IFMT) == S_IFLNK ) &&
-            ( nftype != INODE_LINK ))
-        {
-            changedb = true;
-            nftype = INODE_LINK;
-        }
-        else if ((( sb.st_mode & S_IFMT) == S_IFDIR ) &&
-                 ( nftype != INODE_DIR ))
-        {
-            changedb = true;
-            nftype = INODE_DIR;
-        }
-        else if (!(( sb.st_mode & S_IFMT) == S_IFREG ) &&
-                 ( nftype == INODE_FILE ))
-        {
-            changedb = true;
-            nftype = INODE_FILE;
-        }
-        if ( changedb )
-        {
-            inode_name_db->del( file_id );
-            inode_name_db->add( mount_id, p, nftype, file_id );
-        }
-        ino = new Inode_remote( this, p, file_id, nftype );
-        ino->sb = sb;
-        ino->last_stat = time( NULL );
-        hashlru.add( ino );
-        errno = 0;
-        delete p;
-        return ino;
-    }
-    // else
 
-    inode_name_db->del( file_id );
-    errno = ENOENT;
+    if ( !get_stats_somehow( (char*)p, file_id, &sb ))
+    {
+        errno = ENOENT;
+        delete p;
+        return NULL;
+    }
+
+    bool changedb = false;
+    if ((( sb.st_mode & S_IFMT) == S_IFLNK ) &&
+        ( nftype != INODE_LINK ))
+    {
+        changedb = true;
+        nftype = INODE_LINK;
+    }
+    else if ((( sb.st_mode & S_IFMT) == S_IFDIR ) &&
+             ( nftype != INODE_DIR ))
+    {
+        changedb = true;
+        nftype = INODE_DIR;
+    }
+    else if (!(( sb.st_mode & S_IFMT) == S_IFREG ) &&
+             ( nftype == INODE_FILE ))
+    {
+        changedb = true;
+        nftype = INODE_FILE;
+    }
+    if ( changedb )
+    {
+        inode_name_db->del( file_id );
+        inode_name_db->add( mount_id, p, nftype, file_id );
+    }
+    ino = LOGNEW Inode_remote( this, p, file_id, nftype );
+    ino->sb = sb;
+    ino->last_stat = time( NULL );
+    hashlru.add( ino );
+    errno = 0;
     delete p;
-    return NULL;
+    return ino;
 }
 
 Inode *
-Inode_remote_tree :: get_parent( int file_id )
+Inode_remote_tree :: _get_parent( bool hash_only, int file_id )
 {
     if ( rict.bad_fd )
         bad_fd = true;
@@ -158,7 +164,46 @@ Inode_remote_tree :: get_parent( int file_id )
         return NULL;
     }
 
-    return get( parentfileid );
+    return _get( hash_only, parentfileid );
+}
+
+bool
+Inode_remote_tree :: get_stats_somehow( char * path,
+                                        int file_id, struct stat * sb )
+{
+    bool parentfound = false;
+    Inode_remote * parent = (Inode_remote *) _get_parent( true, file_id );
+
+    if ( parent != NULL )
+    {
+        char * p2 = &path[ strlen( path ) - 1 ];
+        while ( *p2 != '/' && p2 != path )
+            p2--;
+        p2++;
+
+        remino_readdir2_entry * e;
+        for ( e = parent->dirlist; e; e = e->next )
+        {
+            if ( strcmp( p2, (char*)e->dirent.name ) == 0 )
+                break;
+        }
+
+        if ( e )
+        {
+            parentfound = true;
+            rict.clnt.xdrstat_to_stat( &e->stat, sb );
+        }
+
+        deref( parent );
+        if ( parentfound )
+            return true;
+    }
+
+    if ( !parentfound )
+        if ( rict.clnt.lstat( (uchar*)path, sb ) < 0 )
+            return false;
+
+    return true;
 }
 
 Inode *
@@ -205,7 +250,8 @@ Inode_remote_tree :: get( int dir_id, uchar * filename )
             return ret;
         }
         // else
-        if ( rict.clnt.lstat( newpath, &sb ) == 0 )
+
+        if ( get_stats_somehow( (char*)newpath, newfileid, &sb ))
         {
             bool changedb = false;
             if ((( sb.st_mode & S_IFMT ) == S_IFLNK ) &&
@@ -235,7 +281,7 @@ Inode_remote_tree :: get( int dir_id, uchar * filename )
             }
 
             Inode_remote * i;
-            i = new Inode_remote( this, newpath, newfileid, newfilenftype );
+            i = LOGNEW Inode_remote( this, newpath, newfileid, newfilenftype );
             i->sb = sb;
             i->last_stat = time( NULL );
             hashlru.add( i );
@@ -257,18 +303,26 @@ Inode_remote_tree :: get( int dir_id, uchar * filename )
     }
     // else
 
-    if (( sb.st_mode & S_IFMT ) == S_IFLNK )
+    switch ( sb.st_mode & S_IFMT )
+    {
+    case S_IFLNK:
         newfilenftype = INODE_LINK;
-    else if (( sb.st_mode & S_IFMT ) == S_IFDIR )
+        break;
+    case S_IFDIR:
         newfilenftype = INODE_DIR;
-    else if (( sb.st_mode & S_IFMT ) == S_IFREG )
+        break;
+    case S_IFREG:
         newfilenftype = INODE_FILE;
+        break;
+    }
 
     newfileid = inode_name_db->alloc_id();
     inode_name_db->add( mount_id, newpath, newfilenftype, newfileid );
 
-    Inode_remote * i = new Inode_remote( this, newpath,
-                                         newfileid, newfilenftype );
+    Inode_remote * i = LOGNEW Inode_remote( this, newpath,
+                                            newfileid, newfilenftype );
+    i->sb = sb;
+    i->last_stat = time( NULL );
 
     hashlru.add( i );
     errno = 0;
@@ -297,6 +351,7 @@ Inode_remote_tree :: destroy( int fileid, inode_file_type nftype )
 {
     Inode_remote * i;
     int err_ret = 0;
+    int ret = 0;
 
     i = hashlru.find( fileid );
     if ( i && i->refget() != 0 )
@@ -317,9 +372,8 @@ Inode_remote_tree :: destroy( int fileid, inode_file_type nftype )
     {
         if ( rict.clnt.rmdir( p ) < 0 )
         {
-            delete p;
             if ( errno != ENOENT )
-                return -1;
+                ret = -1;
             err_ret = errno;
         }
     }
@@ -327,21 +381,23 @@ Inode_remote_tree :: destroy( int fileid, inode_file_type nftype )
     {
         if ( rict.clnt.unlink( p ) < 0 )
         {
-            delete p;
             if ( errno != ENOENT )
-                return -1;
+                ret = -1;
             err_ret = errno;
         }
     }
-
-    if ( i )
+    delete p;
+    if ( ret == 0 )
     {
-        hashlru.remove( i );
-        delete i;
-        // we know that i's refcount was zero
-        zerorefs--;
+        if ( i )
+        {
+            hashlru.remove( i );
+            delete i;
+            // we know that i's refcount was zero
+            zerorefs--;
+        }
+        inode_name_db->del( fileid );
     }
-    inode_name_db->del( fileid );
 
     errno = err_ret;
     return (err_ret == 0) ? 0 : -1;
@@ -495,7 +551,7 @@ Inode_remote_tree :: _create( int dirid,
     inode_name_db->add( mount_id, newpath, nftype, fileid );
 
     Inode_remote * ino;
-    ino = new Inode_remote( this, newpath, fileid, nftype );
+    ino = LOGNEW Inode_remote( this, newpath, fileid, nftype );
     hashlru.add( ino );
     errno = 0;
 
@@ -574,7 +630,7 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
     }
 
     free( i->path );
-    i->path = (uchar*) strdup( (char*)newpath );
+    i->path = (uchar*) STRDUP( (char*)newpath );
 
     if ( rict.clnt.lstat( newpath, &sb1 ) < 0 )
         // wtf ?
@@ -622,6 +678,7 @@ Inode_remote_tree :: clean( void )
         for ( ino = hashlru.get_lru_tail(); ino; ino = pino )
         {
             pino = hashlru.get_lru_prev( ino );
+
             if ( ino->refget() == 0 )
             {
                 if (( ino->lastref() > 4 ) || ( j == 2 ))
@@ -629,6 +686,7 @@ Inode_remote_tree :: clean( void )
                     hashlru.remove( ino );
                     delete ino;
                     --zerorefs;
+
                     if (( j == 2 ) && ( zerorefs <= MAX_HASH ))
                         // return early in this case.
                         return;

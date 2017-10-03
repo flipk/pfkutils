@@ -1,11 +1,7 @@
 
-/*
-   with these turned on:  10448K
-   with these turned off:  4064K
-*/
-
-#define TRACK_MALLOCS
-#define MALLOC_REDZONES
+#undef TRACK_MALLOCS
+#undef MALLOC_REDZONES
+#undef MALLOC_DUMP
 
 /*
  * ----------------------------------------------------------------------------
@@ -1189,6 +1185,8 @@ typedef struct _mallochdr {
     struct _mallochdr * next;
     struct _mallochdr * prev;
     int size;
+    char * filename;
+    int lineno;
 #ifdef MALLOC_REDZONES
     uchar sig2[ sig2_size ];
 #endif
@@ -1200,11 +1198,33 @@ static mallochdr * mallocs_t = NULL;
 static int malloc_total_size = 0;
 static int malloc_total_pieces = 0;
 
+static void
+dump_malloc( void )
+{
+#ifdef MALLOC_DUMP
+#define DUMPFILE "MALLOCINFODUMP"
+    mallochdr * mh;
+    FILE * dump;
+    dump = fopen( DUMPFILE, "w" );
+    for ( mh = mallocs_h; mh; mh = mh->next )
+        fprintf( dump,
+                 "%s:%d size %d ptr %#x\n",
+                 mh->filename ? mh->filename : "unknown",
+                 mh->lineno, mh->size, payload(mh) );
+    fclose( dump );
+    chown( DUMPFILE, 1000, 1000 );
+    chmod( DUMPFILE, 0666 );
+    system( "sort " DUMPFILE " -o " DUMPFILE " &" );
+#undef DUMPFILE
+#endif /* MALLOC_DUMP */
+}
+
 void
 print_malloc( char * s )
 {
     printf( "%s: malloc size %d pieces %d\n",
             s, malloc_total_size, malloc_total_pieces );
+    dump_malloc();
 }
 
 void
@@ -1212,6 +1232,7 @@ sprint_malloc( char * s )
 {
     sprintf( s, "malloc size %d pieces %d\n",
              malloc_total_size, malloc_total_pieces );
+    dump_malloc();
 }
 
 static void
@@ -1277,12 +1298,28 @@ void *
 malloc(size_t size)
 {
     mallochdr * mh;
+    size += hdr_size;
+    mh = (mallochdr *)mymalloc( size ); 
+    if ( mh == NULL )
+        return NULL;
+    mh->size = size;
+    mh->filename = 0;
+    mh->lineno = 0;
+    m_add( mh );
+    return payload(mh);
+}
+
+void *
+malloc_record( char * file, int line, size_t size )
+{
+    mallochdr * mh;
+    size += hdr_size;
     mh = (mallochdr *)mymalloc( size );
     if ( mh == NULL )
         return NULL;
-    size += hdr_size;
-    mh = (mallochdr *)mymalloc( size );
     mh->size = size;
+    mh->filename = file;
+    mh->lineno = line;
     m_add( mh );
     return payload(mh);
 }
@@ -1291,8 +1328,6 @@ void
 free(void *ptr)
 {
     mallochdr * mh;
-    if ( mh == NULL )
-        return;
     mh = hdr(ptr);
     m_del( mh );
     myfree( mh );
@@ -1302,17 +1337,33 @@ void *
 realloc(void *ptr, size_t size)
 {
     mallochdr * mh;
+    char * oldfilename;
+    int oldlineno;
+
     if ( ptr == NULL )
     {
         return malloc( size );
     }
     mh = hdr(ptr);
+    oldfilename = mh->filename;
+    oldlineno   = mh->lineno;
     size += hdr_size;
     m_del( mh );
     mh = myrealloc( mh, size );
     mh->size = size;
+    mh->filename = oldfilename;
+    mh->lineno = oldlineno;
     m_add( mh );
     return payload(mh);
+}
+
+char *
+strdup_record( char * file, int line, char * s )
+{
+    int l = strlen( s ) + 1;
+    char * ret = (char*) malloc_record( file, line, l );
+    memcpy( ret, s, l );
+    return ret;
 }
 
 #else
@@ -1326,6 +1377,21 @@ void
 sprint_malloc( char * s )
 {
     *s = 0;
+}
+
+void *
+malloc_record( char * file, int line, size_t size )
+{
+    return malloc(size);
+}
+
+char *
+strdup_record( char * file, int line, char * s )
+{
+    int l = strlen( s ) + 1;
+    char * ret = (char*) malloc( l );
+    memcpy( ret, s, l );
+    return ret;
 }
 
 #endif

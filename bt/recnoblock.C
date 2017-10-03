@@ -1,11 +1,3 @@
-#if 0
-set -xe
-opts="-g3"
-opts="-O6 -fomit-frame-pointer"
-g++ -DINCLUDE_MAIN -Wall -pedantic -ansi $opts -I../threads/h recnoblock.C -o t
-./t
-exit 0
-#endif
 
 // a 'record' is 16 bytes.
 // a 'block' is a set of contiguous records.
@@ -30,6 +22,7 @@ exit 0
 #include <errno.h>
 
 #include "recnoblock.H"
+#include "lognew.H"
 
 struct FileBlockNumber :: page {
     LListLinks<FileBlockNumber::page>  links[ BT_DLL2_COUNT ];
@@ -96,8 +89,8 @@ struct user_buffer {
     user_buffer( int _blk ) {
         blockno = _blk;
     }
-    void * operator new( size_t s, int sz ) {
-        char * ret = new char[ sizeof( user_buffer ) + sz ];
+    void * operator new( size_t s, int sz, char *file, int line ) {
+        char * ret = new(file,line) char[ sizeof( user_buffer ) + sz ];
         ((user_buffer*)ret)->size = sz;
         return (void*)ret;
     }
@@ -155,14 +148,26 @@ FileBlockNumber :: get_data_page( int page_num )
         return ret;
     }
 
-    while ( data.get_cnt() >= maxpages )
-    {
-        page * candidate = data.get_lru_head();
-        if ( candidate->refcount > 0 )
-            // can't delete it, so just allow data
-            // to grow beyond maxpages limit
-            break; 
+    extra_list dellist;
+    page * candidate;
 
+    for ( candidate = data.get_lru_head();
+          candidate;
+          candidate = data.get_lru_next(candidate) )
+    {
+        if ( ( data.get_cnt() - dellist.get_cnt() ) < maxpages )
+            break;
+
+        if ( candidate->refcount > 0 )
+            // can't delete this one, so skip it
+            continue;
+
+        dellist.add( candidate );
+    }
+
+    while ( candidate = dellist.get_head() )
+    {
+        dellist.remove( candidate );
         data.remove( candidate );
 
         // careful of this logic, what its doing is 
@@ -184,7 +189,7 @@ FileBlockNumber :: get_data_page( int page_num )
     }
     else
     {
-        ret = new page( page_num, page_num, fd );
+        ret = LOGNEW page( page_num, page_num, fd );
     }
 
     ret->ref();
@@ -199,7 +204,7 @@ FileBlockNumber :: get_segment_bitmap( int seg_num )
     page * ret = bitmaps.find( seg_num );
     if ( ret == NULL )
     {
-        ret = new page( seg_num * pages_per_segment, seg_num, fd );
+        ret = LOGNEW page( seg_num * pages_per_segment, seg_num, fd );
         bitmaps.add( ret );
     }
     ret->ref();
@@ -257,7 +262,7 @@ FileBlockNumber :: get_block( int blockno, int &size, UINT32 &magic )
     // else it crosses a page boundary and we need to
     // return a user_buffer instead.
 
-    user_buffer * ub = new( size ) user_buffer( blockno );
+    user_buffer * ub = new( size, __FILE__, __LINE__ ) user_buffer( blockno );
 
     int left = size + size_overhead;
     UCHAR * dst = ub->data;
@@ -523,7 +528,7 @@ FileBlockNumber :: flush( void )
     page * p, ** pgs;
     int i, len;
 
-    pgs = new page*[ bitmaps.get_cnt() + data.get_cnt() ];
+    pgs = LOGNEW page*[ bitmaps.get_cnt() + data.get_cnt() ];
     len = 0;
 
     for ( p = bitmaps.get_lru_head(); p; p = bitmaps.get_lru_next(p) )

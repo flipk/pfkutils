@@ -20,6 +20,7 @@
  */
 
 #include "inode_virtual.H"
+#include "lognew.H"
 #include <errno.h>
 
 Inode_virtual_tree :: Inode_virtual_tree
@@ -40,7 +41,7 @@ Inode_virtual_tree :: Inode_virtual_tree
 #define ADD2( fileno, id )                                              \
     do {                                                                \
         int newid = id;                                                 \
-        i = new Inode_virtual( this, newid, Inode_virtual::fileno );    \
+        i = LOGNEW Inode_virtual( this, newid, Inode_virtual::fileno ); \
         inode_name_db->add( mount_id, i->name, i->ftype, newid );       \
         ADD(i); newid = inode_name_db->alloc_id();                      \
     } while ( 0 )
@@ -61,7 +62,7 @@ int
 Inode_virtual_tree :: register_tree( uchar * name, Inode_tree * newtree )
 {
     Inode_virtual * i;
-    i = new Inode_virtual( this, newtree->ROOT_INODE_ID, name, newtree );
+    i = LOGNEW Inode_virtual( this, newtree->ROOT_INODE_ID, name, newtree );
     ADD( i );
     return newtree->ROOT_INODE_ID;
 }

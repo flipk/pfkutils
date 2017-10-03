@@ -39,6 +39,12 @@ class id_name_db {
     static void   btdump_sprintfree( void * arg, char * s );
     static void   btdump_print( void * arg, char * format, ... );
 
+    static char * btdump_real_sprint( void * arg, int noderec,
+                                      int keyrec, void * key, int keylen,
+                                      int datrec, void * dat, int datlen );
+    static void   btdump_real_sprintfree( void * arg, char * s );
+    static void   btdump_real_print( void * arg, char * format, ... );
+
 public:
     id_name_db( void );
     ~id_name_db( void );
@@ -46,6 +52,7 @@ public:
     void add( int mount_id, uchar * path, inode_file_type ftype, int id );
     void del( int id );
     void purge_mount( int mount_id );
+    void dump_btree( void );
     // return null if not present
     uchar * fetch( int id, inode_file_type &ftype );
     // return -1 if not present
@@ -56,9 +63,12 @@ public:
             inode_file_type dummy;
             while ( 1 )
             {
+                uchar * p;
                 id = random();
-                if ( fetch( id, dummy ) == NULL )
+                p = fetch( id, dummy );
+                if ( p == NULL )
                     return id;
+                delete[] p;
             }
         }
 

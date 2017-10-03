@@ -84,3 +84,14 @@ void * operator new     ( size_t s ) { return (void*)malloc( s ); }
 void * operator new[]   ( size_t s ) { return (void*)malloc( s ); }
 void   operator delete  ( void * p ) { free( p ); }
 void   operator delete[]( void * p ) { free( p ); }
+
+
+void * operator new     ( size_t s, char * file, int line )
+{
+    return (void*)malloc_record( file, line, s );
+}
+
+void * operator new[]   ( size_t s, char * file, int line )
+{
+    return (void*)malloc_record( file, line, s );
+}
