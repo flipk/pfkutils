@@ -400,7 +400,12 @@ keyinput()
         return 0;
 }
 
+#if 1
 #define SCANSIZE QC_S320x240
+#else
+#define SCANSIZE QC_S160x120
+#endif
+
 
 static void
 motion_detect(options, outfile, pth, fth)
@@ -525,7 +530,8 @@ dispartial(qs, ml, out)
 
     tmp = qs->buffer;
     qs->buffer = tmpbuf;
-    xwindisp(qs);
+    if (ISSET(XWIN_OUT))
+        xwindisp(qs);
     if (ml->detected && out)
         if (out)
             pgm_write(qs, out);

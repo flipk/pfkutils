@@ -29,7 +29,7 @@
 /* NFS mounting parameters */
 #define FS_TYPE "nfs"
 #define FS_DIR "/i"
-#define FS_FLAGS 0
+#define FS_FLAGS (MNT_NOSUID | MNT_NOATIME | MNT_NODEV)
 
 /* svr.C */
 

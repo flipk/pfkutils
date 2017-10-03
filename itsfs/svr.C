@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -57,7 +58,7 @@ static svr_globals * _globs;
 
 extern "C" {
     int itsfssvr_main( int argc, char ** argv );
-    extern void do_mount( char * handle );
+    extern pid_t do_mount( char * handle );
     extern void do_unmount( void );
 };
 
@@ -154,6 +155,7 @@ _itsfssvr_main( int argc, char ** argv )
     Inode_remote_tree * irt;
     Inode_virtual_tree * itv;
     int treenumber;
+    pid_t mount_pid;
 
 #ifdef REALLY_RANDOM
     srandom( time( NULL ) * getpid() );
@@ -292,7 +294,7 @@ _itsfssvr_main( int argc, char ** argv )
             exit( 1 );
         }
 
-        do_mount( (char*) &root_fh_buf.data );
+        mount_pid = do_mount( (char*) &root_fh_buf.data );
         seteuid( getuid() );
     }
 
@@ -331,9 +333,31 @@ _itsfssvr_main( int argc, char ** argv )
         if ( globs.exit_command )
             break;
 
-        if ( r == 0 && indb.need_periodic_purge() )
-            indb.periodic_purge();
+        if ( r == 0 )
+        {
+            int child_status;
+            pid_t waitret;
 
+            // the do_mount creates a child that must be
+            // reaped at some point.
+            if ( mount_pid > 0 )
+            {
+                waitret = waitpid( mount_pid, &child_status, WNOHANG );
+                if ( waitret > 0 )
+                {
+                    mount_pid = 0;
+                    if ( child_status != 0 )
+                    {
+                        printf( "do_mount failed!! status = %#x\n",
+                                child_status );
+                        break;
+                    }
+                }
+            }
+
+            if ( indb.need_periodic_purge() )
+                indb.periodic_purge();
+        }
         // periodically clean the server's cache
 
         now = time( NULL );
@@ -532,6 +556,8 @@ check_ascii( uchar * s, int c )
         if ( s[i] >= 'A' && s[i] <= 'Z' )
             continue;
         if ( s[i] >= '0' && s[i] <= '9' )
+            continue;
+        if ( s[i] == '-' )
             continue;
         if ( s[i] == '_' )
             continue;

@@ -63,7 +63,7 @@ typedef struct {
 static wormstruct worms[MAXSCREENS];
 
 int
-round(x)
+myround(x)
     float       x;
 {
 #ifdef sco
@@ -127,8 +127,8 @@ initworm(win)
 
     init_table = 1;
     for (i = 0; i < SEGMENTS; i++) {
-        sintab[i] = round(CIRCSIZE * sin(i * 2 * PI / SEGMENTS));
-        costab[i] = round(CIRCSIZE * cos(i * 2 * PI / SEGMENTS));
+        sintab[i] = myround(CIRCSIZE * sin(i * 2 * PI / SEGMENTS));
+        costab[i] = myround(CIRCSIZE * cos(i * 2 * PI / SEGMENTS));
     }
 
     wp->nc = Scr[screen].npixels;

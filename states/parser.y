@@ -7,6 +7,7 @@
 #include "machine.h"
 
 extern int yylex( void );
+extern void yyerror( char * e );
 
 %}
 

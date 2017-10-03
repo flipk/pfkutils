@@ -407,11 +407,11 @@ xrs() {
 }
 
 xsd() {
-    xterm +sb -title NoTitle -g 190x50 -e $SHELL -c "sd $1 $2" &
+    xterm +sb -title NoTitle -g 190x50+0+20 -e $SHELL -c "sd $1 $2" &
 }
 
 xsd2() {
-    xterm +sb -title NoTitle -g 190x50 -e $SHELL -c "sd2 $1 $2" &
+    xterm +sb -title NoTitle -g 190x50+0+20 -e $SHELL -c "sd2 $1 $2" &
 }
 
 sd() {
@@ -690,6 +690,10 @@ if __noninteractive ; then
     __verbose noninteractive shell, exiting
     return
 fi
+
+# prevent bugs with recursive myshell scripts
+
+unset __MYSHELL_LAUNCHER
 
 #
 # now try to ensure that we're running pdksh.

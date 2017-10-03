@@ -77,7 +77,7 @@ typedef struct {
     unsigned char fh[32];
 } nfs_fh;
 
-void
+pid_t
 do_mount( char * rootfh_bytes )
 {
     int ret;
@@ -87,8 +87,7 @@ do_mount( char * rootfh_bytes )
     char full_hostpath[64];
     ulong addr = 0x7f000001;
     int port = SERVER_PORT;
-    int pid;
-    char hostname[32];
+    pid_t pid;
 
     pid = fork();
     if ( pid < 0 )
@@ -100,13 +99,12 @@ do_mount( char * rootfh_bytes )
     {
         /* allow the parent to continue with the main event loop
            while the child performs the mount command. */
-        return;
+        return pid;
     }
 
     memcpy( &initial_fh.fh, rootfh_bytes, 32 );
 
-    gethostname( hostname, 32 );
-    sprintf( full_hostpath, "pid%d@%s", getpid(), hostname );
+    sprintf( full_hostpath, "pid%d", getppid() );
 
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = htonl( addr );
@@ -139,7 +137,10 @@ do_mount( char * rootfh_bytes )
     nfs_args.acdirmax = 60;
 
 #ifdef DO_MOUNT
-    ret = mount( FS_TYPE, FS_DIR, FS_FLAGS, (void*)&nfs_args );
+    ret = mount( /* type  */ FS_TYPE,
+                 /* dir   */ FS_DIR,
+                 /* flags */ FS_FLAGS,
+                 /* data  */ (void*)&nfs_args );
 #else
     printf( "skipping mount!\n" ); ret = 0;
     {
@@ -150,7 +151,10 @@ do_mount( char * rootfh_bytes )
 #endif
 
     if ( ret < 0 )
+    {
         perror( "mount" );
+        exit( 1 );
+    }
 
     exit( 0 );
 }

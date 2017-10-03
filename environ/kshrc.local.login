@@ -45,6 +45,15 @@ lsvp() {
     ct lsview gsm_\*$load | cut -c3- | awk '{print $1}'
 }
 
+lsvb() {
+    load=`print $1 | /bin/sed -e 's/\(.\)\(.\)\(.\)\(.\)/\1.\2.\3_bld-\4./'`
+    ct lsview gsm_\*$load | cut -c3- | awk '{print $1}'
+}
+
+lsco() {
+     ct lsco -cview -avobs -short | viewrelpaths
+}
+
 cdv() {
     cd /view/$1/usr/vob/gsm
 }
