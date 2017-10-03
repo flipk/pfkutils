@@ -36,15 +36,15 @@
  *
  * \todo This function is not implemented.
  *
- * @param bt  the Btree database.
  * @param baknum the backup ID number.
  * @param gen_num the generation number in the backup to extract.
  * @param list_file path to a file containing file names to extract.
  */
 void
-pfkbak_extract_list  ( Btree * bt, UINT32 baknum,
+pfkbak_extract_list  ( UINT32 baknum,
                        UINT32 gen_num, char * list_file )
 {
+    printf("Sorry, this functionality is not yet implemented.\n");
     /** \todo modify extract.C to make a generic function for
      * extracting by file number, and then call it from both
      * extract_list and extract. */

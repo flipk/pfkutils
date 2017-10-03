@@ -28,9 +28,6 @@
 #include "FileBlock_iface.H"
 #include "FileBlockLocal.H"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 //static
 FileBlockInterface *
 FileBlockInterface :: open( BlockCache * bc )
@@ -57,22 +54,17 @@ FileBlockInterface *
 FileBlockInterface :: _openFile( const char * filename, int max_bytes,
                                  bool create, int mode )
 {
-    int options = O_RDWR;
-    if (create)
-        options |= O_CREAT | O_EXCL;
-#ifdef O_LARGEFILE
-    options |= O_LARGEFILE;
-#endif
-    int fd = ::open( filename, options, mode );
-    if (fd < 0)
+    PageIO * pageio = PageIO::open(filename, create, mode);
+    if (!pageio)
         return NULL;
-    PageIO * pageio = new PageIOFileDescriptor(fd);
     BlockCache * bc = new BlockCache( pageio, max_bytes );
     if (create)
         FileBlockInterface::init_file(bc);
     FileBlockInterface * fbi = open(bc);
-    if (fbi)
-        return fbi;
-    delete bc;
-    return NULL;
+    if (!fbi)
+    {
+        delete bc;
+        return NULL;
+    }
+    return fbi;
 }

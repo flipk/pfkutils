@@ -85,5 +85,6 @@ FileBlockLocal :: flush(void)
     fh.release();
     bc->flush();
     fh.get();
-    validate(false);
+// this takes too long to do all the time.
+//    validate(false);
 }

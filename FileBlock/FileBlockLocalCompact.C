@@ -69,6 +69,8 @@ Next: \ref BtreeStructure
 */
 
 
+/** \todo Compaction algorithm should someday reclaim unused L2/L3 tables. */
+
 #include "FileBlockLocal.H"
 
 #include <stdlib.h>
@@ -262,7 +264,9 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
         }
         else
         {
-            printf("  ERROR: can't find an L2/L3 table\n");
+            printf("  ERROR: can't find an L2/L3 table for aun %d\n", aun);
+            fflush(stdout);
+            kill(0,6);
         }
     }
     else
@@ -321,9 +325,10 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
 
     while (1)
     {
-        FB_AUN_T aun, last_aun, free_aus;
+        FB_AUN_T aun, last_aun;
+        UINT32 free_aus, num_aus;
         FB_AUID_T auid;
-        int num_aus, bucket;
+        int bucket;
 
         last_aun = fh.d->info.num_aus.get();        
         free_aus = fh.d->info.free_aus.get();
@@ -358,6 +363,11 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         printf("last used au is at %d, auid %d,  size is %d\n",
                aun, auid, num_aus);
 #endif
+#if 0
+        // keep this in reserve, it does solve the problem nicely.
+        if (num_aus > free_aus)
+            break;
+#endif
         bucket = ffu_bucket(num_aus);
 #if DEBUG_COMPACTION
         printf("bucket is %d\n", bucket);
@@ -384,6 +394,14 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                 printf("found a free region of size %d at %d\n",
                        au.d->size(), next_ds_au);
 #endif
+                if (au.d->size() == 0)
+                {
+                    // have we downshifted the entire file?
+                    // a free region of size 0 can only be 
+                    // the end-marker.
+                    break;
+                }
+
                 if (au.d->size() >= num_aus_desired)
                 {
 #if DEBUG_COMPACTION

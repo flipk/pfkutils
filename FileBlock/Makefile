@@ -1,7 +1,7 @@
 
 TARG=	libFileBlock.a
-SRCS=	PageIO.C PageCache.C BlockCache.C \
-	FileBlock_iface.C Btree.C BtreeNode.C \
+SRCS=	PageIO.C PageIOFileDescriptor.C PageIONetworkTCPServer.C \
+	PageCache.C BlockCache.C FileBlock_iface.C Btree.C BtreeNode.C \
 	FileBlockLocal.C FileBlockLocalAllocFree.C FileBlockLocalAuid.C \
 	FileBlockLocalAun.C FileBlockLocalBucket.C FileBlockLocalCompact.C \
 	FileBlockLocalDIB.C FileBlockLocalGetRel.C FileBlockLocalValidate.C \
@@ -58,6 +58,12 @@ btdump: $(TARG)  btdump.C
 
 doc::
 	doxygen
+
+copydoc::
+	tar cf FileBlock-doc.tar FileBlock
+	scp FileBlock-doc.tar fitpc:.
+	ssh fitpc 'tar -C public_html -xf FileBlock-doc.tar ; rm -f FileBlock-doc.tar'
+	rm -f FileBlock-doc.tar
 
 .C.o:
 	$(CC) $(INCS) $(DEFS) $(OPTS) -c $*.C

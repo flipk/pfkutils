@@ -29,7 +29,7 @@
 /** @name utility function prototypes */
 //@{
 bool   pfkbak_get_info    ( PfkBackupDbInfo * info );
-UINT32 pfkbak_find_backup ( Btree * bt, char * bakname );
+UINT32 pfkbak_find_backup ( char * bakname );
 void   pfkbak_md5_buffer  ( UCHAR * buf, int buflen, UCHAR * md5 );
 void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
 #define MD5_STRING_LEN 34
@@ -38,20 +38,18 @@ void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
 /** @name command-line triggered operations */
 //@{
 
-void pfkbak_create_file   ( char * filename, Btree * bt );
-void pfkbak_list_backups  ( Btree * bt );
-void pfkbak_create_backup ( Btree * bt, char * bakname,
-                            char * root_dir, char * comment );
-void pfkbak_delete_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_update_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_delete_gens   ( Btree * bt, UINT32 baknum,
-                            int argc, char ** argv );
-void pfkbak_delete_gen    ( Btree * bt, UINT32 baknum,
+void pfkbak_create_file   ( char * filename );
+void pfkbak_list_backups  ( void );
+void pfkbak_create_backup ( char * bakname, char * root_dir, char * comment );
+void pfkbak_delete_backup ( UINT32 baknum );
+void pfkbak_update_backup ( UINT32 baknum );
+void pfkbak_delete_gens   ( UINT32 baknum, int argc, char ** argv );
+void pfkbak_delete_gen    ( UINT32 baknum,
                             UINT32 gen_num_s, UINT32 gen_num_e );
-void pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num );
-void pfkbak_extract       ( Btree * bt, UINT32 baknum, UINT32 gen_num,
+void pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num );
+void pfkbak_extract       ( UINT32 baknum, UINT32 gen_num,
                             int argc, char ** argv );
-void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, UINT32 gen_num,
+void pfkbak_extract_list  ( UINT32 baknum, UINT32 gen_num,
                             char * list_file );
 
 //@}

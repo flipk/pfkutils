@@ -37,12 +37,11 @@
  * a PfkBackupDbInfo and no backups.
  *
  * @param filename  The path to the database file.
- * @param bt        A pointer to the Btree database.
  */
 void
-pfkbak_create_file   ( char * filename, Btree * bt )
+pfkbak_create_file   ( char * filename )
 {
-    PfkBackupDbInfo   info(bt);
+    PfkBackupDbInfo   info(pfkbak_meta);
 
     info.key.info_key.set((char*)PfkBackupDbInfoKey::INFO_KEY);
     info.data.tool_version.v = PfkBackupDbInfoData::TOOL_VERSION;

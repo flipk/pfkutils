@@ -39,16 +39,15 @@
  * populating it with an initial state. It does not add any user data
  * to the backup.
  *
- * @param bt        A pointer to the Btree database file.
  * @param bakname   A short string name for this backup.
  * @param root_dir  The starting directory for this backup.
  * @param comment   A text string to be displayed in the 'comment' field.
  */
 void
-pfkbak_create_backup ( Btree * bt, char * bakname,
+pfkbak_create_backup ( char * bakname,
                        char * root_dir, char * comment )
 {
-    PfkBackupDbInfo   info(bt);
+    PfkBackupDbInfo   info(pfkbak_meta);
     UINT32  baknum;
 
     if (root_dir[0] != '/')
@@ -68,7 +67,7 @@ pfkbak_create_backup ( Btree * bt, char * bakname,
     if (!pfkbak_get_info( &info ))
         return;
 
-    PfkBackupInfo   binf(bt);
+    PfkBackupInfo   binf(pfkbak_meta);
 
     do {
         baknum = random();

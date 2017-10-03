@@ -33,15 +33,14 @@
 
 /** lookup a backup in the database by name and return ID number.
  *
- * @param bt  the Btree database
  * @param bakname the short text name of the database
  * @return the backup ID of the backup, if found; if not found, returns 0,
  *         which is an invalid backup ID. 
  */
 UINT32
-pfkbak_find_backup( Btree * bt, char * bakname )
+pfkbak_find_backup( char * bakname )
 {
-    PfkBackupDbInfo   info(bt);
+    PfkBackupDbInfo   info(pfkbak_meta);
     int i, j;
 
     if (!pfkbak_get_info( &info ))
@@ -51,7 +50,7 @@ pfkbak_find_backup( Btree * bt, char * bakname )
     {
         UINT32 backup_number = info.data.backups.array[i]->v;
 
-        PfkBackupInfo   binf(bt);
+        PfkBackupInfo   binf(pfkbak_meta);
 
         binf.key.backup_number.v = backup_number;
 

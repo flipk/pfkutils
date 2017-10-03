@@ -47,15 +47,15 @@ usage(void)
 "\n"
 "list backups:   pfkbak -L[Vv] BACKUP-FILE\n"
 "create backup:  pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR COMMENT\n"
-"delete backup:  pfkbak -D[Vv] BACKUP-FILE BACKUP-NAME\n"
+"delete backup:  (unimplemented) pfkbak -D[Vv] BACKUP-FILE BACKUP-NAME\n"
 "update backup:  pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME\n"
 "\n"
 "delete gens:    pfkbak -d[Vv] BACKUP-FILE BACKUP-NAME GenN A-B -B\n"
 "\n"
 "list files:     pfkbak -l[Vv] BACKUP-FILE BACKUP-NAME GenN\n"
 "\n"
-"extract:        pfkbak -e[Vv] BACKUP-FILE BACKUP-NAME GenN [FILE...]\n"
-"extract list:   pfkbak -E[Vv] BACKUP-FILE BACKUP-NAME GenN LIST-FILE\n"
+"extract:        pfkbak -e[Vv] BACKUP-FILE BACKUP-NAME GenN   (unimplemented [FILE...])\n"
+"extract list:   (unimplemented) pfkbak -E[Vv] BACKUP-FILE BACKUP-NAME GenN LIST-FILE\n"
             "\n"
         );
     exit(1);
@@ -65,6 +65,12 @@ usage(void)
  */
 verblevel  pfkbak_verb;
 
+Btree              * pfkbak_meta;
+FileBlockInterface * pfkbak_data;
+char               * pfkbak_file;
+char               * pfkbak_data_file;
+char               * pfkbak_name;
+
 /** the main function of this tool.
  * it is not called 'main' because it is referenced by the pfkutils
  * tool's main function.
@@ -73,8 +79,6 @@ extern "C" int
 pfkbak_main(int argc, char ** argv)
 {
     backop     pfkbak_op;
-    char *     pfkbak_file;
-    char *     pfkbak_name;
     UINT32     baknum = 0;
 
     pfkbak_op = BAK_NONE;
@@ -96,6 +100,9 @@ pfkbak_main(int argc, char ** argv)
         pfkbak_name = argv[3];
     else
         pfkbak_name = NULL;
+
+    pfkbak_data_file = (char*) malloc(strlen(pfkbak_file)+5);
+    sprintf(pfkbak_data_file, "%s.data", pfkbak_file);
 
     // assign pfkbak_op
 #define OP(c,op) case c: pfkbak_op = BAK_##op; break;
@@ -146,6 +153,7 @@ pfkbak_main(int argc, char ** argv)
     }
 
     Btree * bt = NULL;
+    FileBlockInterface * fbi = NULL;
 
     // create or open btree file
     if (pfkbak_op == BAK_CREATE_FILE)
@@ -159,6 +167,16 @@ pfkbak_main(int argc, char ** argv)
                     pfkbak_file, strerror(errno));
             return 1;
         }
+
+        fbi = FileBlockInterface::createFile( pfkbak_data_file,
+                                              DATA_CACHE_SIZE, 0600 );
+
+        if (!fbi)
+        {
+            fprintf(stderr, "unable to create file: %s: %s\n",
+                    pfkbak_data_file, strerror(errno));
+            return 1;
+        }
     }
     else
     {
@@ -166,7 +184,8 @@ pfkbak_main(int argc, char ** argv)
 
         if (!bt)
         {
-            fprintf(stderr, "Unable to open backup file\n");
+            fprintf(stderr, "Unable to open backup file: %s: %s\n",
+                    pfkbak_file, strerror(errno));
             return 1;
         }
 
@@ -177,12 +196,25 @@ pfkbak_main(int argc, char ** argv)
             fprintf(stderr, "unable to validate database!\n");
             return 1;
         }
+
+        fbi = FileBlockInterface::openFile( pfkbak_data_file,
+                                            DATA_CACHE_SIZE );
+
+        if (!fbi)
+        {
+            fprintf(stderr, "Unable to open backup data file: %s: %s\n",
+                    pfkbak_data_file, strerror(errno));
+            return 1;
+        }
     }
+
+    pfkbak_meta = bt;
+    pfkbak_data = fbi;
 
     switch (pfkbak_op)
     {
     case BAK_CREATE_BACKUP:
-        baknum = pfkbak_find_backup(bt, pfkbak_name);
+        baknum = pfkbak_find_backup(pfkbak_name);
         if (baknum != 0)
         {
             delete bt;
@@ -198,7 +230,7 @@ pfkbak_main(int argc, char ** argv)
     case BAK_LIST_FILES:
     case BAK_EXTRACT:
     case BAK_EXTRACT_LIST:
-        baknum = pfkbak_find_backup(bt, pfkbak_name);
+        baknum = pfkbak_find_backup(pfkbak_name);
         if (baknum == 0)
         {
             delete bt;
@@ -213,31 +245,31 @@ pfkbak_main(int argc, char ** argv)
     switch (pfkbak_op)
     {
     case BAK_CREATE_FILE:
-        pfkbak_create_file( pfkbak_file, bt );
+        pfkbak_create_file( pfkbak_file );
         break;
     case BAK_LIST_BACKUPS:
-        pfkbak_list_backups( bt );
+        pfkbak_list_backups();
         break;
     case BAK_CREATE_BACKUP:
-        pfkbak_create_backup( bt, pfkbak_name, argv[4], argv[5] );
+        pfkbak_create_backup( pfkbak_name, argv[4], argv[5] );
         break;
     case BAK_DELETE_BACKUP:
-        pfkbak_delete_backup( bt, baknum );
+        pfkbak_delete_backup( baknum );
         break;
     case BAK_UPDATE_BACKUP:
-        pfkbak_update_backup( bt, baknum );
+        pfkbak_update_backup( baknum );
         break;
     case BAK_DELETE_GENS:
-        pfkbak_delete_gens( bt, baknum, argc-4, argv+4 );
+        pfkbak_delete_gens( baknum, argc-4, argv+4 );
         break;
     case BAK_LIST_FILES:
-        pfkbak_list_files( bt, baknum, atoi(argv[4]) );
+        pfkbak_list_files( baknum, atoi(argv[4]) );
         break;
     case BAK_EXTRACT:
-        pfkbak_extract( bt, baknum, atoi(argv[4]), argc-5, argv+5 );
+        pfkbak_extract( baknum, atoi(argv[4]), argc-5, argv+5 );
         break;
     case BAK_EXTRACT_LIST:
-        pfkbak_extract_list( bt, baknum, atoi(argv[4]), argv[5] );
+        pfkbak_extract_list( baknum, atoi(argv[4]), argv[5] );
         break;
     case BAK_NONE:
     default:
@@ -246,5 +278,6 @@ pfkbak_main(int argc, char ** argv)
     }
 
     delete bt;
+    delete fbi;
     return 0;
 }

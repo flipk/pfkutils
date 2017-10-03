@@ -27,7 +27,8 @@
 #ifndef __PFKBAK_PARAMS_H__
 #define __PFKBAK_PARAMS_H__
 
-#define CACHE_SIZE (256*1024*1024)
+#define      CACHE_SIZE (256*1024*1024)
+#define DATA_CACHE_SIZE  (32*1024*1024)
 #define BTREE_ORDER  15
 
 enum backop {
@@ -49,10 +50,13 @@ enum verblevel {
     VERB_2
 };
 
-extern backop pfkbak_op;
-extern verblevel pfkbak_verb;
-extern char * pfkbak_file;
-extern char * pfkbak_name;
-extern int    pfkbak_gen;
+extern backop               pfkbak_op;
+extern verblevel            pfkbak_verb;
+extern char               * pfkbak_file;
+extern char               * pfkbak_data_file;
+extern char               * pfkbak_name;
+extern int                  pfkbak_gen;
+extern Btree              * pfkbak_meta;
+extern FileBlockInterface * pfkbak_data;
 
 #endif /* __PFKBAK_PARAMS_H__ */

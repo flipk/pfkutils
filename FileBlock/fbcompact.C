@@ -46,7 +46,7 @@ fbcompact_main(int argc, char ** argv)
 
     FileBlockInterface * fbi;
 
-    fbi = FileBlockInterface::openFile(argv[1], 128 * 1024);
+    fbi = FileBlockInterface::openFile(argv[1], 128 * 1024 * 1024);
 
     if (!fbi)
     {

@@ -34,20 +34,19 @@
 
 /** delete a generation or a range of generations from a backup.
  *
- * @param bt    The btree database.
  * @param baknum  The backup ID number of the backup to change.
  * @param gen_num_s  The starting range of generations to delete.
  * @param gen_num_e  The ending range of generations to delete.
  */
 void
-pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
+pfkbak_delete_gen ( UINT32 baknum,
                     UINT32 gen_num_s, UINT32 gen_num_e )
 {
     UINT32 in, out;
 
     printf("deleting generations %d thru %d\n", gen_num_s, gen_num_e);
 
-    PfkBackupInfo backup_info(bt);
+    PfkBackupInfo backup_info(pfkbak_meta);
 
     backup_info.key.backup_number.v = baknum;
 
@@ -85,7 +84,7 @@ pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
          file_number < backup_info.data.file_count.v;
          file_number++)
     {
-        PfkBackupFileInfo  file_info(bt);
+        PfkBackupFileInfo  file_info(pfkbak_meta);
 
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
@@ -119,7 +118,7 @@ pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
         UINT32 piece_number;
         for (piece_number = 0; ; piece_number++)
         {
-            PfkBackupFilePieceInfo piece_info(bt);
+            PfkBackupFilePieceInfo piece_info(pfkbak_meta);
 
             piece_info.key.backup_number.v = baknum;
             piece_info.key.file_number.v = file_number;
@@ -148,7 +147,7 @@ pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
                 }
                 else
                 {
-                    PfkBackupFilePieceData piece_data(bt);
+                    PfkBackupFilePieceData piece_data(pfkbak_meta);
 
                     piece_data.key.backup_number.v = baknum;
                     piece_data.key.file_number.v = file_number;
@@ -167,8 +166,7 @@ pfkbak_delete_gen ( Btree * bt, UINT32 baknum,
                     {
                         if (--piece_data.data.refcount.v == 0)
                         {
-                            bt->get_fbi()->free(
-                                piece_data.data.data_fbn.v );
+                            pfkbak_data->free( piece_data.data.data_fbn.v );
                             piece_data.del();
                         }
                         else

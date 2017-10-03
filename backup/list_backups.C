@@ -31,14 +31,11 @@
 
 #include <stdlib.h>
 
-/** list all backups found in a database.
- *
- * @param bt the Btree database
- */
+/** list all backups found in a database. */
 void
-pfkbak_list_backups  ( Btree * bt )
+pfkbak_list_backups  ( void )
 {
-    PfkBackupDbInfo   info(bt);
+    PfkBackupDbInfo   info(pfkbak_meta);
     int i, j;
 
     if (!pfkbak_get_info( &info ))
@@ -54,7 +51,7 @@ pfkbak_list_backups  ( Btree * bt )
     {
         UINT32   backup_number = info.data.backups.array[i]->v;
 
-        PfkBackupInfo   binf(bt);
+        PfkBackupInfo   binf(pfkbak_meta);
 
         binf.key.backup_number.v = backup_number;
 

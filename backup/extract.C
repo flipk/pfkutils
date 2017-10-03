@@ -88,7 +88,6 @@ openfile( char *in_path, UINT16 mode )
  *  
  * \todo currently argc and argv are ignored, this should be implemented.
  *
- * @param bt  the Btree database.
  * @param baknum the backup ID number.
  * @param gen_num which generation number to extract from the backup.
  * @param argc  count of arguments following on the command line. if argc is 
@@ -97,10 +96,10 @@ openfile( char *in_path, UINT16 mode )
  *              a file to be extracted.
  */
 void
-pfkbak_extract       ( Btree * bt, UINT32 baknum,
+pfkbak_extract       ( UINT32 baknum,
                        UINT32 gen_num, int argc, char ** argv )
 {
-    PfkBackupInfo back_info(bt);
+    PfkBackupInfo back_info(pfkbak_meta);
 
     back_info.key.backup_number.v = baknum;
 
@@ -138,7 +137,7 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
     UINT32 file_number;
     for (file_number = 0; file_number < num_files; file_number++)
     {
-        PfkBackupFileInfo file_info(bt);
+        PfkBackupFileInfo file_info(pfkbak_meta);
 
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
@@ -181,8 +180,8 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
             continue;
         }
 
-        PfkBackupFilePieceInfo piece_info(bt);
-        PfkBackupFilePieceData piece_data(bt);
+        PfkBackupFilePieceInfo piece_info(pfkbak_meta);
+        PfkBackupFilePieceData piece_data(pfkbak_meta);
         UINT32 piece_number;
 
         for (piece_number = 0; ; piece_number++)
@@ -224,7 +223,7 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
                     UINT16 usize = piece_data.data.usize.v;
                     UINT16 csize = piece_data.data.csize.v;
 
-                    FileBlock * fb = bt->get_fbi()->get( fbn );
+                    FileBlock * fb = pfkbak_data->get( fbn );
 
                     if (!fb)
                     {
@@ -246,7 +245,7 @@ pfkbak_extract       ( Btree * bt, UINT32 baknum,
                                                fb->get_ptr(), csize );
                             (void) write( fd, ubuf, ulen );
                         }
-                        bt->get_fbi()->release( fb );
+                        pfkbak_data->release( fb );
                     }
                 }
             }

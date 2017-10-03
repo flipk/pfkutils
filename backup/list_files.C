@@ -27,12 +27,12 @@
 #include <stdlib.h>
 
 void
-pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num )
+pfkbak_list_files    ( UINT32 baknum, UINT32 gen_num )
 {
     fprintf(stderr,
             "listing generation %d in backup number %d\n", gen_num, baknum);
 
-    PfkBackupInfo   bakinfo(bt);
+    PfkBackupInfo   bakinfo(pfkbak_meta);
 
     bakinfo.key.backup_number.v = baknum;
 
@@ -57,7 +57,7 @@ pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num )
 
     for (file_number = 0; file_number < number_files; file_number++)
     {
-        PfkBackupFileInfo  file_info(bt);
+        PfkBackupFileInfo  file_info(pfkbak_meta);
 
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
@@ -94,7 +94,7 @@ pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num )
 
         for (piece_number = 0; ; piece_number++)
         {
-            PfkBackupFilePieceInfo piece_info(bt);
+            PfkBackupFilePieceInfo piece_info(pfkbak_meta);
 
             piece_info.key.backup_number.v = baknum;
             piece_info.key.file_number.v = file_number;
@@ -115,7 +115,7 @@ pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num )
                 printf( "      gen %d hash %s ",
                         v->array[idx]->gen_number.v, md5string );
 
-                PfkBackupFilePieceData piece_data(bt);
+                PfkBackupFilePieceData piece_data(pfkbak_meta);
 
                 piece_data.key.backup_number.v = baknum;
                 piece_data.key.file_number.v = file_number;

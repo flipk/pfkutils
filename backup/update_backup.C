@@ -53,7 +53,6 @@ enum file_state {
  * (because file appears already compressed) just skip compression for
  * the remainder of the file to save time.
  * 
- * @param bt      the Btree database
  * @param baknum  the backup ID
  * @param file_number the file being worked on in the backup.
  * @param piece_number the piece number of this file.
@@ -64,11 +63,11 @@ enum file_state {
  * @return true if data added okay, false if there was an error.
  */
 static bool
-put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
+put_piece_data( UINT32 baknum, UINT32 file_number,
                 UINT32 piece_number, UCHAR * md5hash,
                 UCHAR * buffer, int usize )
 {
-    PfkBackupFilePieceData   piece_data(bt);
+    PfkBackupFilePieceData   piece_data(pfkbak_meta);
     UINT32 data_fbn = 0;
 
     // unfortunately, we have to compress to a temp buffer
@@ -95,7 +94,7 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
         final_size = csize;
     }
 
-    data_fbn = bt->get_fbi()->alloc( final_size );
+    data_fbn = pfkbak_data->alloc( final_size );
     if (data_fbn == 0)
     {
         fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
@@ -104,7 +103,7 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
     }
     else
     {
-        FileBlock * data_fb = bt->get_fbi()->get( data_fbn, true );
+        FileBlock * data_fb = pfkbak_data->get( data_fbn, true );
         if (!data_fb)
         {
             fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
@@ -115,7 +114,7 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
         {
             memcpy( data_fb->get_ptr(), final_buffer, final_size );
             data_fb->mark_dirty();
-            bt->get_fbi()->release( data_fb );
+            pfkbak_data->release( data_fb );
         }
     }
 
@@ -141,7 +140,6 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
  * piece in the database.
  *
  * @param state   the state of the file according to timestamps
- * @param bt      the Btree database
  * @param baknum  the backup ID
  * @param file_number the file being worked on in the backup.
  * @param gen_num  the generation number being created.
@@ -149,7 +147,7 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
  * @param fef     the information from treescan about this file.
  */
 static void
-walk_file( file_state state, Btree * bt,
+walk_file( file_state state, 
            UINT32 baknum, UINT32 file_number, UINT32 gen_num,
            PfkBackupFileInfo * file_info, TSFileEntryFile * fef )
 {
@@ -181,7 +179,7 @@ walk_file( file_state state, Btree * bt,
     int PIECE_SIZE = PfkBackupFilePieceDataData::PIECE_SIZE;
     UCHAR buffer[PIECE_SIZE];
     UCHAR  md5hash[MD5_DIGEST_SIZE];
-    PfkBackupFilePieceInfo   piece_info(bt);
+    PfkBackupFilePieceInfo   piece_info(pfkbak_meta);
 
     // walk all the pieces.
     for (piece_number = 0; ; piece_number++)
@@ -190,12 +188,25 @@ walk_file( file_state state, Btree * bt,
         {
             piece_len = read(fd, buffer, PIECE_SIZE);
             if (piece_len < 0)
+            {
+                int err = errno;
                 fprintf(stderr, "ERROR : reading %s: %s\n",
-                        fef->path, strerror(errno));
-            if (piece_len == 0)
+                        fef->path, strerror(err));
+                // stupid windows, or cygwin, or whatever. if you don't
+                // have permission to READ the file, you should never
+                // have been able to OPEN it in the first place. sigh.
+                if (err == EACCES)
+                {
+                    // pretend the file couldn't be opened.
+                    close(fd);
+                    fd = -1;
+                    state = STATE_UNMODIFIED;
+                }
+            }
+            else if (piece_len == 0)
                 break;
-
-            pfkbak_md5_buffer(buffer, piece_len, md5hash);
+            else
+                pfkbak_md5_buffer(buffer, piece_len, md5hash);
         }
 
         piece_info.key.backup_number.v = baknum;
@@ -219,7 +230,7 @@ walk_file( file_state state, Btree * bt,
 
             // put data fbn.
 
-            put_piece_data( bt, baknum, file_number, piece_number,
+            put_piece_data( baknum, file_number, piece_number,
                             md5hash, buffer, piece_len );
         }
         else
@@ -267,7 +278,7 @@ walk_file( file_state state, Btree * bt,
 
                     // then bump refcount on piecedata.
 
-                    PfkBackupFilePieceData   piece_data(bt);
+                    PfkBackupFilePieceData   piece_data(pfkbak_meta);
 
                     piece_data.key.backup_number.v = baknum;
                     piece_data.key.file_number.v = file_number;
@@ -300,7 +311,7 @@ walk_file( file_state state, Btree * bt,
 
                     piece_info.put(true);
 
-                    put_piece_data( bt, baknum, file_number, piece_number,
+                    put_piece_data( baknum, file_number, piece_number,
                                     md5hash, buffer, piece_len );
                 }
 
@@ -324,7 +335,7 @@ walk_file( file_state state, Btree * bt,
 
                 // then bump refcount on piecedata.
 
-                PfkBackupFilePieceData   piece_data(bt);
+                PfkBackupFilePieceData   piece_data(pfkbak_meta);
 
                 piece_data.key.backup_number.v = baknum;
                 piece_data.key.file_number.v = file_number;
@@ -362,13 +373,12 @@ walk_file( file_state state, Btree * bt,
  * looks for updates since the last run. It adds any new data not
  * in the backup.
  *
- * @param bt      The btree database containing the backup.
  * @param baknum  The backup number in the database to update.
  */
 void
-pfkbak_update_backup ( Btree * bt, UINT32 baknum )
+pfkbak_update_backup ( UINT32 baknum )
 {
-    PfkBackupInfo   bakinfo(bt);
+    PfkBackupInfo   bakinfo(pfkbak_meta);
     UINT32  gen_num;
 
     bakinfo.key.backup_number.v = baknum;
@@ -443,7 +453,7 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         UINT32  file_number;
     };
     unused_file_number * unused_head = NULL;
-    PfkBackupFileInfo  file_info(bt);
+    PfkBackupFileInfo  file_info(pfkbak_meta);
 
     for (file_number = 0;
          file_number < bakinfo.data.file_count.v;
@@ -491,7 +501,7 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
                     fflush(stdout);
                 }
 
-                walk_file( STATE_MODIFIED, bt,
+                walk_file( STATE_MODIFIED, 
                            baknum, file_number, gen_num,
                            &file_info, fe.fef );
 
@@ -505,7 +515,7 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
                 // references to this generation number and bumping all
                 // the refcounts.
 
-                walk_file( STATE_UNMODIFIED, bt, 
+                walk_file( STATE_UNMODIFIED,  
                            baknum, file_number, gen_num,
                            &file_info, fe.fef );
             }
@@ -563,7 +573,7 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         file_info.data.generations.alloc(1);
         file_info.data.generations.array[0]->v = gen_num;
 
-        walk_file( STATE_NEW, bt,
+        walk_file( STATE_NEW, 
                    baknum, file_number, gen_num,
                    &file_info, fe.fef );
 

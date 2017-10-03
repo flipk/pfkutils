@@ -40,6 +40,11 @@ class PageCachePage;
  * path, etc. */
 class PageIO {
 public:
+    /** Create a PageIO, by opening a path. 
+     *
+     * The format of "path" determines the underlying implementation.
+     */
+    static PageIO * open( const char * path, bool create, int mode );
     /** virtual destructor placeholder.
      *
      * This class provides a virtual destructor, so that any derived
@@ -84,6 +89,22 @@ public:
     /** Destructor.
      * \note This destructor closes the file descriptor too!  */
     /*virtual*/ ~PageIOFileDescriptor(void);
+
+    // doxygen comments not required, because they will be inherited
+    // from the base class documentation.
+    /*virtual*/ bool  get_page( PageCachePage * pg );
+    /*virtual*/ bool  put_page( PageCachePage * pg );
+    /*virtual*/ int   get_num_pages(bool * page_aligned = NULL);
+    /*virtual*/ off_t get_size(void);
+    /*virtual*/ void  truncate_pages(int num_pages);
+};
+
+class PageIONetworkTCPServer : public PageIO {
+    int fd; /**< network descriptor, tcp socket */
+public:
+    PageIONetworkTCPServer(void *addr, // actually, struct in_addr *
+                           int port);
+    /*virtual*/ ~PageIONetworkTCPServer(void);
 
     // doxygen comments not required, because they will be inherited
     // from the base class documentation.

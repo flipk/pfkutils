@@ -48,101 +48,137 @@ Next: \ref PageCache
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "PageCache.H"
 #include "PageIO.H"
+#include "regex.h"
 
-PageIOFileDescriptor :: PageIOFileDescriptor( int _fd )
+static const char * path_pattern = "\
+^fbserver:([0-9]+.[0-9]+):([0-9]+.)$|\
+^fbserver:([0-9]+.[0-9]+.[0-9]+.[0-9]+):([0-9]+.)$|\
+^fbserver:(.+):([0-9]+.)$|\
+^(.+)$";
+
+enum {
+    MATCH_ALL,
+    MATCH_FBSRV_IP_2,
+    MATCH_FBSRV_PORT_2,
+    MATCH_FBSRV_IP_4,
+    MATCH_FBSRV_PORT_4,
+    MATCH_FBSRV_HOSTNAME,
+    MATCH_FBSRV_PORT_HN,
+    MATCH_FULLPATH,
+    MAX_MATCHES
+};
+
+//static
+PageIO *
+PageIO :: open( const char * path, bool create, int mode )
 {
-    // this will probably cause problems for someone.
-    if (sizeof(off_t) != 8)
+    regex_t expr;
+    regmatch_t matches[ MAX_MATCHES ];
+    int regerr;
+    char errbuf[80];
+
+    regerr = regcomp( &expr, path_pattern, REG_EXTENDED );
+    if (regerr != 0)
     {
-        fprintf(stderr, "\n\n\nERROR : size of off_t is not 8! \n\n\n");
-        exit(1);
+        regerror( regerr, &expr, errbuf, sizeof(errbuf) );
+        fprintf(stderr,"regcomp error: %s\n", errbuf);
+        return NULL;
     }
-    fd = _fd;
-}
 
-//virtual
-PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
-{
-    close(fd);
-}
-
-//virtual
-bool
-PageIOFileDescriptor :: get_page( PageCachePage * pg )
-{
-    int page = pg->get_page_number();
-    off_t offset = (off_t)page * (off_t)PageCache::PAGE_SIZE;
-    lseek(fd, offset, SEEK_SET);
-    int cc = read(fd, pg->get_ptr(), PageCache::PAGE_SIZE);
-    if (cc < 0)
+    regerr = regexec( &expr, path, MAX_MATCHES, matches, 0 );
+    if (regerr != 0)
     {
-        fprintf(stderr,
-                "PageIOFileDescriptor :: get_page: read -> %s\n",
-                strerror(errno));
-        return false;
+        regerror( regerr, &expr, errbuf, sizeof(errbuf) );
+        fprintf(stderr,"regexec error: %s\n", errbuf);
+        return NULL;
     }
-    if (cc != PageCache::PAGE_SIZE)
+
+    regfree( &expr );
+
+    char string[512];
+    struct in_addr ipaddr;
+    struct hostent * he;
+    int st, en, len, port;
+
+    if (matches[MATCH_FBSRV_IP_2].rm_so != -1)
     {
-        // zero-fill the remainder of the page.
-        memset(pg->get_ptr() + cc, 0, PageCache::PAGE_SIZE - cc);
+        st = matches[MATCH_FBSRV_IP_2].rm_so;
+        en = matches[MATCH_FBSRV_IP_2].rm_eo;
+        len = en-st;
+        if (len > 7)
+        {
+            printf("bogus ipaddr\n");
+            return NULL;
+        }
+        memcpy(string, path + st, len);
+        string[len] = 0;
+        port = atoi(path + matches[MATCH_FBSRV_PORT_2].rm_so);
+        inet_aton(string, &ipaddr);
+        return new PageIONetworkTCPServer(&ipaddr, port);
     }
-    return true;
-}
-
-//virtual
-bool
-PageIOFileDescriptor :: put_page( PageCachePage * pg )
-{
-    int page = pg->get_page_number();
-    off_t offset = (off_t)page * (off_t)PageCache::PAGE_SIZE;
-    lseek(fd, offset, SEEK_SET);
-    if (write(fd, pg->get_ptr(),
-              PageCache::PAGE_SIZE) != PageCache::PAGE_SIZE)
+    else if (matches[MATCH_FBSRV_IP_4].rm_so != -1)
     {
-        fprintf(stderr,
-                "PageIOFileDescriptor :: put_page: write: %s\n",
-                strerror(errno));
-        return false;
+        st = matches[MATCH_FBSRV_IP_4].rm_so;
+        en = matches[MATCH_FBSRV_IP_4].rm_eo;
+        len = en-st;
+        if (len > 15)
+        {
+            printf("bogus ipaddr\n");
+            return NULL;
+        }
+        memcpy(string, path + st, len);
+        string[len] = 0;
+        port = atoi(path + matches[MATCH_FBSRV_PORT_4].rm_so);
+        inet_aton(string, &ipaddr);
+        return new PageIONetworkTCPServer(&ipaddr, port);
     }
-    return true;
-}
-
-//virtual
-int
-PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
-{
-    struct stat sb;
-    if (fstat(fd, &sb) < 0)
-        return -1;
-    if ((sb.st_size & (PageCache::PAGE_SIZE -1 )) != 0)
+    else if (matches[MATCH_FBSRV_HOSTNAME].rm_so != -1)
     {
-        if (page_aligned)
-            *page_aligned = false;
-        return (sb.st_size / PageCache::PAGE_SIZE) + 1;
+        st = matches[MATCH_FBSRV_HOSTNAME].rm_so;
+        en = matches[MATCH_FBSRV_HOSTNAME].rm_eo;
+        len = en-st;
+        if (len > (int)sizeof(string))
+        {
+            fprintf(stderr, "error hostname too long?\n");
+            return NULL;
+        }
+        memcpy(string, path + st, len);
+        string[len] = 0;
+        he = gethostbyname(string);
+        if (he == NULL)
+        {
+            fprintf(stderr, "unknown host name '%s'\n", string);
+            return NULL;
+        }
+        memcpy(&ipaddr.s_addr, he->h_addr, sizeof(ipaddr.s_addr));
+        port = atoi(path + matches[MATCH_FBSRV_PORT_HN].rm_so);
+        return new PageIONetworkTCPServer(&ipaddr, port);
     }
-    // else
-    if (page_aligned)
-        *page_aligned = true;
-    return (sb.st_size / PageCache::PAGE_SIZE);
-}
+    else if (matches[MATCH_FULLPATH].rm_so != -1)
+    {
+        int options = O_RDWR;
+        if (create)
+            options |= O_CREAT | O_EXCL;
+#ifdef O_LARGEFILE
+        options |= O_LARGEFILE;
+#endif
+        int fd = ::open( path, options, mode );
+        if (fd < 0)
+            return NULL;
+        return new PageIOFileDescriptor(fd);
+    }
+    else
+    {
+        fprintf(stderr, "PageIO::open: unknown PageIO method '%s'\n", path);
+    }
 
-//virtual
-off_t
-PageIOFileDescriptor :: get_size(void)
-{
-    struct stat sb;
-    if (fstat(fd, &sb) < 0)
-        return -1;
-    return sb.st_size;
-}
-
-//virtual
-void
-PageIOFileDescriptor :: truncate_pages(int num_pages)
-{
-    off_t size = num_pages * PageCache::PAGE_SIZE;
-    ftruncate(fd, size);
+    return NULL;
 }

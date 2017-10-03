@@ -52,7 +52,8 @@ struct info {
     info(void) { inuse = false; }
 };
 
-#define TESTFILE "testfile.db"
+//#define TESTFILE "testfile.db"
+#define TESTFILE "fbserver:127.0.0.1:2440"
 
 #define VERBOSE 0
 #define XOR_CONSTANT 0x12345678
@@ -115,6 +116,12 @@ main(int argc, char ** argv)
     _fbi = FileBlockInterface::createFile( TESTFILE, 65536 * 100, 0644 );
 
     fbi = (FileBlockLocal*) _fbi;
+
+    if (!fbi)
+    {
+        printf("failed to open test file\n");
+        return 1;
+    }
 
 #if 0
 #define ITEMS         1000000
@@ -267,37 +274,17 @@ struct CRAP {
 int
 main( int argc, char ** argv )
 {
-    int           fd;
-    int           options;
-    PageIO      * io;
-    BlockCache  * bc;
     FileBlockInterface * fbi;
 
-    options = O_RDWR;
-#ifdef O_LARGEFILE
-    options |= O_LARGEFILE;
-#endif
     if (strcmp(argv[1], "init") == 0)
     {
-        options |= O_CREAT;
         (void) unlink( TESTFILE );
+        fbi = FileBlockInterface::createFile(argv[1], 256*1024*1024, 0644);
+        delete fbi;
+        return 0;
     }
-    fd = open(TESTFILE, options, 0644);
-
-    if (fd < 0)
-    {
-        fprintf(stderr, "unable to open file\n");
-        exit( 1 );
-    }
-
-    io = new PageIOFileDescriptor(fd);
-    bc = new BlockCache(io, 256*1024*1024);
-
-    if (strcmp(argv[1], "init") == 0)
-    {
-        FileBlockLocal::init_file( bc );
-        goto out;
-    }
+    else
+        fbi = FileBlockInterface::openFile(argv[1], 256*1024*1024);
 
     fbi = new FileBlockLocal( bc );
 
@@ -359,10 +346,6 @@ main( int argc, char ** argv )
     }
 
     delete fbi;
-out:
-    delete bc;
-    delete io;
-    close(fd);
 
     return 0;
 }
@@ -410,24 +393,10 @@ struct JunkType : public BST {
 int
 main()
 {
-#if 0
-    int fd;
     (void) unlink( TESTFILE );
-    fd = open(TESTFILE, O_RDWR | O_CREAT, 0644);
-    if (fd < 0)
-    {
-        fprintf(stderr, "unable to open file\n");
-        exit( 1 );
-    }
-    PageIO      * io = new PageIOFileDescriptor(fd);
-    BlockCache  * bc = new BlockCache(io, 256*1024*1024);
-    FileBlockInterface::init_file( bc );
-    FileBlockInterface * fbi = FileBlockInterface::open( bc );
-#else
-    (void) unlink( TESTFILE );
-    FileBlockInterface * fbi = 
-        FileBlockInterface::createFile( TESTFILE, 256*1024*1024, 0644 );
-#endif
+
+    FileBlockInterface * fbi;
+    fbi = FileBlockInterface::createFile( TESTFILE, 256*1024*1024, 0644 );
 
     {
         JunkType  j, k;

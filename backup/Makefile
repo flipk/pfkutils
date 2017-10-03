@@ -43,6 +43,13 @@ t:  t.o $(TARG) $(LIBS)
 doc::
 	doxygen
 
+copydoc::
+	cp backup-database-design.gif pfkbak/
+	tar cf pfkbak-doc.tar pfkbak
+	scp pfkbak-doc.tar fitpc:.
+	ssh fitpc 'tar -C public_html -xf pfkbak-doc.tar ; rm -f pfkbak-doc.tar'
+	rm -f pfkbak-doc.tar
+
 depend: xmakefile
 
 clean:

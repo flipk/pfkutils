@@ -59,7 +59,7 @@ enum {
  * function to delete generation appropriately.
  */
 void
-pfkbak_delete_gens   ( Btree * bt, UINT32 baknum, int argc, char ** argv )
+pfkbak_delete_gens   ( UINT32 baknum, int argc, char ** argv )
 {
     int regerr;
     regex_t expr;
@@ -110,6 +110,6 @@ pfkbak_delete_gens   ( Btree * bt, UINT32 baknum, int argc, char ** argv )
             continue;
         }
 
-        pfkbak_delete_gen( bt, baknum, (UINT32)gen_s, (UINT32)gen_e );
+        pfkbak_delete_gen( baknum, (UINT32)gen_s, (UINT32)gen_e );
     }
 }
