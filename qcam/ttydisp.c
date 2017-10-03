@@ -3,13 +3,14 @@
 static const char *dispchars = " .:-+=#";
 
 void
-ttydisp_init( struct qcam_softc *qs )
+ttydisp_init( struct qcam_softc *qs, int web )
 {
-    printf("%c[H%c[J", 27, 27);
+    if ( !web )
+        printf("%c[H%c[J", 27, 27);
 }
 
 void
-ttydisp( struct qcam_softc *qs )
+ttydisp( struct qcam_softc *qs, int web )
 {
     int xs = qs->x_size;
     int ys = qs->y_size;
@@ -18,7 +19,16 @@ ttydisp( struct qcam_softc *qs )
 
     xsc = xs / 80;
     ysc = ys / 25;
-    printf("%c[H", 27);
+    if ( web )
+        printf(
+"<html>\n"
+"<body alink=\"#000099\" vlink=\"#990099\" link=\"#000099\"\n"
+"style=\"color: rgb(255, 255, 255); background-color: rgb(0, 0, 0);\">\n"
+"<pre style=\"font-family: monospace;\"><font size=\"-1\">\n"
+            );
+    else
+        printf("%c[H", 27);
+
     switch (ys) {
     case  60: y = 5; break;
     case 120: y = 2; break;
@@ -32,8 +42,13 @@ ttydisp( struct qcam_softc *qs )
             putchar(dispchars[buf[y*xs+x] / 10]);
             x += xsc;
         }
+        if ( web )
+            putchar( '\n' );
         y += ysc;
     }
+
+    if ( web )
+        printf( "</pre></body></html>\n" );
 
     fflush(stdout);
 }

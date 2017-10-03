@@ -73,7 +73,7 @@ if cmp main.h.tmp main.h ; then
     echo main.h is unchanged
     rm -f main.h.tmp
 else
-    mv main.h.tmp main.h
+    mv -f main.h.tmp main.h
     chmod a-w main.h
 fi
 
@@ -101,7 +101,7 @@ if cmp main_prog.h.tmp main_prog.h ; then
     echo main_prog.h unchanged
     rm -f main_prog.h.tmp
 else
-    mv main_prog.h.tmp main_prog.h
+    mv -f main_prog.h.tmp main_prog.h
 fi
 
 my_uid=`id | sed -e 's/^uid=\([0-9][0-9]*\).*$/\1/'`
@@ -114,7 +114,7 @@ if cmp sudo.h.tmp sudo.h ; then
     echo sudo.h unchanged
     rm -f sudo.h.tmp
 else
-    mv sudo.h.tmp sudo.h
+    mv -f sudo.h.tmp sudo.h
 fi
 
 make depend

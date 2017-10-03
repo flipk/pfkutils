@@ -3,10 +3,10 @@ CCOPTS= -I/usr/X11R6/include -O3
 
 TARG= libqcam.a
 HDRS= headers.h motion.h pgm.h qcam.h ttydisp.h xwindisp.h
-SRCS= main.c motion.c pgm.c qcam.c ttydisp.c xwindisp.c
+SRCS= main.c qcmex.c motion.c pgm.c qcam.c ttydisp.c xwindisp.c
 OBJS= $(SRCS:.c=.o)
 
-all: $(TARG)
+all: $(TARG) 
 
 $(TARG): $(OBJS)
 	rm -f $(TARG)

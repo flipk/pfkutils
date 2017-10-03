@@ -18,6 +18,7 @@
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)
 	PROG(1,qcam,quickcam interface program)
+	PROG(0,qcmex,quickcam movie extractor)
 	PROG(0,treescan,scan a tree of files and produce a treediff)
 	PROG(1,itsfssvr,ITS file system server)
 	PROG(0,xlock,xlock screen)

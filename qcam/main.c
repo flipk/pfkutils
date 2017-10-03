@@ -12,6 +12,7 @@
 #define CAM_DEBUG1   0x080
 #define CAM_DEBUG2   0x100
 #define MOTION_DET   0x200
+#define TTY_WEB_OUT  0x400
 
 #define   SET(a)  (options) |= (a)
 #define ISSET(a) ((options) &  (a))
@@ -36,7 +37,7 @@ usage()
 {
     fprintf(stderr,
 "\n"
-"usage: %s [-qoptx123] [-z pixel frame] [-d arg]\n"
+"usage: %s [-qoptwx123] [-z pixel frame] [-d arg]\n"
 "             [-m moviefile] [-M moviefile]\n"
 "\n"
 "   -q: read from quickcam\n"
@@ -49,6 +50,7 @@ usage()
 "   -3: set quickcam to 320x240 (or if showing movie on X, triple size)\n"
 "\n"
 "   -t: output to tty (or preview to tty) (using text charset, must be 80x25)\n"
+"   -w: tty output in a web-ish format\n"
 "   -x: output to X11 (or preview to X11)\n"
 "   -M: output to 'moviefile'\n"
 "\n"
@@ -99,7 +101,7 @@ qcam_main( int argc, char ** argv )
     if (argc == 1)
         usage();
 
-    while ((ch = getopt(argc, argv, "qm:os:pM:d:tx123z:")) != -1)
+    while ((ch = getopt(argc, argv, "qm:os:pM:d:twx123z:")) != -1)
         switch (ch) {
         case 'q':
             SET(CAMERA_IN);
@@ -120,6 +122,10 @@ qcam_main( int argc, char ** argv )
             break;
         case 't':
             SET(TTY_OUT);
+            break;
+        case 'w':
+            SET(TTY_OUT);
+            SET(TTY_WEB_OUT);
             break;
         case 'x':
             SET(XWIN_OUT);
@@ -280,7 +286,7 @@ qcam_main( int argc, char ** argv )
     }
 
     if (ISSET(TTY_OUT))
-        ttydisp_init(qs);
+        ttydisp_init(qs,ISSET(TTY_WEB_OUT));
 
     if (ISSET(XWIN_OUT) && !ISSET(PREVIEW_ONE))
     {
@@ -298,7 +304,7 @@ qcam_main( int argc, char ** argv )
             qcam_scan(qs);
             qcam_adjustpic(qs);
             if (ISSET(TTY_OUT))
-                ttydisp(qs);
+                ttydisp(qs,ISSET(TTY_WEB_OUT));
             if (ISSET(XWIN_OUT))
                 xwindisp(qs);
         } while (!keyinput());
@@ -313,7 +319,10 @@ qcam_main( int argc, char ** argv )
         } while (qcam_adjustpic(qs));
         qcam_setsize(qs, scan_size);
         qcam_scan(qs);
-        pgm_write(qs, outfilef);
+        if (ISSET(MOVIE_OUT))
+            pgm_write(qs, outfilef);
+        if (ISSET(TTY_OUT))
+            ttydisp(qs,ISSET(TTY_WEB_OUT));
     } else {
         int done = 0;
         if (ISSET(CAMERA_IN) && ISSET(MOVIE_OUT))
@@ -343,7 +352,7 @@ qcam_main( int argc, char ** argv )
                 pgm_write(qs, outfilef);
             if (ISSET(TTY_OUT))
             {
-                ttydisp(qs);
+                ttydisp(qs,ISSET(TTY_WEB_OUT));
                 if (ISSET(MOVIE_IN))
                     usleep(200000);
             }
@@ -432,7 +441,7 @@ motion_detect(options, outfile, pth, fth)
 
     qcam_setsize(qs, SCANSIZE);
     if (ISSET(TTY_OUT))
-        ttydisp_init(qs);
+        ttydisp_init(qs,ISSET(TTY_WEB_OUT));
     if (ISSET(XWIN_OUT))
         xwindisp_init(qs, 1);
     if (out)
@@ -465,7 +474,7 @@ motion_detect(options, outfile, pth, fth)
             if (ISSET(XWIN_OUT))
                 xwindisp(qs);
             if (ISSET(TTY_OUT))
-                ttydisp(qs);
+                ttydisp(qs,ISSET(TTY_WEB_OUT));
         }
         if (ml.detected && out)
             pgm_write(qs, out);
