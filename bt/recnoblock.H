@@ -2,6 +2,16 @@
 #ifndef __RECNOBLOCK_H__
 #define __RECNOBLOCK_H__
 
+// 
+// the 6 args to the constructor of this class are:
+//    char * file
+//    int h1            // hash size of data page cache
+//    int h2            // hash size of bitmap page cache
+//    int c1            // maximum number of data pages held in memory
+//    int _record_size  // bytes in record, default=16
+//    int _page_size    // bytes in page, default=4096
+//
+
 #include <time.h>
 #include "dll2.H"
 #include "types.H"

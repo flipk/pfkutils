@@ -187,18 +187,18 @@ public:
         btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
         btc = _btc;
     }
-    /*virtual*/ char * sprint_element( int noderec,
-                                       int keyrec, void * key, int keylen,
-                                       int datrec, void * dat, int datlen,
+    /*virtual*/ char * sprint_element( UINT32 noderec,
+                                       UINT32 keyrec, void * key, int keylen,
+                                       UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty );
     /*virtual*/ void sprint_element_free( char * s ) { /* nothing */ }
     /*virtual*/ void print( char * format, ... ) { /* nothing */ }
 };
 
 char *
-id_name_db_printinfo :: sprint_element( int noderec,
-                                        int keyrec, void * key, int keylen,
-                                        int datrec, void * dat, int datlen,
+id_name_db_printinfo :: sprint_element( UINT32 noderec,
+                                        UINT32 keyrec, void * key, int keylen,
+                                        UINT32 datrec, void * dat, int datlen,
                                         bool *datdirty )
 {
     if ( memcmp( btc->cmpkey, key, 5 ) == 0 )
@@ -275,9 +275,9 @@ public:
         chown( DUMPFILE, 1000, 1000 );
         chmod( DUMPFILE, 0666 );
     }
-    /*virtual*/ char * sprint_element( int noderec,
-                                       int keyrec, void * key, int keylen,
-                                       int datrec, void * dat, int datlen,
+    /*virtual*/ char * sprint_element( UINT32 noderec,
+                                       UINT32 keyrec, void * key, int keylen,
+                                       UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty );
     /*virtual*/ void sprint_element_free( char * s );
     /*virtual*/ void print( char * format, ... );
@@ -287,9 +287,9 @@ public:
 
 char *
 id_name_db_real_printinfo :: sprint_element(
-    int noderec,
-    int keyrec, void * _key, int keylen,
-    int datrec, void * _dat, int datlen,
+    UINT32 noderec,
+    UINT32 keyrec, void * _key, int keylen,
+    UINT32 datrec, void * _dat, int datlen,
     bool *datdirty )
 {
     int i;

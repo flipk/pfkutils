@@ -90,9 +90,9 @@ public:
         btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
         file_entries = _file_entries;
     }
-    /*virtual*/ char * sprint_element( int noderec,
-                                       int keyrec, void * key, int keylen,
-                                       int datrec, void * dat, int datlen,
+    /*virtual*/ char * sprint_element( UINT32 noderec,
+                                       UINT32 keyrec, void * key, int keylen,
+                                       UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty );
     /*virtual*/ void sprint_element_free( char * s ) { /* nothing */ }
     /*virtual*/ void print( char * format, ... ) { /* nothing */ }
@@ -100,9 +100,9 @@ public:
 
 char *
 treesync_regen_printinfo :: sprint_element(
-    int noderec,
-    int keyrec, void * key, int keylen,
-    int datrec, void * dat, int datlen,
+    UINT32 noderec,
+    UINT32 keyrec, void * key, int keylen,
+    UINT32 datrec, void * dat, int datlen,
     bool *datdirty )
 {
     db_file_entry  * dfe = (db_file_entry *) dat;
