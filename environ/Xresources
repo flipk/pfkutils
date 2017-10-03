@@ -2,7 +2,7 @@
 
 XTerm*termName: vt100
 XTerm*jumpScroll:             true
-XTerm*visualBell:             true
+XTerm*visualBell:             false
 XTerm*scrollBar:              on
 XTerm*utmpInhibit:            off
 XTerm*foreground:             green
