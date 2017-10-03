@@ -80,7 +80,7 @@ private:
     uint32_t next; // offset
     uint8_t bMaster;
     uint8_t poolInd;
-    uint16_t bufInd;
+    uint32_t bufInd;
     uint32_t bufferSize;
 public:
     uint32_t messageSize;
@@ -185,7 +185,7 @@ public:
     shmempipe( shmempipeSlaveConfig * pConfig );
     ~shmempipe( void );
     inline shmempipeMessage * allocSize(uint32_t size, bool bWait=false);
-    inline shmempipeMessage * allocPool(uint16_t poolInd, bool bWait=false);
+    inline shmempipeMessage * allocPool(uint32_t poolInd, bool bWait=false);
     inline bool release(shmempipeMessage * pBuf);
     inline bool send(shmempipeMessage * pBuf);
     void getStats(shmempipeStats * pStats, bool zero=false);
@@ -396,7 +396,7 @@ shmempipe :: allocSize(uint32_t size, bool bWait /*=false */)
 }
 
 inline shmempipeMessage *
-shmempipe :: allocPool(uint16_t poolInd, bool bWait /*=false*/ )
+shmempipe :: allocPool(uint32_t poolInd, bool bWait /*=false*/ )
 {
     if (poolInd < 0 || poolInd >= m_pHeader->poolInfo.numPools)
     {

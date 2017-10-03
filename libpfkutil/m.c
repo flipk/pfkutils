@@ -261,7 +261,7 @@ m_cvt_dec( char * s )
 static M_INT64
 m_cvt_hex( char * s )
 {
-    static const char cvt_matrix[] = {
+    static const signed char cvt_matrix[] = {
 /* 0x30 */    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
 /* 0x40 */   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 /* 0x50 */   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
