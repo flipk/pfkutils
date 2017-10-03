@@ -15,7 +15,7 @@ public:
         __attribute__ ((format( printf, 2, 3 )));
 };
 
-void
+static void
 display_hex(unsigned char * ptr, int size, bool prefix)
 {
     for (int pos = 0; pos < size; pos++)
@@ -61,8 +61,8 @@ myIterator :: print( const char * format, ... )
     printf("\n");
 }
 
-int
-main(int argc, char ** argv)
+extern "C" int
+btdump_main(int argc, char ** argv)
 {
     if (argc != 2)
     {

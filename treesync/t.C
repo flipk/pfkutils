@@ -1,5 +1,5 @@
 
-int treesync_main( int argc, char ** argv );
+extern "C" int treesync_main( int argc, char ** argv );
 
 int
 main(int argc, char ** argv)

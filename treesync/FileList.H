@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <pk-md5.h>
+
 #include "types.H"
 #include "dll2.H"
 
@@ -39,8 +41,6 @@ public:
         int plen = strlen(_path);
         path = new char[plen + 1];
         memcpy(path, _path, plen+1);
-        deleted = false;
-        modified = false;
     }
     virtual ~FileEntry(void) {
         if (path)
@@ -49,8 +49,6 @@ public:
     LListLinks <FileEntry>  links[ FILE_ENTRY_NUM_LISTS ];
     enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
     char * path; // relative to root dir
-    bool deleted;
-    bool modified;
 };
 
 class FileEntryHashComparator {
@@ -85,16 +83,12 @@ public:
         : FileEntry(_path)
     {
         type = TYPE_FILE;
-        deleted = false;
-        created = false;
-        modified = false;
+        state = STATE_EXISTS;
     }
+    enum State { STATE_EXISTS=1, STATE_DELETED=2 } state;
     UINT64  size;
-    time_t  mtime;    // 0 means 'whitespace'
-    bool    deleted;
-    bool    created;
-    bool    modified;
-    UINT8   md5[16];
+    time_t  mtime;
+    UINT8   md5[MD5_DIGEST_SIZE];
 };
 
 class FileEntryDir : public FileEntry {

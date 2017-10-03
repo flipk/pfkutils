@@ -17,11 +17,13 @@ CSRCS=	main.c
 OBJS= $(CSRCS:.c=.o)
 LIBS= -lcurses -lm -lpthread -lz
 
-DIRS= implode tags.make tags.view ipipe2 dll2 util syslog states
-ELIBS= implode/libimplode.a \
+DIRS=	implode tags.make tags.view ipipe2 dll2 \
+	util syslog states FileBlock treesync
+ELIBS=	implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
 	ipipe2/libi2.a util/libutil.a syslog/libsyslog.a \
-	states/libstates.a
+	states/libstates.a treesync/libtreesync.a \
+	FileBlock/libFileBlock.a
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 

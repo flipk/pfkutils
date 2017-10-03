@@ -15,7 +15,7 @@ int treesync_verbose = 0;
         delete fe;                              \
     delete list
 
-int
+extern "C" int
 treesync_main( int argc, char ** argv )
 {
     FileEntryList * fel1, * fel2;
@@ -49,7 +49,7 @@ treesync_main( int argc, char ** argv )
 
     if (argc != 3)
     {
-        fprintf(stderr, "usage: pfktreesync dir1 dir2\n");
+        fprintf(stderr, "usage: pfktreesync [-v] dir1 [dir2]\n");
         return 1;
     }
 
@@ -79,8 +79,6 @@ treesync_main( int argc, char ** argv )
     update_db( dir1, db1, fel1 );
     update_db( dir2, db2, fel2 );
 
-    // next step: analyze fel1 and fel2, and
-    // move files around to synchronize them.
     analyze( dir1, fel1, dir2, fel2 );
 
     DELETE_LIST(fel1);

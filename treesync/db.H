@@ -50,12 +50,14 @@ struct FileSeqKey : public DatabaseKeys {
 struct FileSeqData : public FileBlockBST {
     FileSeqData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        file_path(this), size(this), mtime(this), md5hash(this) { }
+        state(this), file_path(this), size(this), mtime(this), md5hash(this) { }
     ~FileSeqData(void) { bst_free(); }
+    enum { STATE_EXISTS=1, STATE_DELETED=2 };
+    BST_UINT8_t    state;
     BST_STRING     file_path;
     BST_UINT64_t   size;
-    BST_UINT32_t   mtime;   // 0 means file has been deleted.
-    BST_FIXED_BINARY <16> md5hash;
+    BST_UINT32_t   mtime;
+    BST_FIXED_BINARY <MD5_DIGEST_SIZE> md5hash;
 };
 
 DB_ITEM_CLASS(FileSeq);

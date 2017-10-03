@@ -61,8 +61,8 @@ private:
 // used internally by file_db
     friend class file_db;
     UINT32   mark; // random walking mark
-    Btree::rec * rec;
-    Btree * bt;
+    OBtree::rec * rec;
+    OBtree * bt;
 public:
     file_info( char * _fn ) {
         rec = NULL;
@@ -94,7 +94,7 @@ class file_db {
     FileBlockNumber * fbn_keys;
     FileBlockNumber * fbn_data;
     FileBlockNumber * fbn_contents;
-    Btree * bt;
+    OBtree * bt;
     UINT32 current_mark;
     file_info_list  update_list;
     file_info_list  add_list;

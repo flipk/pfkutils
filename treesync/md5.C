@@ -10,7 +10,7 @@ void
 display_md5(char *path, UINT8 *md5)
 {
     int i;
-    for (i=0; i < 16; i++)
+    for (i=0; i < MD5_DIGEST_SIZE; i++)
         printf("%02x", md5[i]);
     printf("  %s\n", path);
 }
@@ -35,7 +35,7 @@ calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
     if (!f )
     {
         fprintf(stderr, "unable to calc md5 hash on %s\n", relpath);
-        memset(hashbuffer,0,16);
+        memset(hashbuffer, 0, MD5_DIGEST_SIZE);
         return;
     }
 
@@ -52,12 +52,12 @@ calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
     MD5Final( &digest, &ctx );
     fclose(f);
 
-    memcpy(hashbuffer, digest.digest, 16);
+    memcpy(hashbuffer, digest.digest, MD5_DIGEST_SIZE);
 
     if (treesync_verbose)
     {
         int i;
-        for (i=0; i < 16; i++)
+        for (i=0; i < MD5_DIGEST_SIZE; i++)
             fprintf(stderr,"%02x", digest.digest[i]);
         fprintf(stderr, "\n");
     }

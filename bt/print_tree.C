@@ -159,11 +159,11 @@ btpt_main( int argc, char ** argv )
         return 0;
     }
 
-    Btree * bt;
+    OBtree * bt;
     try {
-        bt = new Btree( fbn );
+        bt = new OBtree( fbn );
     }
-    catch ( Btree::constructor_failed ) {
+    catch ( OBtree::constructor_failed ) {
         printf( "failed to find a btree header\n" );
         delete fbn;
         return 0;
@@ -171,7 +171,7 @@ btpt_main( int argc, char ** argv )
 
     if ( flag == GENERIC )
     {
-        Btree::btreeinfo  bti;
+        OBtree::btreeinfo  bti;
         bt->query( &bti );
         printf( "btree info:  depth = %d   order = %d\n"
                 "root block = %d   nodes = %d   records = %d\n",

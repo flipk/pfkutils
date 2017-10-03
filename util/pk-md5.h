@@ -16,8 +16,10 @@ typedef struct MD5Context {
     unsigned char buffer[64];   /* input buffer */
 } MD5_CTX;
 
+#define MD5_DIGEST_SIZE 16
+
 typedef struct {
-    unsigned char digest[16];
+    unsigned char digest[MD5_DIGEST_SIZE];
 } MD5_DIGEST;
 
 void   MD5Init      ( MD5_CTX *context );

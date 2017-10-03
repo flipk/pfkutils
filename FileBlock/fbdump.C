@@ -4,8 +4,8 @@
 #include "FileBlock_iface.H"
 #include "FileBlockLocal.H"
 
-int
-main(int argc, char ** argv)
+extern "C" int
+fbdump_main(int argc, char ** argv)
 {
     if (argc != 2)
     {

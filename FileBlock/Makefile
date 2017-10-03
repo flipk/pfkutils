@@ -4,7 +4,8 @@ SRCS=	PageIO.C PageCache.C BlockCache.C \
 	FileBlock_iface.C Btree.C BtreeNode.C \
 	FileBlockLocal.C FileBlockLocalAllocFree.C FileBlockLocalAuid.C \
 	FileBlockLocalAun.C FileBlockLocalBucket.C FileBlockLocalCompact.C \
-	FileBlockLocalDIB.C FileBlockLocalGetRel.C FileBlockLocalValidate.C
+	FileBlockLocalDIB.C FileBlockLocalGetRel.C FileBlockLocalValidate.C \
+	fbdump.C fbcompact.C btdump.C
 HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 	BlockCache.H BlockCache_internal.H \
 	FileBlock_iface.H \
@@ -43,14 +44,17 @@ t1: $(TARG)   testFileBlock.o
 t2: $(TARG)   testBtree.o
 	$(CC) testBtree.o     $(TARG) $(LIBS) -o $@
 
-fbdump: $(TARG)  fbdump.o
-	$(CC)    fbdump.o  $(TARG) $(LIBS) -o fbdump
+fbdump: $(TARG)  fbdump.C
+	$(CC)    fbdump.C $(INCS) $(DEFS) $(OPTS) \
+		-Dfbdump_main=main $(TARG) $(LIBS) -o fbdump
 
-fbcompact: $(TARG)  fbcompact.o
-	$(CC)       fbcompact.o $(TARG) $(LIBS) -o fbcompact
+fbcompact: $(TARG)  fbcompact.C
+	$(CC)       fbcompact.C $(INCS) $(DEFS) $(OPTS) \
+		-Dfbcompact_main=main $(TARG) $(LIBS) -o fbcompact
 
-btdump: $(TARG)  btdump.o
-	$(CC)    btdump.o $(TARG) $(LIBS) -o btdump
+btdump: $(TARG)  btdump.C
+	$(CC)    btdump.C $(INCS) $(DEFS) $(OPTS) \
+		-Dbtdump_main=main $(TARG) $(LIBS) -o btdump
 
 doc::
 	doxygen
@@ -63,5 +67,5 @@ depend: xmakefile
 clean:
 	rm -f $(TARG) testfile.db xmakefile tmp
 	rm -f *~ *.o *.a *.obj *.i
-	rm -f t1 t2 fbdump
+	rm -f $(EXTRAS)
 	rm -rf doc

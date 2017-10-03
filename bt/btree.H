@@ -83,7 +83,7 @@ public:
 
 };
 
-class Btree {
+class OBtree {
 public:
     enum put_retval {
         PUT_NEW = 1,
@@ -215,11 +215,11 @@ public:
 
     static void new_file( FileBlockNumber * fbn, int order );
 
-    Btree( FileBlockNumber * ) throw ( constructor_failed );
-    Btree( FileBlockNumber * nodes,
+    OBtree( FileBlockNumber * ) throw ( constructor_failed );
+    OBtree( FileBlockNumber * nodes,
            FileBlockNumber * keys,
            FileBlockNumber * data ) throw ( constructor_failed );
-    ~Btree( void );
+    ~OBtree( void );
 
     void query( btreeinfo * _bti ) {
         memcpy( _bti, bti, sizeof(btreeinfo) );

@@ -145,10 +145,10 @@ file_db :: file_db( char * fname, bool create_it, bool validate_sig )
 
     if ( create_it )
     {
-        Btree::new_file( fbn_nodes, order );
+        OBtree::new_file( fbn_nodes, order );
     }
 
-    bt = new Btree( fbn_nodes, fbn_keys, fbn_data );
+    bt = new OBtree( fbn_nodes, fbn_keys, fbn_data );
     if ( !bt )
     {
         fprintf( stderr, 
@@ -156,10 +156,10 @@ file_db :: file_db( char * fname, bool create_it, bool validate_sig )
         exit( 1 );
     }
 
-    Btree::rec * rec;
+    OBtree::rec * rec;
     if ( create_it )
     {
-        Btree::new_file( fbn_nodes, order );
+        OBtree::new_file( fbn_nodes, order );
         write_signature( &sig );
     }
     else
@@ -192,7 +192,7 @@ file_db :: file_db( char * fname, bool create_it, bool validate_sig )
 void
 file_db :: write_signature( mytar_sig * sig )
 {
-    Btree::rec * rec;
+    OBtree::rec * rec;
     rec = bt->alloc_rec( sizeof(MYTAR_SIGKEY), sizeof(mytar_sig) );
     strcpy( (char*) rec->key.ptr, MYTAR_SIGKEY );
     datum_0_data * d0d = (datum_0_data *) rec->data.ptr;
@@ -280,7 +280,7 @@ file_info *
 file_db :: get_info_by_id( UINT32 id )
 {
     file_info * ret = NULL;
-    Btree::rec * rec;
+    OBtree::rec * rec;
     datum_2_key  d2k;
 
     d2k.prefix_i = 'i';
@@ -307,7 +307,7 @@ file_db :: get_info_by_fname( char * fname )
     datum_1_key * d1k = (datum_1_key *)buf;
     d1k->prefix_n = 'n';
     memcpy( d1k->fname, fname, fname_len );
-    Btree::rec * rec = bt->get_rec( (UCHAR*)buf, fname_len+1 );
+    OBtree::rec * rec = bt->get_rec( (UCHAR*)buf, fname_len+1 );
     delete[] buf;
 
     if ( rec )
@@ -324,7 +324,7 @@ file_db :: get_info_by_fname( char * fname )
 void
 file_db :: update_info( file_info * inf )
 {
-    Btree::rec * rec = inf->rec;
+    OBtree::rec * rec = inf->rec;
     inf->rec = NULL;
 
     if ( !rec )
@@ -353,7 +353,7 @@ UINT32
 file_db :: add_info( file_info * inf )
 {
     int fname_len = strlen(inf->fname);  // not counting trailing NUL
-    Btree::rec * rec;
+    OBtree::rec * rec;
     UINT32 id;
     file_info * tmpfi;
 
@@ -414,10 +414,10 @@ typedef LList <delete_id,0> delete_id_list;
 class file_db_delete_old_pi : public btree_printinfo {
 public:
     delete_id_list  list;
-    Btree * bt;
+    OBtree * bt;
     UINT32 current_mark;
 //
-    file_db_delete_old_pi( Btree * _bt, UINT32 _current_mark ) :
+    file_db_delete_old_pi( OBtree * _bt, UINT32 _current_mark ) :
         btree_printinfo( KEY_REC_PTR )
     {
         bt = _bt;
@@ -464,7 +464,7 @@ public:
 void
 file_db :: delete_old( void )
 {
-    Btree::rec * d2rec;
+    OBtree::rec * d2rec;
     datum_2 * d2;
     UINT32  id;
 
@@ -517,7 +517,7 @@ file_db :: delete_old( void )
         for ( piecenum = 0; ; )
         {
             d3k.piece_num.set( piecenum );
-            Btree::rec * d3rec;
+            OBtree::rec * d3rec;
             d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof( d3k ));
             if ( d3rec == NULL )
                 break;
@@ -545,7 +545,7 @@ file_db :: truncate_pieces( UINT32 id, UINT32 num_pieces )
     for ( piece_num = num_pieces; ; piece_num++ )
     {
         datum_3     * d3;
-        Btree::rec  * d3rec;
+        OBtree::rec  * d3rec;
 
         d3k.piece_num.set( piece_num );
 
@@ -567,7 +567,7 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     MD5_DIGEST    dig;
     datum_3_key   d3k;
     datum_3     * d3;
-    Btree::rec  * d3rec;
+    OBtree::rec  * d3rec;
     bool          d3_created = false;
     UINT32        blockno;
     ULONG        block_magic;
@@ -640,7 +640,7 @@ file_db :: extract_piece( UINT32 id, UINT32 piece_num,
     d3k.id = id;
     d3k.piece_num = piece_num;
 
-    Btree::rec * d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof(d3k) );
+    OBtree::rec * d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof(d3k) );
     if ( !d3rec )
     {
         *buflen = 0;

@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <Btree.H>
 #include <bst.H>
@@ -72,17 +73,17 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
                 // recalculate the md5 of the file and update
                 // both the list entry and the database.
                 calc_md5( root_dir, fe.fe->path, fe.fef->md5 );
-                memcpy(fiseq.data.md5hash.binary, fe.fef->md5, 16);
+                memcpy(fiseq.data.md5hash.binary, fe.fef->md5, MD5_DIGEST_SIZE);
+                fiseq.data.state.v = FileSeqData::STATE_EXISTS;
                 fiseq.data.size.v = fe.fef->size;
                 fiseq.data.mtime.v = fe.fef->mtime;
                 fiseq.put(true);
-                fe.fef->modified = true;
             }
             else
             {
                 // file is not modified.  optimize out the md5 
                 // calculation by copying out of the database.
-                memcpy(fe.fef->md5, fiseq.data.md5hash.binary, 16);
+                memcpy(fe.fef->md5, fiseq.data.md5hash.binary, MD5_DIGEST_SIZE);
             }
         }
         else
@@ -93,20 +94,26 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
             // exist there.
 
             fe.fef = new FileEntryFile(fiseq.data.file_path.string);
+            fe.fef->state = FileEntryFile::STATE_DELETED;
             fe.fef->size = 0;
-            fe.fef->mtime = 0;
-            memset(fe.fef->md5, 0, 16);
+            memset(fe.fef->md5, 0, MD5_DIGEST_SIZE);
 
-            if (fiseq.data.mtime.v != 0)
+            if (fiseq.data.state.v == FileSeqData::STATE_EXISTS)
             {
                 // indicate in the database that the file has been
-                // deleted.
+                // deleted.  technically we don't know the moment the
+                // file was deleted, so just record the deletion time
+                // as right now.
 
+                fiseq.data.state.v = FileSeqData::STATE_DELETED;
                 fiseq.data.size.v = 0;
-                fiseq.data.mtime.v = 0;
+                fiseq.data.mtime.v = time(0);
+                memset(fiseq.data.md5hash.binary, 0, MD5_DIGEST_SIZE);
                 fiseq.put(true);
-                fe.fef->deleted = true;
             }
+
+            // extract the time of deletion from the database.
+            fe.fef->mtime = fiseq.data.mtime.v;
 
             fel->add(fe.fe);
         }
@@ -119,15 +126,14 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
     {
         calc_md5(root_dir, fe.fe->path, fe.fef->md5);
 
-        fe.fef->created = true;
-
         // add a new entry to the database for this item.
         fiseq.key.index.v = dbinf.data.num_files.v;
         dbinf.data.num_files.v++;
+        fiseq.data.state.v = FileSeqData::STATE_EXISTS;
         fiseq.data.file_path.set(fe.fe->path);
         fiseq.data.size.v = fe.fef->size;
         fiseq.data.mtime.v = fe.fef->mtime;
-        memcpy(fiseq.data.md5hash.binary, fe.fef->md5, 16);
+        memcpy(fiseq.data.md5hash.binary, fe.fef->md5, MD5_DIGEST_SIZE);
         if (!fiseq.put())
             fprintf(stderr, "error putting created entry\n");
     }

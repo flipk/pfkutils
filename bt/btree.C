@@ -32,7 +32,7 @@
 
 #undef  DEBUG
 
-Btree :: Btree( FileBlockNumber * _nodes,
+OBtree :: OBtree( FileBlockNumber * _nodes,
                 FileBlockNumber * _keys,
                 FileBlockNumber * _data )
     throw ( constructor_failed )
@@ -43,7 +43,7 @@ Btree :: Btree( FileBlockNumber * _nodes,
     Btree_common();
 }
 
-Btree :: Btree( FileBlockNumber * _fbn )
+OBtree :: OBtree( FileBlockNumber * _fbn )
     throw ( constructor_failed )
 {
     fbn_nodes = _fbn;
@@ -53,7 +53,7 @@ Btree :: Btree( FileBlockNumber * _fbn )
 }
 
 void
-Btree :: Btree_common( void )
+OBtree :: Btree_common( void )
 {
     UINT32 bn;
     int len;
@@ -88,7 +88,7 @@ Btree :: Btree_common( void )
     ORDER_MO = BTREE_ORDER - 1;
 }
 
-Btree :: ~Btree( void )
+OBtree :: ~OBtree( void )
 {
     // the btreeinfo record should be the only
     // record still locked. if not, the fileblocknumber
@@ -104,7 +104,7 @@ Btree :: ~Btree( void )
 }
 
 void
-Btree :: add_nodstor( node * _n, UINT32 _noderecno, int _index )
+OBtree :: add_nodstor( node * _n, UINT32 _noderecno, int _index )
 {
     nodstor * x = LOGNEW nodstor;
     x->n = _n;
@@ -114,8 +114,8 @@ Btree :: add_nodstor( node * _n, UINT32 _noderecno, int _index )
     nods = x;
 }
 
-Btree :: node *
-Btree :: get_nodstor( UINT32 &_noderecno, int &_index )
+OBtree :: node *
+OBtree :: get_nodstor( UINT32 &_noderecno, int &_index )
 {
     node * ret = NULL;
     nodstor * x = nods;
@@ -135,8 +135,8 @@ Btree :: get_nodstor( UINT32 &_noderecno, int &_index )
 // that the correct magic# exists, fill one in and 
 // initialize the contents of the node.
 
-Btree :: node *
-Btree :: fetch_node( UINT32 blockno, bool newnode )
+OBtree :: node *
+OBtree :: fetch_node( UINT32 blockno, bool newnode )
 {
     int dummylen;
     node * r = LOGNEW node;
@@ -164,7 +164,7 @@ Btree :: fetch_node( UINT32 blockno, bool newnode )
 }
 
 void
-Btree :: unlock_node( node * n )
+OBtree :: unlock_node( node * n )
 {
     fbn_nodes->unlock_block( n->magic, n->dirty );
     delete n;
@@ -172,8 +172,8 @@ Btree :: unlock_node( node * n )
 
 // retrieve a record from the file.
 
-Btree :: rec *
-Btree :: fetch_rec( UINT32 keyblockno, UINT32 datablockno )
+OBtree :: rec *
+OBtree :: fetch_rec( UINT32 keyblockno, UINT32 datablockno )
 {
     rec * ret = LOGNEW rec;
 
@@ -217,7 +217,7 @@ Btree :: fetch_rec( UINT32 keyblockno, UINT32 datablockno )
 
 // static
 void
-Btree :: new_file( FileBlockNumber * fbn, int order )
+OBtree :: new_file( FileBlockNumber * fbn, int order )
 {
     btreeinfo * bti;
     UINT32 btibn, rbn;
@@ -227,7 +227,7 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
 
     if (( order & 1 ) == 0 )
     {
-        printf( "Btree::new_file: error! order supplied "
+        printf( "OBtree::new_file: error! order supplied "
                 "must be odd! (not %d)\n", order );
         return;
     }
@@ -241,7 +241,7 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
     if ( btibn > MAX_BTI_HUNT )
     {
         fbn->free( btibn );
-        printf( "Btree::new_file: error! first block number "
+        printf( "OBtree::new_file: error! first block number "
                 "free is %d,\nwhich is too high for this "
                 "API to find! (> %d)\n",
                 btibn, MAX_BTI_HUNT );
@@ -272,7 +272,7 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
 }
 
 void
-Btree :: dumptree( btree_printinfo * pi )
+OBtree :: dumptree( btree_printinfo * pi )
 {
     if ( pi->options & btree_printinfo::BTREE_INFO )
     {
@@ -290,7 +290,7 @@ Btree :: dumptree( btree_printinfo * pi )
 }
 
 bool
-Btree :: dumpnode( btree_printinfo * pi, int recno )
+OBtree :: dumpnode( btree_printinfo * pi, int recno )
 {
     int i;
     node *n = fetch_node( recno );
@@ -349,8 +349,8 @@ Btree :: dumpnode( btree_printinfo * pi, int recno )
 
 // this returns a rec where ptrs are valid and fileblocks are locked.
 
-Btree :: rec *
-Btree :: alloc_rec( int keylen, int datalen )
+OBtree :: rec *
+OBtree :: alloc_rec( int keylen, int datalen )
 {
     rec * ret = LOGNEW rec;
 
@@ -377,7 +377,7 @@ Btree :: alloc_rec( int keylen, int datalen )
 // is actually needed.
 
 void
-Btree :: unlock_rec( rec * r )
+OBtree :: unlock_rec( rec * r )
 {
     if (( r->key.recno != INVALID_BLK ) && ( r->key.ptr != NULL ))
         fbn_keys->unlock_block( r->key.magic,  r->key.dirty  );
@@ -388,8 +388,8 @@ Btree :: unlock_rec( rec * r )
     delete r;
 }
 
-Btree :: rec *
-Btree :: get_rec( UCHAR *keyptr, int keylen )
+OBtree :: rec *
+OBtree :: get_rec( UCHAR *keyptr, int keylen )
 {
     rec r;
     bool exact;
@@ -439,7 +439,7 @@ Btree :: get_rec( UCHAR *keyptr, int keylen )
 // are compared.)
 
 int
-Btree :: compare_recs( rec *a, rec *b )
+OBtree :: compare_recs( rec *a, rec *b )
 {
     int comparelen = (a->key.len > b->key.len) ?
         b->key.len : a->key.len;
@@ -464,7 +464,7 @@ Btree :: compare_recs( rec *a, rec *b )
 // followed to get closer to rec 'r'.
 
 int
-Btree :: walk_node( node * n, rec * r, bool &exact )
+OBtree :: walk_node( node * n, rec * r, bool &exact )
 {
     int i;
     int cmpres = 0;
@@ -505,7 +505,7 @@ Btree :: walk_node( node * n, rec * r, bool &exact )
 // in the process, don't forget about the new record's rightnode pointer.
 
 int
-Btree :: split_node( node *n, rec *r, UINT32 rightnode, int index )
+OBtree :: split_node( node *n, rec *r, UINT32 rightnode, int index )
 {
     node *right;
     UINT32 newrightnode;
@@ -672,8 +672,8 @@ Btree :: split_node( node *n, rec *r, UINT32 rightnode, int index )
     return newrightnode;
 }
 
-Btree :: put_retval
-Btree :: put_rec( rec * newr )
+OBtree :: put_retval
+OBtree :: put_rec( rec * newr )
 {
     UINT32 curnod_blockno = bti->rootblockno;
     node * curnod = fetch_node( curnod_blockno );
@@ -825,8 +825,8 @@ Btree :: put_rec( rec * newr )
     return ret;
 }
 
-Btree :: delete_retval
-Btree :: delete_rec( UCHAR * keyptr, int keylen )
+OBtree :: delete_retval
+OBtree :: delete_rec( UCHAR * keyptr, int keylen )
 {
     rec * r;
 
@@ -844,8 +844,8 @@ Btree :: delete_rec( UCHAR * keyptr, int keylen )
     return delete_rec( r );
 }
 
-Btree :: delete_retval
-Btree :: delete_rec( rec * del_rec )
+OBtree :: delete_retval
+OBtree :: delete_rec( rec * del_rec )
 {
     UINT32 curnod_blockno;
     node * curnod;
@@ -1012,7 +1012,7 @@ Btree :: delete_rec( rec * del_rec )
         {
             // actually this should never happen; the above case
             // should happen first.  but handle it anyway.
-            printf( "Btree::delete : case that should never happen!\n" );
+            printf( "OBtree::delete : case that should never happen!\n" );
             break;
         }
 
@@ -1077,7 +1077,7 @@ Btree :: delete_rec( rec * del_rec )
              whichsib_coalesce == SIB_NONE )
         {
             // error! if this ever happens, debug it!
-            printf( "Btree::delete : can't steal or coalesce! debug me\n" );
+            printf( "OBtree::delete : can't steal or coalesce! debug me\n" );
             ret = DELETE_FAIL;
             break;
         }
@@ -1302,7 +1302,7 @@ Btree :: delete_rec( rec * del_rec )
                 if ( !parent->nd->is_root() )
                 {
                     // should not happen, if it does, debug me!
-                    printf( "Btree::delete : error! nonroot node shrunk!\n" );
+                    printf( "OBtree::delete : error! nonroot node shrunk!\n" );
                     ret = DELETE_FAIL;
                 }
                 oldrootblockno = ndstptr->noderecno;
