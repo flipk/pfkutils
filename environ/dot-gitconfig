@@ -22,6 +22,8 @@
 	ssub = !git submodule foreach git status
 	dt = difftool
 	dtc = difftool --cached
+[status]
+	submoduleSummary = true
 [diff]
 	tool = meld
 [merge]
