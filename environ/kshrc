@@ -311,7 +311,6 @@ alias ec='emacsclient --no-wait '
 alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
-alias sudo='$HOME/bin/sudo ; cd .'
 
 #FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
 
