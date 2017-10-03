@@ -1,4 +1,12 @@
 
+/** \file BlockCache.C
+ * \brief The BlockCache implementation
+ * \author Phillip F Knaack
+ * 
+ * This file implements all the methods of the BlockCache object.
+ * This object manages arbitrary accesses to blocks of a file, using
+ * underlying PageIO and PageCache objects. */
+
 #include "BlockCache.H"
 #include "BlockCache_internal.H"
 
@@ -13,7 +21,7 @@ BlockCache :: BlockCache( PageIO * _io, int max_bytes )
 
 BlockCache :: ~BlockCache( void )
 {
-    // clean list?
+    /** \todo clean the list first? investigate. */
     delete bcl;
     delete pc;
 }

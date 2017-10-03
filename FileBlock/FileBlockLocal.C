@@ -1,4 +1,11 @@
 
+/** \file FileBlockLocal.C
+ * \brief implements FileBlockLocal class
+ * \author Phillip F Knaack
+ *
+ * This file implements the FileBlockLocal class.
+ */
+
 #include "FileBlockLocal.H"
 #include "FileBlockLocal_internal.H"
 

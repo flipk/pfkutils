@@ -1,18 +1,40 @@
 
+/** \file FileBlockLocal.H
+ * \brief Defines the "Local File" implementation of FileBlockInterface
+ * \author Phillip F Knaack
+ */
+
 #ifndef __FILE_BLOCK_LOCAL_H__
 #define __FILE_BLOCK_LOCAL_H__
 
 #include "FileBlock_iface.H"
 #include "dll2.H"
+#include "ExtentMap.H"
+
+/** \brief A "Local File" implementation of FileBlockInterface
+ * 
+ * This class talks to a BlockCache to implement file storage.
+ * internally it uses an ExtentMap to keep track of the condition
+ * of the file.
+ * \note The contents of the ExtentMap is stored within the file
+ *       itself; the ExtentMap will also have entries marking the 
+ *       portions of the file in use where the ExtentMap is stored. */
+/** \todo the file info junk must be added here eventually */
 
 class FileBlockLocal : public FileBlockInterface {
-// xxx
+    /** \brief the ExtentMap showing used and free portions of the file */
+    Extents map;
+    /** \brief the interface to read and write the file itself */
     BlockCache * bc;
 public:
+    /** \brief Constructor
+     * \param _bc a BlockCache object which will be used to access
+     *   the contents of the file */
     FileBlockLocal( BlockCache * _bc );
+    /** \brief Destructor
+     * \note This does \b not destroy the BlockCache which was passed in
+     *   to the constructor!  The caller must destroy the BlockCache. */
     ~FileBlockLocal( void );
-
-    // xxx file info junk goes here eventually.
 
     /*virtual*/ UINT32 alloc( int size );
     /*virtual*/ void free( UINT32 id );

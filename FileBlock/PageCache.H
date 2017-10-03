@@ -16,8 +16,7 @@ class PageCache {
     PageIO * io;
     PageCachePageList * pgs;
 public:
-//    static const int PAGE_SIZE = 65536;
-    static const int PAGE_SIZE = 1024; // xxx testing
+    static const int PAGE_SIZE = 65536;
     PageCache( PageIO * _io, int _max_pages );
     ~PageCache(void);
     PageIO * get_io(void) { return io; }
@@ -49,7 +48,7 @@ public:
     // return false if some error occurred
     virtual bool  get_page( PageCachePage * pg ) = 0;
     virtual bool  put_page( PageCachePage * pg ) = 0;
-    virtual int   get_num_pages(void) = 0;
+    virtual int   get_num_pages(bool * page_aligned = NULL) = 0;
     virtual off_t get_size(void) = 0;
 };
 
@@ -66,7 +65,7 @@ public:
     // return false if some error occurred
     bool get_page( PageCachePage * pg );
     bool put_page( PageCachePage * pg );
-    int get_num_pages(void);
+    int get_num_pages(bool * page_aligned = NULL);
     off_t get_size(void);
 };
 

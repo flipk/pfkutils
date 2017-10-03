@@ -141,8 +141,14 @@ bool
 PageIOFileDescriptor :: get_page( PageCachePage * pg )
 {
     lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
-    if (read(fd, pg->get_ptr(), PageCache::PAGE_SIZE) < 0)
+    int cc = read(fd, pg->get_ptr(), PageCache::PAGE_SIZE);
+    if (cc < 0)
         return false;
+    if (cc != PageCache::PAGE_SIZE)
+    {
+        // zero-fill the remainder of the page.
+        memset(pg->get_ptr() + cc, 0, PageCache::PAGE_SIZE - cc);
+    }
     return true;
 }
 
@@ -157,14 +163,20 @@ PageIOFileDescriptor :: put_page( PageCachePage * pg )
 }
 
 int
-PageIOFileDescriptor :: get_num_pages(void)
+PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
 {
     struct stat sb;
     if (fstat(fd, &sb) < 0)
         return -1;
     if ((sb.st_size & (PageCache::PAGE_SIZE -1 )) != 0)
+    {
+        if (page_aligned)
+            *page_aligned = false;
         return (sb.st_size / PageCache::PAGE_SIZE) + 1;
+    }
     // else
+    if (page_aligned)
+        *page_aligned = true;
     return (sb.st_size / PageCache::PAGE_SIZE);
 }
 
