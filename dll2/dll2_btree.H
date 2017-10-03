@@ -1,16 +1,7 @@
 
 #include <string.h>
 
-//  LListBTREE
-//     - int btree_key( void )
-//     - LListBTREELink btree_link
-
-struct LListBTREELink {
-    // this is a class so that we can have an 
-    // automatic constructor.
-    void * onlist;
-    LListBTREELink( void ) { onlist = 0; }
-};
+// this is an internal type used by LListBTREE
 
 template <class T, int ORDER>
 struct LListBTREENode {
@@ -27,7 +18,20 @@ struct LListBTREENode {
         }
 };
 
-template <class T, int ORDER>
+// to use LListBTREE, type T must have a companion comparator class
+// which provides information about how to do keying on the item. This
+// comparator class must have the following static member:
+//
+//    static int key_compare( T * item, BTREE_Key_Type key )
+//    static int key_compare( T * item, T * item2 )
+//    static char * key_format( T * item )
+//
+// this method must return -1 if the item->key is less than key,
+// 0 if the item->key is equal to the key, 1 if the item->key is 
+// greator than key.
+
+template <class T, class BTREE_Key_Type,
+          class BTREE_Key_Comparator, int instance, int ORDER>
 class LListBTREE {
     static const int HALF_ORDER = ORDER / 2;
     static const int ORDER_MO   = ORDER - 1;
@@ -40,6 +44,8 @@ class LListBTREE {
     int numnodes;
     int numitems;
     int depth;
+
+    LList <T,instance>  items;
 
     void empty_store( NODESTORE * store )
         {
@@ -176,19 +182,22 @@ public:
         {
             delete root;
         }
-    T * find( int key )
+    T * find( BTREE_Key_Type key )
         {
             NODE * n = root;
-            T * t;  int i,v;  if ( numitems == 0 ) return 0;
+            T * t;
+            int i,v;
+            if ( numitems == 0 )
+                return 0;
             while ( 1 )
             {
                 for ( i = 0; i < n->numkeys; i++ )
                 {
                     t = n->keys[i];
-                    v = t->btree_key();
-                    if ( v == key )
+                    v = BTREE_Key_Comparator::key_compare(t, key);
+                    if ( v == 0 )
                         return t;
-                    if ( v < key )
+                    if ( v < 0 )
                         break;
                 }
                 if ( n->leaf )
@@ -199,15 +208,14 @@ public:
 
     void add( T * nt )
         {
-            if ( nt->btree_link.onlist != 0 )
+            if ( items.onlist(nt))
                 DLL2BAIL(( "ERROR! LListBTREE item is already on list!\n" ));
+            items.add(nt);
 
             NODESTORE store;
             NODE * n = root;
             T * t;
-            int i, v, key;
-
-            key = nt->btree_key();
+            int i, v;
 
             // start walking down from the rootnode a level at a time,
             // until we either find an exact match or we hit a leaf.
@@ -219,10 +227,12 @@ public:
             {
                 for ( n->cur = 0; n->cur < n->numkeys; n->cur++ )
                 {
-                    int k = n->keys[n->cur]->btree_key();
-                    if ( k == key )
+                    int k = 
+                        BTREE_Key_Comparator::key_compare(
+                            n->keys[n->cur], nt);
+                    if ( k == 0 )
                         DLL2BAIL(( "ERROR! LListBTREE item is duplicate!\n" ));
-                    if ( k <= key )
+                    if ( k <= 0 )
                         break;
                 }
 
@@ -262,7 +272,6 @@ public:
                         n->keys[i] = n->keys[i-1];
                     n->keys [n->cur]   = nt;
                     n->nodes[n->cur+1] = right;
-                    nt->btree_link.onlist = (void*)this;
                     numitems++;
                     break;
                 }
@@ -304,9 +313,7 @@ public:
             NODESTORE store;
             NODE * n = root, * foundn = 0;
             T * t;
-            int i, v, foundnindex, key;
-
-            key = dt->btree_key();
+            int i, v, foundnindex;
 
             // begin walking down the tree looking for the
             // item. at each node, store a pointer and index
@@ -322,10 +329,12 @@ public:
             {
                 for ( i = 0; i < n->numkeys; i++ )
                 {
-                    int k = n->keys[i]->btree_key();
-                    if ( k == key )
+                    int k =
+                        BTREE_Key_Comparator::key_compare(
+                            n->keys[i], dt);
+                    if ( k == 0 )
                         exact = true;
-                    if ( k <= key )
+                    if ( k <= 0 )
                         break;
                 }
 
@@ -636,7 +645,7 @@ public:
 
             empty_store( &store );
             numitems--;
-            dt->btree_link.onlist = 0;
+            items.remove(dt);
         }
 
     void _printtree( NODE * n )
@@ -649,8 +658,9 @@ public:
                 if ( n->nodes[i] )
                     _printtree( n->nodes[i] );
                 if ( n->keys[i] )
-                    printf( "node at %#x index %d -> %d\n",
-                            n, i, n->keys[i]->btree_key() );
+                    printf( "node at %#x index %d -> %s\n",
+                            n, i, 
+                            BTREE_Key_Comparator::key_format(n->keys[i]));
             }
             if ( n->nodes[i] )
                 _printtree( n->nodes[i] );

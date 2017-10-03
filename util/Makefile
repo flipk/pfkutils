@@ -10,7 +10,7 @@ OBJS= $(CPPSRCS:.C=.o) $(CSRCS:.c=.o)
 CC=  gcc
 CPP= g++
 INCS=  -I../dll2 -I../h
-DEFS= 
+DEFS= -D_FILE_OFFSET_BITS=64
 LIBS= 
 OPTS= -O3 -Wall -Werror
 

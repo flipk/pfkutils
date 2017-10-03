@@ -12,6 +12,7 @@ exit 0
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
 #define DLL2_CHECKSUMS      0
 #define DLL2_INCLUDE_BTREE  1
 #include "dll2.H"
@@ -25,19 +26,123 @@ exit 0
 */
 
 struct thing {
-    LListBTREELink btree_link;
-    int btree_key( void ) { return v; }
+    LListLinks <thing> links[1];
     thing( int _v ) { v = _v; inlist = false; }
     int v;
     bool inlist;
 };
 
+class thingBtreeComparator {
+public:
+    static int key_compare( thing * item, int key ) {
+        if (item->v < key) return 1;
+        if (item->v > key) return -1;
+        return 0;
+    }
+    static int key_compare( thing * item, thing * item2 ) {
+        if (item->v < item2->v) return 1;
+        if (item->v > item2->v) return -1;
+        return 0;
+    }
+    static char * key_format( thing * item ) {
+        static char string[20];
+        sprintf(string,"%d",item->v);
+        return string;
+    }
+};
+
+struct memory_block {
+    LListLinks <memory_block> links[1];
+    size_t size;
+    char buf[0];
+
+    memory_block(size_t sz) { size = sz; }
+    void * operator new(size_t sz, int real_size) {
+        return (void*) 
+            ::malloc(real_size + sizeof(memory_block));
+    }
+    void operator delete(void * ptr) {
+        ::free(ptr);
+    }
+    void * get_ptr(void) {
+        return (void*)((char*)this + sizeof(links) + sizeof(size));
+    }
+    static memory_block * get_block(void * _ptr) {
+        memory_block * b = (memory_block *) _ptr;
+        char * ptr = (char*)_ptr;
+        ptr -= (sizeof(b->links) + sizeof(b->size));
+        b = (memory_block *) ptr;
+        return b;
+    }
+};
+
+class memory_manager {
+    LList <memory_block,0> items;
+    size_t size;
+    size_t peak_size;
+    int alloc_count;
+public:
+    memory_manager(void) {
+        printf("memory manager initializing\n");
+        size = 0;
+        peak_size = 0;
+        alloc_count = 0;
+    }
+    ~memory_manager(void) {
+        printf("alloc_count %d, items %d, size %d, peak %d\n",
+               alloc_count, 
+               items.get_cnt(),
+               size, peak_size);
+    }
+    void * alloc(size_t sz) {
+        memory_block * b = new(sz) memory_block(sz);
+        items.add(b);
+        size += sz;
+        if (size > peak_size)
+            peak_size = size;
+        alloc_count++;
+        return b->get_ptr();
+    }
+    void free(void * ptr) {
+        memory_block * b = memory_block::get_block(ptr);
+        size -= b->size;
+        items.remove(b);
+        delete b;
+    }
+};
+
+memory_manager mgr;
+
+void *
+operator new(size_t sz)
+{
+    return mgr.alloc(sz);
+}
+
+void *
+operator new[](size_t sz)
+{
+    return mgr.alloc(sz);
+}
+
+void
+operator delete(void * ptr)
+{
+    mgr.free(ptr);
+}
+
+void
+operator delete[](void * ptr)
+{
+    mgr.free(ptr);
+}
+
 #if 1
 
-#define NUMS 1
+#define NUMS 2
 
 #if NUMS==1
-#define BTORDER 13
+#define BTORDER 25
 #define MAX     500000
 #define REPS    5000000
 #elif NUMS==2
@@ -46,7 +151,8 @@ struct thing {
 #define REPS    50000000
 #endif
 
-typedef LListBTREE<thing,BTORDER> BT;
+typedef LListBTREE<thing,int,
+                   thingBtreeComparator, 0, BTORDER> BT;
 
 thing ** a;
 

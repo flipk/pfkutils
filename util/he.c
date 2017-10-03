@@ -1,4 +1,7 @@
 
+#define _GNU_SOURCE 
+#define _FILE_OFFSET_BITS 64
+
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -70,6 +73,7 @@ he_main( int argc, char ** argv )
 {
     struct stat sb;
     int i, c;
+    int open_options;
 
     if ( argc != 2 )
     {
@@ -89,10 +93,14 @@ he_main( int argc, char ** argv )
 
     readonly = 0;
     file_name = argv[1];
-    file_descriptor = open( file_name, O_RDWR );
+    open_options = 0;
+#ifdef O_LARGEFILE
+    open_options |= O_LARGEFILE;
+#endif
+    file_descriptor = open( file_name, open_options | O_RDWR );
     if ( file_descriptor < 0 )
     {
-        file_descriptor = open( file_name, O_RDONLY );
+        file_descriptor = open( file_name, open_options | O_RDONLY );
         if ( file_descriptor < 0 )
         {
             perror( "open" );
@@ -159,6 +167,7 @@ void
 get_file_data( off_t pos, unsigned char *data, int len )
 {
     int rlen;
+
     if ( pos < 0 )
     {
         lseek( file_descriptor, 0, SEEK_SET );
@@ -168,7 +177,12 @@ get_file_data( off_t pos, unsigned char *data, int len )
     }
     else
     {
-        lseek( file_descriptor, pos, SEEK_SET );
+#ifdef __CYGWIN__
+        /* ??? wtf? */
+        _lseek64( file_descriptor, pos, SEEK_SET );
+#else
+        lseek64( file_descriptor, pos, SEEK_SET );
+#endif
         rlen = len;
     }
     read( file_descriptor, data, rlen );

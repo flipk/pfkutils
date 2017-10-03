@@ -12,11 +12,11 @@ HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 
 OBJS=	$(SRCS:.C=.o)
 CC=	g++
-INCS=	-I../h -I../dll2
+INCS=	-I../pkutils/h -I../pkutils/dll2
 DEFS=	-D_FILE_OFFSET_BITS=64
 # -DDLL2_CHECKSUMS=0 -DDLL2_STRICT_WALKING=0
 OPTS=	-Wall -Werror -g3
-LIBS=	../dll2/dll2_hash.o
+LIBS=	../pkutils/dll2/dll2_hash.o
 
 all: xmakefile
 	@make -f xmakefile $(TARG)
