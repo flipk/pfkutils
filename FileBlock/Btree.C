@@ -219,7 +219,8 @@ BtreeInternal :: del( _BTDatum * key  )
  * \param node_fbn  the FileBlock ID of the node to walk
  * \return true if the entire node was printed uninterrupted, or false 
  *         if BtreePrintinfo::print_item returned false, indicating that
- *         the entire tree-walk should be terminated. */
+ *         the entire tree-walk should be terminated.
+ */
 bool
 BtreeInternal :: printnode( BtreePrintinfo * pi, UINT32 node_fbn )
 {

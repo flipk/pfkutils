@@ -28,6 +28,10 @@ types.  Click on the following links to read about each of them.
 <li> \ref Templates (see templates FileBlockT, BlockCacheT, and BTDatum)
 </ul>
 
+
+
+Author: Phillip F Knaack <pknaack1@netscape.net>
+
 */
 
 
