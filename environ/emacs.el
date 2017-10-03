@@ -3,10 +3,10 @@
 ;
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(blink-matching-paren-distance nil)
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
@@ -14,18 +14,22 @@
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
  '(inhibit-startup-screen t)
- '(speedbar-show-unknown-files t)
  '(initial-scratch-message "")
- '(menu-bar-mode t)
+ '(menu-bar-mode nil)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
- '(tool-bar-mode nil nil (tool-bar)))
+ '(speedbar-show-unknown-files t)
+ '(tool-bar-mode nil nil (tool-bar))
+ '(verilog-auto-delete-trailing-whitespace t)
+ '(verilog-auto-inst-column 10)
+ '(verilog-auto-newline nil)
+ '(verilog-indent-begin-after-if nil))
 
 (custom-set-faces
-  ;; custom-set-faces was added by Custom.
-  ;; If you edit it by hand, you could mess it up, so be careful.
-  ;; Your init file should contain only one such instance.
-  ;; If there is more than one, they won't work right.
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  '(cursor ((t (:background "white" :foreground "black"))))
  '(menu ((((type x-toolkit)) (:background "grey85" :foreground "black"))))
  '(mouse ((t (:background "white" :foreground "black"))))
@@ -94,7 +98,7 @@
     (setq c-basic-offset c-mode-indent
 	  indent-tabs-mode tabs-mode
 	  tab-width c-mode-tabwidth)
-    (local-set-key "\C-u" 'fix-buffer-my-way)))
+    (local-set-key "\C-u" 'fix-c-buffer-my-way)))
 
 (defun set-c-mode ( my-indent my-tabs my-tabwidth )
   "Set the C mode parameters"
@@ -112,7 +116,21 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (add-hook 'c-mode-hook   'set-c-mode-thingies)
 (add-hook 'c++-mode-hook 'set-c-mode-thingies)
 
-(defun fix-buffer-my-way ()
+(defun fix-verilog-buffer-my-way ()
+  ""
+  (interactive)
+  (progn
+    (indent-region (point-min) (point-max) nil)
+    (untabify (point-min) (point-max))))
+
+(defun set-verilog-mode-thingies () "setup for verilog mode"
+  (interactive)
+  (setq indent-tabs-mode nil)
+  (local-set-key "\C-u" 'fix-verilog-buffer-my-way))
+
+(add-hook 'verilog-mode-hook 'set-verilog-mode-thingies)
+
+(defun fix-c-buffer-my-way ()
   ""
   (interactive)
   (progn
@@ -144,6 +162,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key "\C-x\C-y" 'clearcase-checkout-file)
 (global-set-key "\C-xy" 'cscope-window)
 (global-set-key "\C-xY" 'cscope-rebuild)
+
+(global-set-key [C-tab] 'buffer-menu)
 
 ; (call-process "argv[0]" infile buffer display "argv[1]" "argv[2]"...)
 ; infile describes the file to use as stdin
