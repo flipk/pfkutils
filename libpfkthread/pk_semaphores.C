@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_semaphores.C
+ * \brief implementation of PK_Semaphores and PK_Semaphore
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -21,6 +26,7 @@
 #include "pk_semaphores.H"
 #include "pk_timers.H"
 
+/** \cond internal */
 PK_Semaphores * PK_Semaphores_global;
 
 PK_Semaphores :: PK_Semaphores( void )
@@ -48,6 +54,7 @@ PK_Semaphores :: ~PK_Semaphores( void )
     PK_Semaphores_global = NULL;
     pthread_mutex_destroy( &mutex );
 }
+/** \endcond */
 
 //
 

@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_timers_internal.H
+ * \brief internals of timer management
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -19,6 +23,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \cond INTERNAL */
+
 enum { PK_TIMER_OQ, PK_TIMER_HASH, PK_TIMER_NUMLISTS };
 
 enum pk_timer_type { PK_TIMER_MSG, PK_TIMER_FUNC, PK_TIMER_COND };
@@ -29,7 +35,7 @@ public:
     int ordered_queue_key;  // initially, ticks
     int tid;
 //    int set_time;  // only useful for debugging
-    int expire_time;
+    uint64_t expire_time;
     pk_timer_type type;
     union {
         struct { // type == PK_TIMER_MSG
@@ -49,8 +55,8 @@ public:
 class PK_Timer_hash_1 {
 public:
     static int hash_key( PK_Timer * item ) { return item->tid; }
-    static int hash_key( int key ) { return key; }
-    static bool hash_key_compare( PK_Timer * item, int key )
+    static int hash_key( const int key ) { return key; }
+    static bool hash_key_compare( PK_Timer * item, const int key )
     { return ( item->tid == key ); }
 };
 
@@ -60,9 +66,7 @@ class PK_Timer_List {
                    PK_Timer_hash_1,PK_TIMER_HASH>  hash;
 public:
     PK_Timer_List( void ) { }
-    void add( PK_Timer * pkt ) {
-        oq.add( pkt, pkt->ordered_queue_key ); hash.add( pkt );
-    }
+    void add( PK_Timer * pkt ) { oq.add( pkt, pkt->ordered_queue_key ); hash.add( pkt ); }
     void remove( PK_Timer * pkt ) { oq.remove( pkt ); hash.remove( pkt ); }
     PK_Timer * get_head( void ) { return oq.get_head(); }
     PK_Timer * get_next( PK_Timer * pkt ) { return oq.get_next(pkt); }
@@ -71,3 +75,4 @@ public:
 //    bool onlist( PK_Timer * pkt ) { return oq.onlist(pkt); }
 //    bool onthislist( PK_Timer * pkt ) { return oq.onthislist(pkt); }
 };
+/** \endcond */

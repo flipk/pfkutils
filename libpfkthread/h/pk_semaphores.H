@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_semaphores.H
+ * \brief definition of PK_Semaphore for PK_Thread
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -31,6 +36,17 @@
 
 enum { PK_SEM_LIST, PK_SEM_HASH, PK_SEM_NUMLISTS };
 
+/** a semaphore.
+ * this semaphore is a counting semaphore: the \ref take method attempts
+ * to subtract 1 from the value, blocking (either for a timeout period,
+ * or forever) if the value is at zero, and the \ref give method
+ * adds one, resuming a blocked \ref take if one exists.
+ * \note the initial value of the semaphore is 1, which is suitable for
+ *       use as a mutex (a \ref take and \ref give around critical code
+ *       regions. if however a thread-to-thread signal is required, an
+ *       initial \ref take should be perform immediately after creation
+ *       to drop the value of the semaphore to 0, so that it is now suitable
+ *       for use as a signaling device. */
 class PK_Semaphore {
     pthread_mutex_t  mutex;
     pthread_cond_t   cond;
@@ -40,17 +56,48 @@ class PK_Semaphore {
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
     PK_Semaphore( const char * _name );
     ~PK_Semaphore( void );
+    /** \cond INTERNAL */
     friend class PK_Semaphores; // only create thru PK_Semaphores class
+    /** \endcond */
     char * name;
 public:
+    /** \cond INTERNAL */
     LListLinks <PK_Semaphore> links[PK_SEM_NUMLISTS];
+    /** \endcond */
+    /** return the name string of the semaphore
+     * \return character string representing the name of the semaphore */
     const char * get_name( void ) { return name; }
-    // false if timeout
+    /** attempt to acquire the semaphore (decrement value).
+     * if the current value of the semaphore is zero, the calling
+     * thread will block for up to the given number of timer ticks
+     * waiting for a \ref give.
+     * \note if multiple processes are blocked waiting on the same
+     *       semaphore, they are queued in FIFO order: a \ref give will 
+     *       wake up the next waiter in the queue.
+     * \param ticks  the number of timer ticks to wait for a \ref give. <ul>
+     *              <li> -1 : wait forever
+     *              <li> 0 : attempt to take, and return immediately
+     *                   whether success or failure
+     *              <li> >0 : if not available, block for up to the
+     *                   specified number of ticks waiting for a \ref give.
+     *              </ul>
+     * \return <ul> <li> true if the semaphore was taken (value was
+     *         decremented) or <li> false if there was a timeout </ul> */
     bool take( int ticks );
+    /** acquire the semaphore (decrement the value).
+     * this call is equivialent to \ref take(-1), to wait forever if the
+     * semaphore is not available. */
     void take( void ) { (void) take( -1 ); }
-    void give( void );
+    /** release the semaphore (increment the value).
+     * this call increments the value of the semaphore. if there is a 
+     * waiter blocked in \ref take, it will be resumed.
+     * \note if multiple processes are blocked waiting on the same
+     *       semaphore, they are queued in FIFO order: a \ref give will 
+     *       wake up the next waiter in the queue. */
+ void give( void );
 };
 
+/** \cond INTERNAL */
 class PK_Semaphore_hash_1 {
 public:
     static int hash_key( PK_Semaphore * item ) {
@@ -106,5 +153,6 @@ public:
 };
 
 extern PK_Semaphores * PK_Semaphores_global;
+/** \endcond */
 
 #endif /* __SEMAPHORES_H__ */

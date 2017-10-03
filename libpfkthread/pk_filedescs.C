@@ -1,4 +1,8 @@
-/*
+
+/** \file pk_filedescs.C
+ * \brief implementation of file descriptor manager
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -29,6 +33,7 @@
 
 PK_File_Descriptor_Manager * PK_File_Descriptors_global;
 
+/** \cond INTERNAL */
 PK_File_Descriptor_List :: ~PK_File_Descriptor_List( void )
 {
     //? destroy pending data on the list
@@ -120,3 +125,4 @@ PK_File_Descriptor_Manager :: unregister_fd( int pkfdid )
     }
     return obj;
 }
+/** \endcond */

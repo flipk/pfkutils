@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_threads_internal.H
+ * \brief internals of thread management
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -20,6 +24,8 @@
  */
 
 #include "stringhash.H"
+
+/** \cond INTERNAL */
 
 class PK_Thread_hash_1 {
 public:
@@ -115,3 +121,4 @@ public:
         return ret;
     }
 };
+/** \endcond */

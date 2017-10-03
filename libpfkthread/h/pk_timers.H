@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_timers.H
+ * \brief definition of timer manager
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -23,6 +28,8 @@
 
 #include "dll2.H"
 #include "pk_messages.H"
+
+#include <stdint.h>
 
 class PK_Timer;
 class PK_Timer_List;
@@ -51,6 +58,7 @@ public:
     }
 };
 
+/** \cond INTERNAL */
 class PK_Timer_Manager {
     pthread_mutex_t  mutex;
     PK_Timer_List  * timers;
@@ -66,7 +74,7 @@ class PK_Timer_Manager {
     int  _create( PK_Timer *, int ticks );
     void  expire( PK_Timer * );
     int ticks_per_second;
-    int   global_time;
+    uint64_t global_time;
 public:
     PK_Timer_Manager( int tps );
     ~PK_Timer_Manager( void );
@@ -80,9 +88,10 @@ public:
 //
     int   tps( void ) { return ticks_per_second; }
     void  sleep( int ticks );
-    int   get_time( void ) { return global_time; }
+    uint64_t get_time( void ) { return global_time; }
 };
 
 extern PK_Timer_Manager * PK_Timers_global;
+/** \endcond */
 
 #endif /* __TIMERS_H__ */

@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_filedescs.H
+ * \brief file descriptor gateway to message queues
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -21,20 +26,30 @@
 #ifndef __PK_FILEDESCS_H__
 #define __PK_FILEDESCS_H__
 
+/** specify what kind of activity a file descriptor should be registered for. */
 typedef enum {
-    PK_FD_None = 0,
-    PK_FD_Read = 1,
-    PK_FD_Write = 2,
-    PK_FD_ReadWrite = 3 // note this is (PK_FD_Read | PK_FD_Write)
+    PK_FD_None = 0,     /**< no activity; used as an initializer */
+    PK_FD_Read = 1,     /**< the filedesc is registered for read */
+    PK_FD_Write = 2,    /**< the filedesc is registered for write */
+    PK_FD_ReadWrite = 3 /**< the filedesc is registered for read and write */
 } PK_FD_RW;
 
-// this message is sent to the qid registered for a fd
+/** message sent when a registered filedesc becomes active 
+ * \see PK_Thread::register_fd */
 PkMsgIntDef(PK_FD_Activity, 0x5c27, 
             int fd;
             PK_FD_RW rw;
             void * obj;
     );
 
+/** \var PK_FD_Activity::fd
+ *       the descriptor that saw activity
+ *  \var PK_FD_Activity::rw
+ *       the activity that was seen descriptor
+ *  \var PK_FD_Activity::obj
+ *       the parameter that was registered with the descriptor. */
+
+/** \cond INTERNAL */
 class PK_File_Descriptor_List;
 class PK_File_Descriptor_Thread;
 
@@ -57,5 +72,6 @@ public:
 };
 
 extern PK_File_Descriptor_Manager * PK_File_Descriptors_global;
+/** \endcond */
 
 #endif /* __PK_FILEDESCS_H__ */

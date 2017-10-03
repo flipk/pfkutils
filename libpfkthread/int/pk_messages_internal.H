@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_messages_internal.H
+ * \brief internals of message queues
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -24,6 +28,8 @@
 #include <stdlib.h>
 
 #include "stringhash.H"
+
+/** \cond INTERNAL */
 
 enum { PK_MSG_LIST, PK_MSG_IDHASH, PK_MSG_NAMEHASH, PK_MSG_NUMLISTS };
 
@@ -100,3 +106,4 @@ public:
         list.remove( q ); id_hash.remove( q ); name_hash.remove( q );
     }
 };
+/** \endcond */

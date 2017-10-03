@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_timers.C
+ * \brief implementation of timer manager and time-functions
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -26,6 +30,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/** \cond INTERNAL */
 PK_Timer_Manager * PK_Timers_global;
 
 PK_Timer_Manager :: PK_Timer_Manager( int _tps )
@@ -140,6 +145,11 @@ PK_Timer_Manager :: cancel( int tid,
                             int * ticks_remaining )
 {
     PK_Timer * t;
+
+    if ( msgp )
+        *msgp = NULL;
+    if ( ticks_remaining )
+        *ticks_remaining = 0;
 
     _lock();
     t = timers->find( tid );
@@ -267,3 +277,4 @@ PK_Timer_Manager :: _thread2( void )
         } while ( t );
     }
 }
+/** \endcond */

@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_threads.C
+ * \brief implementation of core of PK_Threads and PK_Thread
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -126,7 +130,7 @@ PK_Threads :: run( void )
 
 PK_Thread :: PK_Thread( void )
 {
-    startup = new startup_sync;
+    startup = new PK_Thread_startup_sync;
 
     pthread_cond_init( &startup->cond, NULL );
     pthread_mutex_init( &startup->mutex, NULL );

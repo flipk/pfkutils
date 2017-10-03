@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file stringhash.C
+ * \brief utility function for hashing strings
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack

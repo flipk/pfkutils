@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_messages_ext.H
+ * \brief message and message queue definitions for external messages
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
   This file is part of the "pfkutils" tools written by Phil Knaack
   (pknaack1@netscape.net).
   Copyright (C) 2008  Phillip F Knaack

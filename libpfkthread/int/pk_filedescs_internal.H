@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_filedescs_internal.H
+ * \brief internals of file descriptor maintenance
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -24,6 +28,7 @@
 
 #include "dll2.H"
 
+/** \cond INTERNAL */
 enum {
     PK_FD_Queue,
     PK_FD_Hash,
@@ -42,8 +47,8 @@ struct PK_File_Descriptor {
 class PK_File_Descriptor_Hash_Comparator {
 public:
     static int hash_key( PK_File_Descriptor * item ) { return item->pkfdid; }
-    static int hash_key( int key ) { return key; }
-    static bool hash_key_compare( PK_File_Descriptor * item, int key ) {
+    static int hash_key( const int key ) { return key; }
+    static bool hash_key_compare( PK_File_Descriptor * item, const int key ) {
         return (item->pkfdid == key); 
     }
 };
@@ -72,5 +77,6 @@ public:
     ~PK_File_Descriptor_Thread( void ); // ?
     void stop( void ); // used by PK_Threads to shut down threading
 };
+/** \endcond */
 
 #endif /* __PK_FILEDESCS_INTERNAL_H__ */

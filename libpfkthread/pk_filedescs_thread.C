@@ -1,5 +1,8 @@
 
-/*
+/** \file pk_filedescs_thread.C
+ * \brief implementation of thread to support file descriptor manager
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -29,6 +32,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 
+/** \cond INTERNAL */
 PK_File_Descriptor_Thread :: PK_File_Descriptor_Thread(
     PK_File_Descriptor_Manager * _mgr )
 {
@@ -127,3 +131,4 @@ PK_File_Descriptor_Thread :: entry( void )
         }
     }
 }
+/** \endcond */

@@ -1,5 +1,9 @@
 
-/*
+/**
+ * \file pk_messages.C
+ * \brief implementation of internal messaging manager
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -26,6 +30,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
+/** \cond INTERNAL */
 PK_Message_Manager * PK_Messages_global;
 
 PK_Message_Manager :: PK_Message_Manager( void )
@@ -265,3 +270,4 @@ PK_Message_Queue :: ~PK_Message_Queue( void )
     }
     free( name );
 }
+/** \endcond */

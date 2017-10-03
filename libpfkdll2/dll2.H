@@ -30,38 +30,68 @@ easy-to-use doubly linked lists of any data type.
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 </pre>
 
- \section dll2features Features
-
-The DLL2 library includes the following features:
+\section dll2features Features
 
 <ul>
-<li>   LListHash : self-balancing hash tables that support millions
-       of elements and user-defined comparators for fast hash search.
-  <ul>
-  <li>   Insert or remove at head or tail.
-  </ul>
-<li>   LListOrderedQ : ordered queue (i.e. for fast timer lists).
-<li>   LListLRU : least-recently used lists with promote functionality.
-<li>   LListHashLRU : compound container type demonstration
-<li>   LListBTREE : memory btree of arbitrary order.
 <li>   LListLinks : list links placed into each item
+  <ul>
+  <li>  downside: requires objects defined with links as members of object
+  <li>  upside: does not require allocs or frees for insertion/deletion like
+        an STL map or list
+  </ul>
+<li>   insert or remove at either end of list
+<li>   iteration in both directions (except LListHash)
+<li>   removal from any position in list
 <li>   linked list checksums and validations.
 <li>   crosslinked list detection and prevention.
 <li>   uninitialized object prevention.
 <li>   in-use object deletion prevention.
 </ul>
 
- \section dll2contents  Contents
+ \section dll2classes Classes
 
-\ref dll2discussion
+The DLL2 library includes the following classes:
 
-\ref dll2usage
+<ul>
+<li>   LList : a simple linked list
+  <ul>
+  <li>   O(1) Insert or dequeue at head or tail.
+  <li>   O(1) Iteration in either direction.
+  <li>   O(1) Remove from anywhere in list.
+  </ul>
+<li>   LListHash : self-balancing hash tables that support millions
+       of elements and user-defined comparators for fast hash search.
+  <ul>
+  <li>   User-defined hashing function
+  <li>   auto-rehashing as hash grows or shrinks
+  <li>   O(1) lookups
+  <li>   O(1) insertion (except when triggering auto-rehash)
+  <li>   O(1) removal (except when triggering auto-rehash)
+  <li>   (does not support iteration)
+  </ul>
+<li>   LListOrderedQ : ordered queue (i.e. for fast timer lists).
+  <ul>
+  <li>  O(ln n) insertion in order
+  <li>  O(1) remove
+  <li>  O(1) tick interval
+  <li>  O(1) iteration
+  </ul>
+<li>   LListLRU : least-recently used lists with promote functionality.
+  <ul>
+  <li>  O(1) insert and remove
+  <li>  O(1) iteration
+  <li>  O(1) promotion
+  </ul>
+<li>   LListHashLRU : compound container type demonstration
+  <ul>
+  <li>  combines functionality of hash and lru in one object
+  </ul>
+<li>   LListBTREE : memory btree of arbitrary order.
+</ul>
 
-\ref dll2config
+Please see <a href=pages.html> Related Pages </a>.
 
- \page dll2discussion DLL2 Discussion
-
- \section Introduction
+ \page dll2intro Introduction
 
 Linked lists are an integral part of complex software designs.  Many
 processes inevitably require linked lists containing hundreds or
@@ -89,7 +119,7 @@ as well as helping ensure that information gathered from fault reports
 will conclusively identify the location of the root cause directly,
 rather than indirectly or not at all.
 
- \section dll2errorscaught Programming errors caught by this API
+ \page dll2errorscaught Programming errors caught by this API
 
 When discussing the design decisions for the DLL2 API, it is important
 to first discuss the types of programming errors the library is
@@ -291,8 +321,7 @@ in debugging problems when they arise.
 Finally, in the author’s opinion, no software exists in the world
 which is “fully debugged and stable.”
 
-
- \page dll2usage Usage
+ \page dll2overview DLL2 Overview
 
 The entire DLL2 C++ API is provided by a single header file, dll2.H.
 This header file contains a series of C++ template definitions for the
@@ -331,7 +360,7 @@ objects simultaneously.  This guarantees that the items on the list
 cannot become internally inconsistent (e.g. it would not be possible
 to have an item on the LListHash but not on the LListLRU).
 
- \section dll2listinstancenumber List instance number
+ \page dll2listinstancenumber List instance number
 
 The DLL2 API introduces a concept called a “list instance number.”  So
 that an item may exist on more than one list simultaneously, the item
@@ -400,7 +429,7 @@ added in the future, the links array will automatically grow to
 accommodate the new list.  See the definition of struct disk_block in
 the snippet below for an example of this.
 
- \section dll2llistlinks LListLinks definition
+ \page dll2llistlinks LListLinks definition
 
 When declaring the data type that will be stored in a linked list, the
 data type must itself contain the “links” pointers used by the linked
@@ -432,7 +461,7 @@ user must reference ‘next’ and ‘prev’ pointers through the ‘get_next�
 and ‘get_prev’ methods found in the list objects.  This is to force
 validations at each step.
 
- \section dll2LList LList object
+ \page dll2LList LList object
 
 In order to maintain a list of objects, the list object itself must be
 declared.  When declaring a list object, two things must be specified:
@@ -463,7 +492,7 @@ Disk_cache_clean_dirty_list_t  disk_cache_dirty_list;
 Refer to the documentation for the LList class for a list of methods
 it provides.
 
- \section dll2listhash LListHash object
+ \page dll2listhash LListHash object
 
 In order to use the LListHash data type, the user must implement a
 ‘comparator’ class.  This is a method-only class (no data) which
@@ -523,13 +552,13 @@ and referencing the appropriate members of the object.
 
 Refer to the LListHash documentation for a list of methods it provides.
 
- \section dll2llistlru LListLRU
+ \page dll2llistlru LListLRU
 
 This object implements a least-recently-used list. Internally it is
 implemented as a LList.  The tail of this list represents the newest
 item and the head is the oldest.
 
- \section dll2listorderedq LListOrderedQ
+ \page dll2listorderedq LListOrderedQ
 
 The ordered queue is a curious data structure with its origins in the
 UNIX operating system for managing timer lists.  The item data type
@@ -570,7 +599,7 @@ figure shows the configuration one tick after that.
 
 Refer to the documentation for LListHashLRU for methods it provides.
 
- \section dll2customcompoundcontainer DLL2 Compound Container Types
+ \page dll2customcompoundcontainer DLL2 Compound Container Types
 
 If data items must exist on multiple lists at one time, it may make
 more sense to implement a single class which contains those multiple
@@ -703,8 +732,6 @@ public:
 \endcode
 
 */
-
-/** \todo read http://www.stack.nl/~dimitri/doxygen/external.html */
 
 #ifndef __DLL2_H_
 #define __DLL2_H_

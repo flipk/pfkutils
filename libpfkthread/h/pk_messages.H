@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file pk_messages.H
+ * \brief message and message queue definitions
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -31,6 +36,11 @@
 #include <signal.h>
 #include <stdio.h>
 
+/** a macro for defining internal message classes.
+
+xxx
+
+ */
 #define PkMsgIntDef( classname, typevalue, body ) \
 class classname : public pk_msg_int { \
 public: \
@@ -39,11 +49,17 @@ public: \
     body \
 }
 
-// the COMMA definition is useful if the 'constructor' argument below
-// would like to insert member-constructions.  yeah, i know, it's kind
-// of gross -- i admit, not my finest hour.
+/** a comma.
+ * the COMMA definition is useful if the \ref PkMsgIntDef2 class constructor
+ * would like to insert member-constructions. yeah, i know, it's kind
+ * of gross -- i admit, not my finest hour. */
 #define COMMA ,
 
+/**
+
+xxx
+
+*/
 #define PkMsgIntDef2( classname, typevalue, body, \
                       constructargs, constructor ) \
 class classname : public pk_msg_int { \
@@ -55,16 +71,106 @@ public: \
     body \
 }
 
+/** base class for internal (thread-to-thread) message,
+ * see \ref PkMsgIntDef */
 class pk_msg_int {
 public:
     LListLinks <pk_msg_int> links[1];
-    UINT16    length; // automatically filled by PkMsgIntDef*
-    UINT16    type; // automatically filled by PkMsgIntDef*
-    UINT32    src_q; // user must fill
-    UINT32    dest_q; // user must fill
+    /** length in bytes of the message, automatically populated.
+     * this field is automatically filled in by \ref PkMsgIntDef
+     * (using sizeof). */
+    UINT16    length;
+    /** type of the message body, automatically populated.
+     * this field is automatically filled in by \ref PkMsgIntDef and
+     * comes from the TYPE value declared by that macro. */
+    UINT16    type;
+    /** source message queue id, user may fill if required.
+     * this field is not automatically populated. the user must
+     * fill it if the recipient of this message wants to reply
+     * to sender. if the recipient will not reply to sender, this
+     * field does not have to be populated. */
+    UINT32    src_q;
+    /** destination message queue id, user must fill.
+     * this field is not automatically populated. the user must
+     * fill this in order for the message to be delivered to its
+     * destination. */
+    UINT32    dest_q;
 //
+    /** constructor, called automatically by \ref PkMsgIntDef. 
+     * user should not have to call this.
+     * \param _length the length of the message in bytes.
+     * \param _type  the type of the message, from the TYPE constant. */
     pk_msg_int( UINT16 _length, UINT16 _type )
         : length( _length ), type( _type ) { }
+    /** automatic method for upcasting to derived message type.
+     * derived types defined by \ref PkMsgIntDef will have a TYPE
+     * constant. this template method can be used to convert a 
+     * pk_msg_int pointer to the derived message type.
+     * \param ptr   a pointer to a derived message type. this pointer
+     *             will be written if the base message \ref type value
+     *             matches the derived type's TYPE constant value,
+     *             or NULL if it does not match.
+     * \return true if the types match and ptr has been written,
+     *          or false if the types do not match.
+     *
+     * consider the following messages and thread class:
+     * \code
+     * PkMsgIntDef(MyMessage1, 0x0001, 
+     *             int field1;
+     *             int field2;
+     *     );
+     * PkMsgIntDef(MyMessage2, 0x0002, 
+     *             int field1;
+     *             int field2;
+     *     );
+     * class MyThread : public PK_Thread {
+     *    MyThread(void) { resume(); }
+     *    void entry(void);
+     * };
+     * \endcode
+     * the following two implementations of \a entry are identical.
+     * \code
+     * void MyThread::entry(void) {
+     *     pk_msg_int * msg;
+     *     while (1) {
+     *         int rcvd_qid;
+     *         msg = PK_Thread::msg_recv(1, &myqid, &rcvd_qid, -1);
+     *         MyMessage1 * msg1;
+     *         MyMessage2 * msg2;
+     *         if (msg->convert(&msg1))
+     *         {
+     *             // handle msg1
+     *         }
+     *         else if (msg->convert(&msg2))
+     *         {
+     *             // handle msg2
+     *         }
+     *         delete msg;
+     *     }
+     * }
+     * \endcode
+     * \code
+     * void MyThread::entry(void) {
+     *     union {
+     *         pk_msg_int * msg;
+     *         MyMessage1 * msg1;
+     *         MyMessage2 * msg2;
+     *     } u;
+     *     while (1) {
+     *         int rcvd_qid;
+     *         u.msg = PK_Thread::msg_recv(1, &myqid, &rcvd_qid, -1);
+     *         switch (u.msg->type) {
+     *         case MyMessage1::TYPE:
+     *             // handle u.msg1
+     *             break;
+     *         case MyMessage2::TYPE:
+     *             // handle u.msg2
+     *             break;
+     *         }
+     *         delete u.msg;
+     *     }
+     * }
+     * \endcode */
     template <class T> bool convert( T ** ptr ) {
         if ( type != T::TYPE )
             return false;
@@ -73,6 +179,7 @@ public:
     }
 };
 
+/** \cond INTERNAL */
 class PK_Message_Queue_List;
 
 class PK_Message_Manager {
@@ -93,5 +200,6 @@ public:
 };
 
 extern PK_Message_Manager * PK_Messages_global;
+/** \endcond */
 
 #endif /* __MESSAGES_H__ */

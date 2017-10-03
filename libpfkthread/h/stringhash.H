@@ -1,4 +1,9 @@
-/*
+
+/**
+ * \file stringhash.H
+ * \brief helper function for hashing strings into integers
+ * \author Phillip F Knaack <pknaack1@netscape.net>
+
     This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
@@ -21,6 +26,14 @@
 #ifndef __STRINGHASH_H__
 #define __STRINGHASH_H__
 
+/** hash a string into an integer.
+ * this method uses the djb2 string hash algorithm to
+ * generate an integer from a string that is useful for
+ * searching a hash based on a string. the algorithm attempts
+ * to reasonably-space ascii strings throughout the hash space.
+ * \param string   the string to hash
+ * \return a positive integer hash of the string
+ */
 int string_hash( const char * string );
 
 #endif /* __STRINGHASH_H__ */
