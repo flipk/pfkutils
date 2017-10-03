@@ -1,6 +1,6 @@
 
 TARG= libmytar.a
-SRCS= file_db.C
+SRCS= file_db.C update_file.C
 HDRS= file_db.H
 COPTS= -g3 -Wall -Werror
 INCS= -I .. -I ../dll2 -I ../bt

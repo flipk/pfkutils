@@ -90,11 +90,11 @@ file_db :: get_info_by_id( UINT32 id )
 {
     file_info * ret = NULL;
     Btree::rec * rec;
-    char buf[ sizeof(id) + 1 ];
+    datum_2_key  d2k;
 
-    buf[0] = 'i';
-    memcpy( buf+1, &id, sizeof(id) );
-    rec = bt->get_rec( (UCHAR*)buf, sizeof(buf) );
+    d2k.prefix_i = 'i';
+    d2k.id = id;
+    rec = bt->get_rec( (UCHAR*)&d2k, sizeof(d2k) );
 
     if ( rec )
     {
@@ -124,15 +124,16 @@ file_db :: get_info_by_fname( char * fname )
 
     // not counting nul but counting type prefix:
     char * buf = new char[ fname_len + 1 ];
-    buf[0] = 'n';
-    memcpy( buf+1, fname, fname_len );
+    datum_1_key * d1k = (datum_1_key *)buf;
+    d1k->prefix_n = 'n';
+    memcpy( d1k->fname, fname, fname_len );
     Btree::rec * rec = bt->get_rec( (UCHAR*)buf, fname_len+1 );
     delete[] buf;
 
     if ( rec )
     {
-        UINT32 id;
-        memcpy( &id, rec->data.ptr, sizeof(id) );
+        datum_1 * d1 = (datum_1 *)rec->data.ptr;
+        UINT32 id = d1->id.get();
         bt->unlock_rec( rec );
         return get_info_by_id( id );
     }
@@ -260,8 +261,6 @@ public:
                 {
                     delete_id * did = new delete_id;
                     memcpy( &did->id, ((char*)key)+1, sizeof(UINT32) );
-                    printf( "adding id %u to the delete list\n",
-                            did->id );
                     list.add( did );
                 }
                 fbn->unlock_block( magic, false );
@@ -372,7 +371,7 @@ file_db :: truncate_pieces( UINT32 id, UINT32 num_pieces )
     }
 }
 
-void
+bool
 file_db :: update_piece( UINT32 id, UINT32 piece_num,
                          char * buf, int buflen )
 {
@@ -408,9 +407,8 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
         if ( memcmp( &d3->digest, &dig, sizeof(dig) ) == 0 )
         {
             // match! no need to update contents.
-            printf( "match on piece %d\n", piece_num );
             bt->unlock_rec( d3rec );
-            return;
+            return false;
         }
     }
 
@@ -434,12 +432,51 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     ptr = bt->get_fbn()->get_block_for_write( blockno, NULL, &block_magic );
     memcpy( ptr, buf, buflen );
     bt->get_fbn()->unlock_block( block_magic, true );
-    printf( "updated piece %d\n", piece_num );
+
+    return true;
 }
 
 void
 file_db :: extract_piece( UINT32 id, UINT32 piece_num,
                           char * buf, int * buflen )
 {
-    
+    datum_3_key  d3k;
+
+    d3k.prefix_d = 'd';
+    d3k.id = id;
+    d3k.piece_num = piece_num;
+
+    Btree::rec * d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof(d3k) );
+    if ( !d3rec )
+    {
+        *buflen = 0;
+        return;
+    }
+
+    datum_3 * d3 = (datum_3 *) d3rec->data.ptr;
+
+    UINT32  db_len = d3->size.get();
+
+    if ( db_len > (UINT32) *buflen )
+    {
+        fprintf( stderr, "error, block too big!\n" );
+        kill(0,6);
+    }
+
+    *buflen = db_len;
+    if ( db_len > 0 )
+    {
+        UINT32 magic;
+        UINT32 blockno = d3->blockno.get();
+        UCHAR * ptr = bt->get_fbn()->get_block( blockno, &magic );
+        if ( !ptr )
+        {
+            fprintf( stderr, "internal error in extract_piece!\n" );
+            kill(0,6);
+        }
+        memcpy( buf, ptr, db_len );
+        bt->get_fbn()->unlock_block( magic, false );
+    }
+
+    bt->unlock_rec( d3rec );
 }

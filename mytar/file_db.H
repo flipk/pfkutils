@@ -101,8 +101,9 @@ public:
     // this deletes any excess datum 3's that may be present.
     // use num_pieces=='0' if a file is being deleted.
     void truncate_pieces( UINT32 id, UINT32 num_pieces );
-    // this will update or create a datum 3.
-    void update_piece( UINT32 id, UINT32 piece_num,
+    // this will update or create a datum 3. returns true if 
+    // the piece was modified or false if it was unchanged.
+    bool update_piece( UINT32 id, UINT32 piece_num,
                        char * buf, int buflen );
     void extract_piece( UINT32 id, UINT32 piece_num,
                         char * buf, int * buflen );
