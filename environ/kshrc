@@ -406,12 +406,14 @@ xrs() {
     fi
 }
 
+diffheight=50
+
 xsd() {
-    xterm +sb -title NoTitle -g 190x50+0+20 -e $SHELL -c "sd $1 $2" &
+    xterm +sb -title NoTitle -g 190x${diffheight}+0+20 -e $SHELL -c "sd $1 $2" &
 }
 
 xsd2() {
-    xterm +sb -title NoTitle -g 190x50+0+20 -e $SHELL -c "sd2 $1 $2" &
+    xterm +sb -title NoTitle -g 190x${diffheight}+0+20 -e $SHELL -c "sd2 $1 $2" &
 }
 
 sd() {
