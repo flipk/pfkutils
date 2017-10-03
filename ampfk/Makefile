@@ -2,6 +2,7 @@
 PROG= t
 HDRS= automake_parser.H condition.H parser.H tokenizer.H
 SRCS= automake_parser.cc automake_ostream.cc automake_findtargets.cc \
+	automake_rules.cc automake_variables.cc automake_utilities.cc \
 	condition.cc parser.cc tokenizer.cc main.cc
 OBJS= $(SRCS:.cc=.o)
 DEPS= $(SRCS:.cc=.d)
@@ -18,7 +19,7 @@ CPPFLAGS= -I$(HOME)/pfk/include/dll2
 .SUFFIXES: .d
 
 all: xmakefile
-	make -f xmakefile $(PROG)
+	make -f xmakefile -j 8 $(PROG)
 
 xmakefile: Makefile $(DEPS)
 	rm -f xmakefile xmakefile-tmp
@@ -30,13 +31,13 @@ xmakefile: Makefile $(DEPS)
 $(PROG): $(OBJS)
 	$(CXX) -o $(PROG) $(OBJS) $(LIBS)
 
-parser.cc parser.H : parser.Y
-	rm -f parser.cc parser.H
+parser.cc parser.h : parser.Y
+	rm -f parser.cc parser.h
 	$(YACC) -d parser.Y
 	mv y.tab.c parser.cc
-	mv y.tab.h parser.H
+	mv y.tab.h parser.h
 
-tokenizer.cc : parser.H tokenizer.L
+tokenizer.cc : parser.h tokenizer.L
 	$(LEX) tokenizer.L
 	mv lex.yy.c tokenizer.cc
 
@@ -47,5 +48,5 @@ tokenizer.cc : parser.H tokenizer.L
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f *~ $(OBJS) $(DEPS) $(PROG) parser.cc parser.H tokenizer.cc
+	rm -f *~ $(OBJS) $(DEPS) $(PROG) parser.cc parser.h tokenizer.cc
 	rm -f xmakefile xmakefile-tmp

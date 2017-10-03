@@ -65,23 +65,22 @@ automake_file :: make_amtarget(amword * word,
     amtarget * t = new amtarget;
 
     t->target = word;
+    t->target_underscored = new amword;
+    t->target_underscored->word = underscoreize(word->word);
     t->target_type = target_type;
     t->install_type = install_type;
 
     amvariable * v;
-    string * search;
+    string search;
 
 #define SEARCH(field,name) \
-    search = underscoreize(word->word); \
-    search->append("_"); \
-    search->append(#name); \
-    v = input_variables.find(*search); \
+    v = input_variables.find(*t->target_underscored->word + "_" + #name); \
     if (v) \
     { \
-        if (0) cout << "  found : " << *v;      \
+        if (0) cout << "  found : " << *v; \
+        input_variables.remove(v); \
         t->field = v; \
-    } \
-    delete search;
+    }
 
     SEARCH(sources,SOURCES);
     SEARCH(headers,HEADERS);
@@ -91,8 +90,18 @@ automake_file :: make_amtarget(amword * word,
     SEARCH(cflags,CFLAGS);
     SEARCH(cxxflags,CXXFLAGS);
     SEARCH(cppflags,CPPFLAGS);
+    SEARCH(lflags,LFLAGS);
+    SEARCH(yflags,YFLAGS);
 
 #undef SEARCH
+
+    for (amword * w = t->sources->value.get_head();
+         w;
+         w = t->sources->value.get_next(w))
+    {
+        t->objects.add(new amword(make_o(t, w)));
+    }
+    
 
     return t;
 }

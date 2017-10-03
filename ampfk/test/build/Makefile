@@ -1,16 +1,17 @@
-
-CC=gcc
-CFLAGS=-Wall
-CXX=g++
-CXXFLAGS=-Wall
-CPPFLAGS=
-AR=ar
-one_LDADD = libfour.a
-two_LDADD = libfour.a libthree.a
+srcdir = ..
+CC = gcc
+CFLAGS = -Wall
+CXX = g++
+CXXFLAGS = -Wall
+CPPFLAGS = -DCRAP
+AR = ar
+LEX = flex
+YACC = yacc
+YFLAGS = -d
+two_LDADD = libthree.a libfour.a
 two_LDFLAGS = -L/usr/lib -lm
-one_CPPFLAGS= -DCRAP
-
-srcdir=..
+one_LDADD = libfour.a
+one_CPPFLAGS = -DSTUFF=one -DSTUFF2=two
 
 all: xmakefile
 	make -f xmakefile libthree.a libfour.a two one
@@ -22,43 +23,46 @@ xmakefile: Makefile libthree_a-three.d libfour_a-four.d two-two.d one-one.d
 	cat libthree_a-three.d libfour_a-four.d two-two.d one-one.d >> xmakefile-tmp
 	mv xmakefile-tmp xmakefile
 
-libthree_a-three.d: $(srcdir)/three.cc $(srcdir)/three.h
-	$(CXX) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(three_CPPFLAGS) $(three_CXXFLAGS) -MT libthree_a-three.o -M -MF libthree_a-three.d $(srcdir)/three.cc
+libthree_a-three.d: $(srcdir)/three.cc
+	$(CXX) $(CXXFLAGS) $(libthree_a_CXXFLAGS) $(CPPFLAGS) $(libthree_a_CPPFLAGS) -MT ' libthree_a-three.o libthree_a-three.d ' -M -MF libthree_a-three.d $(srcdir)/three.cc
 
-libfour_a-four.d: $(srcdir)/four.c $(srcdir)/four.h
-	$(CC) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(four_CPPFLAGS) $(four_CFLAGS) -MT libfour_a-four.o -M -MF libfour_a-four.d $(srcdir)/four.c
+libfour_a-four.d: $(srcdir)/four.c
+	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -MT ' libfour_a-four.o libfour_a-four.d ' -M -MF libfour_a-four.d $(srcdir)/four.c
 
-two-two.d: $(srcdir)/two.cc 
-	$(CXX) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) $(two_CPPFLAGS) -MT two-two.o -M -MF two-two.d $(srcdir)/two.cc
+two-two.d: $(srcdir)/two.cc
+	$(CXX) $(CXXFLAGS) $(two_CXXFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) -MT ' two-two.o two-two.d ' -M -MF two-two.d $(srcdir)/two.cc
 
-one-one.d: $(srcdir)/one.c $(srcdir)/one.h
-	$(CC) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(one_CPPFLAGS) $(one_CFLAGS) -MT one-one.o -M -MF one-one.d $(srcdir)/one.c
+one-one.d: $(srcdir)/one.c
+	$(CC) $(CFLAGS) $(one_CFLAGS) $(CPPFLAGS) $(one_CPPFLAGS) -MT ' one-one.o one-one.d ' -M -MF one-one.d $(srcdir)/one.c
 
-libthree.a: libthree_a-three.o
+libthree.a: libthree_a-three.o $(libthree_a_LDADD)
 	rm -f libthree.a
-	$(AR) cq libthree.a libthree_a-three.o
+	$(AR) cq libthree.a  libthree_a-three.o $(libthree_a_LDADD) $(libthree_a_LDFLAGS)
 
-libfour.a: libfour_a-four.o
+libfour.a: libfour_a-four.o $(libfour_a_LDADD)
 	rm -f libfour.a
-	$(AR) cq libfour.a libfour_a-four.o
+	$(AR) cq libfour.a  libfour_a-four.o $(libfour_a_LDADD) $(libfour_a_LDFLAGS)
 
-two: two-two.o libfour.a libthree.a
-	$(CXX) -o two $(two_LDFLAGS) two-two.o $(two_LDADD)
+two: two-two.o $(two_LDADD)
+	rm -f two
+	$(CXX) $(CXXFLAGS) $(two_CXXFLAGS) -o two  two-two.o $(two_LDADD) $(two_LDFLAGS)
 
-one: one-one.o libfour.a
-	$(CXX) -o one $(one_LDFLAGS) one-one.o $(one_LDADD)
+one: one-one.o $(one_LDADD)
+	rm -f one
+	$(CC) $(CFLAGS) $(one_CFLAGS) -o one  one-one.o $(one_LDADD) $(one_LDFLAGS)
 
 libthree_a-three.o: $(srcdir)/three.cc
-	$(CXX) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(three_CPPFLAGS) $(three_CXXFLAGS) -c $(srcdir)/three.cc -o libthree_a-three.o
+	$(CXX) $(CXXFLAGS) $(libthree_a_CXXFLAGS) $(CPPFLAGS) $(libthree_a_CPPFLAGS) -c $(srcdir)/three.cc -o libthree_a-three.o
 
 libfour_a-four.o: $(srcdir)/four.c
-	$(CC) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CFLAGS) $(CPPFLAGS) $(four_CPPFLAGS) $(four_CFLAGS) -c $(srcdir)/four.c -o libfour_a-four.o
+	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -c $(srcdir)/four.c -o libfour_a-four.o
 
 two-two.o: $(srcdir)/two.cc
-	$(CXX) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CXXFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) $(two_CPPFLAGS) -c $(srcdir)/two.cc -o two-two.o
+	$(CXX) $(CXXFLAGS) $(two_CXXFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) -c $(srcdir)/two.cc -o two-two.o
 
-one-one.o: $(srcdir)/one.c $(srcdir)/one.h
-	$(CC) $(AM_INCLUDES) $(AM_CPPFLAGS) $(CFLAGS) $(CPPFLAGS) $(one_CPPFLAGS) $(one_CFLAGS) -c $(srcdir)/one.c -o one-one.o
+one-one.o: $(srcdir)/one.c
+	$(CC) $(CFLAGS) $(one_CFLAGS) $(CPPFLAGS) $(one_CPPFLAGS) -c $(srcdir)/one.c -o one-one.o
 
-clean:
+clean: 
 	rm -f xmakefile *.d *.o libthree.a libfour.a two one
+

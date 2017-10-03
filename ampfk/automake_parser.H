@@ -6,12 +6,32 @@
 #include <dll2.H>
 #include <iostream>
 
+struct amword;
+typedef LList<amword,0> amwordList;
+
 struct amword {
     LListLinks<amword> links[1];
     std::string * word;
+    amword(void) { word = NULL; }
+    amword(const amword *w) {
+        word = new std::string;
+        word->assign(*w->word);
+    }
+    amword(const std::string &str) {
+        word = new std::string;
+        word->assign(str);
+    }
+    amword(const amwordList &list) {
+        word = new std::string;
+        for (amword * w = list.get_head(); w; w = list.get_next(w))
+        {
+            word->append(" ");
+            word->append(*w->word);
+        }
+    }
+    ~amword(void) { if (word) delete word; }
 };
 
-typedef LList<amword,0> amwordList;
 
 std::ostream& operator<<(std::ostream& ostr, const amwordList& val);
 
@@ -27,6 +47,15 @@ struct amvariable {
     amwordList  value;
     bool sum;
     amvariable(void) { sum = false; }
+    amvariable(amvariable * v) {
+        var = v->var;
+        for (amword * w = v->value.get_head();
+             w;
+             w = v->value.get_next(w))
+        {
+            value.add(new amword(w));
+        }
+    }
     ~amvariable(void) { 
         amword * w;
         while ((w = value.dequeue_head()) != NULL)
@@ -85,6 +114,10 @@ public:
         if (item) hash.remove(item);
         return item;
     }
+    void remove(amvariable *v) {
+        list.remove(v);
+        hash.remove(v);
+    }
     amvariable *get_next(amvariable *item) const {
         return list.get_next(item);
     }
@@ -95,6 +128,8 @@ std::ostream& operator<<(std::ostream& ostr, const amvariables& val);
 struct amcommand {
     LListLinks<amcommand> links[1];
     amwordList  cmd;
+    amcommand(void) { }
+    amcommand(const std::string &str) { cmd.add(new amword(str)); }
     ~amcommand(void) {
         amword * w;
         while ((w = cmd.dequeue_head()) != NULL)
@@ -156,19 +191,29 @@ struct amtarget {
     amtarget(void) {
         target = NULL;
         sources = headers = includes = ldadd =
-            ldflags = cflags = cxxflags = cppflags = NULL;
+            ldflags = cflags = cxxflags = cppflags = 
+            lflags = yflags = NULL;
+    }
+    ~amtarget(void) {
+        amword * w;
+        while ((w = objects.dequeue_head()) != NULL)
+            delete w;
     }
     amword * target;
+    amword * target_underscored;
     enum tgttype { TARGET_TYPE_LIB, TARGET_TYPE_PROG } target_type;
     enum insttype { INSTALL_NONE, INSTALL_LIB, INSTALL_BIN } install_type;
     amvariable * sources;
     amvariable * headers;
+    amwordList   objects;
     amvariable * includes;
     amvariable * ldadd;
     amvariable * ldflags;
     amvariable * cflags;
     amvariable * cxxflags;
     amvariable * cppflags;
+    amvariable * lflags;
+    amvariable * yflags;
 };
 
 std::ostream& operator<<(std::ostream& ostr, const amtarget& val);
@@ -188,6 +233,14 @@ public:
     void tokenize(const char * filename); // debug only
     bool parse(const char * filename);
     void find_targets(void);
+    void set_srcdir(const std::string &path);
+    void make_variables(void);
+    void make_allrule(void);
+    void make_depfilerules(void);
+    void make_targetlinkrules(void);
+    void make_targetobjrules(void);
+    void make_lexyaccrules(void);
+    void make_cleanrule(void);
 
     amvariables     input_variables;
     amruleList      input_rules;
@@ -198,7 +251,16 @@ public:
     amruleList      output_rules;
 };
 
-std::ostream& operator<<(std::ostream& ostr, const automake_file& val);
+// utilities
+std::string replace_suffix(const std::string &file, const std::string &suffix);
+amword * make_d(const amtarget * t, const amword * source);
+amword * make_o(const amtarget * t, const amword * source);
+amword * make_h(const amword * source);
+amword * make_c_from_ly(const amtarget * t, const amword * source);
+amword * add_srcdir(const amword * src);
+bool is_cc(const amword * w); // also returns true for L and Y
+bool is_lex(const amword * w);
+bool is_lex_or_yacc(const amword * w);
 
 extern automake_file * parser_amf;
 void print_tokenized_file(void);

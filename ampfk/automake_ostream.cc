@@ -33,9 +33,8 @@ operator<<(std::ostream& ostr, const amvariables& val)
 {
     amvariable * t;
     for (t = val.get_head(); t; t = val.get_next(t))
-    {
         ostr << *t;
-    }
+    ostr << endl;
     return ostr;
 }
 
@@ -59,7 +58,7 @@ std::ostream&
 operator<<(std::ostream& ostr, const amrule& val)
 {
     ostr << val.targets << ": " << val.sources << endl;
-    ostr << val.commands;
+    ostr << val.commands << endl;
     return ostr;
 }
 
@@ -88,8 +87,10 @@ operator<<(std::ostream& ostr, const amtarget& val)
     case amtarget::INSTALL_BIN:  ostr << "(bin) ";    break;
     }
     ostr << endl;
+
 #define OUTFIELD(field) \
     if (val.field) ostr << "\t" << #field << ": " << val.field->value << endl;
+
     OUTFIELD(sources);
     OUTFIELD(headers);
     OUTFIELD(includes);
@@ -98,7 +99,23 @@ operator<<(std::ostream& ostr, const amtarget& val)
     OUTFIELD(cflags);
     OUTFIELD(cxxflags);
     OUTFIELD(cppflags);
+    OUTFIELD(lflags);
+    OUTFIELD(yflags);
+
 #undef  OUTFIELD
+
+    if (val.objects.get_cnt() > 0)
+    {
+        ostr << "\tobjects: ";
+        for (amword * w = val.objects.get_head();
+             w;
+             w = val.objects.get_next(w))
+        {
+            ostr << *w->word << " ";
+        }
+        ostr << endl;
+    }
+
     return ostr;
 }
 
@@ -108,21 +125,5 @@ operator<<(std::ostream& ostr, const amtargetList& val)
     amtarget * t;
     for (t = val.get_head(); t; t = val.get_next(t))
         ostr << *t;
-    return ostr;
-}
-
-std::ostream&
-operator<<(std::ostream& ostr, const automake_file& val)
-{
-    ostr << " **** input_variables ****" << endl;
-    ostr << val.input_variables;
-    ostr << " **** input_rules ****" << endl;
-    ostr << val.input_rules;
-    ostr << " **** targets ****" << endl;
-    ostr << val.targets;
-    ostr << " **** output_variables ****" << endl;
-    ostr << val.output_variables;
-    ostr << " **** output_rules ****" << endl;
-    ostr << val.output_rules;
     return ostr;
 }
