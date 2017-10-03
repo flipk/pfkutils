@@ -488,6 +488,7 @@ motion_detect(options, outfile, pth, fth)
         xwindisp_close();
 }
 
+#if 0
 static void
 dispartial(qs, ml, out)
     struct qcam_softc *qs;
@@ -530,3 +531,4 @@ dispartial(qs, ml, out)
             pgm_write(qs, out);
     qs->buffer = tmp;
 }
+#endif
