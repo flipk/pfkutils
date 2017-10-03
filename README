@@ -1,0 +1,13 @@
+
+The following packages are required in order to build pfkutils:
+
+bash
+make
+cvs
+gcc
+gcc-c++
+zlib-devel
+ncurses-devel
+byacc
+flex
+

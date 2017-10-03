@@ -12,6 +12,8 @@ PROG=	pfkutils.exe
 PROG=	pfkutils
 #endif
 
+all: $(PROG) ksh
+
 HDRS=	sudo.h main_prog.h main.h 
 CSRCS=	main.c 
 OBJS= $(CSRCS:.c=.o)
@@ -19,11 +21,40 @@ LIBS= -lcurses -lm -lpthread -lz
 
 DIRS=	implode tags.make tags.view ipipe2 dll2 \
 	util syslog states FileBlock treesync backup
-ELIBS=	implode/libimplode.a \
-	tags.make/libmaketags.a tags.view/libviewtags.a \
-	ipipe2/libi2.a util/libutil.a syslog/libsyslog.a \
-	states/libstates.a treesync/libtreesync.a \
+ELIBS=	implode/libimplode.a tags.make/libmaketags.a \
+	tags.view/libviewtags.a ipipe2/libi2.a util/libutil.a \
+	syslog/libsyslog.a states/libstates.a treesync/libtreesync.a \
 	FileBlock/libFileBlock.a backup/libpfkbak.a
+
+implode/libimplode.a:
+	cd implode && make
+
+tags.make/libmaketags.a:
+	cd tags.make && make
+
+tags.view/libviewtags.a:
+	cd tags.view && make
+
+ipipe2/libi2.a:
+	cd ipipe2 && make
+
+util/libutil.a:
+	cd util && make
+
+syslog/libsyslog.a:
+	cd syslog && make
+
+states/libstates.a:
+	cd states && make
+
+treesync/libtreesync.a: FileBlock/libFileBlock.a
+	cd treesync && make
+
+FileBlock/libFileBlock.a: dll2/libdll2.a
+	cd FileBlock && make
+
+backup/libpfkbak.a: FileBlock/libFileBlock.a
+	cd backup && make
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
@@ -34,9 +65,24 @@ ELIBS+= mytar/libmytar.a
 #ifdef linux
 CSRCS+=	sudo.c
 ELIBS+= bt/libbt.a xlock/libxlock.a enctelgate/libetg.a teld/libteld.a
-DIRS+=  bt xlock threads mytar enctelgate teld
+DIRS+=  bt xlock mytar enctelgate teld
 ELIBS+=  mytar/libmytar.a
 LIBS+= -L/usr/X11R6/lib -lX11
+
+bt/libbt.a:
+	cd bt && make
+
+xlock/libxlock.a:
+	cd xlock && make
+
+enctelgate/libetg.a:
+	cd enctelgate && make
+
+teld/libteld.a:
+	cd teld && make
+
+mytar/libmytar.a:
+	cd mytar && make
 #endif
 
 #ifdef cygwin32
@@ -83,19 +129,14 @@ CFLAGS= -O3 $(CPPFLAGS)
 # needs to be last
 ELIBS+=	dll2/libdll2.a
 
-all: subdirs $(PROG) ksh
+dll2/libdll2.a:
+	cd dll2 && make
 
 $(PROG): $(OBJS) $(ELIBS)
 	g++ -o $(PROG) $(OBJS) $(ELIBS) $(LIBS)
 	-rm -rf t
 	-mkdir t
 	-cd t && ln -s ../$(PROG) && ./$(PROG) -makelinks
-
-subdirs::
-	@for d in $(DIRS) ; do \
-		echo making in $$d ; \
-		( cd $$d ; make ) || exit 1 ; \
-	done
 
 .c.o:
 	gcc $(CFLAGS) -c $*.c -o $*.o

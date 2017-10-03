@@ -26,10 +26,10 @@ if [ "x$1" = x--clean ] ; then
     exit 0
 fi
 
-ARCH=`uname -s`-`uname -r`
+PFKARCH=`uname -s`-`uname -r`
 EXE_NAME=0
 
-case $ARCH in
+case $PFKARCH in
     FreeBSD-*)
 	def=freebsd
 	awk=awk
@@ -45,22 +45,22 @@ case $ARCH in
     CYGWIN_NT-*|CYGWIN_98-*)
 	def=cygwin32
 	awk=gawk
-# cygwin's $ARCH is ugly and complex. simplify it!
-	ARCH=cygwin32
+# cygwin's $PFKARCH is ugly and complex. simplify it!
+	PFKARCH=cygwin32
 	EXE_NAME=1
 	;;
     Linux-*)
 	def=linux
 	awk=awk
-#	ARCH=linux
+#	PFKARCH=linux
 	;;
     *)
-	echo "unknown arch $ARCH, please modify configure and Makefile.in's"
+	echo "unknown arch $PFKARCH, please modify configure and Makefile.in's"
 	exit 1
 	;;
 esac
 
-echo configuring for $ARCH, Makefile.in opt is $def
+echo configuring for $PFKARCH, Makefile.in opt is $def
 
 IFDEFSYM=$def
 export IFDEFSYM
@@ -95,7 +95,7 @@ for f in $precomps ; do
         echo '# please edit the master and rerun ./configure!'
         echo '#'
         echo ''
-        sed -e 1d -e s/MY_USERNAME/$USER/g -e s/MY_ARCH/$ARCH/g < ${f}.in
+        sed -e 1d -e s/MY_USERNAME/$USER/g -e s/MY_ARCH/$PFKARCH/g < ${f}.in
     ) > $f
     chmod a-w $f
 done

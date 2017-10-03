@@ -463,6 +463,8 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     int i, inlength, numargs;
     enum m_math_retvals err;
 
+    memset(stack, 0, sizeof(stack));
+
     instring = _instring;
     *instring = 0;
     inlength = 1;

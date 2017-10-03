@@ -272,9 +272,9 @@ case x$ENV_SET in
         ;;
 esac
 
-ARCH=`$HOME/bin/architecture`
-export ARCH
-__verbose ARCH=$ARCH
+PFKARCH=`$HOME/bin/architecture`
+export PFKARCH
+__verbose PFKARCH=$PFKARCH
 
 # reverse mode : rev or mr      \E[7m
 # exit attributes: sgr0 or me   \E[m

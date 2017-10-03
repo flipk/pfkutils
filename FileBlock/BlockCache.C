@@ -237,7 +237,7 @@ BlockCache :: truncate( off_t offset )
         {
             fprintf(stderr, "ERROR: BlockCache :: truncate: "
                     "block at offset %lld is still in use!\n",
-                    bcb->get_offset());
+                    (long long) bcb->get_offset());
             return;
         }
     }

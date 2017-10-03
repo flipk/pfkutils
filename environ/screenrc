@@ -1,7 +1,7 @@
 bell 'Bell in window % ~'
 activity 'Activity in window % ~'
 autodetach on
-defscrollback 2000
+defscrollback 5000
 chdir
 startup_message off
 deflogin off

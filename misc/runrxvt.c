@@ -20,8 +20,8 @@
  */
 
 #if 0
-gcc -mno-cygwin -Wl,--subsystem,windows runrxvt.c -DGEOM=1 -o runrxvt15.exe
-gcc -mno-cygwin -Wl,--subsystem,windows runrxvt.c -DGEOM=2 -o runrxvt20.exe
+/cygdrive/c/mingw/bin/gcc -Wl,--subsystem,windows runrxvt.c -DGEOM=1 -o runrxvt15.exe
+/cygdrive/c/mingw/bin/gcc -Wl,--subsystem,windows runrxvt.c -DGEOM=2 -o runrxvt20.exe
 exit 0
 #endif
 
@@ -38,7 +38,7 @@ exit 0
 #endif
 
 #define      PROGRAM  "c:\\cygwin\\bin\\rxvt.exe"
-#define PROGRAM_ARGS  "-font " GEOMETRY " -e bash -i"
+#define PROGRAM_ARGS  "-ut -font " GEOMETRY " -e bash -i"
 #define         HOME  "c:\\Users\\flipk"
 
 int WINAPI
