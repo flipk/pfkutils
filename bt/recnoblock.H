@@ -98,7 +98,11 @@ public:
 
     // return some statistics
     void cache_info( int * bitmap_pages, int * data_pages, int * dirty );
-    void file_info( int * num_segments, int * recs_in_use, int * recs_free );
+
+    void file_info( int * _num_segments,
+                    int * _recs_in_use, int * _recs_free,
+                    int ** _perseg_used_array,
+                    int ** _perseg_free_array );
 };
 
 #ifdef RECNOBLOCK_INTERNAL

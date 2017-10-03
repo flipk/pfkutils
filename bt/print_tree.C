@@ -34,9 +34,9 @@ public:
                                        UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty ) {
 
-        printf( "key : " );
+        printf( "key (%d): ", keyrec );
         print_hex( key, keylen );
-        printf( "data: " );
+        printf( "data (%d): ", datrec );
         print_hex( dat, datlen );
         printf( "\n" );
 
@@ -88,13 +88,21 @@ main( int argc, char ** argv )
     FileBlockNumber * fbn = new FileBlockNumber( argv[2], 100 );
 
     int num_segments, recs_in_use, recs_free;
-    fbn->file_info( &num_segments, &recs_in_use, &recs_free );
+    int * perseg_used, * perseg_free;
+    fbn->file_info( &num_segments, &recs_in_use, &recs_free,
+                    &perseg_used, &perseg_free );
 
     if ( flag == GENERIC )
     {
+        int i;
         printf( "recno info:\n"
-                "num_segments = %d, recs_in_use = %d, recs_free = %d\n\n",
+                "num_segments = %d, recs_in_use = %d, recs_free = %d\n",
                 num_segments, recs_in_use, recs_free );
+        for ( i = 0; i < num_segments; i++ )
+            printf( "segment %d : used=%d free=%d%s\n", i, 
+                    perseg_used[i], perseg_free[i], 
+                    (i == (num_segments-1)) ? "    (partial)" : "" );
+        printf( "\n" );
     }
     if ( flag == RECNO )
     {

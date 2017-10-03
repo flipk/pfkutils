@@ -444,6 +444,7 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
         d3rec = bt->alloc_rec( sizeof(d3k), sizeof(datum_3) );
         memcpy( d3rec->key.ptr, &d3k, sizeof(d3k) );
         d3 = (datum_3 *) d3rec->data.ptr;
+        d3->size.set( 0 );
         d3_created = true;
     }
     else

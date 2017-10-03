@@ -713,7 +713,9 @@ FileBlockNumber :: cache_info( int * bitmap_pages,
 
 void
 FileBlockNumber :: file_info( int * _num_segments,
-                              int * _recs_in_use, int * _recs_free )
+                              int * _recs_in_use, int * _recs_free,
+                              int ** _perseg_used_array,
+                              int ** _perseg_free_array )
 {
     struct stat sb;
     fstat( fd, &sb );
@@ -721,6 +723,20 @@ FileBlockNumber :: file_info( int * _num_segments,
     int num_segments = sb.st_size / segmentsize;
     if (( sb.st_size % segmentsize ) != 0 )
         num_segments++;
+
+    int * perseg_used_array = NULL;
+    int * perseg_free_array = NULL;
+
+    if ( _perseg_used_array )
+    {
+        perseg_used_array = new int[num_segments];
+        *_perseg_used_array = perseg_used_array;
+    }
+    if ( _perseg_free_array )
+    {
+        perseg_free_array = new int[num_segments];
+        *_perseg_free_array = perseg_free_array;
+    }
 
     int num_recs = sb.st_size / recordsize;
 
@@ -733,13 +749,24 @@ FileBlockNumber :: file_info( int * _num_segments,
 
     for ( i = 0; i < num_segments; i++ )
     {
+        int thispage1=0, thispage0=0;
         if ( i != 0 )
-            p->init( i, i, fd, pagesize );
+            p->init( i * pages_per_segment, i, fd, pagesize );
         for ( j = reserved_bits; j < (pagesize*8); j++ )
             if ( p->getbit(j) )
+            {
                 count1++;
+                thispage1++;
+            }
             else
+            {
                 count0++;
+                thispage0++;
+            }
+        if ( perseg_used_array )
+            perseg_used_array[i] = thispage1;
+        if ( perseg_free_array )
+            perseg_free_array[i] = thispage0;
     }
     delete p;
 
@@ -907,7 +934,7 @@ main()
     printf( "completed %d reps in %d seconds, %d reps/second\n",
             r, stop - start, r / (stop-start) );
     int num_segments, recs_in_use, recs_free;
-    f.file_info( &num_segments, &recs_in_use, &recs_free );
+    f.file_info( &num_segments, &recs_in_use, &recs_free, NULL, NULL );
     printf( "file info: segments %d recs_in_use %d recs_free %d\n",
             num_segments, recs_in_use, recs_free );
 }
