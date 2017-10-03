@@ -79,6 +79,7 @@ public:
         checksum = 0;
 #endif
     }
+    void * get_onlist( void ) { return onlist; }
 };
 
 // to use LList, type T must have the following member:
@@ -281,6 +282,16 @@ private:
     theLListHash * hash;
     int hashv ( int key ) { return key % hashsize; }
     int count;
+    theLListHash * rev_eng_hashind( T * t ) {
+        unsigned long min  = (unsigned long) & hash[ 0 ];
+        unsigned long max  = (unsigned long) & hash[ hashsize-1 ];
+        unsigned long mine = (unsigned long) t->links[instance].get_onlist();
+        if ( mine == 0 || mine < min || mine > max ) return NULL;
+        unsigned long off  = mine - min;
+        if (( off % sizeof(theLListHash) ) != 0 )
+            DLL2BAIL(( "LLISTHASH corrupt onlist pointer?\n" ));
+        return (theLListHash *) mine;
+    }
 public:
     LListHash ( int _hashsize ) {
         hashsize = _hashsize;
@@ -309,16 +320,19 @@ public:
     }
     void remove( T * t ) {
         count--;
-        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
-        hash[ hashv( h ) ].remove( t );
+        theLListHash * lst = rev_eng_hashind( t );
+        if ( !lst )
+            DLL2BAIL(( "LLISTHASH remove: not on this hash?\n" ));
+        lst->remove( t );
     }
     bool onlist( T * t ) {
-        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
-        return hash[ hashv( h ) ].onlist( t );
+        return ( t->links[instance].onlist != 0 );
     }
     bool onthislist( T * t ) {
-        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
-        return hash[ hashv( h ) ].onthislist( t );
+        theLListHash * lst = rev_eng_hashind( t );
+        if ( !lst )
+            return false;
+        return true;
     }
 };
 

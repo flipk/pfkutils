@@ -1,0 +1,49 @@
+
+LIB= libpkthr.a
+CPPFLAGS= -Ih -Iint -I.. -I../dll2
+GCC= gcc $(CPPFLAGS) -O3
+GCCLINK= g++ $(CPPFLAGS) $(LINKFL)
+SRCS=  pk_messages.C pk_semaphores.C pk_threads.C pk_timers.C stringhash.C
+HDRS= h/pk_messages.H h/pk_semaphores.H h/pk_threads.H \
+	h/pk_timers.H h/stringhash.H int/pk_messages_internal.H \
+	int/pk_threads_internal.H int/pk_timers_internal.H
+
+OBJS= $(SRCS:.C=.o)
+
+LINKFL= -lpthread
+
+#ifdef solaris
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSOLARIS
+LINKFL+= -lsocket
+SRCS+= vsnprintf.c malloclock_stub.C
+#elifdef sunos
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSUNOS
+SRCS+= vsnprintf.c malloclock_stub.C
+#elifdef cygwin32
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DCYGWIN
+#else
+#endif
+
+all: $(LIB) t1 
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	ar cq $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+t1: $(LIB) test-1.C
+	$(GCCLINK) -g3 test-1.C -Ih $(LIB) -o t1
+
+.C.o:
+	$(GCC) -c $*.C
+
+depend: Makefile.in $(SRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(CPPFLAGS) $(SRCS) >> x
+	mv x Makefile
+
+clean:
+	rm -f xmakefile $(LIB) *.core  *.o *~
+	rm -f Makefile t1
+
+#DEPENDENCIES
