@@ -97,11 +97,13 @@ lbsol() {
 lbappccs() {
     export RUN_CCS=1
     lbsub gsdapp28 $*
+    unset RUN_CCS
 }
 
 lbappcmbps() {
     export RUN_CMBPS=1
     lbsub gsdapp28 $*
+    unset RUN_CMBPS
 }
 
 lbapp() {
