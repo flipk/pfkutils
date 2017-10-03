@@ -30,12 +30,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-#if defined(SOLARIS)
-extern "C" {
-    int utimes( char *, struct timeval * );
-};
-#endif
-
 struct opendir_path {
     DIR * dir;
     char * filepos;
@@ -633,8 +627,10 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
         }
 
         listen( fd, 1 );
-#if defined(CYGWIN) || defined(SOLARIS)
+#if defined(CYGWIN)
         int salen = sizeof( struct sockaddr_in );
+#elif defined(SOLARIS)
+        socklen_t salen = sizeof( struct sockaddr_in );
 #else
         u_int salen = sizeof( struct sockaddr_in );
 #endif

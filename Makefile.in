@@ -42,7 +42,7 @@ DIRS+= bt treesync
 #endif
 
 #ifdef solaris
-LIBS+= -lsocket
+LIBS+= -lsocket -lnsl
 CSRCS+= vsnprintf_stub.c
 #endif
 

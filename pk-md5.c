@@ -16,6 +16,12 @@ static void MD5Transform(u_int32_t [4], const unsigned char [64]);
  * a multiple of 4.
  */
 
+#define htole32(x) \
+	(((x) >> 24) & 0x000000FF) | \
+	(((x) << 24) & 0xFF000000) | \
+	(((x) >>  8) & 0x0000FF00) | \
+	(((x) <<  8) & 0x00FF0000)
+
 static void
 Encode (unsigned char *output, u_int32_t *input, unsigned int len)
 {
@@ -30,6 +36,12 @@ Encode (unsigned char *output, u_int32_t *input, unsigned int len)
  * Decodes input (unsigned char) into output (u_int32_t). Assumes len is
  * a multiple of 4.
  */
+
+#define le32toh(x) \
+	(((x) >> 24) & 0x000000FF) | \
+	(((x) << 24) & 0xFF000000) | \
+	(((x) >>  8) & 0x0000FF00) | \
+	(((x) <<  8) & 0x00FF0000)
 
 static void
 Decode (u_int32_t *output, const unsigned char *input, unsigned int len)

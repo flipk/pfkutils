@@ -38,7 +38,9 @@
 
 USER=`whoami`
 if [ ! -f /home/$USER/bin/architecture ] ; then
-    if [ -f /home/knaack/bin/architecture ] ; then
+    if [ -f /home/pknaack1/bin/architecture ] ; then
+        USER=pknaack1
+    elif [ -f /home/knaack/bin/architecture ] ; then
         USER=knaack
     elif [ -f /home/flipk/bin/architecture ] ; then
         USER=flipk

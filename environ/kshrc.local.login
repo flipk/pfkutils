@@ -62,6 +62,11 @@ sv() {
     ct setview $1
 }
 
+#
+# HOSTPREF could be set to specify a specific machine
+# to loadbalance to.  i.e.   HOSTPREF="-m gsdapp02"
+#
+
 lbsub() {
     SHELL=/bin/ksh
     export SHELL
@@ -70,17 +75,17 @@ lbsub() {
 
     if [[ $# -eq 1 ]] ; then
         __verbose INVOKING: bsub -q $1 -Is $SHELL
-        bsub -q $1 -Is $SHELL
+        bsub -q $1 $HOSTPREF -Is $SHELL
     else
         queue=$1
         shift
         if [[ $1 = "-q" ]] ; then
             shift
             __verbose INVOKING: bsub -q $queue -o $HOME/00_lbsub_%J $*
-            bsub -q $queue -o $HOME/00_lbsub_%J $*
+            bsub -q $queue $HOSTPREF -o $HOME/00_lbsub_%J $*
         else
             __verbose INVOKING: bsub -q $queue -Is $*
-            bsub -q $queue -Is $*
+            bsub -q $queue $HOSTPREF -Is $*
         fi
     fi
     __verbose bsub complete
@@ -125,8 +130,8 @@ lbgsd() {
 zeroversion() {
     ct ls $1 | 
      sed \
-        -e 's,^\(.*\) *Rule.*$,\1,'     \
-        -e 's,^\(.*\) *from.*$,\1,'     \
+        -e 's,^\(.*\)  *Rule.*$,\1,'     \
+        -e 's,^\(.*\)  *from.*$,\1,'     \
         -e 's,^\(.*/\).*$,\1,'          \
         -e 's,$,0,'
 }
@@ -319,6 +324,8 @@ if [[ x$RUN_CMBPS = x1 ]] ; then
       # NOTREACHED
   fi
 fi
+
+rm -f .sh_history
 
 # always make sure my /home/$USER/bin is the first
 # element of the path.

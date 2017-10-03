@@ -48,7 +48,7 @@ usage( void )
 "stack item left at the end is also an error.\n"
 "\n"
 "valid ops are: + - * times / and or xor not swap32 swap16 \n"
-"               rshift >> lshift << lt < lteq <= rt > rteq >= eq == \n"
+"               rshift >> lshift << lt < lteq <= gt > gteq >= eq == \n"
 "\n"
 "examples:\n"
 "\n"

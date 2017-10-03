@@ -46,7 +46,6 @@ FDMAP_DATA :: FDMAP_DATA( int _fd, bool connecting )
 }
 
 #if defined(SUNOS) || defined(SOLARIS) || defined(CYGWIN)
-#define socklen_t int
 #define setsockoptcast char*
 #else
 #define setsockoptcast void*
@@ -57,9 +56,9 @@ FDMAP_LISTEN :: handle_select_r( void )
 {
     int ear, nfd;
     struct sockaddr_in sa;
-    int salen = sizeof( sa );
+    socklen_t salen = sizeof( sa );
 
-    ear = accept( fd, (struct sockaddr *)&sa, (socklen_t*)&salen );
+    ear = accept( fd, (struct sockaddr *)&sa, &salen );
 
     if ( ear < 0 )
     {
@@ -196,6 +195,14 @@ FDMAP_DATA :: _handle_select_r( void )
                  other_fd->fd, cc );
         for ( int i = 0; i < cc; i++ )
             fprintf( logfd, "%02x ", bp[i] );
+        fprintf( logfd, "\n" );
+        for ( int i = 0; i < cc; i++ )
+        {
+            unsigned char c = bp[i];
+            if ( c < 0x20 || c > 0x7f )
+                c = '.';
+            fprintf( logfd, "%c", c );
+        }
         fprintf( logfd, "\n" );
     }
 
