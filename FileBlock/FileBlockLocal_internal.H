@@ -20,7 +20,7 @@ is the ASCII string \em "FILE BLOCK LOCAL" with no trailing NUL (this
 consumes 16 bytes).
 
 The size for blocks of extents maps is flexible.  The recommended
-value is 8KB; however they must not be more than 64KB in size.
+value is 32KB; however they must not be more than 64KB in size.
 
 The next 12 bytes contain an 8-byte offset and 4-byte size describing
 a portion of the file containing a piece-map, described below.
@@ -41,7 +41,7 @@ of the extent map, described below.
 
 \section FileBlockLocalFileFormatFileHeaderPiece Piece
 
-The extent map entries are encoded 8KB at a time.  First the size of
+The extent map entries are encoded 32KB at a time.  First the size of
 an extent is encoded as a 4-byte big-endian number.  If the extent is
 free, the highest-order bit is cleared.  If the extent is used, the
 highest-order bit is set.  Also, if the extent is used, the size is
@@ -51,6 +51,27 @@ the block id is not present.
 The file blocks where the the extent map is stored are themselves
 encoded in the extent map.  This must be taken into account when the
 extent map is being parsed to produce the file blocks.
+
+\section FileBlockLocalFileFormatExample Example
+
+A data file which has one million used extents and half a million free
+extents will consume the following amount of disk space:
+
+<pre>
+1,000,000 x 8 bytes per extent = 8,000,000 bytes
+  500,000 x 4 bytes per extent = 2,000,000 bytes
+10,000,000 / 32768 bytes per piece = 306 pieces
+</pre>
+
+While running, it will also consume the following amount of RAM:
+
+<pre>
+1,500,000 extent map entries x
+   (16 bytes per LListLinks * 4 LListLinks + 8 + 4 + 4) =
+1,500,000 x 80 = 120,000,000 bytes
+</pre>
+
+(Note this does not count the overhead of the hash table.)
 
 \see FileBlockHeader, PieceMapEntry
 
