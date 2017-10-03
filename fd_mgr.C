@@ -15,7 +15,7 @@ fd_interface :: make_nonblocking( void )
 }
 
 void
-fd_mgr :: loop( void )
+fd_mgr :: loop( struct timeval *tv )
 {
     fd_interface * fdi, * nfdi;
 
@@ -71,7 +71,10 @@ fd_mgr :: loop( void )
             break;
         }
 
-        cc = select( max+1, &rfds, &wfds, NULL, NULL );
+        cc = select( max+1, &rfds, &wfds, NULL, tv );
+
+        if ( tv != NULL && cc == 0 )
+            return;
 
         if ( cc <= 0 )
         {

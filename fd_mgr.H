@@ -66,7 +66,8 @@ public:
             fprintf( stderr, "unregistering fd %d\n", ifd->fd );
         ifds.remove( ifd );
     }
-    void loop( void );
+    void loop( struct timeval * tv );
+    void loop( void ) { while (1) loop( NULL ); }
 };
 
 #endif /* __FD_MGR_H__ */
