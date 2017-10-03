@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "pk_messages.H"
 #include "pk_semaphores.H"
@@ -40,11 +41,13 @@ enum { PK_THREAD_LIST, PK_THREAD_IDHASH,
        PK_THREAD_NAMEHASH, PK_THREAD_NUMLISTS };
 
 class PK_Thread {
+    friend class PK_Threads;
     char     * name;
     pthread_t  id;
     struct startup_sync {
         bool             waiting;
         bool             needed;
+        bool             runner_active;
         pthread_cond_t   cond;
         pthread_mutex_t  mutex;
     } * startup;
@@ -57,8 +60,15 @@ protected:
 public:
     PK_Thread( void );
     LListLinks <PK_Thread> links[PK_THREAD_NUMLISTS];
-    void set_name( char * n ) {
-        char * oldn = name, * newn = strdup( n );
+    void set_name( char * n, ... ) {
+        char * oldn = name, * newn;
+        char tempn[100];
+        va_list ap;
+        va_start(ap,n);
+        vsnprintf(tempn, sizeof(tempn)-1, n, ap);
+        tempn[sizeof(tempn)-1] = 0;
+        va_end(ap);
+        newn = strdup( tempn );
         th->unhash_name( this );
         name = newn;
         th->rehash_name( this );
@@ -70,11 +80,23 @@ public:
     // following are shortcuts for other apis
     //
     // messages - PK_Messages_global
-    static int msg_create( char * name ) {
-        return PK_Messages_global->create( name );
+    static int msg_create( char * name, ... ) {
+        va_list ap;
+        char tempn[100];
+        va_start(ap,name);
+        vsnprintf(tempn,sizeof(tempn)-1,name,ap);
+        tempn[sizeof(tempn)-1] = 0;
+        va_end(ap);
+        return PK_Messages_global->create( tempn );
     }
-    static int msg_lookup( char * name ) {
-        return PK_Messages_global->lookup( name );
+    static int msg_lookup( char * name, ... ) {
+        va_list ap;
+        char tempn[100];
+        va_start(ap,name);
+        vsnprintf(tempn,sizeof(tempn)-1,name,ap);
+        tempn[sizeof(tempn)-1] = 0;
+        va_end(ap);
+        return PK_Messages_global->lookup( tempn );
     }
     static bool msg_destroy( int qid ) {
         return PK_Messages_global->destroy( qid );
@@ -88,11 +110,23 @@ public:
                                          retqid, ticks );
     }
     // semaphores - PK_Semaphores_global
-    static PK_Semaphore * sem_create( char * name ) {
-        return PK_Semaphores_global->create( name );
+    static PK_Semaphore * sem_create( char * name, ... ) {
+        va_list ap;
+        char tempn[100];
+        va_start(ap,name);
+        vsnprintf(tempn,sizeof(tempn)-1,name,ap);
+        tempn[sizeof(tempn)-1] = 0;
+        va_end(ap);
+        return PK_Semaphores_global->create( tempn );
     }
-    static PK_Semaphore * sem_lookup( char * name ) {
-        return PK_Semaphores_global->lookup( name );
+    static PK_Semaphore * sem_lookup( char * name, ... ) {
+        va_list ap;
+        char tempn[100];
+        va_start(ap,name);
+        vsnprintf(tempn,sizeof(tempn)-1,name,ap);
+        tempn[sizeof(tempn)-1] = 0;
+        va_end(ap);
+        return PK_Semaphores_global->lookup( tempn );
     }
     static void sem_destroy( PK_Semaphore * s ) {
         PK_Semaphores_global->destroy( s );

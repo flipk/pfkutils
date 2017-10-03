@@ -86,8 +86,19 @@ PK_Threads :: run( void )
     pthread_mutex_init( &mut, NULL );
     running = true;
 
+    // all threads existing at this point are sitting in the
+    // initial wait-for-resume step.  so lets resume them all.
+
+    for (t = thread_list->get_head(); t; t = thread_list->get_next(t))
+        t->resume();
+
+    // now, wait for all the threads to die.  whenever any thread
+    // dies, the condition is poked.  when the last thread dies, 
+    // we return to the caller.
+
     while ( thread_list->get_cnt() > 0 )
         pthread_cond_wait( &runner_wakeup, &mut );
+
     running = false;
     pthread_mutex_destroy( &mut );
 }
@@ -140,6 +151,12 @@ PK_Thread :: _entry( void * _pk_thread )
 void
 PK_Thread :: resume( void )
 {
+    if (!th->running)
+        // resume does nothing, because th->run() is not started yet;
+        // when th->run() is started, all existing threads will be
+        // resumed.
+        return;
+
     bool send_sig = false;
 
     pthread_mutex_lock( &startup->mutex );

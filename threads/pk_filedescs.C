@@ -60,7 +60,9 @@ PK_File_Descriptor_Manager :: register_fd( int fd, PK_FD_RW rw,
     // find a unique id
     _lock();
     do {
-        pkfdid = random();
+        do {
+            pkfdid = random();
+        } while (pkfdid == -1  ||  pkfdid == 0); // never use -1 or 0
     } while (descs->find(pkfdid) != NULL);
     pkfd->pkfdid = pkfdid;
     descs->add(pkfd);
