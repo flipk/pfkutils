@@ -6,13 +6,17 @@ class Config_fd : public fd_interface {
     Pipe_Mgr * pipe_mgr;
     struct sockaddr_in * last_sa;
 
-    //xxx seq no validation not done
-    static const int  seq_hist_size = 10;
-    UINT32 seq_nos[ seq_hist_size ];
-    int  seq_no_pos;
+    UINT32 last_seq_no;
+    char * last_response_pkt;
+    int    last_response_len;
 
-    // xxx must store last seq_hist_size replies too
-    //     so that we can reply to repeated requests.
+    // send response from the last* buffer
+    void   send_response( void );
+    // call before send_response if there is a new one
+    void   fill_response( char * buf, int len );
+
+    // return true if the seqno is new
+    bool   check_last_seqno( UINT32 seq );
 
 public:
     Config_fd( Pipe_Mgr * _pipe_mgr, short udp_port_no );

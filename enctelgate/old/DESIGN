@@ -9,8 +9,51 @@ ENC TEL GATE PROXY + ENC TEL GATE WORKER
       - create packet encoder and decoder.
 - user and network exchange raw data; all raw data passes
   through packet_decoder filter.
-- if packet_decoder finds a packet, pipeno is examined; pipe manager
-  in pipe mgr array indexed by pipeno is given this packet.
+
+- proxy hookup fd requires pure virtual factory class
+  that constructs proxy gate fd and allocates pipe#
+
+- proxy gate fd requires pure virtual io class; proxy list mgr
+  constructs concrete io class which encodes pipe# and calls
+  net adm gate encoder
+
+- config fd requires pure virtual io class which proxy list mgr
+  makes concrete to trigger add-listen requests and delete-listen
+  requests
+
+
+use case 1 : packet arrival for any pipe
+- raw data PFK1 plus valid base64 data enters net adm gate fd
+- decoder recognizes header and body
+- decoder calls packet_decoder_io derived class method
+  which calls pipe mgr -> handle_pkt.
+- handle_pkt examines pipe number
+- calls pipe_list[ pipe_number ] -> handle_pkt
+
+use case 2 : packet arrives for pipe 0
+- switch on packet type
+     - add-listen request
+          - create proxy hookup fd
+     - delete-listen request
+          - delete proxy hookup fd
+            (implies that proxy list mgr must maintain list of 
+             port number -> proxy hookup mappings)
+     - connect request for pipe#
+          - create proxy gate fd in connect mode and put in pipe_list
+     - close request for pipe#
+          - delete proxy gate fd
+
+use case 3 : packet arrives for pipe>0
+- proxy gate fd writes packet data to fd
+
+use case 4 : connect arrives to proxy hookup
+- create proxy gate fd
+- allocate unused pipe#
+- send connect-request to remote pipe 0
+
+use case 5 : data arrives to proxy gate fd
+- construct data and send to remote pipe#
+
 
 
 
@@ -22,10 +65,11 @@ encoded with a meaningless newline inserted every 72 characters.
 
 A packet begins with the 4 character sequence "PFK1".
 What follows is a sequence of N 4-character base64-encoded characters.
-Each 4-character group translates into three bytes.
 Every 72 characters, a newline is inserted.
+Each 4-character group translates into three bytes.
 The packet contains the following data:
 	- two-byte big-endian packet length value (len)
+	- two-byte big-endian pipe number
 	- (len) bytes of packet data.
 	- two-byte big-endian checksum value
 		- note the checksum is calculated over only the data bytes

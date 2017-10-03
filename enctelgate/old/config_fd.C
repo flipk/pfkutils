@@ -39,14 +39,43 @@ Config_fd :: Config_fd( Pipe_Mgr * _pipe_mgr, short udp_port_no )
 
     last_sa = new sockaddr_in;
 
-    seq_no_pos = 0;
-    memset( &seq_nos, 0, sizeof( seq_nos ));
+    last_seq_no = 0;
+    last_response_pkt = NULL;
+    last_response_len = 0;
 }
 
 Config_fd :: ~Config_fd( void )
 {
     close( fd );
     delete last_sa;
+}
+
+void
+Config_fd :: send_response( void )
+{
+    sendto( fd, last_response_pkt, last_response_len, 0,
+            (struct sockaddr *) last_sa, sizeof( *last_sa ));
+}
+
+void
+Config_fd :: fill_response( char * buf, int len )
+{
+    if ( last_response_pkt )
+        delete[] last_response_pkt;
+    last_response_pkt = new char[len];
+    last_response_len = len;
+    memcpy( last_response_pkt, buf, len );
+}
+
+bool
+Config_fd :: check_last_seqno( UINT32 seq )
+{
+    if ( last_seq_no != seq )
+    {
+        last_seq_no = seq;
+        return true;
+    }
+    return false;
 }
 
 bool
@@ -85,35 +114,41 @@ Config_fd :: read( fd_mgr * mgr )
     case Config_Add_Listen_Port::TYPE:
     {
         printf( "add-listen-port %d\n", u.calp->port_number.get() );
-        //xxx handle it
-        Config_Add_Listen_Port_Reply  calpr;
-        calpr.sequence_number.set( u.calp->sequence_number.get() );
-        calpr.set_checksum();
-        sendto( fd, calpr.get_ptr(), calpr.get_len(), 0,
-                (struct sockaddr *)last_sa, sizeof( *last_sa ));
+        if ( check_last_seqno( u.calp->sequence_number.get() ) == true )
+        {
+            //xxx handle
+            Config_Add_Listen_Port_Reply  calpr;
+            calpr.sequence_number.set( u.calp->sequence_number.get() );
+            calpr.set_checksum();
+            fill_response( calpr.get_ptr(), calpr.get_len() );
+        }
+        send_response();
         break;
     }
     case Config_Delete_Listen_Port::TYPE:
     {
         printf( "delete-listen-port %d\n", u.cdlp->port_number.get() );
-        //xxx
-        Config_Delete_Listen_Port_Reply cdlpr;
-        cdlpr.sequence_number.set( u.cdlp->sequence_number.get() );
-        cdlpr.set_checksum();
-        sendto( fd, cdlpr.get_ptr(), cdlpr.get_len(), 0,
-                (struct sockaddr *)last_sa, sizeof( *last_sa ));
+        if ( check_last_seqno( u.cdlp->sequence_number.get() ) == true )
+        {
+            //xxx handle
+            Config_Delete_Listen_Port_Reply cdlpr;
+            cdlpr.sequence_number.set( u.cdlp->sequence_number.get() );
+            cdlpr.set_checksum();
+            fill_response( cdlpr.get_ptr(), cdlpr.get_len() );
+        }
+        send_response();
         break;
     }
     case Config_Display_Listen_Ports::TYPE:
     {
         printf( "displaying listen ports:\n" );
-        //xxx
+        //xxx handle
         break;
     }
     case Config_Display_Proxy_Ports::TYPE:
     {
         printf( "displaying proxy ports:\n" );
-        //xxx
+        //xxx handle
         break;
     }
     }
@@ -151,5 +186,4 @@ Config_fd :: write_to_fd( char * buf, int len )
     int cc;
     cc = sendto( fd, buf, len, /* flags */ 0, 
                  (struct sockaddr *) last_sa, sizeof(*last_sa) );
-    printf( "wrote udp frame of size %d\n", cc );
 }

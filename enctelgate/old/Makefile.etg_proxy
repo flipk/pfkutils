@@ -27,10 +27,13 @@ $(TARG): $(OBJS)
 
 .c.o:
 	@echo compiling $*.c
+	@gcc $(CFLAGS) -E $*.c > logs/$*.c
 	@gcc $(CFLAGS) -c -Wa,-a=logs/$*.L $*.c
 
 .C.o:
 	@echo compiling $*.C
+	@gcc $(CFLAGS) -E $*.C > logs/$*.C
+	@gcc -c -E logs/$*.C > logs/$*.C2 2> /dev/null
 	@gcc $(CFLAGS) -c -Wa,-a=logs/$*.Lx $*.C
 	@c++filt < logs/$*.Lx > logs/$*.L ; rm -f logs/$*.Lx
 

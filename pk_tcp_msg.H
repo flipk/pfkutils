@@ -20,13 +20,18 @@ public: \
     body \
 }
 
-#define PkTcpMsgDef2( classname, typevalue, \
-                      constructargs, constructor, body ) \
+// the COMMA definition is useful if the 'constructor' argument below
+// would like to insert member-constructions
+#define COMMA ,
+
+#define PkTcpMsgDef2( classname, typevalue, body, \
+                      constructargs, constructor ) \
 class classname : public pk_tcp_msg { \
 public: \
     static const UINT16 TYPE = typevalue ; \
-    classname( constructargs ) : pk_tcp_msg( sizeof( classname ), TYPE ) \
-        { constructor } \
+    classname( void ) : pk_tcp_msg( sizeof( classname ), TYPE ) { } \
+    classname constructargs : pk_tcp_msg( sizeof( classname ), TYPE ) \
+        constructor \
     body \
 }
 

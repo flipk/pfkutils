@@ -51,15 +51,11 @@ main( int argc, char ** argv )
         return 1;
     }
 
-    bool                         done = false;
-    int                          fd, port;
-    UINT32                       seq = arc4random();
-    Config_Add_Listen_Port       calp;
-    Config_Delete_Listen_Port    cdlp;
-    Config_Display_Listen_Ports  cdispl;
-    Config_Display_Proxy_Ports   cdispp;
-    pk_tcp_msg                 * msg;
-    struct sockaddr_in           sa;
+    bool               done = false;
+    int                fd, port;
+    UINT32             seq = arc4random();
+    pk_tcp_msg       * msg;
+    struct sockaddr_in  sa;
 
     sa.sin_family = AF_INET;
     sa.sin_port = htons( CONFIG_UDP_PORT_NO );
@@ -76,29 +72,29 @@ main( int argc, char ** argv )
     {
         if ( argc != 5 )
             goto usage;
+
         port = atoi(argv[2]);
         if ( port < 1024 || port > 32767 )
         {
             fprintf( stderr, "bogus port number '%d'\n", port );
             return 1;
         }
-        calp.port_number.set( port );
-        UINT32 host;
-        if ( fetch_host( argv[3], &host ) == false )
+
+        UINT32 rhost;
+        if ( fetch_host( argv[3], &rhost ) == false )
         {
             fprintf( stderr, "unknown host %s\n", argv[3] );
             return 1;
         }
-        calp.remote_host.set( host );
-        port = atoi(argv[4]);
+
+        int rport = atoi(argv[4]);
         if ( port < 20 || port > 32767 )
         {
             fprintf( stderr, "bogus port number '%d'\n", port );
             return 1;
         }
-        calp.remote_port.set( port );
-        calp.sequence_number.set( seq );
-        msg = &calp;
+
+        msg = new Config_Add_Listen_Port( seq, port, rhost, rport );
     }
     else if ( strcmp( argv[1], "-dl" ) == 0 )
     {
@@ -110,45 +106,40 @@ main( int argc, char ** argv )
             fprintf( stderr, "bogus port number '%d'\n", port );
             return 1;
         }
-        cdlp.sequence_number.set( seq );
-        cdlp.port_number.set( port );
-        msg = &cdlp;
+
+        msg = new Config_Delete_Listen_Port( seq, port );
     }
     else if ( strcmp( argv[1], "-Dl" ) == 0 )
     {
         if ( argc != 2 )
             goto usage;
-        msg = &cdispl;
+
+        msg = new Config_Display_Listen_Ports( seq );
         done = true; // no response
     }
     else if ( strcmp( argv[1], "-Dp" ) == 0 )
     {
         if ( argc != 2 )
             goto usage;
-        msg = &cdispp;
+
+        msg = new Config_Display_Proxy_Ports( seq );
         done = true; // no response
     }
     else 
         goto usage;
-
-    MaxPkMsgType                          gen;
-    union {
-        char                            * buf;
-        MaxPkMsgType                    * gen;
-        Config_Add_Listen_Port_Reply    * calpr;
-        Config_Delete_Listen_Port_Reply * cdlpr;
-    } u;
-    u.gen = &gen;
 
     int retries = 0;
     while ( 1 )
     {
         msg->set_checksum();
         sendto( fd, msg->get_ptr(), msg->get_len(), 0,
-            (struct sockaddr *)&sa, sizeof( sa ));
+                (struct sockaddr *)&sa, sizeof( sa ));
 
         if ( done )
+        {
+            delete msg;
             return 0;
+        }
 
         fd_set rfds;
         struct timeval tv = { 0, 100000 };
@@ -166,6 +157,17 @@ main( int argc, char ** argv )
             return 1;
         }
     }
+    delete msg;
+
+
+    MaxPkMsgType                          gen;
+    union {
+        char                            * buf;
+        MaxPkMsgType                    * gen;
+        Config_Add_Listen_Port_Reply    * calpr;
+        Config_Delete_Listen_Port_Reply * cdlpr;
+    } u;
+    u.gen = &gen;
 
     recvfrom( fd, u.buf, sizeof(gen), 0, NULL, NULL );
 
