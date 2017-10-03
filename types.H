@@ -38,6 +38,42 @@
 #define uchar   UCHAR
 
 #ifdef __cplusplus
+class UINT64_t {
+private:
+    UCHAR p[8];
+public:
+    UINT64_t( void ) { }
+    UINT64_t( UINT64 x ) { set( x ); }
+    UINT64 get(void)
+        {
+            return
+                ((UINT64)p[0] << 56) + ((UINT64)p[1] << 48) + 
+                ((UINT64)p[2] << 40) + ((UINT64)p[3] << 32) + 
+                ((UINT64)p[4] << 24) + ((UINT64)p[5] << 16) + 
+                ((UINT64)p[6] <<  8) + ((UINT64)p[7] <<  0);
+        }
+    UINT32 get_lo(void)
+        {
+            return
+                ((UINT32)p[4] << 24) + ((UINT32)p[5] << 16) + 
+                ((UINT32)p[6] <<  8) + ((UINT32)p[7] <<  0);
+        }
+    UINT32 get_hi(void)
+        {
+            return
+                ((UINT32)p[0] << 24) + ((UINT32)p[1] << 16) + 
+                ((UINT32)p[2] <<  8) + ((UINT32)p[3] <<  0);
+        }
+    void set( UINT64 x )
+        {
+            p[0] = (x >> 56) & 0xff;  p[1] = (x >> 48) & 0xff;
+            p[2] = (x >> 40) & 0xff;  p[3] = (x >> 32) & 0xff;
+            p[4] = (x >> 24) & 0xff;  p[5] = (x >> 16) & 0xff;
+            p[6] = (x >>  8) & 0xff;  p[7] = (x >>  0) & 0xff;
+        }
+    int size_of(void) { return 8; }
+};
+
 class UINT32_t {
 private:
     UCHAR p[4];

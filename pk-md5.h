@@ -12,10 +12,14 @@ typedef struct MD5Context {
     unsigned char buffer[64];   /* input buffer */
 } MD5_CTX;
 
+typedef struct {
+    unsigned char digest[16];
+} MD5_DIGEST;
+
 void   MD5Init      ( MD5_CTX *context );
 void   MD5Update    ( MD5_CTX *context, const unsigned char *data,
                       unsigned int len );
-void   MD5Final     ( unsigned char digest[16], MD5_CTX *context );
+void   MD5Final     ( MD5_DIGEST * digest, MD5_CTX *context );
 char * MD5End       ( MD5_CTX *context, char *buf );
 char * MD5File      ( const char *filename, char *buf );
 char * MD5FileChunk ( const char *filename, char *buf, off_t offset,

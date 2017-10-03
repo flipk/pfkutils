@@ -167,13 +167,13 @@ MD5Pad (MD5_CTX *context)
  */
 
 void
-MD5Final (unsigned char digest[16], MD5_CTX *context)
+MD5Final ( MD5_DIGEST * digest, MD5_CTX *context)
 {
 	/* Do padding. */
 	MD5Pad (context);
 
 	/* Store state in digest */
-	Encode (digest, context->state, 16);
+	Encode (digest->digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
 	memset ((void *)context, 0, sizeof (*context));
@@ -292,7 +292,7 @@ MD5File ( const char *filename, char *buf )
 {
     FILE           * f;
     MD5_CTX          ctx;
-    unsigned char    digest[16];
+    MD5_DIGEST       digest;
     unsigned char    inbuf[ 1024 ];
     unsigned int     len;
 
@@ -310,11 +310,11 @@ MD5File ( const char *filename, char *buf )
         MD5Update( &ctx, inbuf, len );
     }
 
-    MD5Final( digest, &ctx );
+    MD5Final( &digest, &ctx );
     fclose( f );
 
     for ( len = 0; len < 16; len++ )
-        sprintf( buf + (len*2), "%02x", digest[len] );
+        sprintf( buf + (len*2), "%02x", digest.digest[len] );
 
     return buf;
 }
