@@ -85,7 +85,7 @@ PK_Threads :: rehash_name( PK_Thread * t )
 }
 
 PK_Thread *
-PK_Threads :: find_name( char * name )
+PK_Threads :: find_name( const char * name )
 {
     return thread_list->find_name( name );
 }

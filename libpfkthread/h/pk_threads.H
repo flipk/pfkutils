@@ -50,7 +50,7 @@ class PK_Threads {
 public:
     PK_Threads( int _tps );
     ~PK_Threads( void );
-    PK_Thread * find_name( char * name );
+    PK_Thread * find_name( const char * name );
     PK_Thread * find_id( pthread_t id );
     void run( void );
 };
@@ -80,7 +80,7 @@ protected:
 public:
     PK_Thread( void );
     LListLinks <PK_Thread> links[PK_THREAD_NUMLISTS];
-    void set_name( char * n, ... ) {
+    void set_name( const char * n, ... ) {
         char * oldn = name, * newn;
         char tempn[100];
         va_list ap;
@@ -94,13 +94,13 @@ public:
         th->rehash_name( this );
         free( oldn );
     }
-    char * get_name( void ) { return name; }
-    pthread_t get_id( void ) { return id; }
+    const char * get_name( void ) const { return name; }
+    const pthread_t get_id( void ) const { return id; }
     // 
     // following are shortcuts for other apis
     //
     // messages - PK_Messages_global
-    static int msg_create( char * name, ... ) {
+    static int msg_create( const char * name, ... ) {
         va_list ap;
         char tempn[100];
         va_start(ap,name);
@@ -109,7 +109,7 @@ public:
         va_end(ap);
         return PK_Messages_global->create( tempn );
     }
-    static int msg_lookup( char * name, ... ) {
+    static int msg_lookup( const char * name, ... ) {
         va_list ap;
         char tempn[100];
         va_start(ap,name);
@@ -130,7 +130,7 @@ public:
                                          retqid, ticks );
     }
     // semaphores - PK_Semaphores_global
-    static PK_Semaphore * sem_create( char * name, ... ) {
+    static PK_Semaphore * sem_create( const char * name, ... ) {
         va_list ap;
         char tempn[100];
         va_start(ap,name);
@@ -139,7 +139,7 @@ public:
         va_end(ap);
         return PK_Semaphores_global->create( tempn );
     }
-    static PK_Semaphore * sem_lookup( char * name, ... ) {
+    static PK_Semaphore * sem_lookup( const char * name, ... ) {
         va_list ap;
         char tempn[100];
         va_start(ap,name);

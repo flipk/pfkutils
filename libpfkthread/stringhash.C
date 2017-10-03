@@ -26,7 +26,7 @@
 /* djb2 string hash algorithm */
 
 int
-string_hash( char * string )
+string_hash( const char * string )
 {
     unsigned int ret = 5381;
     unsigned int c;

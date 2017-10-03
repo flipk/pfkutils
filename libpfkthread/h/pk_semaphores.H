@@ -38,13 +38,13 @@ class PK_Semaphore {
     int waiters;
     void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
-    PK_Semaphore( char * _name );
+    PK_Semaphore( const char * _name );
     ~PK_Semaphore( void );
     friend class PK_Semaphores; // only create thru PK_Semaphores class
     char * name;
 public:
     LListLinks <PK_Semaphore> links[PK_SEM_NUMLISTS];
-    char * get_name( void ) { return name; }
+    const char * get_name( void ) { return name; }
     // false if timeout
     bool take( int ticks );
     void take( void ) { (void) take( -1 ); }
@@ -56,8 +56,9 @@ public:
     static int hash_key( PK_Semaphore * item ) {
         return hash_key( item->get_name() );
     }
-    static int hash_key( char * key ) { return string_hash( key ); }
-    static bool hash_key_compare( PK_Semaphore * item, char * key ) {
+    static int hash_key( const char * key ) { return string_hash( key ); }
+    static bool hash_key_compare( PK_Semaphore * item,
+                                  const char * key ) {
         return ( strcmp( item->get_name(), key ) == 0 );
     }
 };
@@ -65,14 +66,14 @@ public:
 class PK_Semaphores {
     pthread_mutex_t  mutex;
     LList     <PK_Semaphore,        PK_SEM_LIST>  list;
-    LListHash <PK_Semaphore,  char *,
+    LListHash <PK_Semaphore,  const char *,
                PK_Semaphore_hash_1, PK_SEM_HASH>  hash;
     void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
 public:
     PK_Semaphores( void );
     ~PK_Semaphores( void );
-    PK_Semaphore * create( char * name ) {
+    PK_Semaphore * create( const char * name ) {
         PK_Semaphore * ret = new PK_Semaphore( name );
         _lock();
         list.add( ret );
@@ -80,7 +81,7 @@ public:
         _unlock();
         return ret;
     }
-    PK_Semaphore * lookup( char * name ) {
+    PK_Semaphore * lookup( const char * name ) {
         PK_Semaphore * ret;
         _lock();
         ret = hash.find( name );
@@ -94,7 +95,7 @@ public:
         _unlock();
         delete s;
     }
-    PK_Semaphore * get_head( void ) { return list.get_head(); }
+    PK_Semaphore * get_head( void ) const { return list.get_head(); }
     PK_Semaphore * get_next( PK_Semaphore * s ) {
         PK_Semaphore * ret;
         _lock();

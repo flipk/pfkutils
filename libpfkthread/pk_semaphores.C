@@ -51,7 +51,7 @@ PK_Semaphores :: ~PK_Semaphores( void )
 
 //
 
-PK_Semaphore :: PK_Semaphore( char * _name )
+PK_Semaphore :: PK_Semaphore( const char * _name )
 {
     pthread_mutex_init( &mutex, NULL );
     pthread_cond_init( &cond, NULL );

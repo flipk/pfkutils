@@ -68,17 +68,17 @@ private:
     void * onlist;
 #if DLL2_CHECKSUMS
     unsigned long checksum;
-    unsigned long calc_checksum(void) {
+    unsigned long calc_checksum(void) const {
         return 0xb09d3086U + (unsigned long) next +
             (unsigned long) prev + (unsigned long) onlist;
     }
-    void validate(void) {
+    void validate(void) const {
         if ( checksum != calc_checksum())
             DLL2BAIL(( "CHECKSUM ERROR IN DLL2 ELEMENT\n" ));
     }
     void recalc(void) { checksum = calc_checksum(); }
 #else
-    void validate(void) {}
+    void validate(void) const {}
     void recalc(void) {}
 #endif
 public:
@@ -94,7 +94,7 @@ public:
         checksum = 0;
 #endif
     }
-    void * get_onlist( void ) { return onlist; }
+    void * get_onlist( void ) const { return onlist; }
 };
 
 // to use LList, type T must have the following member:
@@ -108,18 +108,18 @@ class LList
     int cnt;
 #if DLL2_CHECKSUMS
     unsigned long checksum;
-    unsigned long calc_checksum(void) {
+    unsigned long calc_checksum(void) const {
         return 0x2df692f8U + (unsigned long) head +
             (unsigned long) tail + (unsigned long) cnt;
     }
-    void validate(void) {
+    void validate(void) const {
         if ( checksum != calc_checksum())
             DLL2BAIL(( "CHECKSUM ERROR IN DLL2 LLIST\n" ));
     }
     void recalc(void) { checksum = calc_checksum(); }
 #else
-    void validate(void) { }
-    void recalc(void) { }
+    void validate(void) const { }
+    void recalc(void) const { }
 #endif
 public:
     LList( void ) { head = tail = NULL;  cnt = 0; recalc(); }
@@ -234,13 +234,13 @@ public:
         cnt++;
         recalc();
     }
-    bool onlist ( T * t ) {
+    bool onlist ( const T * t ) const {
         return t->links[instance].onlist != 0;
     }
-    bool onthislist ( T * t ) {
+    bool onthislist ( const T * t ) const {
         return t->links[instance].onlist == (void*)this; 
     }
-    int get_cnt  ( void ) {
+    int get_cnt  ( void ) const {
         return cnt;
     }
     T * dequeue_head( void ) {
@@ -253,15 +253,15 @@ public:
         if ( ret ) remove( ret );
         return ret;
     }
-    T * get_head ( void ) {
+    T * get_head ( void ) const {
         validate();
         return head;
     }
-    T * get_tail ( void ) {
+    T * get_tail ( void ) const {
         validate();
         return tail;
     }
-    T * get_next( T * x ) {
+    T * get_next( T * x ) const {
         validate();
 #if DLL2_STRICT_WALKING
         if ( !onthislist( x ))
@@ -270,7 +270,7 @@ public:
         x->links[instance].validate();
         return x->links[instance].next;
     }
-    T * get_prev( T * x ) {
+    T * get_prev( T * x ) const {
         validate();
 #if DLL2_STRICT_WALKING
         if ( !onthislist( x ))
@@ -286,8 +286,8 @@ public:
 // comparator class must have the following static members:
 //
 //    static int hash_key( T * item ) 
-//    static int hash_key( Hash_Key_Type key )
-//    static bool hash_key_compare( T * item, Hash_Key_Type key )
+//    static int hash_key( const Hash_Key_Type key )
+//    static bool hash_key_compare( T * item, const Hash_Key_Type key )
 //
 
 #define DLL2_NUM_HASH_PRIMES 16
@@ -302,9 +302,9 @@ private:
     int hashsize;
     typedef LList <T,instance>  theLListHash;
     theLListHash * hash;
-    int hashv ( int key, int hs ) { return key % hs; }
+    static int hashv ( int key, int hs ) { return key % hs; }
     int count;
-    theLListHash * rev_eng_hashind( T * t ) {
+    theLListHash * rev_eng_hashind( T * t ) const {
         unsigned long min  = (unsigned long) & hash[ 0 ];
         unsigned long max  = (unsigned long) & hash[ hashsize-1 ];
         unsigned long mine = (unsigned long) t->links[instance].get_onlist();
@@ -345,7 +345,7 @@ public:
                 DLL2BAIL(( "LLISTHASH destructor: hash not empty!\n" ));
         delete[] hash;
     }
-    T * find    ( Hash_Key_Type key ) {
+    T * find    ( const Hash_Key_Type key ) const {
         int h = hashv( Hash_Key_Comparator::hash_key( key ) & 0x7fffffff,
                        hashsize );
         T * ret;
@@ -354,7 +354,7 @@ public:
                 break;
         return ret;
     }
-    int get_cnt( void ) { return count; }
+    int get_cnt( void ) const { return count; }
     void add( T * t ) {
         count++;
         int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
@@ -369,10 +369,10 @@ public:
         lst->remove( t );
         recalc_hash();
     }
-    bool onlist( T * t ) {
+    bool onlist( const T * t ) const {
         return ( t->links[instance].onlist != 0 );
     }
-    bool onthislist( T * t ) {
+    bool onthislist( const T * t ) const {
         theLListHash * lst = rev_eng_hashind( t );
         if ( !lst )
             return false;
@@ -385,23 +385,23 @@ class LListLRU {
 private:
     LList <T,instance> list;
 public:
-    int get_cnt( void ) { return list.get_cnt(); }
+    int get_cnt( void ) const { return list.get_cnt(); }
     void add( T * t ) { list.add( t ); }
     void remove( T * t ) { list.remove( t ); }
-    T * get_oldest( void ) { return list.get_head(); }
+    T * get_oldest( void ) const { return list.get_head(); }
     void promote( T * t ) {
         if ( list.get_tail() != t ) {
             list.remove( t ); list.add( t );
         }
     }
-    bool onlist( T * t ) { return list.onlist( t ); }
-    bool onthislist( T * t ) { return list.onthislist( t ); }
+    bool onlist( const T * t ) const { return list.onlist( t ); }
+    bool onthislist( const T * t ) const { return list.onthislist( t ); }
     T * dequeue_head( void ) { return list.dequeue_head(); }
     T * dequeue_tail( void ) { return list.dequeue_tail(); }
-    T * get_head( void ) { return list.get_head(); }
-    T * get_tail( void ) { return list.get_tail(); }
-    T * get_next( T * t ) { return list.get_next( t ); }
-    T * get_prev( T * t ) { return list.get_prev( t ); }
+    T * get_head( void ) const { return list.get_head(); }
+    T * get_tail( void ) const { return list.get_tail(); }
+    T * get_next( T * t ) const { return list.get_next( t ); }
+    T * get_prev( T * t ) const { return list.get_prev( t ); }
 };
 
 template <class T, 
@@ -413,13 +413,13 @@ private:
     LListLRU  <T, lru_instance > lru;
 public:
     ~LListHashLRU( void ) { }
-    T * find( Hash_Key_Type key ) { return hash.find( key ); }
-    int get_cnt( void ) { return lru.get_cnt(); }
+    T * find( const Hash_Key_Type key ) const { return hash.find( key ); }
+    int get_cnt( void ) const { return lru.get_cnt(); }
     void add( T * t ) { hash.add( t ); lru.add( t ); }
     void remove( T * t ) { hash.remove( t ); lru.remove( t ); }
     void promote( T * t ) { lru.promote( t ); }
-    bool onlist( T * t ) { return lru.onlist( t ); }
-    bool onthislist( T * t ) { return lru.onthislist( t ); }
+    bool onlist( const T * t ) const { return lru.onlist( t ); }
+    bool onthislist( const T * t ) const { return lru.onthislist( t ); }
     T * dequeue_lru_head( void ) {
         T * ret = lru.get_head();
         if ( ret ) remove( ret );
@@ -430,10 +430,10 @@ public:
         if ( ret ) remove( ret );
         return ret;
     }
-    T * get_lru_head ( void ) { return lru.get_head(); }
-    T * get_lru_tail ( void ) { return lru.get_tail(); }
-    T * get_lru_next( T * t ) { return lru.get_next(t); }
-    T * get_lru_prev( T * t ) { return lru.get_prev(t); }
+    T * get_lru_head ( void ) const { return lru.get_head(); }
+    T * get_lru_tail ( void ) const { return lru.get_tail(); }
+    T * get_lru_next( T * t ) const { return lru.get_next(t); }
+    T * get_lru_prev( T * t ) const { return lru.get_prev(t); }
 // hash stats
     void rehash( int newhashsize ) { hash.rehash( newhashsize ); }
 };
@@ -446,7 +446,7 @@ class LListOrderedQ {
 private:
     LList <T,instance> oq;
 public:
-    int get_cnt( void ) { return oq.get_cnt(); }
+    int get_cnt( void ) const { return oq.get_cnt(); }
     void add( T * t, int new_oq_key ) {
         T * cur, * prev;
         for ( prev = 0, cur = oq.get_head();
@@ -474,10 +474,10 @@ public:
         if ( n )
             n->ordered_queue_key += t->ordered_queue_key;
     }
-    T * get_head( void ) { return oq.get_head(); }
-    T * get_next( T * t ) { return oq.get_next( t ); }
-    bool onlist( T * t ) { return oq.onlist( t ); }
-    bool onthislist( T * t ) { return oq.onthislist( t ); }
+    T * get_head( void ) const { return oq.get_head(); }
+    T * get_next( T * t ) const { return oq.get_next( t ); }
+    bool onlist( const T * t ) const { return oq.onlist( t ); }
+    bool onthislist( const T * t ) const { return oq.onthislist( t ); }
 };
 
 #if DLL2_INCLUDE_BTREE
