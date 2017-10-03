@@ -14,7 +14,7 @@
 // 3. make btree file with small # entries, then delete a few
 
 #define FILENAME "img"
-#define CACHESIZE 10, 100, 1000
+#define CACHESIZE 10, 100, 500
 
 #if TEST==1 || TEST==2
 #define BTORDER 9
@@ -30,36 +30,38 @@
 #define NUMROUNDS 1000000
 #endif
 
-static char *
-printelement( void * arg, int noderec,
-              int keyrec, void * key, int keylen,
-              int datrec, void * dat, int datlen )
-{
-    char ret[ 500 ];
+class myprintinfo : public btree_printinfo {
+public:
+    myprintinfo( void ) :
+        btree_printinfo( NODE_INFO | BTREE_INFO |
+                         KEY_REC_PTR | DATA_REC_PTR ) { /* nothing */ }
+    /*virtual*/ ~myprintinfo( void ) { /*nothing*/ }
+    /*virtual*/ char * sprint_element( int noderec,
+                                       int keyrec, void * key, int keylen,
+                                       int datrec, void * dat, int datlen,
+                                       bool * datdirty ) {
 
-    sprintf( ret,
-             "(%09d)key[%09d] = %10s  data[%09d] = %10s\n",
-             noderec, keyrec, key, datrec, dat );
+        char ret[ 500 ];
+        sprintf( ret,
+                 "(%09d)key[%09d] = %10s  data[%09d] = %10s\n",
+                 noderec, keyrec, key, datrec, dat );
+        
+        char * ret2 = new char[ strlen( ret ) + 1 ];
+        strcpy( ret2, ret );
+        return ret2;
+    }
+    /*virtual*/ void sprint_element_free( char * s ) {
+        delete[] s;
+    }
+    /*virtual*/ void print( char * format, ... )
+        __attribute__ ((format( printf, 2, 3 ))) {
+        va_list ap;
+        va_start( ap, format );
+        vprintf( format, ap );
+        va_end( ap );
+    }
+};
 
-    char * ret2 = new char[ strlen( ret ) + 1 ];
-    strcpy( ret2, ret );
-    return ret2;
-}
-
-static void
-printelementfree( void * arg, char * s )
-{
-    delete[] s;
-}
-
-static void
-myprintf( void * arg, char * format, ... )
-{
-    va_list ap;
-    va_start( ap, format );
-    vprintf( format, ap );
-    va_end( ap );
-}
 
 int
 main( int argc, char ** argv )
@@ -94,13 +96,7 @@ main( int argc, char ** argv )
     srandom( (unsigned)1829423164 );
 #endif
 
-    Btree::printinfo pi = { 
-        printelement,
-        printelementfree,
-        myprintf,
-        NULL,
-        true
-    };
+    myprintinfo pi;
 
 #if TEST==1
 
@@ -216,11 +212,10 @@ main( int argc, char ** argv )
                 lines = 0;
             }
             lines++;
-            printf( "%4d %7d (%5d) %7d %4d %4d %4d\n",
+            printf( "%4d %7d (%5d) %7d %4d %4d %4d %5d\n",
                     now - startt,
                     i, delta_i, numindb,
-                    put, got, del );
-            bt->flush();
+                    put, got, del, bt->flush());
             put = got = del = delta_i = 0;
         }
 #endif

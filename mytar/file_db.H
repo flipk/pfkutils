@@ -115,10 +115,7 @@ public:
 //    data = size[8], mtime, uid, gid, mark, mode, fname with no nul
 // datum 3
 //    key = "d" plus id plus block#
-//    data = blocksize[2] + md5sum
-// datum 4
-//    key = "D" plus id plus block#
-//    data = N bytes of file data
+//    data = blocksize[2] + recno_block_num + md5sum
 
 
 struct datum_2 {
@@ -133,6 +130,7 @@ struct datum_2 {
 
 struct datum_3 {
     UINT16_t    bsize; // max size is BLOCK_SIZE
+    UINT32_t    blockno;
     MD5_DIGEST  digest;
 };
 

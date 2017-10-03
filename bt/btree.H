@@ -77,7 +77,7 @@ public:
 
     struct field {
         UCHAR *ptr;
-        int recno;
+        UINT32 recno;
         UINT32 magic;
         int len;
         bool dirty;
@@ -88,9 +88,10 @@ public:
     };
 
 private:
-    static const int BTI_MAGIC = 0x0d83f386;
-    static const int NODE_MAGIC = 0x4463ab2c;
-    static const int MAX_BTI_HUNT = 8192;
+    static const UINT32 BTI_MAGIC = 0x0d83f386;
+    static const UINT32 NODE_MAGIC = 0x4463ab2c;
+    static const UINT32 INVALID_BLK = 0xFFFFFFFF;
+    static const UINT32 MAX_BTI_HUNT = 8192;
 
     int BTREE_ORDER;
     int HALF_ORDER;
@@ -109,9 +110,9 @@ private:
         };
     public:
         struct node_data {
-            int ptr;  // node pointer
-            int key;  // recno for key block
-            int data; // recno for data block
+            UINT32 ptr;  // node pointer
+            UINT32 key;  // recno for key block
+            UINT32 data; // recno for data block
         } d[ 0 ];
         int get_numitems(void)   { return numitems & NUM_MASK; }
         void set_numitems(int v) {
@@ -133,8 +134,8 @@ private:
     struct btreeinfo {
         // this is the btree info block on disk.
         UINT32 magic;
-        int bti_recno;
-        int rootblockno;
+        UINT32 bti_recno;
+        UINT32 rootblockno;
         int numnodes;
         int numrecords;
         int depth;
@@ -158,23 +159,23 @@ private:
     struct nodstor {
         nodstor * next;
         node * n;
-        int noderecno;
+        UINT32 noderecno;
         int index;
     };
     nodstor * nods;
-    void add_nodstor( node * n, int noderecno, int index );
-    node * get_nodstor( int &noderecno, int &index );
+    void add_nodstor( node * n, UINT32 noderecno, int index );
+    node * get_nodstor( UINT32 &noderecno, int &index );
 
     // split a node into two at selected index; include record.
     // return blockno for new rightnode. used by put()
-    int    split_node( node *, rec *, int rightnode, int index );
+    int    split_node( node *, rec *, UINT32 rightnode, int index );
 
-    node * fetch_node( int blockno )
+    node * fetch_node( UINT32 blockno )
         { return fetch_node( blockno, false ); }
-    node * fetch_node( int blockno, bool newnode );
+    node * fetch_node( UINT32 blockno, bool newnode );
     void   unlock_node( node * );
 
-    rec  * fetch_rec( int keyblockno, int datablockno );
+    rec  * fetch_rec( UINT32 keyblockno, UINT32 datablockno );
 
     FileBlockNumber * fbn;
 public:
@@ -193,11 +194,12 @@ public:
     Btree( FileBlockNumber * ) throw ( constructor_failed );
     ~Btree( void );
 
-    void flush( void ) {
-        int bn = bti->bti_recno;
+    int flush( void ) {
+        UINT32 bn = bti->bti_recno;
         fbn->unlock_block( bti_magic, true );
-        fbn->flush();
+        int ret = fbn->flush();
         bti = (btreeinfo*) fbn->get_block( bn, &bti_magic );
+        return ret;
     }
 
 

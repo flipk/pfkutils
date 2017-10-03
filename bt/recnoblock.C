@@ -16,11 +16,8 @@
 
 //
 // TODO:
-//    add a method for get_block_for_write which does not access the
-//    disk to read first-- assumes the user doesn't actually want to
-//    read the contents and only wants a new space.  alternatively
-//    perhaps a put_block function which will take a user pointer/len
-//    and block number and does the write in one step.
+//    should learn how to truncate a file if pages at the end of the file
+//    are no longer in use.
 //
 //    add an option to write updates to a separate file as a journal,
 //    for rollback purposes-- each 'commit' call results in all updates
@@ -36,176 +33,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define RECNOBLOCK_INTERNAL
 #include "recnoblock.H"
-
-#if DLL2_INCLUDE_LOGNEW
-#include "lognew.H"
-#else
-#define LOGNEW new
-#endif
-
-struct FileBlockNumber :: page {
-    LListLinks<FileBlockNumber::page>  links[ BT_DLL2_COUNT ];
-
-    // if this page describes a bitmap page, then the hash key_value
-    // is the segment number.  if this page is a data page, the key_value
-    // describes the page number (same as pagenum field).
-
-    int key_value;
-    int refcount;
-    time_t reftime;
-    int pagenum;
-    bool dirty;
-    UINT32 _buf[ 0 ];
-//
-    UCHAR * bufp( void ) { return (UCHAR*) _buf; }
-//
-    static void * operator new( size_t sz, int pagesize ) {
-        char * ptr = new char[ sizeof(page) + pagesize ];
-        return (void*) ptr;
-    }
-    static void operator delete( void * ptr ) {
-        char * p = (char*) ptr;
-        delete[] p;
-    }
-    page( int pgnum, int key, int fd, int pagesize ) {
-        init( pgnum, key, fd, pagesize );
-    }
-    ~page( void ) {
-        if ( dirty )
-        {
-            fprintf( stderr, "deleting a dirty page!\n" );
-            kill(0,6);
-        }
-    }
-    void init( int _pgnum, int _key, int fd, int pagesize ) {
-        pagenum = _pgnum; key_value = _key;
-        dirty = false; refcount = 0;
-        lseek( fd, pagenum*pagesize, SEEK_SET );
-        int cc = read( fd, bufp(), pagesize );
-        if ( cc < 0 ) {
-            fprintf( stderr, "read file failed: %s\n", strerror( errno ));
-            kill(0,6); }
-        if ( cc != pagesize )
-            memset( bufp()+cc, 0, pagesize-cc );
-        time( &reftime );
-    }
-    bool clean( int fd, int pagesize ) {
-        if ( dirty )
-        {
-            lseek( fd, pagenum*pagesize, SEEK_SET );
-            write( fd, bufp(), pagesize );
-            dirty = false;
-            return true;
-        }
-        return false;
-    }
-    int age(void) { return time(0) - reftime; }
-    bool   ref( void ) {
-        time( &reftime );
-        return (refcount++ == 0); // true if first ref
-    }
-    bool deref( void ) {
-        if ( refcount == 0 )
-            kill( 0, 6 );
-        return (--refcount == 0);
-    } // true if last deref
-
-// this method is used only if this page is a data page
-    UCHAR * getrecord( int rec, int recordsize ) {
-        return bufp() + (rec*recordsize);
-    }
-
-// these methods are used only if this page is a segment bitmap page
-    void   setbit ( int bit ) {
-        _buf[ bit / 32 ] |=  (1 << (bit % 32));
-    }
-    void clearbit ( int bit ) {
-        _buf[ bit / 32 ] &= ~(1 << (bit % 32));
-    }
-    bool   getbit ( int bit ) {  // return true if set
-        return (_buf[ bit / 32 ] & (1 << (bit % 32))) != 0;
-    }
-    int countbits ( int bit, int max, int pagesize ) {
-        int cnt = 1;
-        bool v = getbit(bit++);
-        for ( ; bit < (pagesize*8) && cnt <= max; )
-        {
-            bool jump32 = false;
-            if (( bit & 31 ) == 0 )
-            {
-                if ( v )
-                {
-                    if (_buf[ bit / 32 ] == ~0)
-                        jump32 = true;
-                }
-                else
-                {
-                    if (_buf[ bit / 32 ] ==  0)
-                        jump32 = true;
-                }
-                if ( jump32 )
-                {
-                    bit += 32;
-                    cnt += 32;
-                    continue;
-                }
-            }
-            if ( getbit(bit) != v )
-                break;
-            else
-            {
-                bit++; cnt++;
-            }
-        }
-        return cnt;
-    }
-};
-
-class FileBlockNumber :: FBN_page_hash_1 {
-public:
-    static int hash_key( FileBlockNumber :: page * item ) {
-        return item->key_value;
-    }
-    static int hash_key( int key ) {
-        return key;
-    }
-    static bool hash_key_compare( FileBlockNumber :: page * item,
-                                  int key ) {
-        return (item->key_value == key);
-    }
-};
-
-
-// use one of these during a 'get_block' if the block
-// crosses 1 or more page boundaries and the memory
-// can't be provided contiguously.  the 'magic' will
-// have a special bit set if this is the case.
-
-struct user_buffer {
-    int blockno;
-    int size;
-    UCHAR data[0];
-//
-    user_buffer( int _blk ) {
-        blockno = _blk;
-    }
-    void * operator new( size_t s, int sz, char *file, int line ) {
-        int alloc_size =
-            sz + sizeof( user_buffer ) + FileBlockNumber::size_overhead;
-#if DLL2_INCLUDE_LOGNEW
-        char * ret = new(file,line) char[ alloc_size ];
-#else
-        char * ret = new char[ alloc_size ];
-#endif
-        ((user_buffer*)ret)->size = sz;
-        return (void*)ret;
-    }
-    void operator delete( void * ptr ) {
-        char * buf = (char*)ptr;
-        delete[] buf;
-    }
-};
 
 FileBlockNumber :: FileBlockNumber( char * file, int h1, int h2, int c1,
                                     int _record_size, int _page_size )
@@ -317,7 +146,7 @@ FileBlockNumber :: ~FileBlockNumber( void )
 // we do not limit bitmap pages.
 
 FileBlockNumber::page *
-FileBlockNumber :: get_data_page( int page_num )
+FileBlockNumber :: get_data_page( int page_num, bool for_write )
 {
     page * ret;
 
@@ -370,11 +199,17 @@ FileBlockNumber :: get_data_page( int page_num )
     if ( ret != NULL )
     {
         ret->clean( fd, pagesize );
-        ret->init( page_num, page_num, fd, pagesize );
+        if ( for_write )
+            ret->init2( page_num, page_num, pagesize );
+        else
+            ret->init( page_num, page_num, fd, pagesize );
     }
     else
     {
-        ret = new(pagesize) page( page_num, page_num, fd, pagesize );
+        if ( for_write )
+            ret = new(pagesize) page( page_num, page_num, pagesize );
+        else
+            ret = new(pagesize) page( page_num, page_num, fd, pagesize );
     }
 
     ret->ref();
@@ -408,7 +243,8 @@ FileBlockNumber :: release_page ( page * p )
 }
 
 UCHAR *
-FileBlockNumber :: get_block( int blockno, int *sizep, UINT32 *magic )
+FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
+                               UINT32 *magic, bool for_write )
 {
     // which file segment is this block in?
     int seg_num        = blockno / recs_per_segment;
@@ -427,10 +263,10 @@ FileBlockNumber :: get_block( int blockno, int *sizep, UINT32 *magic )
     }
     release_page( bm );
 
-    page * datpg = get_data_page( pag_num_in_fil );
+    page * datpg = get_data_page( pag_num_in_fil, false );
 
-    UCHAR * ret = datpg->getrecord( rec_in_pag, recordsize );
-    UINT16_t * sig     = (UINT16_t *)ret;
+    UCHAR * recptr = datpg->getrecord( rec_in_pag, recordsize );
+    UINT16_t * sig     = (UINT16_t *)recptr;
 
     if ( sig->get() != block_signature )
     {
@@ -439,7 +275,7 @@ FileBlockNumber :: get_block( int blockno, int *sizep, UINT32 *magic )
         kill(0,6);
     }
 
-    UINT16_t * szfield = (UINT16_t *)(ret + 2);
+    UINT16_t * szfield = (UINT16_t *)(recptr + 2);
     int size = szfield->get();
     if ( sizep )
         *sizep = size;
@@ -449,7 +285,7 @@ FileBlockNumber :: get_block( int blockno, int *sizep, UINT32 *magic )
     if (( rec_in_pag + recs ) < recs_per_page )
     {
         *magic = (UINT32) datpg;
-        return ret + size_overhead;
+        return recptr + size_overhead;
     }
 
     // else it crosses a page boundary and we need to
@@ -457,33 +293,45 @@ FileBlockNumber :: get_block( int blockno, int *sizep, UINT32 *magic )
 
     user_buffer * ub = new( size, __FILE__, __LINE__ ) user_buffer( blockno );
 
-    int left = size + size_overhead;
-    UCHAR * dst = ub->data;
-    bool first = true;
-
-    // populate ub
-    while ( left > 0 )
+    if ( for_write )
     {
-        int tocopy;
-        UCHAR * src;
-        if ( !first )
-            datpg = get_data_page( pag_num_in_fil );
-        pag_num_in_fil++;
-        first = false;
+        // copy the magic+size, and bin the rest.
 
-        // get next datapage, setup src / tocopy
-        src = datpg->getrecord( rec_in_pag, recordsize );
-        rec_in_pag = 0;
-        tocopy = (datpg->bufp() + pagesize) - src;
-        if ( tocopy > left )
-            tocopy = left;
+        memcpy( ub->data, recptr, size_overhead );
+        memset( ub->data + size_overhead, 0, size - size_overhead );
 
-        memcpy( dst, src, tocopy );
-        dst += tocopy;
-        left -= tocopy;
-
-        // release data page
         release_page( datpg );
+    }
+    else
+    {
+        int left = size + size_overhead;
+        UCHAR * dst = ub->data;
+        bool first = true;
+
+        // populate ub
+        while ( left > 0 )
+        {
+            int tocopy;
+            UCHAR * src;
+            if ( !first )
+                datpg = get_data_page( pag_num_in_fil, false );
+            pag_num_in_fil++;
+            first = false;
+
+            // get next datapage, setup src / tocopy
+            src = datpg->getrecord( rec_in_pag, recordsize );
+            rec_in_pag = 0;
+            tocopy = (datpg->bufp() + pagesize) - src;
+            if ( tocopy > left )
+                tocopy = left;
+
+            memcpy( dst, src, tocopy );
+            dst += tocopy;
+            left -= tocopy;
+
+            // release data page
+            release_page( datpg );
+        }
     }
 
     *magic = (UINT32) ub  | user_buffer_flag;
@@ -544,13 +392,19 @@ FileBlockNumber :: unlock_block( UINT32 magic, bool dirty )
                 // so it is okay to copy all the records without 
                 // special-casing the first one.
 
-                datpg = get_data_page( pag_num_in_fil );
+                tocopy = pagesize - rec_in_pag * recordsize;
+                if ( tocopy > left )
+                    tocopy = left;
+
+                if ( tocopy == pagesize )
+                    // overwriting the whole page, so..
+                    datpg = get_data_page( pag_num_in_fil, true );
+                else
+                    datpg = get_data_page( pag_num_in_fil, false );
+
                 pag_num_in_fil++;
                 dest = datpg->getrecord( rec_in_pag, recordsize );
                 rec_in_pag = 0;
-                tocopy = (datpg->bufp() + pagesize) - dest;
-                if ( tocopy > left )
-                    tocopy = left;
 
                 // only mark this page as dirty if this page changed.
                 // oh, and if it changed, update its contents.
@@ -577,14 +431,7 @@ FileBlockNumber :: unlock_block( UINT32 magic, bool dirty )
     }
 }
 
-void
-FileBlockNumber :: put_block( int blockno, UCHAR * buf, int size )
-{
-    fprintf( stderr, "FileBlockNumber :: put_block : xxx unimplemented\n" );
-    kill(0,6);
-}
-
-int
+UINT32
 FileBlockNumber :: alloc( int bytes )
 {
     if ( bytes > max_block_size() )
@@ -595,7 +442,8 @@ FileBlockNumber :: alloc( int bytes )
     }
 
     page * bm;
-    int blockno, seg_num, bit, bitstart, recs, cnt, largest_seg;
+    UINT32 blockno;
+    int seg_num, bit, bitstart, recs, cnt, largest_seg;
 
     recs = recs_from_size( bytes );
 
@@ -608,7 +456,13 @@ FileBlockNumber :: alloc( int bytes )
             if ( !bm )
                 break;
 
-            if ( bm->key_value > largest_seg )
+            // we can get away with the mix of signed and unsigned
+            // for largest_seg because while the max size of the data
+            // file is recordsize * 4G, segment number maximum value is
+            // 1/(recordsize*8) of that, so no possibility of signed 
+            // overflow.
+
+            if ( largest_seg == -1 || bm->key_value > (UINT32)largest_seg )
                 largest_seg = bm->key_value;
 
             for ( bit = reserved_bits; bit < recs_per_segment; )
@@ -659,7 +513,7 @@ FileBlockNumber :: alloc( int bytes )
     UINT16_t * mag;
     UINT16_t * sz;
 
-    page * dat = get_data_page( pag_num_in_fil );
+    page * dat = get_data_page( pag_num_in_fil, false );
 
     recptr = dat->getrecord( rec_in_pag, recordsize );
     mag = (UINT16_t*) recptr;
@@ -674,7 +528,7 @@ FileBlockNumber :: alloc( int bytes )
 }
 
 void
-FileBlockNumber :: free( int blockno )
+FileBlockNumber :: free( UINT32 blockno )
 {
     int seg_num        = blockno / recs_per_segment;
     int pag_num_in_fil = blockno / recs_per_page;
@@ -688,7 +542,7 @@ FileBlockNumber :: free( int blockno )
                  "error, block %d is already marked as free!\n", blockno );
         kill(0,6);
     }
-    page * datpg = get_data_page( pag_num_in_fil );
+    page * datpg = get_data_page( pag_num_in_fil, false );
 
     UCHAR * recptr = datpg->getrecord( rec_in_pag, recordsize );
     UINT16_t * sig = (UINT16_t*)recptr;
@@ -820,7 +674,7 @@ FileBlockNumber :: file_info( int * _num_segments,
 
 #ifdef INCLUDE_MAIN
 
-#define DATSIZE   5000 // 64k or 5000 or 200
+#define DATSIZE  10000 // 64k or 5000 or 200
 #define MAXDATS   5000
 #define ROUNDS  100000
 
@@ -849,8 +703,8 @@ main()
     time_t start, stop, last, now;
 
     unlink( "00LOG" );
-    lf = NULL;
-//    lf = fopen( "00LOG", "w" );
+//    lf = NULL;
+    lf = fopen( "00LOG", "w" );
 
     if ( lf ) setlinebuf( lf );
     int seed;
@@ -863,7 +717,7 @@ main()
         fprintf( lf, "S %d\n", seed );
     memset( &td, 0, sizeof( td ));
     unlink( "testdb" );
-    FileBlockNumber f( "testdb", 100, 100, 100, 16, 4096 );
+    FileBlockNumber f( "testdb", 100, 100, 1000, 16, 4096 );
 
     time( &last );
     start = last;
@@ -899,9 +753,15 @@ main()
         {
             buf = f.get_block( t->blockno, &size, &magic );
             if ( size != t->size )
+            {
+                fprintf( stderr, "size mismatch!\n" );
                 kill( 0, 6 );
+            }
             if ( memcmp( buf, t->data, size ) != 0 )
+            {
+                fprintf( stderr, "buffer data mismatch!\n" );
                 kill( 0, 6 );
+            }
 
             v = random() % 100;
             if ( v > 63 )
@@ -943,7 +803,7 @@ main()
                 t->data[i] = random() & 0xff;
 
             t->blockno = f.alloc( size );
-            buf = f.get_block( t->blockno, &magic );
+            buf = f.get_block_for_write( t->blockno, NULL, &magic );
             memcpy( buf, t->data, size );
             f.unlock_block( magic, true );
 
