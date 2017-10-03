@@ -104,11 +104,7 @@ FileBlockLocal :: validate( bool verbose )
                 printf("LAST ");
             printf("prev %d ", au.d->prev.get());
             if (au.d->used())
-            {
-#if AUIDS_IN_USED
                 printf("auid %d", au.d->auid());
-#endif
-            }
             else
                 printf("bucket_next %d bucket_prev %d",
                        au.d->bucket_next(),

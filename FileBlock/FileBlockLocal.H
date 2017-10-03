@@ -30,14 +30,6 @@
 #include "FileBlock_iface.H"
 #include "dll2.H"
 
-/** 
- * this is a configuration macro, used to switch on or off the use of
- * AUIDs in the used-region AUHead objects.  this will most likely be
- * necessary once compaction is implemented, but for now it is not
- * used by anything except the debug interface.
- */
-#define AUIDS_IN_USED 0
-
 /** a data type for AU id numbers.  */
 typedef UINT32   FB_AUN_T;
 /** a data type for AU id numbers when encoded in a file */
@@ -231,11 +223,7 @@ class _AUHead {
     /** these 31 bits are used for the size of the region. */
     static const UINT32 SIZE_MASK = 0x7fffffff;
 public:
-#if AUIDS_IN_USED
     static const int used_size = 12;
-#else
-    static const int used_size = 8;
-#endif
     /** pointer to the previous region in the file. */
     FB_AUN_t  prev;
 private:
@@ -281,12 +269,10 @@ public:
             (size_and_used.get() & SIZE_MASK) |
             (used ? USED_MASK : 0));
     }
-#if AUIDS_IN_USED
     /** fetch the AUID if this is a used-region. */
     FB_AUID_T auid        ( void        ) { return one.get(); }
     /** set the AUID if this is a used-region. */
     void      auid        ( FB_AUID_T v ) { one.set(v); }
-#endif
     /** fetch the bucket_next for a free region */
     FB_AUN_T bucket_next ( void       ) { return one.get(); }
     /** set the bucket_next for a free region */
@@ -354,7 +340,9 @@ class FileBlockLocal : public FileBlockInterface {
      * \param au    pointer to a user's AUHead to populate with
      *           info from the AU
      */
-    void      dequeue_bucket ( int num_aus, AUHead * au );
+    void      dequeue_bucket ( int num_aus, AUHead * au ) {
+        dequeue_bucketn(ffu_bucket(num_aus), au);
+    }
     /** return a region to the appropriate bucket.
      * \param  au    the AU to return to a bucket.
      */
@@ -374,14 +362,24 @@ class FileBlockLocal : public FileBlockInterface {
         return (num_aus-1);
     }
     // @}
-    /** @name aun management */
+    /** @name AUN management */
     // @{
+    /** allocate a region of the file.
+     * \param desired_aun   desired position, must be a free bucket.
+     *        if zero, buckets are used to allocate dynamically.
+     * \param au    the user's AUHead object to fill in.
+     * \param size  the number of AUs required.
+     * \return   the AUN of the allocated space.
+     */
+    FB_AUN_T  alloc_aun      ( FB_AUN_T desired_aun, AUHead * au, int size );
     /** allocate a region of the file.
      * \param au    the user's AUHead object to fill in.
      * \param size  the number of AUs required.
      * \return   the AUN of the allocated space.
      */
-    FB_AUN_T  alloc_aun      ( AUHead * au, int size );
+    FB_AUN_T  alloc_aun      ( AUHead * au, int size ) {
+        return alloc_aun( 0, au, size );
+    }
     /** allocate a region of the file, where AUHead is not required.
      * \param size  the number of AUs required.
      * \return  the AUN of the allocated space.
@@ -437,6 +435,32 @@ class FileBlockLocal : public FileBlockInterface {
      * \return   the AUID stored at that position in the stack.
      */
     FB_AUID_T lookup_stack   ( UINT32 index );
+    // @}
+    /** @name Compaction */
+    // @{
+    /** walk an L2 table collecting L3 AUNs, used by compact.
+     * \param l   pointer to L2L3AUNList
+     * \param aun  the AUN of the L2 table to walk
+     * \param ty   the TableType of the L2 table to walk.
+     *
+     * See also: \ref addent
+     */
+    void      walkl2         ( void * l, FB_AUN_T aun, int ty );
+    /** move a block to a different location in the file.
+     * doesn't matter if this is an L2/L3 table or a user AUID.
+     * reallocs a used block, or if its an L2/L3 table, uses the
+     * AUN interface.
+     * \param l     L2L3s list, casted to void* to keep type private.
+     * \param auid  the AUID of the block to move; if its an L2/L3 table
+     *              this should be zero.
+     * \param aun   the AUN of the block to move.
+     * \param to_aun desired AUN position to move block to; if zero,
+     *               will be dynamically allocated.
+     * \param num_aus the size of the block to move.
+     */
+    void      move_unit   ( void *l, FB_AUID_T auid,
+                            FB_AUN_T aun, FB_AUN_T to_aun, int num_aus );
+    FB_AUID_T realloc     ( FB_AUID_T auid, FB_AUN_T to_aun, int new_size );
     // @}
 public:
     /*       */             FileBlockLocal     ( BlockCache * _bc );

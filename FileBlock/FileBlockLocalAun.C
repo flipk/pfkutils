@@ -67,18 +67,38 @@ Next: \ref AUNBuckets
 #include <stdlib.h>
 
 FB_AUN_T
-FileBlockLocal :: alloc_aun( AUHead * au, int size )
+FileBlockLocal :: alloc_aun( FB_AUN_T desired_aun, AUHead * au, int size )
 {
     // be sure to account for size of _AUHead 
     size += _AUHead::used_size;
 
     int num_aus = SIZE_TO_AUS(size);
+    FB_AUN_T aun;
 
     // take first au off this bucket list -> au
 
-    dequeue_bucket(num_aus, au);
-
-    FB_AUN_T aun = au->get_aun();
+    if (desired_aun == 0)
+    {
+        dequeue_bucket(num_aus, au);
+        aun = au->get_aun();
+    }
+    else
+    {
+        aun = desired_aun;
+        if (!au->get(aun))
+        {
+            fprintf(stderr, "WTF?? FileBlockLocal :: alloc_aun: crap\n");
+            /*DEBUGME*/
+            exit(1);
+        }
+        if (au->d->used())
+        {
+            fprintf(stderr, "FileBlockLocal :: alloc_aun: used???\n");
+            /*DEBUGME*/
+            exit(1);
+        }
+        remove_bucket(au);
+    }
 
     fh.mark_dirty();
 

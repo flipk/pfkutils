@@ -139,12 +139,6 @@ FileBlockLocal :: dequeue_bucketn( int bucket,  AUHead * au )
 }
 
 void
-FileBlockLocal :: dequeue_bucket(int num_aus, AUHead * au)
-{
-    dequeue_bucketn(ffu_bucket(num_aus), au);
-}
-
-void
 FileBlockLocal :: enqueue_bucket(AUHead *au)
 {
     BucketList   * bl = &fh.d->bucket_list;

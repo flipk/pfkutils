@@ -76,7 +76,9 @@ main(int argc, char ** argv)
     FileBlockInterface * _fbi;
     FileBlockLocal * fbi;
 
-    srandom( getpid() * time(NULL) );
+    int seed = getpid() * time(NULL);
+    srandom( seed );
+    printf("seed: %d\n", seed);
 
     (void) unlink( TESTFILE );
 
@@ -84,12 +86,13 @@ main(int argc, char ** argv)
 
     fbi = (FileBlockLocal*) _fbi;
 
-#if 1
+#if 0
 #define ITEMS 1000000
 #define LOOPS 10000000
 #else
-#define ITEMS 100
-#define LOOPS 1000
+#define ITEMS        10000
+#define LOOPS        100000
+#define LOOPS_THRESH  90000
 #endif
 
     info * infos = new info[ITEMS];
@@ -141,7 +144,7 @@ main(int argc, char ** argv)
                     printf("%d: ERROR seq mismatch\n", loop);
             }
             count_read ++;
-            if ((random() & 0x7F) > 0x40)
+            if ((loop > LOOPS_THRESH) || ((random() & 0x7F) > 0x40))
             {
                 // delete
                 td.release();
@@ -191,6 +194,7 @@ main(int argc, char ** argv)
 
         if ((loop % ITEMS) == 0)
         {
+            fbi->compact(true);
             fbi->flush();
             count_flush++;
         }
@@ -211,10 +215,9 @@ main(int argc, char ** argv)
 
     delete[] infos;
 
+    fbi->compact(true);
     fbi->validate(false);
     delete fbi;
-
-    (void) unlink( TESTFILE );
 
     return 0;
 }

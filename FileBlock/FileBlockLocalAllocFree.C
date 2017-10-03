@@ -68,9 +68,7 @@ FileBlockLocal :: alloc( int size )
         return 0;
 
     auid = alloc_auid( aun );
-#if AUIDS_IN_USED
     au.d->auid(auid);
-#endif
 
     return auid;
 }
@@ -93,6 +91,13 @@ FileBlockLocal :: free( FB_AUID_T auid )
 FB_AUID_T
 FileBlockLocal :: realloc( FB_AUID_T auid, int new_size )
 {
+    return realloc(auid, 0, new_size);
+}
+
+FB_AUID_T
+FileBlockLocal :: realloc( FB_AUID_T auid, FB_AUN_T to_aun,
+                           int new_size )
+{
     FB_AUN_T aun;
     UCHAR * buffer;
     int buflen;
@@ -107,6 +112,8 @@ FileBlockLocal :: realloc( FB_AUID_T auid, int new_size )
         return 0;
 
     buflen = fb->get_size();
+    if (new_size == 0)
+        new_size = buflen;
     if (buflen >= new_size)
     {
         buflen = new_size;
@@ -124,7 +131,11 @@ FileBlockLocal :: realloc( FB_AUID_T auid, int new_size )
 
     free_aun(aun);
 
-    aun = alloc_aun(new_size);
+    {
+        AUHead au(bc);
+        aun = alloc_aun(to_aun, &au, new_size);
+        au.d->auid(auid);
+    }
     fb = get_aun(aun,true);
     if (!fb)
     {

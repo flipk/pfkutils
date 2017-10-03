@@ -26,91 +26,9 @@
 
 /** \page FileBlockCompacting FileBlock Compacting
 
-At this time, compaction is not yet implemented, mostly because a 
-design has not yet been finalized. Possible implementations include:
+The algorithm for compacting a file is as follows:
 
 <ul>
-<li>  Recreating the file from scratch
-
-This requires halting access to the file and creating an entirely new
-file, walking the original file in block order and simply
-tail-allocating from the new file, guaranteeing the new file is
-completely packed.  While this guarantees perfect packing and
-excellent performance (due to the linear nature of both the reader and
-the writer) it unfortunately requires the access to the file to be
-halted-- an unacceptable step for any program intended to run
-continuously for long periods.
-
-Performance with this method would be excellent if the source and
-destination files were on different disk spindles, due to the mostly
-linear access to the two files, but performance would be very poor if
-they were on the same spindle due to repeated seeking between the two
-files.
-
-<li>  In-place downshifting
-
-In this method, the file is walked from beginning to end.  Each time a
-free region is encountered, a used-region following it is moved down
-into the free space.  The free space is then pushed up.  Whenever a
-free region is encountered, it is coalesced with the free space being
-pushed up. If this is done through the entire file, all the free space
-will be eventually coalesced with the end-of-file marker and the 
-overall file size will be reduced.
-
-This is complicated by the AUID free-stack L2/L3 tables.  For any
-other used-block, the AUID translation table can be modified to the
-new AUN value when the block is moved.  But L2 tables are identified
-only by an AUN value stored in the L1 table, and L3 tables are
-identified only by an AUN value stored in the L2 table.  There are no
-AUIDs to modify, so for example when an L2 table is moved, the
-corresponding L1 entry must be modified.
-
-To address this problem, the compaction algorithm will need to first
-walk the list of all L2 and L3 tables for both the AUID table and the
-free stack, and collect a list in memory.  When an AUID of zero is
-encountered in a used-block, the list should be consulted, so that
-when the table is moved, the proper AUN value in the parent table can
-be updated.
-
-This algorithm would process the file in a linear fashion.  This is
-not a good scenario for the PageCache, as the cache would be filling
-linearly from one end and doing write-backs linearly from the other
-end.  If the PageCache were made sufficiently large, performance
-degradation could be kept to a minimum if well-timed cache flushes
-were performed, guaranteeing that a large number of dirty pages would
-be written out in a linear (and thus high-speed) fashion.
-
-<li> Bucket matching
-
-In this method, the header data in a used-region will need to be modified
-to include a used-bucket list, so that even used-regions are on a list
-corresponding to bucket size.  Then, the algorithm is as follows:
-
-<ul>
-<li> For each bucket size, 1-2047:
-   <ul>
-   <li>  Read into memory a list of all free AUNs of this bucket size
-   <li>  Read into memory a list of all used AUNs of this bucket size
-   <li>  Sort the free AUNs in increasing order
-   <li>  Sort the used AUNs in decreasing order
-   <li>  For index counts from 1 to size of smaller list
-      <ul>
-      <li> move the first used region on the used list to the
-           first free region on the free list, and dequeue from both lists.
-      <li> continue this loop until either:
-         <ul>
-         <li> one of the lists is empty, or
-         <li> the next free AUN is larger than the next used AUN.
-         </ul>
-      </ul>
-   </ul>
-</ul>
-
-This method has a significant performance impact on the PageCache, as it
-would cause random seeking all over the file to build the bucket lists,
-and then seeking from beginning to end and back again repeatedly as
-blocks are moved down.
-
 <li>  Unpeeling + Downshifting
 
 <ul>
@@ -157,9 +75,329 @@ Next: \ref BtreeStructure
 
 #include <stdlib.h>
 
+#define DEBUG_COMPACTION 0
+
+enum TableType { AUID, STACK };
+enum TableLevel { L2, L3 };
+
+enum {
+    DLL2_INDEX_LIST,
+    DLL2_INDEX_HASH,
+    DLL2_NUM_LISTS
+};
+
+struct L2L3AUN {
+    LListLinks <L2L3AUN> links[DLL2_NUM_LISTS];
+    TableType type;
+    TableLevel level;
+    FB_AUN_T aun;
+    L2L3AUN * parent;
+    int parent_index;
+};
+
+class L2L3AUNHashComparator {
+public:
+    static int hash_key( L2L3AUN * item ) { return item->aun; }
+    static int hash_key( FB_AUN_T key ) { return key & 0x7FFFFFFF; }
+    static bool hash_key_compare( L2L3AUN * item, FB_AUN_T key ) {
+        return (item->aun == key);
+    }
+};
+
+typedef LList <L2L3AUN,DLL2_INDEX_LIST> L2L3AUNList;
+typedef LListHash <L2L3AUN,FB_AUN_T,
+                   L2L3AUNHashComparator,DLL2_INDEX_HASH> L2L3AUNHash;
+
+class L2L3s {
+    L2L3AUNList  list;
+    L2L3AUNHash  hash;
+public:
+    void add   ( L2L3AUN * item ) { list.add   (item); hash.add   (item); }
+    void remove( L2L3AUN * item ) { list.remove(item); hash.remove(item); }
+    L2L3AUN * find ( FB_AUN_T aun ) { return hash.find(aun); }
+    L2L3AUN * dequeue_head( void ) {
+        L2L3AUN * ret = list.dequeue_head();
+        if (ret)
+            hash.remove(ret);
+        return ret;
+    }
+};
+
+/** add an entry to the L2L3s list.
+ * \param l   the list to modify
+ * \param aun   the AUN of the L2/L3 table to add to the list.
+ * \param ty    type of the table being added, AUID or STACK
+ * \param lev   the table level, L2 or L3
+ * \param parent_aun  the AUN of the parent table (ignored if L2)
+ * \param parent_index  the index in the parent table to modify
+ */
+static void
+addent( L2L3s * l, FB_AUN_T aun,
+        TableType ty, TableLevel lev,
+        FB_AUN_T parent_aun, int parent_index )
+{
+    L2L3AUN * ent = new L2L3AUN;
+    ent->type = ty;
+    ent->level = lev;
+    ent->aun = aun;
+    ent->parent = l->find(parent_aun);
+    ent->parent_index = parent_index;
+    l->add(ent);
+#if DEBUG_COMPACTION
+    printf("add table type %d level %d at aun %d; ", ty, lev, aun);
+    if (lev == L2)
+        printf("  parent is L1 index %d\n", parent_index);
+    else
+        printf("  parent is L2 at %d index %d\n",
+               l->find(parent_aun)->aun, parent_index);
+#endif
+}
+
+void
+FileBlockLocal :: walkl2( void /*L2L3s*/ * l,
+                          FB_AUN_T tabaun, int /*TableType*/ ty )
+{
+    FileBlock   * l2fb = get_aun( tabaun );
+    AuidL23Tab  * l2tab = (AuidL23Tab*)l2fb->get_ptr();
+    int i;
+    FB_AUN_T aun;
+
+    for (i=0; i < AuidL23Tab::L23_ENTRIES; i++)
+    {
+        aun = l2tab->entries[i].get();
+        if (aun != 0)
+            addent( (L2L3s*) l, aun,
+                    (TableType)ty, L3,
+                    tabaun, i );
+    }
+
+    release( l2fb );
+}
+
+void
+FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
+                             FB_AUN_T aun, FB_AUN_T to_aun,
+                             int num_aus )
+{
+    L2L3s * l2l3tables = (L2L3s*) l;
+    L2L3AUN * l2l3ent;
+
+    if (auid == 0)
+    {
+        l2l3ent = l2l3tables->find(aun);
+        if (l2l3ent)
+        {
+            AuidL23Tab temp;
+            FileBlock * fb;
+            FB_AUN_T new_aun;
+
+            fb = get_aun(aun);
+            memcpy( &temp, fb->get_ptr(), fb->get_size() );
+            release(fb);
+            free_aun(aun);
+            if (to_aun == 0)
+                new_aun = alloc_aun( sizeof(temp) );
+            else
+            {
+                AUHead junk_au(bc);
+                new_aun = alloc_aun(to_aun, &junk_au, sizeof(temp) );
+            }
+            fb = get_aun(new_aun,true);
+            memcpy(fb->get_ptr(), &temp, sizeof(temp) );
+            fb->mark_dirty();
+            release(fb);
+
+            // update parent's entry
+            if (l2l3ent->level == L2)
+            {
+                // moved an L2, so must update L1 table
+                if (l2l3ent->type == AUID)
+                {
+                    fh.d->auid_l1.entries[
+                        l2l3ent->parent_index].set(new_aun);
+#if DEBUG_COMPACTION
+                    printf("  moved an L2 AUID table from %d to %d (pi %d)\n",
+                           aun, new_aun, l2l3ent->parent_index);
+#endif
+                }
+                else /* type == STACK */
+                {
+                    fh.d->auid_stack_l1.entries[
+                        l2l3ent->parent_index].set(new_aun);
+#if DEBUG_COMPACTION
+                    printf("  moved an L2 stack table from %d to %d (pi %d)\n",
+                           aun, new_aun, l2l3ent->parent_index);
+#endif
+                }
+                fh.mark_dirty();
+            }
+            else
+            {
+                // we moved an L3 table, so we're updating an L2 table
+                fb = get_aun(l2l3ent->parent->aun);
+                AuidL23Tab * t = (AuidL23Tab *)fb->get_ptr();
+                t->entries[l2l3ent->parent_index].set( new_aun );
+                fb->mark_dirty();
+                release(fb);
+#if DEBUG_COMPACTION
+                printf("  moved an L3 %s table from %d to %d (paun %d pi %d)\n",
+                       l2l3ent->type == AUID ? "AUID" : "stack",
+                       aun, new_aun, 
+                       l2l3ent->parent->aun,
+                       l2l3ent->parent_index);
+#endif
+            }
+
+            // must update the aun in this entry, but this also
+            // means rehashing it so we can still find it again later.
+            l2l3tables->remove(l2l3ent);
+            l2l3ent->aun = new_aun;
+            l2l3tables->add(l2l3ent);
+        }
+        else
+        {
+            printf("  ERROR: can't find an L2/L3 table\n");
+        }
+    }
+    else
+    {
+#if DEBUG_COMPACTION
+        FB_AUN_T old_aun, new_aun;
+        old_aun = translate_auid(auid);
+#endif
+        realloc(auid, to_aun, 0);
+#if DEBUG_COMPACTION
+        new_aun = translate_auid(auid);
+        printf("  moved auid %d from %d to %d\n", auid, old_aun, new_aun);
+#endif
+    }
+}
+
 //virtual
 void
 FileBlockLocal :: compact( bool full )
 {
-    // not yet supported
+    L2L3s  l2l3tables;
+    L2L3AUN * l2l3ent;
+    int i;
+    FB_AUN_T next_ds_au;
+
+    // build the list of L2/L3 tables.
+
+    for (i=0; i < AuidL1Tab::L1_ENTRIES; i++)
+    {
+        FB_AUN_T aun;
+        aun = fh.d->auid_l1.entries[i].get();
+        if (aun != 0)
+        {
+            addent(&l2l3tables, aun, AUID, L2, 0, i);
+            walkl2(&l2l3tables, aun, AUID);
+        }
+        aun = fh.d->auid_stack_l1.entries[i].get();
+        if (aun != 0)
+        {
+            addent(&l2l3tables, aun, STACK, L2, 0, i);
+            walkl2(&l2l3tables, aun, STACK);
+        }
+    }
+
+    next_ds_au = fh.d->info.first_au.get();
+
+    while (1)
+    {
+        FB_AUN_T aun, last_aun, free_aus;
+        FB_AUID_T auid;
+        int num_aus, bucket;
+
+        last_aun = fh.d->info.num_aus.get();        
+        free_aus = fh.d->info.free_aus.get();
+
+#if DEBUG_COMPACTION
+        printf("free_aus = %d, file_size = %d, percent = %d\n",
+               free_aus, last_aun, (free_aus*100)/last_aun);
+#endif
+
+        if (((free_aus*100)/last_aun) < 2)
+            break;
+
+        AUHead  au(bc);
+        au.get(last_aun);
+        aun = au.d->prev.get();
+        au.get(aun);
+        num_aus = au.d->size();
+        auid = au.d->auid();
+        au.release();
+#if DEBUG_COMPACTION
+        printf("last used au is at %d, auid %d,  size is %d\n",
+               aun, auid, num_aus);
+#endif
+        bucket = ffu_bucket(num_aus);
+#if DEBUG_COMPACTION
+        printf("bucket is %d\n", bucket);
+#endif
+        if (bucket == (BucketList::NUM_BUCKETS-1))
+        {
+#if DEBUG_COMPACTION
+            printf("cannot move this piece, must start downshifting\n");
+#endif
+            int num_aus_desired = num_aus;
+
+            while (1)
+            {
+                // find a free region.
+                while (1)
+                {
+                    if (!au.get(next_ds_au))
+                        goto done;
+                    if (!au.d->used())
+                        break;
+                    next_ds_au += au.d->size();
+                }
+#if DEBUG_COMPACTION
+                printf("found a free region of size %d at %d\n",
+                       au.d->size(), next_ds_au);
+#endif
+                if (au.d->size() >= num_aus_desired)
+                {
+#if DEBUG_COMPACTION
+                    printf("which is large enough for piece we want to move\n");
+#endif
+                    break;
+                }
+
+                // the next region should be used, because the file
+                // should never have two free regions adjacent.
+                // move it down.
+
+                FB_AUN_T naun;
+                naun = next_ds_au + au.d->size();
+                if (!au.get(naun))
+                    goto done;
+                num_aus = au.d->size();
+                auid = au.d->auid();
+                au.release();
+#if DEBUG_COMPACTION
+                printf("downshifting auid %d size %d from %d to %d:\n",
+                       auid, num_aus, naun, next_ds_au );
+#endif
+                move_unit( &l2l3tables, auid, naun, next_ds_au, num_aus );
+#if DEBUG_COMPACTION
+                naun = next_ds_au + num_aus;
+                au.get(naun);
+                printf("after moving, next %s region size at %d is %d\n",
+                       au.d->used() ? "USED" : "FREE",
+                       naun, au.d->size());
+                au.release();
+#endif
+            }
+        }
+        else
+        {
+            move_unit( &l2l3tables, auid, aun, 0, num_aus );
+        }
+    }
+
+done:
+    while ((l2l3ent = l2l3tables.dequeue_head()) != NULL)
+        delete l2l3ent;
 }
