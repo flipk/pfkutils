@@ -10,6 +10,87 @@
 #include "FileBlock_iface.H"
 #include "dll2.H"
 #include "ExtentMap.H"
+/** \page FileBlock FileBlock object
+
+ \section FileBlockExtents FileBlock Extents usage
+
+The FileBlock controls allocation of the body of the file.  It uses an
+Extents map to manage in-use and free zones in the file.  The Extents
+is stored in a simple format on disk: the Extents is written an entire
+page at a time.  Each entry is simply a pair of UINT32 values; the
+first is an identifier key, while the second is the block size, with
+the top bit reserved.  A value of 1 in the top bit indicates a block
+which is in use, while 0 means a free region.  The remaining 31 bits
+indicate the size of that particular block.  The file-offset of the
+block is implied by summing all the previous extent-map descriptor
+sizes.
+
+Obviously, this implies that the on-disk format is not very useful for
+actually managing allocations and frees.  When a file is first opened,
+all of the extent-map pages are read in, and parsed.  A series of
+lists are produced.  Every entry is on a linked list which is sorted
+by the offset, in other words, in order through the file.  Every
+entry, if a free region, is also on a bucket-list.  There are a
+significant number of bucket lists, each corresponding to free regions
+of different sizes.
+
+The extent-map is stored on the disk starting with the first page.
+
+\todo needs more information here.
+
+A flush-operation becomes rather expensive, because the entire linked
+list of all extent-map entries must be serially written to the list of
+extent-map file pages.  This is the only disadvantage of this technique.
+
+\section FileBlockBuckets FileBlock Buckets
+
+The list of buckets is configurable by the user when the FileBlock
+object is created.  The reason, is that the bucket-list which is
+useful varies greatly by application.  If a given application uses
+only 3 different block sizes, then a small but specific bucket-list
+may be appropriate for speed.  On the other hand if bucket sizes vary
+greatly by a large range, the application may define a short list of
+ranges comprising the most common bucket sizes.  Or, if it is
+important to optimize the size of the file as much as possible, it may
+be desirable to define a much larger bucket-list with small increments
+between them.  This will be slower to search for appropriate sizes,
+but will dramatically improve file space utilization.
+
+Another option which needs investigation, is to arrange the
+bucket-list as an indexable array, where the index is derived from a
+few bits of the piece size.
+
+\section FileBlockHash FileBlock Hash
+
+Any block which is currently in-use, is also on a hash list.  The hash
+key is the unique identifier.
+
+One benefit of the unique identifier key method of retrieval, is that
+the file can be compacted by moving entries near the end of the file
+to unused holes earlier in the file.  But the block itself is still
+retrieved using the same identifier, so that the application storing
+data in the file is unaware the blocks have moved to a different
+position.
+
+\section FileBlockAccess FileBlock Access Methods
+
+There is a single allocation function which supports all the features
+required in the allocator; all other allocation functions are merely
+front-ends to this one function.
+
+\todo needs more information here.
+
+Next: \ref FileBlockLocalFileFormat
+
+\page FileBlockLocalFileFormat FileBlockLocal File Format
+
+The first few bytes of the first page contains a unique signature
+which identifies the file as a FileBlock file.  This signature must be
+added when the file is first created.  The contents of the signature
+is the ASCII string \em "FILE BLOCK LOCAL" with no trailing NUL (this
+consumes 16 bytes).
+
+ */
 
 /** \brief A "Local File" implementation of FileBlockInterface
  * 

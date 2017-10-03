@@ -10,6 +10,48 @@
 
 #include "PageCache.H"
 
+
+/** \page BlockCache BlockCache object
+
+The PageCache object is consumed by the BlockCache object.  This
+object abstracts the concept of arbitrarily-sized blocks in a file.
+When the BlockCache::get() method is called, it determines how many
+pages are required to satisfy the request.  If the entire request is
+within a single page, the returned object is optimized by returning a
+pointer directly into the PageCachePage object.  Since pages are
+generally pretty large, most BlockCache operations are thus within a
+single page.  Thus, this optimization results in dramatic zero-copy
+speedup.  If the request spans more than one page, then a separate
+memory buffer is allocated, and the block object maintains references
+to all pages.
+
+Various optimizations are also done when the \c for_write parameter is
+specified.  Obviously if the user is requesting only a portion of a
+page, then for_write cannot be passed to PageCache, because this could
+trash the remainder of the page which is not being modified.  However
+in multi-block fetches, for_write does have an effect if complete
+pages are involved in the block.
+
+When the BlockCache::flush() method is invoked, it will eventually
+call PageCache::flush().  This will automatically synchronize all
+single-page blocks with the data file; however for multi-page blocks,
+some additional work must be done before flushing the PageCache.  All
+portions of the multi-page blocks are copied to their respective pages
+prior to calling PageCache::flush().
+
+Be sure to call BlockCacheBlock::mark_dirty() to ensure that flushes are
+written to the containing pages properly.
+
+\note While it is legal for PageCache users to call PageCache::get()
+on the same page twice (because of internal reference counts, etc),
+this is \b NOT legal for BlockCache blocks.  Undefined behavior and data
+corruption will occur if the same or overlapping blocks are requested
+from BlockCache at the same time.
+
+Next: \ref ExtentMap
+
+*/
+
 class BlockCacheList;
 
 /** \brief what the user sees when interfacing to the cache */

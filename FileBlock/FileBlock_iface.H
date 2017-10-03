@@ -11,6 +11,29 @@
 #include "BlockCache.H"
 #include "types.H"
 
+/** \mainpage FileBlock Interface
+
+The purpose of the FileBlock interface is to manage allocation of file
+space within a file.  An excellent analogy to the FileBlockInterface 
+object are the standard unix functions \c malloc and \c free, except that
+it is for file space rather than memory space.
+
+ \section FileBlockObjects FileBlock component objects
+
+The FileBlock interface is composed of a number of lower-level object
+types.  Click on the following links to read about each of them.
+
+<ul>
+<li> \ref PageIO
+<li> \ref PageCache
+<li> \ref BlockCache
+<li> \ref ExtentMap
+<li> \ref FileBlock
+<li> \ref FileBlockLocalFileFormat
+</ul>
+
+*/
+
 /** \brief A data unit in a FileBlockInterface file.
  *
  * When the user of the FileBlockInterface is attempting to access

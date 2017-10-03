@@ -8,6 +8,7 @@
 #define __PAGE_CACHE_H__
 
 #include "types.H"
+#include "PageIO.H"
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -15,6 +16,49 @@
 class PageIO;
 class PageCachePage;
 class PageCachePageList;
+
+
+
+/** \page PageCache PageCache object
+
+The PageIO interface is consumed by a PageCache object.  This is a
+cache of PageCachePage objects up to a maximum number.  The method
+PageCache::get() will retrieve a page from the cache if it is in
+cache, or fetch it from the PageIO interface if it is not (and add it
+to the cache).  A page returned by PageCache::get() is in the \c locked
+state with a \c reference \c count greator than 0.  When the caller is
+done using the page object, it must call PageCache::release() to
+return the page to the cache.  This decreases the reference count on
+the page.  When the PageCache::flush() method is called, all pages
+currently in cache are synced up with the backend storage, by invoking
+the PageIO interface to write any pages marked as dirty.
+
+If the number of pages cached in PageCache reaches the maximum, then a
+true \c Least-Recently-Used (LRU) algorithm is used to determine which
+old page to remove from cache.  If the oldest page is clean (in sync
+with the PageIO backend storage) then the memory is simply freed.  If
+the oldest page is dirty, then PageIO::put_page() is invoked prior to
+freeing the page memory.
+
+When the \c for_write flag is set on a PageCache::get() operation, this
+indicates that the user has no intention of using any data currently
+stored in the page, and instead intends to write data to the whole
+page.  This results in an optimization where the PageIO::get_page()
+method is not called, instead an empty PageCachePage is built and
+returned to the user.  (Why read a page from the file if you're just
+going to throw the data away and write the whole page with new data
+anyway?)
+
+\note The maximum count only applies to unlocked pages.  A locked
+page does not count against the limit.
+
+Be sure to call PageCachePage::mark_dirty() to ensure that flushes are
+written to the file properly.
+
+Next: \ref BlockCache 
+
+*/
+
 
 /** \brief A cache of PageCachePage objects fetched thru a PageIO object
  *
@@ -118,66 +162,6 @@ public:
     UCHAR * get_ptr(void) { return ptr; }
     /** \brief user must call this if he has modified the page data. */
     void mark_dirty(void) { dirty = true; }
-};
-
-/** \brief Pure-virual interface class for accessing a file.
- *
- * This is an abstraction of how to get and put pages to a file.
- * The idea is that the underlying implementation could be anything--
- * a file descriptor, an RPC object to another machine, an interface
- * to a flash memory device, a custom UDP or TCP-based communication
- * path, etc. */
-class PageIO {
-public:
-    /** \brief virtual destructor placeholder
-     *
-     * This class provides a virtual destructor, so that any derived
-     * classes can implement their own destructors which are invoked
-     * when this object is destroyed. */
-    virtual ~PageIO(void) { /* placeholder */ }
-    /** \brief Fetch a page from the file
-     * \param pg A PageCachePage object to populate
-     * \return true if the fetch succeeded, false if error
-     * \note This method assumes pg->page_number was already populated */
-    virtual bool  get_page( PageCachePage * pg ) = 0;
-    /** \brief Write a page to the file
-     * \param pg A PageCachePage to write
-     * \return true if the write succeeded, false if error */
-    virtual bool  put_page( PageCachePage * pg ) = 0;
-    /** \brief return size of the file in pages
-     * \param page_aligned pointer to a bool; if NULL, it is ignored;
-     *  if not NULL, the bool will be written with true if the size of
-     *  the file is an even multiple of the page size, or false if the 
-     *  file size is not an even multiple of the page size.
-     * \note This method rounds up the return value to the nearest page,
-     *  if the size of the file is not an even multiple of a page size. */
-    virtual int   get_num_pages(bool * page_aligned = NULL) = 0;
-    /** \brief return size of the file in bytes. */
-    virtual off_t get_size(void) = 0;
-};
-
-/** \brief An example implementation of PageIO using a file descriptor.
- *
- * This class is an example of how to create a PageIO object.
- * This one is useful for local files.  Just open(2) the file
- * and pass the fd to this class. */
-class PageIOFileDescriptor : public PageIO {
-    /** \brief The file descriptor of the file being accessed. */
-    int fd;
-public:
-    /** \brief Constructor
-     * \param _fd The file descriptor of the file to access */
-    PageIOFileDescriptor(int _fd);
-    /** \brief Destructor
-     * \note This destructor does \b NOT close the file descriptor!  */
-    /*virtual*/ ~PageIOFileDescriptor(void);
-
-    // doxygen comments not required, because they will be inherited
-    // from the base class documentation.
-    /*virtual*/ bool get_page( PageCachePage * pg );
-    /*virtual*/ bool put_page( PageCachePage * pg );
-    /*virtual*/ int get_num_pages(bool * page_aligned = NULL);
-    /*virtual*/ off_t get_size(void);
 };
 
 #endif /* __PAGE_CACHE_H__ */

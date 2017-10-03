@@ -9,6 +9,108 @@
 #include "types.H"
 #include "dll2.H"
 
+/**  \page ExtentMap Extent and Extents objects
+
+The core of the allocation system is a list of Extent objects.  Each
+Extent contains a position and size.  In the list, the Extent objects
+are ordered such that entry N's position plus entry N's size equals
+entry N+1's position.  Cumulatively, the entire list thus describes
+every position starting at zero at the start of the list thru
+MAX_INT64, in order, with no gaps.
+
+Each Extent can also be marked as used or free.  A used Extent
+represents a region of a data file which is currently in-use.  A free
+Extent represents a region which is unallocated.
+
+\note It is meaningless to have two free Extent objects in a row.  If
+such a condition occurs by freeing a used Extent, then the two
+adjacent Extent objects should be coalesced into one.
+
+When an allocation is required, an existing free Extent may be broken
+into two Extent objects.  The size value of both Extent objects are
+reduced (such that the sum still equals the original Extent size) and
+the position of the second is increased (to maintain the consistency
+of position plus size of the first one).
+
+\section ExtentMapExample1 Allocation Example
+
+Suppose prior to allocation, the Extents map looked like this:
+<pre>
+    1. Used 0-51 (size 52)
+    2. Used 52-67 (size 16)
+    3. Free 68-77 (size 10)
+    4. Used 78-95 (size 18)
+    5. Free 96-115 (size 20)
+    6. Used 116-149 (size 34)
+</pre>
+Now we want to allocate 12.  If we look through the list, we see that
+the hole at #3 is not large enough, but #5 is.  So we split it up.
+<pre>
+    1. Used 0-51 (size 52)
+    2. Used 52-67 (size 16)
+    3. Free 68-77 (size 10)
+    4. Used 78-95 (size 18)
+    5. Used 96-115 (size 12)
+       Free 108-115 (size 8)
+    6. Used 116-149 (size 34)
+</pre>
+So the new allocation of size 12 starts at position 96.
+
+Now suppose instead we return to the original example, and decide we
+want to free the extent of 18 at position 78.  After changing #4 from
+the Used state to Free, we discover three free extents in a row.  So
+we combine them as follows:
+<pre>
+    1. Used 0-51 (size 52)
+    2. Used 52-67 (size 16)
+    3. Free 68-115 (size 48)
+    6. Used 116-149 (size 34)
+</pre>
+
+\section ExtentMapOptimize Optimizing Extent maps
+
+This is well enough, but it needs to be efficient.  Obviously the
+allocation case is not efficient, because we must walk the list until
+a large enough hole is found.  (This is O(ln n)).  The free case is
+also not efficient, because if an extent is identified by its starting
+position, again you must perform an O(ln n) search to find the
+matching extent.  If on the other hand you identify the extent by its
+entry number in the table, the identifier changes each time some other
+allocate or free action is taken elsewhere in the table.
+
+The Extent and Extents objects solve the identification problem by
+attaching a unique 32-bit identifer to each Used Extent.  This
+identifier is stored in a hash table for quick lookup.  During an
+alloc, the identifier is randomly generated (and the hash is checked
+to ensure the same identifier doesn't already exist).  This
+dramatically increases the speed of a free operation.
+
+The allocation problem is solved as well, using a bucket-list array.
+The free Extent objects are grouped on different linked lists by size.
+In this implementation, the bucket size is 32 bytes.  Thus the first
+bucket-list contains free holes of size 1-31 bytes in size.  The
+second bucket-list contains free holes of size 32-63 bytes in size,
+etc, on up to 65536 bytes in size.  This requires 2048 bucket-lists.
+
+When an allocation is performed, the size of the desired allocation is
+right-shifted by 5 bits and the resulting value is used to index the
+array of buckets.  Thus a free extent of just the right size can be
+located quickly.
+
+However if there is no extent of just the right size, the bucket-list
+array is walked in increasing order until another extent can be found.
+This can be expensive since there are 2048 bucket-lists.  To optimize
+this search, an array of 32 UINT64's are used as a bitmap.  An
+algorithm races through the bitmap 64 bits at a jump looking for a bit
+set to 1.  This corresponds to a bucket-list which is nonempty, which
+can be used for allocation.  The first extent found is then broken
+into two, and the remaining free portion is put back into the
+bucket-list array in the position appropriate to its remaining size.
+
+Next: \ref FileBlock
+
+*/
+
 /** \brief DLL2 enum for definint the lists used by Extent objects */
 enum EXTENT_MAP_LIST_INDICES { EXTENT_LIST, EXTENT_HASH, NUM_LISTS };
 
