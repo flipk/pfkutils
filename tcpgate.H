@@ -1,6 +1,7 @@
 
 #include "dll2/dll2.H"
 
+extern "C" int inet_aton( register const char *cp, struct in_addr *addr );
 enum { FDMAP_MAIN_LIST, FDMAP_DEL_LIST, FDMAP_NUM_LISTS };
 
 struct FDMAP_DATA;

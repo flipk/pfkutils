@@ -7,48 +7,39 @@ IconManagerFont  "-adobe-helvetica-bold-r-normal--*-100-*-*-*"
 
 UsePPosition "nonzero"
 
-OpenWindowTimeout  120
+OpenWindowTimeout    5
 MaxIconTitleWidth  120
 MoveOffResistance   20
-BorderWidth          2
+BorderWidth          3
 
 NoDefaults
 DontMoveOff
 NoGrabServer
 SqueezeTitle
+WarpUnmapped
 PackNewWindows
+StartInMapState
+SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
 RestartPreviousState
 CenterFeedbackWindow
 ShortAllWindowsMenus
+ShowWorkSpaceManager
+AutoFocusToTransients
+AlwaysShowWindowWhenMovingFromWorkspaceManager
 
-IconRegion "translit(WIDTH.50,.,x)-0-22"   South East 130 50
-IconRegion "translit(WIDTH.75,.,x)-0-72"   South East 130 75
-
-# we should never have this many icons...
-
-IconRegion "520x25-520-22" South East 130 25
-IconRegion "520x25-520-47" South East 130 25
-IconRegion "520x25-520-72" South East 130 25
-IconRegion "520x25-520-97" South East 130 25
-
-IconRegionAlignement    "bottom"
-IconRegionJustification "center"
+IconRegion "0900x60-0+0" North East  10 10 "center" "center" "top"
 
 AutoSqueeze { "autosqueeze" }
 
-#WorkSpaceManagerGeometry "240x60-0-0" 4
+WorkSpaceManagerGeometry "120x60+188-0" 2
 WorkSpaces {
 #	space buttonbg  buttonfg  rootbg
-	"1" { "#203040" "#203040" "#203040" }
-	"2" { "#203040" "#203040" "#203040" }
-	"3" { "#203040" "#203040" "#203040" }
-	"4" { "#203040" "#203040" "#203040" }
-	"5" { "#203040" "#203040" "#203040" }
-	"6" { "#203040" "#203040" "#203040" }
-	"7" { "#203040" "#203040" "#203040" }
-	"8" { "#203040" "#203040" "#203040" }
+	"1" { "#203040" "#ffffff" "#203040" }
+	"2" { "#203040" "#ffffff" "#203040" }
+	"3" { "#203040" "#ffffff" "#203040" }
+	"4" { "#203040" "#ffffff" "#203040" }
 }
 
 NoTitle {
@@ -58,14 +49,14 @@ NoTitle {
 	"XTermScreen"
 	"NoTitle"
 	"XDaliClock"
-	"vncviewer"
-	"Wfica"
 }
 
 OccupyAll {
 	"Emacs Minibuffer"
 	"Doxtrms"
 }
+
+MapWindowCurrentWorkSpace { "red" }
 
 Color
 {
@@ -80,6 +71,7 @@ Color
 	MenuForeground "gray85"
 	MenuTitleBackground "gray70"
 	MenuTitleForeground "rgb:2/a/9"
+	MapWindowBackground "yellow"
 	IconBackground "#203040"
 	IconForeground "gray85"
 	IconBorderColor "gray85"
@@ -93,7 +85,7 @@ Function "move-or-iconify" { f.move f.deltastop f.iconify }
 
 Button1 =   : root        : f.menu "defops"
 Button3 =   : root        : f.menu "TwmAllWindows"
-Button1 = m : window|icon : f.iconify
+Button2 = s : window|icon : f.iconify
 Button2 = m : window|icon : f.resize
 Button3 = m : window|icon : f.function "move-or-raise"
 Button1 =   : title|frame : f.function "move-or-raise"
@@ -108,7 +100,9 @@ Button2 =   : iconmgr     : f.iconify
 "x"     = s : root        : !"xs&"
 "e"     =   : root        : !"myemacs&"
 "r"     = c : root        : f.restart
+"l"	=   : root        : !"xlock&"
 
+"0"     =   : root        : f.toggleworkspacemgr
 "1"     =   : root        : f.gotoworkspace "1"
 "2"     =   : root        : f.gotoworkspace "2"
 "3"     =   : root        : f.gotoworkspace "3"
@@ -118,6 +112,7 @@ Button2 =   : iconmgr     : f.iconify
 "7"     =   : root        : f.gotoworkspace "7"
 "8"     =   : root        : f.gotoworkspace "8"
 
+"0"     = m : root|window|title : f.toggleworkspacemgr
 "1"     = m : root|window|title : f.gotoworkspace "1"
 "2"     = m : root|window|title : f.gotoworkspace "2"
 "3"     = m : root|window|title : f.gotoworkspace "3"
@@ -129,6 +124,13 @@ Button2 =   : iconmgr     : f.iconify
 
 "Left"	= m : root|window|title : f.prevworkspace
 "Right"	= m : root|window|title : f.nextworkspace
+"Down"	= m : root              : f.downworkspace
+"Up"	= m : root              : f.upworkspace
+
+"Left"	=   : root              : f.prevworkspace
+"Right"	=   : root              : f.nextworkspace
+"Down"	=   : root              : f.downworkspace
+"Up"	=   : root              : f.upworkspace
 
 LeftTitleButton  ":xpm:dot"    = f.iconify
 LeftTitleButton  ":xpm:bar"    = f.squeeze
@@ -141,10 +143,14 @@ menu "defops"
         "XtermScreen"	f.exec "xs"
 	"Mozilla"	f.exec "mozilla &"
 	"MozillaMail"	f.exec "mozilla -mail &"
+	"Lap"		!"lap&"
+	":2"		!"vncviewer 127.1:2&"
+	"Lock"		!"xlock&"
         ""		f.nop
 	"Iconify"	f.iconify
 	"Resize"	f.resize
 	"Move"		f.movepack
+	"MoveF"		f.forcemove
         "Raise"		f.raise
         "Lower"		f.lower
         "Info"          f.identify

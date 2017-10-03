@@ -55,7 +55,7 @@ rmstar_item :: new_item( char * format, ... )
 
 typedef LList<rmstar_item,0> RMSTAR_LIST;
 
-RMSTAR_LIST log;
+static RMSTAR_LIST log;
 
 void logit( char * format, ... )
     __attribute__ (( format( printf, 1, 2 )));

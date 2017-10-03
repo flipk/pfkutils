@@ -22,6 +22,7 @@
 	PROG(1,qcam,quickcam interface program)
 	PROG(0,treescan,scan a tree of files and produce a treediff)
 	PROG(1,itsfssvr,ITS file system server)
+	PROG(0,xlock,xlock screen)
 #endif
 	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,tcpgate2,TCP gateways for bridging)
@@ -30,6 +31,7 @@
 	PROG(0,itsfsriw,ITS file system remote inode worker)
 	PROG(0,xtermbar,change title in the xterm)
 	PROG(0,gmarc,get me a real copy)
+	PROG(0,fmtsdiff,format sdiff output)
 	PROG(0,rmstar,recursive rm -rf but verbosely)
 	PROG(0,waitpid,wait for some process ids to exit)
 	PROG(0,maketags,make tags database of C files)

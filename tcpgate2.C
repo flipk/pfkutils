@@ -22,6 +22,7 @@ exit 0
 #include <fcntl.h>
 
 #include "threads.H"
+extern "C" int inet_aton( register const char *cp, struct in_addr *addr );
 
 #if defined(SUNOS) || defined(SOLARIS) || defined(CYGWIN)
 #define socklen_t int

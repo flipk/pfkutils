@@ -270,7 +270,7 @@ alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
 
-#FUNCTIONS: make_file_part x xr xs xrs xsd sd xless z ediff merge3 myemacs 
+#FUNCTIONS: make_file_part x xr xs xrs xsd sd xless z ediff merge3 myemacs cvsd2 sd2
 
 make_file_part() {
     typeset try dir_part file_part fp load
@@ -375,6 +375,16 @@ sd() {
     else
         diff -dNsyw --width $cols $* 2>&1 | l
     fi
+}
+
+cvsd2() {
+    width=`stty size | awk '{print $2}'`
+    cvs diff -tyW $width $* | fmtsdiff $width | less '+/%.%'
+}
+
+sd2() {
+    width=`stty size | awk '{print $2}'`
+    diff -tyW $width $* | fmtsdiff $width | less '+/%.%'
 }
 
 xless() {
