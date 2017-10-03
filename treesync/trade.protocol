@@ -1,0 +1,40 @@
+
+first                                    second
+---------------------------------------------------------------------------
+
+regen-started                            regen-started
+wait for regen-started                   wait for regen-started
+perform database regeneration            perform database regeneration
+send regen-done                          send regen-done
+wait for regen-done                      wait for regen-done
+
+for all on the 3 lists                   while !affected-done msg
+   send affected-file                       wait for msg
+   wait for affected-file-status            reply to affected-file msg
+   move conflicts to conflictlist
+send affected-done
+                                         for all on the 3 lists
+while !affected-done msg                    send affected-file
+   wait for msg                             wait for affected-file-status
+   reply to affected-file msg               move conflicts to conflictlist
+                                         send affected-done
+
+for all on created+changed lists         
+   send changed-file-name                accept
+   while file !empty                        changed-file-name
+      send changed-file-contents            changed-file-contents
+   send changed-file-done                   changed-file-done
+for all on removed list                     removed-file-name
+   send removed-file-name                   sync-done              
+send sync-done                           
+
+                                         for all on created+changed lists
+accept                                      send changed-file-name
+   changed-file-name                        while file !empty
+   changed-file-contents                       send changed-file-contents
+   changed-file-done                        send changed-file-done
+   removed-file-name                     for all on removed list
+   sync-done                                send removed-file-name
+                                         send sync-done
+
+exit                                     exit

@@ -1,0 +1,11 @@
+
+enum {
+    __token_start = 256,
+    TOKEN_LITERAL,
+    TOKEN_IDENTIFIER,
+    TOKEN_WHITESPACE,
+    TOKEN_PREPROCLINE,
+    TOKEN_COMMENT,
+    TOKEN_CHAR,
+
+};
