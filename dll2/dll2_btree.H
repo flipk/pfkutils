@@ -201,7 +201,7 @@ public:
     void add( T * nt )
         {
             if ( nt->btree_link.onlist != 0 )
-                BAIL(( "ERROR! LListBTREE item is already on list!\n" ));
+                DLL2BAIL(( "ERROR! LListBTREE item is already on list!\n" ));
 
             NODESTORE store;
             NODE * n = root;
@@ -222,7 +222,7 @@ public:
                 {
                     int k = n->keys[n->cur]->btree_key();
                     if ( k == key )
-                        BAIL(( "ERROR! LListBTREE item is duplicate!\n" ));
+                        DLL2BAIL(( "ERROR! LListBTREE item is duplicate!\n" ));
                     if ( k <= key )
                         break;
                 }
@@ -316,7 +316,7 @@ public:
             // not the leaf.
 
             if ( numitems == 0 )
-                BAIL(( "item not found, btree empty\n" ));
+                DLL2BAIL(( "item not found, btree empty\n" ));
             bool exact = false;
 
             while ( 1 )
@@ -344,9 +344,9 @@ public:
             // a ways down (a for-loop with no init-case).
 
             if ( !exact )
-                BAIL(( "item not found\n" ));
+                DLL2BAIL(( "item not found\n" ));
             if ( n->keys[n->cur] != dt )
-                BAIL(( "didn't find the same item!\n" ));
+                DLL2BAIL(( "didn't find the same item!\n" ));
 
             // store the ref to the node which contains the deleted item.
             foundn = n;
@@ -402,6 +402,8 @@ public:
             n = store.get_tail();
             while ( n )
             {
+                NODE * delete_item = NULL;
+
                 if (( n->numkeys >= HALF_ORDER ) || ( n->root ))
                     break;
 
@@ -412,7 +414,7 @@ public:
 
                 parent = store.get_prev( n );
                 if ( !parent )
-                    BAIL(( "screwed up root indicator\n" ));
+                    DLL2BAIL(( "screwed up root indicator\n" ));
 
                 // check left sib -- if more than half full we can use 
                 // left sib's rightmost entry to steal; if its only
@@ -423,7 +425,7 @@ public:
                 {
                     l_sib = parent->nodes[ parent->cur-1 ];
                     if ( !l_sib )
-                        BAIL(( "screwed up left sib pointer\n" ));
+                        DLL2BAIL(( "screwed up left sib pointer\n" ));
                     if ( l_sib->numkeys > HALF_ORDER )
                         whichsib_steal = SIB_LEFT;
                     else
@@ -442,7 +444,7 @@ public:
                 {
                     r_sib = parent->nodes[ parent->cur+1 ];
                     if ( !r_sib )
-                        BAIL(( "screwed up right sib pointer\n" ));
+                        DLL2BAIL(( "screwed up right sib pointer\n" ));
                     if ( r_sib->numkeys > HALF_ORDER )
                         whichsib_steal = SIB_RIGHT;
                     else
@@ -451,7 +453,7 @@ public:
 
                 if (( whichsib_steal == SIB_NONE ) &&
                     ( whichsib_coalesce == SIB_NONE ))  // should not happen
-                    BAIL(( "Btree can't steal or coalesce! debug me\n" ));
+                    DLL2BAIL(( "Btree can't steal or coalesce! debug me\n" ));
 
                 if ( whichsib_steal != SIB_NONE )
                 {
@@ -597,11 +599,13 @@ public:
                     if ( --parent->numkeys == 0 )
                     {
                         if ( !parent->root )
-                            BAIL(( "nonroot node shrunk! debug me\n" ));
+                            DLL2BAIL(( "nonroot node shrunk! debug me\n" ));
                         numnodes--;
                         depth--;
-                        delete parent;
+                        delete_item = parent;
                         r->root = true;
+                        store.remove( root );
+                        delete root;
                         root = r;
                     }
 
@@ -609,17 +613,25 @@ public:
                     switch ( whichsib_coalesce )
                     {
                     case SIB_LEFT:
-                        delete l_sib;
+                        delete_item = l_sib;
                         break;
 
                     case SIB_RIGHT:
-                        delete n;
+                        delete_item = n;
                         break;
                     }
 
                     numnodes--;
                 }
-                n = store.get_prev( n );
+
+                NODE * prev_item = store.get_prev( n );
+                if ( delete_item != NULL )
+                {
+                    if ( store.onthislist( delete_item ))
+                        store.remove( delete_item );
+                    delete delete_item;
+                }
+                n = prev_item;
             }
 
             empty_store( &store );
@@ -651,6 +663,7 @@ public:
             _printtree( root );
         }
 
+#if 0
     T * get_first( void ) 
         {
             // walk nodes[0] down to leaf, then return keys[0]
@@ -669,4 +682,5 @@ public:
             // recurse to its parent, repeat.
             // if we hit the far right of the root, return null.
         }
+#endif
 };

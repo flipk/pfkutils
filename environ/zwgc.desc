@@ -49,7 +49,6 @@ match "WG_CTL_CLASS"
     set X="1"
   endif
   set filename="/home/knaack/.messages"
-  exec "sh" "-c" "znol | awk '{printf(\"%9s %16s %5s %s %2s\\n\",$1,$3,$4,$5,$6);}' | zwrite -q knaack -i flip"
   exit
 
 match "message"
@@ -85,6 +84,7 @@ match "message"
   set sign = $sender
 
   if ($X == "1") then
+    print "@huge(@center(Message))\n"
     print "@bold(<"+$class+","+$instance+","+$recipient+"> from "+$sender+")\n"
     print "@bold(Signature:) @(@color(red)"+$signature+")\n"
     print $msgbeep+$body

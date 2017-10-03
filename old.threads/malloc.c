@@ -1187,6 +1187,7 @@ typedef struct _mallochdr {
     int size;
     char * filename;
     int lineno;
+    int counter;
 #ifdef MALLOC_REDZONES
     uchar sig2[ sig2_size ];
 #endif
@@ -1197,6 +1198,7 @@ static mallochdr * mallocs_t = NULL;
 
 static int malloc_total_size = 0;
 static int malloc_total_pieces = 0;
+static int malloc_counter = 0;
 
 static void
 dump_malloc( void )
@@ -1208,9 +1210,9 @@ dump_malloc( void )
     dump = fopen( DUMPFILE, "w" );
     for ( mh = mallocs_h; mh; mh = mh->next )
         fprintf( dump,
-                 "%s:%d size %d ptr %#x\n",
+                 "%s:%d %d size %d ptr %#x\n",
                  mh->filename ? mh->filename : "unknown",
-                 mh->lineno, mh->size, payload(mh) );
+                 mh->lineno, mh->counter, mh->size, payload(mh) );
     fclose( dump );
     chown( DUMPFILE, 1000, 1000 );
     chmod( DUMPFILE, 0666 );
@@ -1305,6 +1307,7 @@ malloc(size_t size)
     mh->size = size;
     mh->filename = 0;
     mh->lineno = 0;
+    mh->counter = ++malloc_counter;
     m_add( mh );
     return payload(mh);
 }
@@ -1320,7 +1323,12 @@ malloc_record( char * file, int line, size_t size )
     mh->size = size;
     mh->filename = file;
     mh->lineno = line;
+    mh->counter = ++malloc_counter;
     m_add( mh );
+#if 0
+    if ( mh->counter == 11 )
+        kill(0,18);
+#endif
     return payload(mh);
 }
 
@@ -1353,6 +1361,7 @@ realloc(void *ptr, size_t size)
     mh->size = size;
     mh->filename = oldfilename;
     mh->lineno = oldlineno;
+    mh->counter = ++malloc_counter;
     m_add( mh );
     return payload(mh);
 }

@@ -1,6 +1,8 @@
 #if 0
 set -x -e
-g++ -g3 test_btree.C -o t
+gcc -O3 -c ../threads/malloc.c
+g++ -O3 -c -I ../threads/h test_btree.C
+g++ -O3 malloc.o test_btree.o -o t
 rm -f t.core
 MALLOC_OPTIONS=A ./t
 exit 0
@@ -21,6 +23,23 @@ exit 0
    - 243902 lookups per second
 */
 
+void * operator new     ( size_t s, char * file, int line )
+{
+    return (void*)malloc_record( file, line, s );
+}
+
+void * operator new[]   ( size_t s, char * file, int line )
+{
+    return (void*)malloc_record( file, line, s );
+}
+
+extern "C" void
+malloclock( int x )
+{
+    // nothing
+}
+
+extern "C" void print_malloc( char * s );
 
 struct thing {
     LListBTREELink btree_link;
@@ -32,15 +51,17 @@ struct thing {
 
 #if 1
 
-/*
+#define NUMS 2
+
+#if NUMS==1
 #define BTORDER 13
 #define MAX     500000
 #define REPS    5000000
-*/
-
+#elif NUMS==2
 #define BTORDER 5
-#define MAX     50
-#define REPS    500
+#define MAX     500000
+#define REPS    50000000
+#endif
 
 typedef LListBTREE<thing,BTORDER> BT;
 
@@ -49,7 +70,7 @@ thing ** a;
 int
 main()
 {
-    BT bt;
+    BT * bt;
     int i, j, s;
 
     s = getpid() * time(0);
@@ -58,10 +79,12 @@ main()
 
     printf( "S %d\n", s );
 
-    a = new thing*[ MAX ];
+    a = LOGNEW thing*[ MAX ];
 
     for ( i = 0; i < MAX; i++ )
-        a[i] = new thing( i );
+        a[i] = LOGNEW thing( i );
+
+    bt = LOGNEW BT;
 
     for ( i = 0; i < REPS; i++ )
     {
@@ -69,29 +92,40 @@ main()
 
         if ( a[j]->inlist )
         {
-            if ( bt.find( j ) == 0 )
+            if ( bt->find( j ) == 0 )
                 printf( "not found 1\n" );
-            printf( "remove %d\n", j );
-            bt.remove( a[j] );
+//            printf( "remove %d\n", j );
+            bt->remove( a[j] );
         }
         else
         {
-            printf( "add %d\n", j );
-            bt.add( a[j] );
-            if ( bt.find( j ) == 0 )
+//            printf( "add %d\n", j );
+            bt->add( a[j] );
+            if ( bt->find( j ) == 0 )
                 printf( "not found 1\n" );
         }
 
         a[j]->inlist = !a[j]->inlist;
 
-        bt.printtree();
+//        bt->printtree();
     }
 
-//    bt.printtree();
+    for ( i = 0; i < MAX; i++ )
+    {
+        if ( a[i]->inlist )
+            bt->remove( a[i] );
+        delete a[i];
+    }
+    delete[] a;
 
-    printf( "done\n" );
+    bt->printtree();
+
+    delete bt;
+
+    print_malloc( "btree test" );
     fflush(stdout);
     fflush(stderr);
+
     return 0;
 }
 #endif
@@ -127,7 +161,7 @@ main()
 
     gettimeofday( tv+1, 0 );
     for ( i = 0; i < MAX; i++ )
-        bt.add( new thing( vals[i] ));
+        bt.add( LOGNEW thing( vals[i] ));
     gettimeofday( tv+2, 0 );
     for ( i = 0; i < MAX; i++ )
     {
