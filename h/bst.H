@@ -475,19 +475,19 @@ public:
 
    class example_union : public BST_UNION {
    public:
-   enum { ONE, TWO, MAX };  // values assigned to 'which'
-   BST_UINT8_t   which; // indicates which field in the union is in use
-   // union fields start here; note we don't actually use "union" keyword;
-   // downside is this uses more space on the transmitter and receiver,
-   // upside is bytestream does not.
-   BST_UINT32_t  one;
-   BST_STRING    two;
-   // union fields end here
-   /@virtual@/ bool bst_op( BST_STREAM *str ) {
-   // values in enum correspond to indexes in this array.
-   BST * fields[] = { &one, &two };
-   return bst_do_union(str,&which,MAX,fields);
-   }
+     enum { ONE, TWO, MAX };  // values assigned to 'which'
+     BST_UINT8_t   which; // indicates which field in the union is in use
+     // union fields start here; note we don't actually use "union" keyword;
+     // downside is this uses more space on the transmitter and receiver,
+     // upside is bytestream does not.
+     BST_UINT32_t  one;
+     BST_STRING    two;
+     // union fields end here
+     /@virtual@/ bool bst_op( BST_STREAM *str ) {
+       // values in enum correspond to indexes in this array.
+       BST * fields[] = { &one, &two };
+       return bst_do_union(str,&which,MAX,fields);
+     }
    };
 
 */
