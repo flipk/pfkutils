@@ -3,7 +3,7 @@
 # vars
 #
 
-LD_LIBRARY_PATH=/apps/public/gcc_3.4.3/lib
+LD_LIBRARY_PATH=/apps/public/gcc_3.4.3/lib:/apps/public/gcc_3.2.3/lib
 export LD_LIBRARY_PATH
 
 #
