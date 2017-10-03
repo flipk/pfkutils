@@ -51,7 +51,7 @@ class PK_Semaphores {
     void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
 public:
-    PK_Semaphores( int hashsize );
+    PK_Semaphores( void );
     ~PK_Semaphores( void );
     PK_Semaphore * create( char * name ) {
         PK_Semaphore * ret = new PK_Semaphore( name );

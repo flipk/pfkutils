@@ -47,8 +47,7 @@ Inode_remote_tree :: Inode_remote_tree( int tree_id,
                                         uchar * _path,
                                         int fd )
     : Inode_tree( INODE_REMOTE, tree_id ),
-      rict( fd ),
-      hashlru( HASH_SIZE )
+      rict( fd )
 {
     uchar * p;
     bool dummy;

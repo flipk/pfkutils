@@ -26,10 +26,7 @@ class PK_Threads {
     void unhash_name( PK_Thread * t );  // locks list
     void rehash_name( PK_Thread * t );  // unlocks list
 public:
-    PK_Threads( int thread_hash_size,
-                int message_queue_hash_size,
-                int semaphore_hash_size,
-                int timer_hash_size, int _tps );
+    PK_Threads( int _tps );
     ~PK_Threads( void );
     PK_Thread * find_name( char * name );
     PK_Thread * find_id( pthread_t id );

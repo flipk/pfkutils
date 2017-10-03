@@ -4,8 +4,7 @@
 
 PK_Semaphores * PK_Semaphores_global;
 
-PK_Semaphores :: PK_Semaphores( int _hashsize )
-    : hash( _hashsize )
+PK_Semaphores :: PK_Semaphores( void )
 {
     if ( PK_Semaphores_global )
     {

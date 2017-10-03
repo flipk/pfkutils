@@ -64,8 +64,7 @@ class PK_Message_Queue_List {
     LListHash <PK_Message_Queue,char *,
                PK_Message_Queue_hash_2,PK_MSG_NAMEHASH>  name_hash;
 public:
-    PK_Message_Queue_List( int _hashsize )
-        : id_hash( _hashsize ), name_hash( _hashsize ) { }
+    PK_Message_Queue_List( void ) { }
     ~PK_Message_Queue_List( void );
 
     PK_Message_Queue * find( int qid ) {

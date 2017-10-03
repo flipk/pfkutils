@@ -22,7 +22,7 @@ $(TARG): $(OBJS)
 	rm -f $(TARG)
 	ar cq $(TARG) $(OBJS)
 
-LIBS= -L ../bt -lbt ../pk-md5.o
+LIBS= -L ../bt -lbt ../pk-md5.o ../dll2/libdll2.a
 
 t: test.C $(TARG)
 	g++ $(INCS) -g3 test.C $(TARG) $(LIBS) -o t

@@ -1,0 +1,33 @@
+
+HDRS= dll2.H
+SRCS= dll2_hash.C
+OBJS= $(SRCS:.C=.o)
+LIB= libdll2.a
+FLAGS= -O3
+INCS= 
+
+all: $(LIB) test_hash # test_btree
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	ar cq $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+test_hash:
+	sh test_hash.C
+
+test_btree:
+	sh test_btree.C
+
+.C.o:
+	g++ $(INCS) $(FLAGS) -c $*.C
+
+clean:
+	rm -f *.o $(LIB) Makefile *core
+
+depend: Makefile.in $(SRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(INCS) $(SRCS) >> x
+	mv x Makefile
+
+#DEPENDENCIES

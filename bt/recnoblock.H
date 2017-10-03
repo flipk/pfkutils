@@ -5,8 +5,6 @@
 // 
 // the 6 args to the constructor of this class are:
 //    char * file
-//    int h1            // hash size of data page cache
-//    int h2            // hash size of bitmap page cache
 //    int c1            // maximum number of data pages held in memory
 //    int _record_size  // bytes in record, default=16
 //    int _page_size    // bytes in page, default=4096
@@ -64,15 +62,15 @@ class FileBlockNumber {
 public:
     class constructor_failed { };
 private:
-    void init( char * file, int h1, int h2, int c1,
+    void init( char * file, int c1,
                      int _record_size, int _page_size )
         throw ( constructor_failed );
 public:
     static const int     size_overhead = 4;    // two for sig, two for size
-    FileBlockNumber( char * file, int h1, int h2, int c1,
+    FileBlockNumber( char * file, int c1,
                      int _record_size, int _page_size )
         throw ( constructor_failed );
-    FileBlockNumber( char * file, int h1, int h2, int c1 )
+    FileBlockNumber( char * file, int c1 )
         throw ( constructor_failed );
     ~FileBlockNumber( void );
     int min_block_no( void ) { return reserved_bits; }

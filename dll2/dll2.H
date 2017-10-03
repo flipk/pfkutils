@@ -272,14 +272,19 @@ public:
 //    static bool hash_key_compare( T * item, Hash_Key_Type key )
 //
 
+#define DLL2_NUM_HASH_PRIMES 16
+extern const int dll2_hash_primes[DLL2_NUM_HASH_PRIMES];
+
 template <class T, class Hash_Key_Type,
           class Hash_Key_Comparator, int instance>
 class LListHash {
 private:
+    short hashorder;
+    short rehash_inprog;
     int hashsize;
     typedef LList <T,instance>  theLListHash;
     theLListHash * hash;
-    int hashv ( int key ) { return key % hashsize; }
+    int hashv ( int key, int hs ) { return key % hs; }
     int count;
     theLListHash * rev_eng_hashind( T * t ) {
         unsigned long min  = (unsigned long) & hash[ 0 ];
@@ -291,11 +296,30 @@ private:
             DLL2BAIL(( "LLISTHASH corrupt onlist pointer?\n" ));
         return (theLListHash *) mine;
     }
+    void recalc_hash( void ) {
+        if ( rehash_inprog )
+            return;
+        int average = count / hashsize;
+        if ( average > 5  &&  hashorder < DLL2_NUM_HASH_PRIMES )
+            rehash( dll2_hash_primes[ ++hashorder ] );
+        else if ( average < 1  &&  hashorder > 0 )
+            rehash( dll2_hash_primes[ --hashorder ] );
+    }
+    void rehash( int newhashsize ) {
+        rehash_inprog = 1;   theLListHash * oldhash = hash;
+        int oldhashsize = hashsize;  hashsize = newhashsize;
+        hash = new theLListHash[ hashsize ];  count = 0;
+        for ( int i = 0; i < oldhashsize; i++ )
+            while ( T * t = oldhash[i].dequeue_head() )
+                add( t );
+        delete[] oldhash;
+        rehash_inprog = 0;
+    }
 public:
-    LListHash ( int _hashsize ) {
-        hashsize = _hashsize;
+    LListHash ( void ) {
+        hashorder = 0; rehash_inprog = 0;  count = 0;
+        hashsize = dll2_hash_primes[ hashorder ];
         hash = new theLListHash[ hashsize ];
-        count = 0;
     }
     ~LListHash ( void ) {
         for ( int i = 0; i < hashsize; i++ )
@@ -304,7 +328,8 @@ public:
         delete[] hash;
     }
     T * find    ( Hash_Key_Type key ) {
-        int h = hashv( Hash_Key_Comparator::hash_key( key ) & 0x7fffffff );
+        int h = hashv( Hash_Key_Comparator::hash_key( key ) & 0x7fffffff,
+                       hashsize );
         T * ret;
         for ( ret = hash[h].get_head(); ret; ret = hash[h].get_next(ret))
             if ( Hash_Key_Comparator::hash_key_compare( ret, key ))
@@ -315,7 +340,8 @@ public:
     void add( T * t ) {
         count++;
         int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
-        hash[ hashv( h ) ].add( t );
+        hash[ hashv( h, hashsize ) ].add( t );
+        recalc_hash();
     }
     void remove( T * t ) {
         count--;
@@ -323,6 +349,7 @@ public:
         if ( !lst )
             DLL2BAIL(( "LLISTHASH remove: not on this hash?\n" ));
         lst->remove( t );
+        recalc_hash();
     }
     bool onlist( T * t ) {
         return ( t->links[instance].onlist != 0 );
@@ -375,7 +402,6 @@ private:
     LListHash <T, Hash_Key_Type, Hash_Key_Comparator, hash_instance> hash;
     LListLRU  <T, lru_instance > lru;
 public:
-    LListHashLRU ( int hashsize ) : hash( hashsize ) { }
     ~LListHashLRU( void ) { }
     T * find( Hash_Key_Type key ) { return hash.find( key ); }
     int get_cnt( void ) { return lru.get_cnt(); }
@@ -398,6 +424,8 @@ public:
     T * get_lru_tail ( void ) { return lru.get_tail(); }
     T * get_lru_next( T * t ) { return lru.get_next(t); }
     T * get_lru_prev( T * t ) { return lru.get_prev(t); }
+// hash stats
+    void rehash( int newhashsize ) { hash.rehash( newhashsize ); }
 };
 
 // to use LListOrderedQ, type T must have the following member:

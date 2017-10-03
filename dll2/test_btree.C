@@ -1,9 +1,8 @@
 #if 0
 set -x -e
-gcc -O3 -c ../threads/malloc.c
-g++ -O3 -c -I ../threads/h test_btree.C
-g++ -O3 malloc.o test_btree.o -o t
-rm -f t.core
+g++ -O3 -c test_btree.C
+g++ -O3 -c dll2_hash.C
+g++ -O3 test_btree.o dll2_hash.o -o tb
 MALLOC_OPTIONS=A ./t
 exit 0
 #endif
@@ -23,16 +22,6 @@ exit 0
    - 243902 lookups per second
 */
 
-void * operator new     ( size_t s, char * file, int line )
-{
-    return (void*)malloc_record( file, line, s );
-}
-
-void * operator new[]   ( size_t s, char * file, int line )
-{
-    return (void*)malloc_record( file, line, s );
-}
-
 extern "C" void
 malloclock( int x )
 {
@@ -51,7 +40,7 @@ struct thing {
 
 #if 1
 
-#define NUMS 2
+#define NUMS 1
 
 #if NUMS==1
 #define BTORDER 13

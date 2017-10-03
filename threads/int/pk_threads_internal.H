@@ -38,9 +38,7 @@ class PK_Thread_List {
     void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
 public:
-    PK_Thread_List( int _hashsize )
-        : idhash( _hashsize ),
-          namehash( _hashsize ) {
+    PK_Thread_List( void ) {
         pthread_mutex_init( &mutex, NULL );
     }
     ~PK_Thread_List( void ) {

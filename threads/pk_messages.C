@@ -8,7 +8,7 @@
 
 PK_Message_Manager * PK_Messages_global;
 
-PK_Message_Manager :: PK_Message_Manager( int _hashsize )
+PK_Message_Manager :: PK_Message_Manager( void )
 {
     if ( PK_Messages_global )
     {
@@ -16,7 +16,7 @@ PK_Message_Manager :: PK_Message_Manager( int _hashsize )
         kill(0,6);
     }
 
-    queues = new PK_Message_Queue_List( _hashsize );
+    queues = new PK_Message_Queue_List;
     pthread_mutex_init( &mutex, NULL );
     PK_Messages_global = this;
 }

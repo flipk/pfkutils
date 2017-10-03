@@ -14,7 +14,7 @@ class PK_Message_Manager {
     void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
 public:
-    PK_Message_Manager( int _hashsize );
+    PK_Message_Manager( void );
     ~PK_Message_Manager( void );
 //
     int          create( char * name );  // returns qid

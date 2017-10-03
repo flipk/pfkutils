@@ -39,7 +39,7 @@ class PK_Timer_List {
     LListHash     <PK_Timer,  int,
                    PK_Timer_hash_1,PK_TIMER_HASH>  hash;
 public:
-    PK_Timer_List( int _hashsize ) : hash( _hashsize ) { }
+    PK_Timer_List( void ) { }
     void add( PK_Timer * pkt ) {
         oq.add( pkt, pkt->ordered_queue_key ); hash.add( pkt );
     }

@@ -7,10 +7,7 @@
 
 PK_Threads * th;
 
-PK_Threads :: PK_Threads( int thread_hash_size,
-                          int message_queue_hash_size,
-                          int semaphore_hash_size,
-                          int timer_hash_size, int _tps )
+PK_Threads :: PK_Threads( int _tps )
 {
     if ( th )
     {
@@ -18,10 +15,10 @@ PK_Threads :: PK_Threads( int thread_hash_size,
         kill(0,6);
     }
 
-    new PK_Message_Manager( message_queue_hash_size );
-    new PK_Semaphores( semaphore_hash_size );
-    new PK_Timer_Manager( _tps, timer_hash_size );
-    thread_list = new PK_Thread_List( thread_hash_size );
+    new PK_Message_Manager;
+    new PK_Semaphores;
+    new PK_Timer_Manager( _tps );
+    thread_list = new PK_Thread_List;
     running = false;
     pthread_cond_init( &runner_wakeup, NULL );
 

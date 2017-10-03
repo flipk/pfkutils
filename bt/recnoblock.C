@@ -39,19 +39,17 @@
 #define FBN_DEFAULT_RECORD_SIZE    16
 #define FBN_DEFAULT_PAGE_SIZE    4096
 
-FileBlockNumber :: FileBlockNumber( char * file, int h1, int h2, int c1,
+FileBlockNumber :: FileBlockNumber( char * file, int c1,
                                     int _record_size, int _page_size )
     throw ( constructor_failed )
-    : bitmaps( h2 ), data( h1 )
 {
-    init( file, h1, h2, c1, _record_size, _page_size );
+    init( file, c1, _record_size, _page_size );
 }
 
-FileBlockNumber :: FileBlockNumber( char * file, int h1, int h2, int c1 )
+FileBlockNumber :: FileBlockNumber( char * file, int c1 )
     throw ( constructor_failed )
-    : bitmaps( h2 ), data( h1 )
 {
-    init( file, h1, h2, c1, FBN_DEFAULT_RECORD_SIZE, FBN_DEFAULT_PAGE_SIZE );
+    init( file, c1, FBN_DEFAULT_RECORD_SIZE, FBN_DEFAULT_PAGE_SIZE );
 }
 
 static bool
@@ -63,7 +61,7 @@ power_of_2( int value )
 }
 
 void
-FileBlockNumber :: init( char * file, int h1, int h2, int c1,
+FileBlockNumber :: init( char * file, int c1,
                          int _record_size, int _page_size )
     throw ( constructor_failed )
 {
@@ -720,7 +718,7 @@ main()
         fprintf( lf, "S %d\n", seed );
     memset( &td, 0, sizeof( td ));
     unlink( "testdb" );
-    FileBlockNumber f( "testdb", 100, 100, 1000, 16, 4096 );
+    FileBlockNumber f( "testdb", 1000, 16, 4096 );
 
     time( &last );
     start = last;

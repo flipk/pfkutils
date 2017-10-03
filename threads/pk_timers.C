@@ -8,13 +8,13 @@
 
 PK_Timer_Manager * PK_Timers_global;
 
-PK_Timer_Manager :: PK_Timer_Manager( int _tps, int _hashsize )
+PK_Timer_Manager :: PK_Timer_Manager( int _tps )
 {
     if ( PK_Timers_global )
         kill(0,6);
 
     ticks_per_second = _tps;
-    timers = new PK_Timer_List( _hashsize );
+    timers = new PK_Timer_List;
 
     pthread_mutex_init( &mutex, NULL );
 

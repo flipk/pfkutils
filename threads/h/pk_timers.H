@@ -50,7 +50,7 @@ class PK_Timer_Manager {
     int ticks_per_second;
     int   global_time;
 public:
-    PK_Timer_Manager( int tps, int _hashsize );
+    PK_Timer_Manager( int tps );
     ~PK_Timer_Manager( void );
 // returns a timer id
     int   create( int ticks, int qid, pk_msg_int * msg );

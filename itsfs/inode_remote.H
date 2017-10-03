@@ -36,7 +36,6 @@ private:
     remote_inode_client_tcp rict;
 
     static const int  MAX_HASH = 60;
-    static const int HASH_SIZE = 30;
 
     int zerorefs; // count of members whose refcount is zero
     bool bad_fd;

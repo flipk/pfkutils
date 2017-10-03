@@ -84,7 +84,7 @@ test3 :: entry( void )
 int
 main()
 {
-    new PK_Threads( 100, 100, 100, 100, 10 );
+    new PK_Threads( 10 );
 
     int qid1 = PK_Thread::msg_create( "q1" );
     int qid2 = PK_Thread::msg_create( "q2" );

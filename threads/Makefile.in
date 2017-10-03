@@ -30,7 +30,7 @@ $(LIB): $(OBJS)
 	ranlib $(LIB)
 
 t1: $(LIB) test-1.C
-	$(GCCLINK) -g3 test-1.C -Ih $(LIB) -o t1
+	$(GCCLINK) -g3 test-1.C -Ih $(LIB) ../dll2/libdll2.a -o t1
 
 .C.o:
 	$(GCC) -c $*.C
