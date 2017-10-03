@@ -43,6 +43,7 @@ types.  Click on the following links to read about each of them.
  * methods of FileBlockInterface.
  */
 class FileBlock {
+protected:
     /** FileBlocks are identified using a unique 32-bit identifier.
      * 
      * The \em identifier is randomly-generated when a new block is allocated.
@@ -59,7 +60,7 @@ class FileBlock {
     /** FileBlock destructor does nothing. 
      * \note The destructor is private to prevent users from creating
      *    this object; this object should be freed by passing to
-     *    FileBlockInterface::unlock_block only. */
+     *    FileBlockInterface::release only. */
     virtual ~FileBlock(void) { }
     friend class FileBlockInterface;
 public:
@@ -128,15 +129,18 @@ public:
      *  buffer, not read it from the file.
      * \return a FileBlock pointer that the caller can use to access
      *  the data in the file. */
-    virtual FileBlock * get_block( UINT32 id, bool for_write = false ) = 0;
+    virtual FileBlock * get( UINT32 id, bool for_write = false ) = 0;
     /** return a FileBlock back to the file.
      *
      * This function is called to indicate the user is done with a FileBlock
      * that was previously returned by get_block().  If the user has modified
      * the data, the user should call FileBlock::mark_dirty() before calling
      * this function.
-     * \param blk pointer to FileBlock previously returned by get_block(). */
-    virtual void unlock_block( FileBlock * blk ) = 0;
+     * \param blk pointer to FileBlock previously returned by get_block().
+     * \param dirty the caller should indicate if the block was modified.
+     *  passing dirty=true is equivalent to calling FileBlock::mark_dirty
+     *  prior to releasing. */
+    virtual void release( FileBlock * blk, bool dirty=false ) = 0;
 
     /** flush the cache to the disk.
      *

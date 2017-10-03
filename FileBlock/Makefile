@@ -30,6 +30,8 @@ xmakefile: Makefile $(SRCS) $(HDRS)
 $(TARG): $(OBJS)
 	rm -f $(TARG)
 	$(CC) $(OBJS) $(LIBS) -o $(TARG)
+
+doc::
 	doxygen DOXYCONFIG
 
 .C.o:
@@ -39,3 +41,4 @@ depend: xmakefile
 
 clean:
 	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i
+	rm -rf doc

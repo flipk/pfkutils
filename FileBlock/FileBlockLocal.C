@@ -26,7 +26,22 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
         exit(1);
     }
 
-    /** \todo */
+    FileBlockHeader * fbh;
+    BlockCacheBlock * bcb;
+
+    bcb = bc->get( 0, sizeof(FileBlockHeader) );
+    if (!bcb)
+    {
+        fprintf(stderr, "bc->get 0 failed!\n");
+        exit(1);
+    }
+
+    fbh = (FileBlockHeader *)bcb->get_ptr();
+
+    load_map( fbh->piece_map_start.get(), 
+              fbh->piece_map_len.get() );
+
+    bc->release( bcb, false );
 }
 
 //virtual
@@ -105,31 +120,45 @@ FileBlockLocal :: init_file( BlockCache * bc )
 UINT32
 FileBlockLocal :: alloc( int size )
 {
-    /** \todo */
-
-    return 0;
+    Extent * e;
+    e = map.alloc( size );
+    return e->id;
 }
 
 //virtual
 void
 FileBlockLocal :: free( UINT32 id )
 {
-    /** \todo */
+    map.free_id( id );
 }
 
 //virtual
 FileBlock *
-FileBlockLocal :: get_block( UINT32 id, bool for_write /*= false*/ )
+FileBlockLocal :: get( UINT32 id, bool for_write /*= false*/ )
 {
-    /** \todo */
-    return NULL;
+    Extent * e;
+
+    e = map.find_id( id );
+    if (!e)
+        return NULL;
+
+    BlockCacheBlock * bcb = bc->get( e->offset, e->size, for_write );
+    FBL * fbl = new FBL( id, bcb );
+    FBLlist.add( fbl );
+
+    return fbl;
 }
 
 //virtual
 void
-FileBlockLocal :: unlock_block( FileBlock * blk )
+FileBlockLocal :: release( FileBlock * blk, bool dirty )
 {
-    /** \todo */
+    FBL * fbl = (FBL *) blk;
+    if (dirty)
+        fbl->mark_dirty();
+    FBLlist.remove( fbl );
+    bc->release( fbl->get_bcb() );
+    delete fbl;
 }
 
 //virtual

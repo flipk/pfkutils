@@ -130,8 +130,12 @@ public:
     BlockCacheBlock * get( off_t offset, int size, bool for_write = false );
     /** release a block.
      * \param bcb the BlockCacheBlock previously returned by get().
-     * \param dirty the user should indicate if the block was modified. */
-    void release( BlockCacheBlock * bcb, bool dirty );
+     * \param dirty the user should indicate if the block was modified.
+     * \note if bcb->mark_dirty() has been called, this is equivalent to
+     *  passing dirty=true to this function (that is, if bcb->mark_dirty()
+     *  has been called, the dirty argument to this function is ignored,
+     *  treated as if it was true. */
+    void release( BlockCacheBlock * bcb, bool dirty = false );
     /** \brief flush all open blocks back to the physical file. */
     void flush(void);
 };

@@ -84,6 +84,17 @@ Next: \ref FileBlockLocalFileFormat
 
 */
 
+class FBL : public FileBlock {
+public:
+    LListLinks <FBL> links[1];
+    FBL( UINT32 _id, BlockCacheBlock * _bcb ) {
+        id = _id;
+        bcb = _bcb;
+    }
+    ~FBL(void) { }
+    BlockCacheBlock * get_bcb( void ) { return bcb; }
+};
+
 /** A "Local File" implementation of FileBlockInterface.
  * 
  * This class talks to a BlockCache to implement file storage.
@@ -95,10 +106,16 @@ Next: \ref FileBlockLocalFileFormat
 /** \todo the file info junk must be added here eventually */
 
 class FileBlockLocal : public FileBlockInterface {
+    LList <FBL,0>   FBLlist;
     /** the ExtentMap showing used and free portions of the file */
     Extents map;
     /** the interface to read and write the file itself */
     BlockCache * bc;
+    /** read in a map from the file.
+     * \param pos the position in the file of the piece map.
+     * \param len the length of the first piece of the
+     *        map in the file. */
+    void load_map( UINT64 pos, UINT32 len );
     /** free all disk space used by Extent pieces and piece maps.
      * \param pos the position in the file of the piece map.
      * \param len the length of the first piece of the
@@ -141,8 +158,8 @@ public:
 
     /*virtual*/ UINT32 alloc( int size );
     /*virtual*/ void free( UINT32 id );
-    /*virtual*/ FileBlock * get_block( UINT32 id, bool for_write = false );
-    /*virtual*/ void unlock_block( FileBlock * blk );
+    /*virtual*/ FileBlock * get( UINT32 id, bool for_write = false );
+    /*virtual*/ void release( FileBlock * blk, bool dirty );
     /*virtual*/ void flush(void);
     /*virtual*/ void compact(int time_limit);
 };
