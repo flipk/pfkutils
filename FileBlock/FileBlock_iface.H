@@ -63,9 +63,15 @@ public:
  * access of files.  
  */
 class FileBlockInterface {
-public:
     /** @name Constructor/Destructor */
     // @{
+protected:
+    /** the constructor for the base class.
+     * this constructor is not public, because users should not
+     * be able to 'new' them.  Proper way to get one is using
+     * FileBlockInterface::open. */
+    FileBlockInterface(void) { }
+public:
     /** Destructor.
      * This destructor is a placeholder; so that objects derived from
      * this class can implement their own virtual destructors. */
