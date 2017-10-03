@@ -12,11 +12,13 @@ typedef struct DLL2_LIST {
     int index;
 } DLL2_LIST;
 
+#if 0
 typedef struct {
     int count;
     int array_size;
     DLL2_LIST array[0];
 }  DLL2_HASH;
+#endif
 
 /*
   some compilers (like gcc version 3) don't allow you to 
@@ -56,7 +58,6 @@ typedef struct {
                          (existing),(item),__FILE__,__LINE__)
 
 #define DLL2_SIZE(list)              ((list)->count)
-
 #define DLL2_HEAD(list)              ((list)->head)
 #define DLL2_TAIL(list)              ((list)->tail)
 

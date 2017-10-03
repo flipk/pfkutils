@@ -17,9 +17,11 @@
 
 static const char *helpmsg =
 "\n"
-"ipipe [-pqsve] [-l delay] port     (passive)\n"
-"ipipe [-pqsve] [-l delay] host port    (active)\n"
-"ipipe [-psve] host port pty (redirect to local pty)\n"
+"ipipe [-i infile] [-o outfile] [-pqsve] [-l delay] port     (passive)\n"
+"ipipe [-i infile] [-o outfile] [-pqsve] [-l delay] host port    (active)\n"
+"ipipe [-i infile] [-o outfile] [-psve] host port pty (redirect to pty)\n"
+"    -i: redirect fd 0 to input file\n"
+"    -o: redirect fd 1 to output file\n"
 "    -q: set raw qcomm mode\n"
 "    -l: insert carefully timed delays\n"
 "    -s: display stats of transfer at end\n"
@@ -42,8 +44,8 @@ static int options;
 #define OPT_NOSTDIN  ( 2 << 7 )
 #define OPT_DELNULS  ( 2 << 8 )
 
-#define SET(x)   options |= x
-#define ISSET(x) (options & x)
+#define SET(x)    options |= x
+#define ISSET(x) (options &  x)
 
 static int low_delay;
 
@@ -63,6 +65,8 @@ int
 ipipe_main( int argc, char ** argv )
 {
     int fd, ch;
+    char *  input_file = NULL;
+    char * output_file = NULL;
 
     extern int optind;
     extern char * optarg;
@@ -72,7 +76,7 @@ ipipe_main( int argc, char ** argv )
     signal( SIGTTIN, SIG_IGN );
     options = 0;
 
-    while (( ch = getopt( argc, argv, "qfsndvepl:" )) != -1 )
+    while (( ch = getopt( argc, argv, "qfsndvepl:i:o:" )) != -1 )
     {
         switch ( ch )
         {
@@ -85,6 +89,8 @@ ipipe_main( int argc, char ** argv )
         case 'd': SET(OPT_DELNULS); break;
         case 'p': SET(OPT_PINGACK); break;
         case 'l': SET(OPT_DELAYS);  low_delay = atoi( optarg );  break;
+        case 'i':   input_file = optarg;  break;
+        case 'o':  output_file = optarg;  break;
         default:  usage();
         }
     }
@@ -121,6 +127,34 @@ ipipe_main( int argc, char ** argv )
 
     default:
         usage();
+    }
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
+    if ( input_file )
+    {
+        int fd2 = open( input_file, O_RDONLY | O_BINARY );
+        if ( fd2 < 0 )
+        {
+            fprintf( stderr, "error %d opening input file\n", errno );
+            return -1;
+        }
+        dup2( fd2, 0 );
+        close( fd2 );
+    }
+
+    if ( output_file )
+    {
+        int fd2 = open( output_file, O_RDONLY | O_BINARY, 0600 );
+        if ( fd2 < 0 )
+        {
+            fprintf( stderr, "error %d opening output file\n", errno );
+            return -1;
+        }
+        dup2( fd2, 1 );
+        close( fd2 );
     }
 
     read_write( fd );

@@ -46,7 +46,6 @@ public:
 
 class FDMAP_DATA : public FDMAP {
 
-
     static const int BUFSIZE = 16384;
 
     circular_buffer buf;
