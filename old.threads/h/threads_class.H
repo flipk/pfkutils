@@ -113,9 +113,9 @@ protected:
     bool unregister_eid( int eid ) {
         return th->msgs->unregister_eid( eid );
     }
-    bool register_fd_mq( int fd, fd_mq_t t, int mqid ) {
+    bool register_fd_mq( int fd, void * arg, fd_mq_t t, int mqid ) {
         return th->msgs->register_fd_mq(
-            fd, (ThreadMessages::fd_mq_t)t, mqid );
+            fd, arg, (ThreadMessages::fd_mq_t)t, mqid );
     }
     bool unregister_fd_mq( int fd ) {
         return th->msgs->unregister_fd_mq( fd );

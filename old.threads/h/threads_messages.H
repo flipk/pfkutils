@@ -148,10 +148,11 @@ struct messageQueue;
 class ThreadMessages {
 public:
     enum fd_mq_t {
-        FOR_NOTHING = 0,
-        FOR_READ = 1,
-        FOR_WRITE = 2,
-        FOR_ERROR = 3    // only in indication response
+        FOR_NOTHING   = 0,
+        FOR_READ      = 1,
+        FOR_WRITE     = 2,
+        FOR_READWRITE = 3,
+        FOR_ERROR     = 4  // only in indication response
     };
     ThreadMessages( int max_mqids, int my_eid,
                     int max_eids, int max_fds );
@@ -163,8 +164,12 @@ private:
     int max_fds;
     messageQueue ** mqs;
     int * eid_mqids; // for routing to other eids
-    int * fd_mqids;  // for routing fds to mqids
-    fd_mq_t * fd_mqids_types; // ditto
+    struct fd_mqids_t {
+        fd_mqids_t( void ) { mqid = -1; type = FOR_NOTHING; arg = NULL; }
+        int mqid;
+        fd_mq_t type;
+        void * arg;
+    } * fd_mqids;
     bool die;
     Threads::tid_t fd_helper_tid;
     Threads::tid_t lookup_helper_tid;
@@ -200,7 +205,7 @@ public:
     bool register_eid( int eid, int mqid );
     bool unregister_eid( int eid );
 
-    bool register_fd_mq( int fd, fd_mq_t, int mqid );
+    bool register_fd_mq( int fd, void * arg, fd_mq_t, int mqid );
     bool unregister_fd_mq( int fd );
 };
 
@@ -211,5 +216,6 @@ public:
     FdActiveMessage( void ) :
         Message( sizeof( FdActiveMessage ), TYPE ) { }
     UINT32_t fd;
+    void * arg;
     UINT32_t activity;  // this is a ThreadMessages::fd_mq_t
 };

@@ -200,10 +200,11 @@ MessagesTcp :: send_my_eid( void )
 
     write( fd, &msg, sizeof( msg ));
 }
+
 bool
 MessagesTcp :: setup_fd_active_mq( void )
 {
-    if ( register_fd_mq( fd, FOR_READ, mbids[FD_ACTIVE] ) == false )
+    if ( register_fd_mq( fd, 0, FOR_READ, mbids[FD_ACTIVE] ) == false )
     {
         print( -1, "register_fd_mq for fd failed" );
         return false;
@@ -364,10 +365,10 @@ MessagesTcp :: entry( void )
     while ( connection_open )
     {
         union {
-            Message     * m;
+            Message         * m;
             FdActiveMessage * fam;
-            KillTcp     * ktm;
-            NewKeyReq   * nkrm;
+            KillTcp         * ktm;
+            NewKeyReq       * nkrm;
             NewKeyReqInt    * nkri;
             NewKeyAckInt    * nkai;
         } m;

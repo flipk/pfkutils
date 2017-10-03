@@ -51,14 +51,7 @@ ThreadMessages :: ThreadMessages( int _max_mqids, int _my_eid,
     for ( i = 0; i < max_eids; i++ )
         eid_mqids[i] = -1;
 
-    fd_mqids = new int[max_fds];
-    fd_mqids_types = new fd_mq_t[max_fds];
-
-    for ( i = 0; i < max_fds; i++ )
-    {
-        fd_mqids[i] = -1;
-        fd_mqids_types[i] = FOR_NOTHING;
-    }
+    fd_mqids = new fd_mqids_t[max_fds];
 
     // a thread which provides a nifty file-descriptor-to-mailbox
     // gateway. this thread will select on any fds you wish and
@@ -73,7 +66,7 @@ ThreadMessages :: ThreadMessages( int _max_mqids, int _my_eid,
 
     mqs[0] = new messageQueue( (char*)lookup_mqname );
 
-    // a task which does nothing but response to 
+    // a task which does nothing but respond to 
     // lookup request messages.
 
     lookup_helper_tid = th->create( "lookupmq", Threads::NUM_PRIOS-1,
@@ -408,7 +401,7 @@ ThreadMessages :: unregister_eid( int eid )
 
 
 bool
-ThreadMessages :: register_fd_mq( int fd,
+ThreadMessages :: register_fd_mq( int fd, void * arg,
                                   ThreadMessages::fd_mq_t activity,
                                   int mqid )
 {
@@ -419,15 +412,17 @@ ThreadMessages :: register_fd_mq( int fd,
         return false;
     }
 
-    if ( fd_mqids[fd] != -1 )
+    if ( fd_mqids[fd].mqid != -1 )
     {
         DEBUG1(( 0, "thmsgs", "register_read_fd_mq : "
                  "fd %d already registered!", fd ));
         return false;
     }
 
-    fd_mqids[fd] = mqid;
-    fd_mqids_types[fd] = activity;
+    fd_mqids[fd].mqid = mqid;
+    fd_mqids[fd].type = activity;
+    fd_mqids[fd].arg  = arg;
+
     th->resume( fd_helper_tid );
     return true;
 }
@@ -442,7 +437,7 @@ ThreadMessages :: unregister_fd_mq( int fd )
         return false;
     }
 
-    if ( fd_mqids[fd] == -1 )
+    if ( fd_mqids[fd].mqid == -1 )
     {
         DEBUG1(( 0, "thmsgs", "unregister_read_fd_mq : "
                  "fd %d is not registered!", fd ));
@@ -457,8 +452,9 @@ ThreadMessages :: unregister_fd_mq( int fd )
 void
 ThreadMessages :: _unregister_fd_mq( int fd )
 {
-    fd_mqids[fd] = -1;
-    fd_mqids_types[fd] = FOR_NOTHING;
+    fd_mqids[fd].mqid = -1;
+    fd_mqids[fd].type = FOR_NOTHING;
+    fd_mqids[fd].arg  = NULL;
 }
 
 
@@ -487,12 +483,16 @@ ThreadMessages :: _msgs_fd( void )
         numrfds = numwfds = 0;
 
         for ( i = 0; i < max_fds; i++ )
-            switch ( fd_mqids_types[i] )
+            switch ( fd_mqids[i].type )
             {
             case FOR_READ:
                 myrfds[numrfds++] = i;
                 break;
             case FOR_WRITE:
+                mywfds[numwfds++] = i;
+                break;
+            case FOR_READWRITE:
+                myrfds[numrfds++] = i;
                 mywfds[numwfds++] = i;
                 break;
             case FOR_NOTHING:
@@ -543,7 +543,8 @@ ThreadMessages :: send_indications( int num, int * outs )
             (outs[num] & Threads::SELECT_FOR_WRITE) ?
             FOR_WRITE : FOR_READ );
 
-        fam->dest.set( fd_mqids[fd] );
+        fam->dest.set( fd_mqids[fd].mqid );
+        fam->arg = fd_mqids[fd].arg;
 
         // unregister before we've sent the indications
         // so that we don't immediately drop into the loop
@@ -553,7 +554,7 @@ ThreadMessages :: send_indications( int num, int * outs )
         // resume immediately and have problems reregistering.
 
         DEBUG0(( 0, "thmsgs", "ind for fd %d to mqid %d",
-                 fd, fd_mqids[fd] ));
+                 fd, fd_mqids[fd].mqid ));
 
         _unregister_fd_mq( fd );
 
@@ -570,7 +571,7 @@ ThreadMessages :: send_indications( int num, int * outs )
 void
 ThreadMessages :: send_error_indication( int fd )
 {
-    int mqid = fd_mqids[fd];
+    int mqid = fd_mqids[fd].mqid;
     _unregister_fd_mq( fd );
 
     DEBUG0(( 0, "thmsgs", "sending error indication for fd %d", fd ));
