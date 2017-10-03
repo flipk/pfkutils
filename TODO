@@ -1,30 +1,22 @@
 
-i2:
- - print kbps/mbps/fractions
- - specify blocksize for I/O (for accessing disk devices directly)
+threads:
+ - implement external tcp messaging in threads
+   - messages based on BST framework
+   - base type
+     - magic / length / type / checksum
+     - method for encoding to fd
+   - object or thread which gateways fd Rx data to
+     callback/handler methods.
+     - perhaps a base class which accepts buffers of
+       received data, and which calls virtual derived methods
+       to handle the received & decoded messages.
+     - if it can be tied into PK_Message_Manager, that would
+       be best, to allow design of message-based main loops which
+       include remote TCP messages in its event processing.
+   - perhaps a connection manager object which has standard defined
+     messages for indicating connection established & connection lost,
+     as well as requests for establishing outgoing connections.
+   - perhaps support TCP & UDP as well.
 
-ideas for FileBlock:
-- client server model for accessing blocks.
-- server handles get/put/alloc/free.
-- client has a client-side cache. 
-- no more 'block cache' 'page cache' 'page io' objects
-- btree on the client side
-- server only runs on linux ?
-- client runs on cygwin or VC++?
-- Server should only allow 1 connection initially
 
-- Future ideas for multiple-access server?
-   - Need locking API where records can be locked by a client
-   - cache leases:
-   - server could keep a list of all blocks cached by clients,
-     and if a client changes a block, server could broadcast
-     an invalidate to all clients---possibility of latency/
-     corruption though.
-     Client could ask the server every time it wants to access
-     a block if the block is still okay to access---increases
-     latency on client side, load on server, and only benefit
-     is reducing traffic on the connection.
- 
 treesync:
-  - don't have to rescan after copying a file.
-  - TCP-based client server?

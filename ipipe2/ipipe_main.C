@@ -299,6 +299,8 @@ i2_main( int argc,  char ** argv )
 
         close( 1 );
 
+        flags |= O_TRUNC;
+
         cc = open( out_file, flags, 0644 );
         if ( cc != 1 )
         {

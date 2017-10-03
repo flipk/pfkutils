@@ -29,6 +29,7 @@
 #include <stdarg.h>
 
 #include "pk_messages.H"
+#include "pk_messages_ext.H"
 #include "pk_semaphores.H"
 #include "pk_timers.H"
 #include "pk_filedescs.H"

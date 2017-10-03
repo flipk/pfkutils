@@ -25,6 +25,7 @@
 #include <pthread.h>
 
 #include "types.H"
+#include "bst.H"
 
 #include <sys/types.h>
 #include <signal.h>
@@ -54,7 +55,8 @@ public: \
     body \
 }
 
-struct pk_msg_int {
+class pk_msg_int {
+public:
     LListLinks <pk_msg_int> links[1];
     UINT16    length; // automatically filled by PkMsgIntDef*
     UINT16    type; // automatically filled by PkMsgIntDef*
