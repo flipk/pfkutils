@@ -1,0 +1,48 @@
+
+#ifndef __ipipe_factories_H__
+#define __ipipe_factories_H__
+
+#include "fd_mgr.H"
+
+// abstract interface describing what acceptor should do when a 
+// new connection is received.
+class ipipe_new_connection {
+public:
+    virtual ~ipipe_new_connection( void ) { /* placeholder */ }
+    // return false if the acceptor should die off
+    virtual bool new_conn( fd_mgr *, int new_fd ) = 0;
+};
+
+
+// concrete factory for a data forwarder connection.
+class ipipe_forwarder_factory : public ipipe_new_connection {
+    bool dowuncomp;
+    bool dowcomp;
+public:
+    ipipe_forwarder_factory( bool dowuncomp, bool dowcomp );
+    virtual ~ipipe_forwarder_factory( void ) { /* nothing */ }
+    // return false if the acceptor should die off
+    virtual bool new_conn( fd_mgr *, int new_fd );
+};
+
+// concrete factory for a proxy connection
+class ipipe_proxy_factory : public ipipe_new_connection {
+    struct sockaddr_in * sa;
+public:
+    ipipe_proxy_factory( struct sockaddr_in * );
+    virtual ~ipipe_proxy_factory( void );
+    // return false if the acceptor should die off
+    virtual bool new_conn( fd_mgr *, int new_fd );
+};
+
+// concrete factory for a proxy connection
+class ipipe_proxy2_factory : public ipipe_new_connection {
+    int fda;
+public:
+    ipipe_proxy2_factory( int fda );
+    virtual ~ipipe_proxy2_factory( void ) { /* nothing */ }
+    // return value irrelevant to connector
+    virtual bool new_conn( fd_mgr *, int new_fd );
+};
+
+#endif /* __ipipe_factories_H__ */

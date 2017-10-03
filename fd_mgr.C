@@ -19,34 +19,43 @@ fd_mgr :: loop( void )
         for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
         {
             nfdi = ifds.get_next(fdi);
-
             if ( fdi->do_close )
             {
+                if ( debug )
+                    fprintf( stderr,
+                             "deleting fd %d due to do_close flag\n",
+                             fdi->fd );
                 ifds.remove( fdi );
                 delete fdi;
             }
-            else 
+        }
+        if ( ifds.get_cnt() == 0 )
+            break;
+        for ( fdi = ifds.get_head(); fdi; fdi = ifds.get_next(fdi) )
+        {
+            if ( fdi->select_for_read(this))
             {
-                if ( fdi->select_for_read(this))
-                {
-//                    printf( "selecting for read on fd %d\n", fdi->fd );
-                    FD_SET( fdi->fd, &rfds );
-                    if ( fdi->fd > max )
-                        max = fdi->fd;
-                }
-                if ( fdi->select_for_write(this))
-                {
-//                    printf( "selecting for write on fd %d\n", fdi->fd );
-                    FD_SET( fdi->fd, &wfds );
-                    if ( fdi->fd > max )
-                        max = fdi->fd;
-                }
+                if ( debug )
+                    fprintf( stderr,
+                             "selecting for read on fd %d\n", fdi->fd );
+                FD_SET( fdi->fd, &rfds );
+                if ( fdi->fd > max )
+                    max = fdi->fd;
+            }
+            if ( fdi->select_for_write(this))
+            {
+                if ( debug )
+                    fprintf( stderr,
+                             "selecting for write on fd %d\n", fdi->fd );
+                FD_SET( fdi->fd, &wfds );
+                if ( fdi->fd > max )
+                    max = fdi->fd;
             }
         }
 
         if ( max == -1 )
         {
-            printf( "max == -1?!\n" );
+            fprintf( stderr, "max == -1?!\n" );
             break;
         }
 
@@ -54,7 +63,7 @@ fd_mgr :: loop( void )
 
         if ( cc == 0 )
         {
-            printf( "select returns 0?!\n" );
+            fprintf( stderr, "select returns 0?!\n" );
             continue;
         }
 
@@ -65,15 +74,27 @@ fd_mgr :: loop( void )
 
             if ( FD_ISSET( fdi->fd, &rfds ))
             {
-//                printf( "servicing read on fd %d\n", fdi->fd );
+                if ( debug )
+                    fprintf( stderr, "servicing read on fd %d\n", fdi->fd );
                 if ( fdi->read(this) == false )
+                {
+                    if ( debug )
+                        fprintf( stderr,
+                                 "deleting %d due to false read\n", fdi->fd );
                     del = true;
+                }
             }
             if ( FD_ISSET( fdi->fd, &wfds ))
             {
-//                printf( "servicing write on fd %d\n", fdi->fd );
+                if ( debug )
+                    fprintf( stderr, "servicing write on fd %d\n", fdi->fd );
                 if ( fdi->write(this) == false )
+                {
+                    if ( debug )
+                        fprintf( stderr,
+                                 "deleting %d due to false write\n", fdi->fd );
                     del = true;
+                }
             }
             if ( del )
             {

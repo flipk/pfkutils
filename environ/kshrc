@@ -259,6 +259,7 @@ export VIEWER=xless
 export NPCL_EDITOR=less
 export PAGER=less
 export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q'
+export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
 
 # for some reason setting HISTSIZE resets the set -o emacs option!
