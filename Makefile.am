@@ -23,9 +23,12 @@ endif
 
 SUBDIRS += main contrib environ scripts
 
+CONFIG_HDR_DEST = $(DESTDIR)$(exec_prefix)/include
+
 install-data-hook:
-	cp $(builddir)/$(CONFIG_HEADER) $(DESTDIR)$(includedir)/$(CONFIG_HEADER)
-	chmod 644 $(DESTDIR)$(includedir)/$(CONFIG_HEADER)
+	mkdir -p $(CONFIG_HDR_DEST) || true
+	cp $(CONFIG_HEADER) $(CONFIG_HDR_DEST)/$(CONFIG_HEADER)
+	chmod 644 $(CONFIG_HDR_DEST)/$(CONFIG_HEADER)
 if PFK_AM_BUILD_sudo
 	@echo ""
 	@echo "*** also, if not already done, perform the following as root:"

@@ -19,11 +19,20 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <pfkutils_config.h>
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
-#include <string.h> // xxx autoconf
+#endif
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+#ifdef HAVE_STRING_H
+#include <string.h>
+#endif
 #include <signal.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -32,8 +41,6 @@
 
 #define NEW(x,y)  (x *)calloc(y, sizeof(x))
 #define FREE(x)  { if (x != NULL) free(x); x = NULL; }
-
-static char *current_file = NULL;
 
 static char *
 dirpart( char * x )
@@ -50,18 +57,6 @@ lastpart( char * x )
     char *ret = strrchr(x, '/');
     return ret ? ret+1 : x;
 }
-
-#if !CYGWIN
-static void
-status( int s )
-{
-    if ( current_file )
-    {
-        fprintf( stderr,
-                 "current_file=\"%s\"\n", current_file );
-    }
-}
-#endif
 
 static void
 recurse( char * name )
@@ -83,8 +78,8 @@ recurse( char * name )
         static char buf[1024];
         enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
 
-#if CYGWIN
-        /* cygwin does not provide a 'type' field in dirents,
+#ifndef HAVE_STRUCT_DIRENT_D_TYPE
+        /* some OSs don't provide a 'type' field in dirents,
            so we have to stat to know what they are. */
         struct stat sb;
 #endif
@@ -92,7 +87,14 @@ recurse( char * name )
         s = NEW( char, strlen(ent)+strlen(name)+2 );
         sprintf( s, "%s/%s", name, ent );
 
-#if CYGWIN
+#ifdef HAVE_STRUCT_DIRENT_D_TYPE
+        if ( de->d_type == DT_DIR )
+            type = TYPE_DIR;
+        else if ( de->d_type == DT_LNK )
+            type = TYPE_LINK;
+        else
+            type = TYPE_FILE;
+#else
         if ( stat( s, &sb ) < 0 )
         {
             fprintf( stderr, "error in stat '%s': %s\n",
@@ -106,13 +108,6 @@ recurse( char * name )
             type = TYPE_LINK;
         else
             type = TYPE_FILE;
-#else
-        if ( de->d_type == DT_DIR )
-            type = TYPE_DIR;
-        else if ( de->d_type == DT_LNK )
-            type = TYPE_LINK;
-        else
-            type = TYPE_FILE;
 #endif
 
         if (( type == TYPE_DIR ) &&
@@ -122,8 +117,6 @@ recurse( char * name )
             FREE(s);
             continue;
         }
-
-        current_file = s;
 
         switch ( type )
         {
@@ -170,10 +163,6 @@ int
 treescan_main( int argc, char ** argv )
 {
     char *p;
-
-#if 0 // xxx implement later
-    signal( SIGINFO, status );
-#endif
 
     if ( argc < 2 )
         usage( 1,NULL );
