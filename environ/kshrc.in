@@ -95,6 +95,11 @@ if __isksh ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
 	unset ENV_SET
     fi
+    if [[ x$SHELL_LEVEL == x ]] ; then
+        export SHELL_LEVEL=1
+    else
+	SHELL_LEVEL=$(( $SHELL_LEVEL + 1 ))
+    fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
@@ -210,6 +215,7 @@ if __isksh ; then
 	if [[ x$WORK_GROUP != x ]] ; then
 	    _ps="${_ps}:$WORK_GROUP"
 	fi
+        _ps="${_ps}:s$SHELL_LEVEL"
 	if [[ x$WINDOW != x ]] ; then
 	    _ps="${_ps}:w$WINDOW"
 	fi
@@ -220,6 +226,12 @@ if __isksh ; then
 	    _ps="${_ps} [7m%[m "
 	fi
 	export PS1="$_ps"
+    }
+
+else
+
+    _set_prompt() {
+	export PS1="$1"
     }
 
 fi
@@ -545,6 +557,7 @@ merge3() {
     lisp=$HOME/merge3.$$
 
     cat << EOF > $lisp
+        (tool-bar-mode 0)
         (ediff-merge-files-with-ancestor "$1" "$2" "$3" nil "$4")
 EOF
 

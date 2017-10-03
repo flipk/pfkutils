@@ -27,9 +27,8 @@ alias ps1='/bin/ps -u $USER -o pid,tty,args'
 alias ps2='/bin/ps -u $USER -o pid,tty,pri,vsz,osz,rss,comm'
 alias fi=find_include
 alias whom='/usr/test/bsstools/bin/whom'
-alias ccs='cd $HOME;exec bin/ccs'
 
-#FUNCTIONS: lsv sv svlp lbsub lbsol lbsolccs lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl 
+#FUNCTIONS: lsv sv svlp lbsub lbsol lbapp lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile 
 
 lsv() {
 	typeset prefix
@@ -46,10 +45,12 @@ cdv() {
 }
 
 sv() {
+    export RUN_CCS=1
     ct setview $1
 }
 
 svlp() {
+    export RUN_CCS=1
     load=`print $1 | /bin/sed -e 's/\(.\)\(.\)\(.\)\(.\)/\1.\2.\3.\4./'`
     ct setview rel_$load
     cd .
@@ -59,7 +60,7 @@ lbsub() {
     SHELL=/bin/ksh
     export SHELL
 
-    __verbose COMMAND: RUN_CCS=$RUN_CCS lbsub $*
+    __verbose COMMAND: lbsub $*
 
     if [[ $# -eq 1 ]] ; then
         __verbose INVOKING: bsub -q $1 -Is $SHELL
@@ -84,17 +85,7 @@ lbsol() {
 }
 
 
-lbsolccs() {
-    export RUN_CCS=1
-    lbsub comp251 $*
-}
-
 lbapp() {
-    lbsub gsdapp28 $*
-}
-
-lbappccs() {
-    export RUN_CCS=1
     lbsub gsdapp28 $*
 }
 
@@ -265,6 +256,25 @@ alias  vm='_vm ""'
 alias vsl='_vl VXSIM:SPARC:GNU:VXSIM:'
 alias  vl='_vl VXWORKS:PPC750:DIAB::'
 
+ctmakefile()  {
+    typeset log=log.$$
+    typeset file=$1
+    echo ct mkelem -nc $file
+    ct mkelem -nc $file > $log 2>&1
+    cmd=`grep '^ct ln' $log`
+    if [ $? -eq 0 ] ; then
+	echo $cmd
+	$cmd
+	echo ct co -nc $file
+	ct co -nc $file
+	cp $file.new $file
+	echo ct ci -nc $file
+	ct ci -nc $file
+    else
+	cat $log
+    fi
+    rm -f $log
+}
 
 if [[ x$RUN_CCS = x1 ]] ; then
   if __noninteractive ; then
@@ -273,8 +283,7 @@ if [[ x$RUN_CCS = x1 ]] ; then
       unset RUN_CCS
       unset GOOD_SHELL
       __verbose RUN_CCS being honored
-      cd $HOME
-      exec bin/ccs
+      exec $HOME/bin/ccs
       # NOTREACHED
   fi
 fi

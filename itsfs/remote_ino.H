@@ -124,5 +124,5 @@ public:
                              bool _verbose, bool _symlinks,
                              bool _dirsymlinks );
     ~remote_inode_server_tcp( void );
-    void dispatch_loop( void );
+    void dispatch_loop( bool check_parent );
 };

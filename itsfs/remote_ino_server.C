@@ -27,6 +27,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <signal.h>
 
 #if defined(SOLARIS)
 extern "C" {
@@ -694,14 +696,35 @@ remote_inode_server_tcp :: ~remote_inode_server_tcp( void )
 }
 
 void
-remote_inode_server_tcp :: dispatch_loop( void )
+remote_inode_server_tcp :: dispatch_loop( bool checkparent )
 {
     uchar rcvbuf[ 9000 ];
+    time_t now, last;
+    pid_t parent;
+
+    time( &now );
+    parent = getppid();
+
+    last = now;
     while ( 1 )
     {
         u_int l, l2;
         uchar * p;
         int cc;
+
+        time( &now );
+        if ( checkparent && now != last )
+        {
+            last = now;
+            if ( kill( parent, 0 ) < 0 )
+            {
+                /* an ironic printf, since if the 'parent' dies,
+                   the shell probably exited.  but maybe its a subshell,
+                   or maybe itsfsriw's output is redirected to a file.. */
+                printf( "parent process has died, bailing out\n" );
+                return;
+            }
+        }
 
         cc = read( fd, &l, sizeof( l ));
         if ( cc != sizeof( l ))

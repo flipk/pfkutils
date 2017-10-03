@@ -39,6 +39,7 @@ itsfsriw_main( int argc, char ** argv )
     bool verbose = false;
     bool symlinks = true;
     bool dirsymlinks = true;
+    bool checkparent = true;
 
     char * server = getenv( "ITSFS_SERVER_IPADDR" );
     if ( !server )
@@ -50,7 +51,7 @@ itsfsriw_main( int argc, char ** argv )
     if ( argc == 1 )
     {
     usage:
-        printf( "usage: itsfsriw [-nolinks -nodirlinks -verbose] <fsname>\n" );
+        printf( "usage: itsfsriw [-nolinks -nodirlinks -verbose -ncp] <fsname>\n" );
         return -1;
     }
 
@@ -67,6 +68,8 @@ itsfsriw_main( int argc, char ** argv )
             dirsymlinks = false;
         else if ( strcmp( argv[0], "-verbose" ) == 0 )
             verbose = true;
+        else if ( strcmp( argv[0], "-ncp" ) == 0 )
+            checkparent = false;
         else
             goto usage;
         argc--;
@@ -87,7 +90,7 @@ itsfsriw_main( int argc, char ** argv )
                                  SLAVE_PORT,
                                  (uchar*)argv[0],
                                  verbose, symlinks, dirsymlinks );
-    svr.dispatch_loop();
+    svr.dispatch_loop( checkparent );
 
     return 0;
 }
