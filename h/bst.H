@@ -36,7 +36,16 @@ enum BST_OP {
 };
 
 class BST_STREAM {
+protected:
     BST_OP  op;
+public:
+    BST_STREAM(void) { op = (BST_OP)0; /* BST_OP_NONE */ }
+    virtual ~BST_STREAM(void) { /*placeholder*/ }
+    BST_OP get_op(void) { return op; }
+    virtual UCHAR * get_ptr(int step) = 0;
+};
+
+class BST_STREAM_BUFFER : public BST_STREAM {
     UCHAR * buffer;
     int     buffer_size;
     UCHAR * ptr;
@@ -46,21 +55,19 @@ class BST_STREAM {
 public:
     // the user supplies the buffer and also takes care
     // of deleting it.
-    BST_STREAM( UCHAR * _buffer, int _size ) {
-        op = (BST_OP)0; // BST_OP_NONE;
+    BST_STREAM_BUFFER( UCHAR * _buffer, int _size ) {
         buffer = _buffer;
         buffer_size = _size;
         my_buffer = false;
     }
     // this object creates the buffer, which is deleted when
     // this object is deleted.
-    BST_STREAM( int _size ) {
-        op = (BST_OP)0; // BST_OP_NONE;
+    BST_STREAM_BUFFER( int _size ) {
         buffer = new UCHAR[_size];
         buffer_size = _size;
         my_buffer = true;
     }
-    ~BST_STREAM(void) {
+    ~BST_STREAM_BUFFER(void) {
         if (my_buffer)
             delete[] buffer;
     }
@@ -74,6 +81,7 @@ public:
                 delete[] buffer;
             buffer = _buffer;
             buffer_size = _size;
+            my_buffer = false;
         }
         ptr = buffer;
         size = 0;
@@ -85,17 +93,11 @@ public:
     // return the amount of data in the buffer; used at the end
     // of an encode to collect the size of the constructed bytestream.
     int get_finished_size(void) { return size; }
-#if 0 /* needs testing */
-private:
-    friend class BST;
-#endif
-    // return the inprogress operation.  used by bst_op in all data types.
-    BST_OP get_op(void) { return op; }
     // return the current working pointer.  used by bst_op in all 
     // data types as the bytestream is processed.  specify the number
     // of bytes needed.  if there are not enough left in the buffer,
     // returns NULL.
-    UCHAR * get_ptr(int step) {
+    /*virtual*/ UCHAR * get_ptr(int step) {
         if (remaining < step)
             return NULL;
         UCHAR * ret = ptr;
@@ -126,7 +128,7 @@ public:
     // return false if some problem (out of buffer, etc)
     virtual bool bst_op( BST_STREAM *str ) = 0;
     int bst_calc_size(void) {
-        BST_STREAM str(NULL,65536);
+        BST_STREAM_BUFFER str(NULL,65536);
         str.start(BST_OP_CALC_SIZE);
         bst_op(&str);
         return str.get_finished_size();
@@ -143,7 +145,7 @@ public:
         return buffer;
     }
     bool bst_encode( UCHAR * buffer, int * len ) {
-        BST_STREAM str(buffer,*len);
+        BST_STREAM_BUFFER str(buffer,*len);
         str.start(BST_OP_ENCODE);
         if (bst_op(&str) == false)
             return false;
@@ -151,12 +153,12 @@ public:
         return true;
     }
     bool bst_decode( UCHAR * buffer, int len ) {
-        BST_STREAM str(buffer,len);
+        BST_STREAM_BUFFER str(buffer,len);
         str.start(BST_OP_DECODE);
         return bst_op(&str);
     }
     void bst_free(void) {
-        BST_STREAM str(NULL,0);
+        BST_STREAM_BUFFER str(NULL,0);
         str.start(BST_OP_MEM_FREE);
         bst_op(&str);
     }

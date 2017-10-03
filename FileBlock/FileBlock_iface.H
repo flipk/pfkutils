@@ -342,7 +342,7 @@ public:
         FileBlock * fb = fbi->get(id);
         if (!fb)
             return false;
-        BST_STREAM str(fb->get_ptr(), fb->get_size());
+        BST_STREAM_BUFFER str(fb->get_ptr(), fb->get_size());
         str.start(BST_OP_DECODE);
         bool retval = bst_op(&str);
         fbi->release(fb,false);
@@ -354,7 +354,7 @@ private:
     bool put( bool newblock ) {
         if (id == 0 && newblock == false)
             return false;
-        BST_STREAM   str(NULL,65536);
+        BST_STREAM_BUFFER str(NULL,65536);
         str.start(BST_OP_CALC_SIZE);
         if (bst_op(&str) == false)
             return false;
@@ -391,7 +391,7 @@ public:
     // this overrides BST::bst_free so that we can get our
     // own meminuse tracking.
     void bst_free( void ) {
-        BST_STREAM str(NULL,0);
+        BST_STREAM_BUFFER str(NULL,0);
         str.start(BST_OP_MEM_FREE);
         bst_op(&str);
         meminuse = false;
