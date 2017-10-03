@@ -1,8 +1,7 @@
 
-TARG=	t
+TARG=	libFileBlock.a
 SRCS=	PageIO.C PageCache.C BlockCache.C ExtentMap.C \
-	FileBlockLocalMap.C FileBlockLocal.C \
-	main.C
+	FileBlockLocalMap.C FileBlockLocal.C
 HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 	BlockCache.H BlockCache_internal.H \
 	FileBlock_iface.H \
@@ -12,14 +11,14 @@ HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 
 OBJS=	$(SRCS:.C=.o)
 CC=	g++
-INCS=	-I../pkutils/h -I../pkutils/dll2
-DEFS=	-D_FILE_OFFSET_BITS=64
-# -DDLL2_CHECKSUMS=0 -DDLL2_STRICT_WALKING=0
-OPTS=	-Wall -Werror -g3
-LIBS=	../pkutils/dll2/dll2_hash.o
+INCS=	-I../h -I../dll2
+DEFS=	-D_FILE_OFFSET_BITS=64 -DDLL2_CHECKSUMS=0 -DDLL2_STRICT_WALKING=0
+OPTS=	-Wall -Werror -O6
+LIBS=	../dll2/dll2_hash.o
 
 all: xmakefile
-	@make -f xmakefile $(TARG)
+	@make -f xmakefile $(TARG) t1
+
 
 xmakefile: Makefile $(SRCS) $(HDRS)
 	rm -f xmakefile tmp
@@ -30,7 +29,10 @@ xmakefile: Makefile $(SRCS) $(HDRS)
 
 $(TARG): $(OBJS)
 	rm -f $(TARG)
-	$(CC) $(OBJS) $(LIBS) -o $(TARG)
+	ar cq $(TARG) $(OBJS)
+
+t1: $(TARG) testFileBlock.o
+	$(CC) testFileBlock.o $(TARG) $(LIBS) -o t1
 
 doc::
 	doxygen DOXYCONFIG
@@ -41,5 +43,5 @@ doc::
 depend: xmakefile
 
 clean:
-	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i
+	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1
 	rm -rf doc

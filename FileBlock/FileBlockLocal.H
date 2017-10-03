@@ -84,16 +84,7 @@ Next: \ref FileBlockLocalFileFormat
 
 */
 
-class FBL : public FileBlock {
-public:
-    LListLinks <FBL> links[1];
-    FBL( UINT32 _id, BlockCacheBlock * _bcb ) {
-        id = _id;
-        bcb = _bcb;
-    }
-    ~FBL(void) { }
-    BlockCacheBlock * get_bcb( void ) { return bcb; }
-};
+class FileBlockLocalInt;
 
 /** A "Local File" implementation of FileBlockInterface.
  * 
@@ -106,9 +97,12 @@ public:
 /** \todo the file info junk must be added here eventually */
 
 class FileBlockLocal : public FileBlockInterface {
-    LList <FBL,0>   FBLlist;
+    /** linked list of all currently open blocks. */
+    LList <FileBlockLocalInt,0>   FBLlist;
     /** the ExtentMap showing used and free portions of the file */
     Extents map;
+    /** is the map space allocated from the map currently? */
+    bool map_present;
     /** the interface to read and write the file itself */
     BlockCache * bc;
     /** read in a map from the file.

@@ -140,4 +140,51 @@ public:
     void flush(void);
 };
 
+/** provide a brief way to access a disk block with a type struct.
+ * Define any type T using platform-independent data types, such as
+ * from types.H.  Then invoke this template and call get(offset), and
+ * then reference the data pointer.  Don't worry about releasing, since
+ * another get(offset) or deleting this object will cause an automatic
+ * release.  You can call the release method manually to force a release,
+ * in case you have an ordering requirement. \note Always release or destroy
+ * the object first if you plan on freeing the space in the file. Also
+ * be sure to call mark_dirty if you have modified the data!
+ * \param T the data type to be encapsulated by this template.
+ */
+template <class T>
+struct BlockCacheT
+{
+    /** this object needs to remember the BlockCache object. */
+    BlockCache * bc;
+    /** a pointer to the block that was retrieved */
+    BlockCacheBlock * bcb;
+    /** constructor takes a BlockCache pointer
+     * \param _bc the BlockCache object to get and put T from */
+    BlockCacheT(BlockCache * _bc) { bc = _bc; bcb = NULL; data = NULL; }
+    /** destructor automatically releases the block back to the file */
+    ~BlockCacheT(void) { release(); }
+    /** fetch from the file; automatically determines size of T.
+     * \param pos the position in the file where T resides
+     * \param for_write set to true if you don't care what T's previous
+     *        value in the file was and you're overwriting it from scratch
+     * \return true if the block was fetched OK and false if not. */
+    bool get( off_t pos, bool for_write = false ) {
+        release();
+        bcb = bc->get( pos, sizeof(T), for_write );
+        if (!bcb) return false;
+        data = (T *) bcb->get_ptr();
+        return true;
+    }
+    /** release the block back to the file */
+    void release(void) {
+        if (bcb) bc->release(bcb);
+        bcb = NULL;
+        data = NULL;
+    }
+    /** mark the block as dirty if you modified it */
+    void mark_dirty(void) { if (bcb) bcb->mark_dirty(); }
+    /** a pointer to the actual data */
+    T * data;
+};
+
 #endif /* __BLOCK_CACHE_H__ */

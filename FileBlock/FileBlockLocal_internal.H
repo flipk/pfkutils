@@ -6,7 +6,6 @@
  * This file implements private details for the
  *  FileBlockLocal implementation. */
 
-
 /** \page FileBlockLocalFileFormat FileBlockLocal File Format
 
 \note All 4-byte or 8-byte numeric fields are encoded in big-endian format.
@@ -75,6 +74,48 @@ While running, it will also consume the following amount of RAM:
 
 \see FileBlockHeader, PieceMapEntry
 
+\section FileBlockLocalFileFormatFuture The future of the FileBlock interface
+
+There is a lot of room for improvement in this API.  The Extents map is
+expensive in terms of memory, disk, and time spent building the
+on-disk image.  Unfortunately, the flexibility offered by the
+position-independent identifier is required, thus Extents map cannot be
+replaced by something like a free-space bitmap.
+
+Of the expenses, the time spent reading and building the on-disk
+representation of the Extents map is the most significant.  If a program
+is designed to rarely flush, then this is less important (although the
+startup time to initially open the data file is still important).
+However if a long-running program wishes to frequently flush in order
+to maintain consistency in the file, this time can become prohibitive
+as the file size becomes large.
+
+One possible optimization to the on-disk format might be to change the
+format it is stored in.  Instead of making the extent offset an
+implicit summation of all previous extent sizes, the offset could be
+explicitly included in each on-disk Extent.  Thus the in-order
+restriction could be relaxed.  Also, if the unique identifier was
+present even for free-blocks (even though it is not used), then all
+Extent entries are fixed-size on disk.  This would present the
+opportunity for a free-space bitmap of the Extent "table" allowing
+individual slots in the table to be freed and allocated as Extent
+splits and joins occur.  This would dramatically reduce the time
+required to flush recent changes back to the disk-- only those entries
+in the table modified since the last flush need be written.  The
+disadvantages of this technique are that it increases both the
+complexity and footprint of the on-disk representation.  This
+technique also does not address the initial load-time problem nor does
+it address the memory footprint of the Extents map.
+
+The problem with addressing the memory footprint of the Extents map is
+the unique identifier translation.  In order to efficiently translate
+an identifier into a file position, it is currently mandatory for the
+entire translation table (i.e. the Extents map) to be memory resident,
+thus also mandating loading the entire table at file-open time.  Any
+solution which wishes to solve the memory-footprint issue must find a
+way to address the unique identifier problem while still maintaining
+decent lookup speed.
+
  */
 
 #include "dll2.H"
@@ -86,6 +127,25 @@ While running, it will also consume the following amount of RAM:
 #define FILE_BLOCK_SIGNATURE_LEN  16
 
 #define MAX_FILE_INFO_BLOCKS 64
+
+#define FILE_BLOCK_HEADER_POSITION ((off_t)0)
+
+/** an internal representation for a FileBlock.
+ * this object is used only internally by FileBlockLocal implementation,
+ * and adds only linked-list pointers to a FileBlock. */
+class FileBlockLocalInt : public FileBlock {
+public:
+    LListLinks <FileBlockLocalInt> links[1];
+    /** constructor.
+     * \param _id the unique identifier of this block
+     * \param _bcb the BlockCacheBlock in which this block resides. */
+    FileBlockLocalInt( UINT32 _id, BlockCacheBlock * _bcb ) {
+        id = _id;
+        bcb = _bcb;
+    }
+    ~FileBlockLocalInt(void) { }
+    BlockCacheBlock * get_bcb( void ) { return bcb; }
+};
 
 /** This struct appears at the beginning of a FileBlockLocal file. 
  * \see \ref FileBlockLocalFileFormat */

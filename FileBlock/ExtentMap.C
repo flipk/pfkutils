@@ -169,7 +169,7 @@ Extent *
 Extents :: alloc( UINT32 size )
 {
     // round up to next 32-byte boundary.
-//    size = ((((size - 1) >> 5) + 1) << 5);
+    size = ((((size - 1) >> 5) + 1) << 5);
 
     int b;
     UINT32 id;
