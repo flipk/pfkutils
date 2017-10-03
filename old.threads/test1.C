@@ -91,12 +91,7 @@ main( int argc, char ** argv )
     return 0;
 }
 
-class creatorAbort : public Message {
-public:
-    static const unsigned int TYPE = 0xe95b78ee;
-    creatorAbort( void )
-        : Message( sizeof( creatorAbort ), TYPE ) { }
-};
+MsgDef( creatorAbort, 0x795b78ee, );
 
 class exersizeThread : public Thread { 
     void entry( void );
@@ -192,12 +187,9 @@ creatorThread :: entry( void )
     }
 }
 
-class exorMsg : public Message {
-public:
-    static const unsigned int TYPE = 0xbf735756;
-    exorMsg( void ) : Message( sizeof( exorMsg ), TYPE ) { }
-    UINT32_t v;
-};
+MsgDef( exorMsg, 0xbf735756,
+        UINT32_t v;
+    );
 
 void
 exersizeThread :: entry( void )

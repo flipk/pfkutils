@@ -87,6 +87,9 @@ public:
     static Message * recv( int numqs, int * mqs, int * mqout, int timeout ) {
         return th->msgs->recv( numqs, mqs, mqout, timeout );
     }
+    static int get_max_eids( void ) {
+        return th->msgs->get_max_eids();
+    }
     static bool register_eid( int eid, int mqid ) {
         return th->msgs->register_eid( eid, mqid );
     }

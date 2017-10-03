@@ -41,11 +41,7 @@ ThreadPrinter :: entry( void )
             continue;
 
         if ( m.m->type.get() == PrintMessage::TYPE )
-        {
-            th->write( 2,
-                       m.pm->printbody,
-                       m.pm->len.get() );
-        }
+            th->write( 2, m.pm->printbody, m.pm->len );
 
         delete m.m;
     }

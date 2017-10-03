@@ -58,25 +58,19 @@ struct messageQueue {
     }
 };
 
-class LookupMqMsg : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_LookupReq;
-    LookupMqMsg( char * mqname_input )
-        : Message( sizeof( LookupMqMsg ), TYPE ) {
-        strcpy( mqname, mqname_input );
-        size.set( size.get() + strlen( mqname_input ) + 1 );
-    }
-    char mqname[1];
-    void * operator new( size_t s, char * ptr ) {
-        char * ret = new char[s + strlen(ptr) + 1];
-        return (void*)ret;
-    }
-};
-
-class LookupMqReplyMsg : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_LookupReply;
-    LookupMqReplyMsg( void )
-        : Message( sizeof( LookupMqReplyMsg ), TYPE ) { }
-    UINT32_t mqid;
-};
+MsgDef2( LookupMqMsg, MagicNumbers_Messages_LookupReq
+         ,
+         char * mqname_input
+         ,
+         strcpy( mqname, mqname_input );
+         size.set( size.get() + strlen( mqname_input ) + 1 );
+         ,
+         char mqname[1];
+         void * operator new( size_t s, char * ptr ) {
+             char * ret = new char[s + strlen(ptr) + 1];
+             return (void*)ret;
+         }
+    );
+MsgDef( LookupMqReplyMsg, MagicNumbers_Messages_LookupReply,
+        UINT32_t mqid;
+    );

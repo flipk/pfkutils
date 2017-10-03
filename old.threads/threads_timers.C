@@ -109,6 +109,7 @@ ThreadTimers :: set( int ticks, Message * m )
     c->p->setv( m );
     int timerid = c->p->timerid;
     cmds.add( c );
+    ThreadShortCuts::resume( mytid );
     return timerid;
 }
 
@@ -133,6 +134,8 @@ ThreadTimers :: set( int ticks, Threads::tid_t tid )
 bool
 ThreadTimers :: cancel( int timerid, Message ** m )
 {
+    if ( m )
+        *m = NULL;
     timerParams * p = hash.find( timerid );
     if ( p == NULL )
         return false;
@@ -319,6 +322,7 @@ ThreadTimers :: process_tick( void )
                 {
                     oq.add( p, p->tickarg );
                     hash.add( p );
+
                     p = NULL;
                 }
             }

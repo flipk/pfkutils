@@ -134,15 +134,27 @@ public:
     }
 };
 
-class MessageGeneric : public Message {
-public:
-    static const int DATA_SIZE = 16384;
-    static const int TYPE = MagicNumbers_MessageEncoding_GenericType;
-    MessageGeneric( void )
-        : Message( sizeof( MessageGeneric ), TYPE ) { }
-    UCHAR data[ DATA_SIZE ];
-};
+#define MsgDef( classname, typevalue, body ) \
+class classname : public Message { \
+public: \
+    static const int TYPE = typevalue; \
+    classname( void ) : Message( sizeof( classname ), TYPE ) { } \
+    body \
+}
 
+#define MsgDef2( classname, typevalue, constructorargs, constructor, body ) \
+class classname : public Message { \
+public: \
+    static const int TYPE = typevalue; \
+    classname( constructorargs ) : Message( sizeof( classname ), TYPE ) \
+        { constructor } \
+    body \
+}
+
+MsgDef( MessageGeneric, MagicNumbers_MessageEncoding_GenericType,
+        static const int DATA_SIZE = 16384;
+        UCHAR data[ DATA_SIZE ];
+    );
 
 struct messageQueue;
 
@@ -194,6 +206,7 @@ public:
     void printmqs( FILE * f );
 
     int get_my_eid( void ) { return my_eid; }
+    int get_max_eids( void ) { return max_eids; }
 
     bool register_mq( int &mqid, char * mqname );
     bool unregister_mq( int mqid );
@@ -211,13 +224,8 @@ public:
     bool unregister_fd_mq( int fd );
 };
 
-class FdActiveMessage : public Message {
-public:
-    static const unsigned int
-    TYPE = MagicNumbers_Messages_MessageFdActive;
-    FdActiveMessage( void ) :
-        Message( sizeof( FdActiveMessage ), TYPE ) { }
-    UINT32_t fd;
-    void * arg;
-    UINT32_t activity;  // this is a ThreadMessages::fd_mq_t
-};
+MsgDef( FdActiveMessage, MagicNumbers_Messages_MessageFdActive,
+        int fd;
+        void * arg;
+        int activity;  // this is a ThreadMessages::fd_mq_t
+    );

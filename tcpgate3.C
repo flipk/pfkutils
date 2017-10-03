@@ -429,7 +429,7 @@ TcpGate3Thread :: entry( void )
         }
 
         fdm = (FDMAP*) m.fam->arg;
-        fd_mq_t activity = (fd_mq_t) m.fam->activity.get();
+        fd_mq_t activity = (fd_mq_t) m.fam->activity;
         delete m.m;
 
 #if VERBOSE

@@ -57,6 +57,7 @@
 #include <string.h>
 #include <sys/uio.h>
 
+#define  INCLUDE_MSGSTCPIND_TYPE_NAMES
 #include "threads.H"
 
 #if defined(sparc) || defined(__CYGWIN32__)
@@ -68,14 +69,6 @@
 #else
 #define setsockoptcast void*
 #endif
-
-const char * MsgsTcpInd::ind_names[NUM_IND_TYPES] = {
-    "IND_STARTED",
-    "IND_CONN_ESTABLISHED",
-    "IND_CONN_HAVE_EID",
-    "IND_CONN_FAILED",
-    "IND_CONN_CLOSED"
-};
 
 MessagesTcp :: MessagesTcp( int _indication_mq, int _connid,
                             encrypt_iface * _cr,
@@ -212,45 +205,19 @@ MessagesTcp :: setup_fd_active_mq( void )
     return true;
 }
 
-class KillTcp : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_KillConn;
-    KillTcp( void )
-        : Message( sizeof( KillTcp ), TYPE ) { }
-};
-
-class NewKeyReq : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_NewKeyReq;
-    NewKeyReq( void )
-        : Message( sizeof( NewKeyReq ), TYPE ) { }
-    // we can send a ptr because this message always goes from
-    // one thread to another in the same process
-    encrypt_iface * new_cr;
-};
-
-class NewKeyReqInt : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_NewKeyReqInt;
-    NewKeyReqInt( void )
-        : Message( sizeof( NewKeyReqInt ), TYPE ) { }
-    static const int MAX_KEY_LEN = 256;
-    char newkeystring[ MAX_KEY_LEN ];
-};
-
-class NewKeyAck : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_NewKeyAck;
-    NewKeyAck( void )
-        : Message( sizeof( NewKeyAck ), TYPE ) { }
-};
-
-class NewKeyAckInt : public Message {
-public:
-    static const unsigned int TYPE = MagicNumbers_Messages_NewKeyAckInt;
-    NewKeyAckInt( void )
-        : Message( sizeof( NewKeyAckInt ), TYPE ) { }
-};
+MsgDef( KillTcp, MagicNumbers_Messages_KillConn, );
+MsgDef( NewKeyReq, MagicNumbers_Messages_NewKeyReq,
+        /* we can send a ptr because this message always goes from
+         * one thread to another in the same process */
+        encrypt_iface * new_cr;
+        int test;
+    );
+MsgDef( NewKeyReqInt, MagicNumbers_Messages_NewKeyReqInt,
+        static const int MAX_KEY_LEN = 256;
+        char newkeystring[ MAX_KEY_LEN ];
+    );
+MsgDef( NewKeyAck, MagicNumbers_Messages_NewKeyAck, );
+MsgDef( NewKeyAckInt, MagicNumbers_Messages_NewKeyAckInt, );
 
 void
 MessagesTcp :: kill( void )
@@ -380,8 +347,7 @@ MessagesTcp :: entry( void )
 
         if ( mbidout == mbids[FD_ACTIVE] )
         {
-            if ( m.fam->activity.get() ==
-                 ThreadMessages::FOR_READ )
+            if ( m.fam->activity == ThreadMessages::FOR_READ )
             {
                 connection_open = handle_fd_data();
                 // getting the msg causes deregistration
@@ -393,10 +359,9 @@ MessagesTcp :: entry( void )
                     return;
                 }
             }
-            else if ( m.fam->activity.get() ==
-                      ThreadMessages::FOR_ERROR )
+            else if ( m.fam->activity == ThreadMessages::FOR_ERROR )
             {
-                print( -1, "error on fd %d", m.fam->fd.get() );
+                print( -1, "error on fd %d", m.fam->fd );
                 connection_open = false;
             }
         }

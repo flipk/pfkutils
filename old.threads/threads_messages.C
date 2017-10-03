@@ -545,10 +545,10 @@ ThreadMessages :: send_indications( int num, int * outs )
 
         FdActiveMessage * fam = new FdActiveMessage;
 
-        fam->fd.set( fd );
-        fam->activity.set(
+        fam->fd = fd;
+        fam->activity = 
             (outs[num] & Threads::SELECT_FOR_WRITE) ?
-            FOR_WRITE : FOR_READ );
+            FOR_WRITE : FOR_READ;
 
         fam->dest.set( fd_mqids[fd].mqid );
         fam->arg = fd_mqids[fd].arg;
@@ -586,8 +586,8 @@ ThreadMessages :: send_error_indication( int fd )
               ( 0, "thmsgs", "sending error indication for fd %d", fd ));
     FdActiveMessage * fam = new FdActiveMessage;
 
-    fam->fd.set( fd );
-    fam->activity.set( FOR_ERROR );
+    fam->fd = fd;
+    fam->activity = FOR_ERROR;
     fam->dest.set( mqid );
 
     if ( send( fam, &fam->dest ) == false )

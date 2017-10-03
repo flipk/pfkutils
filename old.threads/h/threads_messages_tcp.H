@@ -22,28 +22,36 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-class MsgsTcpInd : public Message {
-public:
-    static const unsigned int
-    TYPE = MagicNumbers_Messages_MsgsTcpIndication;
-    MsgsTcpInd( void ) 
-        : Message( sizeof( MsgsTcpInd ), TYPE ) { }
+#define MSGSTCPIND_TYPE_LIST \
+MSGSTCPIND_TYPE(IND_STARTED) \
+MSGSTCPIND_TYPE(IND_CONN_ESTABLISHED) \
+MSGSTCPIND_TYPE(IND_CONN_HAVE_EID) \
+MSGSTCPIND_TYPE(IND_CONN_FAILED) \
+MSGSTCPIND_TYPE(IND_CONN_CLOSED)
 
-    enum ind_type {
-        IND_STARTED          = 0,
-        IND_CONN_ESTABLISHED = 1,
-        IND_CONN_HAVE_EID    = 2,
-        IND_CONN_FAILED      = 3,
-        IND_CONN_CLOSED      = 4,
-        NUM_IND_TYPES        = 5
-    };
-    UINT32_t connid;
-    UINT32_t ind;       // this is an ind_type
-    UINT32_t other_eid;
-    // the fields within this array should match
-    // the enum defs above.
-    static const char * ind_names[NUM_IND_TYPES];
+#define     MSGSTCPIND_TYPE(t)  t,
+MsgDef( MsgsTcpInd, MagicNumbers_Messages_MsgsTcpIndication,
+        enum ind_type {
+            MSGSTCPIND_TYPE_LIST
+            NUM_IND_TYPES
+        };
+        UINT32_t connid;
+        UINT32_t ind;       // this is an ind_type
+        UINT32_t other_eid;
+        static const char * ind_names[NUM_IND_TYPES];
+    );
+#undef      MSGSTCPIND_TYPE
+
+#ifdef INCLUDE_MSGSTCPIND_TYPE_NAMES
+//static 
+const char * MsgsTcpInd::ind_names[NUM_IND_TYPES] = {
+#define MSGSTCPIND_TYPE(t)  #t ,
+    MSGSTCPIND_TYPE_LIST
+#undef  MSGSTCPIND_TYPE
 };
+#endif
+
+#undef  MSGSTCPIND_TYPE_LIST
 
 class MessagesTcp : public Thread {
     int connid;
