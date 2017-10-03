@@ -877,9 +877,16 @@ unset ksh_new ksh_final
 
 # set up keybindings that pdksh understands.
 
-bind '^I'=complete-list
-bind '^V'=quote
-bind '^@'=set-mark-command
+if __isksh ; then
+   if [[ x$TERM != "dumb" ]] ; then
+       # for some reason that i don't sufficiently understand,
+       # emacs ssh tramp doesn't work if these happen. TERM=dumb
+       # seems to be good enough to detect that condition.
+       bind '^I'=complete-list
+       bind '^V'=quote
+       bind '^@'=set-mark-command
+   fi
+fi
 
 __verbose bindings complete
 
