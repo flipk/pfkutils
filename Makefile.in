@@ -39,7 +39,6 @@ LIBS+= -L/usr/X11R6/lib -lX11
 #endif
 
 #ifdef cygwin32
-CSRCS+=	treescan.c 
 DIRS+= bt itsfs mytar threads
 ELIBS+= bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
 #endif
