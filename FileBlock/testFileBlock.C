@@ -120,11 +120,11 @@ main(int argc, char ** argv)
                        td.data->idxor.get(),
                        td.data->seq.get());
 #endif
-                if (td.data->id.get() != i->id)
+                if (td.d->id.get() != i->id)
                     printf("%d: ERROR id mismatch\n", loop);
-                else if (td.data->idxor.get() != (i->id ^ XOR_CONSTANT))
+                else if (td.d->idxor.get() != (i->id ^ XOR_CONSTANT))
                     printf("%d: ERROR idxor mismatch\n", loop);
-                else if (td.data->seq.get() != (UINT32)i->seq)
+                else if (td.d->seq.get() != (UINT32)i->seq)
                     printf("%d: ERROR seq mismatch\n", loop);
             }
             count_read ++;
@@ -146,7 +146,7 @@ main(int argc, char ** argv)
                        loop, i->id, i->seq, loop);
 #endif
                 i->seq = loop;
-                td.data->seq.set( loop );
+                td.d->seq.set( loop );
                 td.mark_dirty();
             }
         }
@@ -163,9 +163,9 @@ main(int argc, char ** argv)
 
             FileBlockT <TestData>  td(fbi);
             td.get(id,true);
-            td.data->id.set( id );
-            td.data->idxor.set( id ^ XOR_CONSTANT );
-            td.data->seq.set( loop );
+            td.d->id.set( id );
+            td.d->idxor.set( id ^ XOR_CONSTANT );
+            td.d->seq.set( loop );
             td.mark_dirty();
 
 #if VERBOSE
@@ -256,17 +256,17 @@ main( int argc, char ** argv )
 
         id = fbi->alloc(sizeof(CRAP));
         crap.get(id,true);
-        crap.data->junk.set( 0x12345678 );
+        crap.d->junk.set( 0x12345678 );
         fbi->set_data_info_block(id,(char*)"CRAP");
 
         id = fbi->alloc(sizeof(CRAP));
         crap.get(id,true);
-        crap.data->junk.set( 0x12345679 );
+        crap.d->junk.set( 0x12345679 );
         fbi->set_data_info_block(id,(char*)"CRAP2");
 
         id = fbi->alloc(sizeof(CRAP));
         crap.get(id,true);
-        crap.data->junk.set( 0x82345679 );
+        crap.d->junk.set( 0x82345679 );
         fbi->set_data_info_block(id,(char*)"CRAP3");
     }
 
@@ -279,7 +279,7 @@ main( int argc, char ** argv )
         {
             FileBlockT <CRAP>  crap(fbi);
             if (crap.get(id) == true)
-                printf("got junk %#x\n", crap.data->junk.get());
+                printf("got junk %#x\n", crap.d->junk.get());
         }
 
         id = fbi->get_data_info_block((char*)"CRAP2");
@@ -287,7 +287,7 @@ main( int argc, char ** argv )
         {
             FileBlockT <CRAP>  crap(fbi);
             if (crap.get(id) == true)
-                printf("got junk %#x\n", crap.data->junk.get());
+                printf("got junk %#x\n", crap.d->junk.get());
         }
 
         id = fbi->get_data_info_block((char*)"CRAP3");
@@ -295,7 +295,7 @@ main( int argc, char ** argv )
         {
             FileBlockT <CRAP>  crap(fbi);
             if (crap.get(id) == true)
-                printf("got junk %#x\n", crap.data->junk.get());
+                printf("got junk %#x\n", crap.d->junk.get());
         }
     }
 

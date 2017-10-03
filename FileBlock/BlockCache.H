@@ -10,48 +10,6 @@
 
 #include "PageCache.H"
 
-
-/** \page BlockCache BlockCache object
-
-The PageCache object is consumed by the BlockCache object.  This
-object abstracts the concept of arbitrarily-sized blocks in a file.
-When the BlockCache::get() method is called, it determines how many
-pages are required to satisfy the request.  If the entire request is
-within a single page, the returned object is optimized by returning a
-pointer directly into the PageCachePage object.  Since pages are
-generally pretty large, most BlockCache operations are thus within a
-single page.  Thus, this optimization results in dramatic zero-copy
-speedup.  If the request spans more than one page, then a separate
-memory buffer is allocated, and the block object maintains references
-to all pages.
-
-Various optimizations are also done when the \c for_write parameter is
-specified.  Obviously if the user is requesting only a portion of a
-page, then for_write cannot be passed to PageCache, because this could
-trash the remainder of the page which is not being modified.  However
-in multi-block fetches, for_write does have an effect if complete
-pages are involved in the block.
-
-When the BlockCache::flush() method is invoked, it will eventually
-call PageCache::flush().  This will automatically synchronize all
-single-page blocks with the data file; however for multi-page blocks,
-some additional work must be done before flushing the PageCache.  All
-portions of the multi-page blocks are copied to their respective pages
-prior to calling PageCache::flush().
-
-Be sure to call BlockCacheBlock::mark_dirty() to ensure that flushes are
-written to the containing pages properly.
-
-\note While it is legal for PageCache users to call PageCache::get()
-on the same page twice (because of internal reference counts, etc),
-this is \b NOT legal for BlockCache blocks.  Undefined behavior and data
-corruption will occur if the same or overlapping blocks are requested
-from BlockCache at the same time.
-
-Next: \ref ExtentMap
-
-*/
-
 class BlockCacheList;
 
 /** what the user sees when interfacing to the cache */
@@ -160,7 +118,7 @@ struct BlockCacheT
     BlockCacheBlock * bcb;
     /** constructor takes a BlockCache pointer
      * \param _bc the BlockCache object to get and put T from */
-    BlockCacheT(BlockCache * _bc) { bc = _bc; bcb = NULL; data = NULL; }
+    BlockCacheT(BlockCache * _bc) { bc = _bc; bcb = NULL; d = NULL; }
     /** destructor automatically releases the block back to the file */
     ~BlockCacheT(void) { release(); }
     /** fetch from the file; automatically determines size of T.
@@ -172,19 +130,19 @@ struct BlockCacheT
         release();
         bcb = bc->get( pos, sizeof(T), for_write );
         if (!bcb) return false;
-        data = (T *) bcb->get_ptr();
+        d = (T *) bcb->get_ptr();
         return true;
     }
     /** release the block back to the file */
     void release(void) {
         if (bcb) bc->release(bcb);
         bcb = NULL;
-        data = NULL;
+        d = NULL;
     }
     /** mark the block as dirty if you modified it */
     void mark_dirty(void) { if (bcb) bcb->mark_dirty(); }
     /** a pointer to the actual data */
-    T * data;
+    T * d;
 };
 
 #endif /* __BLOCK_CACHE_H__ */

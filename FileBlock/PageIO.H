@@ -9,24 +9,6 @@
 
 #include <sys/types.h>
 
-/** \page PageIO PageIO object
-
-The lowest layer is a derived object from PageIO.  This object knows
-only how to read and write PageCachePage objects, whose body is of
-size PageCache::PAGE_SIZE.  An example implementation of PageIO is the
-object PageIOFileDescriptor, which uses a file descriptor (presumably
-an open file) to read and write offsets in the file.
-
-If the user wishes some other storage mechanism (such as a file on a
-remote server, accessed via RPC/TCP for example) then the user may
-implement another PageIO backend which performs the necessary
-interfacing.  This new PageIO object may be passed to the PageCache
-constructor.
-
-Next: \ref PageCache
-
-*/
-
 class PageCachePage;
 
 /** Pure-virual interface class for accessing a file.

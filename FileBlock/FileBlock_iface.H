@@ -11,31 +11,6 @@
 #include "BlockCache.H"
 #include "types.H"
 
-/** \mainpage FileBlock Interface
-
-The purpose of the FileBlock interface is to manage allocation of file
-space within a file.  An excellent analogy to the FileBlockInterface 
-object are the standard unix functions \c malloc and \c free, except that
-it is for file space rather than memory space.
-
- \section FileBlockObjects FileBlock component objects
-
-The FileBlock interface is composed of a number of lower-level object
-types.  Click on the following links to read about each of them.
-
-\todo document FileBlockT and BlockCacheT data types.
-
-<ul>
-<li> \ref PageIO (see classes PageIO and PageIOFileDescriptor)
-<li> \ref PageCache (see classes PageCachePage and PageCache)
-<li> \ref BlockCache (see classes BlockCacheBlock and BlockCache)
-<li> \ref ExtentMap (see classes Extent and Extents)
-<li> \ref FileBlock (see classes FileBlock, FileBlockInterface, FileBlockLocal)
-<li> \ref FileBlockLocalFileFormat
-</ul>
-
-*/
-
 /** A data unit in a FileBlockInterface file.
  *
  * When the user of the FileBlockInterface is attempting to access
@@ -180,7 +155,7 @@ struct FileBlockT
     /** constructor takes a BlockCache pointer
      * \param _fbi the FileBlockInterface object to get and put T from */
     FileBlockT(FileBlockInterface * _fbi) {
-        fbi = _fbi; fb = NULL; data = NULL;
+        fbi = _fbi; fb = NULL; d = NULL;
     }
     /** destructor automatically releases the block back to the file */
     ~FileBlockT(void) { release(); }
@@ -193,19 +168,19 @@ struct FileBlockT
         release();
         fb = fbi->get( id, for_write );
         if (!fb) return false;
-        data = (T *) fb->get_ptr();
+        d = (T *) fb->get_ptr();
         return true;
     }
     /** release the block back to the file */
     void release(void) {
         if (fb) fbi->release(fb);
         fb = NULL;
-        data = NULL;
+        d = NULL;
     }
     /** mark the block as dirty if you modified it */
     void mark_dirty(void) { if (fb) fb->mark_dirty(); }
     /** a pointer to the actual data */
-    T * data;
+    T * d;
 };
 
 #endif /* __FILE_BLOCK_H__ */
