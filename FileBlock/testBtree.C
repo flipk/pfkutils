@@ -38,7 +38,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define TEST 2
+#define TEST 1
 
 #define TEST_FILE "testfile.db"
 #define MAX_BYTES (256*1024*1024)
@@ -55,10 +55,12 @@ public:
             printf("%02x", keydata[i]);
         printf("\ndata fbn: %08x: ", data_fbn);
 #if 1 /* print data contents */
+#if TEST==1
         FileBlock * fb = fbi->get(data_fbn);
         for (i=0; i < fb->get_size(); i++)
             printf("%02x", fb->get_ptr()[i]);
         fbi->release(fb);
+#endif
 #endif
         printf("\n");
         return true; // ok to continue iterating
@@ -109,8 +111,8 @@ main()
     crapdata   data(bt->get_fbi());
     UINT32     data_fbn;
 
-#define ITERATIONS 0x100000
-#define ITEMS      0x010000
+#define ITERATIONS 0x10000
+#define ITEMS      0x01000
 
     ramcopy  ram[ITEMS];
     int iter, ind;
@@ -172,7 +174,7 @@ main()
             "\ncompleted %d iterations; %d inserts, %d deletes, %d queries\n",
             ITERATIONS, inserts, deletes, queries);
 
-#if 0  /* uncomment to enable dumping the database at the end. */
+#if 1  /* uncomment to enable dumping the database at the end. */
     myIterator iterator(bt->get_fbi());
     bt->iterate( &iterator );
 #endif
@@ -265,7 +267,7 @@ main()
             "\ncompleted %d iterations; %d inserts, %d deletes, %d queries\n",
             ITERATIONS, inserts, deletes, queries);
 
-#if 0  /* uncomment to enable dumping the database at the end. */
+#if 1  /* uncomment to enable dumping the database at the end. */
     myIterator iterator(bt->get_fbi());
     bt->iterate( &iterator );
 #endif

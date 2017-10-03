@@ -87,7 +87,7 @@ FileBlockLocal :: ffu_bucket(int num_aus)
 
     if (bucket == BucketList::NUM_BUCKETS)
     {
-        fprintf(stderr, "\n\nFileBlockLocal :: alloc:   WTF ??????\n");
+        fprintf(stderr, "\n\nFileBlockLocal :: ffu_bucket: WTF ?\n");
         /*DEBUGME*/
         bc->flush();
         exit(1);
@@ -109,7 +109,7 @@ FileBlockLocal :: dequeue_bucketn( int bucket,  AUHead * au )
 
     if (!au->get(aun))
     {
-        fprintf(stderr, "FileBlockLocal :: alloc : WTF? DEBUGME\n");
+        fprintf(stderr, "FileBlockLocal :: dequeue_bucketn: WTF ?\n");
         /*DEBUGME*/
         exit(1);
     }

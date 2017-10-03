@@ -49,8 +49,8 @@ digraph FileMGTStructure {
   PageIO     [label="Page\nIO"           URL="\ref PageIO"          ];
   PageCache  [label="Page\nCache"        URL="\ref PageCache"       ];
   BlockCache [label="Block\nCache"       URL="\ref BlockCache"      ];
-  FileBlock  [label="FileBlock"         URL="\ref FileBlock"       ];
-  BTree      [label="B-Tree"            URL="\ref Btree"           ];
+  FileBlock  [label="FileBlock"          URL="\ref FileBlock"       ];
+  BTree      [label="B-Tree"             URL="\ref BtreeStructure"  ];
 
   Pages      [label="Pages"   shape=oval ];
   Blocks     [label="Blocks"  shape=oval ];
@@ -93,7 +93,7 @@ digraph FileMGTStructure {
 \section BtreeObjects Btree component objects
 
 <ul>
-<li> \ref BtreeStructure (see Btree and BTDatum)
+<li> \ref BtreeStructure (see Btree)
 <li> \ref BtreeInternalStructure (see BtreeInternal, _BTInfo,
           BTNodeItem, _BTNodeDisk, BTKey, BTNode, BTNodeCache)
 </ul>
@@ -101,7 +101,7 @@ digraph FileMGTStructure {
 \section TemplatesObjects Templates
 
 <ul>
-<li> \ref Templates (see templates FileBlockT, BlockCacheT, and BTDatum)
+<li> \ref Templates (see templates FileBlockT and BlockCacheT)
 </ul>
 
 

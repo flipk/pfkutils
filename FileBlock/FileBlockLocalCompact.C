@@ -110,9 +110,17 @@ class L2L3s {
     L2L3AUNList  list;
     L2L3AUNHash  hash;
 public:
-    void add   ( L2L3AUN * item ) { list.add   (item); hash.add   (item); }
-    void remove( L2L3AUN * item ) { list.remove(item); hash.remove(item); }
-    L2L3AUN * find ( FB_AUN_T aun ) { return hash.find(aun); }
+    void add   ( L2L3AUN * item ) {
+        list.add(item);
+        hash.add(item);
+    }
+    void remove( L2L3AUN * item ) {
+        list.remove(item);
+        hash.remove(item);
+    }
+    L2L3AUN * find ( FB_AUN_T aun ) {
+        return hash.find(aun);
+    }
     L2L3AUN * dequeue_head( void ) {
         L2L3AUN * ret = list.dequeue_head();
         if (ret)
@@ -190,7 +198,7 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
             FB_AUN_T new_aun;
 
             fb = get_aun(aun);
-            memcpy( &temp, fb->get_ptr(), fb->get_size() );
+            memcpy( &temp, fb->get_ptr(), sizeof(temp) );
             release(fb);
             free_aun(aun);
             if (to_aun == 0)

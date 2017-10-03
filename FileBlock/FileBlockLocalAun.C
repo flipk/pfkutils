@@ -149,7 +149,6 @@ FileBlockLocal :: alloc_aun( FB_AUN_T desired_aun, AUHead * au, int size )
 
     //   modify this region's size field
         au->d->size( num_aus );
-
         enqueue_bucket( &new_free );
 
         if (new_free_size == 0)
@@ -226,8 +225,8 @@ FileBlockLocal :: free_aun( FB_AUN_T aun )
                 next_next_au.get(next_next_aun);
                 next_next_au.mark_dirty();
             }
-            next_au.mark_dirty();
         }
+        next_au.mark_dirty();
     }
     else
     {

@@ -54,7 +54,7 @@ struct info {
 
 #define TESTFILE "testfile.db"
 
-#define VERBOSE 1
+#define VERBOSE 0
 #define XOR_CONSTANT 0x12345678
 
 #define TEST 1
@@ -76,21 +76,22 @@ main(int argc, char ** argv)
     FileBlockInterface * _fbi;
     FileBlockLocal * fbi;
 
-    int seed = 9676291;//getpid() * time(NULL);
+    int seed = getpid() * time(NULL);
     srandom( seed );
     printf("seed: %d\n", seed);
 
     (void) unlink( TESTFILE );
 
-    _fbi = FileBlockInterface::createFile( TESTFILE, 65536 * 10, 0644 );
+    _fbi = FileBlockInterface::createFile( TESTFILE, 65536 * 100, 0644 );
 
     fbi = (FileBlockLocal*) _fbi;
 
 #if 0
-#define ITEMS 1000000
-#define LOOPS 10000000
+#define ITEMS         1000000
+#define LOOPS        10000000
+#define LOOPS_THRESH  9000000
 #else
-#define ITEMS        100000
+#define ITEMS         100000
 #define LOOPS        1000000
 #define LOOPS_THRESH  900000
 #endif
@@ -113,7 +114,7 @@ main(int argc, char ** argv)
 
     sigaction( SIGINT, &act, NULL );
 
-    int loop;
+    int loop = 0;
     for (loop = 0; loop < LOOPS; loop++)
     {
         int idx = random() % ITEMS;
@@ -194,6 +195,7 @@ main(int argc, char ** argv)
 
         if ((loop % ITEMS) == 0)
         {
+            fbi->compact(true);
             fbi->flush();
             count_flush++;
         }
@@ -216,11 +218,11 @@ main(int argc, char ** argv)
 
     FileBlockStats  stat;
     fbi->get_stats(&stat);
-    fprintf(stderr, "\nBefore compaction, file size = %lld\n",
+    fprintf(stderr, "Before compaction, file size = %lld\n",
             (off_t)stat.num_aus * (off_t)stat.au_size);
     fbi->compact(true);
     fbi->get_stats(&stat);
-    fprintf(stderr, "\nAfter compaction, file size = %lld\n",
+    fprintf(stderr, "After compaction, file size = %lld\n",
             (off_t)stat.num_aus * (off_t)stat.au_size);
     fbi->validate(false);
     delete fbi;

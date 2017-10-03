@@ -54,7 +54,7 @@ class PageCache {
     PageCachePageList * pgs;
 public:
     /** a constant indicating how big a page is. */
-    static const int PAGE_SIZE = 65536;
+    static const int PAGE_SIZE = 4096;
     /** Constructor.
      * \param _io the PageIO that will be used to fetch and put pages.
      * \param _max_pages the number of pages that we will be allowed to

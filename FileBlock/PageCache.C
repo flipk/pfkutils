@@ -117,11 +117,13 @@ PageCache :: get(int page_number, bool for_write)
         ret->dirty = true;
     }
     else
+    {
         if (!io->get_page(ret))
         {
             fprintf(stderr, "error getting page %d\n", page_number);
             exit( 1 );
         }
+    }
     pgs->add(ret,true);
     return ret;
 }
@@ -141,7 +143,7 @@ PageCache :: release( PageCachePage * _p, bool dirty )
             if (!io->put_page(p))
             {
                 fprintf(stderr, "error putting page %d\n",
-                        p->get_page_number());
+                        p->page_number);
                 exit( 1 );
             }
         delete p;
@@ -155,12 +157,12 @@ PageCache :: truncate_pages(int num_pages)
     for (p = pgs->get_head(); p; p = np)
     {
         np = pgs->get_next(p);
-        if (p->get_page_number() >= num_pages)
+        if (p->page_number >= num_pages)
         {
             if (p->is_locked())
             {
                 fprintf(stderr, "ERROR: PageCache :: truncate_pages: "
-                        "page %d is still locked\n", p->get_page_number());
+                        "page %d is still locked\n", p->page_number);
                 return;
             }
             else
@@ -216,8 +218,7 @@ PageCache :: flush(void)
         p = pages[i];
         if (!io->put_page(p))
         {
-            fprintf(stderr, "error putting page %d\n",
-                    p->get_page_number());
+            fprintf(stderr, "error putting page %d\n", p->page_number);
             exit( 1 );
         }
         // the page is now synced with the file.

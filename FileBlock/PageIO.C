@@ -79,8 +79,9 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
     int cc = read(fd, pg->get_ptr(), PageCache::PAGE_SIZE);
     if (cc < 0)
     {
-        printf("PageIOFileDescriptor :: get_page: read -> %s\n",
-               strerror(errno));
+        fprintf(stderr,
+                "PageIOFileDescriptor :: get_page: read -> %s\n",
+                strerror(errno));
         return false;
     }
     if (cc != PageCache::PAGE_SIZE)
@@ -88,7 +89,6 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
         // zero-fill the remainder of the page.
         memset(pg->get_ptr() + cc, 0, PageCache::PAGE_SIZE - cc);
     }
-    printf("PageIOFileDescriptor :: get_page: got page %d\n", page);
     return true;
 }
 
@@ -102,11 +102,11 @@ PageIOFileDescriptor :: put_page( PageCachePage * pg )
     if (write(fd, pg->get_ptr(),
               PageCache::PAGE_SIZE) != PageCache::PAGE_SIZE)
     {
-        printf("PageIOFileDescriptor :: put_page: write: %s\n",
-               strerror(errno));
+        fprintf(stderr,
+                "PageIOFileDescriptor :: put_page: write: %s\n",
+                strerror(errno));
         return false;
     }
-    printf("PageIOFileDescriptor :: put_page: put page %d\n", page);
     return true;
 }
 
