@@ -25,7 +25,6 @@ typedef FileBlockT <_BTInfo> BTInfo;
 /** an item within a _BTNodeDisk */
 struct BTNodeItem {
     UINT32_t ptr;       /**< fileblock number of a left-child node */
-    UINT16_t keystart;  /**< offset where key data starts */
     UINT16_t keysize;   /**< length of key data */
     UINT32_t data;      /**< fileblock number of the data */
 };

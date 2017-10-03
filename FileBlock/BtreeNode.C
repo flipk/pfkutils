@@ -2,8 +2,6 @@
 /** \file BtreeNode.C
  * \brief implementation of BTNode and BTNodeCache objects
  * \author Phillip F Knaack
- * \todo remove keystart from node items because it is assumed
- *    keys are contiguous.
  */
 
 #include "Btree.H"
@@ -62,6 +60,7 @@ BTNode :: BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 _fbn )
             ptrs[i] = btn.d->items[i].ptr.get();
 
         UCHAR * keydata = btn.d->get_key_data(btorder);
+        int keystart = 0;
 
         // get keys, datas, alloc key memory, extract key data
         for (i=0; i < numitems; i++)
@@ -69,9 +68,9 @@ BTNode :: BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 _fbn )
             datas[i] = btn.d->items[i].data.get();
             UINT32 keylen = btn.d->items[i].keysize.get();
             keys[i] = new(keylen) BTKey(keylen);
-            memcpy( keys[i]->data,
-                    keydata + btn.d->items[i].keystart.get(),
+            memcpy( keys[i]->data, keydata + keystart,
                     keys[i]->keylen );
+            keystart += keys[i]->keylen;
         }
 
         dirty = false;
@@ -124,7 +123,6 @@ BTNode :: store( void )
     for (i=0; i < numitems; i++)
     {
         btn.d->items[i].ptr.set( ptrs[i] );
-        btn.d->items[i].keystart.set( keystart );
         btn.d->items[i].keysize.set( keys[i]->keylen );
         btn.d->items[i].data.set( datas[i] );
         memcpy( keydata + keystart,
