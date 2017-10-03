@@ -18,11 +18,6 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// NOTE: BST_FIXED_BINARY type was removed, thus possibly breaking
-//       all of the 'md5hash' fields in this program. if you see weird
-//       bus faults in this code around that field, that is probably why.
-//       i never got around to fixing it.
-
 /** \file update_backup.C
  * \brief update or freshen a backup: add a generation.
  * \author Phillip F Knaack
@@ -130,6 +125,7 @@ put_piece_data( UINT32 baknum, UINT32 file_number,
     piece_data.key.backup_number.v = baknum;
     piece_data.key.file_number.v = file_number;
     piece_data.key.piece_number.v = piece_number;
+    piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
     memcpy( piece_data.key.md5hash.binary, md5hash, MD5_DIGEST_SIZE );
 
     piece_data.data.refcount.v = 1;
@@ -234,6 +230,7 @@ walk_file( file_state state,
             // or was a new file and pieces never existed at all.
             versions->alloc(1);
             versions->array[0]->gen_number.v = gen_num;
+            versions->array[0]->md5hash.alloc(MD5_DIGEST_SIZE);
             memcpy( versions->array[0]->md5hash.binary,
                     md5hash, MD5_DIGEST_SIZE);
 
@@ -279,6 +276,7 @@ walk_file( file_state state,
 
                     versions->alloc(newidx+1);
                     versions->array[newidx]->gen_number.v = gen_num;
+                    versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
                     memcpy( versions->array[newidx]->md5hash.binary,
                             versions->array[   idx]->md5hash.binary,
                             MD5_DIGEST_SIZE );
@@ -292,6 +290,7 @@ walk_file( file_state state,
                     piece_data.key.backup_number.v = baknum;
                     piece_data.key.file_number.v = file_number;
                     piece_data.key.piece_number.v = piece_number;
+                    piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
                     memcpy( piece_data.key.md5hash.binary, md5hash,
                             MD5_DIGEST_SIZE );
 
@@ -315,6 +314,7 @@ walk_file( file_state state,
 
                     versions->alloc(newidx+1);
                     versions->array[newidx]->gen_number.v = gen_num;
+                    versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
                     memcpy( versions->array[newidx]->md5hash.binary,
                             md5hash, MD5_DIGEST_SIZE );
 
@@ -336,6 +336,7 @@ walk_file( file_state state,
 
                 versions->alloc(newidx+1);
                 versions->array[newidx]->gen_number.v = gen_num;
+                versions->array[newidx]->md5hash.alloc(MD5_DIGEST_SIZE);
                 memcpy( versions->array[newidx]->md5hash.binary,
                         versions->array[   idx]->md5hash.binary,
                         MD5_DIGEST_SIZE );
@@ -349,6 +350,7 @@ walk_file( file_state state,
                 piece_data.key.backup_number.v = baknum;
                 piece_data.key.file_number.v = file_number;
                 piece_data.key.piece_number.v = piece_number;
+                piece_data.key.md5hash.alloc(MD5_DIGEST_SIZE);
                 memcpy( piece_data.key.md5hash.binary,
                         versions->array[   idx]->md5hash.binary,
                         MD5_DIGEST_SIZE );

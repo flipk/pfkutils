@@ -24,6 +24,7 @@
 // ByteStream interface (BST)
 
 #include <string.h>
+#include <stdio.h>
 #include "types.H"
 
 enum BST_OP {
@@ -372,11 +373,10 @@ struct BST_BINARY : public BST {
         case BST_OP_DECODE:
             if (!count.bst_op(str))
                 return false;
-            size = count.v;
+            alloc(count.v);
             ptr = str->get_ptr(size);
             if (!ptr)
                 return false;
-            alloc(size);
             memcpy(binary, ptr, size);
             return true;
         case BST_OP_MEM_FREE:
