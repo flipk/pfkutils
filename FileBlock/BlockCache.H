@@ -115,6 +115,8 @@ public:
      *  has been called, the dirty argument to this function is ignored,
      *  treated as if it was true. */
     void release( BlockCacheBlock * bcb, bool dirty = false );
+    /** truncate the file to a given position. */
+    void truncate( off_t offset );
     /** \brief flush all open blocks back to the physical file. */
     void flush(void);
 };

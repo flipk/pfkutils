@@ -225,6 +225,29 @@ BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
 }
 
 void
+BlockCache :: truncate( off_t offset )
+{
+    BCB * bcb;
+
+    for (bcb = bcl->list.get_head();
+         bcb;
+         bcb = bcl->list.get_next(bcb))
+    {
+        if (bcb->get_offset() >= offset)
+        {
+            fprintf(stderr, "ERROR: BlockCache :: truncate: "
+                    "block at offset %lld is still in use!\n",
+                    bcb->get_offset());
+            return;
+        }
+    }
+
+    int pages = (offset + PageCache::PAGE_SIZE - 1) / PageCache::PAGE_SIZE;
+
+    pc->truncate_pages(pages);
+}
+
+void
 BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
 {
     BCB * bcb = (BCB *)_bcb;

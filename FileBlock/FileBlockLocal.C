@@ -37,12 +37,12 @@ digraph FileBlockStructure {
   node [shape=record, fontname=Helvetica, fontsize=10];
   edge [arrowhead="open", style="solid"];
 
-  Alloc     [label="Alloc/Free"        URL="\ref FileBlockAccess" ];
-  AUIDmgmt  [label="AUID Management"   URL="\ref AUIDMGMT"        ];
-  AUIDtab   [label="AUID Table"        URL="\ref AUIDTable"       ];
-  AUIDstack [label="AUID Stack"        URL="\ref AUIDTable"       ];
-  AUNmgmt   [label="AUN Management"    URL="\ref AUNMGMT"         ];
-  Bucket    [label="Bucket Management" URL="\ref AUNBuckets"      ];
+  Alloc     [label="Alloc/\nRetrieval"  URL="\ref FileBlockAccess" ];
+  AUIDmgmt  [label="AUID\nMgt"          URL="\ref AUIDMGMT"        ];
+  AUIDtab   [label="AUID\nTable"        URL="\ref AUIDTable"       ];
+  AUIDstack [label="AUID\nStack"        URL="\ref AUIDTable"       ];
+  AUNmgmt   [label="AUN\nMgt"           URL="\ref AUNMGMT"         ];
+  Bucket    [label="Bucket\nMgt"        URL="\ref AUNBuckets"      ];
 
   Alloc     -> AUIDmgmt  ;
   Alloc     -> AUNmgmt   ;
@@ -71,6 +71,13 @@ be calculated from an AUN:  pos=(AUN*32).
 This data type (FB_AUN_T) is completely internal to the FileBlockLocal 
 implementation, and is not available to applications.
 
+The AUN value of zero (which, technically, represents the beginning of
+the file) is an invalid value, reserved for indicating end-of-list,
+etc.
+
+\note  Since the AUN is a 32-bit value, the size of a file is limited to
+2^32 * 32 = 137438953472 = 128 GB.
+
 <li> AUID : Allocation Unit Identifier (FB_AUID_T)
 
 This is also an identifer of an AU, but this identifier is completely 
@@ -85,6 +92,9 @@ There is a translation mechanism in the file providing a lookup table from
 AUID to AUN so that a block can be located quickly.  If the API decides to
 move a unit in order to compact the file, the lookup table is changed but
 the application continues to use the same AUID.
+
+An AUID value of zero is invalid, and reserved for use in identifying
+blocks in the file used for the AUID lookup tables.
 
 </ul>
 
@@ -180,4 +190,16 @@ FileBlockLocal :: init_file( BlockCache * bc )
     head.d->used( false );
     head.d->bucket_next( 0 );
     head.d->bucket_prev( 0 );
+}
+
+//virtual
+void
+FileBlockLocal :: get_stats( FileBlockStats * stats )
+{
+    stats->au_size      = AU_SIZE;
+    stats->used_aus     = fh.d->info.used_aus    .get();
+    stats->free_aus     = fh.d->info.free_aus    .get();
+    stats->used_regions = fh.d->info.used_extents.get();
+    stats->free_regions = fh.d->info.free_extents.get();
+    stats->num_aus      = fh.d->info.num_aus     .get();
 }

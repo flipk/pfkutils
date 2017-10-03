@@ -66,26 +66,40 @@ Next: \ref AUIDTable
 
 /** \page AUIDTable  FileBlock AUID Three-level table
 
+
 A given data file could have thousands or millions or even a billion
 used regions, and thus a great many AUIDs to manage.  Thus, it is not
 feasable to implement the AUID table and free-stack as flat tables.
+They are implemented as a three-level table system.  
 
-Thus they are implemented as a three-level table system.  A 32-bit
-value is divided into three fields: the top 12 bits become a level 1
-(L1) index, the next 10 bits are the L2 index, and the bottom 10 are
-the L3 index.
+Both tables have identical structures:
 
-The FileHeader structure includes the two L1 tables.  Each entry in
-each L1 table is an AUN identifying the location of an L2 table.
-
-Each entry in the L2 table is an AUN specifying a location of an L3
-table.
-
-For the AUID table, each entry in the L3 table is an AUN specifying
-the location of the region identified by the AUID value.
-
-For the AUID free stack, each entry represents an AUID value currently
-unused in the AUID table.
+<ul>
+<li> Both tables are indexed by a 32-bit value:
+   <ul>
+   <li> The AUID table is indexed by the AUID number.
+   <li> The free-stack is indexed by a "stack_top" value.
+   </ul>
+<li> Each table is a three-level heirarchical table:
+   <ul>
+   <li> The first level is called the "L1" table and is found in the
+        FileHeader structure.  The L1 table is 4096 entries, indexed
+        by the top 12 bits of the 32-bit value used to index this
+        table.  The value at each entry in this L1 table is an AUN
+        number used to find an L2 table.  If this value is 0, no L2
+        table exists.
+   <li> The L2 table is dynamically allocated only as needed.  It is
+        1024 entries long, and indexed using the next 10 bits of the
+        index value.  The resulting value is an AUN of the L3 table,
+        if one exists.
+   <li> The L3 table is also dynamically allocated, also 1024 entries
+        long, and indexed using the last 10 bits of the index value.
+        In the AUID table, the resulting value is the AUN location of
+        the block identified by the AUID value; in the free-stack, the
+        resulting value is an AUID value which is currently free in
+        the AUID table.
+   </ul> 
+</ul>
 
 L2 and L3 tables are allocated dynamically as required by calling AUN
 allocation functions.
@@ -94,11 +108,13 @@ allocation functions.
 size decreases, nor is there any attempt to reclaim tables from the
 AUID table if large blocks of contiguous AUIDs are freed.
 
-\note L2 and L3 tables are allocated using the AUN management interface,
-but the AUID field is never populated.  The AUID value is set to 0 for
-all L2 and L3 tables.  L2 and L3 tables are located using AUN values
-instead of AUID values.  This is because the tables themselves provide
-the translation of AUID-to-AUN, thus AUID cannot be used.
+\note L2 and L3 tables are allocated using the AUN management
+interface, but the AUID field is never populated.  The AUID value is
+set to 0 for all L2 and L3 tables.  L2 and L3 tables are located using
+AUN values instead of AUID values.  This is because the tables
+themselves provide the translation of AUID-to-AUN, thus AUID cannot be
+used.  (This presents a special challenge for file compaction,
+described in the next section.)
 
 Next: \ref FileBlockCompacting
 

@@ -37,12 +37,56 @@ it is for file space rather than memory space.
  \section FileBlockObjects FileBlock component objects
 
 The FileBlock interface is composed of a number of lower-level object
-types.  Click on the following links to read about each of them.
+types.  The following diagram shows the relationship between the objects.
+
+\dot 
+
+digraph FileMGTStructure {
+  graph [rankdir=LR];
+  node [shape=record, fontname=Helvetica, fontsize=10];
+  edge [arrowhead="open", style="solid"];
+
+  PageIO     [label="Page\nIO"           URL="\ref PageIO"          ];
+  PageCache  [label="Page\nCache"        URL="\ref PageCache"       ];
+  BlockCache [label="Block\nCache"       URL="\ref BlockCache"      ];
+  FileBlock  [label="FileBlock"         URL="\ref FileBlock"       ];
+  BTree      [label="B-Tree"            URL="\ref Btree"           ];
+
+  Pages      [label="Pages"   shape=oval ];
+  Blocks     [label="Blocks"  shape=oval ];
+  FBlocks    [label="Blocks"  shape=oval ];
+  BTRecs     [label="Records" shape=oval ];
+
+  BTree      ->  BTRecs      ;
+  FileBlock  ->  FBlocks     ;
+  BlockCache ->  Blocks      ;
+  PageCache  ->  Pages       ;
+
+  BTree      ->  FileBlock   ;
+  FileBlock  ->  BlockCache  ;
+  BlockCache ->  PageCache   ;
+  PageCache  ->  PageIO      ;
+
+  edge [style="dashed"];
+
+  BTRecs  -> FBlocks ;
+  FBlocks -> Blocks  ;
+  Blocks  -> Pages   ;
+
+  { rank=same; BTree      BTRecs  }
+  { rank=same; FileBlock  FBlocks }
+  { rank=same; BlockCache Blocks  }
+  { rank=same; PageCache  Pages   }
+}
+
+\enddot
+
+  Click on the following links to read about each of them.
 
 <ul>
 <li> \ref PageIO (see classes PageIO and PageIOFileDescriptor)
 <li> \ref PageCache (see classes PageCachePage and PageCache)
-<li> \ref BlockCache (see classes BlockCacheBlock and BlockCache)
+<li> \ref BlockCache (see classes BlockCacheBlock, BCB, and BlockCache)
 <li> \ref FileBlock (see classes FileBlock, FileBlockInterface, FileBlockLocal)
 </ul>
 

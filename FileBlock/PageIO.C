@@ -47,22 +47,12 @@ Next: \ref PageCache
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "PageCache.H"
 #include "PageIO.H"
 
 PageIOFileDescriptor :: PageIOFileDescriptor( int _fd )
-{
-    fd = _fd;
-}
-
-PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
-{
-    close(fd);
-}
-
-bool
-PageIOFileDescriptor :: get_page( PageCachePage * pg )
 {
     // this will probably cause problems for someone.
     if (sizeof(off_t) != 8)
@@ -70,31 +60,57 @@ PageIOFileDescriptor :: get_page( PageCachePage * pg )
         fprintf(stderr, "\n\n\nERROR : size of off_t is not 8! \n\n\n");
         exit(1);
     }
+    fd = _fd;
+}
 
-    off_t offset = (off_t)pg->get_page_number() * (off_t)PageCache::PAGE_SIZE;
+//virtual
+PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
+{
+    close(fd);
+}
+
+//virtual
+bool
+PageIOFileDescriptor :: get_page( PageCachePage * pg )
+{
+    int page = pg->get_page_number();
+    off_t offset = (off_t)page * (off_t)PageCache::PAGE_SIZE;
     lseek(fd, offset, SEEK_SET);
     int cc = read(fd, pg->get_ptr(), PageCache::PAGE_SIZE);
     if (cc < 0)
+    {
+        printf("PageIOFileDescriptor :: get_page: read -> %s\n",
+               strerror(errno));
         return false;
+    }
     if (cc != PageCache::PAGE_SIZE)
     {
         // zero-fill the remainder of the page.
         memset(pg->get_ptr() + cc, 0, PageCache::PAGE_SIZE - cc);
     }
+    printf("PageIOFileDescriptor :: get_page: got page %d\n", page);
     return true;
 }
 
+//virtual
 bool
 PageIOFileDescriptor :: put_page( PageCachePage * pg )
 {
-    off_t offset = (off_t)pg->get_page_number() * (off_t)PageCache::PAGE_SIZE;
+    int page = pg->get_page_number();
+    off_t offset = (off_t)page * (off_t)PageCache::PAGE_SIZE;
     lseek(fd, offset, SEEK_SET);
     if (write(fd, pg->get_ptr(),
               PageCache::PAGE_SIZE) != PageCache::PAGE_SIZE)
+    {
+        printf("PageIOFileDescriptor :: put_page: write: %s\n",
+               strerror(errno));
         return false;
+    }
+    printf("PageIOFileDescriptor :: put_page: put page %d\n", page);
     return true;
 }
 
+//virtual
 int
 PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
 {
@@ -113,6 +129,7 @@ PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
     return (sb.st_size / PageCache::PAGE_SIZE);
 }
 
+//virtual
 off_t
 PageIOFileDescriptor :: get_size(void)
 {
@@ -120,4 +137,12 @@ PageIOFileDescriptor :: get_size(void)
     if (fstat(fd, &sb) < 0)
         return -1;
     return sb.st_size;
+}
+
+//virtual
+void
+PageIOFileDescriptor :: truncate_pages(int num_pages)
+{
+    off_t size = num_pages * PageCache::PAGE_SIZE;
+    ftruncate(fd, size);
 }

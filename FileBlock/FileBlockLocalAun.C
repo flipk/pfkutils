@@ -31,7 +31,7 @@ region is on a global ordered list.  When a region is freed, this allows
 fast lookups of previous and successive regions, to determine if coalescing
 of free space is possible.
 
-Each region encodes the following information:
+Every region stores the following information:
 
 <ul>
 <li> The AUN of the previous region.  If this is the first region in the
@@ -44,7 +44,7 @@ Each region encodes the following information:
 <li> A used region contains:
    <ul>
    <li> The AUID value used to represent this item.  The value of 0 is
-        reserved to indicate a stack L2 or L3 page.
+        reserved to indicate an AUID table or AUID free-stack L2/L3 page.
    </ul>
 <li> A free region contains:
    <ul>

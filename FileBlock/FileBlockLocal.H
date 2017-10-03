@@ -295,13 +295,16 @@ typedef FileBlockT <_DataInfoBlock> DataInfoBlock;
 
 //
 
+/** an enumerator for FileBlockInt data type linked lists */
+enum FILE_BLOCK_LIST_INDICES { FILE_BLOCK_LIST, FILE_BLOCK_NUM_LISTS };
+
 /**
  * internal representation of a FileBlock.  Just adds some linked
  * list info so we can keep track of it.
  */
 class FileBlockInt : public FileBlock {
 public:
-    LListLinks <FileBlockInt> links[1];
+    LListLinks <FileBlockInt> links[FILE_BLOCK_NUM_LISTS];
     void set_auid(UINT32 _auid) { auid = _auid; }
     void set_bcb(BlockCacheBlock * _bcb) { bcb = _bcb; }
     BlockCacheBlock *get_bcb(void) { return bcb; }
@@ -317,7 +320,7 @@ class FileBlockLocal : public FileBlockInterface {
     BlockCache * bc;
     /** a list of all FileBlockInt objects which have been
      * given to the general public.  */
-    LList <FileBlockInt,0> active_blocks;
+    LList <FileBlockInt,FILE_BLOCK_LIST> active_blocks;
     /** a perpetual pointer to the header of the file. */
     FileHeader  fh;
     /** @name bucket management */
@@ -480,6 +483,7 @@ public:
                                                  bool dirty = false );
     /*virtual*/ void        flush              ( void );
     /*virtual*/ void        compact            ( bool full );
+    /*virtual*/ void        get_stats          ( FileBlockStats * stats );
 
     /** debug information.
      * \param verbose   set to true if you want it to display everything

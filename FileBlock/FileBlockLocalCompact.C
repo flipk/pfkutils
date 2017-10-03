@@ -30,38 +30,36 @@ The algorithm for compacting a file is as follows:
 
 <ul>
 <li>  Unpeeling + Downshifting
-
-<ul>
-<li> walk AUID and free-stack L1 tables and L2 tables, gathering
-     a list of all L2 and L3 table AUNs; also record the location
-     in the parent table where its AUN is stored.
-<li> while number of free AUs is greator than 5% of the file
-   <ul>
-   <li> find the last used-block in the file
-   <li> attempt a realloc 
-   <li> if the new position in the file is before the
-        position of this block
-      <ul>
-      <li> move the block, check AUID
-      <li> if AUID is zero
-         <ul>
-         <li> this is an L2 or L3 table; find the AUN in the list,
-              and modify the parent to point to the new AUN.
-         </ul>
-      <li> else
-         <ul>
-         <li> rename the AUID to the new AUN.
-         </ul>
-      </ul>
-   <li> else
-      <ul>
-      <li> start at the beginning of the file, performing Downshifting
-           until a free block large enough to contain the last block has
-           been coalesced.
-      </ul>
-   </ul>
-</ul>
-
+  <ul>
+  <li> walk AUID and free-stack L1 tables and L2 tables, gathering a
+       list of all L2 and L3 table AUNs; also record the location in
+       the parent table where its AUN is stored.
+  <li> while number of free AUs is greator than 5% of the file
+     <ul>
+     <li> find the last used-block in the file
+     <li> attempt a realloc 
+     <li> if the new position in the file is before the
+          position of this block
+        <ul>
+        <li> move the block, check AUID
+        <li> if AUID is zero
+           <ul>
+           <li> this is an L2 or L3 table; find the AUN in the list,
+                and modify the parent to point to the new AUN.
+           </ul>
+        <li> else
+           <ul>
+           <li> rename the AUID to the new AUN.
+           </ul>
+        </ul>
+     <li> else
+        <ul>
+        <li> start at the beginning of the file, performing
+             Downshifting until a free block large enough to contain
+             the last block has been coalesced.
+        </ul>
+     </ul>
+  </ul>
 </ul>
 
 See also: \ref FileBlockBSTExample
@@ -282,6 +280,16 @@ FileBlockLocal :: compact( bool full )
     int i;
     FB_AUN_T next_ds_au;
 
+    // the only block that can be in use is the FileHeader
+
+    if (active_blocks.get_cnt() > 1)
+    {
+        fprintf(stderr, "ERROR: FileBlockLocal :: compact: "
+                "there are %d blocks still in use!\n",
+                active_blocks.get_cnt());
+        return;
+    }
+
     // build the list of L2/L3 tables.
 
     for (i=0; i < AuidL1Tab::L1_ENTRIES; i++)
@@ -400,4 +408,10 @@ FileBlockLocal :: compact( bool full )
 done:
     while ((l2l3ent = l2l3tables.dequeue_head()) != NULL)
         delete l2l3ent;
+
+    off_t pos;
+
+    pos = (off_t)(fh.d->info.num_aus.get() + 1) * AU_SIZE;
+
+    bc->truncate( pos );
 }

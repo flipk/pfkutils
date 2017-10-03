@@ -148,6 +148,28 @@ PageCache :: release( PageCachePage * _p, bool dirty )
     }
 }
 
+void
+PageCache :: truncate_pages(int num_pages)
+{
+    PCPInt * p, * np;
+    for (p = pgs->get_head(); p; p = np)
+    {
+        np = pgs->get_next(p);
+        if (p->get_page_number() >= num_pages)
+        {
+            if (p->is_locked())
+            {
+                fprintf(stderr, "ERROR: PageCache :: truncate_pages: "
+                        "page %d is still locked\n", p->get_page_number());
+                return;
+            }
+            else
+                pgs->remove(p);
+        }
+    }
+    io->truncate_pages(num_pages);
+}
+
 /** compare page numbers of two PCPInt objects, for qsort.
  * \param _a the first PCPInt to compare
  * \param _b the second PCPInt to compare

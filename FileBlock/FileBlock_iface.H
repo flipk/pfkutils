@@ -80,6 +80,16 @@ public:
     void    mark_dirty(void) { bcb->mark_dirty(); }
 };
 
+/** A struct containing statistics for a FileBlock file. */
+struct FileBlockStats {
+    UINT32  au_size;       /**< size of an allocation unit */
+    UINT32  used_aus;      /**< number of aus in use */
+    UINT32  free_aus;      /**< number of aus free */
+    UINT32  used_regions;  /**< number of unique regions in use */
+    UINT32  free_regions;  /**< number of free regions (holes) in use */
+    UINT32  num_aus;       /**< file size, in aus */
+};
+
 /** A generic interface to read and write FileBlocks.
  *
  * This is a pure-virtual class whose purpose is to abstract the
@@ -261,6 +271,11 @@ public:
      * \note This function is currently unimplemented!
      */
     virtual void compact(bool full) = 0;
+    // @}
+
+    /** @name Statistics */
+    // @{
+    virtual void get_stats( FileBlockStats * stats ) = 0;
     // @}
 };
 

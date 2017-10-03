@@ -65,6 +65,8 @@ public:
     virtual int   get_num_pages(bool * page_aligned = NULL) = 0;
     /** return size of the file in bytes. */
     virtual off_t get_size(void) = 0;
+    /** cut the file to a certain size. */
+    virtual void  truncate_pages(int num_pages) = 0;
 };
 
 /** An example implementation of PageIO using a file descriptor.
@@ -85,10 +87,11 @@ public:
 
     // doxygen comments not required, because they will be inherited
     // from the base class documentation.
-    /*virtual*/ bool get_page( PageCachePage * pg );
-    /*virtual*/ bool put_page( PageCachePage * pg );
-    /*virtual*/ int get_num_pages(bool * page_aligned = NULL);
+    /*virtual*/ bool  get_page( PageCachePage * pg );
+    /*virtual*/ bool  put_page( PageCachePage * pg );
+    /*virtual*/ int   get_num_pages(bool * page_aligned = NULL);
     /*virtual*/ off_t get_size(void);
+    /*virtual*/ void  truncate_pages(int num_pages);
 };
 
 #endif /* __PAGE_IO_H__ */

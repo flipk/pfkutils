@@ -87,8 +87,9 @@ FileBlockLocal :: ffu_bucket(int num_aus)
 
     if (bucket == BucketList::NUM_BUCKETS)
     {
-        fprintf(stderr, "FileBlockLocal :: alloc:   WTF ??????\n");
+        fprintf(stderr, "\n\nFileBlockLocal :: alloc:   WTF ??????\n");
         /*DEBUGME*/
+        bc->flush();
         exit(1);
     }
 

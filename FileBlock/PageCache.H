@@ -98,6 +98,9 @@ public:
      * it will eventually be written back to the file (thru the PageIO
      * interface. */
     void release( PageCachePage * p, bool dirty );
+    /** truncate a file.
+     */
+    void truncate_pages(int num_pages);
     /** Flush the cache, force synchronization.
      *
      * This method walks the list of all dirty pages, as well as all 
