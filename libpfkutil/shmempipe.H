@@ -21,8 +21,8 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <pthread.h>
-
-#include "circular_buffer.H"
+#include <sys/time.h>
+#include <errno.h>
 
 struct shmempipePoolInfo {
     static const int maxPools = 64;
@@ -40,91 +40,70 @@ struct shmempipePoolInfo {
     }
 };
 
-class shmempipeMessage;
-
 #define SHMEMPIPE_FILEPATH_FMT "/tmp/p2p.%s.shmem"
-#define SHMEMPIPE_M2SPATH_FMT "/tmp/p2p.%s.m2s.fifo"
-#define SHMEMPIPE_S2MPATH_FMT "/tmp/p2p.%s.s2m.fifo"
+#define SHMEMPIPE_M2SPATH_FMT "/tmp/p2p.%s.m2s"
+#define SHMEMPIPE_S2MPATH_FMT "/tmp/p2p.%s.s2m"
 
-struct shmempipeFilenames {
+struct shmempipeFilename {
     static const int FILENAMEMAX = 512;
     char filename[FILENAMEMAX];
-    char masterSlaveFifo[FILENAMEMAX];
-    char slaveMasterFifo[FILENAMEMAX];
-    shmempipeFilenames(void) {
+    char m2sname[FILENAMEMAX];
+    char s2mname[FILENAMEMAX];
+    shmempipeFilename(void) {
         filename[0] = 0;
-        masterSlaveFifo[0] = 0;
-        slaveMasterFifo[0] = 0;
+        m2sname[0] = 0;
+        s2mname[0] = 0;
     }
-    void setPipeName(const char * pipename) {
+    void setPipeName(const char * _pipename) {
         snprintf(filename,sizeof(filename),
-                 SHMEMPIPE_FILEPATH_FMT, pipename);
-        snprintf(masterSlaveFifo, sizeof(masterSlaveFifo),
-                 SHMEMPIPE_M2SPATH_FMT, pipename);
-        snprintf(slaveMasterFifo, sizeof(slaveMasterFifo),
-                 SHMEMPIPE_S2MPATH_FMT, pipename);
+                 SHMEMPIPE_FILEPATH_FMT, _pipename);
         filename[FILENAMEMAX-1] = 0;
-        masterSlaveFifo[FILENAMEMAX-1] = 0;
-        slaveMasterFifo[FILENAMEMAX-1] = 0;
+        snprintf(m2sname,sizeof(m2sname),
+                 SHMEMPIPE_M2SPATH_FMT, _pipename);
+        m2sname[FILENAMEMAX-1] = 0;
+        snprintf(s2mname,sizeof(s2mname),
+                 SHMEMPIPE_S2MPATH_FMT, _pipename);
+        s2mname[FILENAMEMAX-1] = 0;
     }
 };
 
 class shmempipe;
-class shmempipeHandler {
-public:
-    shmempipe * pPipe;
-    virtual void connectHandler(void) = 0;
-    virtual void disconnectHandler(void) = 0;
-    virtual void messageHandler(shmempipeMessage *pBuf) = 0;
+struct shmempipeMessage;
+
+typedef void (*shmempipeConnectCallback)(shmempipe *, void *arg);
+typedef void (*shmempipeMessageCallback)(shmempipe *, void *arg,
+                                         shmempipeMessage * pMsg);
+
+struct shmempipeCallbacks {
+    shmempipeConnectCallback connectCallback;
+    shmempipeConnectCallback disconnectCallback;
+    shmempipeMessageCallback messageCallback;
+    void * arg;
 };
 
-struct shmempipeMasterConfig : shmempipeFilenames {
-    static const int DEFAULT_FLUSH_USECS = 10000;
-    static const int DEFAULT_BUFFERSIZE = 4096;
-    static const int DEFAULT_RELEASEQUEUESIZE = 1024;
-    shmempipePoolInfo master2slave;
-    shmempipePoolInfo slave2master;
-    int  masterReleaseQueueSize;
-    int  slaveReleaseQueueSize;
-    int  flushUsecs;
-    int  bufferSize;
+struct shmempipeMasterConfig {
+    shmempipeFilename file;
+    shmempipeCallbacks callbacks;
+    shmempipePoolInfo poolInfo;
     bool bInitialized;
-    shmempipeHandler * pHandler;
     shmempipeMasterConfig(void) {
         bInitialized = false;
-        pHandler = NULL;
-        flushUsecs = DEFAULT_FLUSH_USECS;
-        bufferSize = DEFAULT_BUFFERSIZE;
-        masterReleaseQueueSize = DEFAULT_RELEASEQUEUESIZE;
-        slaveReleaseQueueSize = DEFAULT_RELEASEQUEUESIZE;
     }
 };
 
 struct shmempipeSlaveConfig {
-    static const int DEFAULT_FLUSH_USECS = 10000;
-    static const int DEFAULT_BUFFERSIZE = 4096;
-    char filename[shmempipeFilenames::FILENAMEMAX];
-    int flushUsecs;
-    int bufferSize;
+    shmempipeFilename file;
+    shmempipeCallbacks callbacks;
     bool bInitialized;
-    shmempipeHandler * pHandler;
     shmempipeSlaveConfig(void) {
         bInitialized = false;
-        filename[0] = 0;
-        flushUsecs = DEFAULT_FLUSH_USECS;
-        bufferSize = DEFAULT_BUFFERSIZE;
-        pHandler = NULL;
-    }
-    void setPipeName(const char * pipename) {
-        snprintf(filename,sizeof(filename),
-                 SHMEMPIPE_FILEPATH_FMT, pipename);
-        filename[shmempipeFilenames::FILENAMEMAX-1] = 0;
     }
 };
 
 struct shmempipeMessage {
+    friend class shmempipeBufferList;
 private:
-    shmempipeMessage * next;
+    uint32_t next; // offset
     uint8_t bMaster;
     uint8_t poolInd;
     uint16_t bufInd;
@@ -136,104 +115,135 @@ private:
     friend class shmempipe;
 };
 
-struct shmempipeHeader : shmempipeFilenames {
-    shmempipePoolInfo slave2master;
-    int flushUsecs;
-    int  masterReleaseQueueSize;
-    int  masterReleaseQueueOffset;
-    int  slaveReleaseQueueSize;
-    int  slaveReleaseQueueOffset;
-    int  master2slavePoolOffset;
-    int  slave2masterPoolOffset;
-    // master message queue
-    // slave message queue
-    // master release queue
-    // slave release queue
-    // master buffer pool
-    // slave buffer pool
+struct shmempipeBufferList {
+private:
+    uint32_t head; // dequeue from head
+    uint32_t tail; // enqueue to tail
+    // shmempipeMessage::next points towards tail
+    pthread_mutex_t  mutex;
+    pthread_cond_t   empty_cond;
+    bool needspoke;
+    void lock(void) { pthread_mutex_lock( &mutex ); }
+    void unlock(void) { pthread_mutex_unlock( &mutex ); }
+public:
+    void init(void);
+    bool empty(void) { return head == 0; }
+    void poke(void) { lock(); needspoke = true; unlock(); pthread_cond_signal( &empty_cond ); }
+    void enqueue( uintptr_t base, shmempipeMessage * msg,
+                  bool needlock=true ) {
+        uint32_t msgoff = ((uintptr_t)msg) - base;
+        bool signal = false;
+        msg->next = 0;
+        if (needlock)
+            lock();
+        if (tail != 0) {
+            shmempipeMessage * tailmsg = (shmempipeMessage *)(tail + base);
+            tailmsg->next = msgoff;
+            tail = msgoff;
+        } else {
+            head = tail = msgoff;
+            signal = true;
+        }
+        if (needlock)
+            unlock();
+        if (signal)
+            pthread_cond_signal(&empty_cond);
+    }
+    shmempipeMessage * dequeue(uintptr_t base,
+                               bool needlock=true) {
+        uint32_t msgoff;
+        shmempipeMessage * pMsg = NULL;
+        if (needlock)
+            lock();
+        if (head == 0 && !needspoke) {
+            pthread_cond_wait(&empty_cond, &mutex);
+        }
+        if (head != 0 && !needspoke) {
+            msgoff = head;
+            pMsg = (shmempipeMessage *)(msgoff + base);
+            head = pMsg->next;
+            if (head == 0)
+                tail = 0;
+        }
+        if (pMsg == NULL)
+            needspoke = false;
+        if (needlock)
+            unlock();
+        return pMsg;
+    }
 };
 
-struct shmempipeStats {
-    uint64_t sent_bytes;
-    uint64_t sent_packets;
-    uint64_t rcvd_bytes;
-    uint64_t rcvd_packets;
-    uint64_t sent_messages;
-    uint64_t rcvd_messages;
-    uint64_t buffers_read;
-    uint64_t buffers_flushed;
-    uint64_t alloc_waits;
-    uint64_t alloc_fails;
-    shmempipeStats(void) { init(); }
-    void init(void) { 
-        memset(this, 0, sizeof(*this));
-    }
+struct shmempipeHeader {
+    shmempipePoolInfo    poolInfo;
+    shmempipeBufferList  pools[shmempipePoolInfo::maxPools];
+    shmempipeBufferList  master2slave;
+    shmempipeBufferList  slave2master;
+    // pool buffers start here
 };
 
 class shmempipe {
     bool m_bMaster;
     bool m_bConnected;
-    shmempipeFilenames m_filenames;
-    shmempipeStats m_stats;
-    shmempipeHandler * m_pHandler;
-    int m_writePipe;
-    int m_readPipe;
+    shmempipeFilename m_filename;
+    shmempipeCallbacks m_callbacks;
+//    shmempipeStats m_stats;
     int m_shmemFd;
-    int m_fileSize;
+    int m_myPipeFd;
+    int m_otherPipeFd;
+    int m_closerPipe[2];
+    uint32_t m_fileSize;
     uintptr_t m_shmemPtr;
     uintptr_t m_shmemLimit;
     shmempipeHeader * m_pHeader;
-    int myReleaseQueueSize;
-    int myReleaseQueueIndex;
-    uint32_t * pMyReleaseQueue; // i read from this and write 0s
-    int otherReleaseQueueIndex;
-    int otherReleaseQueueSize;
-    uint32_t * pOtherReleaseQueue; // i write non-0s to this
-    shmempipePoolInfo m_poolInfo;
-    shmempipeMessage * m_pools[shmempipePoolInfo::maxPools];
-    int m_poolCounts[shmempipePoolInfo::maxPools];
-    uintptr_t  m_poolMins[shmempipePoolInfo::maxPools];
-    uintptr_t  m_poolMaxs[shmempipePoolInfo::maxPools];
-    circular_buffer * m_writeBuffer;
-    int m_bufferSize;
-    static const uint32_t  FREE_FLAG   = 0x80000000;
-    static const uint32_t  INIT_FLAG   = 0x40000000;
-    static const uint32_t  OFFSET_MASK = 0x3fffffff;
-    pthread_mutex_t m_mutex;
-    void   lock(void) { pthread_mutex_lock  ( &m_mutex ); }
-    void unlock(void) { pthread_mutex_unlock( &m_mutex ); }
-    int m_closerPipe[2];
-    pthread_t m_readerThreadId;
-    pthread_t m_flusherThreadId;
-    bool m_bReaderThreadRunning;
-    bool m_bFlusherThreadRunning;
-    pthread_cond_t m_allocWaiters;
-    bool validateBuf(shmempipeMessage * pBuf);
-    void releaseBuffer(shmempipeMessage * pBuf, bool needs_lock, 
-                       bool rcvd_stat_bump);
-    void checkReleaseQueue(void);
-    void initPools(uintptr_t walkingPtr);
-    void sendMessage(uint32_t message, bool flush=true);
-    void processMessage(uint32_t message);
-    bool createReaderThread(void);
+    shmempipeBufferList * m_myBufferList;
+    shmempipeBufferList * m_otherBufferList;
+    bool m_bCloserRunning;
+    void startCloserThread(void);
+    void stopCloserThread(void);
+    static void * _closerThreadEntry(void *arg);
+    void closerThread(void);
+
+    bool m_bReaderRunning;
+    bool m_bReaderStop;
+    void startReaderThread(void);
     void stopReaderThread(void);
-    static void * readerThreadEntry( void * pObject );
-    void readerThreadMain(void);
-    static void * flusherThreadEntry( void * pObject );
-    void flusherThreadMain(void);
-    bool flushWriteBuf(void); // false if failed
-    shmempipeMessage * messageToBuffer(uint32_t message) {
-        return (shmempipeMessage *) (m_shmemPtr + (message & OFFSET_MASK));
-    }
+    static void * _readerThreadEntry(void *arg);
+    void readerThread(void);
+
 public:
     shmempipe( shmempipeMasterConfig * pConfig );
     shmempipe( shmempipeSlaveConfig * pConfig );
     ~shmempipe( void );
-    shmempipeMessage * allocSize(int size,    bool bWait,
-                                bool lookToNextPool=true);
-    shmempipeMessage * allocPool(int poolInd, bool bWait);
-    void release(shmempipeMessage * pBuf, bool flush=true);
-    bool send(shmempipeMessage * pBuf, bool flush=true);
-    void flush(void);
-    void getStats(shmempipeStats * pStats, bool zero=false);
+    shmempipeMessage * allocSize(int size, int uSecs=0)
+    {
+        int poolInd;
+        for (poolInd = 0;
+             poolInd < m_pHeader->poolInfo.numPools;
+             poolInd++)
+        {
+            if (m_pHeader->poolInfo.bufSizes[poolInd] >= size)
+                break;
+        }
+        if (poolInd == m_pHeader->poolInfo.numPools)
+            return NULL;
+        return m_pHeader->pools[poolInd].dequeue(m_shmemPtr, uSecs);
+    }
+    shmempipeMessage * allocPool(int poolInd, int uSecs=0)
+    {
+        if (poolInd < 0 || poolInd >= m_pHeader->poolInfo.numPools)
+            return NULL;
+        return m_pHeader->pools[poolInd].dequeue(m_shmemPtr, uSecs);
+    }
+    void release(shmempipeMessage * pBuf)
+    {
+        m_pHeader->pools[pBuf->poolInd].enqueue(m_shmemPtr,pBuf);
+    }
+    bool enqueue(shmempipeMessage * pBuf)
+    {
+        if (m_bConnected == false)
+            return false;
+        m_otherBufferList->enqueue(m_shmemPtr,pBuf);
+        return true;
+    }
+// xxx   void getStats(shmempipeStats * pStats, bool zero=false);
 };

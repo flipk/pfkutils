@@ -1,10 +1,11 @@
 #if 0
 set -e -x
-g++ -Wall -O6 -c shmempipe.cc
-g++ -Wall -O6 -c shmempipe_test_master.cc
-g++ -Wall -O6 -c shmempipe_test_slave.cc
-g++ shmempipe_test_master.o shmempipe.o -o tm -lpthread
-g++ shmempipe_test_slave.o shmempipe.o -o ts -lpthread
+opt=-O3
+g++ -Wall $opt -c shmempipe.cc
+g++ -Wall $opt -c shmempipe_test_master.cc
+g++ -Wall $opt -c shmempipe_test_slave.cc
+g++ $opt shmempipe_test_master.o shmempipe.o -o tm -lpthread
+g++ $opt shmempipe_test_slave.o shmempipe.o -o ts -lpthread
 exit 0
 #endif
 
@@ -34,81 +35,59 @@ exit 0
 #include "shmempipe.H"
 #include "shmempipe_test_msg.H"
 
-class myHandler : public shmempipeHandler {
-public:
-    bool done;
-    time_t last_print;
-    time_t start;
-#ifdef SHMEMPIPE_STATS
-    shmempipeStats stats;
-#endif
-    myHandler(void) { 
-        done = false;
-        last_print = start = 0;
+bool connected = false;
+int count = 0;
+
+void connect(shmempipe *pPipe, void *arg)
+{
+    printf("got connect\n");
+    connected = true;
+}
+
+void disconnect(shmempipe *pPipe, void *arg)
+{
+    printf("got disconnect\n");
+    connected = false;
+}
+
+void message(shmempipe * pPipe, void *arg, shmempipeMessage * _pMsg)
+{
+    MyTestMsg * pMsg = (MyTestMsg *) _pMsg;
+    pPipe->release(pMsg);
+    pMsg = MyTestMsg::allocSize(pPipe);
+    if (pMsg)
+    {
+        pMsg->seqno = 8;
+        pPipe->enqueue(pMsg);
     }
-    /*virtual*/ void messageHandler(shmempipeMessage * _pMsg) {
-        MyTestMsg * pMsg = (MyTestMsg *) _pMsg;
-        if (pMsg->messageSize > 0)
-        {
-#ifdef SHMEMPIPE_STATS
-            time_t now = time(0);
-            int delta = (int)(now - pInfo->start);
-            if (now != pInfo->last_print)
-            {
-                pInfo->pPipe->getStats(&pInfo->stats, true);
-                
-                fprintf(stderr,
-                        " sb %ld sp %ld rb %ld rp %ld"
-                        " sm %ld rm %ld br %ld bf %ld aw %ld           \r",
-                        pInfo->stats.sent_bytes,
-                        pInfo->stats.sent_packets,
-                        pInfo->stats.rcvd_bytes,
-                        pInfo->stats.rcvd_packets,
-                        pInfo->stats.sent_messages,
-                        pInfo->stats.rcvd_messages,
-                        pInfo->stats.buffers_read,
-                        pInfo->stats.buffers_flushed,
-                        pInfo->stats.alloc_waits );
-                pInfo->last_print = now;
-            }
-#endif
-            write(1, pMsg->data, pMsg->messageSize);
-            pPipe->release(pMsg,false);
-        }
-        else
-        {
-            // send it back as an ack.
-            pPipe->send(pMsg,true);
-        }
-    }
-    /*virtual*/ void connectHandler(void) {
-        printf("connected\n");
-    }
-    /*virtual*/ void disconnectHandler(void) {
-        printf("disconnected\n");
-        done = true;
-    }
-};
+    count ++;
+}
 
 int
 main()
 {
-    myHandler handler;
     shmempipeMasterConfig  CONFIG;
     shmempipe * pPipe;
-    CONFIG.setPipeName( "shmempipe_test" );
-    CONFIG.flushUsecs = 10000;
-    CONFIG.pHandler = &handler;
-    CONFIG.master2slave.addPool(5000, sizeof(MyTestMsg));
-    CONFIG.slave2master.addPool(5000, sizeof(MyTestMsg));
+    CONFIG.file.setPipeName( "shmempipe_test" );
+    CONFIG.poolInfo.addPool(500, sizeof(MyTestMsg));
+    CONFIG.callbacks.connectCallback = &connect;
+    CONFIG.callbacks.disconnectCallback = &disconnect;
+    CONFIG.callbacks.messageCallback = &message;
+    CONFIG.callbacks.arg = NULL;
     pPipe = new shmempipe( &CONFIG );
     if (!CONFIG.bInitialized)
     {
         printf("error constructing shmempipe\n");
         return 1;
     }
-    while (!handler.done)
+    while (!connected)
+        usleep(1);
+    while (connected)
+    {
+        printf("\r count = %d    ",count);
+        fflush(stdout);
         usleep(100000);
+    }
     delete pPipe;
     return 0;
 }
