@@ -30,7 +30,7 @@ pfktel_keygen_main()
 {
     PfkKeyPairs * pairs;
 
-    pairs = new PfkKeyPairs( 0x10000 );
+    pairs = new PfkKeyPairs( 0x1000 );
     delete pairs;
 
     return 0;

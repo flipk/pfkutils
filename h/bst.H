@@ -299,6 +299,103 @@ struct BST_UINT8_t : public BST {
     }
 };
 
+
+template <int dim>
+struct BST_FIXED_BINARY : public BST {
+    unsigned char binary[dim];
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {
+        UCHAR * ptr;
+        switch (str->get_op())
+        {
+        case BST_OP_ENCODE:
+            ptr = str->get_ptr(dim);
+            if (!ptr)
+                return false;
+            memcpy(ptr, binary, dim);
+            return true;
+        case BST_OP_CALC_SIZE:
+            ptr = str->get_ptr(dim);
+            if (!ptr)
+                return false;
+            return true;
+        case BST_OP_DECODE:
+            ptr = str->get_ptr(dim);
+            if (!ptr)
+                return false;
+            memcpy(binary, ptr, dim);
+            return true;
+        case BST_OP_MEM_FREE:
+            return true;
+        }
+        return false;
+    }
+};
+
+
+struct BST_VAR_BINARY : public BST {
+    BST_VAR_BINARY(void) { binary = NULL; size = 0; }
+    ~BST_VAR_BINARY(void) { if (binary) delete[] binary; }
+    int size;
+    unsigned char * binary;
+    void alloc(int c) {
+        if (size == c)
+            return;
+        unsigned char * newbin = new unsigned char[c];
+        if (c > size)
+        {
+            memcpy(newbin, binary, size);
+            memset(newbin+size, 0, c-size);
+        }
+        else // c < size
+        {
+            memcpy(newbin, binary, c);
+        }
+        if (binary)
+            delete[] binary;
+        size = c;
+        binary = newbin;
+    }
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {
+        UCHAR * ptr;
+        BST_UINT32_t   count;
+        switch (str->get_op())
+        {
+        case BST_OP_ENCODE:
+            count.v = size;
+            if (!count.bst_op(str))
+                return false;
+            ptr = str->get_ptr(size);
+            if (!ptr)
+                return false;
+            memcpy(ptr, binary, size);
+            return true;
+        case BST_OP_CALC_SIZE:
+            if (!count.bst_op(str))
+                return false;
+            ptr = str->get_ptr(size);
+            if (!ptr)
+                return false;
+            return true;
+        case BST_OP_DECODE:
+            if (!count.bst_op(str))
+                return false;
+            size = count.v;
+            ptr = str->get_ptr(size);
+            if (!ptr)
+                return false;
+            memcpy(binary, ptr, size);
+            return true;
+        case BST_OP_MEM_FREE:
+            if (binary)
+                delete[] binary;
+            binary = NULL;
+            size = 0;
+            return true;
+        }
+        return false;
+    }
+};
+
 // it is legal for string to be a null ptr; however
 // it will be represented identically as a zero-length string.
 struct BST_STRING : public BST {
