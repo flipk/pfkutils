@@ -1,8 +1,27 @@
 
-static char value_to_b64[] = 
+/* return 4 if ok, 0 if not ok */
+int b64_encode_quantum( unsigned char * in3, int in_len,
+                        unsigned char * out4 );
+/* return 0 if ok, return -1 if error (out_len too small) */
+int
+b64_encode_buffer( unsigned char * in,  int in_len,
+                   unsigned char * out, int * arg_out_len );
+/* return length of bytes decoded, or 0 if not ok */
+int b64_decode_quantum( unsigned char * in4, unsigned char * out3 );
+/* return 0 if ok, return -1 if error
+   (out_len too small or invalid b64 char) */
+int
+b64_decode_buffer( unsigned char * in,  int in_len,
+                   unsigned char * out, int * arg_out_len );
+
+
+
+#ifdef INCLUDE_BASE64_IMPL
+
+static unsigned char value_to_b64[] = 
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-static char b64_to_value_20[] = 
+static unsigned char b64_to_value_20[] = 
 {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
     52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
@@ -20,7 +39,8 @@ static char b64_to_value_20[] =
 
 /* return 4 if ok, 0 if not ok */
 int
-b64_encode_quantum( char * in3, int in_len, char * out4 )
+b64_encode_quantum( unsigned char * in3, int in_len,
+                    unsigned char * out4 )
 {
     int v,val;
 
@@ -46,9 +66,42 @@ b64_encode_quantum( char * in3, int in_len, char * out4 )
     return 4;
 }
 
+/* return 0 if ok, return -1 if error (out_len too small) */
+int
+b64_encode_buffer( unsigned char * in,  int in_len,
+                   unsigned char * out, int * arg_out_len )
+{
+    int out_len = *arg_out_len;
+    int e_len, ed_len;
+    int ret_out_len = 0;
+
+    while (in_len > 0)
+    {
+        if (in_len > 3)
+            e_len = 3;
+        else
+            e_len = in_len;
+
+        if (out_len < 4)
+            return -1;
+
+        ed_len = b64_encode_quantum( in, e_len, out );
+        if (ed_len == 0)
+            return -1;
+
+        out_len -= ed_len;
+        out += ed_len;
+        ret_out_len += ed_len;
+        in_len -= e_len;
+        in += e_len;
+    }
+    *arg_out_len = ret_out_len;
+    return 0;
+}
+
 /* return length of bytes decoded, or 0 if not ok */
 int
-b64_decode_quantum( char * in4, char * out3 )
+b64_decode_quantum( unsigned char * in4, unsigned char * out3 )
 {
     int val=0,v;
     int ret;
@@ -91,45 +144,73 @@ b64_decode_quantum( char * in4, char * out3 )
     return ret;
 }
 
-
-
-/* return 4 if ok, 0 if not ok */
-int b64_encode_quantum( char * in3, int in_len, char * out4 );
-
-/* return length of bytes decoded, or 0 if not ok */
-int b64_decode_quantum( char * in4, char * out3 );
-
+/* return 0 if ok, return -1 if error
+   (out_len too small or invalid b64 char) */
 int
-main()
+b64_decode_buffer( unsigned char * in,  int in_len,
+                   unsigned char * out, int * arg_out_len )
 {
-    char * test = "user:password";
-    char * t = test;
-    char out4[4];
-    int l;
+    int out_len = *arg_out_len;
+    int e_len, ed_len;
+    int ret_out_len = 0;
 
-    while ( 1 )
+    while (in_len > 0)
     {
-        l = strlen( t );
-        if ( l == 0 )
-            break;
-        if ( l > 3 )
-            l = 3;
+        if (in_len < 4)
+            return -1;
+        e_len = 4;
 
-        b64_encode_quantum( t, l, out4 );
-        t += l;
+        if (out_len < 3)
+            return -2;
 
-        printf( "%c%c%c%c", out4[0], out4[1], out4[2], out4[3] );
+        ed_len = b64_decode_quantum( in, out );
+        if (ed_len == 0)
+            return -3;
+
+        out_len -= ed_len;
+        out += ed_len;
+        ret_out_len += ed_len;
+        in_len -= e_len;
+        in += e_len;
     }
-
-    printf( "\n" );
+    *arg_out_len = ret_out_len;
+    return 0;
 }
 
+#endif /* INCLUDE_BASE64_IMPL */
 
+#ifdef INCLUDE_BASE64_TEST
 
 /*
 
 GET http://www.cnn.com/ HTTP/1.0
 Proxy-authorization: Basic $string
 
-
 */
+
+int
+main()
+{
+    unsigned char * in = "user:password";
+    unsigned char out[ 100 ];
+    unsigned char backin[ 100 ];
+    int in_len = strlen(in);
+    int out_len = sizeof(out);
+    int backin_len = sizeof(backin);
+    int cc;
+
+    cc = b64_encode_buffer(in, in_len, out, &out_len);
+
+    printf("in = '%s'\n", in);
+    printf("encode buffer returns %d, out_len = %d\n", cc, out_len);
+    printf("out = '%s'\n", out);
+
+    cc = b64_decode_buffer(out, out_len, backin, &backin_len);
+
+    printf("decode buffer returns %d, backin_len = %d\n", cc, backin_len);
+    printf("backin = '%s'\n", backin);
+
+    return 0;
+}
+
+#endif /* INCLUDE_BASE64_TEST */
