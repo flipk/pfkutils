@@ -192,7 +192,7 @@ struct amtarget {
         target = NULL;
         sources = headers = includes = ldadd =
             ldflags = cflags = cxxflags = cppflags = 
-            lflags = yflags = NULL;
+            lflags = yflags = cc = cxx = NULL;
     }
     ~amtarget(void) {
         amword * w;
@@ -203,6 +203,8 @@ struct amtarget {
     amword * target_underscored;
     enum tgttype { TARGET_TYPE_LIB, TARGET_TYPE_PROG } target_type;
     enum insttype { INSTALL_NONE, INSTALL_LIB, INSTALL_BIN } install_type;
+    amvariable * cc;
+    amvariable * cxx;
     amvariable * sources;
     amvariable * headers;
     amwordList   objects;

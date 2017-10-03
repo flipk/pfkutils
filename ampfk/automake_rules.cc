@@ -61,6 +61,16 @@ automake_file :: make_allrule(void)
     // commands to make xmakefile
 
     output_rules.add(r);
+
+    r = new amrule;
+
+    r->targets.add(new amword("Makefile"));
+    r->sources.add(new amword(srcdir + "/Makefile.am"));
+
+    r->commands.add(new amcommand("ampfk " + srcdir + "/Makefile.am"));
+    r->commands.add(new amcommand("make clean"));
+
+    output_rules.add(r);
 }
 
 void
@@ -87,11 +97,15 @@ automake_file :: make_depfilerules(void)
             amcommand * c = new amcommand;
 
             if (is_source_cc)
-                c->cmd.add(new amword("$(CXX) $(CXXFLAGS) $(" +
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CXX) $(CXXFLAGS) $(" +
                                       *t->target_underscored->word +
                                       "_CXXFLAGS)"));
             else
-                c->cmd.add(new amword("$(CC) $(CFLAGS) $(" +
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CC) $(CFLAGS) $(" +
                                       *t->target_underscored->word +
                                       "_CFLAGS)"));
             c->cmd.add(new amword("$(CPPFLAGS)"));
@@ -161,7 +175,9 @@ automake_file :: make_targetlinkrules(void)
         {
             if (is_source_cc)
             {
-                c->cmd.add(new amword("$(CXX) $(CXXFLAGS)"));
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CXX) $(CXXFLAGS)"));
                 c->cmd.add(new amword("$(" + *t->target_underscored->word +
                                       "_CXXFLAGS)"));
                 c->cmd.add(new amword("-o"));
@@ -169,7 +185,9 @@ automake_file :: make_targetlinkrules(void)
             }
             else
             {
-                c->cmd.add(new amword("$(CC) $(CFLAGS)"));
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CC) $(CFLAGS)"));
                 c->cmd.add(new amword("$(" + *t->target_underscored->word +
                                       "_CFLAGS)"));
                 c->cmd.add(new amword("-o"));
@@ -216,13 +234,17 @@ automake_file :: make_targetobjrules(void)
             c = new amcommand;
             if (is_cc(w))
             {
-                c->cmd.add(new amword("$(CXX) $(CXXFLAGS)"));
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CXX) $(CXXFLAGS)"));
                 c->cmd.add(new amword("$(" + *t->target_underscored->word +
                                       "_CXXFLAGS)"));
             }
             else
             {
-                c->cmd.add(new amword("$(CC) $(CFLAGS)"));
+                c->cmd.add(new amword("$(" +
+                                      *t->target_underscored->word +
+                                      "_CC) $(CFLAGS)"));
                 c->cmd.add(new amword("$(" + *t->target_underscored->word +
                                       "_CFLAGS)"));
             }
@@ -278,7 +300,11 @@ automake_file :: make_lexyaccrules(void)
                     c->cmd.add(new amword("rm -f " + *obj->word));
                     r->commands.add(c);
                     c = new amcommand;
-                    c->cmd.add(new amword("$(LEX) " + *src->word));
+                    c->cmd.add(new amword("$(LEX)"));
+                    c->cmd.add(new amword("$(" +
+                                          *t->target_underscored->word +
+                                          "_LFLAGS)"));
+                    c->cmd.add(new amword(*src->word));
                     r->commands.add(c);
                     c = new amcommand;
                     c->cmd.add(new amword("mv lex.yy.c " + *obj->word));
@@ -291,7 +317,9 @@ automake_file :: make_lexyaccrules(void)
                                           " " + *hdr->word));
                     r->commands.add(c);
                     c = new amcommand;
-                    c->cmd.add(new amword("$(YACC) -d " + *src->word));
+                    c->cmd.add(new amword("$(YACC) $(" +
+                                          *t->target_underscored->word +
+                                          "_YFLAGS) -d " + *src->word));
                     r->commands.add(c);
                     c = new amcommand;
                     c->cmd.add(new amword("mv y.tab.c " + *obj->word));

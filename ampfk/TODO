@@ -1,7 +1,3 @@
 
 - SUBDIRS
-- target_CC & target_CXX & target_LD
-- use LFLAGS and YFLAGS on lex & yacc
-- add rule to rebuild Makefile if Makefile.am changes
-   (rebuild all sources if so?)
 - hooks: all-local, clean-local

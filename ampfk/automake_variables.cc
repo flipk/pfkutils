@@ -36,6 +36,22 @@ automake_file :: make_variables(void)
     amtarget * t;
     for (t = targets.get_head(); t; t = targets.get_next(t))
     {
+#define FINDITORSUB(field,varname) \
+        if (t->field) \
+            output_variables.add(t->field); \
+        else { \
+            v = new amvariable; \
+            v->var = new string(*t->target->word + "_" #varname); \
+            v->value.add(new amword("$(" #varname ")")); \
+            output_variables.add(v); \
+        }
+
+        FINDITORSUB(cc,CC);
+        FINDITORSUB(cxx,CXX);
+
+#undef FINDITORSUB
+
+
 #define FINDIT(field) \
         if (t->field) \
             output_variables.add(t->field);

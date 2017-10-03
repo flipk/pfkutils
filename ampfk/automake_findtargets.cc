@@ -82,6 +82,8 @@ automake_file :: make_amtarget(amword * word,
         t->field = v; \
     }
 
+    SEARCH(cc,CC);
+    SEARCH(cxx,CXX);
     SEARCH(sources,SOURCES);
     SEARCH(headers,HEADERS);
     SEARCH(includes,INCLUDES);
