@@ -61,7 +61,7 @@ struct BlockCacheAUT : public BlockCacheT <T> {
      */
     bool get(FB_AUN_T aun, bool for_write = false) {
         my_aun = aun;
-        off_t pos = (aun * AU_SIZE);
+        off_t pos = ((off_t)aun * AU_SIZE);
         return BlockCacheT<T>::get(pos,for_write);
     }
     /** the AUN is a private field, this is an accessor. */

@@ -341,7 +341,7 @@ FileBlockLocal :: get_aun( FB_AUN_T aun, bool for_write )
 
     FileBlockInt * fb = new FileBlockInt;
 
-    off_t pos  = aun          * AU_SIZE;
+    off_t pos  = (off_t)aun   * AU_SIZE;
     int   size = au.d->size() * AU_SIZE;
 
     au.release();
