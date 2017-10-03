@@ -66,6 +66,7 @@ struct ThreadParams {
     int tps;
     int timerhashsize;
     // defaults chosen out of a bithat
+    // (you know, a bit-hat, a hat full of random bits?)
     ThreadParams( void ) {
         debug = DEBUG_NONE;
         max_threads = 32;
