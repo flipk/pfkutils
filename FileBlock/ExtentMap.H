@@ -148,7 +148,7 @@ enum EXTENT_MAP_LIST_INDICES {
                             Extent objects and Extent objects on the
                             ExtentFreePool do not use this index. 
                             \see ExtentOffsetHash */
-    NUM_LISTS            /**< dimension of the links array in Extent */
+    EXTENT_NUM_LISTS     /**< dimension of the links array in Extent */
 };
 
 /** an "extent" : a position and a size.
@@ -169,7 +169,7 @@ class Extent {
 public:
     /** an Extent is on two possible linked lists, 
      * \see EXTENT_MAP_LIST_INDICES */
-    LListLinks <Extent> links[ NUM_LISTS ];
+    LListLinks <Extent> links[ EXTENT_NUM_LISTS ];
     /** the position where this extent begins */
     off_t offset;
     /** the identifier of this Extent.

@@ -29,7 +29,7 @@ FileBlockLocal :: load_map( UINT64 pos, UINT32 len )
 
     UINT64  current_pos = 0;
     UINT64  piece_offset;
-    UINT32  piece_len;
+    UINT32  piece_len = 0;
     BlockCacheBlock * piece_block = NULL;
     UINT32_t * entries = NULL;
     UINT32 j = 0;
@@ -43,8 +43,6 @@ FileBlockLocal :: load_map( UINT64 pos, UINT32 len )
                 break;                                              \
             piece_len = pme->len.get();                             \
             pme++;                                                  \
-            printf("piece at 0x%llx is 0x%x bytes long (%d entries)\n", \
-                   piece_offset, piece_len, piece_len/4);           \
             piece_block = bc->get( piece_offset, piece_len );       \
             entries = (UINT32_t *) piece_block->get_ptr();          \
             j = 0;                                                  \
@@ -74,15 +72,11 @@ FileBlockLocal :: load_map( UINT64 pos, UINT32 len )
         {
             // add a used entry, first extract id
             GET_VALUE(val);
-            printf("adding used entry for offset %lld size %d id 0x%x\n",
-                   current_pos, size, val );
             map.add( current_pos, size, val );
         }
         else
         {
             // add a free entry
-            printf("adding free entry for offset %lld size %d\n",
-                   current_pos, size);
             map.add( current_pos, size );
         }
         current_pos += size;
@@ -111,7 +105,6 @@ FileBlockLocal :: free_map( UINT64 pos, UINT32 len )
     //      map.free
     while (pme->offset.get() != 0)
     {
-        printf("freeing piece at offset %lld\n", pme->offset.get());
         map.free_offset( pme->offset.get() );
         pme++;
     }
@@ -119,7 +112,6 @@ FileBlockLocal :: free_map( UINT64 pos, UINT32 len )
     bc->release( piecemap_block, false );
 
     //   free piece-map
-    printf("freeing piece-map at offset %lld\n", pos);
     map.free_offset( pos );
 }
 
@@ -139,17 +131,11 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
     // increase num_free to account for a zero entry at the end.
     num_free ++;
 
-    printf( "num_used = %d   num_free = %d\n", num_used, num_free );
-
     // used entries need size plus id (8 bytes) while 
     // free entries need only size (4 bytes).
     int bytes_needed = num_used * 8 + num_free * 4;
     int num_pieces = ((bytes_needed-1) / PIECE_SIZE) + 1;
     int piece_map_bytes = (num_pieces + 1) * sizeof(PieceMapEntry);
-
-    printf( "bytes_needed = %d\n", bytes_needed );
-    printf( "num_pieces = %d\n", num_pieces );
-    printf( "piece_map_bytes = %d\n", piece_map_bytes );
 
     // now we need to alloc all the space for everything;
     // this will change the size of the extent map, therefore
@@ -162,15 +148,9 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
     int bytes_in_last_piece = bytes_needed - ((num_pieces-1) * PIECE_SIZE);
     piece_map_bytes = (num_pieces + 1) * sizeof(PieceMapEntry);
 
-    printf( "recalculated bytes_needed = %d\n", bytes_needed );
-    printf( "recalculated num_pieces = %d\n", num_pieces );
-    printf( "recalculated piece_map_bytes = %d\n", piece_map_bytes );
-    printf( "bytes_in_last_piece = %d\n", bytes_in_last_piece );
-
     // m->alloc a region for the new piece-map.
     Extent * e = m->alloc( piece_map_bytes );
     piecemap_block = bc->get( e->offset, e->size, true );
-    printf( "piecemap_block is at %lld\n", e->offset );
     pme = (PieceMapEntry *) piecemap_block->get_ptr();
 
     pos->set( e->offset );
@@ -186,7 +166,6 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
     {
         UINT32 size = i==(num_pieces-1) ? bytes_in_last_piece : PIECE_SIZE;
         Extent * e = m->alloc( size );
-        printf( "piece %d is at %lld, size %d\n", i, e->offset, size );
         pme[i].offset.set( e->offset );
         pme[i].len.set( size );
         bcbs[i] = bc->get( e->offset, size, true );
@@ -209,14 +188,10 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
     for ( e = m->get_head(); e; e = m->get_next(e))
     {
         pieces[i][j].set( (e->used << 31) + e->size );
-        printf( "piece %d entry %d gets size value %#x\n", 
-                i, j, pieces[i][j].get());
         ADVANCE();
         if (e->used)
         {
             pieces[i][j].set( e->id );
-            printf( "piece %d entry %d gets id value %#x\n", 
-                    i, j, pieces[i][j].get());
             ADVANCE();
         }
     }

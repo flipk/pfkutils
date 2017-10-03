@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 int
 main(int argc, char ** argv)
@@ -33,7 +34,7 @@ main(int argc, char ** argv)
         }
 
         io = new PageIOFileDescriptor(fd);
-        bc = new BlockCache(io, 12*1024*1024);
+        bc = new BlockCache(io, 4*1024*1024);
 
         FileBlockLocal::init_file( bc );
         delete bc;
@@ -50,45 +51,52 @@ main(int argc, char ** argv)
     }
 
     io = new PageIOFileDescriptor(fd);
-    bc = new BlockCache(io, 12*1024*1024);
+    bc = new BlockCache(io, 256*1024*1024);
 
     fbi = new FileBlockLocal( bc );
     FileBlock * fb;
     UINT32 id;
 
-    /** \todo FIND AND FIX THE MEMORY LEAK (if there is one) */
-    /** \todo FIGURE OUT WHY FILES > 2G DON'T WORK */
-
     if (strcmp(argv[1], "put") == 0)
     {
-        int i;
+        int i, last_i;
+        time_t last, now;
         FILE * f = fopen( "ids", "w");
+        time( &last );
+        last_i = 0;
         for (i = 0; i < 1000000; i++)
         {
             UINT32 size = (random() % 5120) + 1;
             UINT32 id;
 
             id = fbi->alloc(size);
-            printf( "main: %d: allocated id %d (%08x) of size %d\n",
-                    i, id, id, size );
             fprintf(f, "%d %d %d\n", i, id, size);
             fb = fbi->get( id );
             memset( fb->get_ptr(), i & 0xFF, size );
             fbi->release( fb, true );
+            if (time( &now ) != last)
+            {
+                printf(" %d (%d)\r", i, i-last_i);
+                fflush(stdout);
+                last = now;
+                last_i = i;
+            }
         }
         fclose(f);
     }
 
     if (strcmp(argv[1], "get") == 0)
     {
-        UINT32 i;
+        UINT32 i, last_i;
         UINT32 size;
         UCHAR * buf;
+        time_t last, now;
         FILE * f = fopen( "ids", "r" );
 
+        time( &last );
+        last_i=0;
         while (fscanf(f, "%d %d %d\n", &i, &id, &size) == 3)
         {
-            printf( "checking block number %d, id 0x%x: \n", i, id );
             fb = fbi->get( id );
             if (fb)
             {
@@ -106,6 +114,13 @@ main(int argc, char ** argv)
             {
                 fprintf( stderr, "block id not found!\n" );
                 printf( "block id not found!\n" );
+            }
+            if (time( &now ) != last)
+            {
+                printf(" %d (%d)\r", i, i-last_i);
+                fflush(stdout);
+                last = now;
+                last_i = i;
             }
         }
 

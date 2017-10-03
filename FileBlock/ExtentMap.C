@@ -186,7 +186,7 @@ Extents :: alloc( UINT32 size )
 
     if (b == NUM_BUCKETS)
     {
-        printf("ERROR! NO BUCKETS??\n");
+        fprintf(stderr,"ERROR! NO BUCKETS??\n");
         exit(1);
     }
 
