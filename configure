@@ -101,6 +101,7 @@ done
 chmod u+x inst
 
 echo '#define ADMINNAME "pkutils"' > main_prog.h.tmp
+echo '#define BUILD_DATE "' `date` on `hostname` '"' >> main_prog.h.tmp
 
 if cmp main_prog.h.tmp main_prog.h ; then
     echo main_prog.h unchanged

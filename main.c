@@ -7,7 +7,9 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "main_prog.h"
+#include "version.h"
 
 #if defined(sparc)
 #include <strings.h>
@@ -85,6 +87,8 @@ remove_privs( void )
 static int
 handle_admin( int argc, char ** argv )
 {
+    printf("build date: %s\n", BUILD_DATE);
+    printf("version: %s\n", PKUTILS_VERSION);
     if ( argc == 0 || 
          strcmp( argv[0], "-help" ) == 0 )
     {
