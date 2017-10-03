@@ -228,6 +228,19 @@ public:
      *       reaches zero, the node is put back in the LRU and is eligible for
      *       flushing if it eventually hits the end of the LRU. */
     void release( BTNode * n );
+    /** allocate a new node.  This will be called when the tree has been 
+     * filled to the point where the height must increase and a new root node
+     * must be created.  Just as with the return of BTNodeCache::get method,
+     * you must eventually call BTNodeCache::release on this ptr.
+     * \return the new BTNode object. */
+    BTNode * new_node(void) { return get(0); }
+    /** delete a node no longer in use.
+     * Do not call until all ptrs and data are removed to another place.
+     * This will be called when the tree must be reduced by a level and the
+     * root node freed and replaced.  It is assumed the argument to this
+     * function was originally obtained thru BTNodeCache::get.
+     * \param n the node to delete. */
+    void delete_node( BTNode * n );
 };
 
 /** internal implementation of Btree.
@@ -281,15 +294,28 @@ class BtreeInternal : public Btree {
      */
     int walknode( BTNode * n, BTKey * key, bool *exact );
     /** take full node plus 1 item and split into 2 nodes
-     * plus 1 "pivot" item between them.
+     * plus 1 "pivot" item between them.  Supply a key and an associated
+     * data, plus a node pointer to the right of that key, and an index
+     * into the existing node where this key goes; the existing node becomes
+     * the new left-node; creates a new right-node; and returns the key+data
+     * which is the pivot record between the left-node and the right-node;
+     * and returns the block ID of the new rightnode.
+     * \note that the returned *key and *data_fbn may or may not be the same
+     *       as when passed in; this depends on whether the passed-in key
+     *       happens to lie in exactly the middle of the original node or not.
+     * \note this function only works properly if node n is full!
      * \param n the full BTNode
-     * \param key the key of the item to insert
-     * \param data_fbn the data of the item to insert
+     * \param key pointer to a pointer to the key of the item to insert;
+     *            upon return, *key will be updated to point to the pivot
+     *            key which separates the two nodes.
+     * \param data_fbn a ptr to a block ID for the data of the item to insert;
+     *                 upon return, *data_fbn will be updated to point to
+     *                 the data assocated with the pivot key.
      * \param rightnode a FileBlock ID of the node to the right of the item
      * \param index the index into node n where this item goes (from walknode)
      * \return the FileBlock ID of the new right node that was created.
      */
-    int splitnode( BTNode * n, BTKey * key, UINT32 data_fbn,
+    UINT32 splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
                    UINT32 rightnode, int index );
     /** walk thru all the data in a node, recursing on the pointers, and
      * calling a user-specified function for each key and data (item).

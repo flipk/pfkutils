@@ -164,25 +164,158 @@ BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
     return i;
 }
 
-int
-BtreeInternal :: splitnode( BTNode * n, BTKey * key, UINT32 data_fbn,
-                            UINT32 rightnode, int index )
+UINT32
+BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
+                            UINT32 rightptr, int index )
 {
-    /** \todo implement */
-    return 0;
+    int i;
+    enum { R_PIVOT, R_LEFT, R_RIGHT } where = R_PIVOT;
+
+    if (index < HALF_ORDER)
+        // the key belongs in the left node; the pivot record for the two
+        // nodes (to be promoted to the parent node) will be in the middle
+        // of the old node.
+        where = R_LEFT;
+    else if (index == HALF_ORDER)
+        // the provided key IS the pivot record, and will itself be promoted
+        // to the parent node.
+        where = R_PIVOT;
+    else
+        // the provided key belongs in the right node; the pivot record
+        // to be promoted exists in the middle of the old node.
+        where = R_RIGHT;
+
+    // nr short for 'new right'
+    BTNode * nr = node_cache->new_node();
+
+    nr->leaf = n->leaf;
+    nr->root = false;
+    n->numitems = HALF_ORDER;
+    nr->numitems = HALF_ORDER;
+
+    switch (where)
+    {
+    case R_PIVOT:
+        // the new node is the promoted pivot, so don't update
+        // key or data_fbn; just move half of n's items to nr
+        // and we're done.  the first left-ptr of the new right
+        // is the passed-in rightptr.
+
+        nr->ptrs[0] = rightptr;
+
+        for (i=0; i < HALF_ORDER; i++)
+        {
+            nr->keys[i] = n->keys[i + HALF_ORDER];
+            n->keys[i + HALF_ORDER] = NULL;
+            nr->datas[i] = n->datas[i + HALF_ORDER];
+            n->datas[i + HALF_ORDER] = 0;
+            nr->ptrs[i + 1] = n->ptrs[i + HALF_ORDER + 1];
+            n->ptrs[i + HALF_ORDER + 1] = 0;
+        }
+        break;
+
+    case R_LEFT:
+        // copy right half of left node into right node
+
+        for (i=0; i < HALF_ORDER; i++)
+        {
+            nr->keys[i] = n->keys[i + HALF_ORDER];
+            n->keys[i + HALF_ORDER] = NULL;
+            nr->datas[i] = n->datas[i + HALF_ORDER];
+            n->datas[i + HALF_ORDER] = 0;
+            nr->ptrs[i] = n->ptrs[i + HALF_ORDER];
+            n->ptrs[i + HALF_ORDER] = 0;
+        }
+        // pick up one trailing ptr
+        nr->ptrs[i] = n->ptrs[i + HALF_ORDER];
+
+        // now slide over remaining components of left
+        // node that must move to accomodate new item.
+
+        for (i = HALF_ORDER-1; i >= index; i--)
+        {
+            n->keys[i+1] = n->keys[i];
+            n->datas[i+1] = n->datas[i];
+            n->ptrs[i+2] = n->ptrs[i+1];
+        }
+
+        // insert new item.
+
+        n->keys[index] = *key;
+        n->datas[index] = *data_fbn;
+        n->ptrs[index+1] = rightptr;
+
+        // pivot record to promote is left in leftnode.
+        break;
+
+    case R_RIGHT:
+        // start copying things over to the right;
+        // when we come to the place where the pivot is
+        // supposed to go, insert it.
+
+        index -= HALF_ORDER+1;
+        int j = HALF_ORDER+1;
+
+        nr->ptrs[0] = n->ptrs[j];
+        n->ptrs[j] = 0;
+
+        for (i=0; i < HALF_ORDER; i++)
+        {
+            if (i == index)
+            {
+                // this is where pivot rec goes.
+                nr->keys[i] = *key;
+                nr->datas[i] = *data_fbn;
+                nr->ptrs[i+1] = rightptr;
+                continue;
+            }
+            // else
+            nr->keys[i] = n->keys[j];
+            n->keys[j] = NULL;
+            nr->datas[i] = n->datas[j];
+            n->datas[j] = 0;
+            nr->ptrs[i+1] = n->ptrs[j+1];
+            n->ptrs[j+1] = 0;
+            j++;
+        }
+
+        // pivot record to promote is left in the leftnode.
+        break;
+    }
+
+    if (where != R_PIVOT)
+    {
+        // highest remaining element of leftnode becomes
+        // the new promoted pivot record.
+        *key = n->keys[HALF_ORDER];
+        n->keys[HALF_ORDER] = NULL;
+        *data_fbn = n->datas[HALF_ORDER];
+        n->datas[HALF_ORDER] = 0;
+    }
+
+    UINT32 nr_fbn = nr->get_fbn();
+    node_cache->release(nr);
+    return nr_fbn;
 }
 
 //virtual
 bool
-BtreeInternal :: get( _BTDatum * key, _BTDatum * data )
+BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
 {
+    int keysz = _key->get_size();
+    BTKey * key = new(keysz) BTKey(keysz);
+    bool ret = false;
+
+    
+
     /** \todo implement */
-    return false;
+    delete key;
+    return ret;
 }
 
 //virtual
 bool
-BtreeInternal :: put( _BTDatum * key, _BTDatum * data )
+BtreeInternal :: put( _BTDatum * _key, _BTDatum * data )
 {
     if (iterate_inprogress)
     {
@@ -191,9 +324,15 @@ BtreeInternal :: put( _BTDatum * key, _BTDatum * data )
         exit(1);
     }
 
-    /** \todo implement */
+    int keysz = _key->get_size();
+    BTKey * key = new(keysz) BTKey(keysz);
+    bool ret = false;
 
-    return false;
+    
+
+    /** \todo implement */
+    delete key;
+    return ret;
 }
 
 //virtual
@@ -225,11 +364,15 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
     for (i=0; i < n->numitems; i++)
     {
         if (!n->leaf)
+        {
+printf("node %08x recurse ptr %d -> ", node_fbn, i);
             if (iterate_node(bti, n->ptrs[i]) == false)
             {
                 ret = false;
                 break;
             }
+        }
+printf("node %08x item %d: ", node_fbn, i);
         if (bti->handle_item( n->keys[i]->data,
                               n->keys[i]->keylen,
                               n->datas[i] ) == false)
@@ -239,8 +382,11 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
         }
     }
     if (n->numitems > 0 && !n->leaf)
+    {
+printf("node %08x recurse ptr %d -> ", node_fbn, i);
         if (iterate_node(bti, n->ptrs[i]) == false)
             ret = false;
+    }
     node_cache->release(n);
     return true;
 }

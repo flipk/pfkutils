@@ -15,16 +15,11 @@
 #include <string.h>
 #include <stdarg.h>
 
-#define TEST 1
+#define TEST 2
 
 #define TEST_FILE "testfile.db"
 #define MAX_BYTES (16*1024*1024)
-    
-#if TEST==1
 
-#include "Btree_internal.H"
-
-#define STORE 1
 
 class myIterator : public BtreeIterator {
 public:
@@ -46,6 +41,12 @@ public:
         va_end(ap);
     }
 };
+    
+#if TEST==1
+
+#include "Btree_internal.H"
+
+#define STORE 1
 
 int
 main()
@@ -149,4 +150,43 @@ main()
 
     return 0;
 }
+#elif TEST==2
+
+int
+main()
+{
+    int fd, options;
+
+    (void) unlink( TEST_FILE );
+    options = O_RDWR | O_CREAT | O_LARGEFILE;
+
+    fd = open( TEST_FILE, options, 0644 );
+    if ( fd < 0 )
+    {
+        fprintf(stderr, "open: %s\n", strerror(errno));
+        return 1;
+    }
+
+    PageIO * pageio = new PageIOFileDescriptor(fd);
+    BlockCache * bc = new BlockCache( pageio, MAX_BYTES );
+    FileBlockInterface::init_file(bc);
+    FileBlockInterface * fbi = FileBlockInterface::open(bc);
+    Btree::init_file( fbi, 5 );
+    Btree * bt = Btree::open( fbi );
+
+    bt->get(NULL,NULL);
+
+    myIterator iter;
+    bt->iterate( &iter );
+
+    delete bt;
+    delete fbi;
+    delete bc;
+    delete pageio;
+    close(fd);
+
+    return 0;
+
+}
+
 #endif

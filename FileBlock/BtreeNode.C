@@ -191,3 +191,17 @@ BTNodeCache :: release( BTNode * n )
     if (--n->refcount == 0)
         lru.add(n);
 }
+
+void
+BTNodeCache :: delete_node( BTNode * n )
+{
+    if (n->refcount != 1)
+    {
+        fprintf(stderr, "ERROR: delete_node called on node "
+                "with refcount %d\n", n->refcount);
+        kill(0,6);
+    }
+
+    hash.remove(n);
+    delete n;
+}
