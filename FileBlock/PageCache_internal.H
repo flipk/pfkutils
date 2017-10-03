@@ -1,6 +1,7 @@
 
 #include "dll2.H"
 #include <stdlib.h>
+#include <stdio.h>
 
 enum { PAGE_LIST, PAGE_HASH, PAGE_LRU_LOCK, NUM_PAGE_LISTS };
 
@@ -9,8 +10,16 @@ class PCPInt : public PageCachePage {
 public:
     LListLinks<PCPInt>  links[NUM_PAGE_LISTS];
     PCPInt(int _page_number) : PageCachePage(_page_number) { refcount = 0; }
+    bool is_locked(void) { return (refcount != 0); }
     int ref(void) { return ++refcount; }
-    int deref(void) { return --refcount; }
+    int deref(void) {
+        if (refcount == 0)
+        {
+            fprintf(stderr, "error, dereferencing a page already at count=0\n");
+            exit(1);
+        }
+        return --refcount;
+    }
 };
 
 class PCPIntHashCompare {
@@ -28,13 +37,12 @@ class PageCachePageList {
     LListLRU  <PCPInt,                  PAGE_LRU_LOCK>  lru;
     LList     <PCPInt,                  PAGE_LRU_LOCK>  locklist;
 public:
-    int get_cnt(void) { return list.get_cnt(); }
-    PCPInt * find( int page_number ) { 
-        return hash.find( page_number );
-    }
-    PCPInt * get_head(void) { return list.get_head(); }
-    PCPInt * get_next(PCPInt * i) { return list.get_next(i); }
-    PCPInt * get_oldest(void) { return lru.get_oldest(); }
+    int get_cnt    (void) { return list.get_cnt(); }
+    int get_lru_cnt(void) { return lru .get_cnt(); }
+    PCPInt * find( int page_number ) { return hash.find( page_number ); }
+    PCPInt * get_head  (void      ) { return list.get_head ( ); }
+    PCPInt * get_next  (PCPInt * i) { return list.get_next (i); }
+    PCPInt * get_oldest(void      ) { return lru.get_oldest( ); }
     void add( PCPInt * p, bool locked ) { 
         list.add(p);
         hash.add(p);
@@ -44,21 +52,24 @@ public:
                 fprintf(stderr, "PageCachePageList::add: inconsistent lock!\n");
                 exit( 1 );
             }
-        } else  lru.add(p);
+        } else
+            lru.add(p);
     }
     void remove( PCPInt * p ) {
         list.remove(p);
         hash.remove(p);
-        if (lru.onthislist(p))  lru.remove(p);
-        else                    locklist.remove(p);
+        if (p->is_locked())
+            locklist.remove(p);
+        else
+            lru.remove(p);
     }
-    void lock( PCPInt * p ) {
+    void ref( PCPInt * p ) {
         if (p->ref() == 1) {
             lru.remove(p);
             locklist.add(p);
         }
     }
-    void unlock( PCPInt * p ) {
+    void deref( PCPInt * p ) {
         if (p->deref() == 0) {
             locklist.remove(p);
             lru.add(p);

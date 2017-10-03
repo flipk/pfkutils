@@ -1,69 +1,52 @@
 #if 0
-files="FileBlockLocal.C FileBlockLocalCache.C PageCache.C"
+files="PageCache.C BlockCache.C FileBlockLocal.C FileBlockLocalCache.C ../dll2/dll2_hash.C main.C"
 set -e
 set -x
-g++ -g3 -I../h -I../dll2 -Wall -Werror $files main.C ../dll2/dll2_hash.C
+rm -f *.o
+for f in $files ; do 
+  g++ -g3 -I../h -I../dll2 -Wall -Werror -c $f
+done
+g++ -g3 *.o -o a.out
 exit 0
     ;
 #endif
 
-#include "PageCache.H"
+#include "BlockCache.H"
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
-
-class myIO : public PageIO {
-    int fd;
-public:
-    myIO(char *fname) {
-        fd = open(fname, O_RDWR | O_CREAT, 0644);
-        if (fd < 0)
-        {
-            fprintf(stderr, "unable to open file\n");
-            exit( 1 );
-        }
-    }
-    ~myIO(void) {
-        close(fd);
-    }
-    // return false if some error occurred
-    bool get_page( PageCachePage * pg ) {
-        lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
-        read(fd, pg->ptr, PageCache::PAGE_SIZE);
-        printf("read page %d\n", pg->get_page_number());
-        return true;
-    }
-    bool put_page( PageCachePage * pg ) {
-        lseek(fd, pg->get_page_number() * PageCache::PAGE_SIZE, SEEK_SET);
-        write(fd, pg->ptr, PageCache::PAGE_SIZE);
-        printf("write page %d\n", pg->get_page_number());
-        return true;
-    }
-
-};
+#include <string.h>
 
 int
 main()
 {
+    int           fd;
     PageIO      * io;
-    PageCache   * pc;
-    PageCachePage * p;
+    BlockCache  * bc;
+    BlockCacheBlock * bcb;
 
-    io = new myIO("testfile.db");
-    pc = new PageCache(io, 15);
+    fd = open("testfile.db", O_RDWR | O_CREAT, 0644);
+    if (fd < 0)
+    {
+        fprintf(stderr, "unable to open file\n");
+        exit( 1 );
+    }
 
-    p = pc->get( 4 );
-    sprintf( (char*) p->ptr, "This is a test 4\n");
-    pc->unlock(p, true);
+    io = new PageIOFileDescriptor(fd);
+    bc = new BlockCache(io, 12*1024*1024);
 
-    p = pc->get( 3 );
-    sprintf( (char*) p->ptr, "This is a test 3\n");
-    pc->unlock(p, true);
 
-    delete pc;
+    bcb = bc->get( 500, 5000, true );
+    memset(bcb->get_ptr(), 0xee, 5000);
+    bc->release(bcb,true);
+  
+
+
+    delete bc;
     delete io;
+    close(fd);
 
     return 0;
 }

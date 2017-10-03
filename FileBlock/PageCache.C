@@ -2,6 +2,8 @@
 #include "PageCache.H"
 #include "PageCache_internal.H"
 
+#include <string.h>
+
 PageCache :: PageCache( PageIO * _io, int _max_pages )
 {
     io = _io;
@@ -15,6 +17,11 @@ PageCache :: ~PageCache(void)
     flush();
     while ((p = pgs->get_head()) != NULL)
     {
+        if (p->is_locked())
+        {
+            fprintf(stderr, "error page is locked at delete time!\n");
+            exit(1);
+        }
         pgs->remove(p);
         delete p;
     }
@@ -22,33 +29,39 @@ PageCache :: ~PageCache(void)
 }
 
 PageCachePage *
-PageCache :: get(int page_number)
+PageCache :: get(int page_number, bool for_write)
 {
     PCPInt * ret;
     ret = pgs->find( page_number );
     if (ret != NULL)
     {
-        pgs->lock(ret);
+        pgs->ref(ret);
         return ret;
     }
     ret = new PCPInt( page_number );
-    if (!io->get_page(ret))
+    if (for_write)
     {
-        fprintf(stderr, "error getting page %d\n", page_number);
-        exit( 1 );
+        memset(ret->ptr, 0, PAGE_SIZE);
+        ret->dirty = true;
     }
+    else
+        if (!io->get_page(ret))
+        {
+            fprintf(stderr, "error getting page %d\n", page_number);
+            exit( 1 );
+        }
     pgs->add(ret,true);
     return ret;
 }
 
 void
-PageCache :: unlock( PageCachePage * _p, bool dirty )
+PageCache :: release( PageCachePage * _p, bool dirty )
 {
     PCPInt * p = (PCPInt *)_p;
     if (dirty)
         p->dirty = true;
-    pgs->unlock(p);
-    if (pgs->get_cnt() > max_pages)
+    p->deref();
+    while (pgs->get_lru_cnt() > max_pages)
     {
         p = pgs->get_oldest();
         pgs->remove(p);
