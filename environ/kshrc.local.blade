@@ -1,8 +1,7 @@
 
 xconsole_hook() {
-	if [ $DISPLAY = :0.0 ] ; then
-		VBoxClient-all
-	fi
+	# disable that disgusting mouse acceleration
+	xset m 0
 }
 
 tty=`tty`
