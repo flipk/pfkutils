@@ -1,6 +1,6 @@
 #!/bin/sh
 
-HOME=/home/MY_USERNAME
+HOME=/home/@PFK_USER_NAME@
 ENV=$HOME/.kshrc
 
 export HOME ENV

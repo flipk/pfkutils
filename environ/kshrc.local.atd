@@ -39,7 +39,9 @@ done
 export LD_LIBRARY_PATH
 
 if [[ $uname_s = "Linux" ]] ; then
+    if [[ -t 0 ]] ; then
 	stty erase 0x7f
+    fi
 fi
 unset uname_s
 
