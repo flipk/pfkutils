@@ -22,7 +22,7 @@ destdir=$bindir/MY_ARCH
 
 mkdir -p $destdir
 
-set -- `grep FUNCTIONS: environ/kshrc.in`
+set -- `grep FUNCTIONS: environ/kshrc`
 shift
 launchers="$*"
 

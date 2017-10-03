@@ -2,7 +2,7 @@
 
 makefiles="Makefile bt/Makefile implode/Makefile itsfs/Makefile qcam/Makefile states/Makefile tags.make/Makefile tags.view/Makefile threads/Makefile"
 
-precomps="pf_frontend myshell myshell-launcher environ/kshrc inst"
+precomps="pf_frontend myshell myshell-launcher inst"
 
 if [ "x$1" = x--tar ] ; then
     if [ "x$2" = x ] ; then

@@ -36,10 +36,16 @@
 # always ensure this file is specified as ENV.
 #
 
-USER=MY_USERNAME
+USER=`whoami`
 HOME=/home/$USER
 ENV=$HOME/.kshrc
-export USER HOME ENV
+HOST=`hostname`
+HOST=${HOST%%\.*}
+TMP=/tmp
+TMPDIR=$TMP
+TEMP=$TMP
+
+export USER HOME ENV HOST TMP TMPDIR TEMP
 
  
 if [ -f $HOME/.verbose ] ; then
@@ -51,10 +57,6 @@ else
                return 0
        }
 fi
-
-HOST=`hostname`
-HOST=${HOST%%\.*}
-export HOST
 
 __verbose RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST options=$- args=$*
 
@@ -188,11 +190,6 @@ case x$ENV_SET in
         ;;
 esac
 
-TMP=/tmp
-TMPDIR=$TMP
-TEMP=$TMP
-export TMP TMPDIR TEMP
-
 # reverse mode : rev or mr      \E[7m
 # exit attributes: sgr0 or me   \E[m
 
@@ -205,22 +202,24 @@ if __isksh ; then
 	typeset _ps
 	_ps=''
 	if [[ "x$1" != x ]] ; then
-	    _ps="[7m$1[m
+	    _ps="${_ps}[7m$1[m
 "
 	fi
 	_ps="${_ps}$USER@$HOST"
 	if [[ x$WORK_GROUP != x ]] ; then
-	    _ps="${_ps}:$WORK_GROUP"
+	    _ps="${_ps} in $WORK_GROUP"
 	fi
-        _ps="${_ps}:$$:$TTY"
+        _ps="${_ps} pid $$ on $TTY"
 	if [[ x$WINDOW != x ]] ; then
-	    _ps="${_ps}:w$WINDOW"
+	    _ps="${_ps}, scr $STY-$WINDOW"
 	fi
 	if [[ $_set_prompt_first_time -eq 1 ]] ; then
-	    _ps="${_ps} % "
+	    _ps="${_ps}
+ % "
 	    _set_prompt_first_time=0
 	else
-	    _ps="${_ps} [7m%[m "
+	    _ps="${_ps}
+ [7m%[m "
 	fi
 	export PS1="$_ps"
     }
@@ -228,7 +227,7 @@ if __isksh ; then
 else
 
     _set_prompt() {
-	export PS1="$1"
+	export PS1="$1 % "
     }
 
 fi
@@ -721,6 +720,7 @@ bind '^@'=set-mark-command
 if __isksh ; then
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
+	I_AM_XCONSOLE=yes
         xtermbar Console
         cd $HOME
         xrdb -load .Xresources
@@ -760,7 +760,9 @@ if __isksh ; then
 	_set_prompt "$bardisp"
 	if [[ "x$DISPLAY" != x ]] ; then
 	    bardisp="$HOST:$bardisp"
-	    xtermbar "$bardisp"
+	    if [[ x$I_AM_XCONSOLE == x ]] ; then
+		xtermbar "$bardisp"
+	    fi
 	fi
 	if [[ x$td != x ]] ; then
 	    CDPATH=.:$HOME:$td/src/exec:$td/src/exec/os:$td/src:$td/src/exec/tornado101/target/config
