@@ -12,9 +12,11 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     dowrite     = _dowrite;
     dowuncomp   = _dowuncomp;
     dowcomp     = _dowcomp;
+
     reader_done = false;
     writer_done = false;
     reader      = NULL;
+
     if ( dowuncomp && dowcomp )
     {
         fprintf( stderr,
@@ -76,6 +78,12 @@ ipipe_forwarder :: select_for_read( fd_mgr * mgr )
         do_close = true;
     if ( !doread || reader_done || do_close )
         return false;
+    if ( !writer )
+    {
+        fprintf( stderr,
+                 "ipipe_forwarder :: select_for_read : null writer!\n" );
+        abort();
+    }
     if ( writer->write_space_remaining() < buf_lowater )
         return false;
     return true;

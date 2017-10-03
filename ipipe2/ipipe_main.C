@@ -7,6 +7,7 @@
 #include "ipipe_factories.H"
 #include "ipipe_acceptor.H"
 #include "ipipe_connector.H"
+#include "ipipe_tick.H"
 
 const char * help_msg =
 "ipipe [-psve] [-i infile] [-o outfile] [-z[r|t]] port      (passive)\n"
@@ -25,11 +26,23 @@ const char * help_msg =
 "    -f: forward local port to remote host/port\n"
 ;
 
+static void
+tick_func( void * )
+{
+    printf( "tick\n" );
+}
+
 int
 main( int argc,  char ** argv )
 {
+    fd_mgr         mgr( false, 1 );
     fd_interface * fdi;
-    fd_mgr  mgr( false );
+    tick_fd  *     tick_fd_ptr;
+
+    tick_fd_ptr = new tick_fd( 10 );
+    mgr.register_fd( tick_fd_ptr );
+
+    tick_fd_ptr->register_tick( tick_func, 0 );
 
 #if 0
     /* tcpgate mode */
@@ -41,24 +54,24 @@ main( int argc,  char ** argv )
     fdi = new ipipe_acceptor( 2500, inc );
 #endif
 
-#if 0
+#if 1
     /* ipipe passive mode */
     ipipe_new_connection * inc = new ipipe_forwarder_factory( false, false );
     fdi = new ipipe_acceptor( 2500, inc );
 #endif
 
-#if 1
+#if 0
     /* ipipe active mode */
     struct sockaddr_in sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons( 2500 );
     sa.sin_addr.s_addr = htonl( 0x7f000001 );
-#if 1
+#if 0
     /* compress */
     ipipe_new_connection * inc = new ipipe_forwarder_factory( false, true  );
-#elif 0
+#elif 1
     /* decompress */
-    ipipe_new_connection * inc = new ipipe_forwarder_factory(  true, false );
+    ipipe_new_connection * inc = new ipipe_forwarder_factory( true,  false );
 #else
     /* raw */
     ipipe_new_connection * inc = new ipipe_forwarder_factory( false, false );

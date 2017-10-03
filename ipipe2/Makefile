@@ -1,13 +1,13 @@
 
 TARG= i2
-SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_forwarder.C ipipe_main.C ipipe_factories.C
-HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_forwarder.H ipipe_factories.H
+SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_factories.C ipipe_forwarder.C ipipe_main.C ipipe_tick.C
+HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H ipipe_forwarder.H ipipe_tick.H
 
 OBJS= $(SRCS:.C=.o) fd_mgr.obj
 CC=  g++
 INCS= -I../dll2 -I..
 DEFS= -DDLL2_INCLUDE_BTREE=0
-LIBS= -lz
+LIBS= -lz -lpthread
 OPTS= -g3 -Wall -Werror
 
 all: xmakefile

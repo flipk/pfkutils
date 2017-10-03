@@ -20,7 +20,10 @@ public:
     int fd;
     bool do_close;
 
-    enum rw_response {  OK,  DEL };
+    enum rw_response {
+        OK,   // the read or write was normal
+        DEL   // the fd should be deleted
+    };
 
     // true means it was ok, false means delete this object.
     virtual rw_response read ( fd_mgr * ) = 0;
@@ -34,8 +37,11 @@ public:
 class fd_mgr {
     LList <fd_interface,0>  ifds;
     bool debug;
+    int  die_threshold;
 public:
-    fd_mgr( bool _debug ) { debug = _debug; }
+    fd_mgr( bool _debug, int _die_threshold = 0 ) {
+        debug = _debug; die_threshold = _die_threshold;
+    }
     void register_fd( fd_interface * ifd ) {
         if ( debug )
             fprintf( stderr, "registering fd %d\n", ifd->fd );

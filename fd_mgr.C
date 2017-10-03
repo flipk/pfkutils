@@ -6,9 +6,10 @@
 void
 fd_mgr :: loop( void )
 {
-    while ( ifds.get_cnt() > 0 )
+    fd_interface * fdi, * nfdi;
+
+    while ( ifds.get_cnt() > die_threshold )
     {
-        fd_interface * fdi, * nfdi;
         fd_set rfds, wfds;
         int max, cc;
 
@@ -74,24 +75,32 @@ fd_mgr :: loop( void )
             {
                 if ( debug )
                     fprintf( stderr, "servicing read on fd %d\n", fdi->fd );
-                if ( fdi->read(this) != fd_interface::OK )
+                switch ( fdi->read(this) )
                 {
+                case fd_interface::OK:
+                    break;
+                case fd_interface::DEL:
                     if ( debug )
                         fprintf( stderr,
                                  "deleting %d due to false read\n", fdi->fd );
                     del = true;
+                    break;
                 }
             }
             if ( FD_ISSET( fdi->fd, &wfds ))
             {
                 if ( debug )
                     fprintf( stderr, "servicing write on fd %d\n", fdi->fd );
-                if ( fdi->write(this) != fd_interface::OK )
+                switch ( fdi->write(this) )
                 {
+                case fd_interface::OK:
+                    break;
+                case fd_interface::DEL:
                     if ( debug )
                         fprintf( stderr,
                                  "deleting %d due to false write\n", fdi->fd );
                     del = true;
+                    break;
                 }
             }
             if ( !del && fdi->do_close )
@@ -107,5 +116,11 @@ fd_mgr :: loop( void )
                 delete fdi;
             }
         }
+    }
+    for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
+    {
+        nfdi = ifds.get_next(fdi);
+        ifds.remove( fdi );
+        delete fdi;
     }
 }

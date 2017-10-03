@@ -10,8 +10,8 @@
 ipipe_forwarder_factory :: ipipe_forwarder_factory( bool _dowuncomp,
                                                     bool _dowcomp )
 {
-    dowuncomp = _dowuncomp;
-    dowcomp   = _dowcomp  ;
+    dowuncomp  = _dowuncomp ;
+    dowcomp    = _dowcomp   ;
 }
 
 //virtual
@@ -20,10 +20,10 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
     ipipe_forwarder * ifn, * if0, * if1;
 
-    //                             fd   read  write   w_uncomp   w_comp
-    if0 = new ipipe_forwarder(      0,  true, false,     false,   false );
-    ifn = new ipipe_forwarder( new_fd,  true,  true,     false, dowcomp );
-    if1 = new ipipe_forwarder(      1, false,  true, dowuncomp,   false );
+    //                         fd      read   write  w_uncomp   w_comp
+    if0 = new ipipe_forwarder( 0,      true,  false, false,     false );
+    ifn = new ipipe_forwarder( new_fd, true,  true,  false,     dowcomp );
+    if1 = new ipipe_forwarder( 1,      false, true,  dowuncomp, false );
 
     //                   writer reader
     if0->register_others(  ifn, NULL );
