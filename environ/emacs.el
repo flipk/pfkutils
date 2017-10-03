@@ -105,6 +105,39 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key [f10] 'delete-frame)
 (global-set-key "\C-g" 'goto-line)
 (global-set-key "\C-x\C-w" 'make-dumb-frame)
+(global-set-key "\C-x\C-y" 'clearcase-checkout-file)
+(global-set-key "\C-xy" 'cscope-window)
+(global-set-key "\C-xY" 'cscope-rebuild)
+
+(defun cscope-window ()
+  "open cscope in an xterm"
+  (interactive)
+  (call-process "xterm" nil 0 nil
+		"-g" "140x45+225+20"
+		"-e" "/home/pknaack1/bin/myemacs-cscope-helper"))
+
+(defun cscope-rebuild ()
+  "rebuild cscope database"
+  (interactive)
+  (call-process "xterm" nil 0 nil
+		"-g" "80x10+200+200"
+		"-e" "/home/pknaack1/bin/myemacs-cscope-rebuild-helper"))
+
+(defun clearcase-checkout-file ()
+  "checkout a clearcase file"
+  (interactive)
+  (let ((fname (buffer-file-name)))
+    (if buffer-read-only
+	(progn
+	  (toggle-read-only)
+	  (message "About to checkout file %s..." fname)
+	  (call-process "xterm" nil t t
+			"-g" "80x10+200+200" "-e"
+			(concat
+			 "/home/pknaack1/bin/myemacs-checkout-helper "
+			 (buffer-file-name)))
+	  (message "Checked out file %s." fname))
+      (message "File is already checked out?"))))
 
 (defun make-dumb-frame ()
   "Make a frame with no menu bar and no scroll bar."

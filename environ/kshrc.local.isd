@@ -1,17 +1,53 @@
 
 #FUNCTIONS: lsv lsco sv zeroversion makeorig ccdiff ccdiff2 
 
-stty erase 0x7f
 mips=/vobs/sb/ti_sip_linux/tools/mipsel-linux-uclibc/bin
 ti=/vobs/sb/ti_sip_linux
 vend=/vob/wibb_vendor/Beceem
+Drv=$vend/Source/Drv/Source
+Lib=$vend/Source/Lib/BeceemWiMAX
 cpe=/vob/wibb_cpe
+
+qcomm() {
+    if [[ $# -eq 0 ]] ; then
+        ssh qcomm.cig.mot.com
+    else
+        ssh qcomm.cig.mot.com qcomm $*
+    fi
+}
+
+xvt() {
+    grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
+    cat > ~/.xclearcase << EOF
+Vtree.width: 1169
+Vtree.height: 979
+Vtree.x: 1
+Vtree.y: 1
+EOF
+    cat ~/zzz.xclearcase >>  ~/.xclearcase
+    rm -f ~/zzz.xclearcase
+    xlsvtree $*
+}
+
+xcs() {
+    # cscope in an xterm
+    export CSCOPE_IN_XTERM=1
+    xterm -geometry 140x40+0+0 -title CSCOPE -e cs $* &
+    unset CSCOPE_IN_XTERM
+}
 
 export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
 export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
 
-LD_LIBRARY_PATH=/apps/public/gcc_3.3/sparc-sun-solaris2.8/lib
-export LD_LIBRARY_PATH
+uname_s=`uname -s`
+if [[ $uname_s = "SunOS" ]] ; then
+	LD_LIBRARY_PATH=/apps/public/gcc_3.3/sparc-sun-solaris2.8/lib
+	export LD_LIBRARY_PATH
+fi
+if [[ $uname_s = "Linux" ]] ; then
+	stty erase 0x7f
+fi
+unset uname_s
 
 lsv() {
         typeset prefix
@@ -56,16 +92,21 @@ makeorig() {
 myscript() {
     logfile=$1
     shift
-    MY_INSCRIPT=$HOME/myscript.$$
+    MY_INSCRIPT=$HOME/$HOST.myscript.$$
     export MY_INSCRIPT
-    echo "$@" > $HOME/myscript.$$
+    echo rm -f $MY_INSCRIPT > $MY_INSCRIPT
+    echo echo myscript started at `date` >> $MY_INSCRIPT
+    echo "$@" >> $MY_INSCRIPT
+    echo echo myscript done at `date` >> $MY_INSCRIPT
     script $logfile
     unset MY_INSCRIPT
 }
 
 if [[ x$MY_INSCRIPT != x ]] ; then
-    sh $MY_INSCRIPT
-    rm -f $MY_INSCRIPT
+    local_inscript=$MY_INSCRIPT
+    unset MY_INSCRIPT
+    sh $local_inscript
+    rm -f $local_inscript
     exit 0
 fi
 

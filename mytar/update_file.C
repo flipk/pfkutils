@@ -24,7 +24,7 @@ update_file( file_db * db, char * fname )
     file_info * inf = db->get_info_by_fname( fname );
     bool changed = false;
     UINT32 id;
-    int fd;
+    int fd = -1;
     if ( !inf )
     {
         // file not found in archive, add it new!
@@ -62,7 +62,11 @@ update_file( file_db * db, char * fname )
             {
                 char buf;
                 if ( read( fd, &buf, 1 ) < 0 )
-                    fprintf( stderr, "read: %s\n", strerror( errno ));
+                {
+                    fprintf( stderr, "read: %s: %s\n",
+                             fname, strerror( errno ));
+                    close(fd);
+                }
                 else
                     changed = true;
             }
@@ -71,7 +75,7 @@ update_file( file_db * db, char * fname )
         db->update_info( inf );
     }
 
-    if ( !changed )
+    if ( !changed || fd < 0 )
         return;
 
     UINT32 piece, changed_pieces = 0;

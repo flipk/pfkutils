@@ -5,6 +5,7 @@
 
 #include "ipipe_forwarder.H"
 #include "ipipe_stats.H"
+#include "ipipe_main.H"
 
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp )
@@ -19,7 +20,6 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     reader        = NULL;
     bytes_read    = 0;
     bytes_written = 0;
-    zs            = NULL;
 
 //    this is an option if we can optimize the 
 //      write path to reduce the number of select_for_writes that happen
@@ -33,6 +33,8 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
         exit( 1 );
     }
     buf         = dowrite ? new circular_buffer( buf_size ) : NULL;
+#ifdef I2_ZLIB
+    zs            = NULL;
     if ( dowuncomp || dowcomp )
     {
         inbuf         = new char[ zbuf_size ];
@@ -49,6 +51,7 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
         inflateInit( zs );
     else if ( dowcomp )
         deflateInit( zs, 4 );
+#endif
 
     stats_add_conn();
 }
@@ -58,6 +61,7 @@ ipipe_forwarder :: ~ipipe_forwarder( void )
 {
     stats_del_conn();
 
+#ifdef I2_ZLIB
     if ( zs && dowuncomp )
         inflateEnd( zs );
     if ( zs && dowcomp )
@@ -67,6 +71,7 @@ ipipe_forwarder :: ~ipipe_forwarder( void )
         delete[] inbuf;
         delete zs;
     }
+#endif
     close( fd );
     if ( writer && !writer_done )
         writer->reader_done = true;
@@ -103,8 +108,10 @@ ipipe_forwarder :: select_rw ( fd_mgr * mgr, bool * rd, bool * wr )
         *wr = false;
     else if ( buf->used_space() > 0 )
         *wr = true;
+#ifdef I2_ZLIB
     else if ( zs && zs->avail_in > 0 )
         *wr = true;
+#endif
     else
         *wr = false;
 }
@@ -133,8 +140,11 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     
     if ( cc == 0 )
     {
-        if ( buf->used_space() > 0  ||
-             zs && zs->avail_in > 0 )
+        if (( buf && buf->used_space() > 0 )
+#ifdef I2_ZLIB
+            || ( zs && zs->avail_in > 0 )
+#endif
+            )
         {
             fprintf( stderr, "\nipipe_forwarder :: "
                      "closed unexpectedly during read!\n" );
@@ -151,6 +161,9 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
         return DEL;
     }
 
+    if ( cc > 0 )
+        i2_add_md5_recv( bufptr, cc );
+
     stats_add( cc, 0 );
     bytes_read += cc;
     writer->record_write( cc );
@@ -165,8 +178,10 @@ ipipe_forwarder :: write( fd_mgr * mgr )
     if ( !dowrite )
         return DEL;
 
+#ifdef I2_ZLIB
     if ( zs )
         zloop();
+#endif
 
     int len = buf->contig_readable();
 
@@ -198,6 +213,9 @@ ipipe_forwarder :: write( fd_mgr * mgr )
             return DEL;
         }
 
+        if ( cc > 0 )
+            i2_add_md5_writ( bufptr, cc );
+
         stats_add( 0, cc );
 
         bytes_written += cc;
@@ -216,12 +234,14 @@ ipipe_forwarder :: write( fd_mgr * mgr )
 bool
 ipipe_forwarder :: over_write_threshold( void )
 {
+#ifdef I2_ZLIB
     if ( zs )
     {
         if (( zbuf_size - zs->avail_in ) > 0 )
             return false;
         return true;
     }
+#endif
     if ( buf->free_space() > buf_lowater )
         return false;
     return true;
@@ -232,8 +252,10 @@ ipipe_forwarder :: contig_write_space_remaining( void )
 {
     if ( !dowrite )
         return 0;
+#ifdef I2_ZLIB
     if ( zs )
         return zbuf_size - zs->avail_in;
+#endif
     // else
     return buf->contig_writeable();
 }
@@ -241,8 +263,10 @@ ipipe_forwarder :: contig_write_space_remaining( void )
 char *
 ipipe_forwarder :: write_space( void )
 {
+#ifdef I2_ZLIB
     if ( zs )
         return inbuf + zs->avail_in;
+#endif
     // else
     return buf->write_pos();
 }
@@ -250,12 +274,15 @@ ipipe_forwarder :: write_space( void )
 void
 ipipe_forwarder :: record_write( int len )
 {
+#ifdef I2_ZLIB
     if ( zs )
         zs->avail_in += len;
     else
+#endif
         buf->record_write( len );
 }
 
+#ifdef I2_ZLIB
 void
 ipipe_forwarder :: zloop( void )
 {
@@ -321,3 +348,4 @@ ipipe_forwarder :: zloop( void )
         }
     }
 }
+#endif

@@ -11,6 +11,7 @@ exit 0
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #define DLL2_CHECKSUMS      0
 #define DLL2_INCLUDE_BTREE  1
 #include "dll2.H"

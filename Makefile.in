@@ -124,7 +124,7 @@ depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
 
 clean:
 	rm -rf t
-	rm -f $(OBJS) $(PROG)
+	rm -f $(OBJS) $(PROG) pdksh-5.2.14/*.o
 	@for d in $(DIRS) ; do \
 		echo cleaning in $$d ; \
 		( cd $$d && make clean ) ; \

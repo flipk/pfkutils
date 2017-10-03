@@ -2,7 +2,9 @@
 #ifndef __ipipe_forwarder_H__
 #define __ipipe_forwarder_H__
 
+#ifdef I2_ZLIB
 #include <zlib.h>
+#endif
 
 #include "fd_mgr.H"
 #include "circular_buffer.H"
@@ -23,10 +25,13 @@ class ipipe_forwarder : public fd_interface {
     static const int buf_size    = 16000;
     static const int buf_lowater =  1000;
     circular_buffer * buf;
+
+#ifdef I2_ZLIB
     z_streamp zs;
     static const int zbuf_size   = 32000;
     char *  inbuf;
     void zloop( void );
+#endif
 
     int bytes_read;
     int bytes_written;

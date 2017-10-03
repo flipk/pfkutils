@@ -15,6 +15,11 @@
 #include "ipipe_connector.H"
 #include "ipipe_forwarder.H"
 #include "ipipe_stats.H"
+#include "ipipe_main.H"
+
+#ifdef I2_MD5
+#include "pk-md5.h"
+#endif
 
 const char * help_msg =
 "i2 [-svnd] [-i infile] [-o outfile] [-z[r|t]] port      (passive)\n"
@@ -52,6 +57,42 @@ hostname_to_ipaddr( char * host, void * addr )
     }
 }
 
+#ifdef I2_MD5
+static MD5Context * md5;
+static bool md5_read;
+static bool md5_writ;
+
+void
+i2_add_md5_recv( char * buf, int len )
+{
+    if ( md5_writ )
+        return;
+    md5_read = true;
+    MD5Update( md5, (unsigned char *)buf, len );
+}
+
+void
+i2_add_md5_writ( char * buf, int len )
+{
+    if ( md5_read )
+        return;
+    md5_writ = true;
+    MD5Update( md5, (unsigned char *)buf, len );
+}
+#else
+void
+i2_add_md5_recv( char * buf, int len )
+{
+    // nop
+}
+
+void
+i2_add_md5_writ( char * buf, int len )
+{
+    // nop
+}
+#endif
+
 extern "C"
 int
 i2_main( int argc,  char ** argv )
@@ -69,6 +110,12 @@ i2_main( int argc,  char ** argv )
 
     extern int optind;
     extern char * optarg;
+
+#ifdef I2_MD5
+    md5 = new MD5Context;
+    MD5Init( md5 );
+    md5_read = md5_writ = false;
+#endif
 
     signal( SIGTTIN, SIG_IGN );
 
@@ -143,7 +190,7 @@ i2_main( int argc,  char ** argv )
     {
         int cc;
         close( 1 );
-        cc = open( out_file, O_WRONLY | O_CREAT, 0644 );
+        cc = open( out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644 );
         if ( cc != 1 )
         {
             fprintf( stderr,
@@ -225,6 +272,18 @@ i2_main( int argc,  char ** argv )
 
     mgr.loop();
     stats_done();
+
+#ifdef I2_MD5
+    MD5_DIGEST  digest;
+    int i;
+
+    MD5Final( &digest, md5 );
+
+    fprintf( stderr, "md5 digest: " );
+    for ( i = 0; i < (int)sizeof(digest.digest); i++ )
+        fprintf( stderr, "%02x", digest.digest[i] );
+    fprintf( stderr, "\n" );
+#endif
 
     return 0;
 }

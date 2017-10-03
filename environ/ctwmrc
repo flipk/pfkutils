@@ -8,7 +8,7 @@ IconManagerGeometry   "150x100+0+94"
 
 UsePPosition "nonzero"
 
-OpenWindowTimeout    5
+OpenWindowTimeout    1
 MaxIconTitleWidth  150
 MoveOffResistance   20
 BorderWidth          3
