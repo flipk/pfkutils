@@ -86,20 +86,21 @@ Next: \ref FileBlockLocalFileFormat
 
 /** \page FileBlockLocalFileFormat FileBlockLocal File Format
 
+\note All 4-byte or 8-byte numeric fields are encoded in big-endian format.
+
+\section FileBlockLocalFileFormatFileHeader File Header
+
 The first few bytes of the first page contains a unique signature
 which identifies the file as a FileBlock file.  This signature must be
 added when the file is first created.  The contents of the signature
 is the ASCII string \em "FILE BLOCK LOCAL" with no trailing NUL (this
 consumes 16 bytes).
 
-All 4-byte or 8-byte numeric fields are encoded in big-endian format.
-
 The size for blocks of extents maps is flexible.  The recommended
 value is 8KB; however they must not be more than 64KB in size.
 
-The next 8 bytes are an off_t identifying the position in the file
-where the first 8KB of the extents map begins.  The 4 bytes following
-this offset describe the size of this block in the file.
+The next 12 bytes contain an 8-byte offset and 4-byte size describing
+a portion of the file containing a piece-map, described below.
 
 Following this are 64 4-byte units identifying block ids where file-
 information blocks exist.  The value 0 means no information block is
@@ -108,25 +109,21 @@ not yet designed or implemented.
 
 \todo design and document file-information block system.
 
+\section FileBlockLocalFileFormatFileHeaderPieceMap Piece Map
+
+A piece-map is a block in the file containing offset/size pairs.  Each
+offset is an 8-byte value and each size is a 4-byte value.  Each
+offset/size pair describes another block of the file containing a piece
+of the extent map, described below.
+
+\section FileBlockLocalFileFormatFileHeaderPiece Piece
+
 The extent map entries are encoded 8KB at a time.  First the size of
 an extent is encoded as a 4-byte big-endian number.  If the extent is
 free, the highest-order bit is cleared.  If the extent is used, the
 highest-order bit is set.  Also, if the extent is used, the size is
 followed by a 4-byte encoding of the block id.  If the extent is free,
 the block id is not present.
-
-The last 12 bytes of this 8KB block contain an 8-byte file-offset of
-the next block containing extent map entries (a sort of "next"
-pointer).  The last 4 bytes of this 12-byte region contain the size of
-the next block.
-
-If at the end of the an 8KB block there is not enough space to place
-the block id of a used extent prior to the 12-byte next-pointer
-region, there are two options.  One is to allocate the block 4-bytes
-larger than 8KB to make space, the other is to place the block id in
-the start of the next block.  Both are acceptable practices.
-
-A size value of zero indicates the end of the extent-map list.
 
 The file blocks where the the extent map is stored are themselves
 encoded in the extent map.  This must be taken into account when the
@@ -156,15 +153,14 @@ class FileBlockLocal : public FileBlockInterface {
      * static in the class, so that init_file can call it too.
      * \param m the Extents map to write to disk
      * \param bc the interface to the file to use.
-     * \param first_piece_pos the position in the file of the first
+     * \param pos pointer to the position in the file of the first
      *        piece of the old map.  if this parameter is 0, this
      *        means it is called from init_file, thus the file has
      *        no previous map.
-     * \param first_piece_len the length of the first piece of the
+     * \param len pointer to the length of the first piece of the
      *        map in the file.  ignored if first_piece_pos is 0. */
     static void store_map( Extents * m, BlockCache * bc,
-                           off_t * first_piece_pos,
-                           UINT32 * first_piece_len );
+                           UINT64_t * pos, UINT32_t * len );
 public:
     /** Constructor.
      * \param _bc a BlockCache object which will be used to access

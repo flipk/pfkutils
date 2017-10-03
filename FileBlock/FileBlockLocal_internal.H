@@ -28,3 +28,7 @@ struct FileBlockHeader {
     /** file info blocks have not yet been designed */
     UINT32_t  file_info_block_ids[ MAX_FILE_INFO_BLOCKS ];
 };
+
+/** the size of each block allocated to 
+ * store pieces of the extent map. */
+#define PIECE_SIZE 32768

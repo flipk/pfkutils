@@ -88,9 +88,10 @@ FileBlockLocal :: init_file( BlockCache * bc )
 
     /* pos==0 has special meaning to store_map, it means
      * it doesn't have to free any previous map. */
-    pos = 0;
-    len = 0;
-    store_map( &m, bc, &pos, &len );
+    fbh->extent_map_start.set( 0 );
+    fbh->extent_map_part_len.set( 0 );
+
+    store_map( &m, bc, &fbh->extent_map_start, &fbh->extent_map_part_len );
 
     fbh->extent_map_start.set( pos );
     fbh->extent_map_part_len.set( len );

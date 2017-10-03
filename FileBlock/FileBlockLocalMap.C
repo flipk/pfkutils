@@ -17,34 +17,24 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/** the size of each block allocated to store pieces of the
- * extent map. */
-#define PIECE_SIZE 8192
-
 //static
 void
 FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
-                             off_t * first_piece_pos,
-                             UINT32 * first_piece_len )
+                             UINT64_t * pos, UINT32_t * len )
 {
-    int count_used, count_free;
 
-    count_used = m->get_count_used();
-    count_free = m->get_count_free();
+    // first, if *pos is nonzero, free up all space in the map
+    // consumed by the old map:
+    //   fetch old piece-map
+    //   foreach entry in piece-map
+    //      m->free
 
-    // calculate how many bytes needed to store the 
-    // map itself; this does NOT count the linked-list
-    // stuff at the end of each piece.  used extents store
-    // the size and id; free extents store only the size.
-    int bytes_needed = count_used * 8 + count_free * 4;
+    // then, calculate how many pieces are needed for the new map.
+    // m->alloc a region for the new piece-map.
+    // foreach entry in piece-map
+    //   m->alloc space for a new piece
+    // foreach entry in m
+    //   populate encoded entry into piece
+    // release all pieces
 
-    // calculate number of pieces required; this accounts
-    // for 12 bytes of linked-list stuff at the end of each
-    // piece.  also always add 1 in case the allocation of 
-    // pieces from the map causes the map to grow over a piece
-    // boundary.
-    int pieces_needed = (bytes_needed / (PIECE_SIZE / 12)) + 1;
-
-    // xxx
-    
 }
