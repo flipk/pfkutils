@@ -4,7 +4,7 @@ ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 IconManagerFont  "-adobe-helvetica-bold-r-normal--*-120-*-*-*"
-IconManagerGeometry   "150x100+0+94"
+IconManagerGeometry   "150x100+0+91"
 
 UsePPosition "nonzero"
 
@@ -22,11 +22,12 @@ NoRaiseOnMove
 PackNewWindows
 NoShowOccupyAll
 NoRaiseOnResize
+ShowIconManager
 StartInMapState
 #SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
-#IconifyByUnmapping
+IconifyByUnmapping
 RestartPreviousState
 CenterFeedbackWindow
 ShortAllWindowsMenus
@@ -121,8 +122,8 @@ Button2 =   : iconmgr     : f.iconify
 "x"     = s : root        : !"xs&"
 "e"     =   : root        : !"myemacs&"
 "r"     = c : root        : f.restart
-"d"     = c : root        : f.quit
-"l"	=   : root        : !"xlock&"
+#"d"     = c : root        : f.quit
+#"l"	=   : root        : !"xlock&"
 "i"     =   : root        : f.showiconmgr
 "h"     =   : root        : f.hideiconmgr
 
@@ -131,10 +132,10 @@ Button2 =   : iconmgr     : f.iconify
 "2"     =   : root        : f.gotoworkspace "2"
 "3"     =   : root        : f.gotoworkspace "3"
 "4"     =   : root        : f.gotoworkspace "4"
-"5"     =   : root        : f.gotoworkspace "5"
-"6"     =   : root        : f.gotoworkspace "6"
-"7"     =   : root        : f.gotoworkspace "7"
-"8"     =   : root        : f.gotoworkspace "8"
+#"5"     =   : root        : f.gotoworkspace "5"
+#"6"     =   : root        : f.gotoworkspace "6"
+#"7"     =   : root        : f.gotoworkspace "7"
+#"8"     =   : root        : f.gotoworkspace "8"
 
 "F7"	=   : window            : f.raiselower
 
@@ -143,10 +144,10 @@ Button2 =   : iconmgr     : f.iconify
 "2"     = m : root|window|title : f.gotoworkspace "2"
 "3"     = m : root|window|title : f.gotoworkspace "3"
 "4"     = m : root|window|title : f.gotoworkspace "4"
-"5"     = m : root|window|title : f.gotoworkspace "5"
-"6"     = m : root|window|title : f.gotoworkspace "6"
-"7"     = m : root|window|title : f.gotoworkspace "7"
-"8"     = m : root|window|title : f.gotoworkspace "8"
+#"5"     = m : root|window|title : f.gotoworkspace "5"
+#"6"     = m : root|window|title : f.gotoworkspace "6"
+#"7"     = m : root|window|title : f.gotoworkspace "7"
+#"8"     = m : root|window|title : f.gotoworkspace "8"
 
 "Left"	= m : root|window|title : f.prevworkspace
 "Right"	= m : root|window|title : f.nextworkspace
@@ -164,34 +165,33 @@ RightTitleButton ":xpm:resize" = f.resize
 
 menu "defops"
 {
-	"Twm"		f.title
-	"Pin"		f.pin
-        "Xterm"		f.exec "x"
-        "XtermScreen"	f.exec "xs"
+	"Twm"			f.title
+	"Pin"			f.pin
+        "Xterm (x)"		f.exec "x"
+        "XtermScreen (X)"	f.exec "xs"
 	"MANUAL"	f.exec "xterm -fg black -bg gray85 -geometry 80x55 &"
-	"Firefox"	f.exec "firefox &"
-	"Thunderbird"	f.exec "thunderbird &"
-	"Emacs-Lone"	f.exec "emacs-lone &"
-	"FBSD"		f.exec "fbsd &"
-	"Lock"		!"xlock&"
-        ""		f.nop
-	"Iconify"	f.iconify
-	"Resize"	f.resize
-	"Move"		f.movepack
-	"MoveF"		f.forcemove
-        "Raise"		f.raise
-        "Lower"		f.lower
-        "Info"          f.identify
-        "Occupy"	f.occupy
-        "Kill"		f.destroy
-        "Delete"	f.delete
-        ""		f.nop
-        "Focus"		f.focus
-        "Unfocus"	f.unfocus
-        "Show Iconmgr"	f.showiconmgr
-        "Hide Iconmgr"	f.hideiconmgr
-        ""		f.nop
-	"Reload Res"	!"xrdb -remove ; xrdb -load ~/.Xresources"
-        "Restart"	f.restart
-	"Exit"		f.quit
+	"Firefox"		f.exec "firefox &"
+	"Thunderbird"		f.exec "thunderbird &"
+	"Emacs-Lone"		f.exec "emacs-lone &"
+	"Lock"			!"xlock&"
+        ""			f.nop
+	"Iconify"		f.iconify
+	"Resize"		f.resize
+	"Move"			f.movepack
+	"MoveF"			f.forcemove
+        "Raise"			f.raise
+        "Lower"			f.lower
+        "Info"          	f.identify
+        "Occupy"		f.occupy
+        "Kill"			f.destroy
+        "Delete"		f.delete
+        ""			f.nop
+        "Focus"			f.focus
+        "Unfocus"		f.unfocus
+        "Show Iconmgr (i)"	f.showiconmgr
+        "Hide Iconmgr (h)"	f.hideiconmgr
+        ""			f.nop
+	"Reload Res"		!"xrdb -remove ; xrdb -load ~/.Xresources"
+        "Restart (^r)"		f.restart
+	"Exit"			f.quit
 }

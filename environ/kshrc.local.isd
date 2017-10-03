@@ -2,30 +2,18 @@
 #FUNCTIONS: lsv lsco sv zeroversion makeorig ccdiff ccdiff2 
 
 mips=/vobs/sb/ti_sip_linux/tools/mipsel-linux-uclibc/bin
-ti=/vobs/sb/ti_sip_linux
-vend=/vob/wibb_vendor/Beceem
-Drv=$vend/Source/Drv/Source
-Lib=$vend/Source/Lib/BeceemWiMAX
-cpe=/vob/wibb_cpe
 mac=/vob/wibb_bts/mac/code/mac_sw
 bts=/vob/wibb_bts
 wrvx=/mot/proj/wibb_wr/pnele14ve32d
 
-alias ti='cd $ti'
 alias mac='cd $mac'
 alias bts='cd $bts'
-alias abs='cd /vob/wibb_cpe/src/abs_layer/src'
-alias cpe='cd $cpe'
-alias vend='cd $vend'
-alias drv='cd $Drv'
-alias lib='cd $Lib'
 alias ssh='myssh'
 alias q='ssh qcomm.cig.mot.com'
 
-fbsd() {
-    ip=`cat $HOME/notes/ip/fbsd`
-    vncviewer -geometry +0+91 $ip:1 -passwd .vnc/passwd &
-}
+alias ccs_cpe='wcpe /home/pknaack1/bin/ccs_cpe_internal'
+alias ccs_bts='bssw /home/pknaack1/bin/ccs_bts_internal'
+alias ccs_omp='bssw /home/pknaack1/bin/ccs_omp_internal'
 
 odin() {
     shellstring "ssh odin"
@@ -35,7 +23,7 @@ odin() {
 
 myssh() {
     shellstring "ssh $*"
-    \ssh $1
+    \ssh $*
     shellstring ""
 }
 
@@ -56,13 +44,6 @@ wrenv() {
     print starting vxworks shell in $wrvx
     $wrvx/wrenv.sh -p vxworks-6.2
     print vxworks shell complete
-}
-
-xcs() {
-    # cscope in an xterm
-    export CSCOPE_IN_XTERM=1
-    xterm -geometry 140x40+0+0 -title CSCOPE -e cs $* &
-    unset CSCOPE_IN_XTERM
 }
 
 export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
@@ -95,8 +76,8 @@ lsv() {
         ct lsview ${prefix}\* | cut -c3- | awk '{print $1}'
 }
 
-lsvp() {
-    ct lsview wmx-cpe\*$1\* | cut -c3- | awk '{print $1}'
+lspr() {
+    ct lsprivate | grep -v '\[checkedout\]'
 }
 
 lsco() {
@@ -209,6 +190,11 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
 fi
 
 if [[ "x$DISPLAY" = "x" && "x$SSH_CONNECTION" != x ]] ; then
-    DISPLAY=${SSH_CONNECTION%% *}:0
+    fbsd_ip=`cat $HOME/notes/ip/fbsd`
+    if [[ ${SSH_CONNECTION%% *} = $fbsd_ip ]] ; then
+	DISPLAY=${SSH_CONNECTION%% *}:1
+    else
+	DISPLAY=${SSH_CONNECTION%% *}:0
+    fi
     export DISPLAY
 fi
