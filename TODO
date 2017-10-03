@@ -1,6 +1,9 @@
 
 - document libpfkutil
 
+- autoconf-ize ampfk (at least in a 'bootstrap' mode)
+- autoconf-ize diskloader
+
 autoconf:
   - autoconfize pfkstat
   - d3des implementation duplication (util & etg)

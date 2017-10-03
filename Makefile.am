@@ -43,3 +43,7 @@ if PFK_AM_BUILD_sudo
 	@echo "     chmod 4755 $(bindir)/pfkutils"
 	@echo ""
 endif
+
+diffdotfiles:
+	@cd environ && make diffdotfiles
+	@cd scripts && make diffdotfiles

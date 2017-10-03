@@ -64,11 +64,11 @@ main()
     shmempipeSlaveConfig CONFIG;
     shmempipe * pPipe;
 
-    CONFIG.file.setPipeName( "shmempipe_test" );
-    CONFIG.callbacks.connectCallback = &connect;
-    CONFIG.callbacks.disconnectCallback = &disconnect;
-    CONFIG.callbacks.messageCallback = &message;
-    CONFIG.callbacks.arg = NULL;
+    CONFIG.setPipeName( "shmempipe_test" );
+    CONFIG.connectCallback = &connect;
+    CONFIG.disconnectCallback = &disconnect;
+    CONFIG.messageCallback = &message;
+    CONFIG.arg = NULL;
     pPipe = new shmempipe( &CONFIG );
     if (!CONFIG.bInitialized)
     {

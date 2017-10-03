@@ -1,4 +1,9 @@
 
+configure
+make
+make diffdotfiles
+make install
+
 blade:
 
 ../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen

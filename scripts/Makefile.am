@@ -33,3 +33,11 @@ install-data-local:
 	cd $(prefix)/bin && \
 		chmod 755 $(PFK_SCRIPT_FILES) $(PFK_SCRIPT_FILES_GENERATED)
 	$(DESTDIR)$(bindir)/setup-links-sh
+
+diffdotfiles:
+	@for f in $(PFK_SCRIPT_FILES) ; do \
+		diff -u $(prefix)/bin/$$f $(abs_srcdir)/$$f ; \
+	done
+	@for f in $(PFK_SCRIPT_FILES_GENERATED) ; do \
+		diff -u $(prefix)/bin/$$f $(abs_builddir)/$$f ; \
+	done

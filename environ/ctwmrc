@@ -13,6 +13,7 @@ MaxIconTitleWidth  150
 MoveOffResistance   20
 BorderWidth          3
 
+OpaqueMove
 NoDefaults
 DontMoveOff
 NoGrabServer
@@ -120,6 +121,8 @@ Button2 =   : icon        : f.iconify
 Button1 =   : iconmgr     : f.iconify
 Button2 =   : iconmgr     : f.iconify
 
+"t"     =   : root        : !"gnome-terminal --disable-factory &"
+"t"     = s : root        : !"gnome-terminal --disable-factory --title NoTitle &"
 "x"     =   : root        : !"x&"
 "x"     = s : root        : !"xs&"
 "e"     =   : root        : !"myemacs&"

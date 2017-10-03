@@ -23,6 +23,15 @@ install-data-local:
 	cd $(abs_builddir) && cp kshrc profile $(DESTDIR)$(sysconfdir)
 	cd $(DESTDIR)$(sysconfdir) && \
 		chmod 644 $(DOT_FILES) $(ELISP_FILES) $(KSHRC_LOCALS)
+	cd $(abs_builddir) && cp setup-links-sh $(DESTDIR)$(bindir)
+	chmod 744 $(DESTDIR)$(bindir)/setup-links-sh
+
+endif
+
+all-local: $(abs_builddir)/setup-links-sh
+
+
+$(abs_builddir)/setup-links-sh: $(srcdir)/setup-links-sh.in
 	sed \
 		-e "s,@SHELL_PATH@,@PFK_SHELL_PATH@," \
 		-e "s,@ENVIRON@,@PFK_ENVIRON@," \
@@ -32,8 +41,14 @@ install-data-local:
 		-e "s,@ELISP_FILES@,$(ELISP_FILES)," \
 		-e "s,@SCRIPTS_DIR@,$(prefix)/bin," \
 		-e "s,@PFK_BIN_DIR@,$(bindir)," \
-		< $(srcdir)/setup-links-sh \
-		> $(DESTDIR)$(bindir)/setup-links-sh
-	chmod 744 $(DESTDIR)$(bindir)/setup-links-sh
+		< $(srcdir)/setup-links-sh.in \
+		> setup-links-sh
 
-endif
+diffdotfiles:
+	@for f in $(DOT_FILES) $(ELISP_FILES) $(KSHRC_LOCALS) ; do \
+		diff -u $(DESTDIR)$(sysconfdir)/$$f $(srcdir)/$$f ; \
+	done
+	@for f in kshrc profile  ; do \
+		diff -u $(DESTDIR)$(sysconfdir)/$$f $(abs_builddir)/$$f ; \
+	done
+	@diff -u $(DESTDIR)$(bindir)/setup-links-sh $(abs_builddir)/setup-links-sh || true
