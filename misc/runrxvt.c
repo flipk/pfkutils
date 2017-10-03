@@ -17,7 +17,7 @@ exit 0
 #endif
 
 #define      PROGRAM  "c:\\cygwin\\bin\\rxvt.exe"
-#define PROGRAM_ARGS  "-font " GEOMETRY " -e bash --login"
+#define PROGRAM_ARGS  "-font " GEOMETRY " -e bash -i"
 #define         HOME  "c:\\Users\\flipk"
 
 int WINAPI
