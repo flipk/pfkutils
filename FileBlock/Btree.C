@@ -24,6 +24,101 @@
  * \author Phillip F Knaack
  */
 
+/** \page BtreeStructure BTREE File Interface
+
+The BTREE is a data storage/retrieval mechanism.  It uses a "key" data
+structure to index the data, so that if the proper key is provided,
+the corresponding data can be located quickly.
+
+At the lowest conceptual level, a "key" and its corresponding "data"
+are just sequences of bytes of arbitrary length and contents.
+
+Keys must be unique.  If a "put" is done on two key/data pairs where
+the keys are the same number of bytes and have the same contents, the
+data portion of the second "put" will replace the data of the first in
+the file.
+
+The "key" and "data" units are specified with UCHAR pointers and an int
+specifying a length.  A UCHAR and int together are known as a "datum".
+
+To retrieve data from a Btree, construct a key datum with the proper
+contents, and call the "get" method.  It will return a data datum which
+has been populated with the matching data.
+ 
+\todo document btree
+
+\section BtreeTemplate BTREE Template types
+
+Next: \ref BtreeInternalStructure
+
+ */
+
+/** \page BtreeInternalStructure BTREE Internal Structure
+
+\todo document btree internals
+
+\section BtreeNodeOnDisk Btree node, on-disk layout
+
+The BTREE node, on disk, has the following layout:
+
+<ul>
+<li> UINT32_t magic
+     <ul>
+     <li> which must be set to _BTNodeDisk::MAGIC
+     </ul>
+<li> UINT16_t numitems
+     <ul>
+     <li> the bottom 14 bits (13-0) of this value encodes the number of items
+     	  stored in this node.  this can be no greator than order-1, and
+	  must be greator than or equal to order/2 (except in the root node,
+	  where the number of items can be anywhere from 0 to order-1).
+     <li> bit 14 indicates if this is a root node.  obviously this can be
+     	  determined by the fact that the BTInfo points to this node, but
+	  it is an extra sanity check.
+     <li> bit 15 indicates if this is a leaf node.  in this case the pointers
+     	  should not be followed, and inserts should take place here.
+     </ul>
+<li> BTNodeItem items[order-1]:
+     <ul>
+     <li> FB_AUID_t ptr
+     	  <ul>
+	  <li> this is a FileBlock ID number of a pointer to a child node.
+	  </ul>
+     <li> UINT16_t keystart
+     <li> UINT16_t keysize
+     	  <ul>
+	  <li> these indicate where the key data for this item begin within
+	       the keydata element below.
+     	  </ul>
+     <li> FB_AUID_t data
+     	  <ul>
+	  <li> this is a FileBlock ID number of the data corresponding to
+	       the key above.
+	  </ul>
+     </ul>
+<li> FB_AUID_t ptr
+     <ul>
+     <li> the number of ptrs in a node is \em order, however the number
+     	  of key/data items in a node is \em order-1.  so there is an
+	  extra ptr at the end of the array to round out the node.
+     <li> since \em ptr is the first element of the items array, it thus
+     	  works to access items[order].ptr (even though the dimension of the
+	  array is order-1), to access this extra ptr.
+     </ul>
+<li> UCHAR keydata[]
+     <ul>
+     <li> this is a variable-length array of data where the key data for
+     	  all the items begins.  the \em keystart and \em keysize elements
+	  indicate offsets and sizes in this array.  all of the key data
+	  are contiguous in this array, thus the total size of this
+	  array is items[order-2].keystart + items[order-1].keysize.
+     </ul>
+</ul>
+
+Next: \ref Templates
+
+*/
+
 #include "Btree.H"
 #include "Btree_internal.H"
 

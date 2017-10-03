@@ -98,7 +98,8 @@ INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          = *.C \
                          *.H
 RECURSIVE              = NO
-EXCLUDE                = 
+EXCLUDE                = testBtree.C \
+                         testFileBlock.C
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = 
 EXCLUDE_SYMBOLS        = 
@@ -114,7 +115,7 @@ FILTER_SOURCE_FILES    = NO
 #---------------------------------------------------------------------------
 SOURCE_BROWSER         = YES
 INLINE_SOURCES         = YES
-STRIP_CODE_COMMENTS    = NO
+STRIP_CODE_COMMENTS    = YES
 REFERENCED_BY_RELATION = YES
 REFERENCES_RELATION    = YES
 REFERENCES_LINK_SOURCE = YES
