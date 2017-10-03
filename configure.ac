@@ -128,6 +128,7 @@ AC_SEARCH_LIBS([compress2], [z], [],
    [AC_MSG_ERROR([libz is required for pfkutils])], [])
 AC_SEARCH_LIBS([wrefresh], [ncurses curses], [],
    [AC_MSG_ERROR([ncurses is required for pfkutils])], [])
+AC_SEARCH_LIBS([raw], [tinfo], [], [], [])
 AC_SEARCH_LIBS([accept], [nsl socket], [], [], [])
 AC_SEARCH_LIBS([listen], [nsl socket], [], [], [])
 AC_SEARCH_LIBS([setsockopt], [nsl socket], [], [], [])
