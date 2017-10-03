@@ -14,8 +14,10 @@ public:
 
     /*virtual*/ ~ipipe_acceptor( void );
     /*virtual*/ rw_response read ( fd_mgr * );
-    /*virtual*/ rw_response write( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+
+    /* note virtual functions write, write_to_fd, and over_write_threshold
+       not implemented. */
 };
 
 #endif /* __ipipe_acceptor_H__ */

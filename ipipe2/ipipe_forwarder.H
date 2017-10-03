@@ -31,7 +31,6 @@ class ipipe_forwarder : public fd_interface {
     int bytes_read;
     int bytes_written;
 
-    bool over_write_threshold( void );
     int contig_write_space_remaining( void );
     char * write_space( void );
     void record_write( int len );
@@ -51,6 +50,9 @@ public:
     /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ rw_response write( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+    /*virtual*/ bool over_write_threshold( void );
+
+    /* note virtual function write_to_fd not implemented here */
 };
 
 #endif /* __ipipe_forwarder_H__ */

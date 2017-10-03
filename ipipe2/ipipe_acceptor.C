@@ -72,11 +72,3 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
 
     return OK;
 }
-
-//virtual
-fd_interface :: rw_response
-ipipe_acceptor :: write( fd_mgr * mgr )
-{
-    //error
-    return DEL;
-}

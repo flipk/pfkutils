@@ -25,7 +25,7 @@ public:
             = new Adm_Gate_fd( fd_ear,
                                false,        // connecting
                                true, true,   // doread / dowrite
-                               true, true, // doencode / dodecode
+                               true, true,   // doencode / dodecode
                                pipe_mgr );   // pipe mgr
 
         Adm_Gate_fd * gfd2

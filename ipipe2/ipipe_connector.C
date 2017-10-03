@@ -59,14 +59,6 @@ ipipe_connector :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 
 //virtual
 fd_interface :: rw_response
-ipipe_connector :: read ( fd_mgr * )
-{
-    // error
-    return DEL;
-}
-
-//virtual
-fd_interface :: rw_response
 ipipe_connector :: write( fd_mgr * mgr )
 {
     int cc;

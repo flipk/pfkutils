@@ -85,11 +85,3 @@ tick_fd :: read ( fd_mgr * mgr )
 
     return OK;
 }
-
-//virtual
-fd_interface :: rw_response
-tick_fd :: write( fd_mgr * )
-{
-    // nothing
-    return DEL;
-}

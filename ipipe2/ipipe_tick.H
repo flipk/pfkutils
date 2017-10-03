@@ -11,8 +11,10 @@ public:
     tick_fd( int tenths, void (*)(void*), void * );
     /*virtual*/ ~tick_fd( void );
     /*virtual*/ rw_response read ( fd_mgr * );
-    /*virtual*/ rw_response write( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+
+    /* note virtual functions write, write_to_fd, and over_write_threshold
+       are not implemented here. */
 };
 
 #endif /* __ipipe_tick_H__ */

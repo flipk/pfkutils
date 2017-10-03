@@ -30,8 +30,11 @@ public:
         DEL   // the fd should be deleted
     };
 
-    virtual rw_response read ( fd_mgr * ) = 0;
-    virtual rw_response write( fd_mgr * ) = 0;
+    // if a fd doesn't need read or write, don't implement
+    // them in the class; just allow the defaults here to be used.
+
+    virtual rw_response read ( fd_mgr * ) { return DEL; }
+    virtual rw_response write( fd_mgr * ) { return DEL; }
 
     // true means select, false means dont;
     //   note:   never return true if you've set do_close !!

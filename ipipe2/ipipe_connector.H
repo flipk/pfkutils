@@ -13,9 +13,11 @@ public:
     ipipe_connector( struct sockaddr_in *, ipipe_new_connection * );
 
     /*virtual*/ ~ipipe_connector( void );
-    /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ rw_response write( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+
+    /* note virtual functions read, write_to_buf, and over_write_threshold
+       are not implemented here. */
 };
 
 #endif /* __ipipe_connector_H__ */
