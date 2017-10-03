@@ -521,8 +521,6 @@ out:
         delete nw;
     }
 
-    /** \todo implement */
-
     if (ret == false)
         delete key;
     return ret;
