@@ -40,10 +40,17 @@ export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
 export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
 
 uname_s=`uname -s`
-if [[ $uname_s = "SunOS" ]] ; then
-	LD_LIBRARY_PATH=/apps/public/gcc_3.3/sparc-sun-solaris2.8/lib
-	export LD_LIBRARY_PATH
-fi
+for dir in /apps/public/gcc_3.3/sparc-sun-solaris2.8/lib /apps/public/gcc/sparc-sun-solaris2.9/lib ; do
+    if [[ -d $dir ]] ; then
+        if [[ x$LD_LIBRARY_PATH = x ]] ; then
+            LD_LIBRARY_PATH=$dir
+        else
+            LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$dir
+        fi
+    fi
+done
+export LD_LIBRARY_PATH
+
 if [[ $uname_s = "Linux" ]] ; then
 	stty erase 0x7f
 fi
