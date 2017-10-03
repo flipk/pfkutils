@@ -33,14 +33,14 @@
        (progn
          (setq
 ;for login, start commenting here
-;	  default-frame-alist '((minibuffer . nil))
-;	  initial-frame-alist 'nil
-;	  minibuffer-frame-alist
-;	  '((top . 0) (left . 20) (width . 155) (height . 1)
-;	    (auto-raise . t) (minibuffer-lines . 1)
-;	    (vertical-scroll-bars . nil)
-;	    (name . "Emacs Minibuffer")
-;	    (title . "Emacs Minibuffer"))
+	  default-frame-alist '((minibuffer . nil))
+	  initial-frame-alist 'nil
+	  minibuffer-frame-alist
+	  '((top . 0) (left . 20) (width . 155) (height . 1)
+	    (auto-raise . t) (minibuffer-lines . 1)
+	    (vertical-scroll-bars . nil)
+	    (name . "Emacs Minibuffer")
+	    (title . "Emacs Minibuffer"))
 ;for login, end commenting here
 	  special-display-buffer-names
 	  '("*compilation*" "*shell*")
