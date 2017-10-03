@@ -25,7 +25,10 @@
 struct MyTestMsg : public shmempipeMessage
 {
     static MyTestMsg * allocSize(shmempipe * pPipe) {
-        return (MyTestMsg *) pPipe->allocSize(sizeof(MyTestMsg), -1);
+        MyTestMsg * ret;
+        ret = (MyTestMsg *) pPipe->allocSize(sizeof(MyTestMsg), -1);
+        ret->messageSize = sizeof(MyTestMsg);
+        return ret;
     }
     static const int max_size = 184;
     int seqno;

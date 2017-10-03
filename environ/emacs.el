@@ -25,7 +25,7 @@
  '(verilog-auto-newline nil)
  '(verilog-indent-begin-after-if nil)
  '(mouse-buffer-menu-maxlen 100)
- '(mouse-buffer-menu-mode-mult 4)
+ '(mouse-buffer-menu-mode-mult 100)
 )
 
 (setq mouse-buffer-menu-mode-groups

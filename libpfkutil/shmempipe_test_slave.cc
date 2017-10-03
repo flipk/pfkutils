@@ -50,7 +50,7 @@ void message(shmempipe * pPipe, void *arg, shmempipeMessage * _pMsg)
         if (pMsg)
         {
             pMsg->seqno = 8;
-            pPipe->enqueue(pMsg);
+            pPipe->send(pMsg);
         }
     }
     count++;
@@ -83,15 +83,19 @@ main()
     {
         MyTestMsg * pMsg = MyTestMsg::allocSize(pPipe);
         pMsg->seqno = 1;
-        pPipe->enqueue(pMsg);
+        pPipe->send(pMsg);
     }
 
-    while (connected && !done)
-    {
-        printf("\r count = %d    ", count);
-        fflush(stdout);
+    do {
+        shmempipeStats stats;
+        pPipe->getStats(&stats,true);
+        printf("sb %lld sp %lld ss %lld rb %lld rp %lld rs %lld "
+               "af %lld fb %lld\n",
+               stats.sent_bytes, stats.sent_packets, stats.sent_signals,
+               stats.rcvd_bytes, stats.rcvd_packets, stats.rcvd_signals,
+               stats.alloc_fails, stats.free_buffers);
         usleep(100000);
-    }
+    } while (connected && !done);
 
     delete pPipe;
     return 0;

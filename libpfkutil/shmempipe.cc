@@ -51,6 +51,7 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
         fprintf(stderr, "no buffer pools defined\n");
         return;
     }
+    (void) unlink(m_filename.filename);
     m_shmemFd = open(m_filename.filename, O_RDWR | O_CREAT, 0600);
     if (m_shmemFd < 0)
     {
@@ -119,6 +120,7 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
             m_pHeader->pools[poolInd].enqueue(
                 m_shmemPtr,
                 (shmempipeMessage *)buf,
+                NULL,
                 false /*for speed*/);
             // add buf to pool
             buf +=
@@ -129,6 +131,11 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
 
     m_myBufferList = &m_pHeader->slave2master;
     m_otherBufferList = &m_pHeader->master2slave;
+
+    pthread_mutexattr_t mattr;
+    pthread_mutexattr_init( &mattr );
+    pthread_mutex_init( &m_statsMutex, &mattr );
+    pthread_mutexattr_destroy( &mattr );
 
     startCloserThread();
 
@@ -169,6 +176,11 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
     m_myBufferList = &m_pHeader->master2slave;
     m_otherBufferList = &m_pHeader->slave2master;
 
+    pthread_mutexattr_t mattr;
+    pthread_mutexattr_init( &mattr );
+    pthread_mutex_init( &m_statsMutex, &mattr );
+    pthread_mutexattr_destroy( &mattr );
+
     startCloserThread();
 
     pConfig->bInitialized = true;
@@ -200,7 +212,9 @@ void
 shmempipeBufferList :: init(void)
 {
     head = tail = 0;
+    count = 0;
     needspoke = false;
+    bIsWaiting = false;
     pthread_mutexattr_t mattr;
     pthread_condattr_t  cattr;
     pthread_mutexattr_init( &mattr );
@@ -278,7 +292,7 @@ shmempipe :: closerThread(void)
     else
     {
         // open other pipe, write connect indication,
-        // when i get one, open my pipe, wait for connect indication.
+        // then try to open my pipe, wait for connect indication.
         char c = 1;
         m_otherPipeFd = open(m_filename.s2mname, O_WRONLY);
         if (m_otherPipeFd < 0)
@@ -387,18 +401,38 @@ shmempipe :: readerThread(void)
 
     while (m_bReaderStop == false)
     {
-        shmempipeMessage * pMsg = m_myBufferList->dequeue(m_shmemPtr);
+        bool signalled = false;
+        shmempipeMessage * pMsg = m_myBufferList->dequeue(m_shmemPtr,
+                                                          &signalled, true);
         if (pMsg)
+        {
+            lockStats();
+            m_stats.rcvd_packets ++;
+            m_stats.rcvd_bytes += pMsg->messageSize;
+            if (signalled)
+                m_stats.rcvd_signals ++;
+            unlockStats();
             m_callbacks.messageCallback(this, m_callbacks.arg, pMsg);
+        }
     }
 
     m_bReaderRunning = false;
 }
 
-
-#if 0 // later
 void
 shmempipe :: getStats(shmempipeStats * pStats, bool zero)
 {
+    lockStats();
+    *pStats = m_stats;
+    if (zero)
+        m_stats.init();
+    uint64_t free_buffers = 0;
+    for (int poolInd = 0;
+         poolInd < m_pHeader->poolInfo.numPools;
+         poolInd++)
+    {
+        free_buffers += m_pHeader->pools[poolInd].get_count();
+    }
+    pStats->free_buffers = free_buffers;
+    unlockStats();
 }
-#endif

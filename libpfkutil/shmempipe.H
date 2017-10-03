@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <errno.h>
+#include <string.h>
 
 struct shmempipePoolInfo {
     static const int maxPools = 64;
@@ -115,21 +116,45 @@ private:
     friend class shmempipe;
 };
 
+struct shmempipeStats {
+    uint64_t sent_bytes;
+    uint64_t sent_packets;
+    uint64_t sent_signals;
+    uint64_t rcvd_bytes;
+    uint64_t rcvd_packets;
+    uint64_t rcvd_signals;
+    uint64_t alloc_fails;
+    uint64_t free_buffers;
+    shmempipeStats(void) { init(); }
+    void init(void) { 
+        memset(this, 0, sizeof(*this));
+    }
+};
+
 struct shmempipeBufferList {
 private:
     uint32_t head; // dequeue from head
     uint32_t tail; // enqueue to tail
+    uint32_t count;
     // shmempipeMessage::next points towards tail
     pthread_mutex_t  mutex;
     pthread_cond_t   empty_cond;
     bool needspoke;
-    void lock(void) { pthread_mutex_lock( &mutex ); }
+    bool bIsWaiting;
+    void   lock(void) { pthread_mutex_lock  ( &mutex ); }
     void unlock(void) { pthread_mutex_unlock( &mutex ); }
 public:
     void init(void);
     bool empty(void) { return head == 0; }
-    void poke(void) { lock(); needspoke = true; unlock(); pthread_cond_signal( &empty_cond ); }
+    void poke(void) {
+        lock(); needspoke = true; unlock();
+        pthread_cond_signal( &empty_cond );
+    }
+    uint32_t get_count(void) { return count; }
+    // the only time needlock=false is at init time when
+    // building the freelists initially.
     void enqueue( uintptr_t base, shmempipeMessage * msg,
+                  shmempipeStats * pStats,
                   bool needlock=true ) {
         uint32_t msgoff = ((uintptr_t)msg) - base;
         bool signal = false;
@@ -142,21 +167,32 @@ public:
             tail = msgoff;
         } else {
             head = tail = msgoff;
-            signal = true;
+            signal = bIsWaiting;
         }
+        count++;
         if (needlock)
             unlock();
         if (signal)
+        {
             pthread_cond_signal(&empty_cond);
+            if (pStats)
+                pStats->sent_signals ++;
+        }
     }
     shmempipeMessage * dequeue(uintptr_t base,
-                               bool needlock=true) {
+                               bool *pSignalled, bool bWait) {
         uint32_t msgoff;
         shmempipeMessage * pMsg = NULL;
-        if (needlock)
-            lock();
+        lock();
         if (head == 0 && !needspoke) {
-            pthread_cond_wait(&empty_cond, &mutex);
+            if (bWait)
+            {
+                bIsWaiting = true;
+                pthread_cond_wait(&empty_cond, &mutex);
+                bIsWaiting = false;
+                if (pSignalled)
+                    *pSignalled = true;
+            }
         }
         if (head != 0 && !needspoke) {
             msgoff = head;
@@ -164,11 +200,11 @@ public:
             head = pMsg->next;
             if (head == 0)
                 tail = 0;
+            count--;
         }
         if (pMsg == NULL)
             needspoke = false;
-        if (needlock)
-            unlock();
+        unlock();
         return pMsg;
     }
 };
@@ -186,7 +222,10 @@ class shmempipe {
     bool m_bConnected;
     shmempipeFilename m_filename;
     shmempipeCallbacks m_callbacks;
-//    shmempipeStats m_stats;
+    shmempipeStats m_stats;
+    pthread_mutex_t m_statsMutex;
+    void   lockStats(void) { pthread_mutex_lock  ( &m_statsMutex ); }
+    void unlockStats(void) { pthread_mutex_unlock( &m_statsMutex ); }
     int m_shmemFd;
     int m_myPipeFd;
     int m_otherPipeFd;
@@ -197,6 +236,7 @@ class shmempipe {
     shmempipeHeader * m_pHeader;
     shmempipeBufferList * m_myBufferList;
     shmempipeBufferList * m_otherBufferList;
+
     bool m_bCloserRunning;
     void startCloserThread(void);
     void stopCloserThread(void);
@@ -214,7 +254,7 @@ public:
     shmempipe( shmempipeMasterConfig * pConfig );
     shmempipe( shmempipeSlaveConfig * pConfig );
     ~shmempipe( void );
-    shmempipeMessage * allocSize(int size, int uSecs=0)
+    shmempipeMessage * allocSize(int size, bool bWait=false)
     {
         int poolInd;
         for (poolInd = 0;
@@ -225,25 +265,55 @@ public:
                 break;
         }
         if (poolInd == m_pHeader->poolInfo.numPools)
+        {
+            lockStats();
+            m_stats.alloc_fails++;
+            unlockStats();
             return NULL;
-        return m_pHeader->pools[poolInd].dequeue(m_shmemPtr, uSecs);
+        }
+        shmempipeMessage * ret = 
+            m_pHeader->pools[poolInd].dequeue(m_shmemPtr, NULL, bWait);
+        if (ret == NULL)
+        {
+            lockStats();
+            m_stats.alloc_fails++;
+            unlockStats();
+        }
+        return ret;
     }
-    shmempipeMessage * allocPool(int poolInd, int uSecs=0)
+    shmempipeMessage * allocPool(int poolInd, bool bWait=false)
     {
         if (poolInd < 0 || poolInd >= m_pHeader->poolInfo.numPools)
+        {
+            lockStats();
+            m_stats.alloc_fails++;
+            unlockStats();
             return NULL;
-        return m_pHeader->pools[poolInd].dequeue(m_shmemPtr, uSecs);
+        }
+        shmempipeMessage * ret = 
+            m_pHeader->pools[poolInd].dequeue(m_shmemPtr, NULL, bWait);
+        if (ret == NULL)
+        {
+            lockStats();
+            m_stats.alloc_fails++;
+            unlockStats();
+        }
+        return ret;
     }
     void release(shmempipeMessage * pBuf)
     {
-        m_pHeader->pools[pBuf->poolInd].enqueue(m_shmemPtr,pBuf);
+        m_pHeader->pools[pBuf->poolInd].enqueue(m_shmemPtr,pBuf,NULL);
     }
-    bool enqueue(shmempipeMessage * pBuf)
+    bool send(shmempipeMessage * pBuf)
     {
         if (m_bConnected == false)
             return false;
-        m_otherBufferList->enqueue(m_shmemPtr,pBuf);
+        lockStats();
+        m_stats.sent_bytes += pBuf->messageSize;
+        m_stats.sent_packets ++;
+        m_otherBufferList->enqueue(m_shmemPtr,pBuf,&m_stats);
+        unlockStats();
         return true;
     }
-// xxx   void getStats(shmempipeStats * pStats, bool zero=false);
+    void getStats(shmempipeStats * pStats, bool zero=false);
 };
