@@ -7,12 +7,21 @@ LIB= libbt.a
 FLAGS= -O3
 INCS=  -I../threads/h -I../dll2 -I..
 
-all: $(LIB)
+all: $(LIB) rbt rbto print_tree
 
 $(LIB): $(OBJS)
 	rm -f $(LIB)
 	ar cq $(LIB) $(OBJS)
 	ranlib $(LIB)
+
+print_tree: print_tree.C $(LIB) 
+	g++ print_tree.C $(INCS) $(FLAGS) $(LIB) -o print_tree
+
+rbt: recnoblock.C
+	g++ -g3 $(INCS) -DINCLUDE_MAIN recnoblock.C -o rbt
+
+rbto: recnoblock.C
+	g++ -O3 $(INCS) -DINCLUDE_MAIN recnoblock.C -o rbto
 
 tests:: t1 t2 t3 t4 t5 t6 t7
 

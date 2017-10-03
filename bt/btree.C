@@ -21,9 +21,9 @@ Btree :: Btree( FileBlockNumber * _fbn )
     // find btreeinfo node somewhere at the beginning
     // of the file.
 
-    for ( bn = FileBlockNumber::min_block_no; bn < MAX_BTI_HUNT; bn++ )
+    for ( bn = fbn->min_block_no(); bn < MAX_BTI_HUNT; bn++ )
     {
-        bti = (btreeinfo*) fbn->get_block( bn, len, bti_magic );
+        bti = (btreeinfo*) fbn->get_block( bn, &len, &bti_magic );
 
         if ( bti == NULL )
             continue;
@@ -96,7 +96,7 @@ Btree :: fetch_node( int blockno, bool newnode )
     int dummylen;
     node * r = LOGNEW node;
     r->dirty = false;
-    r->nd = (_node*) fbn->get_block( blockno, dummylen, r->magic );
+    r->nd = (_node*) fbn->get_block( blockno, &dummylen, &r->magic );
     if ( r->nd == NULL )
     {
         delete r;
@@ -141,8 +141,8 @@ Btree :: fetch_rec( int keyblockno, int datablockno )
     if ( ret->key.recno != -1 )
     {
         ret->key.ptr = fbn->get_block( ret->key.recno,
-                                       ret->key.len,
-                                       ret->key.magic );
+                                       &ret->key.len,
+                                       &ret->key.magic );
         if ( ret->key.ptr == NULL )
         {
             delete ret;
@@ -155,8 +155,8 @@ Btree :: fetch_rec( int keyblockno, int datablockno )
     if ( ret->data.recno != -1 )
     {
         ret->data.ptr = fbn->get_block( ret->data.recno,
-                                        ret->data.len,
-                                        ret->data.magic );
+                                        &ret->data.len,
+                                        &ret->data.magic );
         if ( ret->data.ptr == NULL )
         {
             fbn->unlock_block( ret->key.magic, false );
@@ -202,8 +202,8 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
         return;
     }
 
-    bti = (btreeinfo*) fbn->get_block( btibn, sz, btimagic );
-    nd = (_node*) fbn->get_block( rbn, sz, rootmagic );
+    bti = (btreeinfo*) fbn->get_block( btibn, &sz, &btimagic );
+    nd = (_node*) fbn->get_block( rbn, &sz, &rootmagic );
 
     memset( nd, 0, node_size( order ));
 
@@ -311,13 +311,13 @@ Btree :: alloc_rec( int keylen, int datalen )
     ret->key.len = keylen;
     ret->key.recno = fbn->alloc( keylen );
     ret->key.ptr = fbn->get_block( ret->key.recno,
-                                   keylen, ret->key.magic );
+                                   &keylen, &ret->key.magic );
     ret->key.dirty = true;
 
     ret->data.len = datalen;
     ret->data.recno = fbn->alloc( datalen );
     ret->data.ptr = fbn->get_block( ret->data.recno,
-                                    datalen, ret->data.magic );
+                                    &datalen, &ret->data.magic );
     ret->data.dirty = true;
 
     return ret;
@@ -438,8 +438,8 @@ Btree :: walk_node( node * n, rec * r, bool &exact )
         // compare_recs only needs the key portion
         // so optimize by not fetching the data portion
         tmp.key.recno = bn;
-        tmp.key.ptr = fbn->get_block( bn, tmp.key.len,
-                                      tmp.key.magic );
+        tmp.key.ptr = fbn->get_block( bn, &tmp.key.len,
+                                      &tmp.key.magic );
         cmpres = compare_recs( r, &tmp );
         fbn->unlock_block( tmp.key.magic, false );
         if ( cmpres <= 0 )

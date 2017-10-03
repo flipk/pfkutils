@@ -345,7 +345,7 @@ public:
     void remove( T * t ) { list.remove( t ); }
     void get_oldest( void ) { list.get_head(); }
     void promote( T * t ) {
-        if ( list.get_head() != t ) {
+        if ( list.get_tail() != t ) {
             list.remove( t ); list.add( t );
         }
     }

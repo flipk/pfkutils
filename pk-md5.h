@@ -1,4 +1,7 @@
 
+#ifndef __PK_MD5_H__
+#define __PK_MD5_H__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,3 +35,5 @@ void   MD5Pad       ( MD5_CTX *context );
 #ifdef __cplusplus
 };
 #endif
+
+#endif /* __PK_MD5_H__ */

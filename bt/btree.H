@@ -194,11 +194,10 @@ public:
     ~Btree( void );
 
     void flush( void ) {
-        int dummy;
         int bn = bti->bti_recno;
         fbn->unlock_block( bti_magic, true );
         fbn->flush();
-        bti = (btreeinfo*) fbn->get_block( bn, dummy, bti_magic );
+        bti = (btreeinfo*) fbn->get_block( bn, &bti_magic );
     }
 
 
