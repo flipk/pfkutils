@@ -85,13 +85,17 @@ public:
     typedef void (*FUNCPTR)(void *);
     typedef LList<_Thread,0> _ThreadList;
     enum public_constants {
-        SELECT_FOR_WRITE = 0x1000,  // returned by select
-        INVALID_TID = -1,
-        WAIT_FOREVER = -1,
-        NO_WAIT = 0,
-        NUM_PRIOS = 32  // 0 lowest 31 highest
+        SELECT_FOR_READ  = 0x8000,
+        SELECT_FOR_WRITE = 0x4000,  // returned by select, too
+        FOUND_SEL_READ   = 0x2000,
+        FOUND_SEL_WRITE  = 0x1000,
+        FOUND_SEL_BADF   = 0x0800,
+        INVALID_TID      = -1,
+        WAIT_FOREVER     = -1,
+        NO_WAIT          = 0,
+        NUM_PRIOS        = 32       // 0 lowest 31 highest
     };
-    class constructor_failed { }; // exception thrown by Threads()
+    class constructor_failed { };   // exception thrown by Threads()
     Threads( ThreadParams * ) throw ( constructor_failed );
     ~Threads();
 
@@ -101,13 +105,15 @@ private:
     int max_fds;
     int max_threads;
 
-    _Thread ** threads;       // all threads, tid is index
-    _Thread ** descriptors;   // all fds, fd is index
+    _Thread ** threads;               // all threads, tid is index
+    _Thread ** descriptors;           // all fds, fd is index
+    UINT16 * descriptor_types;
     _ThreadList readyq [ NUM_PRIOS ]; // linked list array, index is priority
-    _Thread * current; // the thread running now
-    _Thread * looper;  // the 'loop' placeholder (how we get out at the exit)
-    _Thread * free_later; // queued memory freeing
-    int numthreads;  // how many threads currently running
+    _Thread * current;                // the thread running now
+    _Thread * looper;                 // the 'loop' placeholder
+//                                       (how we get out at the exit)
+    _Thread * free_later;             // queued memory freeing
+    int numthreads;                   // how many threads currently running
 
     // temp list of threads created between
     // time of constructor and time of looper

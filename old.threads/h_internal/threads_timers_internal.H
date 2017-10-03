@@ -20,22 +20,35 @@
  */
 
 enum timer_action {
-    SEND_MESSAGE,
+    SEND_MESSAGE = 1,
     RESUME_TID
 };
 
 class timerParams {
 public:
+    // required for LList classes
+    LListLinks<timerParams> links[ TIMER_NUMLISTS ];
+    // required by the LListHash
+    int hash_key( void ) { return timerid; }
+    // required by the LListOrderedQ
+    int ordered_queue_key;
+
+    int timerid;
+    timer_action a;
+    bool enabled;  // close a race condition with cancel
+    int tickarg;
+    union {
+        Threads::tid_t tid;
+        Message *m;
+    } mtid;
+
     timerParams( int _timerid, int ticks ) {
-        next = NULL;
         timerid = _timerid;
         enabled = true;
-        onq = false;
-        tickrel = ticks;
         tickarg = ticks;
     }
     ~timerParams( void ) {
-        if ( a == SEND_MESSAGE && mtid.m != NULL )
+        if ( a == SEND_MESSAGE  &&  mtid.m != NULL )
             delete mtid.m;
     }
     void setv( Message * m ) {
@@ -55,18 +68,6 @@ public:
         }
         return ret;
     }
-    timerParams * next;   // on q list
-    timerParams * hnext;  // on hash
-    int timerid;
-    timer_action a;
-    bool onq;      // is it on the q ?
-    bool enabled;  // close a race condition with cancel
-    int tickarg;
-    int tickrel;
-    union {
-        Threads::tid_t tid;
-        Message *m;
-    } mtid;
 };
 
 enum command_action {
@@ -76,8 +77,7 @@ enum command_action {
 
 class timerCommand {
 public:
-    timerCommand( void ) { next = NULL; }
-    timerCommand * next;
+    LListLinks<timerCommand> links[1];
     command_action a;
     timerParams * p;
 };

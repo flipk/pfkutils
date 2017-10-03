@@ -164,7 +164,7 @@ creatorThread :: entry( void )
             case MsgsTcpInd::IND_CONN_HAVE_EID:
                 printf( "connection is to eid %d\n", 
                         m.mti->other_eid.get() );
-                sleep( tps() / 2 );
+//                sleep( tps() / 2 );
                 (void) new exersizeThread(
                     m.mti->other_eid.get(),
                     !(ipaddr == INADDR_ANY) );

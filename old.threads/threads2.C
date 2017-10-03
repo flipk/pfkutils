@@ -137,6 +137,7 @@ Threads :: ~Threads( void )
 
     delete[] threads;
     delete[] descriptors;
+    delete[] descriptor_types;
 }
 
 bool
@@ -160,18 +161,28 @@ Threads :: take_fd( int fd, bool for_read )
     if ( !valid_fd( fd ))
         return false;
 
-    if ( descriptors[fd] != NULL )
+    if ( descriptors[fd] != NULL   &&
+         descriptors[fd] != current )
     {
-        DEBUG1(( 0, "take_fd", "fd %d already registered!", fd ));
-        return true;
+        DEBUG2(( 0, "take_fd",
+                 "fd %d already registered to another tid %#x", fd, current ));
+        return false;
     }
 
     descriptors[fd] = current;
 
     if ( for_read )
+    {
         FD_SET( fd, &th_rfdset );
+        descriptor_types[fd] |= SELECT_FOR_READ;
+        descriptor_types[fd] &= FOUND_SEL_READ;
+    }
     else
+    {
         FD_SET( fd, &th_wfdset );
+        descriptor_types[fd] |= SELECT_FOR_WRITE;
+        descriptor_types[fd] &= FOUND_SEL_WRITE;
+    }
 
     if ( th_max_fd < fd )
         th_max_fd = fd;
@@ -188,22 +199,27 @@ Threads :: release_fd( int fd, bool for_read )
     if ( !valid_fd( fd ))
         return;
 
-    if ( descriptors[fd] == NULL )
+    if ( descriptors[fd] != NULL   &&
+         descriptors[fd] != current )
     {
-        DEBUG1(( 0, "release-fd", "fd %d already unregistered!", fd ));
+        DEBUG2(( 0, "release-fd",
+                 "fd %d owner is %#x!", fd, descriptors[fd] ));
         return;
     }
-
-    descriptors[fd] = NULL;
 
     if ( for_read )
     {
         FD_CLR( fd, &th_rfdset );
+        descriptor_types[fd] &= ~(SELECT_FOR_READ | FOUND_SEL_READ);
     }
     else
     {
         FD_CLR( fd, &th_wfdset );
+        descriptor_types[fd] &= ~(SELECT_FOR_WRITE | FOUND_SEL_WRITE);
     }
+
+    if ( descriptor_types[fd] == 0 )
+        descriptors[fd] = NULL;
 
     for ( last = i = fd; i <= th_max_fd; i++ )
     {
@@ -712,150 +728,147 @@ Threads :: select( int nrfds, int * rfds,
                    int nwfds, int * wfds,
                    int nofds, int * ofds, int timeout )
 {
-    int i, r, fd, max = 0;
-    fd_set rfdset;
-    fd_set wfdset;
+    int c = 0, r, i, fd;
 
-    FD_ZERO( &rfdset );
-    FD_ZERO( &wfdset );
+    // if the user doesn't want to wait, then poll it here,
+    // don't switch back to idler.
+#define CPY \
+    do { if ( c < nofds ) ofds[c++] = fd; } while(0)
+#define CPY2 \
+    do { if ( c < nofds ) ofds[c++] = fd | SELECT_FOR_WRITE; } while(0)
 
-    // set up all fdsets
-
-    for ( i = 0; i < nrfds; i++ )
+    if ( timeout == NO_WAIT )
     {
-        fd = rfds[i];
-        if ( timeout != NO_WAIT )
-            if ( !take_fd( fd, true ))
+        struct timeval tv = { 0, 0 };
+        fd_set rfdset;
+        fd_set wfdset;
+
+        FD_ZERO( &rfdset );
+        FD_ZERO( &wfdset );
+
+        int max = 0;
+        for ( i = 0; i < nrfds; i++ )
+        {
+            fd = rfds[i];
+            FD_SET( fd, &rfdset );
+            if ( fd > max ) max = fd;
+        }
+        for ( i = 0; i < nwfds; i++ )
+        {
+            fd = wfds[i];
+            FD_SET( fd, &wfdset );
+            if ( fd > max ) max = fd;
+        }
+
+        r = ::select( max+1, &rfdset, &wfdset, NULL, &tv );
+        if ( r == 0 )
+            return 0;
+
+        if ( r < 0 )
+        {
+            if ( errno != EBADF )
+                return r;
+
+            // so, one of the fds is invalid, but which 
+            // frickin one?  We have to go hunting for it.
+
+            FD_ZERO( &rfdset );
+            for ( i = 0; i < nrfds; i++ )
             {
-                if ( nofds > 0 )
-                    *ofds = fd;
-                errno = EMFILE;
-                return -1;
+                FD_SET( fd, &rfdset );
+                r = ::select( fd+1, &rfdset, NULL, NULL, &tv );
+                if ( r < 0 ) { CPY; return -1; }
+                FD_CLR( fd, &rfdset );
             }
-        FD_SET( fd, &rfdset );
-        if ( max < fd )
-            max = fd;
-    }
-
-    for ( i = 0; i < nwfds; i++ )
-    {
-        fd = wfds[i];
-        if ( timeout != NO_WAIT )
-            if ( !take_fd( fd, false ))
+            FD_ZERO( &wfdset );
+            for ( i = 0; i < nwfds; i++ )
             {
-                if ( nofds > 0 )
-                    *ofds = fd;
-                errno = EMFILE;
-                return -1;
+                FD_SET( fd, &wfdset );
+                r = ::select( fd+1, NULL, &wfdset, NULL, &tv );
+                if ( r < 0 ) { CPY; return -1; }
+                FD_CLR( fd, &wfdset );
             }
-        FD_SET( fd, &wfdset );
-        if ( max < fd )
-            max = fd;
-    }
 
-    fd_set tmp_wfdset;
-    fd_set tmp_rfdset;
-    struct timeval tv = { 0, 0 };
-
-    // poll
-    tmp_rfdset = rfdset;
-    tmp_wfdset = wfdset;
-    r = ::select( max+1, &tmp_rfdset, &tmp_wfdset, NULL, &tv );
-
-    // if no fds available immediately, go to sleep
-    // until some are.
-
-    if ( r == 0 && timeout != NO_WAIT )
-    {
-        int timerid = -1;
-        if ( timeout != WAIT_FOREVER )
-            timerid = timers->set( timeout, current->tid );
-        current->state = TH_IOWAIT;
-        reschedule();
-        if ( timerid != -1 )
-            (void) timers->cancel( timerid );
-
-        // poll again
-        tmp_rfdset = rfdset;
-        tmp_wfdset = wfdset;
-        r = ::select( max+1, &tmp_rfdset,
-                      &tmp_wfdset, NULL, &tv );
-    }
-
-    // must handle EBADF ... see comment in _thread_idle why
-    // we must do this in this complex fashion.
-    int c = 0;
-
-    if ( r < 0 && errno == EBADF )
-    {
-        // find bad fd and poke it into 'out' and return
-        fd_set fds;
-        FD_ZERO( &fds );
+            return -1;
+        }
 
         for ( i = 0; i < nrfds; i++ )
         {
             fd = rfds[i];
-            FD_SET( fd, &fds );
-            if ( ::select( fd+1, &fds, NULL, NULL, &tv ) < 0 )
-            {
-                ofds[c++] = fd;
-                goto release_all;
-            }
-            FD_CLR( fd, &fds );
+            if ( FD_ISSET( fd, &rfdset ))
+                CPY;
         }
-
         for ( i = 0; i < nwfds; i++ )
         {
             fd = wfds[i];
-            FD_SET( fd, &fds );
-            if ( ::select( fd+1, NULL, &fds, NULL, &tv ) < 0 )
-            {
-                ofds[c++] = fd;
-                goto release_all;
-            }
-            FD_CLR( fd, &fds );
+            if ( FD_ISSET( fd, &wfdset ))
+                CPY2;
         }
-    }
 
- release_all:
-    // tear down all fdsets, copyout active fds
-    int r2 = r;
+        return c;
+    }
 
     for ( i = 0; i < nrfds; i++ )
     {
         fd = rfds[i];
-        if ( r2 > 0 && FD_ISSET( fd, &tmp_rfdset ) && c < nofds )
+        if ( !take_fd( fd, true ))
         {
-            ofds[c++] = fd;
-            r2--;
+            if ( nofds > 0 )
+                *ofds = fd;
+            errno = EMFILE;
+            return -1;
         }
-        if ( timeout != NO_WAIT )
-            release_fd( fd, true );
     }
 
     for ( i = 0; i < nwfds; i++ )
     {
         fd = wfds[i];
-        if ( r2 > 0 && FD_ISSET( fd, &tmp_wfdset ) && c < nofds )
+        if ( !take_fd( fd, false ))
         {
-            ofds[c++] = fd | SELECT_FOR_WRITE;
-            r2--;
+            if ( nofds > 0 )
+                *ofds = fd;
+            errno = EMFILE;
+            return -1;
         }
-        if ( timeout != NO_WAIT )
-            release_fd( fd, false );
     }
 
-    // don't return how many fds select says; 
-    // return instead how many fds we actually copied
-    // out into 'ofds' array. so if more fds are active
-    // than the user specified as the size of 'ofds', we
-    // don't confuse the caller by returning a value larger
-    // than their argument.
+    int timerid = -1;
+    if ( timeout != WAIT_FOREVER )
+        timerid = timers->set( timeout, current->tid );
+    current->state = TH_IOWAIT;
 
-    if ( r > 0 )
-        return c;
+    reschedule();
 
-    return r;
+    if ( timerid != -1 )
+        (void) timers->cancel( timerid );
+
+#define BAD  do { ofds[0] = fd; errno = EBADF; return -1; } while(0)
+
+    for ( i = 0; i < nrfds; i++ )
+    {
+        fd = rfds[i];
+        if ( descriptor_types[fd] & FOUND_SEL_BADF )
+            BAD;
+        if ( descriptor_types[fd] & FOUND_SEL_READ )
+            CPY;
+        release_fd( fd, true );
+    }
+
+    for ( i = 0; i < nwfds; i++ )
+    {
+        fd = wfds[i];
+        if ( descriptor_types[fd] & FOUND_SEL_BADF )
+            BAD;
+        if ( descriptor_types[fd] & FOUND_SEL_WRITE )
+            CPY2;
+        release_fd( fd, false );
+    }
+
+#undef  CPY
+#undef  CPY2
+#undef  BAD
+
+    return c;
 }
 
 int
@@ -1028,7 +1041,7 @@ Threads :: _thread_idle( void )
         // if we wanted to optimize this, we could shortcut
         // Threads::select's work.. but it probably doesn't 
         // save all *that* much effort.
-        
+
         if ( r < 0 && errno == EBADF )
         {
             FD_ZERO( &rfdset );
@@ -1046,6 +1059,9 @@ Threads :: _thread_idle( void )
                                &wfdset, NULL, &tv ) < 0 )
                 {
                     _Thread * w = descriptors[fd];
+                    descriptor_types[fd] |= FOUND_SEL_BADF;
+                    descriptor_types[fd] &=
+                        ~(SELECT_FOR_READ | SELECT_FOR_WRITE);
                     if ( !readyq[w->prio].onlist(w) )
                         enqueue( w );
                     // resume it now...
@@ -1061,9 +1077,20 @@ Threads :: _thread_idle( void )
         bool changed = false;
         while ( r > 0 && fd <= th_max_fd )
         {
-            if ( FD_ISSET( fd, &rfdset ) || 
-                 FD_ISSET( fd, &wfdset ))
+            bool found = false;
+            if ( FD_ISSET( fd, &rfdset ))
             {
+                descriptor_types[fd] |= FOUND_SEL_READ;
+                found = true;
+            }
+            if (FD_ISSET( fd, &wfdset ))
+            {
+                descriptor_types[fd] |= FOUND_SEL_WRITE;
+                found = true;
+            }
+            if ( found )
+            {
+                descriptor_types[fd] &= ~(SELECT_FOR_READ | SELECT_FOR_WRITE);
                 _Thread * w = descriptors[fd];
                 if ( !readyq[w->prio].onlist(w) )
                     enqueue( w );

@@ -90,7 +90,6 @@ MessagesTcp :: MessagesTcp( int _indication_mq, int _connid,
     ind_dest.set( _indication_mq );
     cr =_cr;
     fd = -1;
-    fd_out = -1;
     buf1_size = 0;
     other_eid = -1;
     exit_ind = MsgsTcpInd::IND_CONN_FAILED;
@@ -116,10 +115,7 @@ MessagesTcp :: MessagesTcp( int _indication_mq, int _connid,
 MessagesTcp :: ~MessagesTcp( void )
 {
     if ( fd != -1 )
-    {
         close( fd );
-        close( fd_out );
-    }
 
     if ( mbids[ FD_ACTIVE ] != -1 )
         unregister_mq( mbids[ FD_ACTIVE ] );
@@ -202,7 +198,7 @@ MessagesTcp :: send_my_eid( void )
     msg.my_eid.set( my_eid() );
     msg.req_mid.set( mbids[REQ_EID] );
 
-    write( fd_out, &msg, sizeof( msg ));
+    write( fd, &msg, sizeof( msg ));
 }
 bool
 MessagesTcp :: setup_fd_active_mq( void )
@@ -322,43 +318,42 @@ MessagesTcp :: entry( void )
     }
     else
     {
-        // bummer. we'd like to make this O_NONBLOCK, but then
-        // connect immediately fails with EAGAIN. i mean that's OK,
-        // but we never know when connection is actually established,
-        // except by receipt of the very first packet.
-        // (xxx i've since learned a select-for-write will complete when
-        // connection is established.)
-        // so when is it ok to send the first outbound packet?
-        // so for now leave the fd blocking. connect will block until
-        // connection is established, that's ok for now.
+        // start a connect. note that register_fd makes the
+        // fd nonblocking, so the connect should immediately
+        // return EINPROGRESS.
+        // once the connect starts,
+        // we select for both reading and writing.
+        // if the select-for-read responds first,
+        // then the connect failed.
+        // if the select-for-write responds first,
+        // then the connect succeeded.
+
+        register_fd( fd );
 
         if ( connect( fd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
-        { print( errno, "connect" ); return; }
+        {
+            if ( errno != EINPROGRESS )
+            {
+                print( errno, "connect" );
+                return;
+            }
+        }
+
+        int selret;
+        int selout;
+        selret = select( 1, &fd, 1, &fd,
+                         1, &selout, WAIT_FOREVER );
+
+        struct sockaddr_in name;
+        socklen_t namelen = sizeof( name );
+
+        if ( getpeername( fd, (struct sockaddr *)&name, &namelen ) < 0 )
+            if ( errno == ENOTCONN )
+                return;
     }
 
     send_indication( MsgsTcpInd :: IND_CONN_ESTABLISHED );
     exit_ind = MsgsTcpInd::IND_CONN_CLOSED;
-
-//  threads has a stupid shortcoming. you cannot select
-//  on a file descriptor for both read and write simultaneously.
-//  since this thread blocks on message queues, we must use the
-//  fd_mq interface for reading. however that means we cannot use
-//  Threads::write to transmit simultaneous with fd_mq selecting
-//  for read.
-
-//  but we'd really really like to be able to use Threads::write,
-//  so we come up with another idea.  once the connection is
-//  established, we dup() the descriptor. we register them both,
-//  use one for reading (using fd_mq) and the other for writing
-//  (using Threads::write). So we get best of both worlds -- fd_mq
-//  assistance with reading and the scheduling benefits of 
-//  Threads::write. We just have to be sure to keep track of both
-//  fds on this connection and close them both when its time to close
-//  the link connection.
-
-    fd_out = dup( fd );
-    register_fd( fd );
-    register_fd( fd_out );
 
     send_my_eid();
 
@@ -510,7 +505,7 @@ MessagesTcp :: forward_data( Message * m )
         }
     }
 
-    if ( th->write( fd_out, m->get_body(), m->get_size() ) < 0 )
+    if ( th->write( fd, m->get_body(), m->get_size() ) < 0 )
     {
         print( errno, "forward_data : write" );
         return false;
@@ -713,6 +708,11 @@ MessagesTcp :: rcvr_statemachine( void )
 
                 else
                 {
+                    // zero out the links field, because we didn't
+                    // properly construct this Message.  if we had,
+                    // the LLinks constructor would have cleaned it
+                    // out already.
+
                     memset( &m.m->links, 0, sizeof( m.m->links ));
                     if ( send( m.m, &m.m->dest ) == false )
                     {

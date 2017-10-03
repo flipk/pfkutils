@@ -91,14 +91,18 @@ Threads :: Threads( ThreadParams * p )
     max_threads = p->max_threads;
     max_fds = p->max_fds;
 
-    threads     = new _Thread*[ max_threads ];
-    descriptors = new _Thread*[ max_fds ];
+    threads          = new _Thread*[ max_threads ];
+    descriptors      = new _Thread*[ max_fds ];
+    descriptor_types = new UINT16[ max_fds ];
 
     for ( i = 0; i < max_threads; i++ )
         threads[i] = NULL;
 
     for ( i = 0; i < max_fds; i++ )
+    {
         descriptors[i] = NULL;
+        descriptor_types[i] = 0;
+    }
 
     current = NULL;
     looper = NULL;

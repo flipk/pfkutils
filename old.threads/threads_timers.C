@@ -31,21 +31,12 @@
 #include "threads_messages_internal.H"
 #include "threads_timers_internal.H"
 
-ThreadTimers :: ThreadTimers( int _tps, int _hash_size )
+ThreadTimers :: ThreadTimers( int _tps, int hash_size )
+    : hash( hash_size )
 {
     tps = _tps;
-    hash_size = _hash_size;
     die = false;
-    cmds = cmds_end = NULL;
     tick = 0;
-    numtimers = 0;
-
-    hash = new timerParams*[ hash_size ];
-
-    int i;
-    for ( i = 0; i < hash_size; i++ )
-        hash[i] = NULL;
-    q = NULL;
 
     mytid = th->create( "timer", Threads::NUM_PRIOS-1, 16384,
                         false, _thread, (void*)this );
@@ -54,14 +45,14 @@ ThreadTimers :: ThreadTimers( int _tps, int _hash_size )
 ThreadTimers :: ~ThreadTimers( void )
 {
     int i;
-    timerParams * hp, * nhp;
-    for ( i = 0; i < hash_size; i++ )
-        for ( hp = hash[i]; hp != NULL; hp = nhp )
-        {
-            nhp = hp->next;
-            delete hp;
-        }
-    delete[] hash;
+    timerParams * p, * np;
+    for ( p = oq.get_head(); p; p = np )
+    {
+        np = oq.get_next( p );
+        oq.remove( p );
+        hash.remove( p );
+        delete p;
+    }
 }
 
 void
@@ -76,59 +67,19 @@ ThreadTimers :: printtimers( FILE * f )
     fprintf( f, FORMAT4 );
 
     timerParams * p;
-    for ( p = q; p != NULL; p = p->next )
+    for ( p = oq.get_head(); p; p = oq.get_next(p))
         fprintf( f, FORMAT3,
                  p->timerid, 
                  p->a == RESUME_TID ? "resume" : "msg",
                  p->a == RESUME_TID ?
                  p->mtid.tid : p->mtid.m->dest.mid.get(),
-                 p->enabled, p->onq, p->tickrel );
+                 p->enabled, oq.onlist(p), p->ordered_queue_key );
 
 #undef  FORMAT1
 #undef  FORMAT2
 #undef  FORMAT3
 }
 
-void
-ThreadTimers :: enqueue_cmd( timerCommand * c )
-{
-    if ( cmds )
-    {
-        cmds_end->next = c;
-        cmds_end = c;
-    }
-    else
-    {
-        cmds = cmds_end = c;
-    }
-    th->resume( mytid );
-}
-
-timerCommand *
-ThreadTimers :: dequeue_cmd( void )
-{
-    timerCommand * c = cmds;
-
-    if ( c )
-    {
-        cmds = c->next;
-        if ( cmds == NULL )
-            cmds_end = NULL;
-    }
-
-    return c;
-}
-
-timerParams *
-ThreadTimers :: find_timerid( int timerid )
-{
-    int h = timerid % hash_size;
-    timerParams * p;
-    for ( p = hash[h]; p != NULL; p = p->next )
-        if ( p->timerid == timerid )
-            break;
-    return p;
-}
 
 timerParams *
 ThreadTimers :: new_timer( int ticks )
@@ -137,7 +88,7 @@ ThreadTimers :: new_timer( int ticks )
     while ( 1 )
     {
         timerid = random();
-        if ( find_timerid( timerid ) == NULL )
+        if ( hash.find( timerid ) == NULL )
             break;
     }
     return new timerParams( timerid, ticks );
@@ -151,7 +102,7 @@ ThreadTimers :: set( int ticks, Message * m )
     c->p = new_timer( ticks );
     c->p->setv( m );
     int timerid = c->p->timerid;
-    enqueue_cmd( c );
+    cmds.add( c );
     return timerid;
 }
 
@@ -163,14 +114,14 @@ ThreadTimers :: set( int ticks, Threads::tid_t tid )
     c->p = new_timer( ticks );
     c->p->setv( tid );
     int timerid = c->p->timerid;
-    enqueue_cmd( c );
+    cmds.add( c );
     return timerid;
 }
 
 bool
 ThreadTimers :: cancel( int timerid, Message ** m )
 {
-    timerParams * p = find_timerid( timerid );
+    timerParams * p = hash.find( timerid );
     if ( p == NULL )
         return false;
     if ( m != NULL )
@@ -179,7 +130,7 @@ ThreadTimers :: cancel( int timerid, Message ** m )
     c->a = CANCEL_TIMER;
     c->p = p;
     p->enabled = false;
-    enqueue_cmd( c );
+    cmds.add( c );
     return true;
 }
 
@@ -283,16 +234,26 @@ ThreadTimers :: thread( void )
 void
 ThreadTimers :: process_cmds( void )
 {
-    timerCommand * c;
-    while (( c = dequeue_cmd()) != NULL )
+    timerCommand * c, * nc;
+    for ( c = cmds.get_head(); c; c = nc )
     {
+        nc = cmds.get_next(c);
+        cmds.remove( c );
+
         if ( c->a == SET_TIMER )
-            enqueue_p( c->p );
+        {
+            oq.add( c->p, c->p->tickarg );
+            hash.add( c->p );
+        }
         else if ( c->a == CANCEL_TIMER )
-            dequeue_p( c->p );
+        {
+            oq.remove( c->p );
+            hash.remove( c->p );
+        }
 
         if ( c->a == CANCEL_TIMER && c->p->enabled )
             delete c->p;
+
         delete c;
     }
 }
@@ -301,15 +262,22 @@ void
 ThreadTimers :: process_tick( void )
 {
     tick++;
-    if ( q == NULL )
+    if ( oq.get_cnt() == 0 )
         return;
-    q->tickrel--;
-    while ( q != NULL && q->tickrel <= 0 )
+
+    oq.get_head()->ordered_queue_key--;
+    timerParams * p;
+
+    while ( 1 )
     {
-        timerParams * p = q;
-        q = q->next;
-        p->onq = false;
-        dequeue_p( p );
+        p = oq.get_head();
+        if ( !p )
+            break;
+        if ( p->ordered_queue_key > 0 )
+            break;
+
+        oq.remove( p );
+        hash.remove( p );
 
         // expire p
 
@@ -329,8 +297,8 @@ ThreadTimers :: process_tick( void )
             if (( th->valid_tid( p->mtid.tid )) &&
                 ( th->resume( p->mtid.tid ) == false ))
             {
-                p->tickrel = p->tickarg;
-                enqueue_p( p );
+                oq.add( p, p->tickarg );
+                hash.add( p );
                 p = NULL;
             }
         }
@@ -338,107 +306,4 @@ ThreadTimers :: process_tick( void )
         if ( p != NULL )
             delete p;
     }
-}
-
-void
-ThreadTimers :: enqueue_p( timerParams * n )
-{
-    int h = n->timerid % hash_size;
-
-    n->hnext = hash[h];
-    hash[h] = n;
-    numtimers++;
-
-    n->onq = true;
-
-    if ( q == NULL )
-    {
-        q = n;
-        return;
-    }
-
-    int ticks = n->tickrel;
-    timerParams * p, * op;
-
-    for ( op = NULL, p = q;
-          p != NULL && ticks > p->tickrel;
-          op = p, p = p->next )
-    {
-        ticks -= p->tickrel;
-    }
-
-    if ( p != NULL )
-    {
-        p->tickrel -= ticks;
-        if ( op == NULL )
-            q = n;
-        else
-            op->next = n;
-        n->next = p;
-    }
-    else
-    {
-        op->next = n;
-        n->next = NULL;
-    }
-
-    n->tickrel = ticks;
-}
-
-void
-ThreadTimers :: dequeue_p( timerParams * n )
-{
-    int h = n->timerid % hash_size;
-    timerParams * p, * op;
-
-    for ( op = NULL, p = hash[h]; p != NULL; op = p, p = p->hnext )
-    {
-        if ( p == n )
-            break;
-    }
-
-    if ( p == NULL )
-    {
-        DEBUG1(( 0, "thmsgs", "dequeue_p : bad things happen!" ));
-    }
-    else
-    {
-        if ( op == NULL )
-            hash[h] = n->hnext;
-        else
-            op->hnext = n->hnext;
-    }
-
-    numtimers--;
-
-    if ( n->onq == false )
-        return;
-
-    for ( op = NULL, p = q; p != NULL; op = p, p = p->next )
-    {
-        if ( p == n )
-            break;
-    }
-
-    if ( p == NULL )
-    {
-        DEBUG1(( 0, "thmsgs", "dequeue_p : bad things happen 2!" ));
-        return;
-    }
-
-    if ( op == NULL )
-    {
-        q = p->next;
-        if ( q != NULL )
-            q->tickrel += p->tickrel;
-    }
-    else
-    {
-        op->next = p->next;
-        if ( op->next != NULL )
-            op->next->tickrel += p->tickrel;
-    }
-
-    p->next = NULL;
-    p->tickrel = 0;
 }

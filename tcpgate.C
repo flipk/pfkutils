@@ -22,7 +22,7 @@
 
 #include "tcpgate.H"
 
-#undef VERBOSE
+#define VERBOSE 0
 
 extern "C" int tcpgate_main( int argc, char ** argv );
 extern "C" int pipe_main( int argc, char ** argv );
@@ -115,9 +115,20 @@ FDMAP_DATA :: handle_select_w( void )
 {
     if ( waitfor_connect )
     {
+        struct sockaddr_in name;
+        socklen_t namelen = sizeof( name );
+
+        if ( getpeername( fd, (struct sockaddr *)&name, &namelen ) < 0 )
+            if ( errno == ENOTCONN )
+            {
+                printf( "fd %d not connected during write\n", fd );
+                closeit();
+                return;
+            }
+
         // this means the connect call completed and has 
         // successfully established.
-#ifdef VERBOSE
+#if VERBOSE
         printf( "fd %d connected\n", fd );
 #endif
         waitfor_connect = false;
@@ -130,7 +141,7 @@ FDMAP_DATA :: handle_select_w( void )
     if ( bufsize > 0 )
     {
         int cc = write( fd, write_pos(), bufsize );
-#ifdef VERBOSE
+#if VERBOSE
         printf( "wrote %d of %d bytes\n", cc, bufsize );
 #endif
 
@@ -156,7 +167,7 @@ FDMAP_DATA :: handle_select_r( void )
         // this means the connect call has failed and the
         // connection was not established.
         waitfor_connect = false;
-#ifdef VERBOSE
+#if VERBOSE
         printf( "fd %d NOT connected\n", fd );
 #endif
         closeit();
@@ -171,7 +182,7 @@ FDMAP_DATA :: _handle_select_r( void )
     int bufsize = read_size();
     int cc = read( other_fd->fd, read_pos(), bufsize );
     int e = cc < 0 ? errno : 0;
-#ifdef VERBOSE
+#if VERBOSE
     printf( "read %d of %d: %s\n",
             cc, bufsize,
             e == 0 ? "no error" : strerror( e ));
@@ -259,6 +270,16 @@ manage_ports_loop( void )
         FDMAP_DELETE_LIST del;
 
         if ( cc > 0 )
+        {
+#if 0 /* for debug */
+            for ( int i = 0; i < max; i++ )
+            {
+                if ( FD_ISSET(i, &rfds))
+                    printf( "select %d for read\n", i );
+                if ( FD_ISSET(i, &wfds))
+                    printf( "select %d for write\n", i );
+            }
+#endif
             for ( m = list->get_head(); m; m = nm )
             {
                 nm = list->get_next(m);
@@ -271,6 +292,7 @@ manage_ports_loop( void )
                 if ( m->fd == -1 )
                     del.add( m );
             }
+        }
 
         // delete any fds which require deleting
 

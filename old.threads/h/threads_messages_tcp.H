@@ -50,7 +50,6 @@ class MessagesTcp : public Thread {
     unsigned long remote_ip;
     int remote_port;
     int fd;
-    int fd_out;
     int other_eid;
     int other_req_mid;
     struct sockaddr_in sa;

@@ -22,42 +22,40 @@
 class timerParams;
 class timerCommand;
 
+enum timer_lists {
+    TIMER_LIST_QUEUE, TIMER_LIST_HASH, TIMER_NUMLISTS
+};
+
 class ThreadTimers {
-    timerParams ** hash;
-    timerParams * q;
-    int numtimers;
-    int hash_size;
+    LListHash     <timerParams,TIMER_LIST_HASH > hash;
+    LListOrderedQ <timerParams,TIMER_LIST_QUEUE> oq;
+    LList         <timerCommand,0>               cmds;
+
     int tps;
     int tick;
-    Threads::tid_t mytid;
     bool die;
+    Threads::tid_t mytid;
     static void _thread( void * arg );
     void thread( void );
     void process_tick( void );
     void process_cmds( void );
     void setup_helper( void );
-    timerParams * find_timerid( int timerid );
     timerParams * new_timer( int ticks );
 
     int p[2];  // pipe from helper
     int writeretval;
     static void sighand( int s );
-    timerCommand * cmds;
-    timerCommand * cmds_end;
-    void enqueue_cmd( timerCommand * );
-    timerCommand * dequeue_cmd( void );
-    void enqueue_p( timerParams * );
-    void dequeue_p( timerParams * );
+
 public:
     class constructor_failed { };
-    ThreadTimers( int _tps, int _hash_size );
+    ThreadTimers( int _tps, int hash_size );
     ~ThreadTimers( void );
     void kill( void ) { die = true; th->resume( mytid ); }
     void printtimers( FILE * );
 
     int get_tps() { return tps; }
     int get_tick() { return tick; }
-    int get_numtimers() { return numtimers; }
+    int get_numtimers() { return hash.get_cnt(); }
 
     // send message after x ticks, returns timerid
     int set( int ticks, Message * );
