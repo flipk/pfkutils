@@ -23,6 +23,61 @@
 #include "Btree.H"
 #include "FileBlock_iface.H"
 
+/** \mainpage PFK BAK Database Elements
+
+ \dot
+  digraph junk {
+    node [shape=record, fontname=Helvetica, fontsize=10];
+    edge [ arrowhead="open", style="solid" ];
+    a [ label="BackupInfoList.backup_id" URL="\ref BackupInfoListData" ];
+    b [ label="BackupInfo.generations[n].root_dir_id"  URL="\ref BackupInfoData" ];
+    c [ label="BackupInfo...."  URL="\ref BackupInfoData" ];
+    d [ label="BackupInfo...."  URL="\ref BackupInfoData" ];
+    e [ label="DirectoryInfo 1.entries[n].info.*_id"  URL="\ref DirectoryInfoData" ];
+    f [ label="DirectoryInfo 1...."  URL="\ref DirectoryInfoData" ];
+    g [ label="DirectoryInfo 1...."  URL="\ref DirectoryInfoData" ];
+    h [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
+    i [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
+    j [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
+    k [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
+    l [ label="DirectoryInfo 1"  URL="\ref DirectoryInfoData" ];
+    m [ label="DirectoryInfo 2"  URL="\ref DirectoryInfoData" ];
+    n [ label="FileInfo 1"  URL="\ref FileInfoData" ];
+    o [ label="FileInfo 2"  URL="\ref FileInfoData" ];
+    p [ label="BinaryData 1" URL="\ref BinaryData" ];
+    q [ label="BinaryData 2" URL="\ref BinaryData" ];
+    r [ label="BinaryData 3" URL="\ref BinaryData" ];
+    s [ label="BinaryData 1" URL="\ref BinaryData" ];
+    t [ label="BinaryData 2" URL="\ref BinaryData" ];
+    u [ label="FileInfoExtended"  URL="\ref FileInfoExtended" ];
+    a -> b;
+    a -> c;
+    a -> d;
+    b -> e;
+    b -> f;
+    b -> g;
+    e -> h;
+    e -> i;
+    f -> j;
+    f -> k;
+    g -> l;
+    g -> m;
+    e -> n;
+    f -> n;
+    g -> n;
+    h -> o;
+    j -> o;
+    l -> o;
+    o -> p;
+    o -> q;
+    o -> u;
+    u -> r;
+    n -> s;
+    n -> t;
+  }
+ \enddot
+*/
+
 /** base type for any btree key. every btree key will have a prefix
  * byte which is unique to the type.  This struct's constructor ensures
  * that the prefix byte is populated. */

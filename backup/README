@@ -43,22 +43,16 @@ generations.)
 
 command line forms:
 
-     pfkbak --list-generations BACKUP-FILE
-     pfkbak --delete-generation N,M,X,A-B,-B,... BACKUP-FILE
-     pfkbak --create BACKUP-FILE DIR [DIR..]
-     pfkbak --update BACKUP-FILE
-     pfkbak --list-files [--generation N] [--verbose] BACKUP-FILE
-     pfkbak --extract-file FILE [--generation N] BACKUP-FILE
-     pfkbak --extract-dir DIR [--generation N] BACKUP-FILE
-     pfkbak --extract-files-from LIST-FILE [--generation N] BACKUP-FILE
+     pfkbak --list-backups BACKUP-FILE
+     pfkbak --list-gens BACKUP-FILE:BACKUP-NAME
+     pfkbak --delete-gen N,M,X,A-B,-B,... BACKUP-FILE:BACKUP-NAME
+     pfkbak --create-backup-file BACKUP-FILE
+     pfkbak --create-backup BACKUP-FILE:BACKUP-NAME DIR
+     pfkbak --update BACKUP-FILE:BACKUP-NAME DIR
+     pfkbak --list-files [--gen N] [--verbose] BACKUP-FILE:BACKUP-NAME
+     pfkbak --extract-file FILE [--gen N] BACKUP-FILE:BACKUP-NAME
+     pfkbak --extract-dir DIR [--gen N] BACKUP-FILE:BACKUP-NAME
+     pfkbak --extract-files-from LIST-FILE [--gen N] BACKUP-FILE:BACKUP-NAME
 
 database entries:
-
-FilePiece
----------
-key  : - md5 hash
-data : - reference count
-       - compressed size
-       - uncompressed size
-       - FBN# for the libz-compressed data
 
