@@ -221,6 +221,7 @@ MessagesUdp :: read_packet( void )
         if ( m.m->decrypt( cr ) == false )
         {
             printf( "unable to decrypt received message\n" );
+            delete m.b;
             return;
         }
 

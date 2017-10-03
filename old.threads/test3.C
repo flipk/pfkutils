@@ -66,7 +66,7 @@ main( int argc, char ** argv )
     ThreadParams   p;
     p.my_eid     = my_eid;
     p.max_eids   = 10;
-    p.debug      = ThreadParams::DEBUG_MSGSCONTENTS;
+//    p.debug      = ThreadParams::DEBUG_MSGSCONTENTS;
 
     Threads th( &p );
     new testThread;
@@ -75,10 +75,29 @@ main( int argc, char ** argv )
     return 0;
 }
 
+MsgDef( TestMsg, 0x2a145981,
+        int val;
+    );
+MsgDef( TestDataMsg, 0x2a145982,
+        int len;
+        char string[80];
+    );
+
 void
 testThread :: entry( void )
 {
-    MessagesUdp * mu = new MessagesUdp( 1, 0, my_port, true );
+    union {
+        Message * m;
+        TestMsg * tm;
+        TestDataMsg * tdm;
+    } m;
+
+    encrypt_iface * cr = parse_key( "rubik4:"
+                                    "0e37adb1631180b8326d6148,5,"
+                                    "12666fc65963b5fa531e"
+                                    "321d6153961e5abed732" );
+
+    MessagesUdp * mu = new MessagesUdp( 1, cr, my_port, false );
     mu->register_entity( other_ip, other_port, other_eid );
 
     int mqid, other_mq;
@@ -89,29 +108,77 @@ testThread :: entry( void )
         return;
     }
 
-    printf( "start sleep 1\n" );
     sleep( 30 );
-    printf( "end sleep one, looking up test_mq on other side\n" );
 
     if ( lookup_mq( other_eid, other_mq, "test_mq" ) == false )
-    {
         printf( "unable to lookup other mq\n" );
-    }
     else
     {
-        printf( "sending test message to other mq %d at eid %d\n",
-                other_mq, other_eid );
+        m.tm = new TestMsg;
+        m.tm->dest.set( other_eid, other_mq );
+        m.tm->val = random();
+        printf( "sending test message to other mq %d at eid %d val %d\n",
+                other_mq, other_eid, m.tm->val );
+        if ( send( m.m, &m.m->dest ) == false )
+        {
+            printf( "unable to send message to other entity!\n" );
+            delete m.m;
+        }
     }
 
-    printf( "lookup complete; starting sleep 2\n" );
-    sleep( 10 );
-    printf( "ending sleep 2, shutting down\n" );
+    bool zero_regd = false;
+    bool done = false;
+
+    register_fd( 0 );
+
+    while ( !done )
+    {
+        int mqout;
+        TestDataMsg * tdmout;
+
+        if ( !zero_regd )
+        {
+            register_fd_mq( 0, 0, FOR_READ, mqid );
+            zero_regd = true;
+        }
+
+        m.m = recv( 1, &mqid, &mqout, WAIT_FOREVER );
+        if ( m.m == NULL )
+            break;
+
+        switch ( m.m->type.get() )
+        {
+        case FdActiveMessage::TYPE:
+            tdmout = new TestDataMsg;
+            tdmout->dest.set( other_eid, other_mq );
+            tdmout->len = ::read( 0, tdmout->string, sizeof( tdmout->string ));
+            if ( tdmout->len == 0 )
+                done = true;
+            send( tdmout, &tdmout->dest );
+            zero_regd = false;
+            break;
+
+        case TestDataMsg::TYPE:
+            write( 1, m.tdm->string, m.tdm->len );
+            if ( m.tdm->len == 0 )
+                done = true;
+            break;
+
+        case TestMsg::TYPE:
+            printf( "received test message with val = %d\n",
+                    m.tm->val );
+            break;
+        default:
+            printf( "message unknown type %#x received\n",
+                    m.m->type.get() );
+        }
+
+        delete m.m;
+    }
 
     mu->unregister_entity( other_eid );
 
-    printf( "unregister complete, starting sleep 3\n" );
     sleep( 10 );
-    printf( "ending sleep 3\n" );
 
     mu->kill();
 }
