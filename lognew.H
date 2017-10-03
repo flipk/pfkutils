@@ -1,3 +1,8 @@
+#if 1
+#define LOGNEW new
+#define MALLOC(size) malloc( size )
+#define STRDUP(str) strdup( str )
+#else
 
 #ifdef __cplusplus
 
@@ -18,3 +23,4 @@ char * strdup_record( char * file, int line, char *str );
 #ifdef __cplusplus
 };
 #endif
+#endif /* if 0 */

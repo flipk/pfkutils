@@ -1,3 +1,13 @@
+#if 0
+incs=-I..
+g++ -c $incs encrypt_iface.C
+g++ -c $incs encrypt_rubik4.C
+g++ -c $incs encrypt_rubik5.C
+g++ -c $incs -Dmakekey_main=main makekey.C
+g++ encrypt_iface.o encrypt_rubik4.o encrypt_rubik5.o makekey.o -o mk
+exit 0
+#endif
+
 /*
  * This code is written by Phillip F Knaack. This code is in the
  * public domain. Do anything you want with this code -- compile it,
@@ -25,39 +35,8 @@
 
 #include "encrypt_iface.H"
 #include "types.H"
-#include "threads.H"
-#include "threads/h_internal/encrypt_rubik4.H"
-/* #include "threads/h_internal/encrypt_rubik5.H" */
-
-class makekeymain : public Thread {
-    void entry( void ) {
-        encrypt_key * key = NULL;
-        switch ( type )
-        {
-        case 4:
-            key = new rubik4_key;
-            break;
-/*        case 5:
-            key = new rubik5_key;
-            break; */
-        default:
-/*            printf( "type must be 4 or 5 (not %d)\n", type ); */
-            printf( "type must be 4 (not %d)\n", type );
-            return;
-        }
-        key->random_key( atoi( string ));
-        ::printf( "%s\n", key->key_dump());
-    };
-    char * string;
-    int type;
-public:
-    makekeymain( int _type, char * _string )
-        : Thread( "makekey" ) {
-        string = _string;
-        type = _type;
-        resume( tid );
-    }
-};
+#include "encrypt_rubik4.H"
+#include "encrypt_rubik5.H"
 
 extern "C" {
     int makekey_main( int argc, char ** argv );
@@ -72,10 +51,23 @@ makekey_main( int argc, char ** argv )
         return 1;
     }
 
-    ThreadParams p;
-    p.my_eid = 1;
-    Threads th( &p );
-    (void) new makekeymain( atoi( argv[1] ), argv[2] );
-    th.loop();
+    char * string = argv[2];
+    int type = atoi( argv[1] );
+
+    encrypt_key * key = NULL;
+    switch ( type )
+    {
+    case 4:
+        key = new rubik4_key;
+        break;
+    case 5:
+        key = new rubik5_key;
+        break;
+    default:
+        printf( "type must be 4 or 5 (not %d)\n", type );
+        return 1;
+    }
+    key->random_key( atoi( string ));
+    printf( "%s\n", key->key_dump());
     return 0;
 }

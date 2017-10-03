@@ -5,10 +5,10 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-#include "pk_tcp_msg.H"
+#include "pk_msg.H"
 
 bool
-pk_tcp_msgr :: send( pk_tcp_msg * m )
+pk_msgr :: send( pk_msg * m )
 {
     m->set_checksum();
     int l = m->get_len();
@@ -27,11 +27,11 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
 enum states { HEADER, BODY };
 
 bool
-pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
+pk_msgr :: recv( pk_msg * m, int max_size )
 {
     char * buf = m->get_ptr();
     states state = HEADER;
-    int stateleft = sizeof( pk_tcp_msg );
+    int stateleft = sizeof( pk_msg );
 
     while ( 1 )
     {
@@ -55,7 +55,7 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
                 if ( stateleft > max_size )
                     return false;
 
-                stateleft -= sizeof( pk_tcp_msg );
+                stateleft -= sizeof( pk_msg );
                 if ( stateleft == 0 )
                     return true;
 
@@ -77,12 +77,12 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
 
 /* example definition of a message */
 
-PkTcpMsgDef( TestMessage, 0x12345,
-             int a;
-             int b;
+PkMsgDef( TestMessage, 0x12345,
+          int a;
+          int b;
     );
 
-class my_tcp_msgr : public pk_tcp_msgr {
+class my_msgr : public pk_msgr {
 private:
     /*virtual*/ int reader( void * buf, int buflen ) {
     }
@@ -93,15 +93,15 @@ private:
     int fd;
     int junk;
 public:
-    my_tcp_msgr( int _fd, int _junk ) { fd = _fd; junk = _junk; }
-    ~my_tcp_msgr( void ) { close( fd ); }
+    my_msgr( int _fd, int _junk ) { fd = _fd; junk = _junk; }
+    ~my_msgr( void ) { close( fd ); }
 };
 
 int
 testfunc( void )
 {
     TestMessage tm;
-    pk_tcp_msgr mgr( /*fd*/ 1, /*junk*/ 4 );
+    pk_msgr mgr( /*fd*/ 1, /*junk*/ 4 );
 
     mgr.send( &tm );
 }

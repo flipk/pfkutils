@@ -32,7 +32,11 @@
 
 #include "inode.H"
 #include "nfs_prot.h"
+#ifdef USE_CRYPT
 #include "encrypt_iface.H"
+#else
+class encrypt_iface;
+#endif
 #include "filehandle.H"
 
 class nfssrv {
@@ -161,8 +165,10 @@ public:
             for ( int i = 0 ; i < MAX_TREES; i++ )
                 if ( it[i] )
                     delete it[i];
+#ifdef USE_CRYPT
             if ( crypt )
                 delete crypt;
+#endif
         }
 
     int reserve_treeid( void )

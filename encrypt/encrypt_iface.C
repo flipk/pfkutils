@@ -19,14 +19,57 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* not that a file this size really needs a copyright header, per se.... */
+// this module understands all supported encryption types
+// and parses them out.
 
-extern "C" int PROGRAM_MAIN ( int argc, char ** argv );
+#include "encrypt_iface.H"
+#include "encrypt_rubik4.H"
+#include "encrypt_rubik5.H"
+#include "encrypt_none.H"
+#include "lognew.H"
 
-int
-main( int argc, char ** argv )
+encrypt_iface *
+parse_key( char * keystring )
 {
-    return PROGRAM_MAIN ( argc, argv );
-}
+    encrypt_key * key = NULL;
+    encrypt_iface * ret = NULL;
 
-/* itsfssvr itsfsriw */
+    if ( encrypt_none_key::valid_keystring( keystring ))
+        key = LOGNEW encrypt_none_key;
+    else if ( rubik4_key::valid_keystring( keystring ))
+        key = LOGNEW rubik4_key;
+    else if ( rubik5_key::valid_keystring( keystring ))
+        key = LOGNEW rubik5_key;
+    
+    if ( key == NULL )
+        return NULL;
+
+    if ( key->key_parse( keystring ) == false )
+    {
+        delete key;
+        return NULL;
+    }
+
+    switch ( key->type )
+    {
+    case encrypt_none_key::TYPE:
+        ret = LOGNEW encrypt_none;
+        break;
+    case rubik5_key::TYPE:
+        ret = LOGNEW rubik5;
+        break;
+    case rubik4_key::TYPE:
+        ret = LOGNEW rubik4;
+        break;
+    }
+
+    if ( ret == NULL )
+    {
+        delete key;
+        return NULL;
+    }
+
+    ret->key = key;
+
+    return ret;
+}

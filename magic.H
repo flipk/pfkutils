@@ -35,6 +35,7 @@ enum MagicNumbers {
     MagicNumbers_Encrypt_KeyRubik4              = 0x7dd744b7,
     MagicNumbers_Encrypt_ClassRubik4            = 0x3b927dca,
 
+#if 0
     MagicNumbers_MessageEncoding_Header         = 0x31bc397f,
     MagicNumbers_MessageEncoding_HeaderEnc      = 0x126735df,
     MagicNumbers_MessageEncoding_GenericType    = 0x095be460,
@@ -53,6 +54,7 @@ enum MagicNumbers {
     MagicNumbers_Messages_discon_ind            = 0x26f33c08,
 
     MagicNumbers_Threads_PrintMessage           = 0x24fec2ea
+#endif
 
 };
 

@@ -2,14 +2,13 @@
 TitleFont        "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
 MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
-IconFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
-IconManagerFont  "-adobe-helvetica-bold-r-normal--*-120-*-*-*"
-IconManagerGeometry   "150x100+0+94"
+IconFont         "-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*"
+IconManagerFont  "-adobe-helvetica-bold-r-normal--*-100-*-*-*"
 
 UsePPosition "nonzero"
 
 OpenWindowTimeout    5
-MaxIconTitleWidth  150
+MaxIconTitleWidth  120
 MoveOffResistance   20
 BorderWidth          3
 
@@ -23,7 +22,7 @@ PackNewWindows
 NoShowOccupyAll
 NoRaiseOnResize
 StartInMapState
-#SchrinkIconTitles
+SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
 #IconifyByUnmapping
@@ -37,7 +36,7 @@ AlwaysShowWindowWhenMovingFromWorkspaceManager
 
 #           geometry        hgrav vgrav grid  iconjust iconregjust iconregalign
 #IconRegion "280x50+125+60"  North West  10 10  "left"   "left"     "top"
-#IconRegion "900x100+410+25" North West  10 10  "left"   "left"     "top"
+IconRegion "900x100+410+25" North West  10 10  "left"   "left"     "top"
 
 AutoSqueeze { "autosqueeze" }
 
@@ -57,10 +56,7 @@ NoTitle {
 	"XTermScreen"
 	"NoTitle"
 	"XDaliClock"
-	"xdaliclock"
 	"Vncviewer"
-	"TWM Icon Manager"
-	"firefox-bin"
 }
 
 IconManagerDontShow {
@@ -89,11 +85,11 @@ Color
 	MenuTitleBackground "gray70"
 	MenuTitleForeground "rgb:2/a/9"
 	MapWindowBackground "yellow"
-	IconBackground "#c00000"
-	IconForeground "white"
+	IconBackground "#203040"
+	IconForeground "gray85"
 	IconBorderColor "gray85"
-	IconManagerBackground "#800000"
-	IconManagerForeground "white"
+	IconManagerBackground "rgb:2/a/9"
+	IconManagerForeground "gray85"
 }
 
 MoveDelta 3
@@ -101,6 +97,7 @@ Function "move-or-raise" { f.movepack f.deltastop f.raiselower }
 Function "move-or-iconify" { f.move f.deltastop f.iconify }
 
 Button1 =   : root        : f.menu "defops"
+Button1 = c : root        : f.menu "vncssh"
 Button3 =   : root        : f.menu "TwmAllWindows"
 Button3 = s : root        : f.menu "TwmWindows"
 Button2 = s : window|icon : f.iconify
@@ -120,8 +117,6 @@ Button2 =   : iconmgr     : f.iconify
 "r"     = c : root        : f.restart
 "d"     = c : root        : f.quit
 "l"	=   : root        : !"xlock&"
-"i"     =   : root        : f.showiconmgr
-"h"     =   : root        : f.hideiconmgr
 
 "0"     =   : root        : f.toggleworkspacemgr
 "1"     =   : root        : f.gotoworkspace "1"
@@ -164,12 +159,7 @@ menu "defops"
 	"Twm"		f.title
 	"Pin"		f.pin
         "Xterm"		f.exec "x"
-        "XtermScreen"	f.exec "xs"
-	"Firefox"	f.exec "firefox &"
-	"Lap"		!"lap&"
-	"Runner"	!"run0&"
-	":2"		!"colon2&"
-	"Lock"		!"xlock&"
+	"vncssh"	f.menu "vncssh"
         ""		f.nop
 	"Iconify"	f.iconify
 	"Resize"	f.resize
@@ -191,3 +181,31 @@ menu "defops"
         "Restart"	f.restart
 	"Exit"		f.quit
 }
+
+menu "vncssh"
+{
+	"VNCSSH"	f.title
+	"bladevncssh"	!"xterm -g +0+91 -iconic -title BLADESSH -e ~/bin/blade&"
+        ""		f.nop
+	"bladessh"	!"xterm -g +0+91 -e ssh -XC blade&"
+	"runnerssh"	!"xterm -g +0+91 -e ssh -XC runner&"
+	"rachelssh"	!"xterm -g +0+91 -e ssh -XC rachel&"
+	"lap2ssh"	!"xterm -g +0+91 -e ssh -XC lap2&"
+        ""		f.nop
+	"blade:1"	!"./bin/vnc blade1 &"
+	"blade:2"	!"./bin/vnc blade2 &"
+	"runner:0"	!"./bin/vnc runner &"
+	"runner:1"	!"./bin/vnc runner1 &"
+	"rachel:0"	!"./bin/vnc rachel &"
+	"suz:0"		!"./bin/vnc suz &"
+        ""		f.nop
+	"laph:0"	!"./bin/vnc laph &"
+	"lapw:0"	!"./bin/vnc lapw &"
+	"rcongo:1"	!"./bin/vnc congo1 &"
+	"rcongo:3"	!"./bin/vnc congo &"
+	"rcongo83:0"	!"./bin/vnc congo83 &"
+	"lcongo:1"	!"./bin/vnc mcongo1 &"
+	"lcongo:3"	!"./bin/vnc mcongo &"
+	"lcongo83:0"	!"./bin/vnc mcongo83 &"
+}
+

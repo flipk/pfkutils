@@ -122,7 +122,7 @@ XDaliClock*font:          -*-*-*-*-*-*-20-*-*-*-*-*-iso8859-*
 XDaliClock*memory:        High
 XDaliClock*mode:          24
 XDaliClock*seconds:       no
-XDaliClock*geometry:      59x18-5-5
+XDaliClock*geometry:      80x18+126+64
 
 xlock*username: this terminal in use by phil 
 xlock*password: knaack@cig.mot.com, 435-0869

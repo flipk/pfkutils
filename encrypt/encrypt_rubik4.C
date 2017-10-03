@@ -67,7 +67,6 @@ for each 19-byte group of input.
 #include <string.h>
 
 #include "encrypt_rubik4.H"
-#include "threads.H"
 #include "lognew.H"
 
 rubik4_key :: rubik4_key( void )

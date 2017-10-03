@@ -23,13 +23,16 @@
 #include <string.h>
 
 #include "filehandle.H"
+#include "config.h"
 
 bool
 FileHandle :: decode( encrypt_iface * crypt, nfs_fh *buffer )
 {
+#ifdef USE_CRYPT
     if ( crypt )
         crypt->decrypt( (UCHAR*)this, buffer->data, FH_SIZE );
     else
+#endif
         memcpy( (UCHAR*)this, buffer->data, FH_SIZE );
     return valid();
 }
@@ -39,9 +42,11 @@ FileHandle :: encode( encrypt_iface * crypt, nfs_fh *buffer )
 {
     magic.set( MAGIC );
     checksum.set( calc_checksum() );
+#ifdef USE_CRYPT
     if ( crypt )
         crypt->encrypt( buffer->data, (UCHAR*)this, FH_SIZE );
     else
+#endif
         memcpy( buffer->data, (UCHAR*)this, FH_SIZE );
 }
 

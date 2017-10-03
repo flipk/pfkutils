@@ -38,9 +38,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <netinet/in.h>
 
 #include "encrypt_rubik5.H"
-#include "threads.H"
 
 /*
  * implement a 6-bit circular shift on five bits of a face

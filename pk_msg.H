@@ -1,6 +1,6 @@
 
-#ifndef __PK_TCP_MSG_H_
-#define __PK_TCP_MSG_H_
+#ifndef __PK_MSG_H_
+#define __PK_MSG_H_
 
 #include <sys/types.h>
 #include <signal.h>
@@ -8,15 +8,15 @@
 #include "types.H"
 
 // define before including for a different max msg length
-#ifndef MAX_PK_TCP_MSG_LENGTH
-#define MAX_PK_TCP_MSG_LENGTH 1024
+#ifndef MAX_PK_MSG_LENGTH
+#define MAX_PK_MSG_LENGTH 1024
 #endif
 
-#define PkTcpMsgDef( classname, typevalue, body ) \
-class classname : public pk_tcp_msg { \
+#define PkMsgDef( classname, typevalue, body ) \
+class classname : public pk_msg { \
 public: \
     static const UINT16 TYPE = typevalue ; \
-    classname( void ) : pk_tcp_msg( sizeof( classname ), TYPE ) { } \
+    classname( void ) : pk_msg( sizeof( classname ), TYPE ) { } \
     body \
 }
 
@@ -24,23 +24,23 @@ public: \
 // would like to insert member-constructions
 #define COMMA ,
 
-#define PkTcpMsgDef2( classname, typevalue, body, \
+#define PkMsgDef2( classname, typevalue, body, \
                       constructargs, constructor ) \
-class classname : public pk_tcp_msg { \
+class classname : public pk_msg { \
 public: \
     static const UINT16 TYPE = typevalue ; \
-    classname( void ) : pk_tcp_msg( sizeof( classname ), TYPE ) { } \
-    classname constructargs : pk_tcp_msg( sizeof( classname ), TYPE ) \
+    classname( void ) : pk_msg( sizeof( classname ), TYPE ) { } \
+    classname constructargs : pk_msg( sizeof( classname ), TYPE ) \
         constructor \
     body \
 }
 
-struct pk_tcp_msg {
-    pk_tcp_msg( UINT16 _length, UINT16 _type )
+struct pk_msg {
+    pk_msg( UINT16 _length, UINT16 _type )
         : length( _length ), type( _type ) {
-        if ( _length > (MAX_PK_TCP_MSG_LENGTH+sizeof(pk_tcp_msg)) ) {
+        if ( _length > (MAX_PK_MSG_LENGTH+sizeof(pk_msg)) ) {
             fprintf( stderr, "message type %#x size %d exceeds max %d!\n",
-                     _type, _length, MAX_PK_TCP_MSG_LENGTH );
+                     _type, _length, MAX_PK_MSG_LENGTH );
             kill(0,6);
         }
     }
@@ -77,20 +77,20 @@ private:
     }
 };
 
-PkTcpMsgDef( MaxPkMsgType, 0x0,
-             UINT8 anonymous_body[ MAX_PK_TCP_MSG_LENGTH ];
+PkMsgDef( MaxPkMsgType, 0x0,
+          UINT8 anonymous_body[ MAX_PK_MSG_LENGTH ];
     );
 
-class pk_tcp_msgr {
+class pk_msgr {
 protected:
     virtual int reader( void * buf, int buflen ) = 0;
     virtual int writer( void * buf, int buflen ) = 0;
     virtual bool read_pending( void ) = 0;
 public:
-    virtual ~pk_tcp_msgr( void ) { /* placeholder */ }
-    bool send( pk_tcp_msg * m );
+    virtual ~pk_msgr( void ) { /* placeholder */ }
+    bool send( pk_msg * m );
     bool recv_pending( void ) { return read_pending(); }
-    bool recv( pk_tcp_msg * m, int max_size );
+    bool recv( pk_msg * m, int max_size );
 };
 
-#endif /* __PK_TCP_MSG_H_ */
+#endif /* __PK_MSG_H_ */

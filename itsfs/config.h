@@ -39,7 +39,7 @@
 #define SERVER_PORT 2701
 
 /* should we use encryption on the packets? */
-#define USE_CRYPT
+#undef  USE_CRYPT
 /* should we srandom() based on time and pid? */
 #define REALLY_RANDOM
 /* should we print all NFS packets sent and received to tty? */

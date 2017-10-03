@@ -25,7 +25,12 @@
 #include <string.h>
 #include "types.H"
 #include "nfs_prot.h"
+#include "config.h"
+#ifdef USE_CRYPT
 #include "encrypt_iface.H"
+#else
+class encrypt_iface;
+#endif
 
 #define MagicNumbers_Filehandle_magic          0xa62ff4e6
 #define MagicNumbers_Filehandle_sum_constant   0x10f379cc

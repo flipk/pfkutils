@@ -5,9 +5,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define MAX_PK_TCP_MSG_LENGTH 2048
+#define MAX_PK_MSG_LENGTH 2048
 
-#include "pk_tcp_msg.H"
+#include "pk_msg.H"
 #include "treesync.h"
 #include "trade.H"
 #include "regen.H"
@@ -17,7 +17,7 @@
 
 MESSAGE_LIST;
 
-class trade_tcp_msgr : public pk_tcp_msgr {
+class trade_tcp_msgr : public pk_msgr {
 private:
     /*virtual*/ int reader( void * buf, int buflen );
     /*virtual*/ int writer( void * buf, int buflen );

@@ -147,6 +147,10 @@ itsfssvr_main( int argc, char ** argv )
 
 id_name_db * inode_name_db;
 
+#ifndef USE_CRYPT
+class encrypt_iface;
+#endif
+
 int
 _itsfssvr_main( int argc, char ** argv )
 {
@@ -173,8 +177,6 @@ _itsfssvr_main( int argc, char ** argv )
     // make a real key and then randomize it.
     crypt = parse_key( "rubik4:000000000000000000000000,1,00000000" );
     crypt->key->random_key( 32 );
-#else
-    crypt = NULL;
 #endif
 
     id_name_db indb;

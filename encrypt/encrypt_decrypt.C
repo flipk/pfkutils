@@ -1,3 +1,13 @@
+#if 0
+incs=-I..
+g++ -c $incs encrypt_iface.C
+g++ -c $incs encrypt_rubik4.C
+g++ -c $incs encrypt_rubik5.C
+g++ -c $incs -Dmakekey_main=main makekey.C
+g++ encrypt_iface.o encrypt_rubik4.o encrypt_rubik5.o makekey.o -o mk
+exit 0
+#endif
+
 /*
  * This code is written by Phillip F Knaack. This code is in the
  * public domain. Do anything you want with this code -- compile it,

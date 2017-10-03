@@ -1,7 +1,7 @@
 
 
 #ifndef DLL2_INCLUDE_LOGNEW
-#define DLL2_INCLUDE_LOGNEW 1
+#define DLL2_INCLUDE_LOGNEW 0
 #endif
 
 #include <string.h>

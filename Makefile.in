@@ -16,15 +16,14 @@ HDRS=	sudo.h main_prog.h m.h main.h regex.h
 CSRCS=	agrep.c crnl.c do_connect.c he.c inet_aton.c \
 	ipipe.c m.c regex.c main.c random-hex.c fmtsdiff.c \
 	xtermbar.c gmarc.c genpw.c waitpid.c pkfstat.c pk-md5.c
-CPPSRCS= newtail.C rmstar.C makekey.C encrypt_decrypt.C \
-	tcpgate.C tcpgate2.C tcpgate3.C pk_tcp_msg.C
+CPPSRCS= rmstar.C tcpgate.C pk_msg.C lognew.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
 LIBS= -lcurses -lm 
 
-DIRS= implode itsfs tags.make tags.view threads
+DIRS= implode itsfs tags.make tags.view 
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
-	threads/libthreads.a itsfs/libitsfs.a
+	itsfs/libitsfs.a
 
 DIRS+= states
 ELIBS+= states/libstates.a
@@ -56,7 +55,7 @@ CSRCS+=	treescan.c sudo.c
 LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
 #endif
 
-CPPFLAGS= -I/usr/X11R6/include -Ithreads/h -I.
+CPPFLAGS= -I/usr/X11R6/include -I.
 CFLAGS= -O3 $(CPPFLAGS)
 
 #ifdef sunos
