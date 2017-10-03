@@ -1,0 +1,7 @@
+#!/bin/sh
+
+os=`uname -s`
+rev=`uname -r`
+pf=$os-$rev
+
+echo $pf

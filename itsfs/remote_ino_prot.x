@@ -1,0 +1,242 @@
+/*
+ * This code is written by Phillip F Knaack. This code is in the
+ * public domain. Do anything you want with this code -- compile it,
+ * run it, print it out, pass it around, shit on it -- anything you want,
+ * except, don't claim you wrote it.  If you modify it, add your name to
+ * this comment in the COPYRIGHT file and to this comment in every file
+ * you change.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+%#define MAX_REQ 9000
+%#define MAX_PATH 500
+
+%#include "xdr.h"
+
+typedef string filepath<MAX_PATH>;
+
+enum remino_callnum {
+    OPEN      =  1,
+    CLOSE     =  2,
+    READ      =  3,
+    WRITE     =  4,
+    TRUNCATE  =  6,
+    UNLINK    =  7,
+    OPENDIR   =  8,
+    CLOSEDIR  =  9,
+    READDIR   = 10,
+    REWINDDIR = 11,
+    MKDIR     = 12,
+    RMDIR     = 13,
+    LSTAT     = 14,
+    RENAME    = 15,
+    CHOWN     = 16,
+    CHMOD     = 17,
+    UTIMES    = 18,
+    READLINK  = 19,
+    LINK_H    = 20,
+    LINK_S    = 21
+};
+
+struct remino_open_args {
+    filepath path;
+    int flags;
+    int mode;
+};
+
+struct remino_close_args {
+    int fd;
+};
+
+struct remino_read_args {
+    int fd;
+    int pos;
+    int len;
+};
+
+struct remino_write_args {
+    int fd;
+    int pos;
+    opaque data<MAX_REQ>;
+};
+
+struct remino_truncate_args {
+    filepath path;
+    int length;
+};
+
+/* used for unlink, opendir, rmdir, stat, readlink */
+struct remino_path_args {
+    filepath path;
+};
+
+/* used for closedir, readdir, rewinddir */
+struct remino_dirptr_args {
+    unsigned dirptr;
+};
+
+/* used for mkdir and chmod */
+struct remino_path_mode_args {
+    filepath path;
+    int mode;
+};
+
+/* also used for hard link and soft link */
+struct remino_rename_args {
+    filepath from;   /* target  */
+    filepath to;     /*  path   */
+};
+
+struct remino_chown_args {
+    filepath path;
+    int owner;
+    int group;
+};
+
+struct remino_utimes_args {
+    filepath path;
+    unsigned asecs;
+    unsigned ausecs;
+    unsigned msecs;
+    unsigned musecs;
+};
+
+union remino_call switch (remino_callnum call) {
+ case OPEN:
+     remino_open_args open;
+ case CLOSE:
+     remino_close_args close;
+ case READ:
+     remino_read_args read;
+ case WRITE:
+     remino_write_args write;
+ case TRUNCATE:
+     remino_truncate_args truncate;
+ case UNLINK:
+ case OPENDIR:
+ case RMDIR:
+ case LSTAT:
+ case READLINK:
+     remino_path_args path_only;
+ case CLOSEDIR:
+ case READDIR:
+ case REWINDDIR:
+     remino_dirptr_args dirptr_only;
+ case MKDIR:
+ case CHMOD:
+     remino_path_mode_args path_mode;
+ case RENAME:
+ case LINK_S:
+ case LINK_H:
+     remino_rename_args rename;
+ case CHOWN:
+     remino_chown_args chown;
+ case UTIMES:
+     remino_utimes_args utimes;
+ default:
+     void;
+};
+
+struct remino_open_reply {
+    int err;
+    int fd;
+};
+
+struct remino_errno_reply {
+    int err;
+    int retval;
+};
+
+struct remino_read_reply {
+    int err;
+    opaque data<MAX_REQ>;
+};
+
+struct remino_write_reply {
+    int err;
+    int size;
+};
+
+struct remino_opendir_reply {
+    int err;
+    unsigned dirptr;
+};
+
+struct remino_readdir_reply {
+    int err;
+    int retval;
+    int ftype;  /* actually inode_file_type */
+    filepath name;
+    int fileid;
+};
+
+struct remino_stat_reply {
+    int err;
+    int retval;
+    int mode;
+    int nlink;
+    int uid;
+    int gid;
+    int size;
+    int blocksize;
+    int rdev;
+    int blocks;
+    int fsid;
+    int asec;
+    int ausec;
+    int msec;
+    int musec;
+    int csec;
+    int cusec;
+    int fileid;
+};
+
+struct remino_readlink_reply {
+    int err;
+    int retval;
+    filepath path;
+};
+
+union remino_reply switch (remino_callnum reply) {
+ case OPEN:
+     remino_open_reply open;
+ case CLOSE:
+ case TRUNCATE:
+ case UNLINK:
+ case CLOSEDIR:
+ case REWINDDIR:
+ case MKDIR:
+ case RMDIR:
+ case RENAME:
+ case CHOWN:
+ case CHMOD:
+ case UTIMES:
+ case LINK_H:
+ case LINK_S:
+     remino_errno_reply err;
+ case READ:
+     remino_read_reply read;
+ case WRITE:
+     remino_write_reply write;
+ case OPENDIR:
+     remino_opendir_reply opendir;
+ case READDIR:
+     remino_readdir_reply readdir;
+ case LSTAT:
+     remino_stat_reply stat;
+ case READLINK:
+     remino_readlink_reply readlink;
+ default:
+     void;
+};

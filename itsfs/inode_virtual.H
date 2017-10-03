@@ -1,0 +1,107 @@
+/*
+ * This code is written by Phillip F Knaack. This code is in the
+ * public domain. Do anything you want with this code -- compile it,
+ * run it, print it out, pass it around, shit on it -- anything you want,
+ * except, don't claim you wrote it.  If you modify it, add your name to
+ * this comment in the COPYRIGHT file and to this comment in every file
+ * you change.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <dirent.h>
+#include "inode.H"
+#include "id_name_db.H"
+
+class Inode_virtual;
+
+class Inode_virtual_tree : public Inode_tree {
+    friend class Inode_virtual;
+    Inode_virtual * inos;
+    uchar * (*update_status_info)( void );
+    void (*command_handler)( char *, int );
+    char * help_string;
+public:
+    Inode_virtual_tree            ( int _tree_id,
+                                    uchar * (*update_status_info)( void ),
+                                    void (*command_handler)( char *, int ),
+                                    char * help_string );
+    virtual ~Inode_virtual_tree   ( void );
+
+    virtual Inode *   get         ( int file_id );
+    virtual Inode *   get         ( int dir_id, uchar * filename );
+    virtual Inode *   get_parent  ( int file_id );
+    virtual int       deref       ( Inode * );
+
+    virtual Inode *   create      ( int dirid, uchar * name, inode_file_type );
+    virtual Inode *   createslink ( int dirid,
+                                    uchar * name, uchar * target );
+    virtual Inode *   createhlink ( int dirid,
+                                    uchar * name, int fileid );
+    virtual int       destroy     ( int fileid, inode_file_type );
+    virtual int       rename      ( int olddir, uchar * oldfile,
+                                    int newdir, uchar * newfile );
+
+    virtual void      clean       ( void );
+    virtual void      print_cache ( int arg, void (*printfunc)
+                                    (int arg, char *format,...) );
+
+    // not in Inode_tree interface....
+
+    int register_tree( uchar * name, Inode_tree * newtree );
+    Inode_tree * kill_tree( int id );
+};
+
+class Inode_virtual : public Inode {
+public:
+    enum ITVT {
+        INO_TREE_VIRT_ROOT_DIR,
+        INO_TREE_VIRT_ROOT_PARENT_DIR,
+        INO_TREE_VIRT_STATUS_FILE,
+        INO_TREE_VIRT_CMD_FILE,
+        INO_TREE_VIRT_HELP_FILE,
+        INO_TREE_VIRT_TREE
+    };
+
+private:
+    Inode_virtual * n;
+    uchar * name;
+    ITVT itype;
+    Inode_virtual_tree * it;
+    int dirposval;
+    bool bad;
+    Inode_tree * owned_tree;
+
+    uchar * status_info;
+    void update_status_info( void );
+
+    friend class Inode_virtual_tree;
+public:
+    Inode_virtual               ( Inode_virtual_tree * it,
+                                  int file_id, ITVT itype );
+    Inode_virtual               ( Inode_virtual_tree * it,
+                                  int file_id, uchar * path,
+                                  Inode_tree * owned_tree );
+    virtual ~Inode_virtual      ( void );
+
+    virtual int       isattr    ( sattr & );
+    virtual int       ifattr    ( fattr & );
+
+    virtual int       iread     ( int offset, uchar * buf, int &size );
+    virtual int       iwrite    ( int offset, uchar * buf, int size );
+
+    virtual int       setdirpos ( int cookie );
+    virtual int       readdir   ( int &fileno, uchar * filename );
+
+    virtual int       readlink    ( uchar * buf );
+};

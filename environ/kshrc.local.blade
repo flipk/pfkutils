@@ -1,0 +1,19 @@
+
+alias lapd='export DISPLAY=laptop:0'
+alias rund='export DISPLAY=runner:0'
+alias run='rsh -l flipk runner'
+
+xconsole_hook() {
+    xhost laptop
+    xhost runner
+}
+
+tty=`tty`
+if [[ $tty != ${tty#/dev/ttyv} ]] ; then
+    unset -f x
+    x() {
+        clear
+        xinit > .xinitlog 2>&1
+    }
+fi
+

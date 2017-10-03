@@ -1,0 +1,152 @@
+*background:                  gray
+
+XTerm*termName: vt100
+XTerm*jumpScroll:             true
+XTerm*visualBell:             true
+XTerm*scrollBar:              on
+XTerm*utmpInhibit:            off
+XTerm*foreground:             green
+XTerm*background:             black
+XTerm*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+XTerm*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
+XTerm*cursorColor:            white
+XTerm*Scrollbar*background:   red
+XTerm*Scrollbar*foreground:   blue
+XTerm*scrollKey:              true
+XTerm*scrollTtyOutput:        false
+XTerm*saveLines:              2000
+XTerm*vt100*charClass: 33:48,35:48,37:48,43:48,45-47:48,95:48,126:48
+
+XTerm*fontMenu*font1*Label:  tiny
+XTerm*VT100*font1:           -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
+XTerm*fontMenu*font2*Label:  small
+XTerm*VT100*font2:           -schumacher-clean-medium-r-normal--8-80-75-75-c-50-iso646.1991-irv
+XTerm*fontMenu*font3*Label:  exceedhuge
+XTerm*VT100*font3:           10x20
+XTerm*fontMenu*font4*Label:  large
+XTerm*VT100*font4:           -schumacher-clean-medium-r-normal--16-160-75-75-c-80-iso646.1991-irv
+XTerm*fontMenu*font5*Label:  huge
+XTerm*VT100*font5:           -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso8859-9
+XTerm*fontMenu*font6*Label:  wider huge
+XTerm*VT100*font6:           -b&h-lucidatypewriter-medium-r-normal-sans-18-180-75-75-m-110-iso8859-2
+
+XTermScreen*termName: vt100
+XTermScreen*utmpInhibit:      on
+XTermScreen*visualBell:       false
+XTermScreen*foreground:       yellow
+XTermScreen*scrollBar:        off
+
+XTerm.VT100.Translations: \
+#override \
+   <Key>F1:  string("chg_lev") string(0x0d)\n\
+   <Key>F2:  string("3stooges") string(0x0d) string("4beatles") string(0x0d)\n\
+   <Key>F3:  string(0x0e)\n\
+   <Key>F4:  string("debug on") string(0x0d)\n\
+   <Key>F5:  string("msg 23 1 0 0 8a04h 1")string(0x0d)\n\
+   <Key>F6:  string(0x01) string("d")\n\
+   <Key>F7:  scroll-back(1,line)\n\
+   <Key>F8:  scroll-forw(1,line)\n\
+   <Key>F9:  scroll-back(1,page)\n\
+   <Key>F10: scroll-forw(1,page)\n\
+   Ctrl <Key>Left:  string(0x01) string("p")\n\
+   Ctrl <Key>Right: string(0x01) string("n")\n\
+   Ctrl <Key>0:     string(0x01) string("0")\n\
+   Ctrl <Key>1:     string(0x01) string("1")\n\
+   Ctrl <Key>2:     string(0x01) string("2")\n\
+   Ctrl <Key>3:     string(0x01) string("3")\n\
+   Ctrl <Key>4:     string(0x01) string("4")\n\
+   Ctrl <Key>5:     string(0x01) string("5")\n\
+   Ctrl <Key>6:     string(0x01) string("6")\n\
+   Ctrl <Key>7:     string(0x01) string("7")\n\
+   Ctrl <Key>8:     string(0x01) string("8")\n\
+   Ctrl <Key>9:     string(0x01) string("9")
+
+!!
+!! This is where zwgc puts zwrites.  
+!! You can actually configure it so different kinds of zwrites
+!! go to different locations on the screen...
+!! but I don't remember how to do that.
+!!
+
+Zwgc*geometry: -0-150
+Zwgc*reverseStack: True
+
+Xmessage*foreground: green
+Xmessage*background: black
+Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+
+Emacs*foreground:    yellow
+Emacs*background:    black
+Emacs*cursorColor:   white
+Emacs*pointerColor:  white
+Emacs*font:          -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+
+Emacs_Minibuffer*geometry: -0-0
+
+xload*showLabel:      false
+xload*load.update:    5
+xload*load.highlight: #203040
+xload*foreground:     gray
+xload*background:     #203040
+xload*geometry:       228x124+256-19
+
+Xman*foreground:      gray85
+Xman*background:      black
+Xman.notopbox:        true
+
+Xedit*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-70-iso646.1991-irv
+Xedit*geometry:       500x500
+Xedit*foreground:     Yellow
+Xedit*background:     Black
+Xedit*Scrollbar*background: red
+Xedit*Scrollbar*foreground: blue
+Xedit*cursorColor: yellow
+
+*synchronize.geometry:                    +488-19
+Synchronize*Day-at-a-time*geometry:       660x730-0+0
+
+*zmail.geometry:                     +672+0
+*message_window.geometry:            603x925
+
+Netscape*blinkingEnabled: False
+Netscape*confirmExit:     False
+
+Console.keep:             False
+
+XDaliClock*foreground:    gray
+XDaliClock*background:    #203040
+XDaliClock*font:          -*-*-*-*-*-*-20-*-*-*-*-*-iso8859-*
+XDaliClock*memory:        High
+XDaliClock*mode:          24
+XDaliClock*seconds:       no
+XDaliClock*geometry:      59x18-5-5
+
+xlock*username: this terminal in use by phil 
+xlock*password: knaack@cig.mot.com, 435-0869
+xlock*info: Pager: 2629142399@mobile.mycingular.com                                              
+xlock*invalid: Password verification failed.
+xlock*validate: Checking password, please wait.
+xlock*echokeys: False
+
+xlock*foreground: red
+xlock*background: black
+
+!!
+!! CCT stuff
+!!
+CCT*termName: xterm
+CCT*Geometry:         80x50
+CCT*font:       -*-fixed-*-*-*-*-13-*-*-*-*-*-*-*
+CCT*boldFont:   -*-fixed-*-*-*-*-13-*-*-*-*-*-*-*
+
+!! CCT*Font:             8x13
+!! CCT*boldFont:         8x13bold
+CCT*VT100.Translations: #override\n\
+         <Key>BackSpace: string(0x7f)\n\
+         <Key>Delete:    string(0x08)\n\
+    Meta <Key>C: string("\033[220z")\n\
+    Meta <Key>D: string("\033[220zread /usr/test/template/pm\n")\n\
+    Meta <Key>R: string("_START_CUSTOMER_DOC\nNo changes required.\n_END_CUSTOMER_DOC\033[A\033[A")\n
+
+AcrobatDistiller.compatibilityWarningIssued:    YES
+

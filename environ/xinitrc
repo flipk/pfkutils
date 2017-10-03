@@ -1,0 +1,13 @@
+#!/bin/sh
+
+cd $HOME
+
+# inform the .profile inside the xterm that this is the xconsole.
+# it will start the window manager there, so that all processes
+# started from the window manager will have a tty console.
+
+XCONSOLE=yes
+ENV=$HOME/.kshrc
+export XCONSOLE ENV
+
+exec xterm -iconic +sb -geometry 80x10+0-20 -name Console

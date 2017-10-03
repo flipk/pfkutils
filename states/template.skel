@@ -1,0 +1,66 @@
+
+% variables:
+% headerfile, callstubs
+
+#include "@@headerfile@@"
+
+int
+@@machine@@_STATE_MACHINE :: input_discriminator( void * m )
+{
+	// determine type of input message here,
+	// and return values from input_types enum
+	return UNKNOWN_INPUT;
+}
+
+void
+@@machine@@_STATE_MACHINE :: output_generator( int ty )
+{
+	// output messages based on 'ty' argument here
+}
+
+void
+@@machine@@_STATE_MACHINE :: constructor_hook( void )
+{
+	//
+}
+
+void
+@@machine@@_STATE_MACHINE :: destructor_hook( void )
+{
+	//
+}
+
+void
+@@machine@@_STATE_MACHINE :: unknown_message( void )
+{
+	//
+}
+
+void
+@@machine@@_STATE_MACHINE :: debug_transition_hook( 
+	int input,
+	int old_state,
+	int new_state )
+{
+	//
+}
+
+void
+@@machine@@_STATE_MACHINE :: set_timer( int val )
+{
+	//
+}
+
+void
+@@machine@@_STATE_MACHINE :: cancel_timer( void )
+{
+	// 
+}
+
+void
+@@machine@@_STATE_MACHINE :: _first_call( void )
+{
+	//
+}
+
+@@callstubs@@

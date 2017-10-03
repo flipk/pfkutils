@@ -1,0 +1,9 @@
+#!/bin/sh
+
+HOME=/home/MY_USERNAME
+ARCH=`$HOME/bin/architecture`
+ENV=$HOME/.kshrc
+
+export HOME ARCH ENV
+
+exec $HOME/bin/$ARCH/ksh "$@"

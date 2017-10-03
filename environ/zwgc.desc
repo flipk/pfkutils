@@ -1,0 +1,99 @@
+
+set INSTANCE = upcase($instance)
+set CLASS = upcase($class)
+set OPCODE = upcase($opcode)
+   
+case $auth
+match "yes"
+        set aval = ""
+match "no"
+        set aval = "***Unauthentic***"
+match "forged"
+        set aval = "***Forged***"
+endcase
+
+set fh = $fromhost
+
+if ($OPCODE == "PING") then
+  exit
+endif
+
+case $CLASS
+match "LOGIN"
+  case $OPCODE
+  match "USER_LOGIN"
+    set log="is alive"
+  match "USER_LOGOUT"
+    set log="died"
+  default
+    set log="created opcode "+$OPCODE
+  endcase
+
+  set noping = "1"
+  set sign = $sender
+
+  fields host when tty
+  if ($X == "1") then
+    print "user "+$sign+" "+$log+" on "+$fh
+  else
+    print $beep+"\n**** @b("+$sign+") "+$log
+    print " on @b("+$fh+"), @b("+$tty+") ****\n"
+  endif
+  put
+
+  exit
+
+match "WG_CTL_CLASS"
+  set beep="@beep()"
+  if ($output_driver == "X") then
+    set X="1"
+  endif
+  set filename="/home/knaack/.messages"
+  exec "sh" "-c" "znol | awk '{printf(\"%9s %16s %5s %s %2s\\n\",$1,$3,$4,$5,$6);}' | zwrite -q knaack -i flip"
+  exit
+
+match "message"
+  fields signature body
+  clearbuf
+  if ($INSTANCE == "PAGER") then
+     exec "/home/knaack/bin/page-phil" $sender+":" $body
+  endif
+  if ($INSTANCE == "MAILCHECK") then
+     exec "sh" "-c" "/home/knaack/bin/nfrm -a | zwrite -n -q "+$sender
+     exit
+  endif
+  if ($INSTANCE != "FLIP") then
+    appendport "savefile" $filename
+    print "\n"
+    print "-----------------------------------------------------------------\n"
+    print "<"+$class+","+$instance+","+$recipient+"> from "+$sender
+    print "@"+$fh+"\n"
+    print "signature: "+$signature+"\n"
+    print "Date: "+$date+" "+$time+"\n"
+    if ($opcode != "") then
+      print "Opcode: "+$opcode+"\n"
+    endif
+    print $body
+    put "savefile"
+    closeport "savefile"
+    clearbuf
+  endif
+
+  set msgbeep = $beep
+
+  set noping = "1"
+  set sign = $sender
+
+  if ($X == "1") then
+    print "@bold(<"+$class+","+$instance+","+$recipient+"> from "+$sender+")\n"
+    print "@bold(Signature:) @(@color(red)"+$signature+")\n"
+    print $msgbeep+$body
+  else
+    print $msgbeep+"\n****"+$aval+" @b(<"+$class+", "+$instance+", "
+    print $recipient+">) from @b("+$sign+") ****\n"
+    print $body
+    print "\n******** @b("+$signature+") *****************"
+  endif
+  put
+  exit
+endcase

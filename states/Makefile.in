@@ -1,0 +1,61 @@
+
+TARG= libstates.a
+OBJS= parse_actions.o machine.o parser.o tokenizer.o main.o templates.o
+SRCS= parse_actions.c machine.c parser.c tokenizer.c main.c
+HDRS= parse_actions.h machine.h wordentry.h
+TEMPLATES= template.code template.header template.skel \
+	state_machine_base.C state_machine_base.H
+
+#ifdef freebsd
+OPTS= -O3 -DFREEBSD=1
+#else
+OPTS= -O3 -DSOLARIS=1
+#endif
+
+all: $(TARG)
+
+$(TARG): $(OBJS)
+	rm -f $(TARG)
+	ar cq $(TARG) $(OBJS)
+
+tokenizer.c: tokenizer.l tokens.h
+	lex tokenizer.l
+	mv lex.yy.c tokenizer.c
+
+tokens.h parser.c: parser.y
+#ifdef cygwin32
+	bison -dv parser.y
+	mv parser.tab.c parser.c
+	mv parser.tab.h tokens.h
+#else
+	yacc -dv parser.y
+	mv y.tab.c parser.c
+	mv y.tab.h tokens.h
+#endif
+
+.c.o:
+	gcc $(OPTS) -c $*.c
+
+templates.c: $(TEMPLATES) tmpl_to_c.c
+	gcc tmpl_to_c.c -o tmpl_to_c
+	./tmpl_to_c \
+		template.code   template_code    \
+		template.header template_header  \
+		template.skel   template_skel    \
+		state_machine_base.H baseclassH  \
+		state_machine_base.C baseclassC  \
+		> templates.c
+
+depend: Makefile.in $(SRCS) templates.c $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(OPTS) $(SRCS) templates.c >> x
+	mv x Makefile
+
+clean:
+	rm -f $(OBJS) templates.c tmpl_to_c
+	rm -f parser.c tokenizer.c tokens.h y.output
+	rm -f *~ \#*
+	rm -f $(TARG)
+	rm -f Makefile
+
+#DEPENDENCIES

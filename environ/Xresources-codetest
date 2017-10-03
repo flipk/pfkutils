@@ -1,0 +1,727 @@
+!!!!
+!!!! Everything below this point is CodeTEST crap. CodeTEST is a broken
+!!!! X application that doesn't behave nicely with my colors and setup.
+!!!!
+
+
+
+
+!
+! global visual stuff
+!
+CodeTEST*fontList: -schumacher-clean-medium-r-normal--12-120-75-75-c-60-iso8859-1
+CodeTEST*XmMenu.background: black
+CodeTEST*XmMessageBox.background: black
+CodeTEST*XmRowColumn.background: black
+CodeTEST*XmLabel.background: black
+CodeTEST*XmPushButton.background: black
+CodeTEST*XmCascadeButton.background: black
+CodeTEST*XmToggleButton.background: black
+CodeTEST*XmFileSelectionBox.background: black
+CodeTEST*XmScrolledWindow.background: black
+CodeTEST*XmScrollBar.background: black
+CodeTEST*XmDrawingArea.background: black
+CodeTEST*XmForm.background: black
+CodeTEST*Text.background: black
+CodeTEST*foreground: green
+CodeTEST*XmText.background: black
+CodeTEST*XmTextField.background: black
+CodeTEST*XmList.background: black
+
+
+!
+! Main window
+!
+CodeTEST*main_window.button_form*XmPushButton.fontList: -schumacher-clean-medium-r-normal--12-120-75-75-c-60-iso8859-1
+CodeTEST*main_window.button_form*XmPushButton.background: black
+CodeTEST*main_window.button_form*XmPushButton.foreground: green
+CodeTEST*main_window.button_form*XmLabel.background: black
+CodeTEST*main_window.button_form*XmLabel.borderWidth: 1
+CodeTEST*main_window.title: Software Verification Tool
+CodeTEST*main_window*status_area.background: black
+CodeTEST*callpair_button.labelString: Calls
+CodeTEST*performance_button.labelString: Function
+CodeTEST*malloc_button.labelString: Usage
+CodeTEST*memerrs_button.labelString: Errors
+CodeTEST*coverage_button.labelString: Function
+CodeTEST*covsummary_button.labelString: Summary
+CodeTEST*covtrend_button.labelString: Trend
+CodeTEST*task_button.labelString: Task
+CodeTEST*trace_button.labelString: Trace
+CodeTEST*performance_category.labelString: Performance
+CodeTEST*coverage_category.labelString: Coverage
+CodeTEST*memory_category.labelString: Memory
+CodeTEST*trace_category.labelString: Trace
+CodeTEST*start_probe.labelString: Start Data Collection
+CodeTEST*stop_probe.labelString: Stop Data Collection
+CodeTEST*continue_target_server.labelString: Continue Data Collection 
+CodeTEST*refresh_views.labelString: Refresh All Views
+CodeTEST*set_overview_mode.labelString: Set Continuous Mode
+CodeTEST*set_overview_mode.acceleratorText: Ctrl-C
+CodeTEST*set_overview_mode.accelerator: Ctrl<Key>C
+CodeTEST*set_trace_mode.labelString: Set Trace Mode
+CodeTEST*set_trace_mode.acceleratorText: Ctrl-T
+CodeTEST*set_trace_mode.accelerator: Ctrl<Key>T
+CodeTEST*set_raw_trace_mode.labelString: Set Raw Trace Mode
+CodeTEST*comments_label.labelString: Comments
+CodeTEST*no_message_file.messageString: Couldn't find the CodeTEST message file '%1'!\nThe reason was "%2".\nMake sure that CodeTEST was properly installed,\nand that the environment variable 'AMC_HOME' is set correctly.
+
+!
+! button labels
+!
+CodeTEST*findbutton.labelString: Find...
+CodeTEST*filterbutton.labelString: Filter...
+CodeTEST*sortbutton.labelString: Sort...
+CodeTEST*resize.labelString: Resize...
+CodeTEST*okbutton.labelString: Apply
+CodeTEST*resetbutton.labelString: Reset
+CodeTEST*done.labelString: Close
+CodeTEST*applybutton.labelString: Apply
+CodeTEST*cancelbutton.labelString: Close
+CodeTEST*helpbutton.labelString: Help
+CodeTEST*findfirstbutton.labelString: Find First
+CodeTEST*findnextbutton.labelString: Find Next
+
+CodeTEST*fromtop.labelString: From the Top
+CodeTEST*frombottom.labelString: From the Bottom
+
+CodeTEST*caller_name.labelString: Calling Function
+CodeTEST*callee_name.labelString: Called Function
+CodeTEST*num_calls.labelString: Number of Calls
+CodeTEST*function_name.labelString: Function Name
+CodeTEST*line_number.labelString: Line Number
+CodeTEST*bytes_alloced.labelString: Bytes Currently Allocated
+CodeTEST*max_bytes_alloced.labelString: Maximum Bytes Allocated
+CodeTEST*percent_coverage.labelString: Coverage (in %)
+CodeTEST*source_file.labelString: Source File
+CodeTEST*minimum_time.labelString: Minimum Time (in uS)
+CodeTEST*maximum_time.labelString: Maximum Time (in uS)
+CodeTEST*average_time.labelString: Average Time (in uS)
+CodeTEST*cumulative_time.labelString: Cumulative Time (in uS)
+CodeTEST*num_task_entries.labelString: Number of Task Entries
+CodeTEST*num_task_instances.labelString: Number of Task Instances
+CodeTEST*task_name.labelString: Task Name
+CodeTEST*minimum_time_slice.labelString: Minimum Time Slice (in uS)
+CodeTEST*maximum_time_slice.labelString: Maximum Time Slice (in uS)
+
+!
+! macro window
+!
+CodeTEST*macro_window_popup.title: Command Macros
+CodeTEST*macro_window_popup.geometry: +390+170
+CodeTEST*macro_window_popup*clear_macro.labelString: Clear Current Macro
+CodeTEST*macro_window_popup*macro_filter.labelString: Filter
+
+CodeTEST*idb_popup.title: Load an Instrumentation Database
+
+CodeTEST*config_file_popup.loadtitle: Load a Configuration File
+CodeTEST*config_file_popup.savetitle: Save a Configuration File
+
+CodeTEST*datafile_popup.loadtitle: Load Collected Data
+CodeTEST*datafile_popup.savetitle: Save Collected Data
+CodeTEST*datafile_popup.mergetitle: Merge Collected Data
+
+CodeTEST*function_summary_popup.title: Function Summary
+CodeTEST*summary_text.rows: 20
+CodeTEST*summary_text.columns: 40
+
+CodeTEST*setupbutton.labelString: Setup...
+CodeTEST*svtdisplayerror_popup.title: CodeTEST Error
+CodeTEST*svtaskquestion_popup.title: CodeTEST
+CodeTEST*about_application_popup.title: CodeTEST Help
+
+!
+! log window configuration
+!
+CodeTEST*log_window.title: Error Log
+CodeTEST*log_window.geometry: +390+170
+CodeTEST*logfile_popup.title: Save a Log File
+CodeTEST*clear_button.labelString: Clear
+
+!
+! View window configuration
+!
+CodeTEST*XbaeMatrix.background: black
+CodeTEST*XbaeMatrix.selectedBackground: gold
+CodeTEST*XbaeMatrix.fixedCellBackground: black
+CodeTEST*XbaeMatrix.fixedCellForeground: black
+CodeTEST*XbaeMatrix.cellBackground: plum1
+
+
+CodeTEST*vw_histogram_1*foreground: red
+CodeTEST*vw_histogram_2*foreground: yellow
+CodeTEST*filtered_label.labelString: ( Filtered View )
+CodeTEST*no_objects_label.labelString: ( No Data to Display )
+CodeTEST*vw_function.title: Function
+CodeTEST*vw_function.labelString: Function
+CodeTEST*vw_function.width: 8
+CodeTEST*vw_function.print_title: Function
+CodeTEST*vw_function.print_width: 16
+CodeTEST*vw_source.title: Source File
+CodeTEST*vw_source.labelString: Source File
+CodeTEST*vw_source.width: 8
+CodeTEST*vw_source.print_title: Source File
+CodeTEST*vw_source.print_width: 16
+CodeTEST*vw_line_number.title: Line #
+CodeTEST*vw_line_number.labelString: Line #
+CodeTEST*vw_line_number.width: 3
+CodeTEST*vw_line_number.print_title: Line #
+CodeTEST*vw_line_number.print_width: 6
+CodeTEST*vw_num_calls.title: Number of Calls
+CodeTEST*vw_num_calls.labelString: Number of Calls
+CodeTEST*vw_num_calls.width: 20
+CodeTEST*vw_num_calls.print_title: # Calls
+CodeTEST*vw_num_calls.print_width: 10
+CodeTEST*vw_coverage.title: % Coverage
+CodeTEST*vw_coverage.labelString: % Coverage
+CodeTEST*vw_coverage.width: 20
+CodeTEST*vw_coverage.print_title: Coverage
+CodeTEST*vw_coverage.print_width: 8
+CodeTEST*vw_num_executions.title: # XEQ
+CodeTEST*vw_num_executions.labelString: # XEQ
+CodeTEST*vw_num_executions.width: 6
+CodeTEST*vw_num_executions.print_title: # Calls
+CodeTEST*vw_num_executions.print_width: 8
+CodeTEST*vw_task_name.title: Task Name
+CodeTEST*vw_task_name.labelString: Task Name
+CodeTEST*vw_task_name.width: 10
+CodeTEST*vw_task_name.print_title: Task Name
+CodeTEST*vw_task_name.print_width: 14
+CodeTEST*vw_num_task_instances.title: # Instances
+CodeTEST*vw_num_task_instances.labelString: # Instances
+CodeTEST*vw_num_task_instances.width: 5
+CodeTEST*vw_num_task_instances.print_title: Inst
+CodeTEST*vw_num_task_instances.print_width: 4
+CodeTEST*vw_num_task_entries.title: # Entries
+CodeTEST*vw_num_task_entries.labelString: # Entries
+CodeTEST*vw_num_task_entries.width: 5
+CodeTEST*vw_num_task_entries.print_title: Entr
+CodeTEST*vw_num_task_entries.print_width: 4
+CodeTEST*vw_min_time.title: Min
+CodeTEST*vw_min_time.labelString: Min
+CodeTEST*vw_min_time.width: 8
+CodeTEST*vw_min_time.print_title: Min
+CodeTEST*vw_min_time.print_width: 10
+CodeTEST*vw_max_time.title: Max
+CodeTEST*vw_max_time.labelString: Max
+CodeTEST*vw_max_time.width: 8
+CodeTEST*vw_max_time.print_title: Max
+CodeTEST*vw_max_time.print_width: 10
+CodeTEST*vw_avg_time.title: Avg
+CodeTEST*vw_avg_time.labelString: Avg
+CodeTEST*vw_avg_time.width: 8
+CodeTEST*vw_avg_time.print_title: Avg
+CodeTEST*vw_avg_time.print_width: 10
+CodeTEST*vw_total_time.title: Cumulative
+CodeTEST*vw_total_time.labelString: Cumulative
+CodeTEST*vw_total_time.width: 8
+CodeTEST*vw_total_time.print_title: Cum
+CodeTEST*vw_total_time.print_width: 10
+CodeTEST*vw_percent_total_time.title: % Total Time
+CodeTEST*vw_percent_total_time.labelString: % Total Time
+CodeTEST*vw_percent_total_time.width: 15
+CodeTEST*vw_percent_total_time.print_title: % Total
+CodeTEST*vw_percent_total_time.print_width: 7
+CodeTEST*vw_qualified_name.messageString: Full function name:  %1
+CodeTEST*vw_qualified_name.background: SlateGray1
+CodeTEST*vw_qualified_name.borderWidth: 1
+CodeTEST*vw_view_source.messageString: Display source code of function '%1'
+CodeTEST*vw_func_summary.messageString: Display statistics for function '%1'
+CodeTEST*criterion_label.messageString: Criterion #%1
+CodeTEST*view_message_form.width: 0
+
+!
+! performance view
+!
+CodeTEST*performance_view.title: Function Performance
+CodeTEST*performance_view*background: black
+CodeTEST*performance_view.geometry: +20+190
+CodeTEST*performance_view.iconName: Function Performance
+CodeTEST*performance_filter_popup.title: Performance Filter
+CodeTEST*performance_finder_popup.title: Performance Finder
+CodeTEST*performance_sorter_popup.title: Performance Sorter
+CodeTEST*performance_resize_popup.title: Performance Window Resize
+
+!
+! callpair view
+!
+CodeTEST*callpair_view.title: Call Linkage Frequency
+CodeTEST*callpair_view.geometry: +160+290
+CodeTEST*callpair_view*background: black
+CodeTEST*callpair_view.iconName: Call Linkage Table
+CodeTEST*callpair_filter_popup.title: Call Linkage Filter
+CodeTEST*callpair_finder_popup.title: Call Linkage Finder
+CodeTEST*callpair_sorter_popup.title: Call Linkage Sorter
+CodeTEST*callpair_resize_popup.title: Call Linkage Window Resize
+CodeTEST*callpair_summary_popup.title: Call Linkage Summary
+CodeTEST*vw_caller.title: Calling Function
+CodeTEST*vw_caller.labelString: Calling Function
+CodeTEST*vw_caller.width: 9
+CodeTEST*vw_caller.print_title: Caller
+CodeTEST*vw_caller.print_width: 20
+CodeTEST*vw_callee.title: Called Function
+CodeTEST*vw_callee.labelString: Called Function
+CodeTEST*vw_callee.width: 9
+CodeTEST*vw_callee.print_title: Called
+CodeTEST*vw_callee.print_width: 20
+CodeTEST*callpair_view_caller_source.messageString: Display source code of calling function '%1'
+CodeTEST*callpair_view_called_source.messageString: Display source code of called function '%1'
+CodeTEST*callpair_called_func_summary.messageString: Display statistics for called function '%1'
+
+!
+! coverage view
+!
+CodeTEST*coverage_view.title: Coverage by Function
+CodeTEST*coverage_view.geometry: +190+300
+CodeTEST*coverage_view*background: black
+CodeTEST*coverage_view.iconName: Functions
+CodeTEST*coverage_filter_popup.title: Filter
+CodeTEST*coverage_finder_popup.title: Finder
+CodeTEST*coverage_sorter_popup.title: Sorter
+CodeTEST*coverage_resize_popup.title: Resize
+CodeTEST*coverage_view_source.messageString: Display '%1'
+
+!
+! malloc view
+!
+CodeTEST*malloc_view.title: Memory Allocation By Function
+CodeTEST*malloc_view.geometry: +240+330
+CodeTEST*malloc_view*background: black
+CodeTEST*malloc_view.iconName: Memory Allocation By Function
+CodeTEST*malloc_filter_popup.title: Memory Allocation Filter
+CodeTEST*malloc_finder_popup.title: Memory Allocation Finder
+CodeTEST*malloc_sorter_popup.title: Memory Allocation Sorter
+CodeTEST*malloc_resize_popup.title: Memory Allocation WindowResize
+CodeTEST*malloc_summary_popup.title: Malloc Call Summary
+CodeTEST*malloc_view_source.messageString: Display line %1 of file '%2'
+CodeTEST*vw_allocator.title: Type
+CodeTEST*vw_allocator.labelString: Type
+CodeTEST*vw_allocator.width: 6
+CodeTEST*vw_allocator.print_title: Type
+CodeTEST*vw_allocator.print_width: 12
+CodeTEST*vw_bytes_allocated.title: Bytes Allocated
+CodeTEST*vw_bytes_allocated.labelString: Bytes Allocated
+CodeTEST*vw_bytes_allocated.width: 17
+CodeTEST*vw_bytes_allocated.print_title: # Alloc
+CodeTEST*vw_bytes_allocated.print_width: 10
+CodeTEST*vw_smallest_allocation.title: Min Block
+CodeTEST*vw_smallest_allocation.labelString: Min Block
+CodeTEST*vw_smallest_allocation.width: 5
+CodeTEST*vw_smallest_allocation.print_title: Min
+CodeTEST*vw_smallest_allocation.print_width: 10
+CodeTEST*vw_largest_allocation.title: Max Block
+CodeTEST*vw_largest_allocation.labelString: Max Block
+CodeTEST*vw_largest_allocation.width: 5
+CodeTEST*vw_largest_allocation.print_title: Max
+CodeTEST*vw_largest_allocation.print_width: 10
+CodeTEST*vw_average_allocation.title: Average
+CodeTEST*vw_average_allocation.labelString: Average
+CodeTEST*vw_average_allocation.width: 5
+CodeTEST*vw_average_allocation.print_title: Average
+CodeTEST*vw_average_allocation.print_width: 10
+CodeTEST*mf_malloc: Malloc
+CodeTEST*mf_calloc: Calloc
+CodeTEST*mf_realloc: Realloc
+CodeTEST*mf_new: New
+CodeTEST*mf_delete: Delete
+CodeTEST*mf_free: Free
+
+
+!
+! task performance view
+!
+CodeTEST*task_view.title: RTOS Task Performance
+CodeTEST*task_view.geometry: +220+360
+CodeTEST*task_view*background: black
+CodeTEST*task_view.iconName: RTOS Task Performance
+CodeTEST*task_filter_popup.title: RTOS Task Filter
+CodeTEST*task_finder_popup.title: RTOS Task Finder
+CodeTEST*task_sorter_popup.title: RTOS Task Sorter
+CodeTEST*task_resize_popup.title: RTOS Task Window Resize
+CodeTEST*task_sampling.messageString: (Sampling rate: %1%)
+CodeTEST*task_view*view_message_form.width: 300
+
+
+CodeTEST*main_file_menu.labelString: File
+CodeTEST*main_file_menu*loaddata.labelString: Load Data...
+CodeTEST*main_file_menu*loaddata.acceleratorText: Ctrl-L
+CodeTEST*main_file_menu*loaddata.accelerator: Ctrl<Key>L
+CodeTEST*main_file_menu*savedata.labelString: Save Data...
+CodeTEST*main_file_menu*savedata.acceleratorText: Ctrl-S
+CodeTEST*main_file_menu*savedata.accelerator: Ctrl<Key>S
+CodeTEST*main_file_menu*mergedata.labelString: Merge Coverage Data...
+CodeTEST*main_file_menu*mergedata.acceleratorText: Ctrl-M
+CodeTEST*main_file_menu*mergedata.accelerator: Ctrl<Key>M
+CodeTEST*main_file_menu*loadidb.labelString: Load IDB...
+CodeTEST*main_file_menu*loadidb.acceleratorText: Ctrl-I
+CodeTEST*main_file_menu*loadidb.accelerator: Ctrl<Key>I
+CodeTEST*main_file_menu*exit.labelString: Exit
+CodeTEST*main_file_menu*exit.acceleratorText: Ctrl-X
+CodeTEST*main_file_menu*exit.accelerator: Ctrl<Key>X
+
+CodeTEST*probe_menu.labelString: Run
+CodeTEST*gobutton.labelString: Start
+CodeTEST*stopbutton.labelString: Stop
+CodeTEST*probe_menu*continue_probe.labelString: Continue
+CodeTEST*probe_menu*reset_probe.labelString: Reset Connection
+CodeTEST*probe_menu*config_probe.labelString: Probe Configuration Utility ...
+
+CodeTEST*tools_menu.labelString: Tools
+CodeTEST*tools_menu*macros.labelString: Macros...
+CodeTEST*tools_menu*statwin.labelString: Status Window...
+CodeTEST*tools_menu*coveragewin.labelString: Coverage Report ...
+CodeTEST*tools_menu*macros.acceleratorText: Ctrl-M
+CodeTEST*tools_menu*macros.accelerator: Ctrl<Key>M
+CodeTEST*tools_menu*logwin.labelString: Error Log...
+
+CodeTEST*config_menu.labelString: Options
+CodeTEST*config_menu*config.labelString: Edit Options...
+CodeTEST*config_menu*config.acceleratorText: Ctrl-O
+CodeTEST*config_menu*config.accelerator: Ctrl<Key>O
+CodeTEST*config_menu*load_config_file.labelString: Load Options File...
+CodeTEST*config_menu*save_config_file.labelString: Save Options File...
+
+CodeTEST*help_menu.labelString: Help
+CodeTEST*help_contents.labelString: Contents...
+CodeTEST*help_on_help.labelString: How to use Help...
+CodeTEST*help_search.labelString: Search...
+CodeTEST*help_on_window.labelString: Help on Window...
+CodeTEST*about_application.labelString: About CodeTEST...
+
+CodeTEST*file_menu.labelString: File
+CodeTEST*window_menu.labelString: Window
+CodeTEST*open.labelString: Open
+CodeTEST*save.labelString: Save
+CodeTEST*save_as.labelString: Save As...
+CodeTEST*close.labelString: Close
+CodeTEST*export.labelString: Export...
+CodeTEST*print.labelString: Print...
+
+!
+! Coverage Report Window
+!
+
+CodeTEST*report_menu.labelString: Report
+
+CodeTEST*vw_view_menu.labelString: View
+CodeTEST*vw_view_menu*sort.labelString: Sort
+CodeTEST*vw_view_menu*filter.labelString: Filter
+
+!
+! coverage summary window
+!
+CodeTEST*coverage_summary.title: Function Coverage Summary
+CodeTEST*coverage_summary.geometry: +450+150
+CodeTEST*coverage_summary.iconName: Function Coverage Summary
+
+!
+! coverage trend window
+!
+CodeTEST*coverage_trend.title: Function Coverage Trend
+CodeTEST*coverage_trend.geometry: +390+240
+CodeTEST*coverage_trend.iconName: Function Coverage Trend
+
+!
+! trace window
+!
+CodeTEST*trace_view.title: Trace
+CodeTEST*trace_view.geometry: +40+240
+CodeTEST*trace_view.iconName: Trace
+CodeTEST*trace_view*background: grey95
+CodeTEST*trace_file_menu.labelString: File
+CodeTEST*trace_options_menu.labelString: Options
+CodeTEST*displaybutton.labelString: Display...
+CodeTEST*hilevelbutton.labelString: High Level
+CodeTEST*controlflowbutton.labelString: Control Flow
+CodeTEST*sourcebutton.labelString: Source
+CodeTEST*collapseloops_button.labelString: Collapse Loops
+CodeTEST*expandloops_button.labelString: Expand Loops
+CodeTEST*matchbutton.labelString: Match
+CodeTEST*trc_source_file.title: File
+CodeTEST*trc_source_file.labelstring: File
+CodeTEST*trc_source_file.width: 8
+CodeTEST*trc_source_file.print_title: File
+CodeTEST*trc_source_file.print_width: 16
+CodeTEST*trc_line_number.title: Line #
+CodeTEST*trc_line_number.labelString: Line #
+CodeTEST*trc_line_number.width: 3
+CodeTEST*trc_line_number.print_title: Line #
+CodeTEST*trc_line_number.print_width: 6
+CodeTEST*trc_tag_type.title: Type
+CodeTEST*trc_tag_type.labelString: Type
+CodeTEST*trc_tag_type.width: 11
+CodeTEST*trc_tag_type.print_title: Type
+CodeTEST*trc_tag_type.print_width: 17
+CodeTEST*trc_source_text.title: Source
+CodeTEST*trc_source_text.labelString: Source
+CodeTEST*trc_source_text.width: 35
+CodeTEST*trc_source_text.print_title: Source
+CodeTEST*trc_source_text.print_width: 24
+CodeTEST*trc_time_stamp.title: Time
+CodeTEST*trc_time_stamp.labelString: Time
+CodeTEST*trc_time_stamp.width: 7
+CodeTEST*trc_time_stamp.print_title: Time
+CodeTEST*trc_time_stamp.print_width: 10
+CodeTEST*indenting_on.messageString: Indenting On
+CodeTEST*indenting_off.messageString: Indenting Off
+CodeTEST*elapsed_times.messageString: Elapsed Times
+CodeTEST*delta_times.messageString: Time Intervals
+CodeTEST*collapse_loops.messageString: Collapse Loops
+CodeTEST*expand_loops.messageString: Expand Loops
+CodeTEST*hex_mode.messageString: Hex Mode
+CodeTEST*normal_mode.messageString: Normal Mode
+CodeTEST*unformatted.messageString: Unformatted
+CodeTEST*formatted.messageString: Formatted
+CodeTEST*tag_found_color.background: violet
+CodeTEST*first_selection_color.background: gray40
+CodeTEST*second_selection_color.background: PaleTurquoise
+! blue3
+CodeTEST*trace_branch_color*foreground: red
+CodeTEST*trace_entryexit_color*foreground: brown
+CodeTEST*trace_task_color*foreground: DarkGreen
+CodeTEST*trace_discontinuity_color*foreground: red
+CodeTEST*trace_user_defined_color*foreground: orange
+CodeTEST*trigger_background_color*background: gold
+CodeTEST*error_color*foreground: red
+CodeTEST*trace_resize_popup.title: Trace Window Resize
+CodeTEST*trc_source_file.labelString: File
+
+
+!
+! memory errors window
+!
+CodeTEST*memory_errors.title: Memory Errors
+CodeTEST*memory_errors.geometry: +90+440
+CodeTEST*memory_errors.iconName: Memory Errors
+CodeTEST*memory_errors_text.columns: 80
+CodeTEST*memory_errors_text.rows: 24
+
+CodeTEST*no_heap_space: No available heap space
+CodeTEST*bad_allocation_size: Bad allocation size
+CodeTEST*block_not_free: Block not free
+CodeTEST*free_with_bad_pointer: Invalid pointer
+CodeTEST*pointer_not_in_memory_chain: Pointer not in memory chain
+CodeTEST*free_bad_allocation_size: Free of a block with a bad allocation size
+CodeTEST*invalid_pointer_mask: Invalid pointer mask
+CodeTEST*end_block_overwrite: End of block overwritten
+CodeTEST*begin_block_overwrite: Beginning of block overwritten
+CodeTEST*free_null_pointer: Attempt to free a null pointer
+CodeTEST*free_block_already_free: Attempt to free a block that was already freed
+CodeTEST*free_block_not_allocated: Attempt to free a block that wasn't allocated
+CodeTEST*free_chain_empty: Free chain empty
+CodeTEST*memory_leak: Memory leak
+CodeTEST*high_water_mark: High water mark
+CodeTEST*invalid_block_size: Invalid block size
+CodeTEST*invalid_block_type: Invalid block type
+CodeTEST*invalid_heap: Invalid heap
+CodeTEST*invalid_blink: Invalid blink
+CodeTEST*invalid_flink: Invalid flink
+
+
+!
+! config window
+!
+CodeTEST*config_window_popup.title: CodeTEST Configuration Options
+CodeTEST*config_categories.labelString: Configuration categories
+CodeTEST*config_window_popup*probe_config_button.labelString: Probe
+CodeTEST*config_window_popup*target_server_config_button.labelString: Target Server
+CodeTEST*config_window_popup*program_config_button.labelString: Target Program
+! CodeTEST*config_window_popup*rtos_config_button.labelString: RTOS
+CodeTEST*config_window_popup*license_config_button.labelString: Licensing
+CodeTEST*update_label.labelString: Update Interval (in seconds)
+CodeTEST*heartbeat_label.labelString: Heartbeat Interval (in seconds)
+CodeTEST*timeout_label.labelString: Timeout Interval (in seconds)
+CodeTEST*networkid_label.labelString: Probe Network Id
+CodeTEST*targetserverid_label.labelString: Target Server Name
+CodeTEST*probetip_file_label.labelString: Probe Configuration File
+CodeTEST*string_search_button.labelString: Search
+CodeTEST*sourcedirs_label.labelString: Source Code Directories
+CodeTEST*idbdirs_label.labelString: Instrumentation Database Directories
+CodeTEST*idb_label.labelString: Instrumentation Database
+CodeTEST*usertagfile_label.labelString: User Defined Tag File
+CodeTEST*memory_call_map_label.labelString: Memory Call Definition File
+CodeTEST*memory_errors_map_label.labelString: Memory Errors Definition File
+CodeTEST*mapfile_label.labelString: RTOS Map File
+CodeTEST*use_rtos.labelString: Using an RTOS?
+CodeTEST*performance_license.labelString: Performance License
+CodeTEST*memory_license.labelString: Memory License
+CodeTEST*coverage_license.labelString: Coverage License
+CodeTEST*trace_license.labelString: Trace License
+CodeTEST*dc_license.labelString: DC License
+CodeTEST*mcdc_license.labelString: MCDC License
+
+
+!
+! string selection windows
+!
+CodeTEST*function_list_popup.title: Function Names
+CodeTEST*task_list_popup.title: RTOS Tasks
+
+!
+! trace setup window
+!
+CodeTEST*trace_setup_popup.title: Trace Setup Options
+CodeTEST*trace_setup_popup*background: grey95
+CodeTEST*trace_depth_label.labelString: Trace Depth
+CodeTEST*normal_trace.labelString: Normal
+CodeTEST*deep_trace.labelString: Deep
+CodeTEST*really_deep_trace.labelString: Very Deep
+CodeTEST*trigger_event_label.labelString: Trigger Event
+! trigger events
+CodeTEST*no_trigger.labelString: No Trigger
+CodeTEST*any_event.labelString: Any Event
+CodeTEST*printf_label.labelString: AMCPrintf/AMCPuts Text
+CodeTEST*usertag_label.labelString: Tag Value
+CodeTEST*function_event_label.labelString: Function
+CodeTEST*trigger_function_text.value: ANY FUNCTION
+CodeTEST*rtos_task_label.labelString: Task
+CodeTEST*memory_error.labelString: Memory Error
+CodeTEST*memory_alloc.labelString: Memory Allocation
+CodeTEST*memory_dealloc.labelString: Memory Deallocation
+CodeTEST*external_trigger.labelString: External Trigger
+CodeTEST*task_entry.labelString: RTOS Task Entry
+CodeTEST*task_exit.labelString: RTOS Task Exit
+CodeTEST*task_create.labelString: RTOS Task Creation
+CodeTEST*task_delete.labelString: RTOS Task Deletion
+CodeTEST*amc_printf.labelString: AMCPrintf/AMCPuts
+CodeTEST*printf_text.value: ANY
+CodeTEST*user_tag.labelString: User Defined Tag
+CodeTEST*usertag_text.value: ANY
+CodeTEST*tag_error.labelString: Tag Error
+CodeTEST*stack_error.labelString: Stack Error
+CodeTEST*tag_overflow.labelString: Tag Overflow
+CodeTEST*rtos_taskname_text.value: ANY TASK
+! trigger positions
+CodeTEST*trigger_position_label.labelString: Trigger Position
+CodeTEST*start_of_trace.labelString: Start of Trace
+CodeTEST*center_of_trace.labelString: Center of Trace
+CodeTEST*end_of_trace.labelString: End of Trace
+CodeTEST*trigger_context_label.labelString: Trigger Context
+! trigger contexts
+CodeTEST*trace_trigger_context.labelString: Trigger Context
+CodeTEST*trace_storage_context.labelString: Storage Context
+CodeTEST*any_context.labelString: Any Context
+CodeTEST*in_task.labelString: In Task
+CodeTEST*in_function.labelString: In Function
+CodeTEST*in_task_and_function.labelString: In Task and Function
+CodeTEST*function_entry.labelString: Function Entry
+CodeTEST*function_exit.labelString: Function Exit
+CodeTEST*task_label.labelString: Specified Task
+CodeTEST*task_text.value: ANY TASK
+CodeTEST*function_list_button.labelString: ...
+CodeTEST*task_list_button.labelString: ...
+CodeTEST*context_label0.labelString: Function
+CodeTEST*context_func_text0.value: ANY FUNCTION
+CodeTEST*context_label1.labelString: which calls
+CodeTEST*context_label2.labelString: which calls
+CodeTEST*context_label3.labelString: which calls
+CodeTEST*list_button.labelString: ...
+
+!
+! trace find window
+!
+CodeTEST*trace_find_popup.title: Trace Data Finder
+CodeTEST*find_trace_tag_label.labelString: Find trace tag of type
+CodeTEST*memory_call.labelString: Call to Memory Function
+CodeTEST*discontinuous_tag.labelString: Storage Disabled
+CodeTEST*unknown_tag.labelString: Unknown Tag
+CodeTEST*rollover_tag.labelString: Storage Disabled
+CodeTEST*fifo_overflow.labelString: Processing Limit
+CodeTEST*tag_overrun.labelString: Capture Limit
+CodeTEST*target_reset.labelString: Target Reset
+CodeTEST*tagtype_unknown_tag.labelString: and Unknown Tag ID = 
+CodeTEST*tagtype_unknown_label.labelString: Tag value =
+CodeTEST*tagtype_function_label.labelString: and Function Name =
+CodeTEST*tagtype_function_text.value: ANY FUNCTION
+CodeTEST*tagtype_task_label.labelString: and Task ID =
+CodeTEST*tagtype_task_text.value: ANY TASK
+CodeTEST*tagtype_printf_label.labelString: with initial characters =
+CodeTEST*tagtype_printf_text.value: ANY
+CodeTEST*tagtype_usertag_label.labelString: with value =
+CodeTEST*tagtype_usertag_text.value: ANY
+CodeTEST*out_of_sequence_tag.labelString: Out of Sequence Tag
+CodeTEST*unknown_tag_on_stack.labelString: Unknown Tag on Stack
+CodeTEST*unknown_tag_format.labelString: Unknown Tag Format
+CodeTEST*unmatched_tag.labelString: Unmatched Tag/Timestamp
+CodeTEST*stack_expanded.labelString: Stack Expanded
+CodeTEST*stack_maximum.labelString: Maximum Stack Size
+CodeTEST*stack_flush.labelString: End of Stack Flush
+CodeTEST*trigger.labelString: Trigger Position
+
+
+
+!
+! overview setup window
+!
+CodeTEST*overview_setup_popup.title: Continuous Mode Setup Options
+CodeTEST*wind_overview_setup_popup.title: Data Collection Options
+CodeTEST*qualification_label.labelString: Performance and Memory Allocation in Task
+CodeTEST*wind_qualification_label.labelString: Measure only in task
+CodeTEST*always.labelString: Always
+CodeTEST*enable_measurement.labelString: Measurement Enable
+CodeTEST*disable_measurement.labelString: Measurement Disable
+
+!
+! source display window
+!
+CodeTEST*source_window_title.messageString: Source File: %1
+CodeTEST*source_highlight_color.background: black
+CodeTEST*source_window_scrollwin*background: red
+CodeTEST*source_window.width: 600
+CodeTEST*source_window.height: 750
+
+!
+! The following 3 resources control:
+!   The font used in the source code windows
+!   The color used to display source code that has been executed 
+!   The background color used to highlight executed source code.
+!
+CodeTEST*sourceDisplayFont: -schumacher-clean-medium-r-normal--12-120-75-75-c-60-iso8859-1
+CodeTEST*style1Foreground: yellow
+CodeTEST*style1Background: black
+
+CodeTEST*Scrollbar.foreground: red
+CodeTEST*topShadowColor: grey80
+CodeTEST*bottomShadowColor: grey40
+
+
+!
+! coverage source display window
+!
+CodeTEST*coverage_source_window_title.messageString: Coverage in Source File: %1
+
+
+!
+! status window
+!
+CodeTEST*status_window_popup.title: CodeTEST Status
+
+
+!
+! print window
+!
+CodeTEST*print_window_popup.title: Print Data
+CodeTEST*print_format_label.labelString: File Format
+CodeTEST*text_format.labelString: Ascii Text
+CodeTEST*postscript_format.labelString: PostScript
+CodeTEST*printer_label.labelString: Printer
+CodeTEST*print_to_file.labelString: Print to File?
+CodeTEST*printfile_label.labelString: Filename
+CodeTEST*printall_label.labelString: Print Entire View
+CodeTEST*printsome_label.labelString: Print Range of Entries
+CodeTEST*firstline_label.labelString: First Entry
+CodeTEST*lastline_label.labelString: Last Entry
+CodeTEST*linesperpage_label.labelString: Maximum Lines per Page
+
+!
+! export window
+!
+CodeTEST*export_window_popup.title: Save Data to Export File
+CodeTEST*exportfile_label.labelString: Export Filename
+CodeTEST*exportall_label.labelString: Export Entire View
+CodeTEST*exportsome_label.labelString: Export Range of Entries
+
+!
+! resize window
+!
+CodeTEST*resize_popup.title: Resize Column Widths

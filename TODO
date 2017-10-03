@@ -1,0 +1,8 @@
+
+ - threads code needs dll2 in timer lists
+ - threads code needs dll2 in message lists ? or msg queue lists
+ - ipipe.c should roll up into tcpgate.C
+ - itsfs needs a remote inode worker that is much more efficient
+ - itsfs needs a cache tree to sit in front of the remote inode trees
+ - try writing a threads version of tcpgate.C
+

@@ -1,0 +1,10 @@
+
+tty=`tty`
+if [[ $tty != ${tty#/dev/ttyv} ]] ; then
+    unset -f x
+    x() {
+        clear
+        xinit > .xinitlog 2>&1
+    }
+fi
+

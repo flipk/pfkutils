@@ -1,0 +1,727 @@
+
+###########################################################################
+#
+#  ATTENTION READER OF THIS FILE
+#
+#  I do something funny.  ITS does not have the shell I like to use.
+#  I like to use pdksh, which is ksh plus useful features, such as
+#  the command history and tab completion you expect in a shell, but
+#  with all the nifty 'sh' or 'ksh' features like functions and
+#  file-descriptor numbers specified for redirects.
+#
+#  I have therefore built pdksh in my own directory. But I cannot just
+#  change my account's login shell to point to a file in my homedir,
+#  because if it turns out that my nfs fileserver for my homedir is down,
+#  then I can't login.
+#
+#  So I do something funny. My login shell is /bin/ksh which is present
+#  on all ITS machines if nfs servers are up or down. This script then
+#  attempts to locate my pdksh binary and if it is found, it is then exec'd.
+#  From that point on on that machine, $SHELL points to my home dir.
+#
+#  But this is really gross, so if you're going to take things from this
+#  file I advise extreme caution in making your account work like mine.
+#  I perfected this on my home unix machine before bringing it here, 
+#  because it took some time to get it right.
+#
+#  If you have questions about this file I'll be happy to answer them
+#  if I find the time.               -- Phil Knaack
+#
+#
+#  Last update:  Tue Sep 16 22:17:21 GMT 2003
+#
+#############################################################################
+
+#
+# always ensure this file is specified as ENV.
+#
+
+USER=MY_USERNAME
+HOME=/home/$USER
+ENV=$HOME/.kshrc
+export USER HOME ENV
+
+ 
+if [ -f $HOME/.verbose ] ; then
+       __verbose() {
+               echo $$ $*
+       }
+else
+       __verbose() {
+               return 0
+       }
+fi
+
+HOST=`hostname`
+HOST=${HOST%%\.*}
+export HOST
+
+__verbose RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST options=$- args=$*
+
+# if this is a login shell, unset these vars to make sure
+# they get regenerated.
+
+case $- in 
+    *i*)
+       __noninteractive() {
+               return 1
+       }
+       ;;
+    *)
+       __noninteractive() {
+               return 0
+       }
+       ;;
+esac
+
+case $- in 
+    *l*)
+        unset ENV_SET
+        ;;
+esac
+
+if [ -z "$KSH_VERSION" ] ; then
+    __isksh() {
+	return 1
+    }
+else
+    __isksh() {
+	return 0
+    }
+fi
+
+if __isksh ; then
+    if [[ x$LAST_HOST != x$HOST ]] ; then
+	__verbose from $LAST_HOST to $HOST, regen ENV
+	unset ENV_SET
+    fi
+else
+    if [ x$LAST_HOST != x$HOST ] ; then
+	__verbose from $LAST_HOST to $HOST, regen ENV
+	unset ENV_SET
+    fi
+fi
+
+LAST_HOST=$HOST
+export LAST_HOST
+
+#
+# convoluted way to set the path. this works
+# regardless of which platform this runs on.
+#
+
+case x$ENV_SET in 
+    x)
+        ARCH=`$HOME/bin/architecture`
+        export ARCH
+
+        if __isksh ; then
+            __extend_path() {
+                if [[ -d $1 ]] ; then
+                    if [[ x$p = x ]] ; then
+                        p=$1
+                    else
+                        p=$p:$1
+                    fi
+                fi
+            }
+        else
+            __extend_path() {
+                if [ -d $1 ] ; then
+                    if [ x$p = x ] ; then
+                        p=$1
+                    else
+                        p=$p:$1
+                    fi
+                fi
+            }
+        fi
+
+        p=''
+        __extend_path ~/bin
+        __extend_path /usr/bin/X11
+        __extend_path /usr/misc/X11/bin
+        __extend_path /opt/site/bin
+        __extend_path /opt/gnu/bin
+        __extend_path /usr/X11R6/bin
+        __extend_path /usr/openwin/bin
+        __extend_path /opt/X11R6.4/bin
+        __extend_path /usr/misc/bin
+        __extend_path /usr/vendor/bin
+        __extend_path /usr/mot/bin
+        __extend_path /usr/local/bin
+        __extend_path /usr/test/gsmtesttools/bin
+        __extend_path /usr/test/bsstools/bin
+        __extend_path /usr/test/bsstools/misc
+        __extend_path /usr/ucb
+        __extend_path /usr/etc
+        __extend_path /usr/dt/bin
+        __extend_path /usr/ccs/bin
+        __extend_path /bin
+        __extend_path /usr/bin
+        __extend_path /sbin
+        __extend_path /usr/sbin
+        __extend_path /share/scripts
+        __extend_path /share/bin
+        __extend_path /share/pd/bin
+        __extend_path /motorola/bin
+        __extend_path /opt/SUNWspro/bin
+        __extend_path /usr/vendor/hst/1.0/bin
+        __extend_path /usr/vendor/lb/3.3/bin.sol4
+        __extend_path /usr/public/sphinx/ITS/IDE
+        __extend_path /emx/bin
+        __extend_path /dna/bin
+        __extend_path /preps/bin
+        __extend_path /preps/helpdesk/bin
+
+        unset -f __extend_path
+
+        PATH=$p
+        ENV_SET=yes
+        unset p
+    
+        export PATH ENV_SET
+
+        __verbose PATH=$PATH
+
+        ;;
+esac
+
+TMP=/tmp
+TMPDIR=$TMP
+TEMP=$TMP
+export TMP TMPDIR TEMP
+
+# reverse mode : rev or mr      \E[7m
+# exit attributes: sgr0 or me   \E[m
+
+if __isksh ; then
+    _set_prompt_first_time=1
+
+    _set_prompt() {
+	typeset _ps
+	_ps=''
+	if [[ "x$1" != x ]] ; then
+	    _ps="[7m$1[m
+"
+	fi
+	_ps="${_ps}$USER@$HOST"
+	if [[ x$WORK_GROUP != x ]] ; then
+	    _ps="${_ps}:$WORK_GROUP"
+	fi
+	if [[ x$WINDOW != x ]] ; then
+	    _ps="${_ps}:w$WINDOW"
+	fi
+	if [[ $_set_prompt_first_time -eq 1 ]] ; then
+	    _ps="${_ps} % "
+	    _set_prompt_first_time=0
+	else
+	    _ps="${_ps} [7m%[m "
+	fi
+	export PS1="$_ps"
+    }
+
+fi
+
+export LANG=C
+export EDITOR=vi
+export VISUAL=vi
+export VIEWER=xless
+export NPCL_EDITOR=less
+export PAGER=less
+export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q'
+export WGFILE=$TMP/wg.$USER
+
+# for some reason setting HISTSIZE resets the set -o emacs option!
+
+export HISTSIZE=250
+
+#
+# fix up TERM to make it sane.
+#
+
+case $TERM in
+    xterm|xterms|linux|screen)
+        TERM=vt100
+        ;;
+    cygwin)
+        TERM=vt100
+        stty rows 24 cols 80
+        ;;
+esac
+export TERM
+
+#
+# aliases go here
+#
+
+alias h='fc -l'
+alias s=screen
+alias res='eval `resize -u`'
+alias ls='ls -F'
+alias xl=xless
+alias l=less
+alias lt='l -n +G'
+alias zl='zcat \!* | less'
+alias zt='l -n +G ~/.messages'
+alias p='rm -f *~'
+alias ec='emacsclient --no-wait '
+alias ed='echo export DISPLAY=$DISPLAY'
+alias mem='top -n 1 | grep ^Mem'
+alias cdc='cd $HOME;clear'
+
+#FUNCTIONS: make_file_part x xr xs xrs xsd sd xless z ediff merge3 myemacs 
+
+make_file_part() {
+    typeset try dir_part file_part fp load
+    fp="$1"
+
+    if [[ -L "$fp/.base" ]] ; then
+        dir_part="${fp%/*/*}"
+        load="${fp##$dir_part/}"
+        print $2=\"[$load]\"
+        print td="$fp"
+        return
+    fi
+
+    if [[ -f .backpath ]] ; then
+        typeset base
+        base=`awk '/^BASE/ { print $2 }' .backpath`
+        base=`command cd "$base" ; pwd`
+        if [[ -d "$base/load" ]] ; then
+            base="$base/load"
+        fi
+        dir_part="${base%/*/*}"
+        load="${base##$dir_part/}"
+        try="${fp##$base/}"
+        print $2="[$load]:$try"
+        print td="$base"
+        return
+    fi
+
+    case $fp in 
+
+        *load_pointer*)
+            try=${fp#/*load_pointer/}
+            load=${try%/src*}
+            try=${try#*/}
+            print $2="[$load]:$try"
+            print td=$lp/$load
+            ;;
+
+        /usr/vob/*)
+            try=${fp#/usr/vob/}
+            typeset vobname
+            vobname=${try%%/*}
+            try=${try#$vobname/}
+            if [[ "x$CLEARCASE_ROOT" == x ]] ; then
+                print $2="[$vobname]:${try#/}"
+            else
+                print $2="${try#/}"
+            fi
+            print td=/usr/vob/gsm
+            ;;
+
+        /view/*/usr/vob/*)
+            typeset viewname
+            try=${fp#/view/}
+            viewname=${try%%/*}
+            try=${fp#/view/*/usr/vob/}
+            vobname=${try%%/*}
+            try=${try#$vobname/}
+            print $2="[$viewname]:${try#/}"
+            print td=/view/$viewname/usr/vob/$vobname
+            ;;
+
+        *)
+            dir_part="${fp%/*/*/*/*/*}"
+            file_part="${fp##$dir_part}"
+            file_part="${file_part#/}"
+            if [[ "x$file_part" = x || "x$dir_part" = x ]] ; then
+                file_part="$PWD"
+            fi
+            print $2=\"$file_part\"
+            ;;
+
+    esac
+
+}
+
+x() {
+    xterm $* &
+}
+
+xr() {
+    xterm -name knaack_xterm $* &
+}
+
+xs() {
+    xterm -name XTermScreen &
+}
+
+xrs() {
+    xterm -name knaack_xterm_screen $* &
+}
+
+xsd() {
+    xterm +sb -title NoTitle -g 190x50 -e $SHELL -c "sd $1 $2" &
+}
+
+sd() {
+    typeset cols
+    cols=`stty size 2>/dev/null | awk '{print $2}'`
+    if cmp -s $1 $2 ; then
+        echo The files are identical.  | l
+    else
+        diff -dNsyw --width $cols $* 2>&1 | l
+    fi
+}
+
+xless() {
+    typeset args file dir i olddir
+    olddir=$PWD
+
+    for i in $* ; do
+        if [[ -f $i ]] ; then
+            # figure out the directory, minus the last four path components.
+            dir=${i%/*/*/*/*/*}
+            # figure out the last four components.
+            file=${i##$dir}
+            # strip off an extra slash
+            file=${file#/}
+            # if the above algorithm messes up, $file will be null.
+            # in that case just pass the args thru unmodified.
+            # this can happen if the full path has less than four
+            # components, or if the path doesn't start with '/'.
+            if [[ x$file = x || x$dir = x ]] ; then
+                dir=.
+                file=$i
+            fi
+            # rebuild command line with the filename argument, so that
+            # the filename arg appears just as we want it at the bottom
+            # of the xterm.
+            args="$args $file"
+        else
+            args="$args $i"
+        fi
+    done
+
+    if [[ x$file = x ]] ; then
+        echo "I didn't find any files on the command line."
+        return
+    fi
+
+    if [[ x$dir != x ]] ; then
+        cd $dir
+    fi
+
+    typeset OLDLESS
+    OLDLESS="$LESS"
+    LESS="-j5 -c -d -h 5 -i -M -q"
+    export LESS
+
+    xterm -title "+ ${file##*/}" -name XLESS +sb -g 80x45 -e less $args &
+
+    LESS="$OLDLESS"
+    cd $olddir
+}
+
+z() {
+    typeset logfile tempfile count
+    typeset CLASS INSTANCE RECIPIENTS OPCODE
+
+    logfile=$HOME/.messages
+    tempfile=$TMP/zwrite.$USER.$$
+
+    CLASS=
+    INSTANCE=
+    RECIPIENTS=
+    OPCODE=
+
+    count=0
+
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+        -c)
+            CLASS=$2
+            shift
+            ;;
+        -i)
+            INSTANCE=$2
+            shift
+            ;;
+        -O)
+            OPCODE=$2
+            shift
+            ;;
+        -*)
+            break
+            ;;
+        *)
+            RECIPIENTS="$RECIPIENTS $1"
+            count=$(( count + 1 ))
+            ;;
+        esac
+        shift
+    done
+
+    test -t 0 && print Enter your message, followed by control-D.
+
+    cat > $tempfile
+
+    print -n 'Message '
+
+    [[ "x$RECIPIENTS" = "x" ]] || {
+        print -- ------------------------------------------------------------
+        print -n MESSAGE SENT TO
+        [[ "x$CLASS"      = "x" ]] || print -n " class"     $CLASS
+        [[ "x$INSTANCE"   = "x" ]] || print -n " instance"  $INSTANCE
+        [[ "x$OPCODE"     = "x" ]] || print -n " opcode"    $OPCODE
+        if [[ $count = "1" ]] ; then 
+            print -n " recipient" $RECIPIENTS
+        else
+            print -n " recipients" $RECIPIENTS
+        fi
+        print -n " -- " ; date
+        cat $tempfile
+    } >> $logfile
+
+    [[ "x$CLASS"      = "x" ]] || CLASS="-c $CLASS"
+    [[ "x$INSTANCE"   = "x" ]] || INSTANCE="-i $INSTANCE"
+    [[ "x$OPCODE"     = "x" ]] || OPCODE="-O $OPCODE"
+
+    [[ $count = "0" || $count = "1" ]] || {
+        print ""
+        print "@center(CC: $RECIPIENTS)"
+    } >> $tempfile
+
+    zwrite -n -q $OPCODE $CLASS $INSTANCE $RECIPIENTS < $tempfile
+
+    test -t 0 && print sent.
+
+    rm -f $tempfile
+}
+
+ediff() {
+    if [ $# -ne 2 ] ; then
+        echo usage : file-1 file-2
+        return
+    fi
+
+    lisp=$HOME/ediff.$$
+
+    cat << EOF > $lisp
+        (ediff "$1" "$2")
+EOF
+
+    emacs -g 162x54+5+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
+merge3() {
+    typeset lisp
+
+    if [ $# -ne 4 ] ; then
+	echo usage : file-A file-B common-ancestor output
+	return
+    fi
+
+    lisp=$HOME/merge3.$$
+
+    cat << EOF > $lisp
+        (ediff-merge-files-with-ancestor "$1" "$2" "$3" nil "$4")
+EOF
+
+    emacs -g 162x54+5+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
+myemacs() {
+    typeset started
+
+    INSIDE_EMACS=yes
+    export INSIDE_EMACS
+
+    started=no
+    ps xc | grep -q emacsserver && started=yes
+
+    if [ $started = yes ] ; then
+	emacsclient --no-wait display:$DISPLAY
+    else
+        emacs -geometry 80x33+0-200 &
+    fi
+
+    unset INSIDE_EMACS
+}
+
+fp() {
+    print $PWD/$1
+}
+
+if __isksh ; then
+    __sed=''
+    if [[ -f /bin/sed ]] ; then
+        __sed=/bin/sed
+    elif [[ -f /usr/bin/sed ]] ; then
+        __sed=/usr/bin/sed
+    fi
+    if [[ x$__sed != x ]] ; then
+        dir() {
+            ls -l $* | $__sed 's, ->.*, @,'
+        }
+    fi
+fi
+
+__verbose funcs and aliases done
+
+#  
+# allow per-host customizations.  note that the file
+# .kshrc.local must have execute permissions
+#  
+
+if __isksh ; then
+    xconsole_hook() {
+        return 0
+    }
+    if [[ -f $HOME/.kshrc.local ]] ; then
+        __verbose sourcing kshrc.local
+        . $HOME/.kshrc.local
+        __verbose DONE sourcing kshrc.local
+    else
+	__verbose no kshrc.local
+    fi
+fi
+
+#
+# noninteractive shells don't do any more.
+#
+
+if __noninteractive ; then 
+    __verbose noninteractive shell, exiting
+    return
+fi
+
+#
+# now try to ensure that we're running pdksh.
+# if we can find a pdksh, copy it to $TMPDIR
+# and then exec. otherwise continue running
+# what we have.
+#
+
+ksh_new=$HOME/bin/$ARCH/ksh
+
+if __isksh ; then
+    if [[ x$GOOD_SHELL = x ]] ; then
+	if [[ -x $ksh_new ]] ; then
+	    ksh_final=$ksh_new
+	elif [[ -x /bin/ksh ]] ; then
+	    ksh_final=/bin/ksh
+	elif [[ -x /usr/local/bin/ksh ]] ; then
+	    ksh_final=/usr/local/bin/ksh
+	else
+	    print 'WARNING: USING /bin/sh!'
+	    ksh_final=/bin/sh
+	fi
+	if [[ $SHELL != $ksh_final ]] ; then
+	    __verbose switching shells, $SHELL to $ksh_final
+	    GOOD_SHELL=yes
+	    export GOOD_SHELL
+	    exec $ksh_final
+	fi
+    fi
+else
+    if [ x$GOOD_SHELL = x ] ; then
+	if [ -x $ksh_new ] ; then
+	    ksh_final=$ksh_new
+	elif [ -x /bin/ksh ] ; then
+	    ksh_final=/bin/ksh
+	elif [ -x /usr/local/bin/ksh ] ; then
+	    ksh_final=/usr/local/bin/ksh
+	else
+	    echo 'WARNING: USING /bin/sh!'
+	    ksh_final=/bin/sh
+	fi
+	if [ $SHELL != $ksh_final ] ; then
+	    __verbose switching shells, $SHELL to $ksh_final
+	    GOOD_SHELL=yes
+	    export GOOD_SHELL
+	    exec $ksh_final
+	fi
+    fi
+fi
+
+unset GOOD_SHELL
+
+__verbose running correct shell, finishing setup
+
+#
+# after switching shells we will reenter this script
+# and wind up here, finishing the script.
+#
+
+unset ksh_new ksh_final
+
+# set up keybindings that pdksh understands.
+
+bind '^I'=complete-list
+bind '^V'=quote
+bind '^@'=set-mark-command
+
+if __isksh ; then
+    if [[ x$XCONSOLE = xyes ]] ; then
+        unset XCONSOLE
+        xtermbar Console
+        cd $HOME
+        xrdb -load .Xresources
+        ctwm -W&
+	xconsole_hook
+    else
+        cd() {
+            if [[ $# -eq 0 ]] ; then
+                command cd
+            else
+                command cd "$*"
+            fi
+            typeset file_part bardisp
+            if [[ "x$CLEARCASE_ROOT" != x ]] ; then
+                td=/usr/vob/gsm
+            else
+                unset td
+            fi
+            eval `make_file_part "$PWD" file_part`
+            if [[ "x$CLEARCASE_ROOT" == x ]] ; then
+                bardisp="$file_part"
+            else
+                typeset viewname
+                viewname="${CLEARCASE_ROOT#/view/}"
+                bardisp="[$viewname]:$file_part"
+            fi
+            _set_prompt "$bardisp"
+            if [[ "x$DISPLAY" != x ]] ; then
+                bardisp="$HOST:$bardisp"
+                xtermbar "$bardisp"
+            fi
+            if [[ x$td != x ]] ; then
+                CDPATH=.:$td/src/exec:$td/src/exec/os:$td/src:$td/src/exec/tornado101/target/config
+            fi
+        }
+
+        # update xterm title
+        cd .
+    fi
+fi
+
+#
+# these must be after the environment variables, 
+# because setting HISTSIZE resets the emacs option.
+# i don't know why that should be so.
+#
+
+set -o nolog
+set -o emacs
+set -o trackall
+set +o bgnice
+
+__verbose done with kshrc, enjoy your shell

@@ -1,0 +1,19 @@
+
+alias bld='export DISPLAY=blade:0'
+alias rund='export DISPLAY=runner:0'
+alias bl='rsh -l flipk blade'
+alias run='rsh -l flipk runner'
+
+xconsole_hook() {
+    xhost blade
+    xhost runner
+}
+
+tty=`tty`
+if [[ $tty != ${tty#/dev/ttyv} ]] ; then
+    unset -f x
+    x() {
+        clear
+        xinit > .xinitlog 2>&1
+    }
+fi

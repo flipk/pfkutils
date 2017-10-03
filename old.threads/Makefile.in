@@ -1,0 +1,75 @@
+
+LIB= libthreads.a
+CPPFLAGS= -Ih -Ih_internal
+GCC= gcc $(CPPFLAGS) 
+GCCLINK= g++ $(CPPFLAGS) 
+GCCOPT= $(GCC) -O3
+SRCS=  encrypt_rubik4.C encrypt_iface.C \
+	threads1.C threads2.C threads_class.C \
+	threads_messages.C threads_messages_tcp.C threads_timers.C \
+	threads_semaphores.C threads_printer.C
+HDRS= h/magic.H h/types.H h/encrypt_iface.H h/threads.H \
+	h/threads_class.H h/threads_messages.H h/threads_messages_tcp.H \
+	h/threads_timers.H \
+	h_internal/encrypt_none.H  \
+	h_internal/encrypt_rubik4.H \
+	h_internal/threads_internal.H h_internal/threads_messages_internal.H \
+	h_internal/threads_timers_internal.H
+
+# note: pool.C causes gcc on solaris2.6 to internal-fault for some reason.
+# since nothing uses it, it is not currently built into the library.
+
+_OBJS= $(SRCS:.C=.o)
+OBJS= $(_OBJS:.c=.o)
+
+#ifdef solaris
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSOLARIS
+LINKFL= -lsocket
+SRCS+= vsnprintf.c
+#elifdef sunos
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSUNOS
+LINKFL=
+SRCS+= vsnprintf.c
+#elifdef cygwin32
+CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DCYGWIN
+LINKFL=
+#else
+SRCS+= 	malloclock.C malloc.c
+LINKFL=
+#endif
+
+all: $(LIB) t1 t2
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	ar cq $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+t1: $(LIB) test1.C
+	$(GCCLINK) -g3 test1.C -Ih $(LIB) -o t1
+
+t2: $(LIB) test2.C
+	$(GCCLINK) -g3 test2.C -Ih $(LIB) -o t2
+
+# special rule for threads1.C, cuz it cant be built
+# with optimization. (internal-faults gcc on solaris...) grodie.
+
+threads1.o: threads1.C
+	$(GCC) -c $*.C
+
+.C.o:
+	$(GCCOPT) -c $*.C
+
+.c.o:
+	$(GCCOPT) -c $*.c
+
+depend: Makefile.in $(SRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(CPPFLAGS) $(SRCS) >> x
+	mv x Makefile
+
+clean:
+	rm -f xmakefile $(LIB) *.core  *.o *~
+	rm -f Makefile
+
+#DEPENDENCIES

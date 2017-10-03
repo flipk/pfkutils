@@ -1,0 +1,172 @@
+
+TitleFont        "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+ResizeFont       "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+MenuFont         "-adobe-helvetica-bold-r-normal--*-120-*-*-*-*-*-*"
+IconFont         "-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*"
+IconManagerFont  "-adobe-helvetica-bold-r-normal--*-100-*-*-*"
+
+UsePPosition "nonzero"
+
+OpenWindowTimeout  120
+MaxIconTitleWidth  120
+MoveOffResistance   20
+BorderWidth          2
+
+NoDefaults
+DontMoveOff
+NoGrabServer
+SqueezeTitle
+PackNewWindows
+DecorateTransients
+AutoRelativeResize
+RestartPreviousState
+CenterFeedbackWindow
+ShortAllWindowsMenus
+
+IconRegion "translit(WIDTH.50,.,x)-0-22"   South East 130 50
+IconRegion "translit(WIDTH.75,.,x)-0-72"   South East 130 75
+
+# we should never have this many icons...
+
+IconRegion "520x25-520-22" South East 130 25
+IconRegion "520x25-520-47" South East 130 25
+IconRegion "520x25-520-72" South East 130 25
+IconRegion "520x25-520-97" South East 130 25
+
+IconRegionAlignement    "bottom"
+IconRegionJustification "center"
+
+AutoSqueeze { "autosqueeze" }
+
+#WorkSpaceManagerGeometry "240x60-0-0" 4
+WorkSpaces {
+#	space buttonbg  buttonfg  rootbg
+	"1" { "#203040" "#203040" "#203040" }
+	"2" { "#203040" "#203040" "#203040" }
+	"3" { "#203040" "#203040" "#203040" }
+	"4" { "#203040" "#203040" "#203040" }
+	"5" { "#203040" "#203040" "#203040" }
+	"6" { "#203040" "#203040" "#203040" }
+	"7" { "#203040" "#203040" "#203040" }
+	"8" { "#203040" "#203040" "#203040" }
+}
+
+NoTitle {
+	"Emacs Minibuffer"
+	"Doxtrms"
+	"WorkSpaceManager"
+	"XTermScreen"
+	"NoTitle"
+	"XDaliClock"
+	"vncviewer"
+	"Wfica"
+}
+
+OccupyAll {
+	"Emacs Minibuffer"
+	"Doxtrms"
+}
+
+Color
+{
+	BorderColor "#808080"
+	BorderTileBackground "white"
+	BorderTileForeground "black"
+	DefaultBackground "rgb:2/a/9"
+	DefaultForeground "gray85"
+	TitleBackground "#203040"
+	TitleForeground "gray85"
+	MenuBackground "#203040"
+	MenuForeground "gray85"
+	MenuTitleBackground "gray70"
+	MenuTitleForeground "rgb:2/a/9"
+	IconBackground "#203040"
+	IconForeground "gray85"
+	IconBorderColor "gray85"
+	IconManagerBackground "rgb:2/a/9"
+	IconManagerForeground "gray85"
+}
+
+MoveDelta 3
+Function "move-or-raise" { f.movepack f.deltastop f.raiselower }
+Function "move-or-iconify" { f.move f.deltastop f.iconify }
+
+Button1 =   : root        : f.menu "defops"
+Button3 =   : root        : f.menu "TwmAllWindows"
+Button1 = m : window|icon : f.iconify
+Button2 = m : window|icon : f.resize
+Button3 = m : window|icon : f.function "move-or-raise"
+Button1 =   : title|frame : f.function "move-or-raise"
+Button2 =   : title|frame : f.resize
+Button3 =   : title|frame : f.menu "defops"
+Button1 =   : icon        : f.function "move-or-iconify"
+Button2 =   : icon        : f.iconify
+Button1 =   : iconmgr     : f.iconify
+Button2 =   : iconmgr     : f.iconify
+
+"x"     =   : root        : !"x&"
+"x"     = s : root        : !"xs&"
+"e"     =   : root        : !"myemacs&"
+"r"     = c : root        : f.restart
+
+"1"     =   : root        : f.gotoworkspace "1"
+"2"     =   : root        : f.gotoworkspace "2"
+"3"     =   : root        : f.gotoworkspace "3"
+"4"     =   : root        : f.gotoworkspace "4"
+"5"     =   : root        : f.gotoworkspace "5"
+"6"     =   : root        : f.gotoworkspace "6"
+"7"     =   : root        : f.gotoworkspace "7"
+"8"     =   : root        : f.gotoworkspace "8"
+
+"1"     = m : root|window|title : f.gotoworkspace "1"
+"2"     = m : root|window|title : f.gotoworkspace "2"
+"3"     = m : root|window|title : f.gotoworkspace "3"
+"4"     = m : root|window|title : f.gotoworkspace "4"
+"5"     = m : root|window|title : f.gotoworkspace "5"
+"6"     = m : root|window|title : f.gotoworkspace "6"
+"7"     = m : root|window|title : f.gotoworkspace "7"
+"8"     = m : root|window|title : f.gotoworkspace "8"
+
+"Left"	= m : root|window|title : f.prevworkspace
+"Right"	= m : root|window|title : f.nextworkspace
+
+LeftTitleButton  ":xpm:dot"    = f.iconify
+LeftTitleButton  ":xpm:bar"    = f.squeeze
+RightTitleButton ":xpm:resize" = f.resize
+
+menu "defops"
+{
+	"Twm"		f.title
+        "Xterm"		f.exec "x"
+        "XtermScreen"	f.exec "xs"
+	"Mozilla"	f.exec "mozilla &"
+	"MozillaMail"	f.exec "mozilla -mail &"
+        ""		f.nop
+	"Iconify"	f.iconify
+	"Resize"	f.resize
+	"Move"		f.movepack
+        "Raise"		f.raise
+        "Lower"		f.lower
+        "Info"          f.identify
+        "Occupy"	f.occupy
+        ""		f.nop
+        "1"		f.gotoworkspace "1"
+        "2"		f.gotoworkspace "2"
+        "3"		f.gotoworkspace "3"
+        "4"		f.gotoworkspace "4"
+        "5"		f.gotoworkspace "5"
+        "6"		f.gotoworkspace "6"
+        "7"		f.gotoworkspace "7"
+        "8"		f.gotoworkspace "8"
+        ""		f.nop
+        "Focus"		f.focus
+        "Unfocus"	f.unfocus
+        "Show Iconmgr"	f.showiconmgr
+        "Hide Iconmgr"	f.hideiconmgr
+        ""		f.nop
+        "Kill"		f.destroy
+        "Delete"	f.delete
+        ""		f.nop
+        "Restart"	f.restart
+	"Exit"		f.quit
+}

@@ -1,0 +1,104 @@
+#!/bin/sh
+
+valid_hosts="blade congo laptop login runner ipccom06 ipccom08 dell ka"
+files="Xresources Xresources-codetest Xresources-remote ctwmrc kshrc"
+files="$files profile screenrc screenrc.3 xinitrc xsession zephyr.subs"
+files="$files zephyr.vars zwgc.desc"
+efiles="emacs.el myserver.el myshell.el myfiles.el"
+scripts="architecture pf_frontend myshell myshell-launcher"
+
+if [ $# -ne 1 ] ; then
+    echo usage: inst host
+    echo valid hosts are:
+    echo $valid_hosts
+    exit 1
+fi
+
+HOST=$1
+localrc=kshrc.local.$HOST
+
+bindir=/home/MY_USERNAME/bin
+destdir=$bindir/MY_ARCH
+
+mkdir -p $destdir
+
+set -- `grep FUNCTIONS: environ/kshrc.in`
+shift
+launchers="$*"
+
+if [ -f environ/$localrc ] ; then
+    set -- `grep FUNCTIONS: environ/$localrc`
+    if [ $# -gt 0 ] ; then
+        shift
+        launchers="$launchers $*"
+    fi
+fi
+
+echo setting up bin scripts
+( cd $bindir ; rm -f $scripts )
+cp $scripts  $bindir
+(
+    cd $bindir
+    chmod a+x $scripts
+    rm -f pkutils
+    ln -s pf_frontend pkutils
+    for l in $launchers ; do
+        rm -f $l
+        ln -s myshell-launcher $l
+    done
+)
+
+echo setting up pkutils
+cp pkutils $destdir/pkutils.new
+(
+    cd $destdir
+    strip pkutils.new
+    if [ -f sudo ] ; then
+        sudo chown root:wheel pkutils.new
+        sudo chmod 4755 pkutils.new
+        sudo mv pkutils.new pkutils
+    else
+        mv pkutils.new pkutils
+    fi
+    ./pkutils -dellinks
+    ./pkutils -makelinks
+    cd ..
+    ./pkutils -dellinks
+    ./pkutils -makelinks
+)
+
+if [ -f pdksh-5.2.14/ksh ] ; then
+    echo setting up pdksh
+    cp pdksh-5.2.14/ksh $destdir/ksh.new
+    strip $destdir/ksh.new
+    mv -f $destdir/ksh.new $destdir/ksh
+fi
+
+cd environ
+
+echo setting up dotfiles
+rm -rf $HOME/.elisp $HOME/.emacs
+mkdir $HOME/.elisp
+(
+	cd $HOME/.elisp
+	for f in $efiles ; do
+		ln -s ../proj/pkutils/environ/$f
+	done
+)
+
+cd $HOME
+
+ln -s .elisp/emacs.el .emacs
+
+for f in $files ; do
+    rm -f .$f
+    ln -s proj/pkutils/environ/$f .$f
+done
+
+rm -f .Xdefaults
+ln -s .Xresources .Xdefaults
+
+if [ -f proj/pkutils/environ/$localrc ] ; then
+    rm -f .kshrc.local
+    ln -s proj/pkutils/environ/$localrc .kshrc.local
+fi

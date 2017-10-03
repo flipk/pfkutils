@@ -1,0 +1,107 @@
+
+#
+# for pci6b, change:
+# - add sudo.c here (makefile.in)
+# - implement sudo command (main.h.in)
+# - remove itsfs/remote_ino_server.C "utimes" prototype
+#
+
+#ifdef cygwin32
+PROG=	pkutils.exe
+#else
+PROG=	pkutils
+#endif
+
+HDRS=	sudo.h main_prog.h m.h main.h regex.h
+CSRCS=	agrep.c crnl.c do_connect.c he.c inet_aton.c \
+	ipipe.c m.c regex.c main.c random-hex.c \
+	xtermbar.c gmarc.c genpw.c waitpid.c pkfstat.c
+CPPSRCS= newtail.C rmstar.C makekey.C encrypt_decrypt.C tcpgate.C
+OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
+LIBS= -lcurses -lm 
+
+DIRS= implode itsfs tags.make tags.view threads
+ELIBS= implode/libimplode.a \
+	tags.make/libmaketags.a tags.view/libviewtags.a \
+	threads/libthreads.a itsfs/libitsfs.a
+
+#ifdef cygwin32
+#else
+DIRS+= states
+ELIBS+= states/libstates.a
+#endif
+
+#ifdef freebsd
+ELIBS+= bt/libbt.a qcam/libqcam.a 
+DIRS+= bt qcam
+#endif
+
+#ifdef solaris
+LIBS+= -lsocket
+CSRCS+= vsnprintf_stub.c
+#endif
+
+#ifdef sunos
+LIBS+= -ltermcap
+#endif
+
+#ifdef freebsd
+CSRCS+=	treescan.c sudo.c
+LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
+#endif
+
+CPPFLAGS= -I/usr/X11R6/include -Ithreads/h
+CFLAGS= -O3 $(CPPFLAGS)
+
+#ifdef sunos
+CPPFLAGS+= -DSUNOS
+#elifdef solaris
+CPPFLAGS+= -DSOLARIS
+#elifdef freebsd
+CPPFLAGS+= -DFREEBSD
+#elifdef cygwin32
+CPPFLAGS+= -DCYGWIN
+#else
+CPPFLAGS+=
+#endif
+
+all: subdirs $(PROG)
+
+$(PROG): $(OBJS) $(ELIBS)
+	g++ -o $(PROG) $(OBJS) $(ELIBS) $(LIBS)
+	-rm -rf t
+	-mkdir t
+	-cd t && ln -s ../$(PROG) && ./$(PROG) -makelinks
+
+subdirs::
+	@for d in $(DIRS) ; do \
+		echo making in $$d ; \
+		( cd $$d ; make ) ; \
+	done
+
+.c.o:
+	gcc $(CFLAGS) -c $*.c
+
+.C.o:
+	gcc $(CFLAGS) -c $*.C
+
+depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(CPPFLAGS) $(CSRCS) $(CPPSRCS) >> x
+	mv x Makefile
+	@for d in $(DIRS) ; do \
+		echo depending in $$d ; \
+		( cd $$d ; make depend ) ; \
+	done
+
+clean:
+	rm -rf t
+	rm -f $(OBJS) $(PROG)
+	@for d in $(DIRS) ; do \
+		echo cleaning in $$d ; \
+		( cd $$d && make clean ) ; \
+	done
+	rm -f Makefile sudo.h main_prog.h *core
+	rm -f pf_frontend inst myshell myshell-launcher
+
+#DEPENDENCIES

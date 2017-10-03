@@ -1,0 +1,98 @@
+
+knaack_xterm*termName: vt100
+knaack_xterm*jumpScroll:             true
+knaack_xterm*visualBell:             true
+knaack_xterm*scrollBar:              on
+knaack_xterm*utmpInhibit:            off
+knaack_xterm*foreground:             green
+knaack_xterm*background:             black
+knaack_xterm*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+knaack_xterm*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
+knaack_xterm*cursorColor:            white
+knaack_xterm*Scrollbar*background:   red
+knaack_xterm*Scrollbar*foreground:   blue
+knaack_xterm*scrollKey:              true
+knaack_xterm*scrollTtyOutput:        false
+knaack_xterm*saveLines:              2000
+knaack_xterm*vt100*charClass: 33:48,35:48,37:48,43:48,45-47:48,95:48,126:48
+
+knaack_xterm*fontMenu*font1*Label:  tiny
+knaack_xterm*VT100*font1:           -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
+knaack_xterm*fontMenu*font2*Label:  small
+knaack_xterm*VT100*font2:           -schumacher-clean-medium-r-normal--8-80-75-75-c-50-iso646.1991-irv
+knaack_xterm*fontMenu*font3*Label:  exceedhuge
+knaack_xterm*VT100*font3:           10x20
+knaack_xterm*fontMenu*font4*Label:  large
+knaack_xterm*VT100*font4:           -schumacher-clean-medium-r-normal--16-160-75-75-c-80-iso646.1991-irv
+knaack_xterm*fontMenu*font5*Label:  huge
+knaack_xterm*VT100*font5:           -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso8859-9
+knaack_xterm*fontMenu*font6*Label:  wider huge
+knaack_xterm*VT100*font6:           -b&h-lucidatypewriter-medium-r-normal-sans-18-180-75-75-m-110-iso8859-2
+
+knaack_xterm.VT100.Translations: \
+#override \
+   <Key>F1:  string("chg_lev") string(0x0d)\n\
+   <Key>F2:  string("3stooges") string(0x0d) string("4beatles") string(0x0d)\n\
+   <Key>F3:  string(0x0e)\n\
+   <Key>F4:  string("debug on") string(0x0d)\n\
+   <Key>F5:  string("msg 23 1 0 0 8a04h 1")string(0x0d)\n\
+   <Key>F6:  clear-saved-lines()\n\
+   <Key>F7:  scroll-back(1,line)\n\
+   <Key>F8:  scroll-forw(1,line)\n\
+   <Key>F9:  scroll-back(1,page)\n\
+   <Key>F10: scroll-forw(1,page)\n
+
+knaack_xterm_screen*termName: vt100
+knaack_xterm_screen*jumpScroll:             true
+knaack_xterm_screen*visualBell:             true
+knaack_xterm_screen*scrollBar:              on
+knaack_xterm_screen*utmpInhibit:            off
+knaack_xterm_screen*foreground:             yellow
+knaack_xterm_screen*background:             black
+knaack_xterm_screen*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+knaack_xterm_screen*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
+knaack_xterm_screen*cursorColor:            white
+knaack_xterm_screen*Scrollbar*background:   red
+knaack_xterm_screen*Scrollbar*foreground:   blue
+knaack_xterm_screen*scrollKey:              true
+knaack_xterm_screen*scrollTtyOutput:        false
+knaack_xterm_screen*saveLines:              2000
+knaack_xterm_screen*vt100*charClass: 33:48,35:48,37:48,43:48,45-47:48,95:48,126:48
+
+knaack_xterm_screen*fontMenu*font1*Label:  tiny
+knaack_xterm_screen*VT100*font1:           -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
+knaack_xterm_screen*fontMenu*font2*Label:  small
+knaack_xterm_screen*VT100*font2:           -schumacher-clean-medium-r-normal--8-80-75-75-c-50-iso646.1991-irv
+knaack_xterm_screen*fontMenu*font3*Label:  exceedhuge
+knaack_xterm_screen*VT100*font3:           10x20
+knaack_xterm_screen*fontMenu*font4*Label:  large
+knaack_xterm_screen*VT100*font4:           -schumacher-clean-medium-r-normal--16-160-75-75-c-80-iso646.1991-irv
+knaack_xterm_screen*fontMenu*font5*Label:  huge
+knaack_xterm_screen*VT100*font5:           -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso8859-9
+knaack_xterm_screen*fontMenu*font6*Label:  wider huge
+knaack_xterm_screen*VT100*font6:           -b&h-lucidatypewriter-medium-r-normal-sans-18-180-75-75-m-110-iso8859-2
+
+knaack_xterm_screen.VT100.Translations: \
+#override \
+   <Key>F1:  string("chg_lev") string(0x0d)\n\
+   <Key>F2:  string("3stooges") string(0x0d) string("4beatles") string(0x0d)\n\
+   <Key>F3:  string(0x0e)\n\
+   <Key>F4:  string("debug on") string(0x0d)\n\
+   <Key>F5:  string("msg 23 1 0 0 8a04h 1")string(0x0d)\n\
+   <Key>F6:  string(0x01) string("d")\n\
+   <Key>F7:  scroll-back(1,line)\n\
+   <Key>F8:  scroll-forw(1,line)\n\
+   <Key>F9:  scroll-back(1,page)\n\
+   <Key>F10: scroll-forw(1,page)\n\
+   Ctrl <Key>Left:  string(0x01) string("p")\n\
+   Ctrl <Key>Right: string(0x01) string("n")\n\
+   Ctrl <Key>0:     string(0x01) string("0")\n\
+   Ctrl <Key>1:     string(0x01) string("1")\n\
+   Ctrl <Key>2:     string(0x01) string("2")\n\
+   Ctrl <Key>3:     string(0x01) string("3")\n\
+   Ctrl <Key>4:     string(0x01) string("4")\n\
+   Ctrl <Key>5:     string(0x01) string("5")\n\
+   Ctrl <Key>6:     string(0x01) string("6")\n\
+   Ctrl <Key>7:     string(0x01) string("7")\n\
+   Ctrl <Key>8:     string(0x01) string("8")\n\
+   Ctrl <Key>9:     string(0x01) string("9")
