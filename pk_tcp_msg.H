@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <signal.h>
+#include <stdio.h>
 #include "types.H"
 
 // define before including for a different max msg length

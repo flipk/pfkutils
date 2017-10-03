@@ -1,6 +1,16 @@
 
+
+#ifndef DLL2_INCLUDE_LOGNEW
+#define DLL2_INCLUDE_LOGNEW 1
+#endif
+
 #include <string.h>
+
+#if DLL2_INCLUDE_LOGNEW
 #include "lognew.H"
+#else
+#define LOGNEW new
+#endif
 
 //  LListBTREE
 //     - int btree_key( void )

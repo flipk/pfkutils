@@ -2,12 +2,33 @@
 #ifndef __DLL2_H_
 #define __DLL2_H_
 
-#include <sys/types.h>
-#include <signal.h>
-#include "lognew.H"
+/* configurable items */
+
+#ifndef DLL2_INCLUDE_LOGNEW
+#define DLL2_INCLUDE_LOGNEW 1
+#endif
 
 #ifndef DLL2_CHECKSUMS
-#define DLL2_CHECKSUMS 1
+#define DLL2_CHECKSUMS      1
+#endif
+
+#ifndef DLL2_INCLUDE_BTREE
+#define DLL2_INCLUDE_BTREE  1
+#endif
+
+#ifndef DLL2BAIL
+#include <stdio.h>
+#define DLL2BAIL(reason) { printf reason ; kill( 0, 6 ); }
+#endif
+
+/* config items end here */
+
+#include <sys/types.h>
+#include <signal.h>
+#if DLL2_INCLUDE_LOGNEW
+#include "lognew.H"
+#else
+#define LOGNEW new
 #endif
 
 // NOTE:  - LList::add adds at the 'tail' of the list.
@@ -18,10 +39,6 @@
 //             item is closer to head.
 
 template <class T, int instance> class LList;
-
-#ifndef DLL2BAIL
-#define DLL2BAIL(reason) { printf reason ; kill( 0, 6 ); }
-#endif
 
 template <class T>
 class LListLinks
@@ -408,6 +425,8 @@ public:
     bool onthislist( T * t ) { return oq.onthislist( t ); }
 };
 
+#if DLL2_INCLUDE_BTREE
 #include "dll2_btree.H"
+#endif
 
 #endif /* __DLL2_H_ */

@@ -20,7 +20,7 @@ public:
 
     void print ( void ) {
         printf( "\nbuf: s %3d, u %3d, in %3d, out %3d, cw %3d, cr %3d\n",
-                size, used, in, out, contig_write(), contig_read() );
+                size, used, in, out, contig_writeable(), contig_readable() );
         for ( int i = 0; i < size; i++ )
             printf( "%c%02x%c ", (i==out)?'o':' ', buf[i], (i==in)?'i':' ' );
         printf( "\n\n" );
@@ -36,7 +36,7 @@ public:
         if ( bsz > free_space() )
             bsz = free_space();
         /* find how much contiguous space is available currently. */
-        int cpy = contig_write();
+        int cpy = contig_writeable();
         /* if contiguous space is greater than packet size, we will
            copy in two parts; "cpy" then represents first half. */
         if ( cpy > bsz )
@@ -59,7 +59,7 @@ public:
         if ( bsz > used_space() )
             bsz = used_space();
         /* find out how much to read is contiguous. */
-        int cpy = contig_read();
+        int cpy = contig_readable();
         /* determine if the read is contiguous or if it must
            be done in 2 parts. */
         if ( cpy > bsz )
@@ -80,12 +80,12 @@ public:
         return bsz;
     }
 
-    int contig_write (void) {
+    int contig_writeable (void) {
         int r = (out >  in) ? (out - in) : (size -  in);
         int f = free_space();
         return (r > f) ? f : r;
     }
-    int contig_read  (void) {
+    int contig_readable  (void) {
         return (in >= out) ? (in - out) : (size - out);
     }
 

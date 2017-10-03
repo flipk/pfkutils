@@ -15,7 +15,7 @@ CPPSRCS=filehandle.C id_name_db.C nfssrv.C control_pipe.C \
 
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o)
 
-INCS= -I../threads/h -I../dll2
+INCS= -I../threads/h -I../dll2 -I..
 OPTS= -O3
 CC= gcc
 CCLINK= g++

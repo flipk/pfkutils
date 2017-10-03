@@ -144,7 +144,7 @@ FDMAP_DATA :: handle_select_w( void )
     if ( !want_close )
         other_fd->can_read = true;
 
-    int bufsize = buf.contig_read();
+    int bufsize = buf.contig_readable();
     if ( bufsize > 0 )
     {
         int cc = write( fd, buf.read_pos(), bufsize );
@@ -186,7 +186,7 @@ FDMAP_DATA :: handle_select_r( void )
 void
 FDMAP_DATA :: _handle_select_r( void )
 {
-    int bufsize = buf.contig_write();
+    int bufsize = buf.contig_writeable();
     int cc = read( other_fd->fd, buf.write_pos(), bufsize );
 
     if ( logfd )

@@ -56,7 +56,7 @@ CSRCS+=	treescan.c sudo.c
 LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
 #endif
 
-CPPFLAGS= -I/usr/X11R6/include -Ithreads/h
+CPPFLAGS= -I/usr/X11R6/include -Ithreads/h -I.
 CFLAGS= -O3 $(CPPFLAGS)
 
 #ifdef sunos

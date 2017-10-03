@@ -5,7 +5,7 @@ ALLSRCS= $(SRCS) test.C
 OBJS= $(SRCS:.C=.o)
 LIB= libbt.a
 FLAGS= -O3
-INCS=  -I../threads/h -I../dll2
+INCS=  -I../threads/h -I../dll2 -I..
 
 all: $(LIB)
 

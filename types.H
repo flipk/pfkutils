@@ -33,6 +33,12 @@
 #define UINT8   unsigned char
 #define UCHAR   unsigned char
 
+#define uint    UINT32
+#define ushort  UINT16
+#define uchar   UCHAR
+
+#ifdef __cplusplus
+
 class UINT32_t {
 private:
     UCHAR p[4];
@@ -70,5 +76,7 @@ public:
         };
     int size_of(void) { return 2; }
 };
+
+#endif /* __cplusplus */
 
 #endif /* __UNIVERSAL_TYPES_H */

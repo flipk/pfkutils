@@ -1,6 +1,6 @@
 
 LIB= libthreads.a
-CPPFLAGS= -Ih -Ih_internal
+CPPFLAGS= -Ih -Ih_internal -I..
 GCC= gcc $(CPPFLAGS) 
 GCCLINK= g++ $(CPPFLAGS) $(LINKFL)
 GCCOPT= $(GCC) -O3
@@ -9,7 +9,7 @@ SRCS=  encrypt_rubik4.C encrypt_iface.C \
 	threads_messages.C threads_messages_tcp.C \
 	threads_messages_udp.C threads_timers.C \
 	threads_semaphores.C threads_printer.C
-HDRS= h/magic.H h/types.H h/encrypt_iface.H h/threads.H \
+HDRS= h/magic.H h/encrypt_iface.H h/threads.H \
 	h/threads_class.H h/threads_messages.H \
 	h/threads_messages_tcp.H h/threads_messages_udp.H \
 	h/threads_timers.H \
