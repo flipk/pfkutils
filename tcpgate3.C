@@ -1,5 +1,6 @@
 #if 0
-g++ -Ithreads/h -Idll2 tcpgate3.C threads/libthreads.a -g3 -o gate3
+set -e -x
+g++  -Ithreads/h tcpgate3.C threads/libthreads.a -o z
 exit 0
 #endif
 
@@ -18,8 +19,22 @@ exit 0
 #include <errno.h>
 #include <fcntl.h>
 
+#include "tcpgate.H"
 #include "threads.H"
-#include "dll2.H"
+
+#define VERBOSE 0
+
+FDMAP_LIST * list;
+
+FDMAP_DATA :: FDMAP_DATA( int _fd, bool connecting )
+    : buf( BUFSIZE )
+{
+    fd              = _fd;
+    can_read        = connecting;
+    want_write      = connecting;
+    waitfor_connect = connecting;
+    want_close      = false;
+}
 
 #if defined(SUNOS) || defined(SOLARIS) || defined(CYGWIN)
 #define socklen_t int
@@ -28,130 +43,208 @@ exit 0
 #define setsockoptcast void*
 #endif
 
-#if 0
-#include "circular_buffer.H"
-#endif
-
-struct conn {
-    static const int bufsiz = 8192;
-    LListLinks<conn> links[1];
-    bool listen;
-    int fds[2];
-    struct in_addr addr;
-    int port;
-    int bytes;
-#if 0
-    circular_buffer * conn021;
-    circular_buffer * conn120;
-#endif
-
-    conn( int fd, struct in_addr _addr, int _port ) {
-#if 0
-        conn021 = conn120 = NULL;
-#endif
-        listen = true;
-        fds[0] = fd; fds[1] = -1;
-        addr = _addr;
-        port = _port;
-        bytes = 0;
-    }
-    conn( int fd1, int fd2 ) {
-#if 0
-        conn021 = new circular_buffer( bufsiz );
-        conn120 = new circular_buffer( bufsiz );
-#endif
-        listen = false;
-        fds[0] = fd1;
-        fds[1] = fd2;
-        bytes = 0;
-    }
-    ~conn(void) {
-#if 0
-        if ( conn021 ) delete conn021;
-        if ( conn120 ) delete conn120;
-#endif
-        close( fds[0] );
-        if ( !listen )
-            fds[1];
-    }
-};
-
-class MainThread : public Thread {
-    void entry( void );
-    void handle_fd( int fd, conn * c );
-    int mq;
-    int argc;
-    char ** argv;
-    int bytes;
-    LList<conn,0>  conns;
-public:
-    MainThread( int _argc, char ** _argv )
-        : Thread( "Main", 20, 18000 )
-        {
-            argc = _argc;
-            argv = _argv;
-            resume( tid );
-        }
-    ~MainThread(void) {
-        conn * c, * nc;
-        for ( c = conns.get_head(); c; c = nc )
-        {
-            nc = conns.get_next(c);
-            conns.remove(c);
-            delete c;
-        }
-    }
-};
-
-int
-main( int argc, char ** argv )
-{
-    ThreadParams p;
-    p.my_eid = 1;
-    p.max_threads = 512;
-    p.max_fds = 1024;
-
-    Threads th( &p );
-    new MainThread( argc, argv );
-    th.loop();
-    return 0;
-}
-
-class MainTimer : public Message {
-public:
-    static const unsigned int TYPE = 0x23c64c1f;
-    MainTimer( void ) :
-        Message( sizeof( MainTimer ), TYPE ) { }
-};
-
 void
-MainThread :: entry( void )
+FDMAP_LISTEN :: handle_select_r( void )
 {
-    conn * c;
+    int ear, nfd;
+    struct sockaddr_in sa;
+    int salen = sizeof( sa );
 
-    if ( register_mq( mq, "mainthread" ) == false )
+    ear = accept( fd, (struct sockaddr *)&sa, (socklen_t*)&salen );
+
+    if ( ear < 0 )
     {
-        printf( "unable to register mq\n" );
+        printf( "accept error on fd %d: %s\n", fd, strerror( errno ));
+        exit(1);
+    }
+
+    nfd = socket( AF_INET, SOCK_STREAM, 0 );
+
+    if ( nfd < 0 )
+    {
+        printf( "alllocation of socket failed:  %s\n", strerror( errno ));
+        close( ear );
         return;
     }
 
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons( remote_port );
+    sa.sin_addr = remote_host;
+
+    th->register_fd( nfd );
+    th->register_fd( ear );
+
+    // perform the connect in async mode; when the call
+    // is made, it is correct for it to fail with EINPROGRESS.
+    // the connect continues in the background.
+    // once the connection succeeds, a select-for-write will
+    // complete successfully. if the connection fails, a 
+    // select-for-read will complete first.
+
+    if ( connect( nfd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
+    {
+        if ( errno != EINPROGRESS )
+        {
+            printf( "connect failed: %s\n", strerror( errno ));
+            close( ear );
+            close( nfd );
+            return;
+        }
+    }
+
+    FDMAP_DATA * a = new FDMAP_DATA( nfd, true  );
+    FDMAP_DATA * b = new FDMAP_DATA( ear, false );
+
+    a->set_other( b );
+    b->set_other( a );
+
+    list->add( a );
+    list->add( b );
+}
+
+void
+FDMAP_DATA :: handle_select_w( void )
+{
+    if ( waitfor_connect )
+    {
+        struct sockaddr_in name;
+        socklen_t namelen = sizeof( name );
+
+        if ( getpeername( fd, (struct sockaddr *)&name, &namelen ) < 0 )
+            if ( errno == ENOTCONN )
+            {
+                printf( "fd %d not connected during write\n", fd );
+                closeit();
+                return;
+            }
+
+        // this means the connect call completed and has 
+        // successfully established.
+#if VERBOSE
+        printf( "fd %d connected\n", fd );
+#endif
+        waitfor_connect = false;
+    }
+
+    if ( !want_close )
+        other_fd->can_read = true;
+
+    int bufsize = buf.contig_read();
+    if ( bufsize > 0 )
+    {
+        int cc = th->write( fd, buf.read_pos(), bufsize );
+#if VERBOSE
+        printf( "wrote %d of %d bytes\n", cc, bufsize );
+#endif
+
+        if ( cc <= 0 )
+            closeit();
+        else
+            buf.record_read( cc );
+    }
+
+    if ( buf.empty() )
+    {
+        want_write = false;
+        if ( want_close )
+            closeit();
+    }
+}
+
+void
+FDMAP_DATA :: handle_select_r( void )
+{
+    if ( waitfor_connect )
+    {
+        // this means the connect call has failed and the
+        // connection was not established.
+        waitfor_connect = false;
+#if VERBOSE
+        printf( "fd %d NOT connected\n", fd );
+#endif
+        closeit();
+        return;
+    }
+    other_fd->_handle_select_r();
+}
+
+void
+FDMAP_DATA :: _handle_select_r( void )
+{
+    int bufsize = buf.contig_write();
+    int cc = th->read( other_fd->fd, buf.write_pos(), bufsize );
+    int e = cc < 0 ? errno : 0;
+#if VERBOSE
+    printf( "read %d of %d: %s\n",
+            cc, bufsize,
+            e == 0 ? "no error" : strerror( e ));
+#endif
+
+    if ( cc < 0 )
+    {
+        if ( e != EAGAIN )
+            closeit();
+    }
+    else if ( cc == 0 )
+    {
+        other_fd->can_read = false;
+
+        // flag that the connection is dead
+        // but don't close the writer yet.
+        // there could still be data in the buffer.
+        // let the writer wake up and when the
+        // writer empties the buffer it will 
+        // do the closeit.
+
+        want_close = true;
+        want_write = true;
+    }
+    else
+    {
+        buf.record_write( cc );
+        want_write = true;
+    }
+
+    if ( buf.full() )
+        other_fd->can_read = false;
+}
+
+class TcpGate3Thread : public Thread {
+    void entry( void );
+    int mq;
+    int argc;
+    char ** argv;
+public:
+    TcpGate3Thread( int _argc, char ** _argv )
+        : Thread( "main", 10, 32768 )
+        {
+            argc = _argc; argv = _argv; resume( tid );
+        }
+    ~TcpGate3Thread( void ) { }
+};
+
+void
+TcpGate3Thread :: entry( void )
+{
+    list = new FDMAP_LIST;
+
     argc -= 1;
     argv += 1;
-    bytes = 0;
 
-    while ( argc > 0 )
+    while ( argc != 0 )
     {
         struct sockaddr_in sa;
-        socklen_t salen;
         struct in_addr remote_host;
-        struct hostent * he;
+        struct hostent *he;
         int fd, siz, port, remote_port;
+        FDMAP_LISTEN * l;
+        int salen;
         char * host;
 
         if ( argc < 3 )
         {
             printf( "arg parsing problem\n" );
-            return;
+            delete list;
         }
 
         port        = atoi( argv[0] );
@@ -169,17 +262,18 @@ MainThread :: entry( void )
         {
             if (( he = gethostbyname( host )) == NULL )
             {
-                printf( "unknown hostname '%s'\n", host );
-                return;
+                printf( "could not resolve hostname '%s'\n", argv[1] );
+                delete list;
             }
             memcpy( &remote_host, he->h_addr, 4 );
         }
 
         fd = socket( AF_INET, SOCK_STREAM, 0 );
+
         if ( fd < 0 )
         {
             printf( "socket failed: %s\n", strerror( errno ));
-            return;
+            delete list;
         }
 
         siz = 1;
@@ -192,137 +286,121 @@ MainThread :: entry( void )
 
         if ( bind( fd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
         {
-            printf( "bind port %d failed: %s\n", port, strerror( errno ));
-            return;
+            printf( "bind on port %d failed: %s\n", port, strerror( errno ));
+            delete list;
         }
 
         listen( fd, 10 );
 
-        c = new conn( fd, remote_host, remote_port );
-        conns.add( c );
+        l = new FDMAP_LISTEN( fd, port, remote_port, remote_host );
+        list->add( l );
     }
 
-    if ( register_mq( mq, "fdactive" ) == false )
+    if ( list->get_cnt() == 0 )
     {
-        printf( "can't register mq\n" );
+        printf( "no ports to forward!\n" );
         return;
     }
 
-    union {
-        Message          * m;
-        FdActiveMessage  * fam;
-        MainTimer        * mt;
-    } m;
-    MainTimer * mt;
-    int mqout;
+    // now start main event loop
 
-    for ( c = conns.get_head(); c; c = conns.get_next(c) )
+    fd_set zrfds;
+    FD_ZERO( &zrfds );
+
+    if ( register_mq( mq, "fdactive" ) == false )
     {
-        register_fd_mq( c->fds[0], c, FOR_READ, mq );
-        if ( !c->listen )
-            register_fd_mq( c->fds[1], c, FOR_READ, mq );
+        printf( "could not register mq\n" );
+        return;
     }
 
-    mt = new MainTimer;
-    mt->dest.set( mq );
-    set( tps(), mt );
+//xxx
 
     while ( 1 )
     {
-        m.m = recv( 1, &mq, &mqout, WAIT_FOREVER );
+        fd_set rfds, wfds;
+        int cc, max;
+        FDMAP * m, * nm;
 
-        switch ( m.m->type.get() )
+        FD_ZERO( &rfds );
+        FD_ZERO( &wfds );
+
+        max = 0;
+        for ( m = list->get_head(); m; m = list->get_next(m) )
         {
-        case FdActiveMessage::TYPE:
-            handle_fd( m.fam->fd.get(), (conn*)m.fam->arg );
-            break;
-
-        case MainTimer::TYPE:
-            mt = new MainTimer;
-            mt->dest.set( mq );
-            set( tps(), mt );
-            for ( c = conns.get_head(); c; c = conns.get_next(c) )
-                printf( "conn %d->%d bytes %d\n",
-                        c->fds[0], c->fds[1], c->bytes );
-            printf( "total bytes: %d\n", bytes );
-            break;
-
-        default:
-            printf( "unknown message %#x\n", m.m->type.get() );
-            break;
+            if ( m->fd != -1 )
+            {
+                bool inc_max = false;
+                if ( m->sel_r() )
+                {
+                    FD_SET( m->fd, &rfds );
+                    inc_max = true;
+                }
+                if ( m->sel_w() )
+                {
+                    FD_SET( m->fd, &wfds );
+                    inc_max = true;
+                }
+                if ( inc_max )
+                    if ((m->fd+1) > max )
+                        max = m->fd + 1;
+            }
         }
 
-        delete m.m;
+        cc = ::select( max, &rfds, &wfds, NULL, NULL );
+        if ( cc < 0 )
+        {
+            printf( "select error: %s\n", strerror( errno ));
+            return;
+        }
+
+        FDMAP_DELETE_LIST del;
+
+        if ( cc > 0 )
+        {
+#if 0 /* for debug */
+            for ( int i = 0; i < max; i++ )
+            {
+                if ( FD_ISSET(i, &rfds))
+                    printf( "select %d for read\n", i );
+                if ( FD_ISSET(i, &wfds))
+                    printf( "select %d for write\n", i );
+            }
+#endif
+            for ( m = list->get_head(); m; m = nm )
+            {
+                nm = list->get_next(m);
+                if ( m->fd != -1 )
+                    if ( FD_ISSET( m->fd, &wfds ))
+                        m->handle_select_w();
+                if ( m->fd != -1 )
+                    if ( FD_ISSET( m->fd, &rfds ))
+                        m->handle_select_r();
+                if ( m->fd == -1 )
+                    del.add( m );
+            }
+        }
+
+        // delete any fds which require deleting
+
+        for ( m = del.get_head(); m; m = nm )
+        {
+            nm = del.get_next( m );
+            list->remove( m );
+            del.remove( m );
+            delete m;
+        }
     }
+
+    delete list;
 }
 
-void
-MainThread :: handle_fd( int fd, conn * c )
+int
+main( int argc, char ** argv )
 {
-    int rind = 1, wind = 0;
-
-    if ( fd == c->fds[0] )
-        rind = 0, wind = 1;
-
-    if ( c->listen )
-    {
-        conn * c2;
-        struct sockaddr_in sa;
-        socklen_t salen = sizeof( sa );
-        int ear, nfd;
-
-        ear = accept( c->fds[0], (struct sockaddr *)&sa, &salen );
-        if ( ear < 0 )
-        {
-            printf( "accept: %s\n", strerror( errno ));
-        }
-        else
-        {
-            nfd = socket( AF_INET, SOCK_STREAM, 0 );
-            if ( nfd < 0 )
-            {
-                printf( "socket call failed: %s\n", strerror( errno ));
-                close( ear );
-            }
-            else
-            {
-                //xxx not async
-                sa.sin_family = AF_INET;
-                sa.sin_port = htons( c->port );
-                sa.sin_addr = c->addr;
-                if ( connect( nfd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
-                {
-                    printf( "connect: %s\n", strerror( errno ));
-                    close( ear );
-                    close( nfd );
-                }
-                else
-                {
-                    c2 = new conn( ear, nfd );
-                    conns.add( c2 );
-                    register_fd_mq( c2->fds[0], c2, FOR_READ, mq );
-                    register_fd_mq( c2->fds[1], c2, FOR_READ, mq );
-                }
-            }
-        }
-        register_fd_mq( c->fds[rind], c, FOR_READ, mq );
-    }
-    else
-    {
-        char buf[1024];
-        int cc = read( c->fds[rind], buf, 1024 );
-        if ( cc <= 0 )
-        {
-            conns.remove( c );
-            unregister_fd_mq( c->fds[wind] );
-            delete c;
-        }
-        else
-        {
-            write( c->fds[wind], buf, cc );
-            c->bytes += cc;
-            bytes += cc;
-            register_fd_mq( c->fds[rind], c, FOR_READ, mq );
-        }
-    }
+    ThreadParams p;
+    p.my_eid = 0;
+    Threads th( &p );
+    new TcpGate3Thread( argc, argv );
+    th.loop();
+    return 0;
 }
