@@ -28,7 +28,7 @@ alias ps2='/bin/ps -u $USER -o pid,tty,pri,vsz,osz,rss,comm'
 alias fi=find_include
 alias whom='/usr/test/bsstools/bin/whom'
 
-#FUNCTIONS: lsv sv svlp lbsub lbsol lbapp lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile 
+#FUNCTIONS: lsv sv svlp lbsub lbsol lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile 
 
 lsv() {
 	typeset prefix
@@ -45,12 +45,10 @@ cdv() {
 }
 
 sv() {
-    export RUN_CCS=1
     ct setview $1
 }
 
 svlp() {
-    export RUN_CCS=1
     load=`print $1 | /bin/sed -e 's/\(.\)\(.\)\(.\)\(.\)/\1.\2.\3.\4./'`
     ct setview rel_$load
     cd .
@@ -84,6 +82,10 @@ lbsol() {
     lbsub comp251 $*
 }
 
+lbappccs() {
+    export RUN_CCS=1
+    lbsub gsdapp28 $*
+}
 
 lbapp() {
     lbsub gsdapp28 $*
@@ -298,4 +300,21 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
     unset PATHhead
     unset PATHtail
     export PATH
+fi
+
+# if one of the following two directories exists, add them to the
+# path following atria/bin.
+
+if [[ x$CCS_PATH_SET != xyes ]] ; then
+    if [[ -d /usr/vob/gsmtools/build/bin ]] ; then
+	__verbose adding gsmtools/build/bin and vob/bin
+	PATHhead=${PATH%:/usr/atria/bin*}
+	PATHtail=${PATH#*/usr/atria/bin\:}
+	PATH=${PATHhead}:/usr/atria/bin:/usr/vob/gsmtools/build/bin:/usr/vob/gsm/bin:${PATHtail}
+	unset PATHhead
+	unset PATHtail
+	export PATH
+	CCS_PATH_SET=yes
+	export CCS_PATH_SET
+    fi
 fi
