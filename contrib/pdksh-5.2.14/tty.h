@@ -8,7 +8,7 @@
 
 	last edit:	30-Jul-1987	D A Gwyn
 */
-/* $Id: tty.h,v 1.1 2004/03/13 23:19:12 flipk Exp $ */
+/* $Id: tty.h,v 1.2 2013/03/03 23:05:36 flipk Exp $ */
 
 /* some useful #defines */
 #ifdef EXTERN
@@ -29,6 +29,10 @@
 #ifdef SYS_IOCTL_WITH_TERMIO
 # define SYS_IOCTL_WITH_TERMIO
 #endif /* SYS_IOCTL_WITH_TERMIO */
+
+/*PFK include this anyway. this gives us TIOCGWINSZ
+  which gives us x_cols resizing with a window resize. */
+#   include <sys/ioctl.h>
 
 #ifdef	HAVE_TERMIOS_H
 # include <termios.h>

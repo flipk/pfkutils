@@ -939,6 +939,11 @@ getspec(vp)
 		setint(vp, (long) (rand() & 0x7fff));
 		vp->flag |= SPECIAL;
 		break;
+          case V_COLUMNS:
+            	vp->flag &= ~SPECIAL;
+		setint(vp, (long) x_cols);
+		vp->flag |= SPECIAL;
+		break;
 #endif /* KSH */
 #ifdef HISTORY
 	  case V_HISTSIZE:

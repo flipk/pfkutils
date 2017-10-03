@@ -892,6 +892,7 @@ shf_vfprintf(shf, fmt, args)
 	int		len;
 	int		flags;
 	unsigned long	lnum;
+        char            stringbuf[128];
 					/* %#o produces the longest output */
 	char		numbuf[(BITS(long) + 2) / 3 + 1];
 	/* this stuff for dealing with the buffer */
@@ -1213,11 +1214,24 @@ shf_vfprintf(shf, fmt, args)
 #endif /* FP */
 
 		case 's':
+                {
+                    int stringlen, pos;
 			if (!(s = va_arg(args, char *)))
 				s = "(null %s)";
-			len = strlen(s);
+                        stringlen = strlen(s);
+                        len = 0;
+                        for (pos = 0; pos < stringlen; pos++)
+                            // PFK : duh. apparently pdksh authors never
+                            // realized they'd be passing strings
+                            // interleaved with CHAR tokens
+                            // to %s. stupid. strip token ids.
+                            if (s[pos] > CPAT)
+                                if (len < (sizeof(stringbuf)-1))
+                                    stringbuf[len++] = s[pos];
+                        stringbuf[len] = 0;
+                        s = stringbuf;
 			break;
-
+                }
 		case 'c':
 			flags &= ~FL_DOT;
 			numbuf[0] = va_arg(args, int);
