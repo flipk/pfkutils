@@ -120,6 +120,7 @@ MessagesTcp :: ~MessagesTcp( void )
         close( fd );
         close( fd_out );
     }
+
     if ( mbids[ FD_ACTIVE ] != -1 )
         unregister_mq( mbids[ FD_ACTIVE ] );
     if ( mbids[ OTHER_EID ] != -1 )
@@ -325,6 +326,8 @@ MessagesTcp :: entry( void )
         // connect immediately fails with EAGAIN. i mean that's OK,
         // but we never know when connection is actually established,
         // except by receipt of the very first packet.
+        // (xxx i've since learned a select-for-write will complete when
+        // connection is established.)
         // so when is it ok to send the first outbound packet?
         // so for now leave the fd blocking. connect will block until
         // connection is established, that's ok for now.
@@ -576,7 +579,7 @@ MessagesTcp :: rcvr_statemachine( void )
             if ( rcvrsubstate == 4 )
             {
                 rcvrsubstate = 0;
-                
+
                 switch ( ((UINT32_t *)buffer2)->get() )
                 {
                 case MagicNumbers_Messages_ConnEst:
@@ -622,12 +625,10 @@ MessagesTcp :: rcvr_statemachine( void )
                 other_req_mid =
                     ((UINT32_t *)(buffer2 + 8))->get();
 
-                send_indication( 
-                    MsgsTcpInd::IND_CONN_HAVE_EID );
+                send_indication( MsgsTcpInd::IND_CONN_HAVE_EID );
 
-                if ( register_eid
-                     ( other_eid, mbids[ OTHER_EID ] )
-                     == false )
+                if ( register_eid( other_eid,
+                                   mbids[ OTHER_EID ] ) == false )
                 {
                     print( -1, "register_eid failed!" );
                     // nuke other_eid so we dont
@@ -675,9 +676,10 @@ MessagesTcp :: rcvr_statemachine( void )
                     Message * m;
                     char * b;
                 } m;
-                m.b = new char[rcvrmsglen + 4];
-                memcpy( m.m->get_body(), 
-                        buffer2, rcvrmsglen );
+                m.b = new char[rcvrmsglen + 12];
+
+                memcpy( m.m->get_body(), buffer2, rcvrmsglen );
+
                 if ( decryptmsg( m.m ) == false )
                 {
                     th->printf( "failure "
@@ -695,14 +697,12 @@ MessagesTcp :: rcvr_statemachine( void )
 // special case code here to process them w/o forwarding them into 
 // message system. 
 
-                else if ( m.m->type.get() ==
-                          NewKeyReqInt::TYPE )
+                else if ( m.m->type.get() == NewKeyReqInt::TYPE )
                 {
                     handle_newkey_reqint( m.m );
                     delete m.b;
                 }
-                else if ( m.m->type.get() ==
-                          NewKeyAckInt::TYPE )
+                else if ( m.m->type.get() == NewKeyAckInt::TYPE )
                 {
                     handle_newkey_ackint( m.m );
                     delete m.b;
@@ -711,10 +711,14 @@ MessagesTcp :: rcvr_statemachine( void )
 // at this point we can just forward this
 // message back into the message system.
 
-                else if ( send( m.m, &m.m->dest ) == false )
+                else
                 {
-                    print( -1, "resend failed" );
-                    delete m.b;
+                    memset( &m.m->links, 0, sizeof( m.m->links ));
+                    if ( send( m.m, &m.m->dest ) == false )
+                    {
+                        print( -1, "resend failed" );
+                        delete m.b;
+                    }
                 }
             }
 

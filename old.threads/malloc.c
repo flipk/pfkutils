@@ -1245,6 +1245,7 @@ static void
 m_del( mallochdr * h )
 {
     int i;
+
 #ifdef MALLOC_REDZONES
     uchar * p;
     for ( i = 0; i < sig1_size; i++ )
@@ -1258,6 +1259,7 @@ m_del( mallochdr * h )
         if ( p[i] != sig3_val )
             BAIL(3);
 #endif
+
     if ( h->next )
         h->next->prev = h->prev;
     else
@@ -1266,6 +1268,7 @@ m_del( mallochdr * h )
         h->prev->next = h->next;
     else
         mallocs_h = h->next;
+
     malloc_total_size -= h->size;
     malloc_total_pieces--;
 }

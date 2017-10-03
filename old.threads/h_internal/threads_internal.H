@@ -48,7 +48,7 @@
 #define SETUP_STACK( jb, stack, stacksize ) \
         jb[2] = (int)stack + stacksize - 192
 
-// #elif defined(__OpenBSD__) && defined(i386)
+// #elif defined( __OpenBSD__ ) && defined(i386)
 #elif defined( __CYGWIN32__ )
 
 #define SETUP_STACK( jb, stack, stacksize ) \
@@ -61,7 +61,6 @@
 #error Need SETUP_STACK macro definition for this architecture
 
 #endif
-
 
 enum thread_state {
     // these must match statenames table at end of this file
@@ -117,6 +116,7 @@ public:
         switches = 0;
         print_header = true;
     }
+
     ~_Thread( void ) {
         if ( stack != NULL )
             delete[] stack;

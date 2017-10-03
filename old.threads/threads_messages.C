@@ -113,7 +113,7 @@ ThreadMessages :: printmqs( FILE * f )
     for ( i = 0; i < max_mqids; i++ )
         if (( q = mqs[i] ) != NULL )
             fprintf( f, FORMAT3, i,
-                     q->mqname, q->nummsgs,
+                     q->mqname, q->get_count(),
                      q->wait == NULL ? -1 :
                      q->wait->tid );
 
@@ -194,7 +194,7 @@ ThreadMessages :: recv( int numqids, int * mqids,
                      mqid ));
             continue; // skip
         }
-        if ( mqs[mqid]->nummsgs > 0 )
+        if ( mqs[mqid]->get_count() > 0 )
         {
             wtr.whichwoke = mqid;
             numqids = i;

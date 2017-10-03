@@ -29,51 +29,31 @@ struct waiter {
 // a message queue is a linked list of messages
 
 struct messageQueue {
-    Message * head;
-    Message * tail;
-    int nummsgs;
+    LList<Message,0> list;
     waiter * wait;
     char * mqname;
     messageQueue( char * _mqname ) {
-        head = tail = NULL;
-        nummsgs = 0;
         wait = NULL;
         int mqname_l = strlen( _mqname ) + 1;
         mqname = new char[ mqname_l ];
         memcpy( mqname, _mqname, mqname_l );
     }
     ~messageQueue( void ) {
-        while ( head != NULL )
+        Message * m, * nm;
+        for ( m = list.get_head(); m; m = nm )
         {
-            Message * nxt = head->next;
-            delete head;
-            head = nxt;
+            nm = list.get_next(m);
+            list.remove(m);
+            delete m;
         }
         delete mqname;
     }
-    void enqueue( Message * m ) {
-        m->next = NULL;
-        if ( tail )
-        {
-            tail->next = m;
-            tail = m;
-        }
-        else
-        {
-            head = tail = m;
-        }
-        nummsgs++;
-    }
-    Message * dequeue( void ) {
-        Message * ret = NULL;
-        if ( nummsgs > 0 )
-        {
-            nummsgs--;
-            ret = head;
-            head = ret->next;
-            if ( head == NULL )
-                tail = NULL;
-        }
+    int get_count(void) { return list.get_cnt(); }
+    void enqueue( Message * m ) { list.add( m ); }
+    Message * dequeue( void ) { 
+        Message * ret = list.get_head();
+        if ( ret )
+            list.remove( ret );
         return ret;
     }
 };

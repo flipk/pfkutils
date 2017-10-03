@@ -49,8 +49,9 @@ private:
     static const unsigned int
     ENCMAGIC = MagicNumbers_MessageEncoding_HeaderEnc;
 
-    static const int THIS_SKIP = sizeof( Message * );
+    //xxx
     static const int ENCRYPT_SKIP = sizeof( UINT32_t ) * 2;
+    static const int THIS_SKIP = sizeof( LListLinks<Message> );
 
 protected:
     // derived class should call this constructor
@@ -62,18 +63,21 @@ protected:
           random2( random() ),
           type( _type )
         { }
+
 public:
-    Message * next;  // useful for linked lists of messages
+    LListLinks<Message> links[1];
     // everything after this should be moved about
     // by alternate transports. get_body returns this.
     // these first two fields are not encrypted.
     UINT32_t magic;  // MAGIC
     UINT32_t size;   // size from 'magic' to end of body
+
 private:
     // everything after this is encrypted.
     UINT32_t encrypt_magic;
     UINT32_t random1;
     UINT32_t random2;
+
 public:
     UINT32_t type;
     MessageAddress src;
@@ -82,29 +86,29 @@ public:
     UCHAR * get_body( void ) {
         return ((UCHAR*)this)+THIS_SKIP;
     }
+
     int get_size( void ) { return size.get(); }
     bool valid_magic( void ) {
         return ( magic.get() == MAGIC );
     }
+
     bool is_encrypted( void ) {
         return ( encrypt_magic.get() != ENCMAGIC );
     }
+
     bool encrypt( encrypt_iface * crypt ) {
         random1.set( random() );
         random2.set( random() );
         int _size = size.get() - ENCRYPT_SKIP;
         UCHAR * temp_buf = new UCHAR[ _size ];
         bool encr_ret =
-            crypt->encrypt( temp_buf,
-                            get_body() + ENCRYPT_SKIP,
-                            _size );
+            crypt->encrypt( temp_buf, get_body() + ENCRYPT_SKIP, _size );
         if ( encr_ret == true )
-        {
             memcpy( get_body() + ENCRYPT_SKIP, temp_buf, _size );
-        }
         delete[] temp_buf;
         return encr_ret;
     }
+
     bool decrypt( encrypt_iface * crypt ) {
         UINT32 _size = size.get() - ENCRYPT_SKIP;
         UCHAR * temp_buf = new UCHAR[ _size ];

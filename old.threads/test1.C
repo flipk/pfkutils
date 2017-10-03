@@ -79,11 +79,14 @@ main( int argc, char ** argv )
     p.debug = 1;
     p.my_eid = active ? 1 : 2;
     Threads th( &p );
+
     if ( active )
+        (void) new creatorThread( 0x0a000002, 2400, cr ); 
 //      (void) new creatorThread( 0xa016820e, 2400, cr ); 
-        (void) new creatorThread( 0x7f000001, 2400, cr );
+//      (void) new creatorThread( 0x7f000001, 2400, cr );
     else
         (void) new creatorThread( INADDR_ANY, 2400, cr );
+
     th.loop();
     return 0;
 }
