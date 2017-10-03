@@ -5,9 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 
-packet_encoder :: packet_encoder( packet_encoder_io * _io )
+packet_encoder :: packet_encoder( packet_encoder_io * _io,
+                                  packet_encoder_encrypter_io * _encrypter )
 {
     io = _io;
+    encrypter = _encrypter;
 }
 
 void
@@ -64,15 +66,34 @@ packet_encoder :: encode_packet( uchar *pkt, int pkt_len )
     }
 
     start_packet();
-
-    add_byte( (pkt_len >> 8) & 0xff );
-    add_byte( (pkt_len     ) & 0xff );
-
-    add_bytes( pkt, pkt_len );
-
     short calculated_checksum = 0;
-    for ( int i = 0; i < pkt_len; i++ )
-        calculated_checksum += pkt[i];
+    int i;
+
+    if ( encrypter )
+    {
+        uchar encbuf[ pkt_len * 15 / 10 ];
+        int   enclen = sizeof( encbuf );
+
+        encrypter->encrypt_packet( pkt, pkt_len, encbuf, &enclen );
+
+        add_byte( (enclen >> 8) & 0xff );
+        add_byte( (enclen     ) & 0xff );
+
+        add_bytes( encbuf, enclen );
+
+        for ( i = 0; i < enclen; i++ )
+            calculated_checksum += encbuf[i];
+    }
+    else
+    {
+        add_byte( (pkt_len >> 8) & 0xff );
+        add_byte( (pkt_len     ) & 0xff );
+
+        add_bytes( pkt, pkt_len );
+
+        for ( i = 0; i < pkt_len; i++ )
+            calculated_checksum += pkt[i];
+    }
 
     add_byte( (calculated_checksum >> 8) & 0xff );
     add_byte( (calculated_checksum     ) & 0xff );

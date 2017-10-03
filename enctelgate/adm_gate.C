@@ -41,7 +41,9 @@ Adm_pkt_decoder_io :: outbytes ( uchar * buf, int len )
 Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
                             bool _doread, bool _dowrite,
                             bool _doencode,
-                            Adm_pkt_decoder_io * _decoder )
+                            packet_encoder_encrypter_io * _encrypter,
+                            Adm_pkt_decoder_io * _decoder,
+                            packet_decoder_decrypter_io * _decrypter )
     : write_buf( max_write )
 {
     fd         = _fd;
@@ -57,7 +59,7 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     if ( encode_io )
     {
         encode_io->setup_me( this );
-        encoder = new packet_encoder( encode_io );
+        encoder = new packet_encoder( encode_io, _encrypter );
     }
     else
         encoder = NULL;
@@ -66,7 +68,7 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     if ( decode_io )
     {
         decode_io->setup_me( this );
-        decoder = new packet_decoder( decode_io );
+        decoder = new packet_decoder( decode_io, _decrypter );
     }
     else
         decoder   = NULL;

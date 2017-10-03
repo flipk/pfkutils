@@ -4,9 +4,11 @@
 #include "packet_decoder.H"
 #include "base64.h"
 
-packet_decoder :: packet_decoder( packet_decoder_io * _io )
+packet_decoder :: packet_decoder( packet_decoder_io * _io,
+                                  packet_decoder_decrypter_io * _decrypter )
 {
     io = _io;
+    decrypter = _decrypter;
     state = STATE_HDR_HUNT;
     substate = 0;
     b64_in = 0;
@@ -178,7 +180,19 @@ packet_decoder :: input_decoded_byte( uchar c )
             else
             {
                 unput_discard();
-                io->outpacket( input_packet, input_packet_length );
+                if ( decrypter )
+                {
+                    uchar decbuf[ input_packet_length * 15 / 10 ];
+                    int   declen = sizeof( decbuf );
+                    bool result =
+                        decrypter->decrypt_packet( input_packet,
+                                                   input_packet_length,
+                                                   decbuf, &declen );
+                    if ( result )
+                        io->outpacket( decbuf, declen );
+                }
+                else
+                    io->outpacket( input_packet, input_packet_length );
                 first_char_after_packet = 1;
             }
         }

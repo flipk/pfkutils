@@ -10,8 +10,16 @@ public:
     virtual void outbytes( uchar *, int ) = 0;
 };
 
+class packet_encoder_encrypter_io {
+public:
+    virtual ~packet_encoder_encrypter_io( void ) { /* placeholder */ }
+    virtual void encrypt_packet( uchar * in,  int in_len,
+                                 uchar * out, int * out_len ) = 0;
+};
+
 class packet_encoder {
     packet_encoder_io * io;
+    packet_encoder_encrypter_io * encrypter;
 
     int   encoded_len;
     uchar encoded_packet[ PACKET_ENCODED_MAX_LENGTH ];
@@ -29,7 +37,8 @@ class packet_encoder {
     }
 
 public:
-    packet_encoder( packet_encoder_io * _io );
+    packet_encoder( packet_encoder_io * _io,
+                    packet_encoder_encrypter_io * _encrypter );
     void encode_packet( uchar *, int );
 };
 

@@ -129,8 +129,7 @@ Adm_Hookup_fd :: read( fd_mgr * fdmgr )
     // are hooked up to each other, the listening port should
     // be closed.
 
-//    return DEL;  xxx
-    return OK;
+    return DEL;
 }
 
 //virtual

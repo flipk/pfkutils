@@ -17,7 +17,7 @@ public:
     Telgate_pkt_decoder_io( Tunnel_fd * _tun_fdi ) { 
         tun_fdi = _tun_fdi;
     }
-    ~Telgate_pkt_decoder_io( void ) {
+    /*virtual*/ ~Telgate_pkt_decoder_io( void ) {
         tun_fdi->unregister_encoder_fd();
     }
     /*virtual*/ void outpacket( uchar * buf, int len ) {
@@ -37,13 +37,13 @@ main( int argc, char ** argv )
         exit( 1 );
     }
 
-    int tunnum      = atoi( argv[1] );
-    char * my_ip    = argv[2];
-    char * other_ip = argv[3];
-    char * netmask  = argv[4];
+    int      tunnum = atoi( argv[1] );
+    char *    my_ip =       argv[2];
+    char * other_ip =       argv[3];
+    char *  netmask =       argv[4];
 
     char tundev[ 40 ];
-    sprintf( tundev, "/dev/tun%d", tunnum );
+    snprintf( tundev, 40, "/dev/tun%d", tunnum );
 
     fd_mgr  mgr( /*debug*/ false, /*threshold*/ 0 );
     Tunnel_fd * tun_fdi;
@@ -62,7 +62,10 @@ main( int argc, char ** argv )
         = new Adm_Gate_fd( 0,                  // fd
                            false,              // connecting
                            true, false,        // doread / dowrite
-                           false, decoder );   // doencode / decoder
+                           false,              // doencode
+                           NULL,               // encrypter
+                           decoder,            // decoder
+                           NULL );             // decrypter
 
     // this fd takes packets from the tunnel and encodes them, writing
     // them on fd 1 to the proxy.
@@ -71,7 +74,10 @@ main( int argc, char ** argv )
         = new Adm_Gate_fd( 1,               // fd
                            false,           // connecting
                            false, true,     // doread / dowrite
-                           true,  NULL );   // doencode / decoder
+                           true,            // doencode
+                           NULL,            // encrypter
+                           NULL,            // decoder
+                           NULL );          // decrypter
 
     tun_fdi->register_encoder_fd( gfd2 );
     gfd1->setup_other( gfd2 );

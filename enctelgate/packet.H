@@ -10,7 +10,9 @@
  *  (1) the 4 characters "PFK1"
  *  (2) 1 or more 4-character groups of base-64-encoded data containing:
  *      (2a) 2 bytes for 'data' length
- *      (2b) N bytes of 'data' (see length field)
+ *      (2b) N bytes of 'data' (see length field) containing encrypted data:
+ *          (2b1) 2 bytes for real data length
+ *          (2b2) N bytes of real data according to (2b1)
  *      (2c) 2 bytes for 'checksum'
  *  (3) according to base64 standard, if the data contained in
  *      bullet (2) is not a multiple of 3 bytes long, the 4-byte
