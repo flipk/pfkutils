@@ -59,23 +59,30 @@ public:
 };
 typedef LList <file_info,0> file_info_list;
 
+class file_db_iterator {
+public:
+    // NOTE THAT FILE_INFO STRUCTURES PASSED TO THIS FUNCTION
+    // ARE NOT FREED WHEN CALL IS DONE, IT IS UP TO THIS FUNCTION
+    // TO FREE IT IF IT DOESN'T WANT TO KEEP IT
+    virtual void file( file_info * f ) = 0;
+};
+
 class file_db {
     FileBlockNumber * fbn;
     Btree * bt;
     UINT32 current_mark;
     file_info_list  update_list;
     file_info_list  add_list;
+    friend class file_db_iterate_pi;
+    file_info * _get_info_from_block( UINT32 id, UCHAR * data_block, int len );
 public:
     file_db( char * fname, bool create_it );
     ~file_db( void );
 
-    static const int PIECE_SIZE = 1024 * 32;
-    // calculate how many total pieces will be required
-    // to store this file, and also calculate how
-    // many bytes are in the final piece.
-    static void calc_pieces( UINT64 file_size,
-                             UINT32 * num_pieces,
-                             UINT32 * last_piece_size );
+    static const int PIECE_SIZE = 1024 * 50;
+
+    // do something for every file in the database.
+    void iterate( file_db_iterator * );
 
     // these 2 return null if not found;
     // when done with the retval, delete it,

@@ -1,5 +1,6 @@
 
 #include "file_db.H"
+#include "update_file.H"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -7,8 +8,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
-#include "update_file.H"
 
 void
 update_file( file_db * db, char * fname )
@@ -36,18 +35,14 @@ update_file( file_db * db, char * fname )
         inf->mtime = sb.st_mtime;
         id = db->add_info( inf );
         changed = true;
-        printf( "adding new file '%s'\n", fname );
     }
     else
     {
-        bool updated = false;
-
         // file found in archive, compare info.
         if ( inf->uid != sb.st_uid  ||
              inf->gid != sb.st_gid  ||
              inf->mode != (sb.st_mode & 0777) )
         {
-            updated = true;
             inf->uid = sb.st_uid;
             inf->gid = sb.st_gid;
             inf->mode = sb.st_mode & 0777;
@@ -56,15 +51,12 @@ update_file( file_db * db, char * fname )
         if ( (UINT64)sb.st_size != inf->size   ||
              sb.st_mtime != inf->mtime )
         {
-            changed = updated = true;
+            changed = true;
             inf->size = sb.st_size;
             inf->mtime = sb.st_mtime;
         }
         id = inf->id;
-        if ( updated )
-            db->update_info( inf );
-        printf( "updating new file '%s' info %s, contents %s\n",
-                fname, updated ? "Y" : "N", changed ? "Y" : "N" );
+        db->update_info( inf );
     }
 
     if ( !changed )
@@ -73,6 +65,7 @@ update_file( file_db * db, char * fname )
     UINT32 piece, changed_pieces = 0;
     int fd;
     fd = open( fname, O_RDONLY );
+    printf( "%s\n", fname );
     if ( fd < 0 )
     {
         fprintf( stderr, "unable to open file '%s': %s\n",
@@ -83,7 +76,7 @@ update_file( file_db * db, char * fname )
     {
         for ( piece = 0; ; piece++ )
         {
-            static char buf[ file_db::PIECE_SIZE ];
+            char buf[ file_db::PIECE_SIZE ];
             int cc = read( fd, buf, sizeof(buf) );
             if ( cc <= 0 )
                 break;
@@ -91,8 +84,7 @@ update_file( file_db * db, char * fname )
                 changed_pieces++;
         }
     }
+    close( fd );
 
     db->truncate_pieces( id, piece );
-    printf( "updated %d out of %d pieces of '%s'\n",
-            changed_pieces, piece, fname );
 }

@@ -66,22 +66,71 @@ file_db :: ~file_db( void )
     delete bt;   // this also deletes fbn
 }
 
-//static
+class file_db_iterate_pi : public btree_printinfo {
+public:
+    file_db * me;
+    FileBlockNumber * fbn;
+    file_db_iterator * it;
+    file_db_iterate_pi( file_db * _me,
+                        FileBlockNumber * _fbn,
+                        file_db_iterator * _it ) :
+        btree_printinfo( KEY_REC_PTR /* | DATA_REC_PTR */ ) {
+        me = _me; fbn = _fbn; it = _it;
+    }
+    // sprintelement should return null if dumptree/dumpnode should stop.
+    virtual char * sprint_element( UINT32 noderec,
+                                   UINT32 keyrec, void * key, int keylen,
+                                   UINT32 datrec, void * dat, int datlen,
+                                   bool * datdirty ) {
+        struct datum_2_key * d2k = (struct datum_2_key *)key;
+        if ( d2k->prefix_i == 'i' )
+        {
+            UINT32 magic;
+            int data_size;
+            UCHAR * data_block = fbn->get_block( datrec, &data_size, &magic );
+            file_info * fi = me->_get_info_from_block(
+                d2k->id.get(), data_block, data_size );
+            fbn->unlock_block( magic, false );
+            if ( fi )
+                it->file( fi );
+        }
+        return (char*) 1;
+    }
+    // dumpnode will call sprintelementfree when its done
+    // actually doing the printing.
+    virtual void sprint_element_free( char * s ) {
+        // nothing
+    }
+    // this is the function that actually prints.
+    virtual void print( char * format, ... )
+        __attribute__ ((format( printf, 2, 3 ))) {
+        // nothing
+    }
+};
+
 void
-file_db :: calc_pieces( UINT64 file_size,
-                        UINT32 * num_pieces,
-                        UINT32 * last_piece_size )
+file_db :: iterate( file_db_iterator * it )
 {
-    UINT32 quotient, remainder;
+    file_db_iterate_pi  fdipi( this, bt->get_fbn(), it );
+    bt->dumptree( &fdipi );
+}
 
-    quotient  = file_size / PIECE_SIZE;
-    remainder = file_size % PIECE_SIZE;
-
-    if ( remainder != 0 )
-        quotient++;
-
-    *num_pieces      = quotient;
-    *last_piece_size = remainder;
+file_info *
+file_db :: _get_info_from_block( UINT32 id, UCHAR * data_block, int data_len )
+{
+    file_info * ret;
+    datum_2 * d2 = (datum_2 *) data_block;
+    ret = new file_info( d2->fname, data_len - sizeof(datum_2) );
+    ret->id    = id;
+    ret->size  = d2-> size.get();
+    ret->mtime = d2->mtime.get();
+    ret->uid   = d2->  uid.get();
+    ret->gid   = d2->  gid.get();
+    ret->mark  = d2-> mark.get();
+    ret->mode  = d2-> mode.get();
+    ret->rec   = NULL;
+    ret->bt    = NULL;
+    return ret;
 }
 
 file_info *
@@ -97,18 +146,7 @@ file_db :: get_info_by_id( UINT32 id )
 
     if ( rec )
     {
-        datum_2 * d2 = (datum_2 *) rec->data.ptr;
-
-        ret = new file_info( d2->fname,
-                             rec->data.len - sizeof(datum_2) );
-        ret->id    = id;
-        ret->size  = d2-> size.get();
-        ret->mtime = d2->mtime.get();
-        ret->uid   = d2->  uid.get();
-        ret->gid   = d2->  gid.get();
-        ret->mark  = d2-> mark.get();
-        ret->mode  = d2-> mode.get();
-
+        ret = _get_info_from_block( id, rec->data.ptr, rec->data.len );
         ret->rec = rec;
         ret->bt  = bt;
     }
@@ -249,17 +287,20 @@ public:
                                        UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty )
     {
-        if ( ((char*)key)[0] == 'i' )
+        datum_2_key * d2k = (datum_2_key *) key;
+        if ( d2k->prefix_i == 'i' )
         {
             FileBlockNumber * fbn = bt->get_fbn();
             UINT32 magic;
-            datum_2 * d2 = (datum_2 *) fbn->get_block( datrec, &magic );
+            int d2size;
+            datum_2 * d2 = (datum_2 *)
+                fbn->get_block( datrec, &d2size, &magic );
             if ( d2 )
             {
                 if ( d2->mark.get() != current_mark )
                 {
                     delete_id * did = new delete_id;
-                    memcpy( &did->id, ((char*)key)+1, sizeof(UINT32) );
+                    did->id = d2k->id.get();
                     list.add( did );
                 }
                 fbn->unlock_block( magic, false );
@@ -308,10 +349,15 @@ file_db :: delete_old( void )
 
         // delete the datum 1 using filename located in datum 2
         int fname_len = d2rec->data.len - sizeof(datum_2);
-        char * d1key = new char[ fname_len + 1 ];
+        // only fname_len+1 is used for the key; we add an extra
+        // byte so that we can put a nul on the end to make it
+        // printable.
+        char * d1key = new char[ fname_len + 2 ];
         datum_1_key * d1k = (datum_1_key *) d1key;
         d1k->prefix_n = 'n';
         memcpy( d1k->fname, d2->fname, fname_len );
+        d1k->fname[fname_len+1] = 0;
+        printf( "deleting %s\n", d1k->fname );
         (void) bt->delete_rec( (UCHAR*) d1k, fname_len+1 );
         delete[] d1key;
 
@@ -416,8 +462,6 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
 
     (void) compress( outbuf, (uLongf*)&outlen, (const Bytef*)buf, buflen );
 
-    printf( "file %d compressed %d to %d\n", id, buflen, outlen );
-
     blockno = d3->blockno.get();
     if ( outlen != d3->size.get() )
     {
@@ -469,19 +513,23 @@ file_db :: extract_piece( UINT32 id, UINT32 piece_num,
         kill(0,6);
     }
 
-    *buflen = db_len;
-    if ( db_len > 0 )
+    if ( db_len == 0 )
     {
-        UINT32 magic;
-        UINT32 blockno = d3->blockno.get();
-        UCHAR * ptr = bt->get_fbn()->get_block( blockno, &magic );
+        *buflen = db_len;
+    }
+    else
+    {
+        UINT32 magic, blockno;
+        UCHAR * ptr;
+
+        blockno = d3->blockno.get();
+        ptr = bt->get_fbn()->get_block( blockno, &magic );
         if ( !ptr )
         {
             fprintf( stderr, "internal error in extract_piece!\n" );
             kill(0,6);
         }
         (void) uncompress( (Bytef*)buf, (uLongf*)buflen, ptr, db_len );
-        memcpy( buf, ptr, db_len );
         bt->get_fbn()->unlock_block( magic, false );
     }
 

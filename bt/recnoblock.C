@@ -317,6 +317,12 @@ FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
             if ( !first )
                 datpg = get_data_page( pag_num_in_fil, false );
             pag_num_in_fil++;
+            if (( pag_num_in_fil % pages_per_segment ) == 0 )
+            {
+                // this block overlaps into the next segment,
+                // so skip bitmap page.
+                pag_num_in_fil++;
+            }
             first = false;
 
             // get next datapage, setup src / tocopy
@@ -404,6 +410,12 @@ FileBlockNumber :: unlock_block( UINT32 magic, bool dirty )
                     datpg = get_data_page( pag_num_in_fil, false );
 
                 pag_num_in_fil++;
+                if (( pag_num_in_fil % pages_per_segment ) == 0 )
+                {
+                    // this block crosses a segment boundary,
+                    // so skip the bitmap page.
+                    pag_num_in_fil++;
+                }
                 dest = datpg->getrecord( rec_in_pag, recordsize );
                 rec_in_pag = 0;
 
@@ -442,18 +454,21 @@ FileBlockNumber :: alloc( int bytes )
         kill(0,6);
     }
 
-    page * bm;
+    page * bm, * next_bm;
     UINT32 blockno;
     int seg_num, bit, bitstart, recs, cnt, largest_seg;
+    bool overlaps = false;
 
     recs = recs_from_size( bytes );
 
+    bm = NULL;
     while ( 1 )
     {
         largest_seg = -1;
-        for ( cnt = bitmaps.get_cnt(); cnt >= 0; cnt-- )
+        for ( cnt = bitmaps.get_cnt(); cnt > 0; cnt-- )
         {
-            bm = bitmaps.get_lru_head();
+            if ( !bm )
+                bm = bitmaps.get_lru_head();
             if ( !bm )
                 break;
 
@@ -471,18 +486,42 @@ FileBlockNumber :: alloc( int bytes )
                 bool v = bm->getbit( bit );
                 int c = bm->countbits( bit, recs, pagesize );
 
-                if ( !v && c >= recs )
+                if ( !v )
                 {
-                    seg_num = bm->key_value;
-                    bitstart = bit;
-                    bm->ref();
-                    goto found;
+                    if ( c >= recs )
+                    {
+                        seg_num = bm->key_value;
+                        bitstart = bit;
+                        bm->ref();
+                        goto found;
+                    }
+                    if ( (bit+c) == recs_per_segment )
+                    {
+                        next_bm = get_segment_bitmap( bm->key_value+1 );
+                        if ( next_bm->getbit( reserved_bits ) == false )
+                        {
+                            int new_c;
+                            int remaining_recs = recs - c;
+                            new_c = next_bm->countbits(
+                                reserved_bits, remaining_recs, pagesize );
+                            if ( new_c >= remaining_recs )
+                            {
+                                seg_num = bm->key_value;
+                                bitstart = bit;
+                                bm->ref();
+                                next_bm->ref();
+                                overlaps = true;
+                                goto found;
+                            }
+                        }
+                    }
                 }
                 bit += c;
             }
 
             // this one's no good, put it at the end of the list.
             bitmaps.promote( bm );
+            bm = NULL;
         }
 
         // ran thru the entire page list and couldn't find
@@ -491,7 +530,8 @@ FileBlockNumber :: alloc( int bytes )
         // note that if this process opened an existing file,
         // this will instead walk thru the existing bitmaps until either
         // space is found or a new segment is created.
-        get_segment_bitmap( largest_seg+1 )->deref();
+        bm = get_segment_bitmap( largest_seg+1 );
+        bm->deref();
     }
 
  found:
@@ -505,8 +545,18 @@ FileBlockNumber :: alloc( int bytes )
     int pag_num_in_fil = blockno / recs_per_page;
     int rec_in_pag     = blockno - pag_num_in_fil * recs_per_page;
 
-    for ( bit = bitstart; recs > 0; bit++, recs-- )
+    for ( bit = bitstart; recs > 0; recs-- )
+    {
+        if ( bit == recs_per_segment )
+        {
+            bm->dirty = true;
+            release_page( bm );
+            bm = next_bm;
+            bit = reserved_bits;
+        }
         bm->setbit( bit );
+        bit++;
+    }
     bm->dirty = true;
     release_page( bm );
 
@@ -564,8 +614,19 @@ FileBlockNumber :: free( UINT32 blockno )
     int recs = recs_from_size( size );
 
     int bit;
-    for ( bit = rec_in_seg; recs > 0; bit++,recs-- )
+    for ( bit = rec_in_seg; recs > 0; recs-- )
+    {
+        if ( bit == recs_per_segment )
+        {
+            bm->dirty = true;
+            release_page( bm );
+            seg_num++;
+            bm = get_segment_bitmap( seg_num );
+            bit = reserved_bits;
+        }
         bm->clearbit( bit );
+        bit++;
+    }
     bm->dirty = true;
     release_page( bm );
 }
