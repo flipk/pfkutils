@@ -85,7 +85,9 @@ btpt_main( int argc, char ** argv )
         return 1;
     }
 
-    FileBlockNumber * fbn = new FileBlockNumber( argv[2], 100 );
+    FileBlockNumber * fbn = NULL;
+
+    fbn = new FileBlockNumber( argv[2], 100 );
 
     int num_segments, recs_in_use, recs_free;
     int * perseg_used, * perseg_free;

@@ -15,13 +15,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-
 #include "m.h"
 
 #if defined(sparc)
 #include "curses.h"
 #else
 #include "/usr/include/curses.h"
+#endif
+
+#ifdef __CYGWIN__
+/* wtf?? apparently no prototype in system headers. */
+off_t _lseek64(int filedes, off_t offset, int whence);
 #endif
 
 #ifndef MAP_FAILED
