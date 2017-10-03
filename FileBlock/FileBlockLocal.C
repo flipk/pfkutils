@@ -9,77 +9,47 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-FileBlockLocal :: FileBlockLocal( char * fname, bool create )
+FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 {
-    if (create)
-        fd = open( fname, O_RDWR | O_CREAT, 0644 );
-    else
-        fd = open( fname, O_RDWR );
-
-    if ( fd < 0 )
-    {
-        fprintf(stderr, "unable to open file '%s': %s\n",
-                fname, strerror( errno ));
-        exit( 1 );
-    }
-
-    cache = new FileBlockLocalCache(fd, 15000000);
+    bc = _bc;
+    //xxx
 }
 
 //virtual
 FileBlockLocal :: ~FileBlockLocal( void )
 {
-    // xxx flush cache
-    delete cache;
-    close(fd);
+    // xxx
 }
 
 //virtual
 UINT32
 FileBlockLocal :: alloc( int size )
 {
-    
+    //xxx
 
     return 0;
 }
 
 //virtual
 void
-FileBlockLocal :: free( UINT32 block )
+FileBlockLocal :: free( UINT32 id )
 {
+    //xxx
 }
 
 //virtual
-UINT32
-FileBlockLocal :: get_data_info_block( char *info_name )
+FileBlock *
+FileBlockLocal :: get_block( UINT32 id, bool for_write /*= false*/ )
 {
-    return 0;
-}
-
-//virtual
-void
-FileBlockLocal :: set_data_info_block( UINT32 block, char *info_name )
-{
-}
-
-//virtual
-void
-FileBlockLocal :: del_data_info_block( char * info_name )
-{
-}
-
-//virtual
-UCHAR *
-FileBlockLocal :: _get_block( UINT32 block, int *size,
-                              FileBlockCookie **cookie, bool for_write )
-{
+    //xxx
     return NULL;
 }
 
 //virtual
 void
-FileBlockLocal :: unlock_block( FileBlockCookie *cookie )
+FileBlockLocal :: unlock_block( FileBlock * blk )
 {
+    //xxx
 }
 
 //virtual
