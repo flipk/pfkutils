@@ -11,7 +11,7 @@ copy_file( char * from, char * to )
 {
     FILE * fromf, * tof;
     int cc;
-    char buf[4096];
+    char buf[16384];
 
     fromf = fopen( from, "r" );
     if ( fromf == NULL )
@@ -26,7 +26,7 @@ copy_file( char * from, char * to )
         return -1;
     }
 
-    while (( cc = fread( buf, 1, 4096, fromf )) > 0 )
+    while (( cc = fread( buf, 1, sizeof(buf), fromf )) > 0 )
     {
         (void) fwrite( buf, cc, 1, tof );
     }
@@ -41,7 +41,7 @@ int
 gmarc_main( int argc, char ** argv )
 {
     char * file;
-    char orig[80];
+    char orig[200];
     struct stat sb;
 
     if ( argc != 2 )
