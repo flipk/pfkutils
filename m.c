@@ -1,12 +1,4 @@
 
-/* TODO: convert all cvt functions to use the new
- *       m_parse_number function instead of having individual
- *       implementations.
- *       perhaps even drastically simplifying the implementation
- *       so that all outputs are specified directly as base instead
- *       of hex/octal/binary/etc.
- */
-
 #include <sys/types.h>
 #include "regex.h"
 #include <stdio.h>

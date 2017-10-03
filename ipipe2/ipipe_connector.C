@@ -25,12 +25,6 @@ ipipe_connector :: ipipe_connector( struct sockaddr_in * sa,
 
     int cc = connect( fd, (struct sockaddr *)sa, sizeof( *sa ));
 
-    if ( cc == 0 )
-    {
-        fprintf( stderr, "connect SUCCEEDED????\n" );
-        exit( 1 );
-    }
-
     if ( cc < 0  &&  errno != EINPROGRESS )
     {
         fprintf( stderr, "connect: %s\n", strerror( errno ));

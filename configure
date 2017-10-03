@@ -1,6 +1,6 @@
 #!/bin/sh
 
-makefiles="Makefile bt/Makefile implode/Makefile itsfs/Makefile qcam/Makefile states/Makefile tags.make/Makefile tags.view/Makefile treesync/Makefile threads/Makefile dll2/Makefile"
+makefiles="Makefile bt/Makefile implode/Makefile itsfs/Makefile qcam/Makefile states/Makefile tags.make/Makefile tags.view/Makefile threads/Makefile dll2/Makefile"
 
 precomps="pf_frontend myshell myshell-launcher inst"
 

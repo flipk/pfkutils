@@ -1,11 +1,4 @@
 
- - itsfs needs a control command
-
- - pkstgen needs input A,B,C { ... } syntax
- - pkstgen needs input * { ... } syntax
-   (document difference!)
-
- - itsfs needs a cache tree to sit in front of the remote inode trees
- - why does 'tar zxf somefile.tar' in a remotely mounted tree sometimes
+ - itsfs:why does 'tar zxf somefile.tar' in a remotely mounted tree sometimes
    produce garbage files?
 

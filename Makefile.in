@@ -29,8 +29,8 @@ DIRS+= states
 ELIBS+= states/libstates.a
 
 #ifdef freebsd
-ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a treesync/libts.a
-DIRS+= bt qcam xlock treesync threads itsfs mytar
+ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
+DIRS+= bt qcam xlock threads itsfs mytar
 ELIBS+= pdksh-5.2.14/ksh.o itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
@@ -42,8 +42,8 @@ ELIBS+= mytar/libmytar.a
 
 #ifdef cygwin32
 CSRCS+=	treescan.c 
-DIRS+= bt treesync itsfs mytar
-ELIBS+= treesync/libts.a bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
+DIRS+= bt itsfs mytar
+ELIBS+= bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
 #ifdef solaris

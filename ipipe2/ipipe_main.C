@@ -48,7 +48,7 @@ hostname_to_ipaddr( char * host, void * addr )
                      host, strerror( errno ));
             exit( 1 );
         }
-        memcpy( he->h_addr, addr, he->h_length );
+        memcpy( addr, he->h_addr, he->h_length );
     }
 }
 

@@ -46,7 +46,7 @@ public:
             bsz = free_space();
         /* find how much contiguous space is available currently. */
         int cpy = contig_writeable();
-        /* if contiguous space is greater than packet size, we will
+        /* if contiguous space is less than packet size, we will
            copy in two parts; "cpy" then represents first half. */
         if ( cpy > bsz )
             cpy = bsz;
