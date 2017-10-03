@@ -4,8 +4,31 @@
 #include <sys/uio.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <string.h>
 
 #include "pk_msg.H"
+
+enum states {
+    HUNT1,
+    HUNT2,
+    HUNT3,
+    HUNT4,
+    HEADER,
+    BODY
+};
+
+pk_msgr :: pk_msgr( int _max_msg_len )
+{
+    max_msg_len = _max_msg_len;
+    state = HUNT1;
+    msg = new MaxPkMsgType;
+    outbuf = (UINT8*)msg;
+}
+
+pk_msgr :: ~pk_msgr( void )
+{
+    delete msg;
+}
 
 bool
 pk_msgr :: send( pk_msg * m )
@@ -24,86 +47,133 @@ pk_msgr :: send( pk_msg * m )
     return true;
 }
 
-enum states { HEADER, BODY };
-
-bool
-pk_msgr :: recv( pk_msg * m, int max_size )
+void
+pk_msgr :: process_read( UINT8 * buf, int buflen )
 {
-    char * buf = m->get_ptr();
-    states state = HEADER;
-    int stateleft = sizeof( pk_msg );
-
-    while ( 1 )
+    int tocopy;
+    while (buflen > 0)
     {
-        int cc = reader( buf, stateleft );
-
-        if ( cc <= 0 )
-            return false;
-
-        stateleft -= cc;
-        buf += cc;
-
-        if ( stateleft == 0 )
+        switch (state)
         {
-            switch ( state )
+        case HUNT1:
+            if (*buf == pk_msg::magic_1)
+                state = HUNT2;
+            buf++;
+            buflen--;
+            break;
+
+        case HUNT2:
+            if (*buf == pk_msg::magic_2)
+                state = HUNT3;
+            else
+                state = HUNT1;
+            buf++;
+            buflen--;
+            break;
+
+        case HUNT3:
+            if (*buf == pk_msg::magic_3)
+                state = HUNT4;
+            else
+                state = HUNT1;
+            buf++;
+            buflen--;
+            break;
+
+        case HUNT4:
+            if (*buf == pk_msg::magic_4)
             {
-            case HEADER:
-                if ( !m->verif_magic() )
-                    return false;
-
-                stateleft = m->get_len();
-                if ( stateleft > max_size )
-                    return false;
-
-                stateleft -= sizeof( pk_msg );
-                if ( stateleft == 0 )
-                    return true;
-
-                state = BODY;
-                break;
-
-            case BODY:
-                if ( !m->verif_checksum() )
-                    return false;
-
-                return true;
+                state = HEADER;
+                msg->magic.set(pk_msg::magic_value);
+                outbuf = (UINT8*)msg;
+                outbuf += 4;
+                stateleft = sizeof(pk_msg) - 4;
             }
+            else
+                state = HUNT1;
+            buf++;
+            buflen--;
+            break;
+
+        case HEADER:
+            tocopy = buflen;
+            if (tocopy > stateleft)
+                tocopy = stateleft;
+
+            if (outbuf != buf)
+                memmove(outbuf, buf, tocopy);
+#if 0 // theorize that the read(int) method will use this
+            else
+                printf("you were right about the header optimization\n");
+#endif
+
+            outbuf += tocopy;
+            buf += tocopy;
+            stateleft -= tocopy;
+            buflen -= tocopy;
+
+            if (stateleft == 0)
+            {
+                if (msg->get_len() > MAX_PK_MSG_LENGTH)
+                {
+                    printf("pk_msgr::process_read: bogus length %d!\n",
+                           msg->get_len());
+                    outbuf = (UINT8*)msg;
+                    state = HUNT1;
+                }
+                else
+                {
+                    state = BODY;
+                    stateleft = msg->get_len() - sizeof(pk_msg);
+                }
+            }
+            break;
+
+        case BODY:
+            tocopy = buflen;
+            if (tocopy > stateleft)
+                tocopy = stateleft;
+
+            if (outbuf != buf)
+                memmove(outbuf, buf, tocopy);
+#if 0 // theory
+            else
+                printf("you were right about the body optimization\n");
+#endif
+
+            outbuf += tocopy;
+            buf += tocopy;
+            stateleft -= tocopy;
+            buflen -= tocopy;
+
+            if (stateleft == 0)
+            {
+                if (msg->verif_checksum())
+                {
+                    recv(msg);
+                    msg = new MaxPkMsgType;
+                }
+                else
+                {
+                    printf("pk_msgr::process_read: "
+                           "bogus checksum %#x != %#x\n",
+                           msg->checksum.get(), msg->calc_checksum());
+                }
+                outbuf = (UINT8*)msg;
+                state = HUNT1;
+            }
+            break;
         }
     }
 }
 
-
-#if 0
-
-/* example definition of a message */
-
-PkMsgDef( TestMessage, 0x12345,
-          int a;
-          int b;
-    );
-
-class my_msgr : public pk_msgr {
-private:
-    /*virtual*/ int reader( void * buf, int buflen ) {
-    }
-    /*virtual*/ int writer( void * buf, int buflen ) {
-    }
-    /*virtual*/ bool read_pending( void ) {
-    }
-    int fd;
-    int junk;
-public:
-    my_msgr( int _fd, int _junk ) { fd = _fd; junk = _junk; }
-    ~my_msgr( void ) { close( fd ); }
-};
-
 int
-testfunc( void )
+pk_msgr :: process_read( int fd )
 {
-    TestMessage tm;
-    pk_msgr mgr( /*fd*/ 1, /*junk*/ 4 );
-
-    mgr.send( &tm );
+    int pos = outbuf - (UINT8*)msg;
+    int max = sizeof(MaxPkMsgType) - pos;
+    int cc = ::read(fd, (char*)outbuf, max);
+    if (cc > 0)
+        process_read(outbuf,cc);
+    return cc;
 }
-
-#endif

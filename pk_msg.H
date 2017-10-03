@@ -61,18 +61,26 @@ struct pk_msg {
         return true;
     }
 private:
-    static const int magic_value = 0x5048494c;
+    friend class pk_msgr;
+    static const unsigned int magic_value = 0x5048494c;
+    static const unsigned int magic_1 = (magic_value >> 24) & 0xFF;
+    static const unsigned int magic_2 = (magic_value >> 16) & 0xFF;
+    static const unsigned int magic_3 = (magic_value >>  8) & 0xFF;
+    static const unsigned int magic_4 = (magic_value >>  0) & 0xFF;
+    static const unsigned short checksum_start = 0x504b;
+    static const unsigned short checksum_const = 0x4621;
+    static const unsigned char checksum_xor = 0x46;
     UINT32_t  magic;
     UINT16_t  length;
     UINT16_t  type;
     UINT16_t  checksum;
     UINT16    calc_checksum( void ) {
         UINT8 * p = (UINT8*) this;
-        UINT16 cs = 0x504b;
+        UINT16 cs = checksum_start;
         UINT16 oldcs = checksum.get();
-        checksum.set( 0 );
+        checksum.set( checksum_const );
         for ( int i = 0; i < length.get(); i++ )
-            cs += (*p++ ^ 0x46);
+            cs += (*p++ ^ checksum_xor);
         checksum.set( oldcs );
         return cs;
     }
@@ -84,14 +92,22 @@ PkMsgDef( MaxPkMsgType, 0x0,
 
 class pk_msgr {
 protected:
-    virtual int reader( void * buf, int buflen ) = 0;
     virtual int writer( void * buf, int buflen ) = 0;
-    virtual bool read_pending( void ) = 0;
+    virtual void recv( pk_msg *m ) = 0;
+//
+    int max_msg_len;
+    MaxPkMsgType  * msg;
+    UINT8 * outbuf;
+    int stateleft;
+    int state;
 public:
-    virtual ~pk_msgr( void ) { /* placeholder */ }
+    pk_msgr( int _max_msg_len );
+    virtual ~pk_msgr( void );
     bool send( pk_msg * m );
-    bool recv_pending( void ) { return read_pending(); }
-    bool recv( pk_msg * m, int max_size );
+    // user already did a read and passed data to me
+    void process_read( UINT8 * buf, int buflen );
+    // user wants me to do the read. returns same as read(2)
+    int  process_read( int fd );
 };
 
 #endif /* __PK_MSG_H_ */

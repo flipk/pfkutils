@@ -5,9 +5,9 @@
 #include "fd_mgr.H"
 #include "ipipe_forwarder.H"
 
-void stats_init     ( fd_mgr * mgr,
-                      bool _shortform, bool _verbose, bool _final,
-                      bool is_proxy );
+void stats_init     ( bool _shortform, bool _verbose, bool _final,
+                      bool is_proxy, struct timeval * tick_tv );
+void stats_tick     ( void );
 void stats_add_conn ( void );
 void stats_del_conn ( void );
 void stats_add      ( int r, int w );

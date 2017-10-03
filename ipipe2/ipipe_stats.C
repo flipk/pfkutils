@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#include "ipipe_tick.H"
 #include "ipipe_stats.H"
 
 #define TICKS_PER_SECOND 2
@@ -25,12 +24,20 @@ static         UINT64 last5sw    [ TICKS_IN_5 ];
 static int connections;
 static bool is_proxy = true;
 static struct timeval time_start;
+static struct timeval next_print;
+static struct timeval interval;
 
 static int
 difftimevals( struct timeval * a, struct timeval * b )
 {
     struct timeval diff;
     int elapsed100ths;
+
+    // if a < b, return -1;
+    if (a->tv_sec < b->tv_sec)
+        return -1;
+    if (a->tv_sec == b->tv_sec  &&  a->tv_usec < b->tv_usec)
+        return -1;
 
     diff.tv_sec  =  a->tv_sec  - b->tv_sec ;
     diff.tv_usec =  a->tv_usec - b->tv_usec;
@@ -46,7 +53,19 @@ difftimevals( struct timeval * a, struct timeval * b )
 }
 
 static void
-tick_func( void * arg )
+addtimevals(struct timeval * out, struct timeval * a, struct timeval * b)
+{
+    out->tv_sec  = a->tv_sec  + b->tv_sec;
+    out->tv_usec = a->tv_usec + b->tv_usec;
+    if (out->tv_usec > 1000000)
+    {
+        out->tv_usec -= 1000000;
+        out->tv_sec += 1;
+    }
+}
+
+static void
+print_status( bool last )
 {
     int rdbps, wrbps, ratio1000 = 1000, ratio10005s = 1000;
     UINT64 rd5s, wr5s;
@@ -58,8 +77,8 @@ tick_func( void * arg )
     gettimeofday( &time_now, NULL );
     elapsed100ths = difftimevals( &time_now, &time_start );
 
-    if (( arg == NULL && verbose ) ||
-        ( arg != NULL && final   ))
+    if (( !last && verbose ) ||
+        (  last && final   ))
     {
         rdbps = bytes_read    * 100 / elapsed100ths;
         wrbps = bytes_written * 100 / elapsed100ths;
@@ -131,14 +150,14 @@ tick_func( void * arg )
                         elapsed100ths % 100,
                         wrbps );
 
-            if ( arg == NULL )
+            if ( !last )
             {
                 ADD_STRING( "(5s avg %d/%d bps)", (int) wr5s, (int)(wr5s*8) );
             }
         }
         else
         {
-            if ( arg != NULL || stalled )
+            if ( last || stalled )
             {
                 ADD_STRING( "%lld (%d bps) "
                             "%lld (%d bps) %d.%d%% %d.%02ds",
@@ -176,8 +195,21 @@ tick_func( void * arg )
 }
 
 void
-stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose,
-             bool _final, bool _is_proxy )
+stats_tick( void )
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    if (difftimevals( &next_print, &t ) == -1)
+    {
+        addtimevals( &t, &t, &interval );
+        next_print = t;
+        print_status(false);
+    }
+}
+
+void
+stats_init ( bool _shortform, bool _verbose,
+             bool _final, bool _is_proxy, struct timeval * tick_tv )
 {
     int i;
 
@@ -189,7 +221,11 @@ stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose,
     memset( &last5sw, 0, sizeof( last5sw ));
     last5pos = 0;
 
+    interval.tv_sec = 0;
+    interval.tv_usec = 1000000 / TICKS_PER_SECOND;
+
     gettimeofday( &time_start, NULL );
+    addtimevals( &next_print, &time_start, &interval );
 
     for ( i = 0; i < TICKS_IN_5; i++ )
         last5times[i] = time_start;
@@ -202,9 +238,8 @@ stats_init ( fd_mgr * mgr, bool _shortform, bool _verbose,
     if ( verbose )
         final = true;
 
-    tick_fd * tick_fd_ptr = new tick_fd( 10 / TICKS_PER_SECOND,
-                                         tick_func, 0 );
-    mgr->register_fd( tick_fd_ptr );
+    tick_tv->tv_sec = 0;
+    tick_tv->tv_usec = 1000000 / TICKS_PER_SECOND / 2;
 }
 
 void
@@ -223,6 +258,7 @@ void
 stats_reset( void )
 {
     gettimeofday( &time_start, NULL );
+    addtimevals( &next_print, &time_start, &interval );
 }
 
 void
@@ -230,11 +266,12 @@ stats_add( int r, int w )
 {
     bytes_read    += r;
     bytes_written += w;
+    stats_tick();
 }
 
 void
 stats_done ( void )
 {
-    tick_func((void*)1);
+    print_status(true);
     fprintf( stderr, "\n" );
 }

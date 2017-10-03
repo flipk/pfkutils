@@ -14,7 +14,7 @@ fd_interface :: make_nonblocking( void )
            fcntl( fd, F_GETFL, 0 ) | O_NONBLOCK );
 }
 
-void
+bool
 fd_mgr :: loop( struct timeval *tv )
 {
     fd_interface * fdi, * nfdi;
@@ -74,7 +74,7 @@ fd_mgr :: loop( struct timeval *tv )
         cc = select( max+1, &rfds, &wfds, NULL, tv );
 
         if ( tv != NULL && cc == 0 )
-            return;
+            return false;
 
         if ( cc <= 0 )
         {
@@ -133,4 +133,5 @@ fd_mgr :: loop( struct timeval *tv )
         ifds.remove( fdi );
         delete fdi;
     }
+    return true;
 }

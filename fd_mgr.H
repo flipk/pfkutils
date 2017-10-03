@@ -66,8 +66,10 @@ public:
             fprintf( stderr, "unregistering fd %d\n", ifd->fd );
         ifds.remove( ifd );
     }
-    void loop( struct timeval * tv );
-    void loop( void ) { while (1) loop( NULL ); }
+    // return false if timeout, true if out of fds to service
+    bool loop( struct timeval * tv );
+    // don't return until out of fds
+    void loop( void ) { while (!loop( NULL )) ; }
 };
 
 #endif /* __FD_MGR_H__ */

@@ -107,6 +107,7 @@ i2_main( int argc,  char ** argv )
     char * out_file = NULL;
     char * zarg     = NULL;
     int ch;
+    struct timeval tick_tv, tv;
 
     extern int optind;
     extern char * optarg;
@@ -218,12 +219,12 @@ i2_main( int argc,  char ** argv )
         }
     }
 
-    fd_mgr         mgr( debug, 1 );
+    fd_mgr         mgr( debug, 0 );
     fd_interface * fdi = NULL;
 
-    stats_init( &mgr,
-                (!rcvunz && !txz),  // short form if no libz involved
-                verbose, stats, tcpgate );
+    stats_init( (!rcvunz && !txz),  // short form if no libz involved
+                verbose, stats, tcpgate,
+                &tick_tv );
 
     if ( tcpgate )
     {
@@ -288,7 +289,13 @@ i2_main( int argc,  char ** argv )
         }
     }
 
-    mgr.loop();
+    while (1)
+    {
+        tv = tick_tv;
+        if (mgr.loop(&tv))
+            break;
+        stats_tick();
+    }
     stats_done();
 
 #ifdef I2_MD5
