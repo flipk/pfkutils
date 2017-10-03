@@ -370,7 +370,7 @@ public:
     int get_cnt( void ) { return list.get_cnt(); }
     void add( T * t ) { list.add( t ); }
     void remove( T * t ) { list.remove( t ); }
-    void get_oldest( void ) { list.get_head(); }
+    T * get_oldest( void ) { return list.get_head(); }
     void promote( T * t ) {
         if ( list.get_tail() != t ) {
             list.remove( t ); list.add( t );
@@ -378,16 +378,8 @@ public:
     }
     bool onlist( T * t ) { return list.onlist( t ); }
     bool onthislist( T * t ) { return list.onthislist( t ); }
-    T * dequeue_head( void ) { 
-        T * ret = list.get_head();
-        if ( ret ) remove( ret );
-        return ret;
-    }
-    T * dequeue_tail( void ) { 
-        T * ret = list.get_tail();
-        if ( ret ) remove( ret );
-        return ret;
-    }
+    T * dequeue_head( void ) { return list.dequeue_head(); }
+    T * dequeue_tail( void ) { return list.dequeue_tail(); }
     T * get_head( void ) { return list.get_head(); }
     T * get_tail( void ) { return list.get_tail(); }
     T * get_next( T * t ) { return list.get_next( t ); }
