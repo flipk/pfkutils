@@ -8,13 +8,15 @@
 #include "ipipe_main.H"
 
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
-                                    bool _dowuncomp, bool _dowcomp )
+                                    bool _dowuncomp, bool _dowcomp,
+                                    ipipe_rollover * _rollover )
 {
     fd            = _fd;
     doread        = _doread;
     dowrite       = _dowrite;
     dowuncomp     = _dowuncomp;
     dowcomp       = _dowcomp;
+    rollover      = _rollover;
     reader_done   = false;
     writer_done   = false;
     reader        = NULL;
@@ -79,6 +81,8 @@ ipipe_forwarder :: ~ipipe_forwarder( void )
         reader->writer_done = true;
     if ( buf )
         delete buf;
+    if (rollover)
+        delete rollover;
 }
 
 //virtual
@@ -220,6 +224,10 @@ ipipe_forwarder :: write( fd_mgr * mgr )
 
         bytes_written += cc;
         buf->record_read( cc );
+
+        if (rollover)
+            rollover->check_rollover(fd, cc);
+
         return OK;
     }
     /* else */

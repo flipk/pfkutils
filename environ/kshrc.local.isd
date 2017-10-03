@@ -75,7 +75,7 @@ lsv() {
         else
                 prefix=$1
         fi
-        ct lsview ${prefix}* | cut -c3- | awk '{print $1}'
+        ct lsview ${prefix}\* | cut -c3- | awk '{print $1}'
 }
 
 lsvp() {

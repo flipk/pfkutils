@@ -1,7 +1,9 @@
 
 TARG= libi2.a
-SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_factories.C ipipe_forwarder.C ipipe_main.C ipipe_stats.C
-HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H ipipe_forwarder.H ipipe_stats.H
+SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_factories.C \
+	ipipe_forwarder.C ipipe_stats.C ipipe_rollover.C ipipe_main.C
+HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H \
+	ipipe_forwarder.H ipipe_stats.H ipipe_rollover.H
 
 OBJS= $(SRCS:.C=.o)
 CC=  g++

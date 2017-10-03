@@ -3,6 +3,7 @@
 #define __ipipe_factories_H__
 
 #include "fd_mgr.H"
+#include "ipipe_rollover.H"
 
 // abstract interface describing what acceptor should do when a 
 // new connection is received.
@@ -19,8 +20,10 @@ public:
 class ipipe_forwarder_factory : public ipipe_new_connection {
     bool dowuncomp;
     bool dowcomp;
+    ipipe_rollover * rollover;
 public:
-    ipipe_forwarder_factory( bool dowuncomp, bool dowcomp );
+    ipipe_forwarder_factory( bool dowuncomp, bool dowcomp,
+                             ipipe_rollover * _rollover );
     virtual ~ipipe_forwarder_factory( void ) { /* nothing */ }
     // return false if the acceptor should die off
     virtual new_conn_response new_conn( fd_mgr *, int new_fd );

@@ -34,7 +34,8 @@ CSRCS+=	sudo.c
 ELIBS+= bt/libbt.a xlock/libxlock.a
 DIRS+=  bt xlock threads mytar
 # ELIBS+= pdksh-5.2.14/ksh.o
-ELIBS+=  mytar/libmytar.a -lX11
+ELIBS+=  mytar/libmytar.a
+LIBS+= -L/usr/X11R6/lib -lX11
 #endif
 
 #ifdef cygwin32

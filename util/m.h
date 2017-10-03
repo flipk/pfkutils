@@ -1,4 +1,11 @@
 
+#ifndef __PFKMATH_H__
+#define __PFKMATH_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum m_math_retvals {
 	M_MATH_OK = 0,
 	M_MATH_SYNTAX,
@@ -36,3 +43,9 @@ char * m_dump_number( M_INT64 num, int base );
    zero with a valid number, or returns -1 with no valid number.
    0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz  */
 int    m_parse_number( M_INT64 * result, char * string, int len, int base );
+
+#ifdef __cplusplus
+};
+#endif
+
+#endif /* __PFKMATH_H__ */

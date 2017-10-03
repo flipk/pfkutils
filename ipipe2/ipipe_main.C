@@ -10,6 +10,7 @@
 #include <fcntl.h>
 
 #include "fd_mgr.H"
+#include "m.h"
 #include "ipipe_factories.H"
 #include "ipipe_acceptor.H"
 #include "ipipe_connector.H"
@@ -22,11 +23,12 @@
 #endif
 
 const char * help_msg =
-"i2 [-svnd] [-i infile] [-o outfile] [-z[r|t]] port      (passive)\n"
-"i2 [-svnd] [-i infile] [-o outfile] [-z[r|t]] host port (active)\n"
+"i2 [-svnd] [-i infile] [-o outfile] [-m size] [-z[r|t]] port      (passive)\n"
+"i2 [-svnd] [-i infile] [-o outfile] [-m size] [-z[r|t]] host port (active)\n"
 "i2 [-d] -f port host port [port host port...]\n"
 "    -i: redirect fd 0 to input file\n"
 "    -o: redirect fd 1 to output file\n"
+"    -m: max output file size is <max> bytes\n"
 "    -n: do not read from stdin\n"
 "    -s: display stats of transfer at end\n"
 "    -v: verbose stats during transfer (0.5 second updates), implies -s\n"
@@ -107,7 +109,10 @@ i2_main( int argc,  char ** argv )
     char * out_file = NULL;
     char * zarg     = NULL;
     int ch;
+    int flags;
+    M_INT64 max_size = 0;
     struct timeval tick_tv, tv;
+    ipipe_rollover * rollover = NULL;
 
     extern int optind;
     extern char * optarg;
@@ -126,7 +131,7 @@ i2_main( int argc,  char ** argv )
         return 1;
     }
 
-    while (( ch = getopt( argc, argv, "svnfdz:i:o:" )) != -1 )
+    while (( ch = getopt( argc, argv, "svnfdz:i:o:m:" )) != -1 )
     {
         switch ( ch )
         {
@@ -138,6 +143,23 @@ i2_main( int argc,  char ** argv )
         case 'z':  zarg     = optarg;      break;
         case 'i':  inp_file = optarg;      break;
         case 'o':  out_file = optarg;      break;
+        case 'm':
+        {
+            int result;
+            if (optarg[0] == '0' && optarg[1] == 'x')
+                result = m_parse_number( &max_size, optarg+2,
+                                         strlen(optarg)-2, 16 );
+            else
+                result = m_parse_number( &max_size, optarg,
+                                         strlen(optarg), 10 );
+            if (result != 0)
+            {
+                fprintf( stderr,
+                         "error: -m expects either decimal or hex number\n");
+                return 1;
+            }
+            break;
+        }
         default:   fprintf( stderr, "%s\n", help_msg ); exit( 1 );
         }
     }
@@ -176,7 +198,7 @@ i2_main( int argc,  char ** argv )
     if ( inp_file )
     {
         int cc;
-        int flags = O_RDONLY;
+        flags = O_RDONLY;
         close( 0 );
 
 #ifdef O_BINARY  // cygwin
@@ -195,19 +217,30 @@ i2_main( int argc,  char ** argv )
         }
     }
 
+    flags = O_WRONLY | O_CREAT;
+#ifdef O_LARGEFILE // cygwin
+    flags |= O_LARGEFILE;
+#endif
+#ifdef O_BINARY // linux
+    flags |= O_BINARY;
+#endif
+
+    if (max_size != 0)
+    {
+        if (!out_file)
+        {
+            fprintf(stderr, "error: -m only useful with -o\n");
+            exit( 1 );
+        }
+        rollover = new ipipe_rollover( (int) max_size, out_file, flags );
+        out_file = rollover->get_next_filename();
+    }
+
     if ( out_file )
     {
         int cc;
-        int flags = O_WRONLY | O_CREAT;
 
         close( 1 );
-
-#ifdef O_LARGEFILE // cygwin
-        flags |= O_LARGEFILE;
-#endif
-#ifdef O_BINARY // linux
-        flags |= O_BINARY;
-#endif
 
         cc = open( out_file, flags, 0644 );
         if ( cc != 1 )
@@ -262,7 +295,7 @@ i2_main( int argc,  char ** argv )
         {
             int port = atoi( argv[0] );
             ipipe_new_connection * inc =
-                new ipipe_forwarder_factory( rcvunz, txz );
+                new ipipe_forwarder_factory( rcvunz, txz, rollover );
             fdi = new ipipe_acceptor( port, inc );
             mgr.register_fd( fdi );
         }
@@ -278,7 +311,7 @@ i2_main( int argc,  char ** argv )
             hostname_to_ipaddr( host, &sa.sin_addr );
 
             ipipe_new_connection * inc =
-                new ipipe_forwarder_factory( rcvunz, txz );
+                new ipipe_forwarder_factory( rcvunz, txz, rollover );
             fdi = new ipipe_connector( &sa, inc );
             mgr.register_fd( fdi );
         }

@@ -8,6 +8,7 @@
 
 #include "fd_mgr.H"
 #include "circular_buffer.H"
+#include "ipipe_rollover.H"
 
 // each half of a data forwarder 
 class ipipe_forwarder : public fd_interface {
@@ -40,9 +41,12 @@ class ipipe_forwarder : public fd_interface {
     char * write_space( void );
     void record_write( int len );
 
+    ipipe_rollover * rollover;
+
 public:
     ipipe_forwarder( int _fd, bool doread, bool dowrite,
-                     bool dowuncomp, bool dowcomp );
+                     bool dowuncomp, bool dowcomp,
+                     ipipe_rollover * _rollover );
 
     void register_others( ipipe_forwarder * _w, ipipe_forwarder * _r ) {
         writer = _w;  reader = _r;
