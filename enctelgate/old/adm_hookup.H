@@ -14,11 +14,11 @@ class Adm_Hookup_fd : public fd_interface {
 public:
     Adm_Hookup_fd( Adm_Hookup_Factory_iface *,
                short port, char * dest_host, short dest_port );
-    ~Adm_Hookup_fd( void );
-    bool read ( fd_mgr * );
-    bool write( fd_mgr * );
-    bool select_for_read( fd_mgr * );
-    bool select_for_write( fd_mgr * );
-    bool over_write_threshold( void );
-    bool write_to_fd( char * buf, int len );
+    /*virtual*/ ~Adm_Hookup_fd( void );
+
+    /*virtual*/ rw_response read ( fd_mgr * );
+    /*virtual*/ rw_response write( fd_mgr * );
+    /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+
+    // note over_write_threshold and write_to_fd not implemented
 };

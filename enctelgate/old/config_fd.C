@@ -78,7 +78,8 @@ Config_fd :: check_last_seqno( UINT32 seq )
     return false;
 }
 
-bool
+//virtual
+fd_interface::rw_response
 Config_fd :: read( fd_mgr * mgr )
 {
     char buf[ LARGEST_CONFIG_MSG_SIZE ];
@@ -101,12 +102,12 @@ Config_fd :: read( fd_mgr * mgr )
     if ( ! u.gen->verif_magic() )
     {
         printf( "bogus magic\n" );
-        return true;
+        return OK;
     }
     if ( ! u.gen->verif_checksum() )
     {
         printf( "bogus checksum\n" );
-        return true;
+        return OK;
     }
 
     switch ( u.gen->get_type() )
@@ -153,33 +154,26 @@ Config_fd :: read( fd_mgr * mgr )
     }
     }
 
-    return true;
+    return OK;
 }
 
-bool
+//virtual
+fd_interface::rw_response
 Config_fd :: write( fd_mgr * mgr )
 {
     printf( "error this should not be called! \n" );
+    return DEL;
 }
 
-bool
-Config_fd :: select_for_read( fd_mgr * mgr )
+//virtual
+void
+Config_fd :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 {
-    return true;
+    *rd = true;
+    *wr = false;
 }
 
-bool
-Config_fd :: select_for_write( fd_mgr * mgr )
-{
-    return false;
-}
-
-bool
-Config_fd :: over_write_threshold( void )
-{
-    return false;
-}
-
+//virtual
 bool
 Config_fd :: write_to_fd( char * buf, int len )
 {

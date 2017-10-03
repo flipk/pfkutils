@@ -50,6 +50,7 @@ struct pk_msg {
     }
     bool verif_checksum( void ) { return checksum.get() == calc_checksum(); }
     bool verif_magic( void ) { return magic.get() == magic_value; }
+    bool verif( void ) { return verif_magic() && verif_checksum(); }
     int get_len( void ) { return length.get(); }
     UINT16 get_type( void ) { return type.get(); }
     char * get_ptr(void) { return (char*) this; }

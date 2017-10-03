@@ -35,8 +35,12 @@ public:
 
     // true means select, false means dont;
     //   note:   never return true if you've set do_close !!
-    virtual bool select_for_read ( fd_mgr * ) = 0;
-    virtual bool select_for_write( fd_mgr * ) = 0;
+    virtual void select_rw ( fd_mgr *, bool * do_read, bool * do_write ) = 0;
+
+    // provided for convenience; if these are not used,
+    // just use the defaults here.
+    virtual bool write_to_fd( char * buf, int len ) { return false; }
+    virtual bool over_write_threshold( void ) { return false; }
 
     friend class fd_mgr;
 };

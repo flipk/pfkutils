@@ -77,22 +77,36 @@ ipipe_forwarder :: ~ipipe_forwarder( void )
 }
 
 //virtual
-bool
-ipipe_forwarder :: select_for_read( fd_mgr * mgr )
+void
+ipipe_forwarder :: select_rw ( fd_mgr * mgr, bool * rd, bool * wr )
 {
     if ( writer_done )
         do_close = true;
     if ( !doread || reader_done || do_close )
-        return false;
-    if ( !writer )
+        *rd = false;
+    else
     {
-        fprintf( stderr,
-                 "ipipe_forwarder :: select_for_read : null writer!\n" );
-        abort();
+        if ( !writer )
+        {
+            fprintf( stderr,
+                     "ipipe_forwarder :: select_for_read : null writer!\n" );
+            abort();
+        }
+        if ( writer->over_write_threshold() )
+            *rd = false;
+        else
+            *rd = true;
     }
-    if ( writer->over_write_threshold() )
-        return false;
-    return true;
+    if ( reader_done )
+        *wr = true;
+    else if ( !dowrite || do_close )
+        *wr = false;
+    else if ( buf->used_space() > 0 )
+        *wr = true;
+    else if ( zs && zs->avail_in > 0 )
+        *wr = true;
+    else
+        *wr = false;
 }
 
 //virtual
@@ -132,21 +146,6 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     writer->record_write( cc );
 
     return OK;
-}
-
-//virtual
-bool
-ipipe_forwarder :: select_for_write( fd_mgr * mgr )
-{
-    if ( reader_done )
-        return true;
-    if ( !dowrite || do_close )
-        return false;
-    if ( buf->used_space() > 0 )
-        return true;
-    if ( zs && zs->avail_in > 0 )
-        return true;
-    return false;
 }
 
 //virtual

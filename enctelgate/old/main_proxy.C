@@ -46,7 +46,7 @@ public:
 int
 main()
 {
-    fd_mgr                   mgr;
+    fd_mgr                   mgr( /*debug*/ false, /*threshold*/ 0 );
     fd_interface           * hkup;
     Pipe_Mgr                 pipe_mgr;
     Adm_Gateway_factory      factory ( &pipe_mgr );

@@ -79,8 +79,9 @@ Adm_Gate_fd :: setup_other( Adm_Gate_fd * _other )
         decode_io->setup_other( other_fd );
 }
 
-bool
-Adm_Gate_fd :: read( fd_mgr * fdmgr )
+//virtual
+fd_interface::rw_response
+Adm_Gate_fd :: read( fd_mgr * )
 {
     // since the write threshold is 1/2 of max_write,
     // then 1/3 is safe for this.
@@ -94,7 +95,7 @@ Adm_Gate_fd :: read( fd_mgr * fdmgr )
         connecting = false;
         do_close = true;
         other_fd->do_close = true;
-        return false;
+        return DEL;
     }
 
     cc = ::read( fd, read_buf, sizeof( read_buf ));
@@ -103,7 +104,7 @@ Adm_Gate_fd :: read( fd_mgr * fdmgr )
     {
         do_close = true;
         other_fd->do_close = true;
-        return false;
+        return DEL;
     }
 
     if ( decoder )
@@ -125,17 +126,18 @@ Adm_Gate_fd :: read( fd_mgr * fdmgr )
         }
     }
 
-    return true;
+    return OK;
 }
 
-bool
-Adm_Gate_fd :: write( fd_mgr * fdmgr )
+//virtual
+fd_interface::rw_response
+Adm_Gate_fd :: write( fd_mgr * )
 {
     if ( connecting )
     {
         printf( "connection succeeded\n" );
         connecting = false;
-        return true;
+        return OK;
     }
 
     int cc;
@@ -145,39 +147,37 @@ Adm_Gate_fd :: write( fd_mgr * fdmgr )
     {
         do_close = true;
         other_fd->do_close = true;
-        return false;
+        return DEL;
     }
 
     write_buf.record_read( cc );
-    return true;
+    return OK;
 }
 
-bool
-Adm_Gate_fd :: select_for_read( fd_mgr * fdmgr )
+//virtual
+void
+Adm_Gate_fd :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 {
     if ( !doread )
-        return false;
-    if ( other_fd->over_write_threshold() )
-        return false;
+        *rd = false;
+    else if ( other_fd->over_write_threshold() )
+        *rd = false;
+    else
+        //xxx : will need some kind of congestion control
+        //      once there are active proxy fds to consider.
+        *rd = true;
 
-    //xxx : will need some kind of congestion control
-    //      once there are active proxy fds to consider.
-
-    return true;
-}
-
-bool
-Adm_Gate_fd :: select_for_write( fd_mgr * fdmgr )
-{
     if ( !dowrite )
-        return false;
-    if ( connecting )
-        return true;
-    if ( write_buf.used_space() == 0 )
-        return false;
-    return true;
+        *wr = false;
+    else if ( connecting )
+        *wr = true;
+    else if ( write_buf.used_space() == 0 )
+        *wr = false;
+    else
+        *wr = true;
 }
 
+//virtual
 bool
 Adm_Gate_fd :: over_write_threshold( void )
 {
@@ -186,6 +186,7 @@ Adm_Gate_fd :: over_write_threshold( void )
     return false;
 }
 
+//virtual
 bool
 Adm_Gate_fd :: write_to_fd( char * buf, int len )
 {

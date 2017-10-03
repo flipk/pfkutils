@@ -56,9 +56,9 @@ cp pkutils $destdir/pkutils.new
     if [ -f sudo ] ; then
         sudo chown root:wheel pkutils.new
         sudo chmod 4755 pkutils.new
-        sudo mv pkutils.new pkutils
+        sudo mv -f pkutils.new pkutils
     else
-        mv pkutils.new pkutils
+        mv -f pkutils.new pkutils
     fi
     ./pkutils -dellinks
     ./pkutils -makelinks

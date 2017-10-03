@@ -3,7 +3,6 @@
 #define __PACKET_H__
 
 #include "types.H"
-#include "pk_tcp_msg.H"
 
 /*
  * a PFK1-encoded packet has the following layout:

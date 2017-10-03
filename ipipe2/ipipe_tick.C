@@ -61,34 +61,29 @@ tick_fd :: ~tick_fd( void )
 }
 
 //virtual
-bool
-tick_fd :: select_for_read ( fd_mgr * mgr )
+void
+tick_fd :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 {
-    return true;
+    *rd = true;
+    *wr = false;
 }
 
 //virtual
 fd_interface :: rw_response
 tick_fd :: read ( fd_mgr * mgr )
 {
-    char buf[10];
+    char buf[100];
     int cc;
 
-    cc = ::read( fd, buf, 10 );
+    cc = ::read( fd, buf, sizeof(buf) );
 
     if ( cc <= 0 )
         return DEL;
 
-    func( arg );
+    while ( cc-- > 0 )
+        func( arg );
 
     return OK;
-}
-
-//virtual
-bool
-tick_fd :: select_for_write( fd_mgr * mgr )
-{
-    return false;
 }
 
 //virtual

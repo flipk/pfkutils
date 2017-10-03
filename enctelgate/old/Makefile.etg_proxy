@@ -1,7 +1,7 @@
 
 TARG=	etg_proxy
 c_SRCS= base64.c 
-cpp_SRCS= adm_gate.C adm_hookup.C fd_mgr.C main_proxy.C \
+cpp_SRCS= adm_gate.C adm_hookup.C main_proxy.C \
 	packet_decoder.C packet_encoder.C pipe_mgr.C \
 	adm_pkt_io.C config_fd.C
 INCS=	-I ../pkutils -I ../pkutils/dll2
@@ -9,7 +9,8 @@ CFLAGS= -g3 $(INCS)
 
 SRCS= $(c_SRCS) $(cpp_SRCS)
 OBJS= $(c_SRCS:.c=.o) $(cpp_SRCS:.C=.o)
-
+LIBS= ../pkutils/fd_mgr.o
+LIBDEP= ../pkutils/fd_mgr.o
 
 all: xmakefile.$(TARG)
 	@[ ! -d logs ] && mkdir logs || true
@@ -21,9 +22,9 @@ xmakefile.$(TARG): Makefile $(SRCS)
 	@gcc -M $(INCS) $(SRCS) >> tmpfile
 	@mv tmpfile xmakefile.$(TARG)
 
-$(TARG): $(OBJS)
+$(TARG): $(OBJS) $(LIBDEP)
 	@echo linking program $(TARG)
-	@g++ $(CFLAGS) $(OBJS) -o $(TARG)
+	@g++ $(CFLAGS) $(OBJS) $(LIBS) -o $(TARG)
 
 .c.o:
 	@echo compiling $*.c

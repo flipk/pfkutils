@@ -46,11 +46,15 @@ ipipe_connector :: ~ipipe_connector( void )
 }
 
 //virtual
-bool
-ipipe_connector :: select_for_read( fd_mgr * )
+void
+ipipe_connector :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 {
-    // never
-    return false;
+    *rd = false;
+
+    if ( !do_close )
+        *wr = true;
+    else
+        *wr = false;
 }
 
 //virtual
@@ -59,15 +63,6 @@ ipipe_connector :: read ( fd_mgr * )
 {
     // error
     return DEL;
-}
-
-//virtual
-bool
-ipipe_connector :: select_for_write( fd_mgr * )
-{
-    if ( !do_close )
-        return true;
-    return false;
 }
 
 //virtual

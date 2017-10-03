@@ -40,11 +40,11 @@ ipipe_acceptor :: ~ipipe_acceptor( void )
 }
 
 //virtual
-bool
-ipipe_acceptor :: select_for_read( fd_mgr * mgr )
+void
+ipipe_acceptor :: select_rw ( fd_mgr * mgr, bool * rd, bool * wr )
 {
-    // always
-    return true;
+    *rd = true;
+    *wr = false;
 }
 
 //virtual
@@ -71,14 +71,6 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
     }
 
     return OK;
-}
-
-//virtual
-bool
-ipipe_acceptor :: select_for_write( fd_mgr * mgr )
-{
-    // never
-    return false;
 }
 
 //virtual

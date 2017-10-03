@@ -32,12 +32,13 @@ public:
                  bool doread, bool dowrite,
                  bool doencoder, bool dodecoder,
                  Pipe_Mgr  * _pipemgr );
-    ~Adm_Gate_fd( void );
-    void setup_other( class Adm_Gate_fd * _other );
-    bool read ( fd_mgr * );
-    bool write( fd_mgr * );
-    bool select_for_read( fd_mgr * );
-    bool select_for_write( fd_mgr * );
-    bool over_write_threshold( void );
-    bool write_to_fd( char * buf, int len );
+    /*virtual*/ ~Adm_Gate_fd( void );
+
+    /**/        void setup_other( class Adm_Gate_fd * _other );
+
+    /*virtual*/ rw_response read ( fd_mgr * );
+    /*virtual*/ rw_response write( fd_mgr * );
+    /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+    /*virtual*/ bool over_write_threshold( void );
+    /*virtual*/ bool write_to_fd( char * buf, int len );
 };

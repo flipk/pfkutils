@@ -12,8 +12,7 @@ public:
     /*virtual*/ ~tick_fd( void );
     /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ rw_response write( fd_mgr * );
-    /*virtual*/ bool select_for_read ( fd_mgr * );
-    /*virtual*/ bool select_for_write( fd_mgr * );
+    /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
 };
 
 #endif /* __ipipe_tick_H__ */

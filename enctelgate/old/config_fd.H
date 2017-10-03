@@ -20,20 +20,12 @@ class Config_fd : public fd_interface {
 
 public:
     Config_fd( Pipe_Mgr * _pipe_mgr, short udp_port_no );
-    ~Config_fd( void );
+    /*virtual*/ ~Config_fd( void );
 
-    // true means it was ok, false means delete this object.
-    bool read ( fd_mgr * );
-    bool write( fd_mgr * );
+    /*virtual*/ rw_response read ( fd_mgr * );
+    /*virtual*/ rw_response write( fd_mgr * );
+    /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
+    /*virtual*/ bool write_to_fd( char * buf, int len );
 
-    // true means select, false means dont
-    bool select_for_read( fd_mgr * );
-    bool select_for_write( fd_mgr * );
-
-    // true means low on write buffer space, should probably
-    // try to quench your source if you need to write to this fd.
-    bool over_write_threshold( void );
-
-    // return false if it was not ok
-    bool write_to_fd( char * buf, int len );
+    // note over_write_threshold not implemented, using base class version
 };

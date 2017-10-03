@@ -54,7 +54,7 @@ main( int argc, char ** argv )
     bool               done = false;
     int                fd, port;
     UINT32             seq = arc4random();
-    pk_tcp_msg       * msg;
+    pk_msg           * msg;
     struct sockaddr_in  sa;
 
     sa.sin_family = AF_INET;

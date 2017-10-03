@@ -79,7 +79,8 @@ Adm_Hookup_fd :: ~Adm_Hookup_fd( void )
     close( fd );
 }
 
-bool
+//virtual
+fd_interface::rw_response
 Adm_Hookup_fd :: read( fd_mgr * fdmgr )
 {
     int ear, salen, outfd;
@@ -91,7 +92,7 @@ Adm_Hookup_fd :: read( fd_mgr * fdmgr )
     if ( ear < 0 )
     {
         fprintf( stderr, "accept: %s\n", strerror( errno ));
-        return true;
+        return OK;
     }
 
     outfd = socket( AF_INET, SOCK_STREAM, 0 );
@@ -99,7 +100,7 @@ Adm_Hookup_fd :: read( fd_mgr * fdmgr )
     {
         fprintf( stderr, "socket: %s\n", strerror( errno ));
         close( ear );
-        return true;
+        return OK;
     }
 
     fcntl( outfd, F_SETFL, 
@@ -112,7 +113,7 @@ Adm_Hookup_fd :: read( fd_mgr * fdmgr )
             fprintf( stderr, "connect: %s\n", strerror( errno ));
             close( ear );
             close( outfd );
-            return true;
+            return OK;
         }
     }
 
@@ -124,38 +125,22 @@ Adm_Hookup_fd :: read( fd_mgr * fdmgr )
 
     factory->new_gateway( ear, outfd, fdmgr );
 
-    return true;
+    return OK;
 }
 
-bool
-Adm_Hookup_fd :: write( fd_mgr * fdmgr )
+//virtual
+fd_interface::rw_response
+Adm_Hookup_fd :: write( fd_mgr * )
 {
     // should never be called
-    return false;
+    return DEL;
 }
 
-bool
-Adm_Hookup_fd :: select_for_read( fd_mgr * fdmgr )
+//virtual
+void
+Adm_Hookup_fd :: select_rw ( fd_mgr *, bool * rd, bool * wr )
 {
     // always select for new connections
-    return true;
-}
-
-bool
-Adm_Hookup_fd :: select_for_write( fd_mgr * fdmgr )
-{
-    return false;
-}
-
-bool
-Adm_Hookup_fd :: over_write_threshold( void )
-{
-    return false;
-}
-
-bool
-Adm_Hookup_fd :: write_to_fd( char * buf, int len )
-{
-    printf( "Error: adm hookup fd should not do write_to_fd!\n" );
-    return false;
+    *rd = true;
+    *wr = false;
 }

@@ -32,7 +32,9 @@ fd_mgr :: loop( void )
         for ( fdi = ifds.get_head(); fdi; fdi = nfdi )
         {
             nfdi = ifds.get_next(fdi);
-            if ( fdi->select_for_read(this))
+            bool dosrd, doswr;
+            fdi->select_rw( this, &dosrd, &doswr );
+            if ( dosrd )
             {
                 if ( debug )
                     fprintf( stderr,
@@ -41,28 +43,14 @@ fd_mgr :: loop( void )
                 if ( fdi->fd > max )
                     max = fdi->fd;
             }
-            if ( fdi->select_for_write(this))
+            if ( doswr )
             {
-#if 0
-                // why does this have such poor performance?
                 if ( debug )
-                    fprintf( stderr, "shortcutting write on fd %d\n",
+                    fprintf( stderr, "selecting for write on fd %d\n",
                              fdi->fd );
-                if ( fdi->write(this) == fd_interface::DEL )
-                    fdi->do_close = true;
-                else
-#endif
-                {
-                    if ( fdi->select_for_write(this))
-                    {
-                        if ( debug )
-                            fprintf( stderr, "selecting for write on fd %d\n",
-                                     fdi->fd );
-                        FD_SET( fdi->fd, &wfds );
-                        if ( fdi->fd > max )
-                            max = fdi->fd;
-                    }
-                }
+                FD_SET( fdi->fd, &wfds );
+                if ( fdi->fd > max )
+                    max = fdi->fd;
             }
             if ( fdi->do_close )
             {
