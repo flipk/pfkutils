@@ -1,2 +1,2 @@
 
-#define PKUTILS_VERSION "prerelease 2.93; Mon Jul  9 21:25:26 CDT 2007"
+#define PKUTILS_VERSION "2.94; Mon Jul 23 12:48:36 CDT 2007"

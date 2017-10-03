@@ -8,13 +8,12 @@ Drv=$vend/Source/Drv/Source
 Lib=$vend/Source/Lib/BeceemWiMAX
 cpe=/vob/wibb_cpe
 
-qcomm() {
-    if [[ $# -eq 0 ]] ; then
-        ssh qcomm.cig.mot.com
-    else
-        ssh qcomm.cig.mot.com qcomm $*
-    fi
-}
+alias ti='cd $ti'
+alias abs='cd /vob/wibb_cpe/src/abs_layer/src'
+alias vend='cd $vend'
+alias drv='cd $Drv'
+alias lib='cd $Lib'
+alias q='ssh qcomm.cig.mot.com'
 
 xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
@@ -179,6 +178,7 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
     export PATH
 fi
 
-if [[ -f $HOME/.laptop ]] ; then
-    . $HOME/.laptop
+if [[ "x$DISPLAY" = "x" && "x$SSH_CONNECTION" != x ]] ; then
+    DISPLAY=${SSH_CONNECTION%% *}:0
+    export DISPLAY
 fi

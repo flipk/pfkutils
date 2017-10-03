@@ -110,6 +110,11 @@ if __isksh ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
 	unset ENV_SET
     fi
+    if [[ x$LOGIN_LOGGED == x ]] ; then
+        REMOTE_HOST=${SSH_CONNECTION%% *}
+        echo `hostname` `date` pid $$ term $TERM from $REMOTE_HOST >> .lastlog
+        export LOGIN_LOGGED=yes
+    fi
 else
     if [ x$LAST_HOST != x$HOST ] ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
@@ -278,7 +283,7 @@ export HISTSIZE=250
 #
 
 case $TERM in
-    xterm|xterms|linux|screen)
+    xterm|xterms|linux|screen|rmhost-*)
         TERM=vt100
         ;;
     cygwin)
@@ -306,6 +311,7 @@ alias ec='emacsclient --no-wait '
 alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
+alias sudo='$HOME/bin/sudo ; cd .'
 
 #FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2 d1 d2 d3
 
@@ -809,7 +815,7 @@ if __isksh ; then
 	fi
 	_set_prompt "$bardisp"
 	if [[ "x$DISPLAY" != x ]] ; then
-	    bardisp="$HOST:$bardisp"
+	    bardisp="`whoami`@$HOST:$bardisp"
 	    if [[ x$I_AM_XCONSOLE == x ]] ; then
 		xtermbar "$bardisp"
 	    fi

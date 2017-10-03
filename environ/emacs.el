@@ -107,6 +107,14 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key "\C-xy" 'cscope-window)
 (global-set-key "\C-xY" 'cscope-rebuild)
 
+; (call-process "argv[0]" infile buffer display "argv[1]" "argv[2]"...)
+; infile describes the file to use as stdin
+; buffer means buffer to place output into
+;  - t means current buffer
+;  - nil means discard
+;  - 0 means discard and don't wait
+; display should be nil (don't update output window)
+
 (defun cscope-window ()
   "open cscope in an xterm"
   (interactive)
@@ -129,7 +137,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 	(progn
 	  (toggle-read-only)
 	  (message "About to checkout file %s..." fname)
-	  (call-process "xterm" nil t t
+	  (call-process "xterm" nil 0 nil
 			"-g" "80x10+200+200" "-e"
 			(concat
 			 "/home/pknaack1/bin/myemacs-checkout-helper "

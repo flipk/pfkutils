@@ -9,8 +9,10 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#ifdef linux
 #include <linux/if.h>
 #include <linux/if_tun.h>
+#endif
 
 Tunnel_fd :: Tunnel_fd( char * _device,
                         char * _my_address,
