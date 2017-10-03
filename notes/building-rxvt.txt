@@ -1,0 +1,9 @@
+
+why does rxvt fail to build on ubuntu 14.04.5 ?
+  something about ::setlocale not being defined
+  i fixed this by commenting out HAVE_XSETLOCALE in config.h?
+  i think my objdir isn't working, looks like it might be getting
+  config.h from the source dir, not the obj dir -- i bet on 
+  ub14 the objdir config.h undefs HAVE_XSETLOCALE and that's 
+  why this is happening.
+
