@@ -25,11 +25,196 @@
 #include <FileList.H>
 
 #include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <fcntl.h>
+
+#define BAIL() \
+    do { \
+    fprintf(stderr, "%s:%s:%d: error\n", __FILE__, __FUNCTION__, __LINE__); \
+    return; \
+    } while (0)
+
+
+static int
+openfile( char *in_path, UINT16 mode )
+{
+    int len = strlen(in_path)+1;
+    int num_comps = 1;
+    int i, j;
+    char * p;
+
+    // count the path components.
+    for (p = in_path; *p; p++)
+        if (*p == '/')
+            num_comps++;
+
+    // copy the path into all of them
+    char comps[num_comps][len];
+    for (i = 0; i < num_comps; i++)
+        memcpy(comps[i], in_path, len);
+
+    // search for slashes and null them out
+    for (i = j = 0; j < len; j++)
+        if (in_path[j] == '/')
+            comps[i++][j] = 0;
+
+    // create component directories if they don't exist
+    for (i=0; i < (num_comps-1); i++)
+        if (mkdir( comps[i], 0700 ) < 0)
+            if (errno != EEXIST)
+                fprintf(stderr, "mkdir '%s': %s\n",
+                        comps[i], strerror(errno));
+
+    // and open the final file.
+    return open( comps[i], O_WRONLY | O_CREAT, mode );
+}
 
 // recall if argc==0, it means extract everything.
 void
 pfkbak_extract       ( Btree * bt, UINT32 baknum,
                        UINT32 gen_num, int argc, char ** argv )
 {
-    // xxx
+    PfkBackupInfo back_info(bt);
+
+    back_info.key.backup_number.v = baknum;
+
+    if (!back_info.get())
+        BAIL();
+
+    int idx;
+    {
+        // validate that this gen# actually exists in this backup.
+
+        BST_ARRAY <PfkBakGenInfo> * gens = &back_info.data.generations;
+        for (idx = 0; idx < gens->num_items; idx++)
+            if (gens->array[idx]->generation_number.v == gen_num)
+                break;
+
+        if (idx == gens->num_items)
+        {
+            fprintf(stderr, "generation %d not found in backup\n", gen_num);
+            return;
+        }
+    }
+
+    if (mkdir( back_info.data.name.string, 0700 ) < 0)
+    {
+        fprintf(stderr, "unable to create directory '%s': %s\n",
+                back_info.data.name.string,
+                strerror(errno));
+        return;
+    }
+    (void) chdir( back_info.data.name.string );
+
+    UINT32 num_files = back_info.data.file_count.v;
+    UINT32 file_number;
+    for (file_number = 0; file_number < num_files; file_number++)
+    {
+        PfkBackupFileInfo file_info(bt);
+
+        file_info.key.backup_number.v = baknum;
+        file_info.key.file_number.v = file_number;
+
+        if (!file_info.get())
+            // deleted files will leave holes, that's okay.
+            continue;
+
+        BST_ARRAY <BST_UINT32_t> * gens = &file_info.data.generations;
+
+        // validate this file is actually part of this generation.
+
+        for (idx = 0; idx < gens->num_items; idx++)
+            if (gens->array[idx]->v == gen_num)
+                break;
+
+        if (idx == gens->num_items)
+            // this file is not part of this generation.
+            continue;
+
+        char * file_path = file_info.data.file_path.string;
+
+        // do a tar-like display, show the file name without
+        // newline; don't display the newline until extraction
+        // of the file is complete.
+
+        /** \todo support extracting individual files */
+
+        if (pfkbak_verb > VERB_QUIET)
+        {
+            printf("%s", file_path);
+            fflush(stdout);
+        }
+
+        int fd = openfile(file_path, file_info.data.mode.v);
+
+        if (fd < 0)
+        {
+            printf(": unable to create: %s\n", strerror(errno));
+            continue;
+        }
+
+        PfkBackupFilePieceInfo piece_info(bt);
+        PfkBackupFilePieceData piece_data(bt);
+        UINT32 piece_number;
+
+        for (piece_number = 0; ; piece_number++)
+        {
+            piece_info.key.backup_number.v = baknum;
+            piece_info.key.file_number.v = file_number;
+            piece_info.key.piece_number.v = piece_number;
+
+            if (!piece_info.get())
+                // end of file? probably.
+                break;
+
+            BST_ARRAY <PfkBackupVersion> * v = &piece_info.data.versions;
+
+            for (idx = 0; idx < v->num_items; idx++)
+                if (v->array[idx]->gen_number.v == gen_num)
+                    break;
+
+            if (idx == v->num_items)
+            {
+                printf(": piece %d info not found\n", piece_number);
+            }
+            else
+            {
+                piece_data.key.backup_number.v = baknum;
+                piece_data.key.file_number.v = file_number;
+                piece_data.key.piece_number.v = piece_number;
+                memcpy( piece_data.key.md5hash.binary,
+                        v->array[idx]->md5hash.binary,
+                        MD5_DIGEST_SIZE );
+
+                if (!piece_data.get())
+                {
+                    printf(": piece %d data not found\n", piece_number);
+                }
+                else
+                {
+                    UINT32 fbn = piece_data.data.data_fbn.v;
+                    UINT16 size = piece_data.data.usize.v;
+                    /** \todo support decompression */
+
+                    FileBlock * data_fb = bt->get_fbi()->get( fbn );
+
+                    if (!data_fb)
+                    {
+                        printf(": unable to fetch data for piece %d\n",
+                               piece_number);
+                    }
+                    else
+                    {
+                        (void) write( fd, data_fb->get_ptr(), size );
+                        bt->get_fbi()->release( data_fb );
+                    }
+                }
+            }
+        }
+
+        close(fd);
+        if (pfkbak_verb > VERB_QUIET)
+            printf("\n");
+    }
 }

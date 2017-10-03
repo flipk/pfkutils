@@ -125,9 +125,11 @@ struct PfkBackupFileInfoKey : public PfkBakDbKeys {
 struct PfkBackupFileInfoData : public FileBlockBST {
     PfkBackupFileInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        file_path(this), size(this), mtime(this), generations(this) { }
+        file_path(this), mode(this), size(this),
+        mtime(this), generations(this) { }
     ~PfkBackupFileInfoData(void) { bst_free(); }
     BST_STRING     file_path;
+    BST_UINT16_t   mode;
     BST_UINT64_t   size;
     BST_UINT32_t   mtime;
     BST_ARRAY  <BST_UINT32_t>  generations;

@@ -100,7 +100,7 @@ treesync_generate_file_list(const char *root_dir)
             continue;
         }
 
-//        ((TSFileEntryDir*)current)->mode = sb.st_mode & 0777;
+        ((TSFileEntryDir*)current)->mode = sb.st_mode & 0777;
         file_list->add(current);
 
         while ((de = readdir(dir)) != NULL)
@@ -130,13 +130,13 @@ treesync_generate_file_list(const char *root_dir)
             else if (S_ISDIR(sb.st_mode))
             {
                 TSFileEntryDir * fed = new TSFileEntryDir(rel_path);
-//                fed->mode = sb.st_mode & 0777;
+                fed->mode = sb.st_mode & 0777;
                 work_list.add(fed);
             }
             else if (S_ISREG(sb.st_mode))
             {
                 TSFileEntryFile * fef = new TSFileEntryFile(rel_path);
-//                fef->mode = sb.st_mode & 0777;
+                fef->mode = sb.st_mode & 0777;
                 fef->size = sb.st_size;
                 fef->mtime = sb.st_mtime;
                 file_list->add(fef);

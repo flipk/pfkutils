@@ -88,6 +88,7 @@ public:
     enum State { STATE_EXISTS=1, STATE_DELETED=2 } state;
     UINT64  size;
     time_t  mtime;
+    UINT16  mode;
     UINT8   md5[MD5_DIGEST_SIZE];
 };
 
@@ -98,6 +99,7 @@ public:
     {
         type = TYPE_DIR;
     }
+    UINT16  mode;
 };
 
 class TSFileEntryLink : public TSFileEntry {

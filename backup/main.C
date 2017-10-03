@@ -142,6 +142,12 @@ pfkbak_main(int argc, char ** argv)
     {
         bt = Btree::openFile( pfkbak_file, CACHE_SIZE );
 
+        if (!bt)
+        {
+            fprintf(stderr, "Unable to open backup file\n");
+            return 1;
+        }
+
         PfkBackupDbInfo   info(bt);
         if (!pfkbak_get_info( &info ))
         {

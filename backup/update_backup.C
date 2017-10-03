@@ -434,6 +434,8 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             // update the FileInfo to indicate it is a member of
             // this generation.
             gen_index = file_info.data.generations.num_items;
+            file_info.data.mode.v = fe.fef->mode;
+            file_info.data.size.v = fe.fef->size;
             file_info.data.generations.alloc(gen_index+1);
             file_info.data.generations.array[gen_index]->v = gen_num;
             
@@ -471,6 +473,8 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         file_info.key.file_number.v = file_number;
 
         file_info.data.file_path.set(fe.fe->path);
+        file_info.data.mode.v = fe.fef->mode;
+        file_info.data.size.v = fe.fef->size;
         file_info.data.generations.alloc(1);
         file_info.data.generations.array[0]->v = gen_num;
 
