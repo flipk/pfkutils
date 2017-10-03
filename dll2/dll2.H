@@ -195,10 +195,10 @@ public:
         exll->validate();
         itll->validate();
         if ( !onthislist( existing ))
-            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_before WHEN EXISTING ITEM "
                    "NOT ON THIS LIST\n" ));
         if ( onlist( item ))
-            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN NEW ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_before WHEN NEW ITEM "
                    "IS ALREADY ON A LIST\n" ));
         itll->onlist = (void*)this;
         itll->prev = exll->prev;
