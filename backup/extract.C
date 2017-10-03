@@ -31,4 +31,5 @@ void
 pfkbak_extract       ( Btree * bt, UINT32 baknum,
                        char * gen, int argc, char ** argv )
 {
+    // xxx
 }

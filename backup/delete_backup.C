@@ -29,4 +29,5 @@
 void
 pfkbak_delete_backup ( Btree * bt, UINT32 baknum )
 {
+    // xxx
 }

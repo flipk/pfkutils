@@ -29,4 +29,5 @@
 void
 pfkbak_delete_gens   ( Btree * bt, UINT32 baknum, int argc, char ** argv )
 {
+    // xxx
 }

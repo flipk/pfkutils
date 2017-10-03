@@ -29,4 +29,5 @@
 void
 pfkbak_list_files    ( Btree * bt, UINT32 baknum, char * gen )
 {
+    // xxx
 }

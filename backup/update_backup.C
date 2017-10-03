@@ -30,6 +30,97 @@
 #include <time.h>
 #include <fcntl.h>
 
+enum file_state { STATE_NEW, STATE_MODIFIED, STATE_UNMODIFIED };
+
+bool
+walk_file( file_state state, Btree * bt,
+           UINT32 baknum, UINT32 file_number, UINT32 gen_num,
+           PfkBackupFileInfo * file_info, TSFileEntryFile * fef )
+{
+    UINT32 piece_number;
+    int fd = -1;
+    int idx;
+
+    if (state != STATE_UNMODIFIED)
+    {
+        file_info->data.size. v = fef->size;
+        file_info->data.mtime.v = fef->mtime;
+
+        fd = open(fef->path, O_RDONLY);
+        if ( fd < 0 )
+        {
+            fprintf(stderr, "ERROR : modified but cannot open: %s\n",
+                    fef->path);
+            fd = -1;
+        }
+    }
+
+    // read in all the pieces of this file, comparing md5
+    // hashes, and either adding new pieces, or bumping the
+    // refcounts of existing pieces.
+
+    int piece_len;
+    int PIECE_SIZE = PfkBackupFilePieceDataData::PIECE_SIZE;
+    UCHAR buffer[PIECE_SIZE];
+    UCHAR  md5hash[MD5_DIGEST_SIZE];
+    PfkBackupFilePieceInfo   piece_info(bt);
+    PfkBackupFilePieceData   piece_data(bt);
+
+    // walk all the pieces.
+    for (piece_number = 0; ; piece_number++)
+    {
+        if (state != STATE_UNMODIFIED)
+        {
+            piece_len = read(fd, buffer, PIECE_SIZE);
+            if (piece_len < 0)
+                fprintf(stderr, "ERROR : reading %s: %s\n",
+                        fef->path, strerror(errno));
+            if (piece_len == 0)
+                break;
+
+            pfkbak_md5_buffer(buffer, piece_len, md5hash);
+        }
+
+        piece_info.key.backup_number.v = baknum;
+        piece_info.key.file_number.v = file_number;
+        piece_info.key.piece_number.v = piece_number;
+
+        if (!piece_info.get())
+        {
+            if (state == STATE_UNMODIFIED)
+                // done.
+                break;
+
+            // otherwise, file grew in size and added pieces,
+            // or was new and pieces never existed at all.
+            piece_info.data.versions.alloc(1);
+            piece_info.data.versions.array[0]->gen_number.v = gen_num;
+            memcpy( piece_info.data.versions.array[0]->md5hash.binary,
+                    md5hash, MD5_DIGEST_SIZE);
+        }
+        else
+        {
+            // xxx
+
+            // should not ever get here if state is new.
+            // unmodified won't have opened the file, so we have to
+            // find the most recent generation's info and copy the
+            // md5sum.
+            // modified will have opened the file, so we should search
+            // the list to see if this md5 exists already, and if it does,
+            // copy it, if not, make a new entry.
+
+            // must also fetch the PfkBackupFilePieceData and bump
+            // the reference count, if an existing md5 was just copied.
+        }
+
+        piece_info.put(true);
+    }
+
+    if (fd != -1)
+        close(fd);
+}
+
 void
 pfkbak_update_backup ( Btree * bt, UINT32 baknum )
 {
@@ -107,13 +198,12 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         UINT32  file_number;
     };
     unused_file_number * unused_head = NULL;
+    PfkBackupFileInfo  file_info(bt);
 
     for (file_number = 0;
          file_number < bakinfo.data.file_count.v;
          file_number++)
     {
-        PfkBackupFileInfo  file_info(bt);
-
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
 
@@ -144,30 +234,15 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
             fel->remove(fe.fe);
             hash.remove(fe.fe);
 
-            int fd = -1;
-            UCHAR * buffer = NULL;
-            int PIECE_SIZE = PfkBackupFilePieceDataData::PIECE_SIZE;
-
             // file found!
             if ( (fe.fef->size  != file_info.data.size.v )  ||
                  (fe.fef->mtime != file_info.data.mtime.v)  )
             {
                 // file was modified!
-                // read in all the pieces of this file, comparing md5
-                // hashes, and either adding new pieces, or bumping the
-                // refcounts of existing pieces.
 
-                fd = open(fe.fe->path, O_RDONLY);
-                if ( fd < 0 )
-                {
-                    fprintf(stderr, "ERROR : modified but cannot open: %s\n",
-                            fe.fe->path);
-                    fd = -1;
-                }
-                buffer = new UCHAR[PIECE_SIZE];
-
-                file_info.data.size.v = fe.fef->size;
-                file_info.data.mtime.v = fe.fef->mtime;
+                walk_file( STATE_MODIFIED, bt,
+                           baknum, file_number, gen_num,
+                           &file_info, fe.fef );
             }
             else
             {
@@ -176,41 +251,10 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
                 // references to this generation number and bumping all
                 // the refcounts.
 
-                fd = -1;
+                walk_file( STATE_UNMODIFIED, bt, 
+                           baknum, file_number, gen_num,
+                           &file_info, fe.fef );
             }
-
-            // walk all the pieces.
-            UINT32 piece_number;
-            for (piece_number = 0; ; piece_number++)
-            {
-                int piece_len = 0;
-
-                if (buffer)
-                {
-                    piece_len = read(fd, buffer, PIECE_SIZE);
-                    if (piece_len < 0)
-                        fprintf(stderr, "ERROR : reading %s: %s\n",
-                                fe.fe->path, strerror(errno));
-                    if (piece_len == 0)
-                        break;
-                    // xxx calc md5 on this buf
-                }
-
-
-                PfkBackupFilePieceInfo   piece_info(bt);
-
-                piece_info.key.backup_number.v = baknum;
-                piece_info.key.file_number.v = file_number;
-                piece_info.key.piece_number.v = piece_number;
-
-
-                // xxx
-            }
-
-            if (fd != -1)
-                close(fd);
-            if (buffer)
-                delete[] buffer;
 
             // update the FileInfo to indicate it is a member of
             // this generation.
@@ -233,13 +277,47 @@ pfkbak_update_backup ( Btree * bt, UINT32 baknum )
         fel->remove(fe.fe);
 
         // file created!
-        // xxx
+
+        if (unused_head != NULL)
+        {
+            // re-use an unused file number, if one exists.
+            unused_file_number * ufn = unused_head;
+            unused_head = ufn->next;
+            file_number = ufn->file_number;
+            delete ufn;
+        }
+        else
+        {
+            // allocate a new file number if none are unused.
+            file_number = bakinfo.data.file_count.v++;
+        }
+
+        file_info.key.backup_number.v = baknum;
+        file_info.key.file_number.v = file_number;
+
+        file_info.data.file_path.set(fe.fe->path);
+        file_info.data.generations.alloc(1);
+        file_info.data.generations.array[0]->v = gen_num;
+
+        walk_file( STATE_NEW, bt,
+                   baknum, file_number, gen_num,
+                   &file_info, fe.fef );
+
+        file_info.put(true);
 
         delete fe.fe;
     }
     delete fel;
 
-    // xxx cleanup unused list
+    while (unused_head != NULL)
+    {
+        unused_file_number * ufn;
+
+        ufn = unused_head;
+        unused_head = ufn->next;
+
+        delete ufn;
+    }
 
     // write back into the database that a new generation
     // exists.
