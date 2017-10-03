@@ -6,10 +6,8 @@
  * 3. i forget
  */
 
-	PROG(0,agrep,approximate string matching grep)
 	PROG(0,crnl,carriage return/newline add/delete dos/unix/mac)
 	PROG(0,he,hexedit)
-	PROG(0,ipipe,internet pipe fitting)
 	PROG(0,i2,better internet pipe fitting)
 	PROG(0,m,hex/dec/bin mathematics on command line)
 	PROG(0,random_hex,generate a random hex number)
@@ -33,7 +31,6 @@
 #ifdef cygwin32
 	PROG(0,treescan,scan a tree of files and produce a treediff)
 #endif
-	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,pkfstat,file stats written by pk)
 #ifndef linux
 	PROG(0,itsfsriw,ITS file system remote inode worker)
