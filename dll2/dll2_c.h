@@ -1,4 +1,8 @@
 
+/* define following to "0" to save some CPU time on the list operations--
+   beware of the safety checks it turns off, though. 
+   you should always have them turned on during testing. */
+
 #ifndef DLL2_ONLIST_VALIDATIONS
 #define DLL2_ONLIST_VALIDATIONS 1
 #endif
@@ -6,6 +10,9 @@
 #ifndef DLL2_MAGIC_VALIDATIONS
 #define DLL2_MAGIC_VALIDATIONS 1
 #endif
+
+/* Must include "DLL2_LINKS links[ .. ]" in every
+   data type that is put in a list. */
 
 typedef struct {
     void             * links_next;
@@ -81,7 +88,7 @@ typedef struct DLL2_LIST {
 
 /* onlist methods used by public */
 
-#define DLL2_LIST_ONLIST(listindex,item) \
+#define DLL2_LIST_ONLIST(item,listindex) \
     ((item)->links[listindex].links_onlist != 0)
 #define DLL2_LIST_ONTHISLIST(list,item) \
     ((item)->links[(list)->list_index].links_onlist == (list))
@@ -105,22 +112,6 @@ typedef struct DLL2_LIST {
 #define DLL2_LIST_HEAD(list)              ((list)->list_head)
 #define DLL2_LIST_TAIL(list)              ((list)->list_tail)
 
-#if DLL2_ONLIST_VALIDATIONS
-#define DLL2_LIST_NEXT(list,item) \
-    (((item)->links[(list)->list_index].links_onlist==list)? \
-     ((item)->links[(list)->list_index].links_next) : \
-      dll2_error( __FILE__, __LINE__, "dll2_next wrong list" ))
-#define DLL2_LIST_PREV(list,item) \
-    (((item)->links[(list)->list_index].links_onlist==list)? \
-     ((item)->links[(list)->list_index].links_prev) : \
-      dll2_error( __FILE__, __LINE__, "dll2_prev wrong list" ))
-#else
-#define DLL2_LIST_NEXT(list,item) \
-    ((item)->links[(list)->list_index].links_next)
-#define DLL2_LIST_PREV(list,item) \
-    ((item)->links[(list)->list_index].links_prev)
-#endif
-
 #if 0   /* HASH IMPLEMENTATION INCOMPLETE */
 typedef struct {
     int         hash_hashsize;
@@ -142,26 +133,45 @@ typedef struct {
         for ( i = 0; i < (list)->hashsize; i++ ) \
             DLL2_LIST_INIT( &((list)->hash), listindex ); \
     } while ( 0 )  xxx magic
-#endif    /* HASH IMPLEMENTATION INCOMPLETE */
+#endif    /* if 0 HASH IMPLEMENTATION INCOMPLETE */
 
-/* internal macros and funcs used by dll2 code */
+/* everything below this line is INTERNAL to the DLL2 API,
+   and shouldn't need accessing by the public. */
 
 #define DLL2_LINKS_MAGIC 0x4bf4e59c
 #define DLL2_LIST_MAGIC  0x5c2df716
 #define DLL2_HASH_MAGIC  0x427ec79c
 
-#define DLL2_LINKS_OFFSET(item) \
-    (((unsigned int)((item)->links)) - ((unsigned int)(item)))
-#define DLL2_DIM(array) (sizeof(array) / sizeof(array[0]))
-
 #if DLL2_ONLIST_VALIDATIONS
-#define DLL2_NCMP_ONLIST_T(item,index,ptr) \
+#define DLL2_LIST_NEXT(list,item) \
+    (((item)->links[(list)->list_index].links_onlist==list)? \
+     ((item)->links[(list)->list_index].links_next) : \
+      dll2_error( __FILE__, __LINE__, "dll2_next wrong list" ))
+#define DLL2_LIST_PREV(list,item) \
+    (((item)->links[(list)->list_index].links_onlist==list)? \
+     ((item)->links[(list)->list_index].links_prev) : \
+      dll2_error( __FILE__, __LINE__, "dll2_prev wrong list" ))
+/* note there are two versions of this macro (_T and _F); the reason
+   is that when validations are turned off, some places need one default
+   and others need the other. */
+#define DLL2_NCMP_ONLIST(item,index,ptr) \
     ((item)->links[index].links_onlist != (ptr))
-#define DLL2_NCMP_ONLIST_F(item,index,ptr) DLL2_NCMP_ONLIST_T(item,index,ptr)
+#define DLL2_NCMP_ONLIST_T(item,index,ptr) \
+    DLL2_NCMP_ONLIST(item,index,ptr)
+#define DLL2_NCMP_ONLIST_F(item,index,ptr) \
+    DLL2_NCMP_ONLIST(item,index,ptr)
 #else
+#define DLL2_LIST_NEXT(list,item) \
+    ((item)->links[(list)->list_index].links_next)
+#define DLL2_LIST_PREV(list,item) \
+    ((item)->links[(list)->list_index].links_prev)
 #define DLL2_NCMP_ONLIST_T(item,index,ptr) 1
 #define DLL2_NCMP_ONLIST_F(item,index,ptr) 0
 #endif
+
+#define DLL2_LINKS_OFFSET(item) \
+    (((unsigned int)((item)->links)) - ((unsigned int)(item)))
+#define DLL2_DIM(array) (sizeof(array) / sizeof(array[0]))
 
 #if DLL2_MAGIC_VALIDATIONS
 #define DLL2_LIST_ISINIT(list) \
@@ -181,9 +191,9 @@ typedef struct {
         (void) dll2_error( __FILE__, __LINE__, \
                            "dll2_list_init already initialized?" )
 #define DLL2_LINKS_VALIDATE_NOTINIT(item,index) \
-            if ( DLL2_LINKS_ISINIT(item,index) ) \
-                (void) dll2_error( __FILE__, __LINE__, \
-                                   "dll2_item_init already initialized?" )
+    if ( DLL2_LINKS_ISINIT(item,index) ) \
+        (void) dll2_error( __FILE__, __LINE__, \
+                           "dll2_item_init already initialized?" )
 #else
 #define DLL2_INIT_LIST_MAGIC(list) /* nothing */
 #define DLL2_INIT_LINKS_MAGIC(item,index) /* nothing */
