@@ -1,4 +1,8 @@
 
+/*
+ g++ tcpgate.C -Idll2 -Ithreads/h -o tgl -Dtcpgate_main=main
+*/
+
 // a simple tcpgate that just uses a fancy select construct.
 // no threads, just good old-fashioned unix ingenuity.
 
@@ -21,6 +25,8 @@
 #include <fcntl.h>
 
 #include "tcpgate.H"
+
+static FILE * logfd;
 
 #define VERBOSE 0
 
@@ -182,6 +188,17 @@ FDMAP_DATA :: _handle_select_r( void )
 {
     int bufsize = buf.contig_write();
     int cc = read( other_fd->fd, buf.write_pos(), bufsize );
+
+    if ( logfd )
+    {
+        unsigned char * bp = (unsigned char *) buf.write_pos();
+        fprintf( logfd, "data read from fd %d (%d bytes)\n", 
+                 other_fd->fd, cc );
+        for ( int i = 0; i < cc; i++ )
+            fprintf( logfd, "%02x ", bp[i] );
+        fprintf( logfd, "\n" );
+    }
+
     int e = cc < 0 ? errno : 0;
 #if VERBOSE
     printf( "read %d of %d: %s\n",
@@ -311,6 +328,7 @@ manage_ports_loop( void )
 int
 tcpgate_main( int argc, char ** argv )
 {
+    logfd = NULL;
     list = new FDMAP_LIST;
 
     argc -= 1;
@@ -325,6 +343,20 @@ tcpgate_main( int argc, char ** argv )
         FDMAP_LISTEN * l;
         int salen;
         char * host;
+
+        if ( argc > 1 && strncmp( argv[0], "-l", 2 ) == 0 )
+        {
+            logfd = fopen( argv[0]+2, "w" );
+            if ( logfd == NULL )
+            {
+                fprintf( stderr, "unable to open log!\n" );
+                delete list;
+                return 1;
+            }
+            setvbuf( logfd, NULL, _IOLBF, 0 );
+            argv++;
+            argc--;
+        }
 
         if ( argc < 3 )
         {
