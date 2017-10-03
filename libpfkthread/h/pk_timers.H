@@ -29,7 +29,10 @@
 #include "dll2.H"
 #include "pk_messages.H"
 
-#include <stdint.h>
+#include "pfkutils_config.h"
+#if HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
 
 class PK_Timer;
 class PK_Timer_List;

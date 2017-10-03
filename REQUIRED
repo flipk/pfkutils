@@ -9,7 +9,3 @@ ncurses-devel
 libx11-devel libXau-devel libICE-devel libSM-devel libXaw-devel
 libXpm-devel libXmu-devel libXext-devel libXt-devel
 
-
-need to detect missing 'flex' and 'byacc'
-
-
