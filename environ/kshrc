@@ -677,6 +677,8 @@ if __isksh ; then
 	    __verbose switching shells, $SHELL to $ksh_final
 	    GOOD_SHELL=yes
 	    export GOOD_SHELL
+	    SHELL=$ksh_final
+	    export SHELL
 	    exec $ksh_final
 	fi
     fi
@@ -696,6 +698,8 @@ else
 	    __verbose switching shells, $SHELL to $ksh_final
 	    GOOD_SHELL=yes
 	    export GOOD_SHELL
+	    SHELL=$ksh_final
+	    export SHELL
 	    exec $ksh_final
 	fi
     fi
