@@ -1,12 +1,15 @@
 
 TARG=	libFileBlock.a
-SRCS=	PageIO.C PageCache.C BlockCache.C ExtentMap.C \
-	FileBlockLocalMap.C FileBlockLocal.C Btree.C BtreeNode.C
+SRCS=	PageIO.C PageCache.C BlockCache.C \
+	FileBlock_iface.C Btree.C BtreeNode.C \
+	FileBlockLocal.C FileBlockLocalAllocFree.C FileBlockLocalAuid.C \
+	FileBlockLocalAun.C FileBlockLocalBucket.C FileBlockLocalCompact.C \
+	FileBlockLocalDIB.C FileBlockLocalGetRel.C FileBlockLocalValidate.C
 HDRS=	PageIO.H PageCache.H PageCache_internal.H \
 	BlockCache.H BlockCache_internal.H \
 	FileBlock_iface.H \
-	FileBlockLocal.H FileBlockLocal_internal.H \
-	ExtentMap.H Btree.H
+	FileBlockLocal.H \
+	Btree.H
 
 OBJS=	$(SRCS:.C=.o)
 CC=	g++
@@ -18,7 +21,7 @@ LIBS=	../dll2/dll2_hash.o
 TESTSRCS= testFileBlock.C testBtree.C
 
 all: xmakefile
-	@make -f xmakefile $(TARG) t1 t2 t3
+	@make -f xmakefile $(TARG) t1 t2
 
 
 xmakefile: Makefile $(TESTSRCS) $(SRCS) $(HDRS)
@@ -39,9 +42,6 @@ t1: $(TARG)   testFileBlock.o
 t2: $(TARG)   testBtree.o
 	$(CC) testBtree.o     $(TARG) $(LIBS) -o $@
 
-t3: $(TARG)   testExtents.o
-	$(CC) testExtents.o   $(TARG) $(LIBS) -o $@
-
 doc::
 	doxygen
 
@@ -51,5 +51,5 @@ doc::
 depend: xmakefile
 
 clean:
-	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1 t2 t3
+	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1 t2
 	rm -rf doc

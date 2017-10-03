@@ -33,15 +33,15 @@
 #include <sys/types.h>
 #include <signal.h>
 
-BTNode :: BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 _fbn )
+BTNode :: BTNode( FileBlockInterface * _fbi, int _btorder, FB_AUID_T _fbn )
 {
     fbi = _fbi;
     btorder = _btorder;
     fbn = _fbn;
     refcount = 0;
 
-    ptrs = new UINT32[ btorder ];
-    datas = new UINT32[ btorder-1 ];
+    ptrs = new FB_AUID_T[ btorder ];
+    datas = new FB_AUID_T[ btorder-1 ];
     keys = new BTKey*[ btorder-1 ];
 
     int i;
@@ -176,7 +176,7 @@ BTNodeCache :: ~BTNodeCache( void )
 }
 
 BTNode *
-BTNodeCache :: get( UINT32 fbn )
+BTNodeCache :: get( FB_AUID_T fbn )
 {
     BTNode * n;
 
@@ -223,7 +223,7 @@ BTNodeCache :: delete_node( BTNode * n )
     }
 
     hash.remove(n);
-    UINT32 fbn = n->get_fbn();
+    FB_AUID_T fbn = n->get_fbn();
 
     // clear the node's keys to prevent it
     // deleting all memory associated with those

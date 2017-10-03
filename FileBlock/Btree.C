@@ -49,7 +49,7 @@ Btree :: open( FileBlockInterface * _fbi )
 bool
 Btree :: init_file( FileBlockInterface * _fbi, int order )
 {
-    UINT32  root_fbn;
+    FB_AUID_T  root_fbn;
 
     if (order < 0 || order > BtreeInternal::MAX_ORDER || 
         (order & 1) == 0)
@@ -59,10 +59,10 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
     root_fbn = n.get_fbn();
     n.store();
 
-    UINT32  info_fbn;
+    FB_AUID_T  info_fbn;
     BTInfo  info(_fbi);
 
-    info_fbn = _fbi->alloc( sizeof(info) );
+    info_fbn = info.alloc();
     info.get(info_fbn, true);
     info.d->magic.set ( _BTInfo::MAGIC );
     info.d->bti_fbn.set( info_fbn );
@@ -89,7 +89,7 @@ Btree :: valid_file( FileBlockInterface * fbi )
 bool
 BtreeInternal :: valid_file( FileBlockInterface * _fbi )
 {
-    UINT32 info_fbn;
+    FB_AUID_T info_fbn;
     BTInfo info(_fbi);
 
     info_fbn = _fbi->get_data_info_block( (char*) BTInfoFileInfoName );
@@ -205,9 +205,9 @@ BtreeInternal :: walknode( BTNode * n, UCHAR * key, int keylen, bool *exact )
     return i;
 }
 
-UINT32
-BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
-                            UINT32 rightptr, int idx )
+FB_AUID_T
+BtreeInternal :: splitnode( BTNode * n, BTKey ** key, FB_AUID_T * data_fbn,
+                            FB_AUID_T rightptr, int idx )
 {
     int i;
     enum { R_PIVOT, R_LEFT, R_RIGHT } where = R_PIVOT;
@@ -339,21 +339,21 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
         n->datas[HALF_ORDER] = 0;
     }
 
-    UINT32 nr_fbn = nr->get_fbn();
+    FB_AUID_T nr_fbn = nr->get_fbn();
     node_cache->release(nr);
     return nr_fbn;
 }
 
 //virtual
 bool
-BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
+BtreeInternal :: get( UCHAR * key, int keylen, FB_AUID_T * data )
 {
     bool ret = false;
     bool exact = false;
     int idx;
-    UINT32 curfbn;
+    FB_AUID_T curfbn;
     BTNode * curn;
-    UINT32 data_fbn = 0;
+    FB_AUID_T data_fbn = 0;
 
     curfbn = info.d->root_fbn.get();
 
@@ -382,11 +382,11 @@ BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
 
 struct nodewalker {
     struct nodewalker * next;
-    UINT32 fbn;
+    FB_AUID_T fbn;
     BTNode * node;
     int idx;
     //
-    nodewalker(struct nodewalker * _nxt, UINT32 _fbn,
+    nodewalker(struct nodewalker * _nxt, FB_AUID_T _fbn,
                BTNode * _n, int _idx) {
         next = _nxt; fbn = _fbn; node = _n; idx = _idx;
     }
@@ -394,8 +394,8 @@ struct nodewalker {
 
 //virtual
 bool
-BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
-                      bool replace, bool * replaced, UINT32 * old_data_id )
+BtreeInternal :: put( UCHAR * key, int keylen, FB_AUID_T data_id,
+                      bool replace, bool * replaced, FB_AUID_T * old_data_id )
 {
     if (iterate_inprogress)
     {
@@ -417,7 +417,7 @@ BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
 
     bool ret = false;
     nodewalker * nodes = NULL, * nw = NULL;
-    UINT32 curfbn, right_fbn = 0;
+    FB_AUID_T curfbn, right_fbn = 0;
     BTNode * curn;
     int curidx;
     BTKey * newkey = NULL;
@@ -580,7 +580,7 @@ out:
 
 //virtual
 bool
-BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
+BtreeInternal :: del( UCHAR * key, int keylen, FB_AUID_T *old_data_id )
 {
     bool ret = false;
 
@@ -594,7 +594,7 @@ BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
     nodewalker * nodes = NULL, * nw = NULL;
     bool exact;
     int idx;
-    UINT32 curfbn;
+    FB_AUID_T curfbn;
     BTNode * curn;
 
     curfbn = info.d->root_fbn.get();
@@ -700,7 +700,7 @@ BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
     ret = true;
 
     bool oldrootfree = false;
-    UINT32 oldrootfbn = 0;
+    FB_AUID_T oldrootfbn = 0;
 
     // start analyzing nodes for redistribution.
     // return back up the list of nodes until we 
@@ -713,7 +713,7 @@ BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
         int parentidx;
         BTNode * lsib = NULL; // left sibling
         BTNode * rsib = NULL; // right sibling
-        UINT32 lfbn = 0, rfbn = 0; // left and right block ids
+        FB_AUID_T lfbn = 0, rfbn = 0; // left and right block ids
         enum sibwho { SIB_NONE, SIB_LEFT, SIB_RIGHT };
         sibwho whichsib_steal = SIB_NONE;
         sibwho whichsib_coalesce = SIB_NONE;
@@ -1052,7 +1052,7 @@ BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
 }
 
 bool
-BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
+BtreeInternal :: iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn )
 {
     bool ret = true;
     BTNode * n;
@@ -1097,7 +1097,7 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, UINT32 node_fbn )
 bool
 BtreeInternal :: iterate( BtreeIterator * bti )
 {
-    UINT32 node_fbn;
+    FB_AUID_T node_fbn;
     bool ret = true;
     iterate_inprogress = true;
 

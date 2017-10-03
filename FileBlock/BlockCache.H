@@ -36,7 +36,9 @@ class BlockCacheList;
 class BlockCacheBlock {
     friend class BlockCache;
 protected:
+    /** the position in the file of this block */
     off_t offset;
+    /** the size of this block on disk */
     int size;
     /** a pointer to a buffer the user can modify. if this block
      * fits in a page, this pointer points directly to the page 
@@ -162,6 +164,7 @@ struct BlockCacheT
     void mark_dirty(void) { if (bcb) bcb->mark_dirty(); }
     /** a pointer to the actual data */
     T * d;
+    off_t get_offset(void) { return bcb ? bcb->get_offset() : 0; }
 };
 
 #endif /* __BLOCK_CACHE_H__ */

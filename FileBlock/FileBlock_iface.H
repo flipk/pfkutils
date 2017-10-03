@@ -31,6 +31,9 @@
 #include "BlockCache.H"
 #include "types.H"
 
+typedef UINT32   FB_AUID_T;
+typedef UINT32_t FB_AUID_t;
+
 /** A data unit in a FileBlockInterface file.
  *
  * When the user of the FileBlockInterface is attempting to access
@@ -47,7 +50,7 @@ protected:
      * only the values \b 0 and \b 0xFFFFFFFF are invalid.  If a block is moved
      * around within a file, its identifier remains the same.
      */
-    UINT32 id;
+    FB_AUID_T auid;
     BlockCacheBlock * bcb;
     /** FileBlock constructor does nothing. 
      * \note The constructor is private to prevent users from creating
@@ -63,7 +66,7 @@ protected:
 public:
     /** return the identifier of this block.
      * \return the identifier */
-    UINT32  get_id    (void) { return id; }
+    FB_AUID_T  get_auid  (void) { return auid; }
     /** return return the offset in the file where this block starts.
      * \return the offset in the file */
     off_t   get_offset(void) { return bcb->get_offset(); }
@@ -170,27 +173,27 @@ public:
      *
      * This function allocates space in the file.
      */
-    virtual UINT32 alloc( int size ) = 0;
+    virtual FB_AUID_T alloc( int size ) = 0;
 
     /** free a block in a file.
-     * \param id the identifier of the block to free.
+     * \param auid the identifier of the block to free.
      *
      * frees the part of the file used by a block, so this part of the
      * file can be allocated later.
      */
-    virtual void   free( UINT32 id ) = 0;
+    virtual void   free( FB_AUID_T auid ) = 0;
 
     /** change the size of an allocation.
-     * \param id the old block identifier to resize.
+     * \param auid the old block identifier to resize.
      * \param new_size the new size desired.
-     * \return the ID of the new block (the same as the ID passed in)
+     * \return the auid of the new block (the same as the ID passed in)
      * \note This function does NOT copy data from the old block to the
      * new block!
      *
      * This will free the old block, and allocate a new block of the new
      * size, but it will retain the same block id.  
      */
-    virtual UINT32 realloc( UINT32 id, int new_size ) = 0;
+    virtual FB_AUID_T realloc( FB_AUID_T auid, int new_size ) = 0;
     // @}
 
     /** @name File Info Block API
@@ -202,12 +205,12 @@ public:
      * of the info block for that type, if it exists.
      * \param info_name a unique text string up to 128 characters long
      * \return a FileBlock ID of the corresponding info block. */
-    virtual UINT32 get_data_info_block( char * info_name ) = 0;
+    virtual FB_AUID_T get_data_info_block( char * info_name ) = 0;
     /** add an association of a string with an info block.
-     * \param id the FileBlock ID of the info block.
+     * \param auid the FileBlock ID of the info block.
      * \param info_name a unique text string up to 128 characters long
      */
-    virtual void   set_data_info_block( UINT32 id, char *info_name ) = 0;
+    virtual void   set_data_info_block( FB_AUID_T auid, char *info_name ) = 0;
     /** delete an association
      * \param info_name a unique text string up to 128 characters long
      */
@@ -223,12 +226,12 @@ public:
      * reading this block and intends instead to write to it, the 
      * caller may pass for_write=true, which may have cache optimizations
      * to make the access faster.
-     * \param id the identifier of the block (returned by alloc())
+     * \param auid the identifier of the block (returned by alloc())
      * \param for_write set to true, if the caller intends to write to the
      *  buffer, not read it from the file.
      * \return a FileBlock pointer that the caller can use to access
      *  the data in the file. */
-    virtual FileBlock * get( UINT32 id, bool for_write = false ) = 0;
+    virtual FileBlock * get( FB_AUID_T auid, bool for_write = false ) = 0;
     /** return a FileBlock back to the file.
      *
      * This function is called to indicate the user is done with a FileBlock
@@ -252,14 +255,12 @@ public:
 
     /** defragment and compact the file.
      *
-     * \param time_limit the maximum number of seconds to spend performing
-     * defragmentation and compaction.  If this much time passes and the file
-     * isn't completely defragmented, this function will give up and return.
-     * 0 means continue until the file is completely defragmented.
+     * \param full whether to perform a quick or full compaction.  note that
+     *   a full compaction requires all FileBlock objects to be released.
      *
      * \note This function is currently unimplemented!
      */
-    virtual void compact(int time_limit) = 0;
+    virtual void compact(bool full) = 0;
     // @}
 };
 
@@ -288,12 +289,17 @@ struct FileBlockT
     }
     /** destructor automatically releases the block back to the file */
     ~FileBlockT(void) { release(); }
+    /**
+     * allocate space in a file for this type.  it doesn't fetch it
+     * though, that is still up to you.
+     */
+    FB_AUID_T alloc(void) { return fbi->alloc(sizeof(T)); }
     /** fetch from the file; automatically determines size of T.
      * \param id the unique identifier of the block.
      * \param for_write set to true if you don't care what T's previous
      *        value in the file was and you're overwriting it from scratch
      * \return true if the block was fetched OK and false if not. */
-    bool get( UINT32 id, bool for_write = false ) {
+    bool get( FB_AUID_T id, bool for_write = false ) {
         release();
         fb = fbi->get( id, for_write );
         if (!fb) return false;
@@ -320,7 +326,8 @@ struct FileBlockT
 class FileBlockBST : public BST {
     /** this object needs to remember the FileBlockInterface object. */
     FileBlockInterface * fbi;
-    UINT32 id;
+    FB_AUID_T id;
+    /** set a reminder to ourselves indicating if we need to free something. */
     bool meminuse;
 public:
     FileBlockBST(FileBlockInterface * _fbi) {
@@ -328,6 +335,8 @@ public:
         id = 0;
         meminuse = false;
     }
+    /** destructor for this object.  it is illegal to delete it 
+     * without calling bst_free. the destructor will throw an error. */
     ~FileBlockBST(void) {
         if (meminuse)
         {
@@ -336,7 +345,12 @@ public:
             kill(0,SIGABRT);
         }
     }
-    bool get( UINT32 _id ) {
+    /**  fetch an object from the file and decode it.
+     * \param _id   the AUID of the block in the file to fetch.
+     * \return  true if the block was retrieved and decoded ok,
+     *      or false if there was an error.
+     */
+    bool get( FB_AUID_T _id ) {
         bst_free();
         id = _id;
         FileBlock * fb = fbi->get(id);
@@ -351,6 +365,12 @@ public:
         return retval;
     }
 private:
+    /**  store an object into the file.
+     * \param newblock   set this to false if this object already
+     *      corresponds to an existing region of the file.  set to
+     *      true to force an alloc of a new AUID.
+     * \return  true if it was completed without error.
+     */
     bool put( bool newblock ) {
         if (id == 0 && newblock == false)
             return false;
@@ -379,17 +399,36 @@ private:
         return retval;
     }
 public:
+    /** accessor to tell user if this object corresponds to a real
+     * block in the file.
+     * \return true if there is a corresponding block.
+     */
     bool idvalid(void) { return id!=0; }
-    UINT32 get_id(void) { return id; }
+    /** return the AUID of the block in the file.
+     * \return the AUID of the block in the file.
+     */
+    FB_AUID_T get_id(void) { return id; }
+    /** store the object into an existing AUID. will return an error
+     * if there is no corresponding block yet.
+     * \return true if stored in the file with no error.
+     */
     bool put( void ) { return put(false); }
-    bool putnew( UINT32 * retid ) { 
+    /** allocate a new block in the file and store this object.
+     * \param retid   the AUID of the block that was allocated for this object.
+     * \return true if it was stored in the file with no error.
+     */
+    bool putnew( FB_AUID_T * retid ) { 
         bool ret = put(true);
         if (ret)
             *retid = id;
         return ret;
     }
-    // this overrides BST::bst_free so that we can get our
-    // own meminuse tracking.
+    /**  free up all memory associated with this object.
+     * cannot be automatic in the destructor because of the heirarchical
+     * nature of how objects are destroyed.
+     * \note this overrides BST::bst_free so that we can get our
+     * own meminuse tracking.
+     */
     void bst_free( void ) {
         BST_STREAM_BUFFER str(NULL,0);
         str.start(BST_OP_MEM_FREE);
@@ -399,8 +438,11 @@ public:
     }
 };
 
-/* example class using FileBlockBST types and a union:
+/** \page FileBlockBSTExample Examples of FileBlockBST usage
 
+This is an example of using a FileBlockBST data type:
+
+<pre>
 class CrapUnion : public BST_UNION {
 public:
     enum { ONE, TWO, MAX };
@@ -408,7 +450,7 @@ public:
     ~CrapUnion(void) { bst_free(); }
     BST_UINT32_t   one;
     BST_STRING     two;
-    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+    / * virtual * / bool bst_op( BST_STREAM *str ) {
         BST * fields[] = { &one, &two };
         return bst_do_union(str, fields);
     }
@@ -421,11 +463,12 @@ public:
     BST_UINT32_t one;
     BST_UINT32_t two;
     CrapUnion un;
-    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+    / * virtual * / bool bst_op( BST_STREAM *str ) {
         BST * fields[] = { &one, &two, &un, NULL };
         return bst_do_fields( str, fields );
     }
 };
+</pre>
 
 */
 

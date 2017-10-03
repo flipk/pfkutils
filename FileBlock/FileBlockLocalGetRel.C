@@ -19,47 +19,56 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "FileBlock_iface.H"
-#include "FileBlockLocal.C"
+/** \file FileBlockLocalGetRel.C
+ * \brief Everything dealing with fetching, releasing, and flushing blocks.
+ * \author Phillip F Knaack
+ */
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <string.h>
-#include <errno.h>
+#include "FileBlockLocal.H"
 
-#define MAX_BYTES (16*1024*1024)
+#include <stdlib.h>
 
-int
-main(int argc, char ** argv)
+
+//virtual
+FileBlock *
+FileBlockLocal :: get( FB_AUID_T auid, bool for_write )
 {
-    int fd, options;
+    FB_AUN_T aun;
 
-    if (argc != 2)
+    aun = translate_auid(auid);
+
+    if (aun == 0)
+        return NULL;
+
+    FileBlockInt * fb = get_aun(aun,for_write);
+
+    if (fb)
     {
-        fprintf(stderr, "usage: t3 <file>\n");
-        return 1;
+        fb->set_auid( auid );
     }
 
-    options = O_RDWR;
-#ifdef O_LARGEFILE
-    options |= O_LARGEFILE;
-#endif
-    fd = open(argv[1], options);
-    if ( fd < 0 )
-    {
-        fprintf(stderr, "open: %s\n", strerror(errno));
-        return 1;
-    }
+    return fb;
+}
 
-    PageIO * pageio = new PageIOFileDescriptor(fd);
-    BlockCache * bc = new BlockCache( pageio, MAX_BYTES );
-    FileBlockLocal * fbi = new FileBlockLocal(bc);
+//virtual
+void
+FileBlockLocal :: release( FileBlock * _fb, bool dirty )
+{
+    FileBlockInt * fb = (FileBlockInt*)_fb;
 
-    fbi->dump_extents();
+    active_blocks.remove(fb);
 
-    delete fbi;
-    delete bc;
-    delete pageio;
+    bc->release(fb->get_bcb());
 
-    return 0;
+    delete fb;
+}
+
+//virtual
+void
+FileBlockLocal :: flush(void)
+{
+    fh.release();
+    bc->flush();
+    fh.get();
+    validate(false);
 }

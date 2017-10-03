@@ -20,7 +20,7 @@
  */
 
 /** \file FileBlockLocal.H
- * \brief Defines the FileBlockLocal implementation of FileBlockInterface
+ * \brief All private data types to FileBlockLocal implementation.
  * \author Phillip F Knaack
  */
 
@@ -29,83 +29,439 @@
 
 #include "FileBlock_iface.H"
 #include "dll2.H"
-#include "ExtentMap.H"
 
-class FileBlockLocalInt;
-struct FileBlockLocalHeader;
+/** 
+ * this is a configuration macro, used to switch on or off the use of
+ * AUIDs in the used-region AUHead objects.  this will most likely be
+ * necessary once compaction is implemented, but for now it is not
+ * used by anything except the debug interface.
+ */
+#define AUIDS_IN_USED 0
 
-/** A "Local File" implementation of FileBlockInterface.
- * 
- * This class talks to a BlockCache to implement file storage.
- * internally it uses an ExtentMap to keep track of the condition
- * of the file.
- * \note The contents of the ExtentMap is stored within the file
- *       itself; the ExtentMap will also have entries marking the 
- *       portions of the file in use where the ExtentMap is stored. */
-class FileBlockLocal : public FileBlockInterface {
-    /** linked list of all currently open blocks. */
-    LList <FileBlockLocalInt,0>   FBLlist;
-    /** the ExtentMap showing used and free portions of the file */
-    Extents map;
-    /** is the map space allocated from the map currently? */
-    bool map_present;
-    /** the interface to read and write the file itself */
-    BlockCache * bc;
-    /** read in a map from the file.
-     * \param fbh a pointer to a header structure describing
-     *            the file. */
-    void load_map( FileBlockLocalHeader * fbh );
-    /** free all disk space used by Extent pieces and piece maps.
-     * \param fbh a pointer to a header structure describing
-     *            the file. */
-    void free_map( FileBlockLocalHeader * fbh );
-    /** render the map into on-disk format, alloc space for it
-     * from the map, and then write it to bc.  This function is
-     * static in the class, so that init_file can call it too.
-     * \param m the Extents map to write to disk
-     * \param bc the interface to the file to use.
-     * \param fbh a pointer to a header structure describing
-     *            the file. */
-    static void store_map( Extents * m, BlockCache * bc,
-                           FileBlockLocalHeader * fbh );
+/** a data type for AU id numbers.  */
+typedef UINT32   FB_AUN_T;
+/** a data type for AU id numbers when encoded in a file */
+typedef UINT32_t FB_AUN_t;
+
+/** 
+ * fundamental size of an allocation unit.  every allocation is
+ * a multiple of this.
+ */
+#define AU_SIZE 32
+
+/**
+ * calculate the number of AUs required to hold a size.  performs
+ * the proper round-up in case of not even number of AUs.
+ */
+#define SIZE_TO_AUS(size) (((size)+(AU_SIZE-1)) / AU_SIZE)
+
+/** a template which adds a method to the usual BlockCacheT, which
+    supports seeking in the file by AUN instead of byte offset. */
+template <class T>
+struct BlockCacheAUT : public BlockCacheT <T> {
+    BlockCacheAUT(BlockCache * bc) : BlockCacheT<T>(bc) { my_aun = 0; }
+    /** override parent type's get method with a method that takes
+     * an AUN instead of a file offset. 
+     * \param aun        the AUN in the file corresponding to this block.
+     * \param for_write  if true, do not read from the file, instead prepare
+     *        an empty buffer for the application to fill in.
+     * \return  true if successful, false if some failure ocurred.
+     */
+    bool get(FB_AUN_T aun, bool for_write = false) {
+        my_aun = aun;
+        off_t pos = (aun * AU_SIZE);
+        return BlockCacheT<T>::get(pos,for_write);
+    }
+    /** the AUN is a private field, this is an accessor. */
+    FB_AUN_T get_aun(void) {
+        return my_aun;
+    }
+private:
+    FB_AUN_T my_aun;
+};
+
+/** 
+ * overall management information about a file.
+ * contains information such as statistics on space usage
+ * and first AUN, AUIDs, and AUID stack.
+ */
+struct InfoBlock {
+    /** the file must have a valid signature to be used. */
+    static const UINT32 SIGNATURE = 0x04f78c2a;
+    UINT32_t  signature;      /**< value is SIGNATURE */
+    UINT32_t  used_aus;       /**< count of used AUs */
+    UINT32_t  free_aus;       /**< count of free AUs */
+    UINT32_t  used_extents;   /**< count of used regions */
+    UINT32_t  free_extents;   /**< count of free regions */
+    FB_AUN_t  first_au;       /**< number of first AU */
+    UINT32_t  num_aus;        /**< count of how many AUs in the file */
+    FB_AUID_t auid_top;       /**< largest auid allocated so far+1 */
+    UINT32_t  auid_stack_top; /**< top of the auid free stack */
+};
+
+/**
+ * mapping information on data info blocks.
+ * each entry is either zero or points to a DataInfoBlock structure.
+ */
+struct DataInfoPtrs {
+    static const int MAX_DATA_INFOS = 64;
+    /** either zero or points to a DataInfoBlock structure */
+    FB_AUID_t ptrs[MAX_DATA_INFOS];
+};
+
+/**
+ * structure for linked list heads of free blocks.
+ * each entry corresponds to different size blocks.  For example,
+ * index [0] is for 1-AU blocks.  index [1] is for 2-AU blocks, etc.
+ */
+struct BucketList {
+    static const int NUM_BUCKETS = 2048;
+    /** each entry is either zero or the AUN of a linked list head.
+     * Also, if a list is nonempty, there will be a bit set in the
+     * bitmap, too. \see BucketBitmap
+     */
+    FB_AUN_t list_head[NUM_BUCKETS];
+};
+
+/**
+ * bitmap for the bucket lists.  If a bit is set, it means the
+ * corresponding bucket list is nonempty.
+ */
+struct BucketBitmap {
+    /** the bits themselves live here. */
+    UINT32_t longs[BucketList::NUM_BUCKETS/32];
+    /**
+     * change value of a bit in the bitmap.
+     * \param bucket  which bit/corresponding bucket to alter.
+     * \param value   whether to set or clear that bit.
+     */
+    void set_bit(int bucket, bool value) {
+        int whichbit  = bucket % 32;
+        int whichlong = bucket / 32;
+        if (value)
+            longs[whichlong].set(
+                longs[whichlong].get() |  (1 << whichbit)
+                );
+        else
+            longs[whichlong].set(
+                longs[whichlong].get() & ~(1 << whichbit)
+                );
+    }
+    /**
+     * retrieve the value of a bit.
+     * \param bucket  which bit/corresponding bucket to check
+     * \return  true if the bit is set.
+     */
+    bool get_bit(int bucket) {
+        int whichbit  = bucket % 32;
+        int whichlong = bucket / 32;
+        if (longs[whichlong].get() & (1 << whichbit))
+            return true;
+        return false;
+    }
+};
+
+/**
+ * an AUID L1 table.  there are two of these included in the FileHeader,
+ * one used for AUID-to-AUN translation, and the other used for the
+ * free-AUID stack. the top 12 bits of a 32-bit value are used to index 
+ * this table.  the AUID translation table is indexed by the AUID value,
+ * while the free-AUID stack is indexed by the InfoBlock::auid_stack_top
+ * value.
+ */
+struct AuidL1Tab {
+    static const int L1_ENTRIES = 4096;
+    /** the top 12 bits of a 32-bit value are used to index 
+     * this table. */
+    static int auid_to_l1_index(UINT32 v) { return (v >> 20) & 0xFFF; }
+    FB_AUN_t  entries[L1_ENTRIES];
+};
+
+/**
+ * an AUID L2 or L3 table.  these are linked from the two AuidL1Tab tables,
+ * used for AUID-to-AUN translation and free-AUID stack.  they are
+ * dynamically allocated as needed.  the remaining 20 bits of a 32-bit
+ * value are used to index these tables; bottom 10 for the L3 and the next
+ * 10 bits for the L2 table.
+ */
+struct AuidL23Tab {
+    static const int L23_ENTRIES = 1024;
+    static int auid_to_l2_index(UINT32 v) { return (v >> 10) & 0x3FF; }
+    static int auid_to_l3_index(UINT32 v) { return (v >>  0) & 0x3FF; }
+    FB_AUN_t  entries[L23_ENTRIES];
+};
+
+/**
+ * this structure occurs at the beginning of the file and is referenced
+ * constantly. 
+ */
+struct _FileHeader {
+    InfoBlock      info;             /**< all the stats you ever wanted */
+    DataInfoPtrs   data_info_ptrs;   /**< name to AUID mapping */
+    BucketList     bucket_list;      /**< arrays of bucket head ptrs */
+    BucketBitmap   bucket_bitmap;    /**< bitmaps of nonempty buckets */
+    AuidL1Tab      auid_l1;          /**< AUID-to-AUN mapping tables */
+    AuidL1Tab      auid_stack_l1;    /**< AUID free stack tables */
+};
+/**
+ * a perversion of BlockCacheT which knows only FileHeader and where it
+ * goes.
+ */
+class FileHeader : public BlockCacheAUT <_FileHeader> {
 public:
-    /** Constructor.
-     * \param _bc a BlockCache object which will be used to access
-     *   the contents of the file */
-    FileBlockLocal( BlockCache * _bc );
-    /** Destructor.
-     * \note This destroys the BlockCache which was passed in
-     *   to the constructor! */
-    ~FileBlockLocal( void );
+    static const FB_AUN_T FILE_HEADER_AUN = 0;
+    FileHeader(BlockCache *bc) : BlockCacheAUT <_FileHeader>(bc) { }
+    bool get(bool for_write=false) {
+        return BlockCacheAUT <_FileHeader>::get(FILE_HEADER_AUN,for_write);
+    }
+};
 
-    /** checks for signature etc, returns true if file appears to
-     * be valid.  this function is static so that it can be called
-     * prior to the constructor.
-     * \see FileBlockInterface::valid_file
-     * \param bc the interface to the file to check
-     * \return true if file has signature, false if it does not */
-    static bool valid_file( BlockCache * bc );
-    /** takes a new file, and writes a signature etc to initialize
-     * the file.  this function is static, because it needs to be called
-     * before the class can be constructed.
-     * \param bc the interface to the file to check. */
-    static void init_file( BlockCache * bc );
+/**
+ * this structure is at the start of every region.
+ * it encodes a linked list to the previous region and the size
+ * of this region (so that an AUN to the next region can be recovered).
+ * this is how we know when to coalesce free regions, by looking at the
+ * next and previous pointers and checking their used-bits.
+ * used regions also store the AUID (optionally).
+ * free regions also store the linked list pointers for the bucket list.
+ */
+class _AUHead {
+    /** if this bit is set in size_and_used, the region is in use. */
+    static const UINT32 USED_MASK = 0x80000000;
+    /** these 31 bits are used for the size of the region. */
+    static const UINT32 SIZE_MASK = 0x7fffffff;
+public:
+#if AUIDS_IN_USED
+    static const int used_size = 12;
+#else
+    static const int used_size = 8;
+#endif
+    /** pointer to the previous region in the file. */
+    FB_AUN_t  prev;
+private:
+    /** this field encodes both the size (31 bits) and the
+     * used/free flag (1 bit).  \see USED_MASK, \see SIZE_MASK. */
+    UINT32_t  size_and_used;
+    /** a used region puts the AUID here, while a free region puts
+     * the bucket_prev pointer. */
+    FB_AUN_t  one;
+    /** a free region puts the bucket_next here.  a used region 
+     * does not use this space.  it is available for use by the
+     * application. */
+    FB_AUN_t  two;
+public:
+    /** extract the number of AUNs this region consumes from
+     * the size_and_used member.
+     * \return size in AUs
+     */
+    int size(void) { 
+        return size_and_used.get() & SIZE_MASK;
+    }
+    /**
+     * set the size of this region.
+     * \param size   the size in AUs of the region.
+     */
+    void size(int size) {
+        size_and_used.set(
+            (size_and_used.get() & USED_MASK) |
+            (size & SIZE_MASK));
+    }
+    /** query the used-bit for this region.
+     * \return  true if the region is used, false if free.
+     */
+    bool used(void) {
+        return (size_and_used.get() & USED_MASK) != 0;
+    }
+    /**
+     * set the used-bit in this region.
+     * \param used   set to true for a used region, false if free.
+     */
+    void used(bool used) {
+        size_and_used.set(
+            (size_and_used.get() & SIZE_MASK) |
+            (used ? USED_MASK : 0));
+    }
+#if AUIDS_IN_USED
+    /** fetch the AUID if this is a used-region. */
+    FB_AUID_T auid        ( void        ) { return one.get(); }
+    /** set the AUID if this is a used-region. */
+    void      auid        ( FB_AUID_T v ) { one.set(v); }
+#endif
+    /** fetch the bucket_next for a free region */
+    FB_AUN_T bucket_next ( void       ) { return one.get(); }
+    /** set the bucket_next for a free region */
+    void     bucket_next ( FB_AUN_T v ) { one.set(v); }
+    /** fetch the bucket_prev for a free region */
+    FB_AUN_T bucket_prev ( void       ) { return two.get(); }
+    /** set the bucket_prev for a free region */
+    void     bucket_prev ( FB_AUN_T v ) { two.set(v); }
+};
+/** a BlockCache accessor template for the _AUHead type. */
+typedef BlockCacheAUT <_AUHead> AUHead;
 
-    /*virtual*/ UINT32 get_data_info_block( char * info_name );
-    /*virtual*/ void   set_data_info_block( UINT32 id, char *info_name );
-    /*virtual*/ void   del_data_info_block( char * info_name );
+/** map a text name to an AUID.  referenced by DataInfoPtrs::ptrs. */
+struct _DataInfoBlock {
+    static const int MAX_INFO_NAME = 128;
+    char      info_name[MAX_INFO_NAME];
+    FB_AUID_t info_auid;
+};
+typedef FileBlockT <_DataInfoBlock> DataInfoBlock;
 
-    /*virtual*/ UINT32 realloc( UINT32 id, int new_size );
-    /*virtual*/ UINT32 alloc( int size );
-    /*virtual*/ void free( UINT32 id );
-    /*virtual*/ FileBlock * get( UINT32 id, bool for_write = false );
-    /*virtual*/ void release( FileBlock * blk, bool dirty );
-    /*virtual*/ void flush(void);
-    /*virtual*/ void compact(int time_limit);
+//
 
+/**
+ * internal representation of a FileBlock.  Just adds some linked
+ * list info so we can keep track of it.
+ */
+class FileBlockInt : public FileBlock {
+public:
+    LListLinks <FileBlockInt> links[1];
+    void set_auid(UINT32 _auid) { auid = _auid; }
+    void set_bcb(BlockCacheBlock * _bcb) { bcb = _bcb; }
+    BlockCacheBlock *get_bcb(void) { return bcb; }
+};
 
-    /** this function is for debug purposes. */
-    void dump_extents( void );
+//
+
+/**
+ * the private implementation of FileBlockInterface.
+ * the real meat happens here. 
+ */
+class FileBlockLocal : public FileBlockInterface {
+    BlockCache * bc;
+    /** a list of all FileBlockInt objects which have been
+     * given to the general public.  */
+    LList <FileBlockInt,0> active_blocks;
+    /** a perpetual pointer to the header of the file. */
+    FileHeader  fh;
+    /** @name bucket management */
+    // @{
+    /** find first used bucket with usable region size.
+     * \param num_aus  the number of AUs required.
+     * \return  index into bucket array of a nonempty bucket list.
+     */
+    int       ffu_bucket     ( int num_aus );
+    /** remove first region from a specified bucket.
+     * \param bucket   the number of the bucket list to access.
+     * \param au       pointer to a user's AUHead to populate with
+     *           info from the AU
+     * \return  true if the bucket was dequeued, false if
+     *            bucket list was empty.
+     */
+    bool      dequeue_bucketn( int bucket,  AUHead * au );
+    /** remove region from first matching bucket.
+     * \param num_aus   the size region required, in AUs
+     * \param au    pointer to a user's AUHead to populate with
+     *           info from the AU
+     */
+    void      dequeue_bucket ( int num_aus, AUHead * au );
+    /** return a region to the appropriate bucket.
+     * \param  au    the AU to return to a bucket.
+     */
+    void      enqueue_bucket ( AUHead * au );
+    /** remove a region from whatever bucket it is a member of.
+     * \param au    the AU to remove from its bucket.
+     */
+    void      remove_bucket  ( AUHead * au );
+    /** calculate the bucket index for a required size.
+     * \param num_aus  the size of a region in AUs
+     * \return  the bucket index this region size should be in. 
+     */
+    static int aus_to_bucket (int num_aus) {
+        if (num_aus == 0)   return BucketList::NUM_BUCKETS-1;
+        if ((num_aus-1) >= (BucketList::NUM_BUCKETS-1))
+            return BucketList::NUM_BUCKETS-2;
+        return (num_aus-1);
+    }
+    // @}
+    /** @name aun management */
+    // @{
+    /** allocate a region of the file.
+     * \param au    the user's AUHead object to fill in.
+     * \param size  the number of AUs required.
+     * \return   the AUN of the allocated space.
+     */
+    FB_AUN_T  alloc_aun      ( AUHead * au, int size );
+    /** allocate a region of the file, where AUHead is not required.
+     * \param size  the number of AUs required.
+     * \return  the AUN of the allocated space.
+     */
+    FB_AUN_T  alloc_aun      ( int size ) {
+        AUHead au(bc); return alloc_aun(&au,size);
+    }
+    /** free a region of the file.
+     * \param aun    the AUN of the region to free.
+     */
+    void      free_aun       ( FB_AUN_T aun );
+    /** fetch a region of the file, skipping the AUHead.
+     * this method looks up how large the region is, and returns an
+     * object appropriately sized for that region.
+     * \param aun   the AUN where the data begins.
+     * \param for_write   if true, the data will not be read from the
+     *             file, instead some memory will be allocated and set 
+     *             to zeroes, so the application can start writing.
+     * \return a FileBlock object referencing that part of the file.
+     * \note Be sure to call FileBlock::mark_dirty method if you have
+     *    modified any data in this region!
+     */
+    FileBlockInt *  get_aun  ( FB_AUN_T aun, bool for_write=false );
+    // @}
+    /** @name AUID management */
+    // @{
+    /** allocate a new AUID and map it to an AUN.
+     * \param aun   the AUN to be mapped.
+     * \return  the new AUID.
+     */
+    FB_AUID_T alloc_auid     ( FB_AUN_T aun );
+    /** map an AUID to a different AUN.
+     * \param auid   the AUID to be altered.
+     * \param aun    the AUN to be mapped to this AUID.
+     */
+    void      rename_auid    ( FB_AUID_T auid, FB_AUN_T aun );
+    /** lookup an AUID and return its corresponding AUN.
+     * \param auid    the AUID to look up.
+     * \return   the AUN mapped to this AUID.
+     */
+    FB_AUN_T  translate_auid ( FB_AUID_T auid );
+    /** free up an AUID.
+     * \param auid    the AUID to free.
+     */
+    void      free_auid      ( FB_AUID_T auid );
+    /** modify an entry in the free-AUID stack.
+     * \param  index    the entry in the stack to modify.
+     * \param  auid     the value to write to the specified entry.
+     */
+    void      write_stack    ( UINT32 index, FB_AUID_T auid );
+    /** read out of the free-AUID stack.
+     * \param index    the entry to read.
+     * \return   the AUID stored at that position in the stack.
+     */
+    FB_AUID_T lookup_stack   ( UINT32 index );
+    // @}
+public:
+    /*       */             FileBlockLocal     ( BlockCache * _bc );
+    /*virtual*/            ~FileBlockLocal     ( void );
+    static      bool        valid_file         ( BlockCache * bc );
+    static      void        init_file          ( BlockCache * bc );
+    /*virtual*/ FB_AUID_T   alloc              ( int size );
+    /*virtual*/ void        free               ( FB_AUID_T auid );
+    /*virtual*/ FB_AUID_T   realloc            ( FB_AUID_T auid, int new_size );
+    /*virtual*/ FB_AUID_T   get_data_info_block( char * info_name );
+    /*virtual*/ void        set_data_info_block( FB_AUID_T auid,
+                                                 char *info_name );
+    /*virtual*/ void        del_data_info_block( char * info_name );
+    /*virtual*/ FileBlock * get                ( FB_AUID_T auid,
+                                                 bool for_write = false );
+    /*virtual*/ void        release            ( FileBlock * blk,
+                                                 bool dirty = false );
+    /*virtual*/ void        flush              ( void );
+    /*virtual*/ void        compact            ( bool full );
+
+    /** debug information.
+     * \param verbose   set to true if you want it to display everything
+     *       it knows about the metadata.  set to false to show only errors.
+     */
+    void      validate       ( bool verbose=true );
 };
 
 #endif /* __FILE_BLOCK_LOCAL_H__ */

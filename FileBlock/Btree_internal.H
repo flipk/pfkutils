@@ -32,8 +32,8 @@ class BtreeInternal;
 struct _BTInfo {
     static const UINT32 MAGIC = 0x0d83f387;
     UINT32_t magic;
-    UINT32_t bti_fbn;     /**< fileblock number of this info block (self) */
-    UINT32_t root_fbn;    /**< fileblock number of the root node */
+    FB_AUID_t bti_fbn;     /**< fileblock number of this info block (self) */
+    FB_AUID_t root_fbn;    /**< fileblock number of the root node */
     UINT32_t numnodes;    /**< count of nodes in file */
     UINT32_t numrecords;  /**< count of records in file */
     UINT32_t depth;       /**< depth of the btree */
@@ -44,9 +44,9 @@ typedef FileBlockT <_BTInfo> BTInfo;
 
 /** an item within a _BTNodeDisk */
 struct BTNodeItem {
-    UINT32_t ptr;       /**< fileblock number of a left-child node */
+    FB_AUID_t ptr;       /**< fileblock number of a left-child node */
     UINT16_t keysize;   /**< length of key data */
-    UINT32_t data;      /**< fileblock number of the data */
+    FB_AUID_t data;      /**< fileblock number of the data */
 };
 
 /** a Btree node as it appears on disk, plus access methods.
@@ -101,7 +101,7 @@ public:
         // add in order-1 items plus one more ptr.
         return sizeof(_BTNodeDisk) +
             sizeof(BTNodeItem)*(_order-1) +
-            sizeof(UINT32_t);
+            sizeof(FB_AUID_t);
     }
     UCHAR * get_key_data(int _order) {
         return ((UCHAR*)this) + node_size(_order);
@@ -158,7 +158,7 @@ class BTNode {
     int btorder;                /**< the order of the btree, used to calc
                                    the size of the variable-sized portions
                                    of the node on disk. */
-    UINT32 fbn;                 /**< FileBlock ID of the node on disk */
+    FB_AUID_T fbn;                 /**< FileBlock ID of the node on disk */
     int refcount;               /**< BTNodeCache keeps track of # users */
     bool dirty;
 public:
@@ -168,8 +168,8 @@ public:
     int numitems;    /**< number of items in this node */
     bool leaf;       /**< this is a leaf node */
     bool root;       /**< this is a root node */
-    UINT32 * ptrs;   /**< array of FileBlock IDs of ptrs to nodes */
-    UINT32 * datas;  /**< array of FileBlock IDs of ptrs to data */
+    FB_AUID_T * ptrs;   /**< array of FileBlock IDs of ptrs to nodes */
+    FB_AUID_T * datas;  /**< array of FileBlock IDs of ptrs to data */
     BTKey ** keys;   /**< array of keys */
     /** constructor for a node. 
      * \param _fbi  the FileBlockInterface to get the node in and out
@@ -178,11 +178,11 @@ public:
      * \param _fbn  the FileBlock ID of the node; if this is specified as
      *              zero, a new block will be allocated on a store.
      */
-    BTNode( FileBlockInterface * _fbi, int _btorder, UINT32 _fbn );
+    BTNode( FileBlockInterface * _fbi, int _btorder, FB_AUID_T _fbn );
     /** destructor frees memory consumed by the node */
     ~BTNode( void );
     /** return the fbn. */
-    UINT32 get_fbn(void) { return fbn; }
+    FB_AUID_T get_fbn(void) { return fbn; }
     /** mark this node as modified */
     void mark_dirty(void) { dirty = true; }
     /** realloc the fbn and store the node data into the file. */
@@ -197,11 +197,11 @@ public:
         return item->fbn & 0x7FFFFFFF;
     }
     /** how to access a key (fbn) and return a hash index */
-    static int hash_key( UINT32 key ) {
+    static int hash_key( FB_AUID_T key ) {
         return key & 0x7FFFFFFF;
     }
     /** how to compare a key (fbn) to an item (BTNode) */
-    static bool hash_key_compare( BTNode * item, UINT32 key ) {
+    static bool hash_key_compare( BTNode * item, FB_AUID_T key ) {
         return (item->fbn == key);
     }
 };
@@ -209,7 +209,7 @@ public:
 /** typedef for a least-recently used list of BTNode */
 typedef LListLRU <BTNode, BTNODE_LRU>  BTNodeLRU;
 /** typedef for a hash on fbn of BTNode */
-typedef LListHash <BTNode, UINT32,
+typedef LListHash <BTNode, FB_AUID_T,
                    BTNodeHashComparator, BTNODE_HASH>   BTNodeHash;
 
 /** a cache of BTNode objects, with least-recently used list, cap on
@@ -240,7 +240,7 @@ public:
      * \note This method returns a node with a nonzero reference count.  When
      *       done with the node, do NOT delete it!
      *       instead call BTNodeCache::release. */
-    BTNode * get( UINT32 fbn );
+    BTNode * get( FB_AUID_T fbn );
     /** return a node to the cache.
      * \param n the node to return
      * \note This method decreases the node's reference count.  If the refcount
@@ -285,7 +285,7 @@ class BtreeInternal : public Btree {
      * from calculating once during init and storing */
     int node_size;
     /** the FileBlock ID of the BTInfo block in the file */
-    UINT32 info_fbn;
+    FB_AUID_T info_fbn;
     /** a pointer to the FileBlock containing the BTInfo; this 
      * object is always live. */
     BTInfo info;
@@ -339,8 +339,8 @@ class BtreeInternal : public Btree {
      * \param idx the index into node n where this item goes (from walknode)
      * \return the FileBlock ID of the new right node that was created.
      */
-    UINT32 splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
-                   UINT32 rightnode, int idx );
+    FB_AUID_T splitnode( BTNode * n, BTKey ** key, FB_AUID_T * data_fbn,
+                   FB_AUID_T rightnode, int idx );
     /** walk thru all the data in a node, recursing on the pointers, and
      * calling a user-specified function for each key and data (item).
      * \param bti the user's BtreeIterator object.
@@ -349,7 +349,7 @@ class BtreeInternal : public Btree {
      *         if BtreePrintinfo returned false, indicating that
      *         the entire tree-walk should be terminated.
      */
-    bool iterate_node( BtreeIterator * bti, UINT32 node_fbn );
+    bool iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn );
     bool iterate_inprogress;    /**< cannot modify during an iterate method */
 public:
     /** the FileBlockInterface::get_data_info_block string name
@@ -377,9 +377,10 @@ public:
     /** free all memory associated with the btree and sync all nodes
      * back to the file. */
     /*virtual*/ ~BtreeInternal( void );
-    /*virtual*/ bool get( UCHAR * key, int keylen, UINT32 * data_id );
-    /*virtual*/ bool put( UCHAR * key, int keylen, UINT32 data_id,
-                          bool replace, bool * replaced, UINT32 * old_data_id );
-    /*virtual*/ bool del( UCHAR * key, int keylen, UINT32 * old_data_id );
+    /*virtual*/ bool get( UCHAR * key, int keylen, FB_AUID_T * data_id );
+    /*virtual*/ bool put( UCHAR * key, int keylen, FB_AUID_T data_id,
+                          bool replace, bool * replaced,
+                          FB_AUID_T * old_data_id );
+    /*virtual*/ bool del( UCHAR * key, int keylen, FB_AUID_T * old_data_id );
     /*virtual*/ bool iterate( BtreeIterator * bti );
 };

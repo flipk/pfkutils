@@ -38,14 +38,14 @@
 
 /** unit of test data stored in the file to test the API. */
 struct TestData {
-    UINT32_t  id;     /**< unique identifier for a block */
+    FB_AUID_t id;     /**< unique identifier for a block */
     UINT32_t  idxor;  /**< alternate encoding of id, to consume space */
     UINT32_t  seq;    /**< sequence number to validate updates */
 };
 
 /** in-memory copy of data used to validate storage in file. */
 struct info {
-    UINT32 id;  /**< unique identifier for a block */
+    FB_AUID_T id;  /**< unique identifier for a block */
     int seq;    /**< sequence number, basically the loop count */
     int extra;  /**< how many extra bytes of space was allocated */
     bool inuse; /**< whether this slot in the array is in use or not */
@@ -57,7 +57,7 @@ struct info {
 #define VERBOSE 0
 #define XOR_CONSTANT 0x12345678
 
-#define TEST 3
+#define TEST 1
 
 #if TEST==1
 int testFileBlockSignalOccurred = 0;
@@ -68,33 +68,21 @@ sighandler( int sig, siginfo_t * info, void * extra )
     testFileBlockSignalOccurred = 1;
 }
 
+#include "FileBlockLocal.H"
+
 int
 main(int argc, char ** argv)
 {
-    int           fd;
-    int           options;
-    PageIO      * io;
-    BlockCache  * bc;
-    FileBlockInterface * fbi;
+    FileBlockInterface * _fbi;
+    FileBlockLocal * fbi;
 
     srandom( getpid() * time(NULL) );
 
     (void) unlink( TESTFILE );
-    options = O_RDWR | O_CREAT;
-#ifdef O_LARGEFILE
-    options |= O_LARGEFILE;
-#endif
-    fd = open(TESTFILE, options, 0644);
-    if (fd < 0)
-    {
-        fprintf(stderr, "unable to open file\n");
-        exit( 1 );
-    }
 
-    io = new PageIOFileDescriptor(fd);
-    bc = new BlockCache(io, 256*1024*1024);
-    FileBlockInterface::init_file( bc );
-    fbi = FileBlockInterface::open( bc );
+    _fbi = FileBlockInterface::createFile( TESTFILE, 65536 * 4096, 0644 );
+
+    fbi = (FileBlockLocal*) _fbi;
 
 #if 1
 #define ITEMS 1000000
@@ -141,9 +129,9 @@ main(int argc, char ** argv)
                 printf("%d: getting id 0x%x extra %d -> "
                        "id 0x%x idxor 0x%x seq 0x%x\n",
                        loop, i->id, i->extra,
-                       td.data->id.get(),
-                       td.data->idxor.get(),
-                       td.data->seq.get());
+                       td.d->id.get(),
+                       td.d->idxor.get(),
+                       td.d->seq.get());
 #endif
                 if (td.d->id.get() != i->id)
                     printf("%d: ERROR id mismatch\n", loop);
@@ -180,7 +168,7 @@ main(int argc, char ** argv)
             int extra = (random() & 0x7F);
 
             // create
-            UINT32 id = fbi->alloc(sizeof(TestData) + extra);
+            FB_AUID_T id = fbi->alloc(sizeof(TestData) + extra);
             i->id = id;
             i->seq = loop;
             i->inuse = true;
@@ -223,10 +211,8 @@ main(int argc, char ** argv)
 
     delete[] infos;
 
+    fbi->validate(false);
     delete fbi;
-    delete bc;
-    delete io;
-    close(fd);
 
     (void) unlink( TESTFILE );
 

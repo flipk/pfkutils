@@ -68,6 +68,10 @@ public:
             p[6] = (x >>  8) & 0xff;  p[7] = (x >>  0) & 0xff;
         }
     int size_of(void) { return 8; }
+    void incr(UINT64 v) { set(get()+v); }
+    void decr(UINT64 v) { set(get()-v); }
+    void incr(void) { incr(1); }
+    void decr(void) { decr(1); }
 };
 
 class UINT32_t {
@@ -88,6 +92,10 @@ public:
             p[3] =  v    & 0xff;
         };
     int size_of(void) { return 4; }
+    void incr(UINT32 v) { set(get()+v); }
+    void decr(UINT32 v) { set(get()-v); }
+    void incr(void) { incr(1); }
+    void decr(void) { decr(1); }
 };
 
 class UINT16_t {
@@ -106,6 +114,10 @@ public:
             p[1] =  v    & 0xff;
         };
     int size_of(void) { return 2; }
+    void incr(UINT16 v) { set(get()+v); }
+    void decr(UINT16 v) { set(get()-v); }
+    void incr(void) { incr(1); }
+    void decr(void) { decr(1); }
 };
 
 class UINT8_t {
@@ -117,6 +129,10 @@ public:
     UINT8 get(void) { return p[0]; }
     void set( UINT8 v ) { p[0] = v; }
     int size_of(void) { return 1; }
+    void incr(UINT8 v) { set(get()+v); }
+    void decr(UINT8 v) { set(get()-v); }
+    void incr(void) { incr(1); }
+    void decr(void) { decr(1); }
 };
 
 #endif /* __cplusplus */
