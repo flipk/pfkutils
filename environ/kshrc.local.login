@@ -303,7 +303,8 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
 fi
 
 # if one of the following two directories exists, add them to the
-# path following atria/bin.
+# path following atria/bin.  this gets rid of the need to rerun
+# the clearcase setup script after setting into a view.
 
 if [[ x$CCS_PATH_SET != xyes ]] ; then
     if [[ -d /usr/vob/gsmtools/build/bin ]] ; then

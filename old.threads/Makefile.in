@@ -2,7 +2,7 @@
 LIB= libthreads.a
 CPPFLAGS= -Ih -Ih_internal
 GCC= gcc $(CPPFLAGS) 
-GCCLINK= g++ $(CPPFLAGS) 
+GCCLINK= g++ $(CPPFLAGS) $(LINKFL)
 GCCOPT= $(GCC) -O3
 SRCS=  encrypt_rubik4.C encrypt_iface.C \
 	threads1.C threads2.C threads_class.C \
@@ -61,6 +61,9 @@ t3: $(LIB) test3.C
 # with optimization. (internal-faults gcc on solaris...) grodie.
 
 threads1.o: threads1.C
+	$(GCC) -c $*.C
+
+threads_messages_tcp.o: threads_messages_tcp.C
 	$(GCC) -c $*.C
 
 .C.o:
