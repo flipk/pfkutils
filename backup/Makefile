@@ -10,7 +10,7 @@ HDRS=	database_elements.H params.H protos.H
 
 OBJS= $(SRCS:.C=.o)
 CC= g++
-INCS= -I ../h -I ../util -I ../treesync -I ../dll2 -I ../FileBlock 
+INCS= -I.. -I ../h -I ../util -I ../treesync -I ../dll2 -I ../FileBlock 
 DEFS= -D_FILE_OFFSET_BITS=64
 OPTS= -g3
 LIBS= ../FileBlock/libFileBlock.a ../treesync/libtreesync.a \
