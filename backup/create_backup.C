@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file create_backup.C
+ * \brief Implementation of method to create a backup in a backup database.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -28,6 +33,17 @@
 #include <strings.h>
 #include <errno.h>
 
+/**
+ * create a backup in a backup database file.
+ * This function sets up a new backup, creating a PfkBackupInfo and
+ * populating it with an initial state. It does not add any user data
+ * to the backup.
+ *
+ * @param bt        A pointer to the Btree database file.
+ * @param bakname   A short string name for this backup.
+ * @param root_dir  The starting directory for this backup.
+ * @param comment   A text string to be displayed in the 'comment' field.
+ */
 void
 pfkbak_create_backup ( Btree * bt, char * bakname,
                        char * root_dir, char * comment )

@@ -19,6 +19,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file database_elements.H
+ * \brief Defines all data units which appear in a backup database.
+ * \author Phillip F Knaack
+ */
+
 #ifndef __DATABASE_ELEMENTS_H__
 #define __DATABASE_ELEMENTS_H__
 
@@ -27,25 +32,29 @@
 #include "BtreeDbClasses.H"
 #include "pk-md5.h"
 
-// key base type
-
+/** base type for database keys used in the backup database.
+ * This type makes it easier to encapsulate a type field using
+ * an enum. All derived classes must call the base class constructor
+ * identifying the type of class.
+ */
 struct PfkBakDbKeys : public BST {
     enum Prefix {
-        PREFIX_NONE,
-        PREFIX_BACKUP_DB_INFO,
-        PREFIX_BACKUP_INFO,
-        PREFIX_FILE_INFO,
-        PREFIX_FILE_PIECE_INFO,
-        PREFIX_FILE_PIECE_DATA
+        PREFIX_NONE,             /**< 0 is invalid for a prefix type */
+        PREFIX_BACKUP_DB_INFO,   /**< PfkBackupDbInfo */
+        PREFIX_BACKUP_INFO,      /**< PfkBackupInfo */
+        PREFIX_FILE_INFO,        /**< PfkBackupFileInfo */
+        PREFIX_FILE_PIECE_INFO,  /**< PfkBackupFilePieceInfo */
+        PREFIX_FILE_PIECE_DATA   /**< PfkBackupFilePieceData */
     };
+    /** base class constructor must be passed the prefix type. */
     PfkBakDbKeys( Prefix _p ) : BST(NULL), prefix(this) { prefix.v = _p; }
     BST_UINT8_t    prefix;   /**< MUST be included in BSG_FIELD_LIST of
                                 any derived type. */
 };
 
-// PfkBackupDbInfo - singleton data item which describes the 
-//   list of backups in the file and the tool version.
-
+/** describe the list of backups in the file and the tool version.
+ * This is a singleton (there exists only one of these in the database).
+ */
 struct PfkBackupDbInfoKey : public PfkBakDbKeys {
     PfkBackupDbInfoKey(void) :
         PfkBakDbKeys(PREFIX_BACKUP_DB_INFO),

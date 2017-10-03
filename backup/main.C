@@ -211,13 +211,13 @@ pfkbak_main(int argc, char ** argv)
         pfkbak_delete_gens( bt, baknum, argc-4, argv+4 );
         break;
     case BAK_LIST_FILES:
-        pfkbak_list_files( bt, baknum, argv[4] );
+        pfkbak_list_files( bt, baknum, atoi(argv[4]) );
         break;
     case BAK_EXTRACT:
-        pfkbak_extract( bt, baknum, argv[4], argc-5, argv+5 );
+        pfkbak_extract( bt, baknum, atoi(argv[4]), argc-5, argv+5 );
         break;
     case BAK_EXTRACT_LIST:
-        pfkbak_extract_list( bt, baknum, argv[4], argv[5] );
+        pfkbak_extract_list( bt, baknum, atoi(argv[4]), argv[5] );
         break;
     case BAK_NONE:
     default:

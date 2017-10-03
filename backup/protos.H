@@ -23,6 +23,8 @@
 bool   pfkbak_get_info    ( PfkBackupDbInfo * info );
 UINT32 pfkbak_find_backup ( Btree * bt, char * bakname );
 void   pfkbak_md5_buffer  ( UCHAR * buf, int buflen, UCHAR * md5 );
+void   pfkbak_sprint_md5  ( UCHAR * md5hash, char * string );
+#define MD5_STRING_LEN 34
 
 // ops
 
@@ -34,8 +36,8 @@ void pfkbak_delete_backup ( Btree * bt, UINT32 baknum );
 void pfkbak_update_backup ( Btree * bt, UINT32 baknum );
 void pfkbak_delete_gens   ( Btree * bt, UINT32 baknum,
                             int argc, char ** argv );
-void pfkbak_list_files    ( Btree * bt, UINT32 baknum, char * gen );
-void pfkbak_extract       ( Btree * bt, UINT32 baknum, char * gen,
+void pfkbak_list_files    ( Btree * bt, UINT32 baknum, UINT32 gen_num );
+void pfkbak_extract       ( Btree * bt, UINT32 baknum, UINT32 gen_num,
                             int argc, char ** argv );
-void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, char * gen,
+void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, UINT32 gen_num,
                             char * list_file );

@@ -18,6 +18,11 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+/** \file create_file.C
+ * \brief Implementation of a function to create a backup file.
+ * \author Phillip F Knaack
+ */
+
 #include "database_elements.H"
 #include "params.H"
 #include "protos.H"
@@ -26,6 +31,14 @@
 
 #include <stdlib.h>
 
+/**
+ * create a backup file from nothing.
+ * This function creates an empty backup file with nothing but
+ * a PfkBackupDbInfo and no backups.
+ *
+ * @param filename  The path to the database file.
+ * @param bt        A pointer to the Btree database.
+ */
 void
 pfkbak_create_file   ( char * filename, Btree * bt )
 {

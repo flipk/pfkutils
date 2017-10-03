@@ -30,16 +30,65 @@
 #include <time.h>
 #include <fcntl.h>
 
+/** \todo Add support for verbose mode to update_backup. */
+
 enum file_state { STATE_NEW, STATE_MODIFIED, STATE_UNMODIFIED };
 
-bool
+static bool
+put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
+                UINT32 piece_number, UCHAR * md5hash,
+                UCHAR * buffer, int piece_len )
+{
+    PfkBackupFilePieceData   piece_data(bt);
+    UINT32 data_fbn = 0;
+
+    data_fbn = bt->get_fbi()->alloc( piece_len );
+    if (data_fbn == 0)
+    {
+        fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
+                __FILE__, __FUNCTION__, __LINE__);
+        return false;
+    }
+    else
+    {
+        FileBlock * data_fb = bt->get_fbi()->get( data_fbn, true );
+        if (!data_fb)
+        {
+            fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
+                    __FILE__, __FUNCTION__, __LINE__);
+            return false;
+        }
+        else
+        {
+            memcpy( data_fb->get_ptr(), buffer, piece_len );
+            data_fb->mark_dirty();
+            bt->get_fbi()->release( data_fb );
+        }
+    }
+
+    piece_data.key.backup_number.v = baknum;
+    piece_data.key.file_number.v = file_number;
+    piece_data.key.piece_number.v = piece_number;
+    memcpy( piece_data.key.md5hash.binary, md5hash, MD5_DIGEST_SIZE );
+
+    piece_data.data.refcount.v = 1;
+    piece_data.data.csize.v = 0; /** \todo support compression */
+    piece_data.data.usize.v = piece_len;
+    piece_data.data.data_fbn.v = data_fbn;
+
+    piece_data.put(true);
+
+    return true;
+}
+
+static bool
 walk_file( file_state state, Btree * bt,
            UINT32 baknum, UINT32 file_number, UINT32 gen_num,
            PfkBackupFileInfo * file_info, TSFileEntryFile * fef )
 {
     UINT32 piece_number;
     int fd = -1;
-    int idx;
+    int idx, newidx;
 
     if (state != STATE_UNMODIFIED)
     {
@@ -64,7 +113,6 @@ walk_file( file_state state, Btree * bt,
     UCHAR buffer[PIECE_SIZE];
     UCHAR  md5hash[MD5_DIGEST_SIZE];
     PfkBackupFilePieceInfo   piece_info(bt);
-    PfkBackupFilePieceData   piece_data(bt);
 
     // walk all the pieces.
     for (piece_number = 0; ; piece_number++)
@@ -85,33 +133,150 @@ walk_file( file_state state, Btree * bt,
         piece_info.key.file_number.v = file_number;
         piece_info.key.piece_number.v = piece_number;
 
+        BST_ARRAY <PfkBackupVersion> * versions = & piece_info.data.versions;
+
         if (!piece_info.get())
         {
             if (state == STATE_UNMODIFIED)
-                // done.
+                // end of file, most likely.
                 break;
 
             // otherwise, file grew in size and added pieces,
-            // or was new and pieces never existed at all.
-            piece_info.data.versions.alloc(1);
-            piece_info.data.versions.array[0]->gen_number.v = gen_num;
-            memcpy( piece_info.data.versions.array[0]->md5hash.binary,
+            // or was a new file and pieces never existed at all.
+            versions->alloc(1);
+            versions->array[0]->gen_number.v = gen_num;
+            memcpy( versions->array[0]->md5hash.binary,
                     md5hash, MD5_DIGEST_SIZE);
+
+            // put data fbn.
+
+            put_piece_data( bt, baknum, file_number, piece_number,
+                            md5hash, buffer, piece_len );
         }
         else
         {
-            // xxx
+            int res;
 
-            // should not ever get here if state is new.
-            // unmodified won't have opened the file, so we have to
-            // find the most recent generation's info and copy the
-            // md5sum.
-            // modified will have opened the file, so we should search
-            // the list to see if this md5 exists already, and if it does,
-            // copy it, if not, make a new entry.
+            switch (state)
+            {
+            case STATE_NEW:
+                fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
+                        __FILE__, __FUNCTION__, __LINE__);
+                break;
 
-            // must also fetch the PfkBackupFilePieceData and bump
-            // the reference count, if an existing md5 was just copied.
+            case STATE_MODIFIED:
+
+                // search the list for this md5.
+                res = -1;
+                for (idx = 0; idx < versions->num_items; idx++)
+                {
+                    res = memcmp( md5hash,
+                                  versions->array[idx]->md5hash.binary,
+                                  MD5_DIGEST_SIZE );
+                    if (res == 0)
+                        break;
+                }
+
+                // always put new gen# entries at the end of the
+                // array. this way, the unmodified leg can always
+                // assume the latest version is the last version.
+
+                if (res == 0)
+                {
+                    // this md5 already exists. copy to new
+                    // generation #
+
+                    newidx = versions->num_items;
+
+                    versions->alloc(newidx+1);
+                    versions->array[newidx]->gen_number.v = gen_num;
+                    memcpy( versions->array[newidx]->md5hash.binary,
+                            versions->array[   idx]->md5hash.binary,
+                            MD5_DIGEST_SIZE );
+
+                    piece_info.put(true);
+
+                    // then bump refcount on piecedata.
+
+                    PfkBackupFilePieceData   piece_data(bt);
+
+                    piece_data.key.backup_number.v = baknum;
+                    piece_data.key.file_number.v = file_number;
+                    piece_data.key.piece_number.v = piece_number;
+                    memcpy( piece_data.key.md5hash.binary, md5hash,
+                            MD5_DIGEST_SIZE );
+
+                    if (!piece_data.get())
+                    {
+                        fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
+                                __FILE__, __FUNCTION__, __LINE__);
+                    }
+                    else
+                    {
+                        piece_data.data.refcount.v++;
+                        piece_data.put(true);
+                    }
+                }
+                else
+                {
+                    // this md5 does not exist. put new data fbn,
+                    // then put new piecedata.
+
+                    newidx = versions->num_items;
+
+                    versions->alloc(newidx+1);
+                    versions->array[newidx]->gen_number.v = gen_num;
+                    memcpy( versions->array[newidx]->md5hash.binary,
+                            md5hash, MD5_DIGEST_SIZE );
+
+                    piece_info.put(true);
+
+                    put_piece_data( bt, baknum, file_number, piece_number,
+                                    md5hash, buffer, piece_len );
+                }
+
+                break;
+
+            case STATE_UNMODIFIED:
+                // file wasn't opened; so just search the list
+                // and clone the last entry. then bump refcount
+                // in the piecedata.
+
+                idx = versions->num_items-1;
+                newidx = versions->num_items;
+
+                versions->alloc(newidx+1);
+                versions->array[newidx]->gen_number.v = gen_num;
+                memcpy( versions->array[newidx]->md5hash.binary,
+                        versions->array[   idx]->md5hash.binary,
+                        MD5_DIGEST_SIZE );
+
+                piece_info.put(true);
+
+                // then bump refcount on piecedata.
+
+                PfkBackupFilePieceData   piece_data(bt);
+
+                piece_data.key.backup_number.v = baknum;
+                piece_data.key.file_number.v = file_number;
+                piece_data.key.piece_number.v = piece_number;
+                memcpy( piece_data.key.md5hash.binary,
+                        versions->array[   idx]->md5hash.binary,
+                        MD5_DIGEST_SIZE );
+
+                if (!piece_data.get())
+                {
+                    fprintf(stderr, "ERROR: %s:%s:%d shouldn't be here\n",
+                            __FILE__, __FUNCTION__, __LINE__);
+                }
+                else
+                {
+                    piece_data.data.refcount.v++;
+                    piece_data.put(true);
+                }
+
+                break;
+            }
         }
 
         piece_info.put(true);
@@ -121,6 +286,16 @@ walk_file( file_state state, Btree * bt,
         close(fd);
 }
 
+/**
+ * Update a backup in a database.
+ * This function gets into the directory for a backup, walks the
+ * tree collecting timestamps on all files in the tree, and then
+ * looks for updates since the last run. It adds any new data not
+ * in the backup.
+ *
+ * @param bt      The btree database containing the backup.
+ * @param baknum  The backup number in the database to update.
+ */
 void
 pfkbak_update_backup ( Btree * bt, UINT32 baknum )
 {

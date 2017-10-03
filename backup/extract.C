@@ -29,7 +29,7 @@
 // recall if argc==0, it means extract everything.
 void
 pfkbak_extract       ( Btree * bt, UINT32 baknum,
-                       char * gen, int argc, char ** argv )
+                       UINT32 gen_num, int argc, char ** argv )
 {
     // xxx
 }
