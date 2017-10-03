@@ -44,7 +44,10 @@ PageCache :: get(int page_number, bool for_write)
     {
         pgs->ref(ret);
         if (for_write)
+        {
+            memset(ret->ptr, 0, PAGE_SIZE);
             ret->dirty = true;
+        }
         return ret;
     }
     ret = new PCPInt( page_number );

@@ -67,6 +67,25 @@ we combine them as follows:
     6. Used 116-149 (size 34)
 </pre>
 
+\section ExtentMapRemainder The Rest of the File
+
+One special circumstance this code must manage is the final entry in
+the Extents list.  If a file was of fixed maximum size, then the final
+entry should extend out to this maximum value.  However, the disk file
+should not have any limit.  (In practice of course, the operating
+system limits the size of the file, typically to 2^63 bytes or
+somesuch.)
+
+Unfortunately, to save memory and disk space, the 'size' field of an
+Extent is only an unsigned 31-bit value, since the size of a normal
+extent should not be more than 2GB.  However, this 31-bit value is
+insufficient to represent the concept of "From here to infinity".
+
+The Extents object addresses this by using the maximum 31-bit value of
+0x7FFFFFFF to represent infinity.  The size field of the final entry
+in the Extents in-order list will never be modified during alloc or
+free.
+
 \section ExtentMapOptimize Optimizing Extent maps
 
 This is well enough, but it needs to be efficient.  Obviously the
@@ -396,7 +415,7 @@ public:
      * \note The user must not reference this Extent pointer after
      *  performing any other manipulations on the Extents object, because
      *  this Extent object may have been altered or deleted. */
-    Extent * find( UINT32 id );
+    Extent * find_id( UINT32 id );
     /** locate an Extent by its start offset.
      * \param offset the 64-bit start offset of the Extent.
      * \return a pointer to the Extent.
@@ -406,7 +425,7 @@ public:
      * \note The user must not reference this Extent pointer after
      *  performing any other manipulations on the Extents object, because
      *  this Extent object may have been altered or deleted. */
-    Extent * find( off_t offset );
+    Extent * find_offset( off_t offset );
     /** allocate a new Extent of a certain size.
      * \param size The size of the Extent required.
      * \return a pointer to the Extent.
@@ -428,9 +447,18 @@ public:
      * This method returns the Extent back to the free bucket queue.
      * If the region described is adjacent to other free regions, the
      * two regions are coalesced into a single larger free Extent. */
-    void free( UINT32 id );
+    void free_id( UINT32 id );
+    /** Free up an Extent that is no longer needed.
+     * \param offset The 64-bit offset of the Extent.
+     * This method returns the Extent back to the free bucket queue.
+     * If the region described is adjacent to other free regions, the
+     * two regions are coalesced into a single larger free Extent. */
+    void free_offset( off_t offset );
     /** Free up an Extent that is no longer required.
-     * \param e The Extent to be freed. */
+     * \param e The Extent to be freed.
+     * This method returns the Extent back to the free bucket queue.
+     * If the region described is adjacent to other free regions, the
+     * two regions are coalesced into a single larger free Extent. */
     void free( Extent * e );
     // @}
     /** @name Traversal */

@@ -1,21 +1,3 @@
-#if 0
-files="        PageCache.C BlockCache.C"
-files="$files  FileBlockLocal.C FileBlockLocalMap.C"
-files="$files  ExtentMap.C"
-files="$files  ../dll2/dll2_hash.C main.C"
-defs="-D_FILE_OFFSET_BITS=64"
-opts="-Wall -Werror -g3"
-incs="-I../h -I../dll2"
-set -e
-set -x
-rm -f *.o
-for f in $files ; do 
-  g++ $incs $opts $defs -c $f
-done
-g++ $opts *.o -o a.out
-exit 0
-    ;
-#endif
 
 /** \file main.C
  * \brief Test harness for FileBlock

@@ -1,6 +1,6 @@
 
 /** \file PageIO.H
- * \brief Defines interface to input and output of pages from a file.
+ * \brief Defines interfaces: PageIO, PageIOFileDescriptor.
  * \author Phillip F Knaack
  */
 

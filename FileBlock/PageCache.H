@@ -1,7 +1,7 @@
 
 /** \file PageCache.H
  * \brief Define interfaces:
- *   PageCache, PageCachePage, PageIO, PageIOFileDescriptor.
+ *   PageCache, PageCachePage
  * \author Phillip F Knaack */
 
 #ifndef __PAGE_CACHE_H__

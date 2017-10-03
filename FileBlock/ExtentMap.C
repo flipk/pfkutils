@@ -109,7 +109,7 @@ Extents :: print( void )
     int i = 0;
     for ( e = get_head(); e; e = get_next(e) )
     {
-        printf( "%d : offset %lld size %d (%s)",
+        printf( "%d : offset 0x%llx size 0x%x (%s)",
                 i++, e->offset, e->size, e->used ? "USED" : "FREE");
         if (e->used)
             printf(" id %#x", e->id);
@@ -153,13 +153,13 @@ Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
 }
 
 Extent *
-Extents :: find( UINT32 id )
+Extents :: find_id( UINT32 id )
 {
     return idhash.find(id);
 }
 
 Extent *
-Extents :: find( off_t offset )
+Extents :: find_offset( off_t offset )
 {
     return offsethash.find(offset);
 }
@@ -216,7 +216,11 @@ Extents :: alloc( UINT32 size )
 
     // split this one in two.
     Extent * ne = extent_pool.alloc( e->offset, size, id );
-    e->size -= size;
+    // the last entry on the list represents 
+    // the 'remaindiner' of the file (basically out to
+    // infinity) so its size never really decreases.
+    if (list.get_tail() != e)
+        e->size -= size;
     e->offset += size;
     list.add_before(ne, e);
     add_to_bucket(e);
@@ -227,9 +231,17 @@ Extents :: alloc( UINT32 size )
 }
 
 void
-Extents :: free( UINT32 id )
+Extents :: free_id( UINT32 id )
 {
-    Extent * e = find(id);
+    Extent * e = find_id(id);
+    if (e)
+        free(e);
+}
+
+void
+Extents :: free_offset( off_t offset )
+{
+    Extent * e = find_offset(offset);
     if (e)
         free(e);
 }
@@ -253,22 +265,49 @@ Extents :: free( Extent * e )
     if (e2 && e2->used == 0)
     {
         e->offset = e2->offset;
+
+        if (((UINT64)e->size + (UINT64)e2->size) > 0x7FFFFFFFULL)
+        {
+            // This can happen if we are freeing a lot of things
+            // in a file and end up with a 2GB hole in the middle
+            // of the file.  In this case, don't combine the entries,
+            // just make two free-entries in a row.
+            goto dont_combine_1;
+        }
         e->size += e2->size;
         list.remove(e2);
         remove_from_bucket(e2);
         count_free --;
         extent_pool.free(e2);
     }
+dont_combine_1:
     e2 = list.get_next(e);
     if (e2 && e2->used == 0)
     {
-        e->size += e2->size;
+        // if we are freeing the last entry before the end of
+        // the list, then we don't need to update the size of the
+        // end of the list, because the last entry on the list always
+        // has a hardcoded size of 2^31-1.
+        if (list.get_tail() != e2)
+        {
+            if (((UINT64)e->size + (UINT64)e2->size) > 0x7FFFFFFFULL)
+            {
+                // This can happen if we are freeing a lot of things
+                // in a file and end up with a 2GB hole in the middle
+                // of the file.  In this case, don't combine the entries,
+                // just make two free-entries in a row.
+                goto dont_combine_2;
+            }
+            e->size += e2->size;
+        }
+        else
+            e->size = 0x7FFFFFFF;
         list.remove(e2);
         remove_from_bucket(e2);
         count_free --;
         extent_pool.free(e2);
     }
-
+dont_combine_2:
     // add to bucket after updating size!
     add_to_bucket(e);
     count_free ++;

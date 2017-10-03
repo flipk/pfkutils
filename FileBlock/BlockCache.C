@@ -21,7 +21,6 @@ BlockCache :: BlockCache( PageIO * _io, int max_bytes )
 
 BlockCache :: ~BlockCache( void )
 {
-    /** \todo clean the list first? investigate. */
     delete bcl;
     delete pc;
 }
@@ -59,12 +58,7 @@ BlockCache :: get( off_t offset, int size, bool for_write )
         // need a temporary buf
         ret->ptr = new UCHAR[size];
 
-        if (for_write)
-        {
-            memset(ret->ptr, 0, size);
-            ret->dirty = true;
-        }
-        else
+        if (!for_write)
         {
             // copy out of cache pages.
             uptr = ret->ptr;
@@ -115,6 +109,12 @@ BlockCache :: get( off_t offset, int size, bool for_write )
     if (num_pages == 1)
         // allow ptr to point directly into the page cache
         ret->ptr = ret->pages[0]->get_ptr() + offset_in_starting_page;
+
+    if (for_write)
+    {
+        memset(ret->ptr, 0, size);
+        ret->dirty = true;
+    }
 
     return ret;
 }

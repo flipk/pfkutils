@@ -32,6 +32,7 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 //virtual
 FileBlockLocal :: ~FileBlockLocal( void )
 {
+    flush();
     /** \todo */
 }
 
@@ -62,7 +63,7 @@ FileBlockLocal :: init_file( BlockCache * bc )
 {
     FileBlockHeader * fbh;
     BlockCacheBlock * bcb;
-    int i;
+//    int i;
 
     bcb = bc->get( 0, sizeof(FileBlockHeader) );
     if (!bcb)
@@ -79,25 +80,23 @@ FileBlockLocal :: init_file( BlockCache * bc )
 
     // one entry to cover the file header itself.
     len = sizeof(FileBlockHeader);
+
+    // be sure to round up to the nearest block boundary.
+    len = ((((len - 1) >> 5) + 1) << 5);
+
     m.add( pos, len, /* bogus block id */ 1 );
     pos += len;
 
-    // a free entry for the remainder of the file.
-    len = (UINT32) (0xffffffffUL - sizeof(FileBlockHeader));
+    // a free entry for the remainder of the file.  note the final
+    // entry of the list always has 7fffffff as the size because it
+    // always represents 'from here to infinity'.
+    len = 0x7fffffffUL;
     m.add( pos, len );
 
-    /* pos==0 has special meaning to store_map, it means
-     * it doesn't have to free any previous map. */
-    fbh->extent_map_start.set( 0 );
-    fbh->extent_map_part_len.set( 0 );
+    store_map( &m, bc, &fbh->piece_map_start, &fbh->piece_map_len );
 
-    store_map( &m, bc, &fbh->extent_map_start, &fbh->extent_map_part_len );
-
-    fbh->extent_map_start.set( pos );
-    fbh->extent_map_part_len.set( len );
-
-    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
-        fbh->file_info_block_ids[i].set( 0 );
+//    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
+//        fbh->file_info_block_ids[i].set( 0 );
 
     bc->release(bcb,true);
 }
@@ -137,14 +136,34 @@ FileBlockLocal :: unlock_block( FileBlock * blk )
 void
 FileBlockLocal :: flush(void)
 {
-    /** \todo should first sort all of the bucket-lists by file position
-     * so that allocations start early in the file. */
+    // should first sort all of the bucket-lists by file position
+    // so that allocations start early in the file?
+
+    FileBlockHeader * fbh;
+    BlockCacheBlock * bcb;
+
+    bcb = bc->get( 0, sizeof(FileBlockHeader) );
+    if (!bcb)
+        return;
+
+    fbh = (FileBlockHeader *)bcb->get_ptr();
+
+    free_map( fbh->piece_map_start.get(), 
+              fbh->piece_map_len.get() );
+
+    store_map( &map, bc, &fbh->piece_map_start, &fbh->piece_map_len );
+
+    bc->release(bcb,true);
+
+    bc->flush();
 }
 
 //virtual
 void
 FileBlockLocal :: compact(int time_limit)
 {
-    /** \todo should first sort all of the bucket-lists by file position
-     * so that allocations start early in the file. */
+    // should first sort all of the bucket-lists by file position
+    // so that allocations start early in the file?
+    // free_map
+    // store_map
 }
