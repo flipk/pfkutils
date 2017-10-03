@@ -22,10 +22,12 @@
 #ifndef __MYTYPES_H_
 #define __MYTYPES_H_
 
+#ifndef uchar
 typedef unsigned char uchar;
-typedef unsigned int u_int;
-typedef u_int bool_t;
-typedef u_int enum_t;
+#endif
+typedef unsigned int  u_int;
+typedef u_int         bool_t;
+typedef u_int         enum_t;
 
 #define TRUE  1
 #define FALSE 0

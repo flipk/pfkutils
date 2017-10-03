@@ -3,7 +3,12 @@
 #include <string.h>
 #include <stdio.h>
 #include "btree.H"
+
+#if DLL2_INCLUDE_LOGNEW
 #include "lognew.H"
+#else
+#define LOGNEW new
+#endif
 
 #undef  DEBUG
 

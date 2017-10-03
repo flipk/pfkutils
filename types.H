@@ -38,7 +38,6 @@
 #define uchar   UCHAR
 
 #ifdef __cplusplus
-
 class UINT32_t {
 private:
     UCHAR p[4];
@@ -75,6 +74,17 @@ public:
             p[0] =  v    & 0xff;
         };
     int size_of(void) { return 2; }
+};
+
+class UINT8_t {
+private:
+    UCHAR p[1];
+public:
+    UINT8_t( void ) { }
+    UINT8_t( UCHAR x ) { set( x ); }
+    UINT8 get(void) { return p[0]; }
+    void set( UINT8 v ) { p[0] = v; }
+    int size_of(void) { return 1; }
 };
 
 #endif /* __cplusplus */

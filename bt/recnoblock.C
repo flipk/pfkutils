@@ -22,7 +22,13 @@
 #include <errno.h>
 
 #include "recnoblock.H"
+
+#if DLL2_INCLUDE_LOGNEW
 #include "lognew.H"
+#else
+#define LOGNEW new
+#endif
+
 
 struct FileBlockNumber :: page {
     LListLinks<FileBlockNumber::page>  links[ BT_DLL2_COUNT ];
@@ -110,7 +116,11 @@ struct user_buffer {
         blockno = _blk;
     }
     void * operator new( size_t s, int sz, char *file, int line ) {
+#if DLL2_INCLUDE_LOGNEW
         char * ret = new(file,line) char[ sizeof( user_buffer ) + sz ];
+#else
+        char * ret = new char[ sizeof( user_buffer ) + sz ];
+#endif
         ((user_buffer*)ret)->size = sz;
         return (void*)ret;
     }
