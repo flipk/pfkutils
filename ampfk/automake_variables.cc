@@ -51,17 +51,14 @@ automake_file :: make_variables(void)
 #undef FINDIT
     }
 
-}
-
-void
-automake_file :: set_srcdir(const string &path)
-{
-    amvariable * v;
     v = new amvariable;
-
     v->var = new string("srcdir");
-    v->value.add(new amword(path));
+    v->value.add(new amword(srcdir));
+    output_variables.add(v);
 
+    v = new amvariable;
+    v->var = new string("builddir");
+    v->value.add(new amword(builddir));
     output_variables.add(v);
 
     v = output_variables.find("CPPFLAGS");
@@ -72,5 +69,4 @@ automake_file :: set_srcdir(const string &path)
         output_variables.add(v);
     }
     v->value.add(new amword("-I$(srcdir)"));
-
 }

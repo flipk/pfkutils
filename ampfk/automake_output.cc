@@ -25,10 +25,6 @@ automake_file :: output_makefile(const string &filename)
              << targets;
 
     make_variables();
-
-    // figure out srcdir
-    set_srcdir(".."); // xxx
-
     outfile << input_variables;
     outfile << output_variables;
     make_allrule();

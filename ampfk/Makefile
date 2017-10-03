@@ -11,15 +11,15 @@ LIBS= $(HOME)/pfk/$(ARCH)/lib/libpfkdll2.a
 LEX= flex
 YACC= yacc
 CC= gcc
-CFLAGS= -g3 -Wall -Werror
+CFLAGS= -g3 -Wall
 CXX= g++
-CXXFLAGS= -g3 -Wall -Werror
+CXXFLAGS= -g3 -Wall
 CPPFLAGS= -I$(HOME)/pfk/include/dll2
 
 .SUFFIXES: .d
 
 all: xmakefile
-	make -f xmakefile -j 8 $(PROG)
+	+make -f xmakefile $(PROG)
 
 xmakefile: Makefile $(DEPS)
 	rm -f xmakefile xmakefile-tmp

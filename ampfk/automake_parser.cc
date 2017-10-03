@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <unistd.h>
+#include <limits.h>
 
 #include "automake_parser.H"
 #include "tokenizer.H"
@@ -31,6 +33,22 @@ automake_file :: ~automake_file(void)
 bool
 automake_file :: parse(const string &fname)
 {
+    char currpath[PATH_MAX];
+    getcwd(currpath, sizeof(currpath));
+    builddir = currpath;
+    srcdir = currpath;
+    size_t pos = fname.find_last_of('/');
+    if (pos != string::npos)
+    {
+        srcdir = fname;
+        srcdir.erase(pos);
+        chdir(srcdir.c_str());
+        char srcpath[PATH_MAX];
+        getcwd(srcpath, sizeof(srcpath));
+        srcdir = srcpath;
+        chdir(currpath);
+    }
+
     FILE * in = fopen(fname.c_str(), "r");
     if (!in)
         return false;

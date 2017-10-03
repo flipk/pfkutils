@@ -229,7 +229,6 @@ class automake_file {
                              amtarget::insttype install_type);
 
     void find_targets(void);
-    void set_srcdir(const std::string &path);
     void make_variables(void);
     void make_allrule(void);
     void make_depfilerules(void);
@@ -237,6 +236,9 @@ class automake_file {
     void make_targetobjrules(void);
     void make_lexyaccrules(void);
     void make_cleanrule(void);
+
+    std::string     srcdir;
+    std::string     builddir;
 
     amtargetList    targets;
 
