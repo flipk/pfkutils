@@ -11,40 +11,30 @@
 #include <string.h>
 #include <stdio.h>
 
-class Telgate_pkt_encoder_io : public Adm_pkt_encoder_io {
-public:
-    Telgate_pkt_encoder_io( void ) { }
-    /*virtual*/ void outbytes ( char * buf, int len ) {
-        if ( me->write_to_fd( buf, len ) == false )
-            printf( "Adm_pkt_encoder_io outbytes failure\n" );
-    }
-};
-
 class Telgate_pkt_decoder_io : public Adm_pkt_decoder_io {
-    fd_interface * tun_fdi;
+    Tunnel_fd * tun_fdi;
 public:
-    Telgate_pkt_decoder_io( fd_interface * _tun_fdi ) { 
+    Telgate_pkt_decoder_io( Tunnel_fd * _tun_fdi ) { 
         tun_fdi = _tun_fdi;
     }
-    /*virtual*/ void outbytes ( char * buf, int len ) {
-        if ( other->write_to_fd( buf, len ) == false )
-            printf( "Adm_pkt_decoder_io outybtes failed\n" );
+    ~Telgate_pkt_decoder_io( void ) {
+        tun_fdi->unregister_encoder_fd();
     }
-    /*virtual*/ void outpacket( char *, int ) {
-        /* xxx tun_fdi ? */
+    /*virtual*/ void outpacket( uchar * buf, int len ) {
+        if ( tun_fdi->write_to_fd( (char*)buf, len ) == false )
+            printf( "failed to write to tun fd?\n" );
     }
 };
 
 class Adm_User_Hookup_Factory : public Adm_Hookup_Factory_iface {
     fd_mgr * mgr;
-    fd_interface * tun_fdi;
+    Tunnel_fd * tun_fdi;
 public:
-    Adm_User_Hookup_Factory( fd_interface * _tunfdi ) { tun_fdi = _tunfdi; }
-    ~Adm_User_Hookup_Factory( void ) { /* xxx */ }
+    Adm_User_Hookup_Factory( Tunnel_fd * _tunfdi ) { tun_fdi = _tunfdi; }
+    ~Adm_User_Hookup_Factory( void ) { delete tun_fdi; }
 
     /*virtual*/ void new_gateway( int fd_ear, int fd_outfd, fd_mgr * fdmgr )
     {
-
         // this one is reading and writing the 'telnet' from the user
         // which gets the connection to the worker started.
 
@@ -52,23 +42,21 @@ public:
             = new Adm_Gate_fd( fd_ear,
                                false,            // connecting
                                true, true,       // doread / dowrite
-                               NULL, NULL );     // encoder / decoder
+                               false, NULL );    // doencode, decoder
 
         // this one is reading and writing the outgoing
         // network interface to the worker.
 
-        Adm_pkt_decoder_io *  decoder;
-        Adm_pkt_encoder_io *  encoder;
-
-        encoder = new Telgate_pkt_encoder_io;
-        decoder = new Telgate_pkt_decoder_io( tun_fdi );
+        Adm_pkt_decoder_io *  decoder
+            = new Telgate_pkt_decoder_io( tun_fdi );
 
         Adm_Gate_fd * gfd2
             = new Adm_Gate_fd( fd_outfd,
                                true,             // connecting
                                true, true,       // doread / dowrite
-                               encoder, decoder  );
+                               true, decoder );  // doencode / decoder
 
+        tun_fdi->register_encoder_fd( gfd2 );
         gfd1->setup_other( gfd2 );
         gfd2->setup_other( gfd1 );
 
@@ -78,24 +66,43 @@ public:
 };
 
 int
-main()
+main( int argc, char ** argv )
 {
+    if ( argc != 8 )
+    {
+        fprintf( stderr,
+                 "usage:\n"
+                 "   etg_proxy <tun> <my_ip> <other_ip> <netmask> \n"
+                 "                 <proxy_port> <worker_host> <worker_port> \n"
+                 "\n" );
+        exit( 1 );
+    }
+
+    int tunnum         = atoi( argv[1] );
+    char * my_ip       = argv[2];
+    char * other_ip    = argv[3];
+    char * netmask     = argv[4];
+    short proxy_port   = atoi( argv[5] );
+    char * worker_host = argv[6];
+    short worker_port  = atoi( argv[7] );
+
+    char tundev[ 40 ];
+
+    sprintf( tundev, "/dev/tun%d", tunnum );
+
     fd_mgr  mgr( /*debug*/ false, /*threshold*/ 0 );
+    Tunnel_fd * tun_fdi;
     fd_interface * fdi;
 
-    fdi = new Tunnel( "/dev/tun0", "11.0.0.2", "11.0.0.1" );
-    mgr.register_fd( fdi );
-
-    Adm_User_Hookup_Factory  hookup( fdi );
+    tun_fdi = new Tunnel_fd( tundev, my_ip, other_ip, netmask );
+    mgr.register_fd( tun_fdi );
 
     // this FD waits for an incoming telnet connection;
     // when established, it will form an outgoing telnet
     // connection (eventually) going to the worker host.
 
-    fdi = new Adm_Hookup_fd( &hookup, 2700,
-                             // the following line to be replaced
-                             // with the worker host
-                             "127.1", 23 );
+    Adm_User_Hookup_Factory  hookup( tun_fdi );
+    fdi = new Adm_Hookup_fd( &hookup, proxy_port, worker_host, worker_port );
     mgr.register_fd( fdi );
 
     mgr.loop();

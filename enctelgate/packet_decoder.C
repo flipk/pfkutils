@@ -12,11 +12,11 @@ packet_decoder :: packet_decoder( packet_decoder_io * _io )
     b64_in = 0;
     unput_in = 0;
     output_pos = 0;
-    first_char_after_packet = false;
+    first_char_after_packet = 0;
 }
 
 void
-packet_decoder :: unput( char c )
+packet_decoder :: unput( uchar c )
 {
     int new_in;
     new_in = unput_in + 1;
@@ -39,7 +39,7 @@ packet_decoder :: unput_flush( void )
 }
 
 void
-packet_decoder :: add_output( char * c, int len )
+packet_decoder :: add_output( uchar * c, int len )
 {
     while ( len > 0 )
     {
@@ -63,17 +63,16 @@ packet_decoder :: flush_output( void )
 }
 
 void
-packet_decoder :: input_byte( char c )
+packet_decoder :: input_byte( uchar c )
 {
-    if ( first_char_after_packet  &&
-         ( c == '\n' || c == '\r' ))
+    if ( first_char_after_packet > 0 )
     {
-        first_char_after_packet = false;
-        /* skip */
-        return;
+        if ( c == '\n' )
+            first_char_after_packet--;
+            /* skip */
+            return;
     }
 
-    first_char_after_packet = false;
     unput(c);
 
     if ( state == STATE_HDR_HUNT )
@@ -89,7 +88,6 @@ packet_decoder :: input_byte( char c )
         if ( ++substate == PACKET_HEADER_LENGTH )
         {
             state = STATE_GET_LENGTH;
-            printf( "switch to STATE_GET_LENGTH\n" );
             substate = 0;
             b64_in = 0;
             input_packet_length = 0;
@@ -101,9 +99,9 @@ packet_decoder :: input_byte( char c )
     if ( ! b64_is_valid_char( c ))
     {
         if ( c == '\n' || c == '\r' || c == ' ' || c == '\t' )
+            /* skip */
             return;
         state = STATE_HDR_HUNT;
-        printf( "switch to STATE_HDR_HUNT\n" );
         substate = 0;
         unput_flush();
         return;
@@ -113,8 +111,8 @@ packet_decoder :: input_byte( char c )
     if ( ++b64_in == 4 )
     {
         int cc;
-        char b64_out_3[3];
-        char * cp = b64_out_3;
+        uchar b64_out_3[3];
+        uchar * cp = b64_out_3;
 
         cc = b64_decode_quantum( b64_in_4, b64_out_3 );
         while ( cc-- > 0 && state != STATE_HDR_HUNT )
@@ -128,7 +126,7 @@ packet_decoder :: input_byte( char c )
 }
 
 void
-packet_decoder :: input_decoded_byte( char c )
+packet_decoder :: input_decoded_byte( uchar c )
 {
     switch ( state )
     {
@@ -141,13 +139,11 @@ packet_decoder :: input_decoded_byte( char c )
             {
                 /* invalid packet!! */
                 state = STATE_HDR_HUNT;
-                printf( "switch to STATE_HDR_HUNT\n" );
                 substate = 0;
                 unput_flush();
                 return;
             }
             state = STATE_GET_BODY;
-            printf( "switch to STATE_GET_BODY\n" );
             substate = 0;
             input_left = input_packet_length;
             calculated_checksum = 0;
@@ -160,7 +156,6 @@ packet_decoder :: input_decoded_byte( char c )
         if ( ++substate == input_packet_length )
         {
             state = STATE_GET_CKSUM;
-            printf( "switch to STATE_GET_CKSUM\n" );
             substate = 0;
             input_checksum = 0;
         }
@@ -172,19 +167,19 @@ packet_decoder :: input_decoded_byte( char c )
         if ( ++substate == sizeof( input_checksum ))
         {
             state = STATE_HDR_HUNT;
-            printf( "switch to STATE_HDR_HUNT\n" );
             substate = 0;
             if ( input_checksum != calculated_checksum )
             {
-                printf( "checksum error %x != %x\n",
-                        input_checksum != calculated_checksum );
+                printf( "checksum error length %d %x != %x\n",
+                        input_packet_length,
+                        input_checksum, calculated_checksum );
                 unput_flush();
             }
             else
             {
                 unput_discard();
                 io->outpacket( input_packet, input_packet_length );
-                first_char_after_packet = true;
+                first_char_after_packet = 1;
             }
         }
         return;

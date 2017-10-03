@@ -1,10 +1,10 @@
 
 #include "base64.h"
 
-static inline int
+static inline uchar
 value_to_b64( int v )
 {
-    static char table[] = 
+    static uchar table[] = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     if ( v >= sizeof(table)   ||   v < 0 )
         return -1;
@@ -12,7 +12,7 @@ value_to_b64( int v )
 }
 
 static inline int
-b64_to_value( int b64 )
+b64_to_value( uchar b64 )
 {
     static char table[] = {   /* table starts with char 0x20 */
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
@@ -22,14 +22,16 @@ b64_to_value( int b64 )
         -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
         41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
     };
+    if ( b64 < 0x20 )
+        return -1;
     b64 -= 0x20;
-    if ( b64 < 0   ||   b64 >= sizeof(table) )
+    if ( b64 >= sizeof(table) )
         return -1;
     return table[ b64 ];
 }
 
 int
-b64_is_valid_char( char c )
+b64_is_valid_char( uchar c )
 {
     if ( c == '=' )
         return 1;
@@ -40,7 +42,7 @@ b64_is_valid_char( char c )
 
 /* return 4 if ok, 0 if not ok */
 int
-b64_encode_quantum( char * in3, int in_len, char * out4 )
+b64_encode_quantum( uchar * in3, int in_len, uchar * out4 )
 {
     int v,val;
 
@@ -79,7 +81,7 @@ b64_encode_quantum( char * in3, int in_len, char * out4 )
 
 /* return length of bytes decoded, or 0 if not ok */
 int
-b64_decode_quantum( char * in4, char * out3 )
+b64_decode_quantum( uchar * in4, uchar * out3 )
 {
     int val=0,v;
     int ret;

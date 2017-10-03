@@ -8,8 +8,8 @@
 class packet_decoder_io {
 public:
     virtual ~packet_decoder_io( void ) { /* nothing */ }
-    virtual void outbytes( char *, int ) = 0;
-    virtual void outpacket( char *, int ) = 0;
+    virtual void outbytes( uchar *, int ) = 0;
+    virtual void outpacket( uchar *, int ) = 0;
 };
 
 class packet_decoder {
@@ -21,35 +21,35 @@ class packet_decoder {
            STATE_GET_CKSUM } state;
     int substate;
 
-    char   input_packet[ PACKET_ENCODED_MAX_LENGTH ];
+    uchar  input_packet[ PACKET_ENCODED_MAX_LENGTH ];
     short  input_packet_length;
     short  input_left;
     ushort input_checksum;
     ushort calculated_checksum;
 
-    int   b64_in;
-    char  b64_in_4[4];
+    int    b64_in;
+    uchar  b64_in_4[4];
 
-    bool   first_char_after_packet;
+    int    first_char_after_packet;
 
-    char  unput_buffer[ PACKET_MAX_B64_DATA ];
-    int   unput_in;
-    void   unput( char c );
+    uchar  unput_buffer[ PACKET_MAX_B64_DATA ];
+    int    unput_in;
+    void   unput( uchar c );
     void   unput_flush( void );
     void   unput_discard( void ) { unput_in = 0; }
 
     static const int output_max = 1000;
-    char  output_buffer[ output_max ];
-    int   output_pos;
-    void   add_output( char * c, int len );
+    uchar  output_buffer[ output_max ];
+    int    output_pos;
+    void   add_output( uchar * c, int len );
     void   flush_output( void );
 
-    void   input_byte( char c );
-    void   input_decoded_byte( char c );
+    void   input_byte( uchar c );
+    void   input_decoded_byte( uchar c );
 
 public:
     packet_decoder( packet_decoder_io * _io );
-    void input_bytes( char * buffer, int len ) {
+    void input_bytes( uchar * buffer, int len ) {
         while ( len-- > 0 )
             input_byte( *buffer++ );
         flush_output();

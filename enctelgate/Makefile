@@ -1,5 +1,5 @@
 
-MAKEFILES= Makefile.etg_proxy # Makefile.etg_worker
+MAKEFILES= Makefile.etg_proxy Makefile.etg_worker
 
 all:
 	@for d in $(MAKEFILES) ; do \

@@ -18,9 +18,29 @@
 #define setsockoptcast void*
 #endif
 
+class Adm_pkt_encoder_io : public packet_encoder_io {
+protected:
+    Adm_Gate_fd  * me;
+public:
+    Adm_pkt_encoder_io ( void ) { /* nothing */ }
+    void setup_me      ( Adm_Gate_fd * _me    ) { me = _me; }
+    /*virtual*/ void outbytes ( uchar * buf, int len ) {
+        if ( me->write_to_fd( (char*)buf, len ) == false )
+            printf( "Adm_pkt_encoder_io outbytes failure\n" );
+    }
+};
+
+//virtual
+void
+Adm_pkt_decoder_io :: outbytes ( uchar * buf, int len )
+{
+    if ( other->write_to_fd( (char*)buf, len ) == false )
+        printf( "Adm_pkt_decoder_io outybtes failed\n" );
+}
+
 Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
                             bool _doread, bool _dowrite,
-                            Adm_pkt_encoder_io * _encoder,
+                            bool _doencode,
                             Adm_pkt_decoder_io * _decoder )
     : write_buf( max_write )
 {
@@ -29,7 +49,11 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     dowrite    = _dowrite;
     connecting = _connecting;
 
-    encode_io = _encoder;
+    if ( _doencode )
+        encode_io = new Adm_pkt_encoder_io;
+    else
+        encode_io = NULL;
+
     if ( encode_io )
     {
         encode_io->setup_me( this );
@@ -46,11 +70,16 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
     }
     else
         decoder   = NULL;
+
+    printf( "gate created on fd %d : cn=%d, rd=%d wr=%d enc=%d dec=%d\n",
+            fd, connecting, doread, dowrite,
+            encoder != NULL,  decoder != NULL );
 }
 
 Adm_Gate_fd :: ~Adm_Gate_fd( void )
 {
     close( fd );
+    printf( "gate deleted on fd %d\n", fd );
     if ( encoder )
         delete encoder;
     if ( encode_io )
@@ -76,19 +105,21 @@ Adm_Gate_fd :: read( fd_mgr * )
     // since the write threshold is 1/2 of max_write,
     // then 1/3 is safe for this.
 
-    char    read_buf [ max_write / 3 ];
+    uchar   read_buf [ max_write / 3 ];
     int     cc;
 
-    if ( connecting )
+    cc = ::read( fd, read_buf, sizeof( read_buf ));
+
+//    printf( "read fd=%d returns %d\n", fd, cc );
+
+    if ( connecting && cc <= 0 )
     {
-        printf( "connection failed\n" );
+        fprintf( stderr, "connection failed: %s\n", strerror( errno ));
         connecting = false;
         do_close = true;
         other_fd->do_close = true;
         return DEL;
     }
-
-    cc = ::read( fd, read_buf, sizeof( read_buf ));
 
     if ( cc <= 0 )
     {
@@ -110,7 +141,7 @@ Adm_Gate_fd :: read( fd_mgr * )
         // we are not a decoder instance. just pass the
         // data thru.
 
-        if ( other_fd->write_to_fd( read_buf, cc ) == false )
+        if ( other_fd->write_to_fd( (char*)read_buf, cc ) == false )
         {
             printf( "error writing pkt to other fd\n" );
         }
@@ -130,8 +161,11 @@ Adm_Gate_fd :: write( fd_mgr * )
         return OK;
     }
 
+    int wr = write_buf.contig_readable();
     int cc;
-    cc = ::write( fd, write_buf.read_pos(), write_buf.contig_readable() );
+    cc = ::write( fd, write_buf.read_pos(), wr );
+
+//    printf( "write fd=%d %d returns %d\n", fd, wr, cc );
 
     if ( cc <= 0 )
     {
@@ -153,8 +187,7 @@ Adm_Gate_fd :: select_rw ( fd_mgr *, bool * rd, bool * wr )
     else if ( other_fd->over_write_threshold() )
         *rd = false;
     else
-        //xxx : will need some kind of congestion control
-        //      once there are active proxy fds to consider.
+        //xxx : will need some kind of congestion control ?
         *rd = true;
 
     if ( !dowrite )
@@ -190,4 +223,10 @@ Adm_Gate_fd :: write_to_fd( char * buf, int len )
     }
 
     return true;
+}
+
+bool
+Adm_Gate_fd :: write_packet_to_fd( uchar * buf, int len )
+{
+    encoder->encode_packet( buf, len );
 }

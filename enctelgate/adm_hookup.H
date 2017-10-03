@@ -1,4 +1,7 @@
 
+#ifndef __ADM_HOOKUP_H__
+#define __ADM_HOOKUP_H__
+
 #include "fd_mgr.H"
 
 class Adm_Hookup_Factory_iface {
@@ -21,3 +24,5 @@ public:
 
     // note write, over_write_threshold, and write_to_fd not implemented
 };
+
+#endif /* __ADM_HOOKUP_H__ */
