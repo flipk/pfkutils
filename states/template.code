@@ -65,6 +65,17 @@ void
 	}
 }
 
+bool
+@@machine@@_STATE_MACHINE :: valid_input_this_state( int it )
+{
+	bool ret = false;
+	switch ( current_state )
+	{
+@@validtransitions@@
+	}
+	return ret;
+}
+
 PK_STATE_MACHINE_BASE::transition_return
 @@machine@@_STATE_MACHINE :: _transition( int it )
 {

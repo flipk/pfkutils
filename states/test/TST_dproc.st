@@ -739,28 +739,24 @@ DPROC_STATE_MACHINE :: output_generator( int ty )
 }
 
 void
-DPROC_STATE_MACHINE :: constructor_hook( void )
+DPROC_STATE_MACHINE :: _first_call( void )
 {
 	timer_set = false;
 	timer_seq = 1;
-}
-
-void
-DPROC_STATE_MACHINE :: _first_call( void )
-{
 	current_state = START;
 }
 
 void
-DPROC_STATE_MACHINE :: destructor_hook( void )
-{
-}
-
-void
-DPROC_STATE_MACHINE :: unknown_message( void )
+DPROC_STATE_MACHINE :: unknown_message( void * m )
 {
 	printf( "dproc %d processing unknown message tag %x\n",
 		slot, last_tag );
+}
+
+void
+DPROC_STATE_MACHINE :: unhandled_message( int type )
+{
+	//
 }
 
 void

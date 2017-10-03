@@ -256,28 +256,24 @@ NIB_STATE_MACHINE :: output_generator( int ty )
 }
 
 void
-NIB_STATE_MACHINE :: constructor_hook( void )
+NIB_STATE_MACHINE :: _first_call( void )
 {
 	timer_set = false;
 	timer_seq = 1;
-}
-
-void
-NIB_STATE_MACHINE :: _first_call( void )
-{
 	current_state = INIT;
 }
 
 void
-NIB_STATE_MACHINE :: destructor_hook( void )
-{
-}
-
-void
-NIB_STATE_MACHINE :: unknown_message( void )
+NIB_STATE_MACHINE :: unknown_message( void * m )
 {
 	printf( "nib %d, %d processing unknown message tag %x\n",
 		slot, subslot, last_tag );
+}
+
+void
+NIB_STATE_MACHINE :: unhandled_message( int type )
+{
+	//
 }
 
 void

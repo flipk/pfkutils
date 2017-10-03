@@ -30,7 +30,6 @@ PK_STATE_MACHINE_BASE :: ~PK_STATE_MACHINE_BASE( void )
 void
 PK_STATE_MACHINE_BASE :: first_call( void )
 {
-    constructor_hook();
     _first_call();
     call_pre_hooks();
 }
@@ -41,14 +40,23 @@ PK_STATE_MACHINE_BASE :: transition( void * m )
     int it;
 
     it = input_discriminator( m );
+    if ( it == UNKNOWN_INPUT )
+    {
+        unknown_message( m );
+        return TRANSITION_OK;
+    }
+
+    if ( !valid_input_this_state( it ))
+    {
+        unhandled_message( it );
+        return TRANSITION_OK;
+    }
+
     cancel_timer();
     next_state = INVALID_STATE;
 
     if ( _transition( it ) == TRANSITION_EXIT )
-    {
-        destructor_hook();
         return TRANSITION_EXIT;
-    }
 
     if ( next_state != INVALID_STATE )
     {

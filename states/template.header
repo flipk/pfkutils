@@ -43,10 +43,10 @@ private:
 	char * dbg_output_name( int );
 	/* NOTE: USER MUST IMPLEMENT ALL OF THE FOLLOWING */
 	int  input_discriminator( void * m );
+	bool valid_input_this_state( int );
 	void output_generator( int );
-	void constructor_hook( void );
-	void destructor_hook( void );
-	void unknown_message( void );
+	void unknown_message( void * m );
+	void unhandled_message( int type );
 	void set_timer( int val );
 	void cancel_timer( void );
 	void _first_call( void );

@@ -130,6 +130,15 @@ statedef
 	    add_state( $2, pre, $6 );
 	    free( $2 );
 	  }
+	| STATE IDENT LB maybe_pre maybe_post RB
+	  {
+	    WENT * pre = new_wordentry( "prepost" );
+	    pre->type = PREPOST_ACTION;
+	    pre->ex[0] = $4;
+	    pre->ex[1] = $5;
+	    add_state( $2, pre, NULL );
+	    free( $2 );
+	  }
 	;
 
 maybe_pre

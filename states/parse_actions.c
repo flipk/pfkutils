@@ -41,9 +41,11 @@ inputlist_add_timeout( void )
     to->type = INPUT_TIMEOUT;
     list_add( &machine.inputs, to );
 
+#if 0
     to = new_wordentry( "UNKNOWN_INPUT" );
     to->type = INPUT_UNKNOWN;
     list_add( &machine.inputs, to );
+#endif
 }
 
 static WENT *

@@ -296,6 +296,27 @@ process_var( char *cp )
                 }
             return ret;
         }
+    IFSTR("validtransitions")
+        {
+            for ( w = machine.states.head; w; w=w->next )
+            {
+                WENT * w2;
+                if ( w->ex[1] )
+                {
+                    printf( "\tcase %s:\n", w->word );
+                    printf( "\t\tswitch ( it )\n\t\t{\n" );
+                    for ( w2 = w->ex[1]; w2; w2=w2->next )
+                    {
+                        printf( "\t\tcase %s:\n", w2->ex[0]->word );
+                    }
+                    printf( "\t\t\tret = true;\n" );
+                    printf( "\t\t\tbreak;\n" );
+                    printf( "\t\t}\n" );
+                    printf( "\t\tbreak;\n" );
+                }
+            }
+            return ret;
+        }
     IFSTR("statetransitions")
         {
             for ( w = machine.states.head; w; w=w->next )
@@ -304,15 +325,17 @@ process_var( char *cp )
                 printf( "\tcase %s:\n", w->word );
                 if ( w->ex[0] )
                     emit_actions( 2, w->ex[0]->ex[1] );
-                printf( "\t\tswitch ( it )\n\t\t{\n" );
-                for ( w2 = w->ex[1]; w2; w2=w2->next )
+                if ( w->ex[1] )
                 {
-                    printf( "\t\tcase %s:\n", w2->ex[0]->word );
-                    emit_actions( 3, w2->ex[1] );
-                    printf( "\t\t\tbreak;\n" );
+                    printf( "\t\tswitch ( it )\n\t\t{\n" );
+                    for ( w2 = w->ex[1]; w2; w2=w2->next )
+                    {
+                        printf( "\t\tcase %s:\n", w2->ex[0]->word );
+                        emit_actions( 3, w2->ex[1] );
+                        printf( "\t\t\tbreak;\n" );
+                    }
+                    printf( "\t\t}\n" );
                 }
-                printf( "\t\tdefault:\n\t\t\tunknown_message();\n" );
-                printf( "\t\t}\n" );
                 printf( "\t\tbreak;\n" );
             }
             return ret;

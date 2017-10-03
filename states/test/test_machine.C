@@ -82,7 +82,7 @@ handle_mb0( MESSAGE_TYPE * m, PK_STATE_MACHINE_BASE ** devs )
 
 	case 2:
 		if ( find_ss( m, &dev, &slot, &subslot ) == 1 )
-			devs[dev]->printhist();
+			devs[dev]->printhist((void(*)(char*))printf);
 		break;
 
 	case 3:

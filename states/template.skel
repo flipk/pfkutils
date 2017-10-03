@@ -19,28 +19,20 @@ void
 }
 
 void
-@@machine@@_STATE_MACHINE :: constructor_hook( void )
+@@machine@@_STATE_MACHINE :: unknown_message( void * m )
 {
 	//
 }
 
 void
-@@machine@@_STATE_MACHINE :: destructor_hook( void )
-{
-	//
-}
-
-void
-@@machine@@_STATE_MACHINE :: unknown_message( void )
+@@machine@@_STATE_MACHINE :: unhandled_message( int type )
 {
 	//
 }
 
 void
 @@machine@@_STATE_MACHINE :: debug_transition_hook( 
-	int input,
-	int old_state,
-	int new_state )
+	int input, int old_state, int new_state )
 {
 	//
 }
