@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "sudo.h"
+
 class Telgate_pkt_decoder_io : public Adm_pkt_decoder_io {
     Tunnel_fd * tun_fdi;
 public:
@@ -30,28 +32,16 @@ public:
 extern "C" int
 etg_worker_main( int argc, char ** argv )
 {
-    if ( argc != 5 )
-    {
-        fprintf( stderr, "usage:\n"
-                 "   etg_worker <tun> <my_ip> <other_ip> <netmask>\n"
-                 "\n" );
-        exit( 1 );
-    }
+    char *    my_ip = (char*) "11.0.0.2";
+    char * other_ip = (char*) "11.0.0.1";
+    char *  netmask = (char*) "255.255.255.0";
 
-    int      tunnum = atoi( argv[1] );
-    char *    my_ip =       argv[2];
-    char * other_ip =       argv[3];
-    char *  netmask =       argv[4];
-
-    char tundev[ 40 ];
-    snprintf( tundev, 40, "/dev/tun%d", tunnum );
-
-    fd_mgr  mgr( /*debug*/ false, /*threshold*/ 0 );
+    fd_mgr  mgr( /*debug*/ false, /*threshold*/ 1 );
     Tunnel_fd * tun_fdi;
     fd_interface * fdi;
 
     system( "stty -echo" );
-    tun_fdi = new Tunnel_fd( tundev, my_ip, other_ip, netmask );
+    tun_fdi = new Tunnel_fd( my_ip, other_ip, netmask );
 
     Adm_pkt_decoder_io * decoder
         = new Telgate_pkt_decoder_io( tun_fdi );
@@ -88,6 +78,27 @@ etg_worker_main( int argc, char ** argv )
     mgr.register_fd( tun_fdi );
     mgr.register_fd( gfd1 );
     mgr.register_fd( gfd2 );
+
+    // revoke our priviledges because we don't
+    // need them anymore.
+    setreuid(MY_UID,MY_UID);
+    setregid(MY_GID,MY_GID);
+
+#if 0
+//
+//  xxxx environment variable to tell etg_worker where to get its key
+//
+#define FAKEROOT "/home/pknaack1/proj/pfkteld/root"
+    if (chdir( FAKEROOT ) < 0)
+    {
+        printf("chroot unavailable; goodbye\n");
+        fprintf(stderr,"chroot unavailable!\n");
+        return 2;
+    }
+
+    chroot( FAKEROOT );
+#endif
+
 
     mgr.loop();
 

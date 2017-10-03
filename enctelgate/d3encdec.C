@@ -8,7 +8,22 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define KEYFILE "00_ETG_DES_KEY"
+#define DEFAULT_KEYFILE "00_ETG_DES_KEY"
+
+static char *
+get_keyfile(void)
+{
+    char * ret = getenv("ETG_DES_KEY_FILE");
+    if (!ret)
+    {
+        ret = (char*)malloc(128);
+        sprintf(ret, "%s/.etgdeskey", getenv("HOME"));
+        fprintf(stderr, "ETG_DES_KEY_FILE not set, using %s\n", ret);
+    }
+    else
+        ret = strdup(ret);
+    return ret;
+}
 
 bool
 d3des_crypt_genkey( void )
@@ -18,16 +33,19 @@ d3des_crypt_genkey( void )
 
     for ( i = 0; i < 8; i++ )
         key[i] = random() & 0xff;
-    fd = open( KEYFILE, O_WRONLY | O_CREAT | O_TRUNC, 0600 );
+    char * keyfile = get_keyfile();
+    fd = open( keyfile, O_WRONLY | O_CREAT | O_TRUNC, 0600 );
     if ( fd < 0 )
     {
         fprintf( stderr, "cannot write des key file '%s': %s\n",
-                 KEYFILE, strerror( errno ));
+                 keyfile, strerror( errno ));
+        free(keyfile);
         return false;
     }
     write( fd, key, 8 );
     close( fd );
-    fprintf( stderr, "new key written to %s\n", KEYFILE );
+    fprintf( stderr, "new key written to %s\n", keyfile );
+    free(keyfile);
     return true;
 }
 
@@ -38,7 +56,9 @@ d3des_crypt_loadkey( void )
     unsigned char  key[8];
     int    cc, fd;
 
-    fd = open( KEYFILE, O_RDONLY );
+    char * keyfile = get_keyfile();
+    fd = open( keyfile, O_RDONLY );
+    free(keyfile);
     if ( fd > 0 )
     {
         cc = read( fd, key, 8 );

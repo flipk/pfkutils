@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "sudo.h"
+
 class Telgate_pkt_decoder_io : public Adm_pkt_decoder_io {
     Tunnel_fd * tun_fdi;
 public:
@@ -75,32 +77,27 @@ public:
 extern "C" int
 etg_proxy_main( int argc, char ** argv )
 {
-    if ( argc != 8 )
+    if ( argc != 3 )
     {
         fprintf( stderr,
                  "usage:\n"
-                 "   etg_proxy <tun> <my_ip> <other_ip> <netmask> \n"
-                 "                 <proxy_port> <worker_host> <worker_port> \n"
+                 "   etg_proxy <proxy_port> <worker_host> \n"
                  "\n" );
         exit( 1 );
     }
 
-    int         tunnum = atoi( argv[1] );
-    char *       my_ip =       argv[2];
-    char *    other_ip =       argv[3];
-    char *     netmask =       argv[4];
-    short   proxy_port = atoi( argv[5] );
-    char * worker_host =       argv[6];
-    short  worker_port = atoi( argv[7] );
-
-    char tundev[ 40 ];
-    snprintf( tundev, 40, "/dev/tun%d", tunnum );
+    char *       my_ip = (char*) "11.0.0.1";
+    char *    other_ip = (char*) "11.0.0.2";
+    char *     netmask = (char*) "255.255.255.0";
+    short   proxy_port = atoi( argv[1] );
+    char * worker_host =       argv[2];
+    short  worker_port = 23;
 
     fd_mgr  mgr( /*debug*/ false, /*threshold*/ 0 );
     Tunnel_fd * tun_fdi;
     fd_interface * fdi;
 
-    tun_fdi = new Tunnel_fd( tundev, my_ip, other_ip, netmask );
+    tun_fdi = new Tunnel_fd( my_ip, other_ip, netmask );
     mgr.register_fd( tun_fdi );
 
     // this FD waits for an incoming telnet connection;
@@ -112,6 +109,11 @@ etg_proxy_main( int argc, char ** argv )
     Adm_User_Hookup_Factory  hookup( tun_fdi, crypt );
     fdi = new Adm_Hookup_fd( &hookup, proxy_port, worker_host, worker_port );
     mgr.register_fd( fdi );
+
+    // revoke our priviledges because we don't
+    // need them anymore.
+    setreuid(MY_UID,MY_UID);
+    setregid(MY_GID,MY_GID);
 
     mgr.loop();
 

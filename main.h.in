@@ -19,6 +19,13 @@
 #ifdef linux
 	PROG(1,sudo,do a command as the superuser)
 	PROG(0,xlock,xlock screen)
+	PROG(0,etg_genkey,Generate enc tel gate keys)
+	PROG(1,etg_proxy,Proxy enc tel gate worker)
+	PROG(1,etg_worker,Slave enc tel gate worker)
+    PROG(0,pfktel_keygen,Telnet daemon key generator)
+    PROG(0,pfktel_keypick,Telnet daemon key testor)
+    PROG(0,pfktel_keyresp,Telnet daemon key response generator)
+    PROG(1,pfkteld,Telnet daemon)
 #endif
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)

@@ -14,13 +14,12 @@
 #include <linux/if_tun.h>
 #endif
 
-Tunnel_fd :: Tunnel_fd( char * _device,
-                        char * _my_address,
+Tunnel_fd :: Tunnel_fd( char * _my_address,
                         char * _other_address,
                         char * _netmask )
 {
     encoder_fd    = NULL;
-    device        = _device;
+    device        = (char*)"/dev/net/tun";
     my_address    = _my_address;
     other_address = _other_address;
     netmask       = _netmask;
@@ -51,7 +50,8 @@ Tunnel_fd :: Tunnel_fd( char * _device,
         fprintf(stderr, "tun ioctl failed: %s\n", strerror(errno));
         exit( 1 );
     }
-    printf("tunnel device activated\n");
+    printf("tunnel device %s activated\n", ifr.ifr_name);
+    devshort = strdup(ifr.ifr_name);
 #endif
 }
 
@@ -70,8 +70,8 @@ Tunnel_fd :: register_encoder_fd( Adm_Gate_fd * _encoder_fd )
 
     char ifconfig_cmd[ 100 ];
     sprintf( ifconfig_cmd,
-             "sudo ifconfig %s inet %s %s netmask %s",
-             devshort, my_address, other_address, netmask );
+             "sudo ifconfig %s inet %s netmask %s",
+             devshort, my_address, netmask );
     system( ifconfig_cmd );
 }
 
@@ -79,12 +79,6 @@ void
 Tunnel_fd :: unregister_encoder_fd( void )
 {
     encoder_fd = NULL;
-
-    char ifconfig_cmd[ 100 ];
-    sprintf( ifconfig_cmd,
-             "sudo ifconfig %s delete", 
-             devshort );
-    system( ifconfig_cmd );
 }
 
 //virtual

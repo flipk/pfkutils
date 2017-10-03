@@ -4,7 +4,7 @@ c_SRCS= base64.c
 cpp_SRCS= packet_decoder.C packet_encoder.C packet.C \
 	  adm_gate.C adm_hookup.C tunnel.C d3encdec.C d3des.C \
 	  main_genkey.C main_proxy.C main_worker.C
-INCS=	-I .. -I ../dll2
+INCS=	-I ../h -I ../dll2 -I ../util -I ..
 CFLAGS= -O6 $(INCS)
 
 SRCS= $(c_SRCS) $(cpp_SRCS)

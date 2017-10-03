@@ -31,8 +31,8 @@ ELIBS+= itsfs/libitsfs.a mytar/libmytar.a
 
 #ifdef linux
 CSRCS+=	sudo.c
-ELIBS+= bt/libbt.a xlock/libxlock.a
-DIRS+=  bt xlock threads mytar
+ELIBS+= bt/libbt.a xlock/libxlock.a enctelgate/libetg.a pfkteld/libteld.a
+DIRS+=  bt xlock threads mytar enctelgate pfkteld
 ELIBS+=  mytar/libmytar.a
 LIBS+= -L/usr/X11R6/lib -lX11
 #endif

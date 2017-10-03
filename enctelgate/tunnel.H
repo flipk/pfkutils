@@ -13,8 +13,7 @@ class Tunnel_fd : public fd_interface {
     char * other_address;
     char * netmask;
 public:
-    Tunnel_fd( char * device,
-               char * my_address,  char * other_address, char * netmask );
+    Tunnel_fd( char * my_address,  char * other_address, char * netmask );
     /*virtual*/ ~Tunnel_fd( void );
     /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
