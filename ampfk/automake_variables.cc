@@ -41,7 +41,7 @@ automake_file :: make_variables(void)
             output_variables.add(t->field); \
         else { \
             v = new amvariable; \
-            v->var = new string(*t->target->word + "_" #varname); \
+            v->var = new string(*t->target_underscored->word + "_" #varname); \
             v->value.add(new amword("$(" #varname ")")); \
             output_variables.add(v); \
         }
