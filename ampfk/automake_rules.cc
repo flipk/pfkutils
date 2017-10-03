@@ -13,7 +13,7 @@ automake_file :: make_allrule(void)
     amrule * r = new amrule;
     r->targets.add(new amword("all"));
     r->sources.add(new amword("xmakefile"));
-    amcommand * c = new amcommand("make -f xmakefile");
+    amcommand * c = new amcommand("+make $(MAKEJOBS) -f xmakefile");
     amtarget * t;
     for (t = targets.get_head(); t; t = targets.get_next(t))
         c->cmd.add(new amword(t->target));

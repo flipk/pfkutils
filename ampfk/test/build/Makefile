@@ -1,9 +1,12 @@
-srcdir = ..
+bin_PROGRAMS = one
+noinst_PROGRAMS = two
+noinst_LIBRARIES = libthree.a libfour.a
+
 CC = gcc
 CFLAGS = -Wall
 CXX = g++
 CXXFLAGS = -Wall
-CPPFLAGS = -DCRAP
+CPPFLAGS = -DCRAP -I$(srcdir)
 AR = ar
 LEX = flex
 YACC = yacc
@@ -11,16 +14,16 @@ YFLAGS = -d
 two_LDADD = libthree.a libfour.a
 two_LDFLAGS = -L/usr/lib -lm
 one_LDADD = libfour.a
-one_CPPFLAGS = -DSTUFF=one -DSTUFF2=two
+srcdir = ..
 
 all: xmakefile
 	make -f xmakefile libthree.a libfour.a two one
 
-xmakefile: Makefile libthree_a-three.d libfour_a-four.d two-two.d one-one.d
+xmakefile: Makefile libthree_a-three.d libfour_a-four.d libfour_a-one.d libfour_a-two.d two-two.d one-one.d
 	rm -f xmakefile xmakefile-tmp
 	cat Makefile > xmakefile-tmp
 	echo '' >> xmakefile-tmp
-	cat libthree_a-three.d libfour_a-four.d two-two.d one-one.d >> xmakefile-tmp
+	cat libthree_a-three.d libfour_a-four.d libfour_a-one.d libfour_a-two.d two-two.d one-one.d >> xmakefile-tmp
 	mv xmakefile-tmp xmakefile
 
 libthree_a-three.d: $(srcdir)/three.cc
@@ -28,6 +31,12 @@ libthree_a-three.d: $(srcdir)/three.cc
 
 libfour_a-four.d: $(srcdir)/four.c
 	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -MT ' libfour_a-four.o libfour_a-four.d ' -M -MF libfour_a-four.d $(srcdir)/four.c
+
+libfour_a-one.d: $(srcdir)/one.c
+	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -MT ' libfour_a-one.o libfour_a-one.d ' -M -MF libfour_a-one.d $(srcdir)/one.c
+
+libfour_a-two.d: $(srcdir)/two.cc
+	$(CXX) $(CXXFLAGS) $(libfour_a_CXXFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -MT ' libfour_a-two.o libfour_a-two.d ' -M -MF libfour_a-two.d $(srcdir)/two.cc
 
 two-two.d: $(srcdir)/two.cc
 	$(CXX) $(CXXFLAGS) $(two_CXXFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) -MT ' two-two.o two-two.d ' -M -MF two-two.d $(srcdir)/two.cc
@@ -39,9 +48,9 @@ libthree.a: libthree_a-three.o $(libthree_a_LDADD)
 	rm -f libthree.a
 	$(AR) cq libthree.a  libthree_a-three.o $(libthree_a_LDADD) $(libthree_a_LDFLAGS)
 
-libfour.a: libfour_a-four.o $(libfour_a_LDADD)
+libfour.a: libfour_a-four.o libfour_a-one.o libfour_a-two.o $(libfour_a_LDADD)
 	rm -f libfour.a
-	$(AR) cq libfour.a  libfour_a-four.o $(libfour_a_LDADD) $(libfour_a_LDFLAGS)
+	$(AR) cq libfour.a  libfour_a-four.o libfour_a-one.o libfour_a-two.o $(libfour_a_LDADD) $(libfour_a_LDFLAGS)
 
 two: two-two.o $(two_LDADD)
 	rm -f two
@@ -56,6 +65,12 @@ libthree_a-three.o: $(srcdir)/three.cc
 
 libfour_a-four.o: $(srcdir)/four.c
 	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -c $(srcdir)/four.c -o libfour_a-four.o
+
+libfour_a-one.o: $(srcdir)/one.c
+	$(CC) $(CFLAGS) $(libfour_a_CFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -c $(srcdir)/one.c -o libfour_a-one.o
+
+libfour_a-two.o: $(srcdir)/two.cc
+	$(CXX) $(CXXFLAGS) $(libfour_a_CXXFLAGS) $(CPPFLAGS) $(libfour_a_CPPFLAGS) -c $(srcdir)/two.cc -o libfour_a-two.o
 
 two-two.o: $(srcdir)/two.cc
 	$(CXX) $(CXXFLAGS) $(two_CXXFLAGS) $(CPPFLAGS) $(two_CPPFLAGS) -c $(srcdir)/two.cc -o two-two.o

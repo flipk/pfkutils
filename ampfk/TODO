@@ -1,0 +1,5 @@
+
+- calculate directory for $(srcdir) based on Makefile.am path
+- add rule to rebuild Makefile if Makefile.am changes
+   (rebuild all sources if so?)
+- hooks: all-local, clean-local

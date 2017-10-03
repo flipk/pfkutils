@@ -227,11 +227,7 @@ class automake_file {
     amtarget * make_amtarget(amword * word,
                              amtarget::tgttype target_type,
                              amtarget::insttype install_type);
-public:
-    automake_file(void);
-    ~automake_file(void);
-    void tokenize(const char * filename); // debug only
-    bool parse(const char * filename);
+
     void find_targets(void);
     void set_srcdir(const std::string &path);
     void make_variables(void);
@@ -242,13 +238,21 @@ public:
     void make_lexyaccrules(void);
     void make_cleanrule(void);
 
-    amvariables     input_variables;
-    amruleList      input_rules;
-
     amtargetList    targets;
 
     amvariables     output_variables;
     amruleList      output_rules;
+
+public:
+    automake_file(void);
+    ~automake_file(void);
+    void tokenize(const std::string &filename); // debug only
+    bool parse(const std::string &filename);
+    void output_makefile(const std::string &filename);
+
+    amvariables     input_variables;
+    amruleList      input_rules;
+
 };
 
 // utilities

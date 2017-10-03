@@ -16,7 +16,6 @@ noinst_LIBRARIES = libthree.a libfour.a
 one_SOURCES = one.c
 one_HEADERS = one.h
 one_LDADD = libfour.a
-one_CPPFLAGS = -DSTUFF=one -DSTUFF2=two
 two_SOURCES = two.cc
 two_LDADD = libthree.a
 two_LDADD+= libfour.a
@@ -25,8 +24,8 @@ two_LDFLAGS+= -lm
 
 libthree_a_SOURCES = three.cc # four_lex.L four_yacc.Y
 libthree_a_HEADERS = three.h
-libfour_a_SOURCES = four.c 
-libfour_a_HEADERS = four.h
+libfour_a_SOURCES = four.c  one.c two.cc
+libfour_a_HEADERS = four.h  one.h
 
 eight: four
 	nine

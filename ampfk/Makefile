@@ -3,10 +3,10 @@ PROG= t
 HDRS= automake_parser.H condition.H parser.H tokenizer.H
 SRCS= automake_parser.cc automake_ostream.cc automake_findtargets.cc \
 	automake_rules.cc automake_variables.cc automake_utilities.cc \
-	condition.cc parser.cc tokenizer.cc main.cc
+	automake_output.cc condition.cc parser.cc tokenizer.cc main.cc
 OBJS= $(SRCS:.cc=.o)
 DEPS= $(SRCS:.cc=.d)
-ARCH= `/home/flipk/pfk/bin/architecture`
+ARCH= `$(HOME)/pfk/bin/architecture`
 LIBS= $(HOME)/pfk/$(ARCH)/lib/libpfkdll2.a
 LEX= flex
 YACC= yacc

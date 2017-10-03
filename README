@@ -3,13 +3,15 @@ blade:
 
 ../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen
 
-hertz:
+hertz & adler:
 
 ../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope
 
 bohr:
 
-STRIP=true ../configure --enable-environ=atd --enable-pdksh
+PATH=/open_source/bin-sun/gcc/bin:$PATH STRIP=true ../configure --enable-environ=atd --enable-pdksh
+PATH=/open_source/bin-sun/gcc/bin:$PATH make
+PATH=/open_source/bin-sun/gcc/bin:$PATH make install
 
 kobukvalley:
 

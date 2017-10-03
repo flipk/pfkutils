@@ -29,9 +29,9 @@ automake_file :: ~automake_file(void)
 }
 
 bool
-automake_file :: parse(const char * fname)
+automake_file :: parse(const string &fname)
 {
-    FILE * in = fopen(fname, "r");
+    FILE * in = fopen(fname.c_str(), "r");
     if (!in)
         return false;
     tokenizer_init(in);
@@ -45,9 +45,9 @@ automake_file :: parse(const char * fname)
 }
 
 void
-automake_file :: tokenize(const char * fname)
+automake_file :: tokenize(const string &fname)
 {
-    FILE * in = fopen(fname, "r");
+    FILE * in = fopen(fname.c_str(), "r");
     if (!in)
         return;
     tokenizer_init(in);
