@@ -24,6 +24,7 @@ update_file( file_db * db, char * fname )
     file_info * inf = db->get_info_by_fname( fname );
     bool changed = false;
     UINT32 id;
+    int fd;
     if ( !inf )
     {
         // file not found in archive, add it new!
@@ -35,6 +36,7 @@ update_file( file_db * db, char * fname )
         inf->mtime = sb.st_mtime;
         id = db->add_info( inf );
         changed = true;
+        fd = open( fname, O_RDONLY );
     }
     else
     {
@@ -51,9 +53,19 @@ update_file( file_db * db, char * fname )
         if ( (UINT64)sb.st_size != inf->size   ||
              sb.st_mtime != inf->mtime )
         {
-            changed = true;
             inf->size = sb.st_size;
             inf->mtime = sb.st_mtime;
+            fd = open( fname, O_RDONLY );
+            if ( fd < 0 )
+                fprintf( stderr, "open: %s\n", strerror( errno ));
+            else
+            {
+                char buf;
+                if ( read( fd, &buf, 1 ) < 0 )
+                    fprintf( stderr, "read: %s\n", strerror( errno ));
+                else
+                    changed = true;
+            }
         }
         id = inf->id;
         db->update_info( inf );
@@ -63,28 +75,19 @@ update_file( file_db * db, char * fname )
         return;
 
     UINT32 piece, changed_pieces = 0;
-    int fd;
-    fd = open( fname, O_RDONLY );
     printf( "%s: ", fname );
     fflush(stdout);
-    if ( fd < 0 )
+
+    for ( piece = 0; ; piece++ )
     {
-        fprintf( stderr, "open: %s\n", strerror( errno ));
-        piece = 0;
+        char buf[ file_db::PIECE_SIZE ];
+        int cc = read( fd, buf, sizeof(buf) );
+        if ( cc <= 0 )
+            break;
+        if ( db->update_piece( id, piece, buf, cc )) 
+            changed_pieces++;
     }
-    else
-    {
-        for ( piece = 0; ; piece++ )
-        {
-            char buf[ file_db::PIECE_SIZE ];
-            int cc = read( fd, buf, sizeof(buf) );
-            if ( cc <= 0 )
-                break;
-            if ( db->update_piece( id, piece, buf, cc )) 
-                changed_pieces++;
-        }
-        printf( "%d/%d\n", changed_pieces, piece );
-    }
+    printf( "%d/%d\n", changed_pieces, piece );
     close( fd );
 
     db->truncate_pieces( id, piece );
