@@ -94,9 +94,9 @@ _debug_print( int myerrno, char * hdr, char * format, va_list ap )
 
     str[sizeof(str)-2] = '\n';
     str[sizeof(str)-1] = 0;
-    if ( th != NULL )
-        th->printf( str );
-    else
+//    if ( th != NULL )
+//        th->printf( str );
+//    else
         printf( str );
 }
 
