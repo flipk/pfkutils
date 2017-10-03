@@ -1,6 +1,6 @@
 
 /** \file ExtentMap.H
- * \brief Definition of interface to an ExtentMap
+ * \brief Definition of interface to Extent and Extents
  * \author Phillip F Knaack */
 
 #ifndef __EXTENT_MAP_H__
@@ -10,7 +10,7 @@
 #include "dll2.H"
 
 /** \brief DLL2 enum for definint the lists used by Extent objects */
-enum { EXTENT_LIST, EXTENT_HASH, NUM_LISTS };
+enum EXTENT_MAP_LIST_INDICES { EXTENT_LIST, EXTENT_HASH, NUM_LISTS };
 
 /** \brief an "extent" : a position and a size
  * 
@@ -28,12 +28,14 @@ class Extent {
      * Extent objects. */
     ~Extent(void) { /* nothing */ }
 public:
-    /** \brief an Extent is on two possible linked lists */
+    /** \brief an Extent is on two possible linked lists,
+     * see EXTENT_MAP_LIST_INDICES
+     * \see EXTENT_MAP_LIST_INDICES */
     LListLinks <Extent> links[ NUM_LISTS ];
     /** \brief the position where this extent begins */
     off_t offset;
     /** \brief the identifier of this Extent
-     * \note the identifier is only valid if Extent::used == 1 */
+     * \note the identifier is only valid if Extent::used == 1. */
     UINT32 id;  // this field is valid only when used==1
     /** \brief indicate if this Extent is used or free */
     UINT32 used : 1;
@@ -58,7 +60,8 @@ public:
     }
 };
 
-/** \brief a typedef for a DLL2 hash list of Extent objects */
+/** \brief a typedef for a DLL2 hash list of Extent objects
+ * \see EXTENT_MAP_LIST_INDICES */
 typedef LList <Extent, EXTENT_HASH> ExtentBucketList;
 
 /** \brief manages a list of Extent objects
@@ -68,36 +71,47 @@ typedef LList <Extent, EXTENT_HASH> ExtentBucketList;
  * breaking up free blocks if ideally-sized blocks are unavailable,
  * and recombining blocks when free blocks become adjacent. */
 class Extents {
+    /** @name Extent lists */
+    // @{
     /** \brief a list of all Extent objects 
      * 
      * All Extent objects are on this list, at all times.  Also, at
      * all times, the offset+size of one member must equal the offset
-     * of the following member. */
+     * of the following member.
+     * \see EXTENT_MAP_LIST_INDICES */
     LList <Extent, EXTENT_LIST> list;
     /** \brief hash list of used blocks
      *
      * If an Extent is marked as used, the identifier field will be
      * valid, and the Extent will be on this hash list.  The search
-     * key for the hash is the identifier. */
+     * key for the hash is the identifier.
+     * \see EXTENT_MAP_LIST_INDICES */
     LListHash <Extent, UINT32, ExtentHashComparator, EXTENT_HASH> hash;
+    // @}
 
-
+    /** \brief Allocate an unused unique identifier
+     * \return A new unique identifier.
+     *
+     * This function generates a random number and verifies 
+     * this identifier is not currently in use in the hash.
+     * \note This new identifier needs to be used as soon as possible
+     *  to prevent possible collision (two Extent objects with same id). */
     UINT32 alloc_id(void);
 
     /** @name Bucket List
      * The bucket list is for Extent objects which are free;
      * Extent objects are grouped by their size for optimal searching
-     * during an alloc operation.  Buckets are divided up by 16-byte
-     * sizes; i.e. buffers from 1-15 bytes are bucket 0, buffers of size
-     * 16-31 are bucket 1, etc. */
+     * during an alloc operation.  Buckets are divided up by 32-byte
+     * sizes; i.e. buffers from 1-31 bytes are bucket 0, buffers of size
+     * 32-63 are bucket 1, etc. */
     // @{
-    /** \brief 2048 buckets for any size up to 32768 bytes. */
+    /** \brief 2048 buckets for any size up to 65536 bytes. */
     static const int NUM_BUCKETS = 2048;
     /** \brief 64-bit bitmaps in an array, 64*32=2048 */
     static const int BITMAP_ARRAY_SIZE = 32;
     /** \brief convert a size value to a bucket number
      * \note if the size is greator than the maximum bucket size,
-     * the return is capped to NUM_BUCKETS-1 
+     * the return is capped to NUM_BUCKETS-1. 
      * \param size the size of the bucket
      * \return the index into buckets array */
     int size_to_bucket( UINT32 size ) {
@@ -109,10 +123,10 @@ class Extents {
     /** \brief the array of linked lists of Extent objects */
     ExtentBucketList  buckets[ NUM_BUCKETS ];
     /** \brief a bitmap indicating empty bucket lists in the array
-     * \note the bit value "0" indicates an empty list */
+     * \note the bit value "0" indicates an empty list. */
     UINT64 bucket_bitmap[ BITMAP_ARRAY_SIZE ]; // 0 == empty
     /** \brief find the next nonzero bit in the bitmap
-     * \note races through the bitmap a 64-bit doubleword at a time */
+     * \note races through the bitmap a 64-bit doubleword at a time. */
     int find_next_bucket(int bucket) {
         UINT64 reg;
         if ((bucket & 0x3F) != 0)
@@ -152,8 +166,8 @@ class Extents {
         bucket_bitmap[bucket >> 6] &= ~(1ULL << (bucket & 0x3F));
     }
     /** \brief put an Extent into the correct bucket
-     * \note assumes Extent::size has been properly populated
-     * \note calls set_bit to mark the bucket as nonempty */
+     * \note assumes Extent::size has been properly populated.
+     * \note calls set_bit to mark the bucket as nonempty. */
     void add_to_bucket( Extent * e ) {
         int b = size_to_bucket(e->size);
         ExtentBucketList * bucket = &buckets[b];
@@ -162,8 +176,8 @@ class Extents {
             set_bit(b);
     }
     /** \brief remove an Extent from a bucket list
-     * \note assumes Extent::size is populated
-     * \note calls clear_bit if a bucket list has been made empty */
+     * \note assumes Extent::size is populated.
+     * \note calls clear_bit if a bucket list has been made empty. */
     void remove_from_bucket( Extent * e ) {
         int b = size_to_bucket(e->size);
         ExtentBucketList * bucket = &buckets[b];
@@ -173,35 +187,92 @@ class Extents {
     }
     // @}  end of bucket list
 public:
+    /** @name constructor/destructor */
+    // @{
     /** \brief constructor starts with an empty list
-xxx
- */
+     *
+     * User must populate the list after creating.  When this
+     * object is created, there are no Extent objects.
+     * Assumption is the user will add all of the initial entries
+     * immediately after creation. */
     Extents(void);
-    /** \brief destructor destroys all Extent objects */
+    /** \brief destructor destroys all Extent objects. */
     ~Extents(void);
-    /** \brief print out on TTY a list of all Extent objects */
-    void print(void);
     /** \brief for initial setup; add a free Extent
-xxx
- */
+     * \note This function assumes all entries added are in order,
+     *  that is, each Extent offset plus size matches the following
+     *  Extent offset.  Undefined behavior will result if this is not
+     *  the case.
+     * \note This function must not be called after normal operations
+     *  have begun! */
     void add( off_t _offset, UINT32 _size );
     /** \brief for initial setup; add a used Extent
-xxx
- */
+     * \note This function assumes all entries added are in order,
+     *  that is, each Extent offset plus size matches the following
+     *  Extent offset.  Undefined behavior will result if this is not
+     *  the case.
+     * \note This function must not be called after normal operations
+     *  have begun! */
     void add( off_t _offset, UINT32 _size, UINT32 _id );
+    // @}
+    /** @name Debugging */
+    // @{
+    /** \brief print out on TTY a list of all Extent objects */
+    void print(void);
+    // @}
+    /** @name Access methods */
+    // @{
     /** \brief locate an Extent by its ID number.
-xxx
- */
+     * \param id the unique 32-bit identifier of the Extent.
+     * \return a pointer to the Extent.
+     * \note The returned Extent object is still on an internal linked
+     *  list.  The user does not have to do anything to release the Extent
+     *  back to this object when the user is done with it.
+     * \note The user must not reference this Extent pointer after
+     *  performing any other manipulations on the Extents object, because
+     *  this Extent object may have been altered or deleted. */
     Extent * find( UINT32 id );
     /** \brief allocate a new Extent of a certain size.
-xxx
- */
+     * \param size The size of the Extent required.
+     * \return a pointer to the Extent.
+     * \note The returned Extent object is still on an internal linked
+     *  list.  The user does not have to do anything to release the Extent
+     *  back to this object when the user is done with it.
+     * \note The user must not reference this Extent pointer after
+     *  performing any other manipulations on the Extents object, because
+     *  this Extent object may have been altered or deleted.
+     *
+     * This method allocates a new Extent from the free bucket list. 
+     * It attempts to find a best-matched Extent.  If it can't find an
+     * exact match, it looks higher in the list until a free region is
+     * found that can be fragmented. */
     Extent * alloc( UINT32 size );
+    /** \brief Free up an Extent that is no longer needed.
+     * \param id The unique 32-bit identifier of the Extent.
+     * 
+     * This method returns the Extent back to the free bucket queue.
+     * If the region described is adjacent to other free regions, the
+     * two regions are coalesced into a single larger free Extent. */
     void free( UINT32 id );
+    /** \brief Free up an Extent that is no longer required.
+     * \param e The Extent to be freed. */
     void free( Extent * e );
-    // linked list walking
+    /** \brief get the first Extent on the ordered list
+     * \return the first Extent on the ordered Extent list, or NULL if the 
+     *  list is empty (this is technically not possible).
+     * \note This is used in conjunction with the get_next() method
+     *  to walk the linked list of all Extent objects in order. This is
+     *  useful for debugging and for saving the Extents contents offline.
+     * \note The Extents object must \b not be manipulated while walking
+     *  the linked list; to do so may result in incorrect operation. */
     Extent * get_head(void) { return list.get_head(); }
+    /** \brief get the next Extent on the ordered list
+     * \param e the previous Extent on the ordered list
+     * \return the next Extent on the list
+     * \note The Extents object must \b not be manipulated while walking
+     *  the linked list; to do so may result in incorrect operation. */
     Extent * get_next(Extent * e) { return list.get_next(e); }
+    // @}
 };
 
 #endif /* __EXTENT_MAP_H__ */

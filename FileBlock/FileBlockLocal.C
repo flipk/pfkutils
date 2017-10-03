@@ -19,20 +19,20 @@
 FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 {
     bc = _bc;
-    //xxx
+    /** \todo */
 }
 
 //virtual
 FileBlockLocal :: ~FileBlockLocal( void )
 {
-    // xxx
+    /** \todo */
 }
 
 //virtual
 UINT32
 FileBlockLocal :: alloc( int size )
 {
-    //xxx
+    /** \todo */
 
     return 0;
 }
@@ -41,14 +41,14 @@ FileBlockLocal :: alloc( int size )
 void
 FileBlockLocal :: free( UINT32 id )
 {
-    //xxx
+    /** \todo */
 }
 
 //virtual
 FileBlock *
 FileBlockLocal :: get_block( UINT32 id, bool for_write /*= false*/ )
 {
-    //xxx
+    /** \todo */
     return NULL;
 }
 
@@ -56,21 +56,21 @@ FileBlockLocal :: get_block( UINT32 id, bool for_write /*= false*/ )
 void
 FileBlockLocal :: unlock_block( FileBlock * blk )
 {
-    //xxx
+    /** \todo */
 }
 
 //virtual
 void
 FileBlockLocal :: flush(void)
 {
-    // should first sort all of the bucket-lists by file position
-    // so that allocations start early in the file.
+    /** \todo should first sort all of the bucket-lists by file position
+     * so that allocations start early in the file. */
 }
 
 //virtual
 void
 FileBlockLocal :: compact(int time_limit)
 {
-    // should first sort all of the bucket-lists by file position
-    // so that allocations start early in the file.
+    /** \todo should first sort all of the bucket-lists by file position
+     * so that allocations start early in the file. */
 }

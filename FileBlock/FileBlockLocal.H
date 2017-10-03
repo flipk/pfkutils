@@ -1,6 +1,6 @@
 
 /** \file FileBlockLocal.H
- * \brief Defines the "Local File" implementation of FileBlockInterface
+ * \brief Defines the FileBlockLocal implementation of FileBlockInterface
  * \author Phillip F Knaack
  */
 

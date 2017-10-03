@@ -1,4 +1,8 @@
 
+/** \file PageCache.C
+ * \brief Implements PageCache and PageIOFileDescriptor.
+ * \author Phillip F Knaack */
+
 #include "PageCache.H"
 #include "PageCache_internal.H"
 
@@ -81,6 +85,18 @@ PageCache :: release( PageCachePage * _p, bool dirty )
     }
 }
 
+/** \brief compare page numbers of two PCPInt objects, for qsort
+ * \param _a the first PCPInt to compare
+ * \param _b the second PCPInt to compare
+ * \return positive if _a's page number is greator than _b's page number,
+ *         negative if _a's page number is less than _b's page number,
+ *         or zero if they are equal.
+ * \relates PageCache
+ *
+ * This function compares two PCPInt objects.  Its purpose is to be a
+ * utility function to the standard C library function qsort, to assist
+ * qsort in sorting an array of PCPInt objects.  */
+
 static int
 page_compare( const void * _a, const void * _b )
 {
@@ -134,7 +150,7 @@ PageIOFileDescriptor :: PageIOFileDescriptor( int _fd )
 
 PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
 {
-    // nothing-- note this does NOT close fd!
+    // nothing, note fd is not closed!
 }
 
 bool

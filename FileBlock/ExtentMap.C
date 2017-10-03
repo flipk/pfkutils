@@ -1,20 +1,43 @@
 
+/** \file ExtentMap.C
+ * \brief Implementation of Extents and Extent objects
+ * \author Phillip F Knaack */
+
 #include "ExtentMap.H"
 
 #include <stdlib.h>
 #include <string.h>
 
+/** \brief Allocation of patch of Extent objects
+ *
+ * For memory efficiency, Extent objects are not allocated and
+ * freed one at a time; they are allocated in pages and maintained
+ * on a free list.  Since Extent objects are themselves rather small,
+ * this dramatically improves memory allocator overhead. */
 class ExtentsPage {
 public:
+    /** \brief A linked list of all ExtentsPage objects for deletion 
+        when Extents is deleted. */
     LListLinks <ExtentsPage> links[1];
+    /** \brief A number chosen out of a bithat for how many Extent objects
+        live in a single object. */
     static const int EXTENTS_PER_PAGE = 4096;
+    /** \brief the actual group of Extent objects */
     Extent extents[ EXTENTS_PER_PAGE ];
 };
 
+/** \brief Memory allocator for Extent objects
+ *
+ * This class manages free Extent objects.  They're small so the
+ * malloc/free overhead would be terrible.  Make a list of ExtentsPages
+ * and a list of free Extent objects, and deliver them upon request. */
 class ExtentPool {
+    /** \brief a list of all free Extent objects. */
     LList <Extent,EXTENT_LIST> list;
+    /** \brief a list of all ExtentsPage objects. */
     LList <ExtentsPage,0> pages;
 public:
+    /** \brief destructor; empties list and deletes all ExtentsPage objs */
     ~ExtentPool(void) {
         Extent * e;
         ExtentsPage * p;
@@ -23,6 +46,10 @@ public:
         while ((p = pages.dequeue_head()) != NULL)
             delete p;
     }
+    /** \brief allocate a new Extent
+     *
+     * This method pulls a free Extent off of the list; or if the list
+     * is empty, allocates a new ExtentsPage. */
     Extent * alloc(off_t _offset, UINT32 _size, UINT32 _id=0) { 
         if (list.get_cnt() == 0)
         {
@@ -41,11 +68,13 @@ public:
             e->used = 0;
         return e;
     }
+    /** \brief free an Extent back to the free list */
     void free(Extent * e) {
         list.add(e);
     }
 };
 
+/** \brief here is the pool of all free Extent objects */
 static ExtentPool extent_pool;
 
 Extents :: Extents( void )
@@ -115,17 +144,17 @@ Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
     hash.add(e);
 }
 
-// locate a block by its ID number.
 Extent *
 Extents :: find( UINT32 id )
 {
     return hash.find(id);
 }
 
+/** \note Sizes are always rounded up to the nearest 32-byte boundary. */
 Extent *
 Extents :: alloc( UINT32 size )
 {
-    // round up 'size' to the nearest 32-byte boundary.
+    // round up to next 32-byte boundary.
     size = ((((size - 1) >> 5) + 1) << 5);
 
     int b;

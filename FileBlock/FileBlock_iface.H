@@ -11,8 +11,7 @@
 #include "BlockCache.H"
 #include "types.H"
 
-/**
- * \brief A data unit in a FileBlockInterface file.
+/** \brief A data unit in a FileBlockInterface file.
  *
  * When the user of the FileBlockInterface is attempting to access
  * a portion of a file, this is the object which is passed back and
@@ -21,8 +20,7 @@
  * methods of FileBlockInterface.
  */
 class FileBlock {
-    /**
-     * \brief FileBlocks are identified using a unique 32-bit identifier.
+    /** \brief FileBlocks are identified using a unique 32-bit identifier.
      * 
      * The \em identifier is randomly-generated when a new block is allocated.
      * only the values \b 0 and \b 0xFFFFFFFF are invalid.  If a block is moved

@@ -15,6 +15,13 @@ exit 0
     ;
 #endif
 
+/** \file main.C
+ * \brief Test harness for FileBlock
+ * \author Phillip F Knaack
+ *
+ * This file is the test harness for the components of FileBlock.
+ * It is used to test anything and everything during development. */
+
 #include "FileBlockLocal.H"
 
 #include <stdio.h>

@@ -10,7 +10,6 @@
 
 #include "PageCache.H"
 
-/** \brief forward declaration for an internal object */
 class BlockCacheList;
 
 /** \brief what the user sees when interfacing to the cache */
