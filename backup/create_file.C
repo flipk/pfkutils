@@ -18,23 +18,24 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// utility
+#include "database_elements.H"
+#include "params.H"
+#include "protos.H"
 
-bool   pfkbak_get_info( PfkBackupDbInfo * info );
-UINT32 pfkbak_find_backup( Btree * bt, char * bakname );
+#include <FileList.H>
 
-// ops
+#include <stdlib.h>
 
-void pfkbak_create_file   ( Btree * bt );
-void pfkbak_list_backups  ( Btree * bt );
-void pfkbak_create_backup ( Btree * bt, char * bakname,
-                            char * root_dir, char * comment );
-void pfkbak_delete_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_update_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_delete_gens   ( Btree * bt, UINT32 baknum,
-                            int argc, char ** argv );
-void pfkbak_list_files    ( Btree * bt, UINT32 baknum, char * gen );
-void pfkbak_extract       ( Btree * bt, UINT32 baknum, char * gen,
-                            int argc, char ** argv );
-void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, char * gen,
-                            char * list_file );
+void
+pfkbak_create_file   ( Btree * bt )
+{
+    PfkBackupDbInfo   info(bt);
+
+    info.key.info_key.set((char*)INFO_KEY);
+    info.data.tool_version.v = TOOL_VERSION;
+    info.data.backups.alloc(0);
+    if (info.put() == false)
+    {
+        fprintf(stderr,"error writing backup info list\n");
+    }
+}

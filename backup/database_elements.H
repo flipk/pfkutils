@@ -80,9 +80,10 @@ struct PfkBakGenInfo : public BST {
 struct PfkBackupInfoData : public FileBlockBST {
     PfkBackupInfoData(FileBlockInterface *fbi) :
         FileBlockBST(NULL,fbi),
-        name(this), comment(this),
+        root_dir(this), name(this), comment(this),
         next_generation_number(this), generations(this) {}
     ~PfkBackupInfoData(void) { bst_free(); }
+    BST_STRING    root_dir;
     BST_STRING    name;
     BST_STRING    comment;
     BST_UINT32_t  next_generation_number;

@@ -25,18 +25,19 @@
 
 #include "Btree.H"
 #include "params.H"
+#include "database_elements.H"
 #include "protos.H"
 
-void
+static void
 usage(void)
 {
     fprintf(stderr, "usage: \n"
 "create file:    pfkbak -C[Vv] BACKUP-FILE\n"
 "\n"
 "list backups:   pfkbak -L[Vv] BACKUP-FILE\n"
-"create backup:  pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR\n"
+"create backup:  pfkbak -c[Vv] BACKUP-FILE BACKUP-NAME DIR COMMENT\n"
 "delete backup:  pfkbak -D[Vv] BACKUP-FILE BACKUP-NAME\n"
-"update backup:  pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME DIR\n"
+"update backup:  pfkbak -u[Vv] BACKUP-FILE BACKUP-NAME\n"
 "\n"
 "delete gens:    pfkbak -d[Vv] BACKUP-FILE BACKUP-NAME GenN A-B -B\n"
 "\n"
@@ -49,15 +50,16 @@ usage(void)
     exit(1);
 }
 
-backop     pfkbak_op;
 verblevel  pfkbak_verb;
-char *     pfkbak_file;
-char *     pfkbak_name;
-int        pfkbak_gen;
 
-int
-main(int argc, char ** argv)
+extern "C" int
+pfkbak_main(int argc, char ** argv)
 {
+    backop     pfkbak_op;
+    char *     pfkbak_file;
+    char *     pfkbak_name;
+    UINT32     baknum = 0;
+
     pfkbak_op = BAK_NONE;
     pfkbak_verb = VERB_QUIET;
 
@@ -104,10 +106,9 @@ main(int argc, char ** argv)
         if (argc != 3) usage(); break;
 
     case BAK_DELETE_BACKUP:
+    case BAK_UPDATE_BACKUP:
         if (argc != 4) usage(); break;
 
-    case BAK_CREATE_BACKUP:
-    case BAK_UPDATE_BACKUP:
     case BAK_LIST_FILES:
         if (argc != 5) usage(); break;
 
@@ -117,30 +118,9 @@ main(int argc, char ** argv)
     case BAK_EXTRACT:
         if (argc < 5)  usage(); break;
 
+    case BAK_CREATE_BACKUP:
     case BAK_EXTRACT_LIST:
         if (argc != 6) usage(); break;
-
-    case BAK_NONE:
-    default:
-        // shouldn't be reached but it satisifies compiler.
-        usage();
-    }
-
-    // verify presence or absence of backup name
-    switch (pfkbak_op)
-    {
-    case BAK_CREATE_FILE:
-    case BAK_LIST_BACKUPS:
-        if (pfkbak_name != NULL) usage(); break;
-
-    case BAK_CREATE_BACKUP:
-    case BAK_DELETE_BACKUP:
-    case BAK_UPDATE_BACKUP:
-    case BAK_LIST_FILES:
-    case BAK_DELETE_GENS:
-    case BAK_EXTRACT:
-    case BAK_EXTRACT_LIST:
-        if (pfkbak_name == NULL) usage(); break;
 
     case BAK_NONE:
     default:
@@ -159,7 +139,9 @@ main(int argc, char ** argv)
     else
     {
         bt = Btree::openFile( pfkbak_file, CACHE_SIZE );
-        if (!pfkbak_validate_file(bt))
+
+        PfkBackupDbInfo   info(bt);
+        if (!pfkbak_get_info( &info ))
         {
             delete bt;
             fprintf(stderr, "unable to validate database!\n");
@@ -175,6 +157,36 @@ main(int argc, char ** argv)
         return 1;
     }
 
+    switch (pfkbak_op)
+    {
+    case BAK_CREATE_BACKUP:
+        baknum = pfkbak_find_backup(bt, pfkbak_name);
+        if (baknum != 0)
+        {
+            delete bt;
+            fprintf(stderr, "a backup named '%s' already exists "
+                    "in this database.\n", pfkbak_name);
+            return 1;
+        }
+        break;
+
+    case BAK_DELETE_BACKUP:
+    case BAK_UPDATE_BACKUP:
+    case BAK_DELETE_GENS:
+    case BAK_LIST_FILES:
+    case BAK_EXTRACT:
+    case BAK_EXTRACT_LIST:
+        baknum = pfkbak_find_backup(bt, pfkbak_name);
+        if (baknum == 0)
+        {
+            delete bt;
+            fprintf(stderr, "a backup named '%s' is not found "
+                    "in this database.\n", pfkbak_name);
+            return 1;
+        }
+        break;
+    }
+
     // now call the relevant function to handle the op.
     switch (pfkbak_op)
     {
@@ -185,25 +197,25 @@ main(int argc, char ** argv)
         pfkbak_list_backups( bt );
         break;
     case BAK_CREATE_BACKUP:
-        pfkbak_create_backup( bt, argv[4] );
+        pfkbak_create_backup( bt, pfkbak_name, argv[4], argv[5] );
         break;
     case BAK_DELETE_BACKUP:
-        pfkbak_delete_backup( bt );
+        pfkbak_delete_backup( bt, baknum );
         break;
     case BAK_UPDATE_BACKUP:
-        pfkbak_update_backup( bt, argv[4] );
+        pfkbak_update_backup( bt, baknum );
         break;
     case BAK_DELETE_GENS:
-        pfkbak_delete_gens( bt, argc-4, argv+4 );
+        pfkbak_delete_gens( bt, baknum, argc-4, argv+4 );
         break;
     case BAK_LIST_FILES:
-        pfkbak_list_files( bt, argv[4] );
+        pfkbak_list_files( bt, baknum, argv[4] );
         break;
     case BAK_EXTRACT:
-        pfkbak_extract( bt, argv[4], argc-5, argv+5 );
+        pfkbak_extract( bt, baknum, argv[4], argc-5, argv+5 );
         break;
     case BAK_EXTRACT_LIST:
-        pfkbak_extract_list( bt, argv[4], argv[5] );
+        pfkbak_extract_list( bt, baknum, argv[4], argv[5] );
         break;
     case BAK_NONE:
     default:

@@ -18,23 +18,44 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// utility
+#include "database_elements.H"
+#include "params.H"
+#include "protos.H"
 
-bool   pfkbak_get_info( PfkBackupDbInfo * info );
-UINT32 pfkbak_find_backup( Btree * bt, char * bakname );
+#include <FileList.H>
 
-// ops
+#include <stdlib.h>
 
-void pfkbak_create_file   ( Btree * bt );
-void pfkbak_list_backups  ( Btree * bt );
-void pfkbak_create_backup ( Btree * bt, char * bakname,
-                            char * root_dir, char * comment );
-void pfkbak_delete_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_update_backup ( Btree * bt, UINT32 baknum );
-void pfkbak_delete_gens   ( Btree * bt, UINT32 baknum,
-                            int argc, char ** argv );
-void pfkbak_list_files    ( Btree * bt, UINT32 baknum, char * gen );
-void pfkbak_extract       ( Btree * bt, UINT32 baknum, char * gen,
-                            int argc, char ** argv );
-void pfkbak_extract_list  ( Btree * bt, UINT32 baknum, char * gen,
-                            char * list_file );
+// note that 0 is an invalid backup number.
+
+UINT32
+pfkbak_find_backup( Btree * bt, char * bakname )
+{
+    PfkBackupDbInfo   info(bt);
+    int i, j;
+
+    if (!pfkbak_get_info( &info ))
+        return 0;
+
+    for (i=0; i < info.data.backups.num_items; i++)
+    {
+        UINT32 backup_number = info.data.backups.array[i]->v;
+
+        PfkBackupInfo   binf(bt);
+
+        binf.key.backup_number.v = backup_number;
+
+        if (!binf.get())
+        {
+            fprintf(stderr, "bogus backup number %d\n", backup_number);
+            return 0;
+        }
+
+        if (strcmp(bakname, binf.data.name.string) == 0)
+        {
+            return backup_number;
+        }
+    }
+
+    return 0;
+}
