@@ -22,12 +22,12 @@ NoRaiseOnMove
 PackNewWindows
 NoShowOccupyAll
 NoRaiseOnResize
-ShowIconManager
+#ShowIconManager
 StartInMapState
 #SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
-IconifyByUnmapping
+#IconifyByUnmapping
 RestartPreviousState
 CenterFeedbackWindow
 ShortAllWindowsMenus
@@ -37,8 +37,8 @@ AutoFocusToTransients
 AlwaysShowWindowWhenMovingFromWorkspaceManager
 
 #           geometry        hgrav vgrav grid  iconjust iconregjust iconregalign
-#IconRegion "280x50+125+60"  North West  10 10  "left"   "left"     "top"
-#IconRegion "900x100+410+25" North West  10 10  "left"   "left"     "top"
+IconRegion "280x60+125+60"  North West  10 10  "left"   "left"     "top"
+IconRegion "900x90+410+25"  North West  10 10  "left"   "left"     "top"
 
 AutoSqueeze { "autosqueeze" }
 
