@@ -1,7 +1,17 @@
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
 #include "fd_mgr.H"
 
-#include <unistd.h>
+void
+fd_interface :: make_nonblocking( void )
+{
+    fcntl( fd, F_SETFL,
+           fcntl( fd, F_GETFL, 0 ) | O_NONBLOCK );
+}
 
 void
 fd_mgr :: loop( void )
@@ -32,12 +42,26 @@ fd_mgr :: loop( void )
             }
             if ( fdi->select_for_write(this))
             {
+#if 0
+                // why does this have such poor performance?
                 if ( debug )
-                    fprintf( stderr,
-                             "selecting for write on fd %d\n", fdi->fd );
-                FD_SET( fdi->fd, &wfds );
-                if ( fdi->fd > max )
-                    max = fdi->fd;
+                    fprintf( stderr, "shortcutting write on fd %d\n",
+                             fdi->fd );
+                if ( fdi->write(this) == fd_interface::DEL )
+                    fdi->do_close = true;
+                else
+#endif
+                {
+                    if ( fdi->select_for_write(this))
+                    {
+                        if ( debug )
+                            fprintf( stderr, "selecting for write on fd %d\n",
+                                     fdi->fd );
+                        FD_SET( fdi->fd, &wfds );
+                        if ( fdi->fd > max )
+                            max = fdi->fd;
+                    }
+                }
             }
             if ( fdi->do_close )
             {
@@ -49,7 +73,7 @@ fd_mgr :: loop( void )
                 delete fdi;
             }
         }
-        if ( ifds.get_cnt() == 0 )
+        if ( ifds.get_cnt() <= die_threshold )
             break;
 
         if ( max == -1 )
@@ -60,9 +84,11 @@ fd_mgr :: loop( void )
 
         cc = select( max+1, &rfds, &wfds, NULL, NULL );
 
-        if ( cc == 0 )
+        if ( cc <= 0 )
         {
-            fprintf( stderr, "select returns 0?!\n" );
+            if ( debug )
+                fprintf( stderr, "select returns %d?! (%d:%s)\n",
+                         cc, errno, strerror( errno ));
             continue;
         }
 
@@ -75,32 +101,24 @@ fd_mgr :: loop( void )
             {
                 if ( debug )
                     fprintf( stderr, "servicing read on fd %d\n", fdi->fd );
-                switch ( fdi->read(this) )
+                if ( fdi->read(this) == fd_interface::DEL )
                 {
-                case fd_interface::OK:
-                    break;
-                case fd_interface::DEL:
                     if ( debug )
                         fprintf( stderr,
                                  "deleting %d due to false read\n", fdi->fd );
                     del = true;
-                    break;
                 }
             }
             if ( FD_ISSET( fdi->fd, &wfds ))
             {
                 if ( debug )
                     fprintf( stderr, "servicing write on fd %d\n", fdi->fd );
-                switch ( fdi->write(this) )
+                if ( fdi->write(this) == fd_interface::DEL )
                 {
-                case fd_interface::OK:
-                    break;
-                case fd_interface::DEL:
                     if ( debug )
                         fprintf( stderr,
                                  "deleting %d due to false write\n", fdi->fd );
                     del = true;
-                    break;
                 }
             }
             if ( !del && fdi->do_close )

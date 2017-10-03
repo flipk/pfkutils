@@ -1,8 +1,10 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "ipipe_forwarder.H"
+#include "ipipe_stats.H"
 
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp )
@@ -18,6 +20,10 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     bytes_read    = 0;
     bytes_written = 0;
     zs            = NULL;
+
+//    this is an option if we can optimize the 
+//      write path to reduce the number of select_for_writes that happen
+//    make_nonblocking();
 
     if ( dowuncomp && dowcomp )
     {
@@ -35,19 +41,23 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
         zs->zfree     = NULL;
         zs->opaque    = NULL;
         zs->next_in   = (Bytef*) inbuf;
-        zs->next_out  = (Bytef*) buf->write_pos();
         zs->avail_in  = 0;
-        zs->avail_out = zbuf_size;
+        zs->next_out  = (Bytef*) buf->write_pos();
+        zs->avail_out = buf->contig_writeable();
     }
     if ( dowuncomp )
         inflateInit( zs );
     else if ( dowcomp )
         deflateInit( zs, 4 );
+
+    stats_add_conn();
 }
 
 //virtual
 ipipe_forwarder :: ~ipipe_forwarder( void )
 {
+    stats_del_conn();
+
     if ( zs && dowuncomp )
         inflateEnd( zs );
     if ( zs && dowcomp )
@@ -80,7 +90,7 @@ ipipe_forwarder :: select_for_read( fd_mgr * mgr )
                  "ipipe_forwarder :: select_for_read : null writer!\n" );
         abort();
     }
-    if ( writer->write_space_remaining() < buf_lowater )
+    if ( writer->over_write_threshold() )
         return false;
     return true;
 }
@@ -94,11 +104,19 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     if ( writer_done )
         return OK;
 
-    int len = writer->write_space_remaining();
-    int cc = ::read( fd,
-                     writer->write_space(),
-                     len );
+    char * bufptr = writer->write_space();
+    int len = writer->contig_write_space_remaining();
+    int cc = ::read( fd, bufptr, len );
 
+    if ( cc < 0 )
+    {
+        if ( errno == EAGAIN )
+            return OK;
+
+        fprintf( stderr, "ipipe_forwarder :: read : %s\n",
+                 strerror( errno ));
+    }
+    
     if ( cc <= 0 )
     {
         do_close = true;
@@ -109,6 +127,7 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
         return DEL;
     }
 
+    stats_add( cc, 0 );
     bytes_read += cc;
     writer->record_write( cc );
 
@@ -146,6 +165,16 @@ ipipe_forwarder :: write( fd_mgr * mgr )
     {
         char * bufptr = buf->read_pos();
         int    cc     = ::write( fd, bufptr, len );
+
+        if ( cc < 0 )
+        {
+            if ( errno == EAGAIN )
+                return OK;
+
+            fprintf( stderr, "ipipe_forwarder :: write: %s\n",
+                     strerror( errno ));
+        }
+
         if ( cc <= 0 )
         {
             do_close = true;
@@ -155,6 +184,9 @@ ipipe_forwarder :: write( fd_mgr * mgr )
                 reader->do_close = true;
             return DEL;
         }
+
+        stats_add( 0, cc );
+
         bytes_written += cc;
         buf->record_read( cc );
         return OK;
@@ -168,8 +200,22 @@ ipipe_forwarder :: write( fd_mgr * mgr )
     return OK;
 }
 
+bool
+ipipe_forwarder :: over_write_threshold( void )
+{
+    if ( zs )
+    {
+        if (( zbuf_size - zs->avail_in ) > 0 )
+            return false;
+        return true;
+    }
+    if ( buf->free_space() > buf_lowater )
+        return false;
+    return true;
+}
+
 int
-ipipe_forwarder :: write_space_remaining( void )
+ipipe_forwarder :: contig_write_space_remaining( void )
 {
     if ( !dowrite )
         return 0;
@@ -220,7 +266,14 @@ ipipe_forwarder :: zloop( void )
         if ( dowcomp )
             ret = deflate( zs, flush );
         else
+        {
             ret = inflate( zs, flush );
+            if ( ret < 0  &&  ret != Z_BUF_ERROR )
+            {
+                fprintf( stderr, "libz: %d: %s\n", ret, zs->msg );
+                exit( 1 );
+            }
+        }
 
         if ( (int) zs->avail_out != outfirst )
             buf->record_write( outfirst - zs->avail_out );

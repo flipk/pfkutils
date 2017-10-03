@@ -21,8 +21,7 @@ ipipe_connector :: ipipe_connector( struct sockaddr_in * sa,
         exit( 1 );
     }
 
-    fcntl( fd, F_SETFL,
-           fcntl( fd, F_GETFL, 0 ) | O_NONBLOCK );
+    make_nonblocking();
 
     int cc = connect( fd, (struct sockaddr *)sa, sizeof( *sa ));
 

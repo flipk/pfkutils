@@ -29,6 +29,7 @@ ipipe_acceptor :: ipipe_acceptor( short port, ipipe_new_connection * _factory )
         exit( 1 );
     }
     listen( fd, 1 );
+    make_nonblocking();
 }
 
 //virtual
@@ -58,7 +59,8 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
 
     if ( new_fd < 0 )
     {
-        fprintf( stderr, "accept: %s\n", strerror( errno ));
+        if ( errno != EAGAIN )
+            fprintf( stderr, "accept: %s\n", strerror( errno ));
         return OK;
     }
 

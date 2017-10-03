@@ -18,12 +18,21 @@ public:
     }
     ~circular_buffer  ( void ) { delete[] buf; }
 
-    void print ( void ) {
-        printf( "\nbuf: s %3d, u %3d, in %3d, out %3d, cw %3d, cr %3d\n",
-                size, used, in, out, contig_writeable(), contig_readable() );
-        for ( int i = 0; i < size; i++ )
-            printf( "%c%02x%c ", (i==out)?'o':' ', buf[i], (i==in)?'i':' ' );
-        printf( "\n\n" );
+    void print ( bool printbody, char * header = NULL ) {
+        if ( !header )  header = "";
+        fprintf( stderr,
+                 "%sbuf: s %3d, u %4d, in %4d, out %4d, cw %4d, cr %4d\n",
+                 header,
+                 size, used, in, out, contig_writeable(), contig_readable() );
+        if ( printbody )
+        {
+            for ( int i = 0; i < size; i++ )
+                fprintf( stderr,
+                         "%c%02x%c ", (i==out)?'o':' ',
+                         buf[i],
+                         (i==in)?'i':' ' );
+            fprintf( stderr, "\n\n" );
+        }
     }
 
     bool   empty      ( void ) { return used == 0;         }

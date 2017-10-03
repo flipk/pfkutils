@@ -1,7 +1,7 @@
 
 TARG= i2
-SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_factories.C ipipe_forwarder.C ipipe_main.C ipipe_tick.C
-HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H ipipe_forwarder.H ipipe_tick.H
+SRCS= ipipe_acceptor.C ipipe_connector.C ipipe_factories.C ipipe_forwarder.C ipipe_main.C ipipe_stats.C ipipe_tick.C
+HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H ipipe_forwarder.H ipipe_stats.H ipipe_tick.H
 
 OBJS= $(SRCS:.C=.o) fd_mgr.obj
 CC=  g++

@@ -8,8 +8,7 @@ class tick_fd : public fd_interface {
     void ( * func )( void * );
     void * arg;
 public:
-    tick_fd( int tenths );
-    void register_tick( void (*)(void*), void * );
+    tick_fd( int tenths, void (*)(void*), void * );
     /*virtual*/ ~tick_fd( void );
     /*virtual*/ rw_response read ( fd_mgr * );
     /*virtual*/ rw_response write( fd_mgr * );

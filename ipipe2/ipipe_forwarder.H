@@ -19,28 +19,31 @@ class ipipe_forwarder : public fd_interface {
     bool dowcomp;
     bool reader_done;
     bool writer_done;
-//    bool finish; // flush out libz buffers and then do_close
-    static const int buf_size    = 5000;
-    static const int buf_lowater = 1000;
+
+    static const int buf_size    = 16000;
+    static const int buf_lowater =  1000;
     circular_buffer * buf;
     z_streamp zs;
-    static const int zbuf_size   = 5000;
+    static const int zbuf_size   = 32000;
     char *  inbuf;
     void zloop( void );
 
     int bytes_read;
     int bytes_written;
-public:
-    ipipe_forwarder( int _fd, bool doread, bool dowrite,
-                     bool dowuncomp, bool dowcomp );
-    void register_others( ipipe_forwarder * _w, ipipe_forwarder * _r )
-    { writer = _w;  reader = _r; }
 
-    int write_space_remaining( void );
+    bool over_write_threshold( void );
+    int contig_write_space_remaining( void );
     char * write_space( void );
     void record_write( int len );
 
-    void query_stats( int * _read, int * _written ) {
+public:
+    ipipe_forwarder( int _fd, bool doread, bool dowrite,
+                     bool dowuncomp, bool dowcomp );
+
+    void register_others( ipipe_forwarder * _w, ipipe_forwarder * _r ) {
+        writer = _w;  reader = _r;
+    }
+    void query_stats( int * _read, int * _written ) { 
         *_read = bytes_read;  *_written = bytes_written;
     }
 

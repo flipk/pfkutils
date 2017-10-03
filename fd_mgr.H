@@ -12,26 +12,33 @@
 class fd_mgr;
 
 class fd_interface {
+protected:
+    void make_nonblocking( void );
+    int fd;
+    bool do_close;
 public:
     LListLinks <fd_interface> links[ 1 ];
     fd_interface( void ) { do_close = false; }
-    virtual ~fd_interface( void ) { /* placeholder */ }
-
-    int fd;
-    bool do_close;
+    virtual ~fd_interface( void ) {
+        // placeholder : note that fd is NOT closed here, because
+        //  perhaps the derived class wants to do something with it.
+        //  if not, all derived class destructors must close( fd ).
+    }
 
     enum rw_response {
         OK,   // the read or write was normal
         DEL   // the fd should be deleted
     };
 
-    // true means it was ok, false means delete this object.
     virtual rw_response read ( fd_mgr * ) = 0;
     virtual rw_response write( fd_mgr * ) = 0;
 
-    // true means select, false means dont
+    // true means select, false means dont;
+    //   note:   never return true if you've set do_close !!
     virtual bool select_for_read ( fd_mgr * ) = 0;
     virtual bool select_for_write( fd_mgr * ) = 0;
+
+    friend class fd_mgr;
 };
 
 class fd_mgr {

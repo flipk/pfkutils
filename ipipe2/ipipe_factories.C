@@ -4,6 +4,7 @@
 #include "ipipe_factories.H"
 #include "ipipe_forwarder.H"
 #include "ipipe_connector.H"
+#include "ipipe_stats.H"
 
 //////////// ipipe_forwarder_factory
 
@@ -33,6 +34,8 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
     mgr->register_fd( if0 );
     mgr->register_fd( ifn );
     mgr->register_fd( if1 );
+
+    stats_reset();
 
     return CONN_DONE;
 }
