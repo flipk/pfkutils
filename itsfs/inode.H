@@ -93,6 +93,7 @@ public:
     virtual void      clean       ( void )                                = 0;
     virtual void      print_cache ( int arg, void (*printfunc)
                                     (int arg, char *format,...) )         = 0;
+    virtual bool      valid       ( void )                                = 0;
 
 };
 

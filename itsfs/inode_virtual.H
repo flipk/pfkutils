@@ -55,6 +55,7 @@ public:
     virtual void      clean       ( void );
     virtual void      print_cache ( int arg, void (*printfunc)
                                     (int arg, char *format,...) );
+    virtual bool      valid       ( void ) { return true; }
 
     // not in Inode_tree interface....
 

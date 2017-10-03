@@ -38,6 +38,7 @@ private:
     static const int HASH_SIZE = 100;
 
     int zerorefs; // count of members whose refcount is zero
+    bool bad_fd;
 
     LListHashLRU<Inode_remote,DLL2_HASH,DLL2_LRU> hashlru;
 
@@ -75,10 +76,7 @@ public:
     virtual void      clean       ( void );
     virtual void      print_cache ( int arg, void (*printfunc)
                                     (int arg, char *format,...) );
-
-    // not part of the Inode_tree interface...
-
-    bool bad_fd;
+    virtual bool      valid       ( void ) { return !bad_fd; }
 };
 
 class Inode_remote : public Inode {

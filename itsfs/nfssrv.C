@@ -58,8 +58,7 @@ nfssrv :: dispatch( uchar * buf, int bufsize, int &replysize )
 // arguments to the procedure, the xdr function which encodes the 
 // reply for the procedure, and a pointer to the actual implementation
 // of the procedure.  note that null, root, and writecache are not 
-// actually used in the nfsv2 protocol, and link, symlink, and readlink
-// are not yet implemented by this version of the server.
+// actually used in the nfsv2 protocol.
 
 #define X xdrproc_t
         { (X)myxdr_void,        (X)myxdr_void,        &nfssrv::null_2     },

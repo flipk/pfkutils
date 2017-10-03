@@ -23,16 +23,16 @@ void itsfs_print_func( int arg, char * format, ... );
 void itsfs_addlog( char * format, ... );
 
 struct treeinfo {
-    int                 slave_tcp_fd;
-    int                 treenumber;
-    int                 treeid;
-    Inode_remote_tree * inort;
-    char *              treename;
+    int           slave_tcp_fd;
+    int           treenumber;
+    int           treeid;
+    Inode_tree *  inot;
+    char *        treename;
 
     /**/ treeinfo   ( void );
     void init       ( void );
     void setup      ( char * newfsname, int newfd, int _treenumber, 
-                      Inode_remote_tree * irt, int _treeid );
+                      Inode_tree * it, int _treeid );
     void teardown   ( void );
     bool valid      ( void );
     void sprintinfo ( char * f );
@@ -46,6 +46,7 @@ public:
     Inode_virtual_tree * itv;
     int                  nfs_rpc_udp_fd;
     int                  slave_rendevous_fd;
+    int                  slave2_rendevous_fd;
     treeinfo             trees[ maxvs ];
     int                  source_port;
     int                  nfs_rpc_call_count;

@@ -49,13 +49,13 @@ treeinfo :: init( void )
     slave_tcp_fd = 0;
     treenumber = 0;
     treeid = 0; 
-    inort = NULL;
+    inot = NULL;
     treename = NULL;
 }
 
 void
 treeinfo :: setup( char * newfsname, int newfd, int _treenumber, 
-                   Inode_remote_tree * irt, int _treeid )
+                   Inode_tree * it, int _treeid )
 {
     int newfsnamelen;
 
@@ -65,7 +65,7 @@ treeinfo :: setup( char * newfsname, int newfd, int _treenumber,
 
     slave_tcp_fd = newfd;
     treenumber = _treenumber;
-    inort = irt;
+    inot = it;
     treeid = _treeid;
 }
 
@@ -79,7 +79,7 @@ treeinfo :: teardown( void )
 bool
 treeinfo :: valid( void )
 {
-    return (inort != NULL);
+    return (inot != NULL);
 }
 
 void
@@ -93,7 +93,7 @@ treeinfo :: sprintinfo( char * f )
 void
 treeinfo :: printcache( void )
 {
-    inort->print_cache( 0, itsfs_print_func );
+    inot->print_cache( 0, itsfs_print_func );
 }
 
 
@@ -104,6 +104,7 @@ svr_globals :: svr_globals( nfssrv * _server, Inode_virtual_tree * _itv )
     int i;
     nfs_rpc_udp_fd = 0;
     slave_rendevous_fd = 0;
+    slave2_rendevous_fd = 0;
     for ( i = 0; i < maxvs; i++ )
         trees[i].init();
     source_port = 0;
@@ -176,8 +177,9 @@ svr_globals :: fdset( fd_set * rfds )
 #define SET(fd)  FD_SET(fd,rfds); if ( fd >= max ) max = fd+1
     SET( nfs_rpc_udp_fd );
     SET( slave_rendevous_fd );
+    SET( slave2_rendevous_fd );
     for ( int i = 0; i < maxvs; i++ )
-        if ( trees[i].valid() && !trees[i].inort->bad_fd )
+        if ( trees[i].valid() && trees[i].inot->valid() )
         {
             SET( trees[i].slave_tcp_fd );
         }
@@ -208,7 +210,7 @@ svr_globals :: check_bad_fds( void )
 {
     for ( int i = 0; i < maxvs; i++ )
     {
-        if ( trees[i].valid() && trees[i].inort->bad_fd )
+        if ( trees[i].valid() && !trees[i].inot->valid() )
         {
             itsfs_addlog( "killing tree '%s' because remote fd is dead",
                           trees[i].treename );

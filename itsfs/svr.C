@@ -383,6 +383,7 @@ _itsfssvr_main( int argc, char ** argv )
                 {
                     itsfs_addlog( "rejecting NFS packet from port %d",
                             ntohs( addr.sin_port ));
+                    continue;
                 }
 
                 uchar * replybuf;
