@@ -15,7 +15,7 @@ PROG=	pkutils
 HDRS=	sudo.h main_prog.h m.h main.h regex.h
 CSRCS=	agrep.c crnl.c do_connect.c he.c inet_aton.c \
 	ipipe.c m.c regex.c main.c random-hex.c fmtsdiff.c \
-	xtermbar.c gmarc.c genpw.c waitpid.c pkfstat.c
+	xtermbar.c gmarc.c genpw.c waitpid.c pkfstat.c pk-md5.c
 CPPSRCS= newtail.C rmstar.C makekey.C encrypt_decrypt.C \
 	tcpgate.C tcpgate2.C tcpgate3.C pk_tcp_msg.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
@@ -37,7 +37,8 @@ ELIBS+= pdksh-5.2.14/ksh_precrunch.o
 #endif
 
 #ifdef cygwin32
-ELIBS+= bt/libbt.a treesync/libts.a
+CSRCS+=	treescan.c 
+ELIBS+= treesync/libts.a bt/libbt.a
 DIRS+= bt treesync
 #endif
 

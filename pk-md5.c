@@ -1,10 +1,10 @@
 
-#include "md5.h"
+#include "pk-md5.h"
 #include <string.h>
 
 static void MD5Transform(u_int32_t [4], const unsigned char [64]);
 
-#if LITTLE_ENDIAN
+#if LITTLE_ENDIAN || CYGWIN
 
 #define Encode memcpy
 #define Decode memcpy
@@ -283,4 +283,38 @@ MD5Transform (u_int32_t state[4], const unsigned char block[64])
 
 	/* Zeroize sensitive information. */
 	memset ((void *)x, 0, sizeof (x));
+}
+
+#include <stdio.h>
+
+char *
+MD5File ( const char *filename, char *buf )
+{
+    FILE           * f;
+    MD5_CTX          ctx;
+    unsigned char    digest[16];
+    unsigned char    inbuf[ 1024 ];
+    unsigned int     len;
+
+    f = fopen( filename, "r" );
+    if ( !f )
+        return NULL;
+
+    MD5Init( &ctx );
+
+    while ( 1 )
+    {
+        len = fread( inbuf, 1, sizeof(inbuf), f );
+        if ( len == 0 )
+            break;
+        MD5Update( &ctx, inbuf, len );
+    }
+
+    MD5Final( digest, &ctx );
+    fclose( f );
+
+    for ( len = 0; len < 16; len++ )
+        sprintf( buf + (len*2), "%02x", digest[len] );
+
+    return buf;
 }

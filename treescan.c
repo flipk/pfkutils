@@ -3,9 +3,10 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <strings.h>
-#include <md5.h>
+#include "pk-md5.h"
 #include <signal.h>
 #include <errno.h>
+#include <sys/stat.h>
 
 #define NEW(x,y)  (x *)calloc(y, sizeof(x))
 #define FREE(x)  { if (x != NULL) free(x); x = NULL; }
@@ -28,6 +29,7 @@ lastpart( char * x )
     return ret ? ret+1 : x;
 }
 
+#if !CYGWIN
 static void
 status( int s )
 {
@@ -37,6 +39,7 @@ status( int s )
                  "current_file=\"%s\"\n", current_file );
     }
 }
+#endif
 
 static void
 recurse( char * name )
@@ -56,25 +59,57 @@ recurse( char * name )
         char *ent = de->d_name;
         int cc;
         static char buf[1024];
+        enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
 
-        if (( de->d_type & DT_DIR ) &&
-            (( strcmp( ent, "."  ) == 0 ) ||
-             ( strcmp( ent, ".." ) == 0 )))
-        {
-            continue;
-        }
+#if CYGWIN
+        /* cygwin does not provide a 'type' field in dirents,
+           so we have to stat to know what they are. */
+        struct stat sb;
+#endif
 
         s = NEW( char, strlen(ent)+strlen(name)+2 );
         sprintf( s, "%s/%s", name, ent );
+
+#if CYGWIN
+        if ( stat( s, &sb ) < 0 )
+        {
+            fprintf( stderr, "error in stat '%s': %s\n",
+                     s, strerror( errno ));
+            FREE(s);
+            continue;
+        }
+        if ( S_ISDIR(sb.st_mode))
+            type = TYPE_DIR;
+        else if ( S_ISLNK(sb.st_mode))
+            type = TYPE_LINK;
+        else
+            type = TYPE_FILE;
+#else
+        if ( de->d_type == DT_DIR )
+            type = TYPE_DIR;
+        else if ( de->d_type == DT_LNK )
+            type = TYPE_LINK;
+        else
+            type = TYPE_FILE;
+#endif
+
+        if (( type == TYPE_DIR ) &&
+            (( strcmp( ent, "." ) == 0 ) ||
+             ( strcmp( ent, ".." ) == 0 )))
+        {
+            FREE(s);
+            continue;
+        }
+
         current_file = s;
 
-        switch ( de->d_type )
+        switch ( type )
         {
-        case DT_DIR:
+        case TYPE_DIR:
             recurse( s );
             break;
 
-        case DT_LNK:
+        case TYPE_LINK:
             cc = readlink( s, buf, 1023 );
             if ( cc < 0 )
             {
@@ -86,13 +121,10 @@ recurse( char * name )
             printf( "L %s '%s'\n", s, buf );
             break;
 
-        case DT_REG:
+        case TYPE_FILE:
             MD5File( s, buf );
             printf( "F %s\nH %s %s\n", s, s, buf );
             break;
-
-        default:
-            printf( "U %s\n", s );
         }
 
         FREE( s );
@@ -117,7 +149,9 @@ treescan_main( int argc, char ** argv )
 {
     char *p;
 
+#if !CYGWIN
     signal( SIGINFO, status );
+#endif
 
     if ( argc < 2 )
         usage( 1,NULL );
