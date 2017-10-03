@@ -31,8 +31,6 @@
 
 class id_name_db {
     Btree * bt;
-    uchar * fetch_ret;
-    int fetch_ret_len;
     char fname[ 64 ];
 
     static char * btdump_sprint( void * arg, int noderec,

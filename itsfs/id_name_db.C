@@ -32,15 +32,11 @@ id_name_db :: id_name_db( void )
     Btree::new_file( fbn, 15 );
     bt = new Btree( fbn );
     chmod( (char*)fname, 0600 );
-    fetch_ret = NULL;
-    fetch_ret_len = 0;
 }
 
 id_name_db :: ~id_name_db( void )
 {
     delete bt;
-    if ( fetch_ret )
-        delete[] fetch_ret;
     unlink( fname );
 }
 
@@ -106,6 +102,7 @@ uchar *
 id_name_db :: fetch( int id, inode_file_type &ftype )
 {
     uchar idkey[5];
+    uchar * ret;
     Btree::rec * rec;
 
     idkey[0] = 'I';
@@ -114,18 +111,12 @@ id_name_db :: fetch( int id, inode_file_type &ftype )
     if ( !rec )
         return NULL;
 
-    if ( fetch_ret_len < rec->data.len )
-    {
-        if ( fetch_ret )
-            delete[] fetch_ret;
-        fetch_ret = new uchar[ rec->data.len ];
-        fetch_ret_len = rec->data.len;
-    }
+    ret = new uchar[ rec->data.len ];
 
     ftype = (inode_file_type) rec->data.ptr[0];
-    memcpy( fetch_ret, rec->data.ptr + 5, rec->data.len - 5 );
+    memcpy( ret, rec->data.ptr + 5, rec->data.len - 5 );
     bt->unlock_rec( rec );
-    return fetch_ret;
+    return ret;
 }
 
 int

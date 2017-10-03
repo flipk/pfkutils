@@ -257,6 +257,8 @@ remote_inode_client ::  lstat( uchar * path, struct stat * sb )
     return _stat( path, sb );
 }
 
+#include "../sudo.h"
+
 int
 remote_inode_client ::  _stat( uchar * path, struct stat * sb )
 {
@@ -266,8 +268,8 @@ remote_inode_client ::  _stat( uchar * path, struct stat * sb )
     DEC( errno = EINVAL ; return -1 ; );
     sb->st_mode               = R.stat.mode;
     sb->st_nlink              = R.stat.nlink;
-    sb->st_uid                = getuid();
-    sb->st_gid                = getgid();
+    sb->st_uid                = MY_UID;
+    sb->st_gid                = MY_GID;
     sb->st_size               = R.stat.size;
     sb->st_blksize            = R.stat.blocksize;
     sb->st_rdev               = R.stat.rdev;

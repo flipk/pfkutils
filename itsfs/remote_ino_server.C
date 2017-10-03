@@ -503,7 +503,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
     fd = socket( AF_INET, SOCK_STREAM, 0 );
     if ( fd < 0 )
     {
-        printf( "socket: errno %d\n", errno );
+        printf( "socket: %s\n", strerror( errno ));
         return;
     }
 
@@ -526,7 +526,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
             int e = errno;
             close( fd );
             fd = -1;
-            printf( "bind : errno %d\n", e );
+            printf( "bind : %s\n", strerror( e ));
             return;
         }
 
@@ -543,7 +543,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
             int e = errno;
             close( fd );
             fd = -1;
-            printf( "accept : errno %d\n", e );
+            printf( "accept : %s\n", strerror( e ));
             return;
         }
 
@@ -558,7 +558,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
             int e = errno;
             close( fd );
             fd = -1;
-            printf( "connect : errno %d\n", e );
+            printf( "connect : %s\n", strerror( e ));
             return;
         }
     }
@@ -606,7 +606,7 @@ remote_inode_server_tcp :: dispatch_loop( void )
         cc = read( fd, &l, sizeof( l ));
         if ( cc != sizeof( l ))
         {
-            printf( "tcp 1 read returns %d, errno %d\n", cc, errno );
+            printf( "tcp 1 read returns %d: %s\n", cc, strerror( errno ));
             return;
         }
         l = ntohl( l );
@@ -623,7 +623,7 @@ remote_inode_server_tcp :: dispatch_loop( void )
             cc = read( fd, p, l );
             if ( cc <= 0 )
             {
-                printf( "tcp 3 read returns %d, errno %d\n", cc, errno );
+                printf( "tcp 3 read returns %d: %s\n", cc, strerror( errno ));
                 return;
             }
             p += cc;
@@ -640,7 +640,7 @@ remote_inode_server_tcp :: dispatch_loop( void )
             cc = write( fd, buf, l + 4 );
             if ( cc != (int)( l + 4 ))
             {
-                printf( "tcp 4 write returns %d, errno %d\n", cc, errno );
+                printf( "tcp 4 write returns %d: %s\n", cc, strerror( errno ));
                 return;
             }
         }

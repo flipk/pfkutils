@@ -117,12 +117,14 @@ Inode_remote_tree :: get( int file_id )
         ino->last_stat = time( NULL );
         hashlru.add( ino );
         errno = 0;
+        delete p;
         return ino;
     }
     // else
 
     inode_name_db->del( file_id );
     errno = ENOENT;
+    delete p;
     return NULL;
 }
 
@@ -142,6 +144,8 @@ Inode_remote_tree :: get_parent( int file_id )
 
     uchar np[ MAX_PATH_LENGTH ];
     strcpy( (char*)np, (char*)p );
+    delete p;
+
     uchar * pp = &np[ strlen( (char*)np ) ];
     while ( *pp != '/' && pp != np )
         pp--;
@@ -168,7 +172,7 @@ Inode_remote_tree :: get( int dir_id, uchar * filename )
     Inode_remote * ret = NULL;
 
     dirpath = inode_name_db->fetch( dir_id, dirnftype );
-    if ( !dirpath )
+    if ( dirpath == NULL )
     {
         errno = EEXIST;
         return NULL;
@@ -184,6 +188,7 @@ Inode_remote_tree :: get( int dir_id, uchar * filename )
 
     uchar newpath[ Inode_tree::MAX_PATH_LENGTH ];
     sprintf( (char*)newpath, "%s/%s", dirpath, filename );
+    delete dirpath;
 
     inode_file_type newfilenftype;
     int newfileid = inode_name_db->fetch( mount_id, newpath, newfilenftype );
@@ -307,10 +312,12 @@ Inode_remote_tree :: destroy( int fileid, inode_file_type nftype )
         errno = EEXIST;
         return -1;
     }
+    // deleting p is gross
     if ( nftype == INODE_DIR )
     {
         if ( rict.clnt.rmdir( p ) < 0 )
         {
+            delete p;
             if ( errno != ENOENT )
                 return -1;
             err_ret = errno;
@@ -320,6 +327,7 @@ Inode_remote_tree :: destroy( int fileid, inode_file_type nftype )
     {
         if ( rict.clnt.unlink( p ) < 0 )
         {
+            delete p;
             if ( errno != ENOENT )
                 return -1;
             err_ret = errno;
@@ -386,8 +394,11 @@ Inode_remote_tree :: _create( int dirid,
         return NULL;
     }
 
+    // deleting dirpath is dirty
+
     if ( rict.clnt.lstat( dirpath, &sb ) < 0 )
     {
+        delete dirpath;
         Inode_remote * diri = hashlru.find( dirid );
         if ( diri )
         {
@@ -422,6 +433,7 @@ Inode_remote_tree :: _create( int dirid,
             inode_name_db->add( mount_id, dirpath, dirnftype, dirid );
         }
         errno = ENOTDIR;
+        delete dirpath;
         return NULL;
     }
     
@@ -434,6 +446,7 @@ Inode_remote_tree :: _create( int dirid,
 
     uchar newpath[ Inode_tree::MAX_PATH_LENGTH ];
     sprintf( (char*)newpath, "%s/%s", dirpath, name );
+    delete dirpath;
 
     int fileid;
     inode_file_type filenftype;
@@ -506,6 +519,8 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
 
     if ( olddirpath == NULL || newdirpath == NULL )
     {
+        delete olddirpath;
+        delete newdirpath;
         errno = ENOENT;
         return -1;
     }
@@ -516,6 +531,8 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
     if (( rict.clnt.lstat( olddirpath, &sb1 ) < 0 ) ||
         ( rict.clnt.lstat( newdirpath, &sb2 ) < 0 ))
     {
+        delete olddirpath;
+        delete newdirpath;
         // should update name_db
         errno = ENOENT;
         return -1;
@@ -524,6 +541,8 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
     if ((( sb1.st_mode & S_IFMT ) != S_IFDIR ) ||
         (( sb2.st_mode & S_IFMT ) != S_IFDIR ))
     {
+        delete olddirpath;
+        delete newdirpath;
         // should update name_db
         errno = ENOTDIR;
         return -1;
@@ -531,6 +550,8 @@ Inode_remote_tree :: rename( int olddir, uchar *oldfile,
 
     sprintf( (char*)oldpath, "%s/%s", olddirpath, oldfile );
     sprintf( (char*)newpath, "%s/%s", newdirpath, newfile );
+    delete olddirpath;
+    delete newdirpath;
 
     if ( rict.clnt.rename( oldpath, newpath ) < 0 )
         return -1;

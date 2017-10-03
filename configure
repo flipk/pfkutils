@@ -104,6 +104,9 @@ fi
 my_uid=`id | sed -e 's/^uid=\([0-9][0-9]*\).*$/\1/'`
 echo '#define MY_UID' $my_uid > sudo.h.tmp
 
+my_gid=`id | sed -e 's/.* gid=\([0-9][0-9]*\).*$/\1/'`
+echo '#define MY_GID' $my_gid >> sudo.h.tmp
+
 if cmp sudo.h.tmp sudo.h ; then
     echo sudo.h unchanged
     rm -f sudo.h.tmp
