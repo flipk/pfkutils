@@ -1,7 +1,8 @@
 
-#include "state_machine_base.H"
+#include "pk_state_machine_base.H"
 
 extern "C" {
+    void sprintf( char *, char *, ... );
     void printf( char *, ... );
     int tickGet( void );
     void memset( void *, int, int );
@@ -11,7 +12,7 @@ extern "C" {
     int strlen( char * );
 };
 
-STATE_MACHINE_BASE :: STATE_MACHINE_BASE( char * _name )
+PK_STATE_MACHINE_BASE :: PK_STATE_MACHINE_BASE( char * _name )
 {
     current_state = INVALID_STATE;
     memset( &logentries, 0, sizeof( logentries ));
@@ -21,21 +22,21 @@ STATE_MACHINE_BASE :: STATE_MACHINE_BASE( char * _name )
     memcpy( name, _name, namelen );
 }
 
-STATE_MACHINE_BASE :: ~STATE_MACHINE_BASE( void )
+PK_STATE_MACHINE_BASE :: ~PK_STATE_MACHINE_BASE( void )
 {
     free( name );
 }
 
 void
-STATE_MACHINE_BASE :: first_call( void )
+PK_STATE_MACHINE_BASE :: first_call( void )
 {
     constructor_hook();
     _first_call();
     call_pre_hooks();
 }
 
-STATE_MACHINE_BASE :: transition_return
-STATE_MACHINE_BASE :: transition( void * m )
+PK_STATE_MACHINE_BASE :: transition_return
+PK_STATE_MACHINE_BASE :: transition( void * m )
 {
     int it;
 
@@ -70,32 +71,37 @@ STATE_MACHINE_BASE :: transition( void * m )
 }
 
 void
-STATE_MACHINE_BASE :: printhist( void )
+PK_STATE_MACHINE_BASE :: printhist( void (*printfunc)(char *) )
 {
     int i;
     logentry * le;
+    char outline[ 100 ];
 
 #define FORMAT1 "%-8s %-31s %-31s %-31s\n"
 #define FORMAT2 "%8d %-31s %-31s %-31s\n"
 
-    printf( "\n\n" FORMAT1, 
-            "time", "prev", "input", "next" );
+    sprintf( outline, "\n\n" FORMAT1, 
+             "time", "prev", "input", "next" );
+    printfunc( outline );
 
     i = logpos;
     do { 
         le = &logentries[i];
         if ( le->time != 0 )
-            printf( FORMAT2,
-                    le->time,
-                    dbg_state_name( le->prev ),
-                    dbg_input_name( le->input ),
-                    dbg_state_name( le->next ) );
+        {
+            sprintf( outline, FORMAT2,
+                     le->time,
+                     dbg_state_name( le->prev ),
+                     dbg_input_name( le->input ),
+                     dbg_state_name( le->next ) );
+            printfunc( outline );
+        }
         i = (i+1)%numlogentries;
     } while ( i != logpos );
 }
 
 char *
-STATE_MACHINE_BASE :: current_state_name( void )
+PK_STATE_MACHINE_BASE :: current_state_name( void )
 {
     return dbg_state_name( current_state );
 }

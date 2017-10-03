@@ -1,6 +1,6 @@
 
 #include "test_machine.H"
-#include "state_machine_base.H"
+#include "pk_state_machine_base.H"
 #include "TEST_dproc.H"
 #include "TEST_nib.H"
 
@@ -58,7 +58,7 @@ find_ss( MESSAGE_TYPE * m, int * dev, int * slot, int * subslot )
 }
 
 int
-handle_mb0( MESSAGE_TYPE * m, STATE_MACHINE_BASE ** devs )
+handle_mb0( MESSAGE_TYPE * m, PK_STATE_MACHINE_BASE ** devs )
 {
 	int dev, slot, subslot;
 
@@ -136,7 +136,7 @@ dproctest_process( void )
 {
 	MESSAGE_TYPE msg;
 	char body[ MAXMSG ];
-	STATE_MACHINE_BASE * devs [NUMDEVS];
+	PK_STATE_MACHINE_BASE * devs [NUMDEVS];
 	int dev;
 	int mb;
 

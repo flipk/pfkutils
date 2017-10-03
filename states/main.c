@@ -91,14 +91,14 @@ pkstgen_main( int argc, char ** argv )
     if ( args.emit_base_class )
     {
         fprintf( stderr, "*** producing state machine base header\n" );
-        unlink( "state_machine_base.H" );
-        fd = open( "state_machine_base.H", O_CREAT | O_WRONLY, 0644 );
+        unlink( "pk_state_machine_base.H" );
+        fd = open( "pk_state_machine_base.H", O_CREAT | O_WRONLY, 0644 );
         write( fd, baseclassH, strlen( baseclassH ));
         close( fd );
 
         fprintf( stderr, "*** producing state machine base impl\n" );
-        unlink( "state_machine_base.C" );
-        fd = open( "state_machine_base.C", O_CREAT | O_WRONLY, 0644 );
+        unlink( "pk_state_machine_base.C" );
+        fd = open( "pk_state_machine_base.C", O_CREAT | O_WRONLY, 0644 );
         write( fd, baseclassC, strlen( baseclassC ));
         close( fd );
     }

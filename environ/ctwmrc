@@ -144,6 +144,7 @@ menu "defops"
 	"Mozilla"	f.exec "mozilla &"
 	"MozillaMail"	f.exec "mozilla -mail &"
 	"Lap"		!"lap&"
+	"Runner"	!"run0&"
 	":2"		!"colon2&"
 	"Lock"		!"xlock&"
         ""		f.nop

@@ -4,7 +4,7 @@ OBJS= parse_actions.o machine.o parser.o tokenizer.o main.o templates.o
 SRCS= parse_actions.c machine.c parser.c tokenizer.c main.c
 HDRS= parse_actions.h machine.h wordentry.h
 TEMPLATES= template.code template.header template.skel \
-	state_machine_base.C state_machine_base.H
+	pk_state_machine_base.C pk_state_machine_base.H
 
 #ifdef freebsd
 OPTS= -O3 -DFREEBSD=1
@@ -42,8 +42,8 @@ templates.c: $(TEMPLATES) tmpl_to_c.c
 		template.code   template_code    \
 		template.header template_header  \
 		template.skel   template_skel    \
-		state_machine_base.H baseclassH  \
-		state_machine_base.C baseclassC  \
+		pk_state_machine_base.H baseclassH  \
+		pk_state_machine_base.C baseclassC  \
 		> templates.c
 
 depend: Makefile.in $(SRCS) templates.c $(HDRS)

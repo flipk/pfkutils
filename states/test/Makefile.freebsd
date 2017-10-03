@@ -21,36 +21,36 @@ TEST.o: $(OBJS)
 	$(CRUNCH) -k dproctest TEST.o
 	$(NM) -n TEST.o > TEST.o.symbols
 
-TEST_base.o: state_machine_base.C state_machine_base.H
-	$(CC) $(CCOPTS) -c state_machine_base.C -o TEST_base.o
+TEST_base.o: pk_state_machine_base.C pk_state_machine_base.H
+	$(CC) $(CCOPTS) -c pk_state_machine_base.C -o TEST_base.o
 
-state_machine_base.C state_machine_base.H: TEST_nib.C
+pk_state_machine_base.C pk_state_machine_base.H: TEST_nib.C
 
-TEST_nib.C TEST_nib.H: TST_nib.st ../t
-	../t TST_nib.st   -b -h TEST_nib.H   -c TEST_nib.C   -s TEST_nibskel.C
+TEST_nib.C TEST_nib.H: TST_nib.st ../../t/pkstgen
+	../../t/pkstgen TST_nib.st   -b -h TEST_nib.H   -c TEST_nib.C   -s TEST_nibskel.C
 
-TEST_dproc.C TEST_dproc.H: TST_dproc.st ../t
-	../t TST_dproc.st -b -h TEST_dproc.H -c TEST_dproc.C -s TEST_dprocskel.C
+TEST_dproc.C TEST_dproc.H: TST_dproc.st ../../t/pkstgen
+	../../t/pkstgen TST_dproc.st -b -h TEST_dproc.H -c TEST_dproc.C -s TEST_dprocskel.C
 
-TEST_nib.o: TEST_nib.C TEST_nib.H state_machine_base.H test_machine.H
+TEST_nib.o: TEST_nib.C TEST_nib.H pk_state_machine_base.H test_machine.H
 	$(CC) $(CCOPTS) -c TEST_nib.C
 
-TEST_dproc.o: TEST_dproc.C TEST_dproc.H state_machine_base.H test_machine.H
+TEST_dproc.o: TEST_dproc.C TEST_dproc.H pk_state_machine_base.H test_machine.H
 	$(CC) $(CCOPTS) -c TEST_dproc.C
 
-TEST_machine.o: test_machine.C test_machine.H TEST_nib.H TEST_dproc.H state_machine_base.H
+TEST_machine.o: test_machine.C test_machine.H TEST_nib.H TEST_dproc.H pk_state_machine_base.H
 	$(CC) $(CCOPTS) -c test_machine.C -o TEST_machine.o
 
 skel: TEST_dprocskel.o TEST_nibskel.o
 
-TEST_dprocskel.o: TEST_dprocskel.C TEST_dproc.H state_machine_base.H test_machine.H
+TEST_dprocskel.o: TEST_dprocskel.C TEST_dproc.H pk_state_machine_base.H test_machine.H
 	$(CC) $(CCOPTS) -c TEST_dprocskel.C
 
-TEST_nibskel.o: TEST_nibskel.C TEST_nib.H state_machine_base.H test_machine.H
+TEST_nibskel.o: TEST_nibskel.C TEST_nib.H pk_state_machine_base.H test_machine.H
 	$(CC) $(CCOPTS) -c TEST_nibskel.C
 
 
 clean:
 	rm -f TEST*
 	rm -f *.o
-	rm -f state_machine_base.?
+	rm -f pk_state_machine_base.?

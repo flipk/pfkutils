@@ -3,10 +3,6 @@
 
 machine	 DPROC
 
-# the name of the data type used for the input and output messages.
-
-message_type %{ MESSAGE_TYPE %}
-
 # this is the private data stored in the class and used by
 # the user-written custom methods.
 

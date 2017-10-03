@@ -16,7 +16,7 @@
 
 @@machine@@_STATE_MACHINE :: @@machine@@_STATE_MACHINE( char * name
             @@constructor_args@@ )
-	: STATE_MACHINE_BASE( name )
+	: PK_STATE_MACHINE_BASE( name )
 {
 	@@constructor_code@@
 }
@@ -65,7 +65,7 @@ void
 	}
 }
 
-STATE_MACHINE_BASE::transition_return
+PK_STATE_MACHINE_BASE::transition_return
 @@machine@@_STATE_MACHINE :: _transition( int it )
 {
 	next_state = INVALID_STATE;

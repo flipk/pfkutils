@@ -127,11 +127,6 @@ destroy_machine( void )
         free( machine.destructor_code->data );
         free( machine.destructor_code );
     }
-    if ( machine.message_type )
-    {
-        free( machine.message_type->data );
-        free( machine.message_type );
-    }
     if ( machine.startv )
     {
         free( machine.startv->data );
@@ -398,12 +393,6 @@ process_var( char *cp )
         {
             if ( machine.destructor_code && machine.destructor_code->data )
                 printf( "%s\n", machine.destructor_code->data );
-            return ret;
-        }
-    IFSTR("message_type")
-        {
-            if ( machine.message_type && machine.message_type->data )
-                printf( "%s", machine.message_type->data );
             return ret;
         }
     IFSTR("endimpl")

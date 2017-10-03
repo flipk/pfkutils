@@ -15,6 +15,10 @@
 
 template <class T, int instance> class LList;
 
+#ifndef DLL2BAIL
+#define DLL2BAIL(reason) { printf reason ; kill( 0, 6 ); }
+#endif
+
 template <class T>
 class LListLinks
 {
@@ -31,12 +35,14 @@ public:
         next = prev = NULL;
         onlist = 0;
     }
+    ~LListLinks( void ) {
+        if ( onlist != 0 )
+            DLL2BAIL(( "ERROR LLIST ITEM DELETED BUT STILL ON A LIST!\n" ));
+    }
 };
 
 // to use LList, type T must have the following member:
 //    - LListLinks<T>  links[ DLL2_COUNT ];
-
-#define BAIL(reason) { printf reason ; kill( 0, 6 ); }
 
 template <class T, int instance>
 class LList
@@ -49,7 +55,7 @@ public:
     void add( T * x ) {
         LListLinks<T> * ll = & x->links[instance];
         if ( onlist( x )) 
-            BAIL(( "ERROR LLIST ENTRY ALREADY ON LIST %#x\n",
+            DLL2BAIL(( "ERROR LLIST ENTRY ALREADY ON LIST %#x\n",
                    (int)ll->onlist ));
         ll->onlist = (void*)this;
         ll->next = NULL;
@@ -64,7 +70,7 @@ public:
     void remove( T * x ) {
         LListLinks<T> * ll = & x->links[instance];
         if ( !onthislist( x ))
-            BAIL(( "ERROR LLIST ENTRY NOT ON THIS LIST %#x != %#x\n",
+            DLL2BAIL(( "ERROR LLIST ENTRY NOT ON THIS LIST %#x != %#x\n",
                    (int)ll->onlist, (int)this ));
         ll->onlist = 0;
         if ( ll->next )
@@ -82,10 +88,10 @@ public:
         LListLinks<T> * exll = & existing->links[instance];
         LListLinks<T> * itll = & item->links[instance];
         if ( !onthislist( existing ))
-            BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
                    "NOT ON THIS LIST\n" ));
         if ( onlist( item ))
-            BAIL(( "ERROR CANNOT DO add_after WHEN NEW ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN NEW ITEM "
                    "IS ALREADY ON A LIST\n" ));
         itll->onlist = (void*)this;
         itll->next = exll->next;
@@ -101,10 +107,10 @@ public:
         LListLinks<T> * exll = & existing->links[instance];
         LListLinks<T> * itll = & item->links[instance];
         if ( !onthislist( existing ))
-            BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
                    "NOT ON THIS LIST\n" ));
         if ( onlist( item ))
-            BAIL(( "ERROR CANNOT DO add_after WHEN NEW ITEM "
+            DLL2BAIL(( "ERROR CANNOT DO add_after WHEN NEW ITEM "
                    "IS ALREADY ON A LIST\n" ));
         itll->onlist = (void*)this;
         itll->prev = exll->prev;
@@ -133,12 +139,12 @@ public:
     }
     T * get_next( T * x ) {
         if ( !onthislist( x ))
-            BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
+            DLL2BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
         return x->links[instance].next;
     }
     T * get_prev( T * x ) {
         if ( !onthislist( x ))
-            BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
+            DLL2BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
         return x->links[instance].prev;
     }
 };

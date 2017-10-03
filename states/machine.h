@@ -17,7 +17,6 @@ typedef struct {
     VERBATIM * constructor_args;
     VERBATIM * constructor_code;
     VERBATIM * destructor_code;
-    VERBATIM * message_type;
     VERBATIM * startv;
     VERBATIM * datav;
     VERBATIM * endhdrv;

@@ -16,11 +16,12 @@
  */
 
 @@starthdr@@
-#include "state_machine_base.H"
+#include "pk_state_machine_base.H"
 
-class @@machine@@_STATE_MACHINE : public STATE_MACHINE_BASE {
+class @@machine@@_STATE_MACHINE : public PK_STATE_MACHINE_BASE {
 private:
 @@data@@
+public:
 	enum input_types {
 @@inputlist@@
 	};
@@ -30,17 +31,16 @@ private:
 	enum state_values {
 @@statelist@@
 	};
-@@callenums@@
-	void call_pre_hooks( void );
-	char * dbg_state_name ( int );
-	char * dbg_input_name ( int );
-	char * dbg_output_name( int );
-public:
 	@@machine@@_STATE_MACHINE( char * name
 				   @@constructor_args@@ );
 	~@@machine@@_STATE_MACHINE( void );
 	transition_return _transition( int );
 private:
+@@callenums@@
+	void call_pre_hooks( void );
+	char * dbg_state_name ( int );
+	char * dbg_input_name ( int );
+	char * dbg_output_name( int );
 	/* NOTE: USER MUST IMPLEMENT ALL OF THE FOLLOWING */
 	int  input_discriminator( void * m );
 	void output_generator( int );

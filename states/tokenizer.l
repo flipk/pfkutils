@@ -47,7 +47,6 @@ machine		{ RET( MACHINEKW ); }
 machine_cargs	{ RET( VTEXT_CARGS ); }
 machine_ccode	{ RET( VTEXT_CCODE ); }
 machine_dcode	{ RET( VTEXT_DCODE ); }
-message_type	{ RET( MESSAGE_TYPE ); }
 starthdr	{ RET( VTEXT_STARTHDR ); }
 machine_data	{ RET( VTEXT_DATA     ); }
 endhdr		{ RET( VTEXT_ENDHDR   ); }

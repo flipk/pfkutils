@@ -1,18 +1,19 @@
 
-#ifndef __STATE_MACHINE_BASE_H_
-#define __STATE_MACHINE_BASE_H_
+#ifndef __PK_STATE_MACHINE_BASE_H_
+#define __PK_STATE_MACHINE_BASE_H_
 
-class STATE_MACHINE_BASE {
+class PK_STATE_MACHINE_BASE {
 public:
-    STATE_MACHINE_BASE( char * _name );
-    ~STATE_MACHINE_BASE( void );
+    PK_STATE_MACHINE_BASE( char * _name );
+    ~PK_STATE_MACHINE_BASE( void );
 
     enum transition_return {
         TRANSITION_OK, TRANSITION_EXIT
     };
     transition_return transition( void * m );
-    void printhist( void );
+    void printhist( void (*printfunc)(char *) );
     void first_call( void );
+    int get_current_state( void ) { return current_state; }
     char * current_state_name( void );
     char * name;
 protected:
@@ -31,6 +32,7 @@ protected:
     virtual void debug_transition_hook( int input,
                                         int old_state,
                                         int new_state ) = 0;
+
     static const int INVALID_STATE = -1;
     int current_state;
     int next_state;
@@ -45,4 +47,4 @@ protected:
     logentry logentries[ numlogentries ];
 };
 
-#endif /* __STATE_MACHINE_BASE_H_ */
+#endif /* __PK_STATE_MACHINE_BASE_H_ */

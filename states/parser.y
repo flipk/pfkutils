@@ -22,7 +22,6 @@ extern int yylex( void );
 %token STATES STATE PRE POST CALL OUTPUT INLINE
 %token INPUT TIMEOUT EXIT NEXT CASE EMPTY
 
-%token MESSAGE_TYPE
 %token VTEXT_CARGS
 %token VTEXT_CCODE
 %token VTEXT_DCODE
@@ -61,8 +60,6 @@ stmts
 stmt
 	: MACHINEKW ident
 	  { machine_addname( $2 ); }
-	| MESSAGE_TYPE VTEXT
-	  { machine.message_type = $2; }
 	| VTEXT_DATA     VTEXT
 	  { machine.datav = $2; }
 	| VTEXT_CARGS VTEXT

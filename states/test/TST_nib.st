@@ -1,6 +1,5 @@
 
 machine	 NIB
-message_type %{ MESSAGE_TYPE %}
 machine_data
 %{
 	int slot;
