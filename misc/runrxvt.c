@@ -1,5 +1,6 @@
 #if 0
-gcc -mno-cygwin -Wl,--subsystem,windows runemacs.c -o runemacs.exe
+gcc -mno-cygwin -Wl,--subsystem,windows runrxvt.c -DGEOM=1 -o runrxvt15.exe
+gcc -mno-cygwin -Wl,--subsystem,windows runrxvt.c -DGEOM=2 -o runrxvt20.exe
 exit 0
 #endif
 
@@ -9,8 +10,14 @@ exit 0
 
 #define PATH "/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Program Files/QuickTime/QTSystem/:/usr/lib/lapack"
 
-#define      PROGRAM  "c:\\cygwin\\util\\emacs-20.7\\bin\\emacs.exe"
-#define PROGRAM_ARGS  "-fg yellow -bg black"
+#if GEOM==1
+#define GEOMETRY "10x15"
+#else
+#define GEOMETRY "10x20"
+#endif
+
+#define      PROGRAM  "c:\\cygwin\\bin\\rxvt.exe"
+#define PROGRAM_ARGS  "-font " GEOMETRY " -e bash --login"
 #define         HOME  "c:\\Users\\flipk"
 
 int WINAPI
@@ -23,7 +30,7 @@ WinMain (HINSTANCE hSelf, HINSTANCE hPrev, LPSTR cmdline, int nShow)
     DWORD ret_code = 0;
     char ncmdline[MAX_PATH];
 
-    sprintf( ncmdline, "%s %s %s", PROGRAM, PROGRAM_ARGS, cmdline );
+    sprintf(ncmdline, "%s %s %s", PROGRAM, PROGRAM_ARGS, cmdline);
     SetEnvironmentVariable("PATH", PATH);
     SetEnvironmentVariable("HOME", HOME);
     SetCurrentDirectory(HOME);
