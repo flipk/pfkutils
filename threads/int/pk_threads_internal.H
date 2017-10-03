@@ -80,6 +80,9 @@ public:
         _unlock();
         return ret;
     }
+    int get_cnt( void ) {
+        return list.get_cnt();
+    }
     PK_Thread * get_head( void ) {
         return list.get_head();
     }

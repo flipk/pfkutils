@@ -10,7 +10,7 @@ PK_Threads * th;
 PK_Threads :: PK_Threads( int thread_hash_size,
                           int message_queue_hash_size,
                           int semaphore_hash_size,
-                          int timer_hash_size )
+                          int timer_hash_size, int _tps )
 {
     if ( th )
     {
@@ -20,15 +20,17 @@ PK_Threads :: PK_Threads( int thread_hash_size,
 
     new PK_Message_Manager( message_queue_hash_size );
     new PK_Semaphores( semaphore_hash_size );
-    new PK_Timer_Manager( timer_hash_size );
+    new PK_Timer_Manager( _tps, timer_hash_size );
     thread_list = new PK_Thread_List( thread_hash_size );
     running = false;
+    pthread_cond_init( &runner_wakeup, NULL );
 
     th = this;
 }
 
 PK_Threads :: ~PK_Threads( void )
 {
+    pthread_cond_destroy( &runner_wakeup );
     th = NULL;
     delete thread_list;
     delete PK_Timers_global;
@@ -46,6 +48,8 @@ void
 PK_Threads :: remove( PK_Thread * t )
 {
     thread_list->remove( t );
+    if ( thread_list->get_cnt() == 0 )
+        pthread_cond_signal( &runner_wakeup );
 }
 
 void
@@ -77,10 +81,14 @@ PK_Threads :: run( void )
 {
     PK_Thread * t;
     void * ret;
+
+    pthread_mutex_t  mut;
+    pthread_mutex_init( &mut, NULL );
     running = true;
-    while ( t = thread_list->get_head() )
-        pthread_join( t->get_id(), &ret );
+    while ( thread_list->get_cnt() > 0 )
+        pthread_cond_wait( &runner_wakeup, &mut );
     running = false;
+    pthread_mutex_destroy( &mut );
 }
 
 //
@@ -98,6 +106,7 @@ PK_Thread :: PK_Thread( void )
     pthread_create( &id, NULL, _entry, (void*) this );
     sprintf( name+8, "%08x", (unsigned int) id );
     th->add( this );
+    pthread_detach( id );
 }
 
 //static
@@ -141,6 +150,7 @@ PK_Thread :: resume( void )
     else
         startup->needed = false;
     pthread_mutex_unlock( &startup->mutex );
+
     if ( send_sig )
         pthread_cond_signal( &startup->cond );
 }

@@ -17,6 +17,7 @@ class PK_Thread_List;
 
 class PK_Threads {
     PK_Thread_List * thread_list;
+    pthread_cond_t  runner_wakeup;
     bool running;
     friend class PK_Thread;
     // following only called by PK_Thread base class
@@ -28,7 +29,7 @@ public:
     PK_Threads( int thread_hash_size,
                 int message_queue_hash_size,
                 int semaphore_hash_size,
-                int timer_hash_size );
+                int timer_hash_size, int _tps );
     ~PK_Threads( void );
     PK_Thread * find_name( char * name );
     PK_Thread * find_id( pthread_t id );
@@ -112,6 +113,9 @@ public:
     static bool timer_cancel( int tid, pk_msg_int ** ptr, int * remaining ) {
         return PK_Timers_global->cancel( tid, ptr, remaining );
     }
+    static int tps( void ) { return PK_Timers_global->tps(); }
+    static void sleep( int ticks ) { return PK_Timers_global->sleep( ticks ); }
+    static int get_time( void ) { return PK_Timers_global->get_time(); }
 };
 
 #endif /* __THREADS_H__ */

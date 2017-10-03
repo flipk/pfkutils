@@ -37,6 +37,8 @@ class PK_Timer_Manager {
     pthread_mutex_t  mutex;
     PK_Timer_List  * timers;
     int fds[2]; // pipe
+    pthread_t th1;
+    pthread_t th2;
     void _thread1( void );
     void _thread2( void );
     static void * timer_thread1( void * arg );
@@ -45,8 +47,10 @@ class PK_Timer_Manager {
     void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
     int  _create( PK_Timer *, int ticks );
     void  expire( PK_Timer * );
+    int ticks_per_second;
+    int   global_time;
 public:
-    PK_Timer_Manager( int _hashsize );
+    PK_Timer_Manager( int tps, int _hashsize );
     ~PK_Timer_Manager( void );
 // returns a timer id
     int   create( int ticks, int qid, pk_msg_int * msg );
@@ -55,7 +59,10 @@ public:
 // returns true, msg ptr, and ticks remaining if timer was still running
     bool  cancel( int tid, pk_msg_int **, int * ticks_remaining ); 
     bool  cancel( int tid ) { return cancel( tid, NULL, NULL ); }
-    int   global_time;
+//
+    int   tps( void ) { return ticks_per_second; }
+    void  sleep( int ticks );
+    int   get_time( void ) { return global_time; }
 };
 
 extern PK_Timer_Manager * PK_Timers_global;

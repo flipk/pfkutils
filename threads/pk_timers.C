@@ -8,20 +8,23 @@
 
 PK_Timer_Manager * PK_Timers_global;
 
-PK_Timer_Manager :: PK_Timer_Manager( int _hashsize )
+PK_Timer_Manager :: PK_Timer_Manager( int _tps, int _hashsize )
 {
     if ( PK_Timers_global )
         kill(0,6);
 
+    ticks_per_second = _tps;
     timers = new PK_Timer_List( _hashsize );
 
     pthread_mutex_init( &mutex, NULL );
 
     pipe( fds );
 
-    pthread_t th;
-    pthread_create( &th, NULL, timer_thread1, (void*) this );
-    pthread_create( &th, NULL, timer_thread2, (void*) this );
+    pthread_create( &th1, NULL, timer_thread1, (void*) this );
+    pthread_create( &th2, NULL, timer_thread2, (void*) this );
+
+    pthread_detach( th1 );
+    pthread_detach( th2 );
 
     global_time = 0;
     PK_Timers_global = this;
@@ -29,9 +32,13 @@ PK_Timer_Manager :: PK_Timer_Manager( int _hashsize )
 
 PK_Timer_Manager :: ~PK_Timer_Manager( void )
 {
+    pthread_cancel( th1 );
+    pthread_cancel( th2 );
+    PK_Timers_global = NULL;
     pthread_mutex_destroy( &mutex );
     delete timers;
-    PK_Timers_global = NULL;
+    close( fds[0] );
+    close( fds[1] );
 }
 
 int
@@ -42,6 +49,8 @@ PK_Timer_Manager :: _create( PK_Timer * nt, int ticks )
     _lock();
     do {
         tid = random() & 0x7fffffff;
+        if ( tid == 0 || tid == -1 )
+            continue;
         t = timers->find( tid );
     } while ( t != NULL );
     nt->tid = tid;
@@ -123,6 +132,20 @@ PK_Timer_Manager :: cancel( int tid,
     return false;
 }
 
+void
+PK_Timer_Manager :: sleep( int ticks )
+{
+    PK_Timeout_Obj    pkto;
+
+    (void) create( ticks, &pkto );
+
+    pthread_mutex_t   mut;
+    pthread_mutex_init( &mut, NULL );
+    pthread_mutex_lock( &mut );
+    pthread_cond_wait( &pkto.cond, &mut );
+    pthread_mutex_destroy( &mut );
+}
+
 //static
 void *
 PK_Timer_Manager :: timer_thread1( void * arg )
@@ -143,9 +166,11 @@ void
 PK_Timer_Manager :: _thread1( void )
 {
     char c = 1;
+    int delay = 1000000 / ticks_per_second;
     while ( 1 )
     {
-        usleep( 100000 );
+        usleep( delay );
+        pthread_testcancel();
         write( fds[1], &c, 1 );
     }
 }
@@ -177,8 +202,8 @@ PK_Timer_Manager :: _thread2( void )
     while ( 1 )
     {
         read( fds[0], &c, 1 );
+        pthread_testcancel();
         global_time++;
-
         do {
             _lock();
             t = timers->get_head();

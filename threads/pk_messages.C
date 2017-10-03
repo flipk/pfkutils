@@ -39,6 +39,8 @@ PK_Message_Manager :: create( char * name )
     _lock();
     do {
         qid = random() & 0x7fffffff;
+        if ( qid == 0 || qid == -1 )
+            continue;
         mq = queues->find( qid );
     } while ( mq != NULL );
     nmq->qid = qid;

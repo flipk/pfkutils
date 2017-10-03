@@ -57,17 +57,39 @@ test2 :: entry( void )
     msg_send( qids[0], m );
 }
 
+class test3 : public PK_Thread {
+    void entry( void );
+public:
+    test3( void ) { resume(); }
+};
+
+void
+test3 :: entry( void )
+{
+    int i;
+    printf( "about to sleep\n" );
+
+    for ( i = 10; i >= 0; i-- )
+    {
+        printf( "%d ", i );
+        fflush( stdout );
+        sleep( 1 );
+    }
+    printf( "\ndone sleeping, creating 2 test threads\n" );
+
+    new test1;
+    new test2;
+}
+
 int
 main()
 {
-    new PK_Threads( 100, 100, 100, 100 );
+    new PK_Threads( 100, 100, 100, 100, 10 );
 
     int qid1 = PK_Thread::msg_create( "q1" );
     int qid2 = PK_Thread::msg_create( "q2" );
 
-    new test1;
-    new test2;
-
+    new test3;
     th->run();
 
     PK_Thread::msg_destroy( qid1 );
