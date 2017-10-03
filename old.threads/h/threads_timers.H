@@ -26,7 +26,9 @@ enum timer_lists {
 };
 
 class ThreadTimers {
-    LListHash     <timerParams,TIMER_LIST_HASH >  hash;
+    struct ThreadTimers_hash_1;
+    LListHash     <timerParams,int,ThreadTimers_hash_1,
+                   TIMER_LIST_HASH >  hash;
     LListOrderedQ <timerParams,TIMER_LIST_QUEUE>  oq;
 
     ThreadSemaphore * timer_sem;

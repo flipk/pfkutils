@@ -28,6 +28,21 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+
+struct Inode_remote_tree :: Inode_remote_tree_hash_1 {
+public:
+    static int hash_key( Inode_remote * item ) {
+        return item->file_id;
+    }
+    static int hash_key( int key ) {
+        return key;
+    }
+    static bool hash_key_compare( Inode_remote * item, int key ) {
+        return (item->file_id == key);
+    }
+};
+
+
 Inode_remote_tree :: Inode_remote_tree( int tree_id,
                                         uchar * _path,
                                         int fd )

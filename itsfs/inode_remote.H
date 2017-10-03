@@ -29,6 +29,7 @@ class Inode_remote;
 class Inode_remote_tree : public Inode_tree {
 public:
     enum { DLL2_HASH, DLL2_LRU, NUM_DLL2 };
+    struct  Inode_remote_tree_hash_1;
 private:
     uchar * rootpath;
 
@@ -40,7 +41,8 @@ private:
     int zerorefs; // count of members whose refcount is zero
     bool bad_fd;
 
-    LListHashLRU<Inode_remote,DLL2_HASH,DLL2_LRU> hashlru;
+    LListHashLRU<Inode_remote,int,Inode_remote_tree_hash_1,
+                 DLL2_HASH,DLL2_LRU> hashlru;
 
     friend class Inode_remote;
 
@@ -95,7 +97,6 @@ class Inode_remote : public Inode {
     friend class Inode_remote_tree;
 public:
     LListLinks<Inode_remote> links[ Inode_remote_tree::NUM_DLL2 ];
-    /**/    int       hash_key  ( void ) { return file_id; }
     /**/          Inode_remote  ( Inode_remote_tree * it, uchar * path,
                                   int _fileid, inode_file_type );
     virtual      ~Inode_remote  ( void );

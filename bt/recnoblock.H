@@ -23,7 +23,9 @@ class FileBlockNumber {
     static const int           max_age = 15;  // in seconds
 
     struct page;         // private
-    typedef LListHashLRU<page,BT_DLL2_HASH,BT_DLL2_LRU> page_lru;
+    struct FBN_page_hash_1;  // private
+    typedef LListHashLRU <page,int,FBN_page_hash_1,
+                          BT_DLL2_HASH,BT_DLL2_LRU> page_lru;
     typedef LList<page,BT_DLL2_EXTRA> extra_list;
     page_lru bitmaps;    // key is segment number
     page_lru data;       // key is page number

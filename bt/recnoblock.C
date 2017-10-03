@@ -55,7 +55,6 @@ struct FileBlockNumber :: page {
             dirty = false;
         }
     }
-    int hash_key( void ) { return key_value; }
     int age(void) { return (int)time(0) - reftime; }
     bool   ref( void ) {
         reftime = (int)time(0);
@@ -81,6 +80,21 @@ struct FileBlockNumber :: page {
         return c;
     }
 };
+
+class FileBlockNumber :: FBN_page_hash_1 {
+public:
+    static int hash_key( FileBlockNumber :: page * item ) {
+        return item->key_value;
+    }
+    static int hash_key( int key ) {
+        return key;
+    }
+    static bool hash_key_compare( FileBlockNumber :: page * item,
+                                  int key ) {
+        return (item->key_value == key);
+    }
+};
+
 
 // use one of these during a 'get_block' if the block
 // crosses 1 or more page boundaries and the memory
@@ -412,8 +426,8 @@ FileBlockNumber :: alloc( int bytes )
             if ( !bm )
                 break;
 
-            if ( bm->hash_key() > largest_seg )
-                largest_seg = bm->hash_key();
+            if ( bm->key_value > largest_seg )
+                largest_seg = bm->key_value;
 
             for ( bit = reserved_bits; bit < recs_per_segment; )
             {
@@ -422,7 +436,7 @@ FileBlockNumber :: alloc( int bytes )
 
                 if ( !v && c >= recs )
                 {
-                    seg_num = bm->hash_key();
+                    seg_num = bm->key_value;
                     bitstart = bit;
                     bm->ref();
                     goto found;

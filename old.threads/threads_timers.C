@@ -34,6 +34,20 @@
 #define LOCK()    timer_sem->take()
 #define UNLOCK()  timer_sem->give()
 
+struct ThreadTimers :: ThreadTimers_hash_1 {
+public:
+    static int hash_key( timerParams * item ) {
+        return item->timerid;
+    }
+    static int hash_key( int key ) {
+        return key;
+    }
+    static bool hash_key_compare( timerParams * item, int key ) {
+        return (item->timerid == key);
+    }
+};
+
+
 ThreadTimers :: ThreadTimers( int _tps, int hash_size )
     : hash( hash_size )
 {

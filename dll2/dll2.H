@@ -246,10 +246,17 @@ public:
     }
 };
 
-// to use LListHash, type T must have the following method, preferably inline:
-//    - int hash_key(void)
+// to use LListHash, type T must have a companion comparator class
+// which provides hints about how to do hashing on the item. This
+// comparator class must have the following static members:
+//
+//    static int hash_key( T * item ) 
+//    static int hash_key( Hash_Key_Type key )
+//    static bool hash_key_compare( T * item, Hash_Key_Type key )
+//
 
-template <class T,int instance>
+template <class T, class Hash_Key_Type,
+          class Hash_Key_Comparator, int instance>
 class LListHash {
 private:
     int hashsize;
@@ -264,37 +271,37 @@ public:
         count = 0;
     }
     ~LListHash ( void ) {
-        int i;
-        T * t, * nt;
-        for ( i = 0; i < hashsize; i++ )
-            for ( nt = 0, t = hash[i].get_head(); t; t = nt )
-            {
-                nt = hash[i].get_next( t );
-                hash[i].remove( t );
-                delete t;
-            }
+        for ( int i = 0; i < hashsize; i++ )
+            if ( hash[i].get_cnt() != 0 )
+                DLL2BAIL(( "LLISTHASH destructor: hash not empty!\n" ));
         delete[] hash;
     }
-    T * find    ( int key ) {
-        int h = hashv( key );
+    T * find    ( Hash_Key_Type key ) {
+        int h = hashv( Hash_Key_Comparator::hash_key( key ) );
         T * ret;
         for ( ret = hash[h].get_head(); ret; ret = hash[h].get_next(ret))
-            if ( ret->hash_key() == key )
+            if ( Hash_Key_Comparator::hash_key_compare( ret, key ))
                 break;
         return ret;
     }
     int get_cnt( void ) { return count; }
     void add( T * t ) {
-        count++; hash[ hashv( t->hash_key() ) ].add( t );
+        count++;
+        int h = Hash_Key_Comparator::hash_key( t );
+        hash[ hashv( h ) ].add( t );
     }
     void remove( T * t ) {
-        count--; hash[ hashv( t->hash_key() ) ].remove( t );
+        count--;
+        int h = Hash_Key_Comparator::hash_key( t );
+        hash[ hashv( h ) ].remove( t );
     }
     bool onlist( T * t ) {
-        return hash[ hashv( t->hash_key() ) ].onlist( t );
+        int h = Hash_Key_Comparator::hash_key( t );
+        return hash[ hashv( h ) ].onlist( t );
     }
     bool onthislist( T * t ) {
-        return hash[ hashv( t->hash_key() ) ].onthislist( t );
+        int h = Hash_Key_Comparator::hash_key( t );
+        return hash[ hashv( h ) ].onthislist( t );
     }
 };
 
@@ -326,15 +333,17 @@ public:
     T * get_prev( T * t ) { return list.get_prev( t ); }
 };
 
-template <class T, int hash_instance, int lru_instance>
+template <class T, 
+          class Hash_Key_Type, class Hash_Key_Comparator,
+          int hash_instance, int lru_instance>
 class LListHashLRU {
 private:
-    LListHash <T, hash_instance> hash;
+    LListHash <T, Hash_Key_Type, Hash_Key_Comparator, hash_instance> hash;
     LListLRU  <T, lru_instance > lru;
 public:
     LListHashLRU ( int hashsize ) : hash( hashsize ) { }
     ~LListHashLRU( void ) { }
-    T * find( int key ) { return hash.find( key ); }
+    T * find( Hash_Key_Type key ) { return hash.find( key ); }
     int get_cnt( void ) { return lru.get_cnt(); }
     void add( T * t ) { hash.add( t ); lru.add( t ); }
     void remove( T * t ) { hash.remove( t ); lru.remove( t ); }
