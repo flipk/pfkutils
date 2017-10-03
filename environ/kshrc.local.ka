@@ -3,7 +3,7 @@ PATH=/home/knaack/wind/host/sun4-solaris2/bin/:$PATH
 
 export WIND_BASE=/home/knaack/wind
 export WIND_HOST_TYPE=sun4-solaris2
-export WIND_REGISTRY=knaackA
+export WIND_REGISTRY=pci6b
 
 alias s9='screen -c $HOME/.screenrc.9'
 alias ps1='/bin/ps -u $USER -o pid,tty,args'

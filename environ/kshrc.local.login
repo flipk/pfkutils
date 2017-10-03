@@ -29,7 +29,7 @@ alias fi=find_include
 alias whom='/usr/test/bsstools/bin/whom'
 alias ccs='cd $HOME;exec bin/ccs'
 
-#FUNCTIONS: lsv sv svlp lbsub lbsol lbsolccs lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff dis tman pr cr riw vdp vmp vpp vsp vm vsl vl 
+#FUNCTIONS: lsv sv svlp lbsub lbsol lbsolccs lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl 
 
 lsv() {
 	typeset prefix
@@ -150,6 +150,31 @@ ccdiff() {
         sd $file_arg $ofile
     else
         xsd $file_arg $ofile
+    fi
+}
+
+ccdiff2() {
+    typeset file_arg
+    typeset opts
+    typeset ofile
+
+    if [[ x$1 == x+g ]] ; then
+        graphical=no
+        shift
+    else
+        graphical=yes
+    fi
+
+    file_arg=$1
+    shift
+    opts=$1
+
+    ofile=`zeroversion $file_arg`
+
+    if [[ $graphical == no ]] ; then
+        sd2 $file_arg $ofile
+    else
+        xsd2 $file_arg $ofile
     fi
 }
 

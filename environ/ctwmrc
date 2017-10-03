@@ -144,7 +144,7 @@ menu "defops"
 	"Mozilla"	f.exec "mozilla &"
 	"MozillaMail"	f.exec "mozilla -mail &"
 	"Lap"		!"lap&"
-	":2"		!"vncviewer 127.1:2&"
+	":2"		!"colon2&"
 	"Lock"		!"xlock&"
         ""		f.nop
 	"Iconify"	f.iconify

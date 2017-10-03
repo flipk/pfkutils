@@ -270,7 +270,7 @@ alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
 
-#FUNCTIONS: make_file_part x xr xs xrs xsd sd xless z ediff merge3 myemacs cvsd2 sd2
+#FUNCTIONS: make_file_part x xr xs xrs xsd xsd2 sd sd2 xless z ediff merge3 myemacs cvsd2
 
 make_file_part() {
     typeset try dir_part file_part fp load
@@ -365,6 +365,10 @@ xrs() {
 
 xsd() {
     xterm +sb -title NoTitle -g 190x50 -e $SHELL -c "sd $1 $2" &
+}
+
+xsd2() {
+    xterm +sb -title NoTitle -g 190x50 -e $SHELL -c "sd2 $1 $2" &
 }
 
 sd() {
