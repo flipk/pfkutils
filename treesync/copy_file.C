@@ -25,7 +25,7 @@ copy_file(char *fromroot, char *fromfile,
     snprintf(  to_full_path, sizeof(  to_full_path),
                "%s/%s", toroot,   tofile);
 
-    printf("copy %s\n", fromfile);
+    printf("copy %s\n", from_full_path);
 
     int fd1, fd2;
 

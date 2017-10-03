@@ -281,7 +281,7 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
 
 //virtual
 void
-FileBlockLocal :: compact( bool full )
+FileBlockLocal :: compact( int max_percent )
 {
     L2L3s  l2l3tables;
     L2L3AUN * l2l3ent;
@@ -333,7 +333,7 @@ FileBlockLocal :: compact( bool full )
                free_aus, last_aun, (free_aus*100)/last_aun);
 #endif
 
-        if (((free_aus*100)/last_aun) < 2)
+        if (((free_aus*100)/last_aun) <= (UINT32)max_percent)
             break;
 
         AUHead  au(bc);

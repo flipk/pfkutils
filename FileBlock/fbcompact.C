@@ -41,7 +41,7 @@ main(int argc, char ** argv)
 
     printf("\npacking...\n");
 
-    fbi->compact(true);
+    fbi->compact(0);
 
     fbi->get_stats( &stats );
     printf("\nstats after:\n"

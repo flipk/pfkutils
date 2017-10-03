@@ -70,6 +70,21 @@ sighandler( int sig, siginfo_t * info, void * extra )
 
 #include "FileBlockLocal.H"
 
+static void
+print_stats(const char *header, FileBlockStats *stats)
+{
+    fprintf(stderr, "%s:\n", header);
+    fprintf(stderr,
+            "       au_size: %d\n"
+            "      used_aus: %d\n"
+            "      free_aus: %d\n"
+            "  used_regions: %d\n"
+            "  free_regions: %d\n"
+            "       num_aus: %d\n",
+            stats->au_size, stats->used_aus, stats->free_aus,
+            stats->used_regions, stats->free_regions, stats->num_aus);
+}
+
 int
 main(int argc, char ** argv)
 {
@@ -195,7 +210,7 @@ main(int argc, char ** argv)
 
         if ((loop % ITEMS) == 0)
         {
-            fbi->compact(true);
+//            fbi->compact(0);
             fbi->flush();
             count_flush++;
         }
@@ -210,20 +225,18 @@ main(int argc, char ** argv)
     }
 
     fprintf( stderr,
-             " %d : %d creates, %d reads, %d deletes, %d flushes  \n",
-             LOOPS - loop, count_create, count_read,
+             " %d loops: %d creates, %d reads, %d deletes, %d flushes  \n",
+             LOOPS, count_create, count_read,
              count_delete, count_flush );
 
     delete[] infos;
 
     FileBlockStats  stat;
     fbi->get_stats(&stat);
-    fprintf(stderr, "Before compaction, file size = %lld\n",
-            (off_t)stat.num_aus * (off_t)stat.au_size);
-    fbi->compact(true);
+    print_stats("Before compaction", &stat);
+    fbi->compact(0);
     fbi->get_stats(&stat);
-    fprintf(stderr, "After compaction, file size = %lld\n",
-            (off_t)stat.num_aus * (off_t)stat.au_size);
+    print_stats("After compaction", &stat);
     fbi->validate(false);
     delete fbi;
 

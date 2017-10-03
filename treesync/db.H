@@ -46,7 +46,7 @@ struct FileSeqData : public FileBlockBST {
     ~FileSeqData(void) { bst_free(); }
     BST_STRING   file_path;
     BST_UINT64_t   size;
-    BST_UINT32_t   mtime;
+    BST_UINT32_t   mtime;   // 0 means file has been deleted.
     BST_FIXED_ARRAY  <BST_UINT8_t,16>  md5hash;
     BST_FIELD_LIST( &file_path, &size, &mtime, &md5hash );
 };

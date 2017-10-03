@@ -1,8 +1,3 @@
-#if 0
-set -e -x
-g++ FileList.C -D_FILE_OFFSET_BITS=64 -I ../../h -I ../../FileBlock -I ../../dll2 -o t
-exit 0
-#endif
 
 /*
     This file is part of the "pfkutils" tools written by Phil Knaack
@@ -32,6 +27,7 @@ exit 0
 #include <dirent.h>
 
 #include "FileList.H"
+#include "macros.H"
 
 #if _FILE_OFFSET_BITS != 64
 #error you forgot -D_FILE_OFFSET_BITS=64
@@ -71,6 +67,12 @@ generate_file_list(const char *root_dir)
         cc = snprintf(temp_path, sizeof(temp_path)-1,
                       "%s/%s", root_dir, current->path);
         temp_path[cc] = 0;
+
+        if (strcmp(current->path, TRASH_DIR) == 0)
+        {
+            delete current;
+            continue;
+        }
 
         dir = opendir(temp_path);
         if (!dir)

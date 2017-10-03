@@ -1,6 +1,5 @@
 
 #include <pk-md5.h>
-#include <pk-md5.c> // xxx this is temporary
 #include <Btree.H>
 #include <bst.H>
 
@@ -29,6 +28,9 @@ calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
     snprintf(fullpath, sizeof(fullpath), "%s/%s", root_dir, relpath);
     fullpath[511]=0;
 
+    if (treesync_verbose)
+        fprintf(stderr, "md5 %s = ", fullpath);
+
     f = fopen(fullpath,"r");
     if (!f )
     {
@@ -52,7 +54,11 @@ calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
 
     memcpy(hashbuffer, digest.digest, 16);
 
-//xxx
-//    printf("calc_md5:\n");
-//    display_md5(fullpath, hashbuffer);
+    if (treesync_verbose)
+    {
+        int i;
+        for (i=0; i < 16; i++)
+            fprintf(stderr,"%02x", digest.digest[i]);
+        fprintf(stderr, "\n");
+    }
 }

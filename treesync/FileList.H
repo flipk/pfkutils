@@ -62,7 +62,7 @@ public:
         // thank you Daniel Julius Bernstein.
         int hash = 5381;
         int c;
-        while (c = *path++)
+        while ((c = *path++) != 0)
             hash = ((hash << 5) + hash) + c;
         return hash;
     }
@@ -85,9 +85,15 @@ public:
         : FileEntry(_path)
     {
         type = TYPE_FILE;
+        deleted = false;
+        created = false;
+        modified = false;
     }
     UINT64  size;
-    time_t  mtime;
+    time_t  mtime;    // 0 means 'whitespace'
+    bool    deleted;
+    bool    created;
+    bool    modified;
     UINT8   md5[16];
 };
 

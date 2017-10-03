@@ -1,25 +1,3 @@
-#if 0
-
-opts=-O3
-defs=-D_FILE_OFFSET_BITS=64
-incs="-I../h -I../dll2 -I../util -I../FileBlock"
-srcs="analyze.C copy_file.C create_dirs.C md5.C open_ts_db.C update_db.C FileList.C main.C"
-libs="../FileBlock/libFileBlock.a ../dll2/libdll2.a"
-objs=""
-
-for f in $srcs ; do
-   echo $f
-   g++ $opts $incs $defs -c $f
-   objs="$objs ${f%.C}.o"
-done
-
-echo linking
-g++ $opts $objs $libs -o t
-exit 0
-
-       ;;
-
-#endif
 
 #include <stdio.h>
 
@@ -30,18 +8,30 @@ exit 0
 #include "db.H"
 #include "protos.H"
 
+int treesync_verbose = 0;
+
 #define DELETE_LIST(list)                       \
     while ((fe = list->dequeue_head()) != NULL) \
         delete fe;                              \
     delete list
 
 int
-main( int argc, char ** argv )
+treesync_main( int argc, char ** argv )
 {
     FileEntryList * fel1, * fel2;
     Btree * db1, * db2;
     char * dir1, * dir2;
     FileEntry * fe;
+
+    if (argc > 1)
+    {
+        if (strcmp(argv[1], "-v") == 0)
+        {
+            treesync_verbose = 1;
+            argc--;
+            argv++;
+        }
+    }
 
     if (argc == 2)
     {
@@ -52,7 +42,7 @@ main( int argc, char ** argv )
         fel1 = generate_file_list(dir1);
         update_db(dir1, db1, fel1);
         DELETE_LIST(fel1);
-        db1->get_fbi()->compact(true);
+        db1->get_fbi()->compact(0);
         delete db1;
         return 0;
     }
@@ -105,8 +95,8 @@ main( int argc, char ** argv )
     DELETE_LIST(fel1);
     DELETE_LIST(fel2);
 
-    db1->get_fbi()->compact(true);
-    db2->get_fbi()->compact(true);
+    db1->get_fbi()->compact(0);
+    db2->get_fbi()->compact(0);
 
     delete db1;
     delete db2;

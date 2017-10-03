@@ -8,6 +8,7 @@
 #include "FileList.H"
 #include "db.H"
 #include "protos.H"
+#include "macros.H"
 
 void
 update_db( char *root_dir, Btree * db, FileEntryList * fel )
@@ -17,9 +18,10 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         FileEntryFile * fef;
         FileEntryDir * fed;
     } fe;
-    FileEntry * nfe;
+    FileEntry * nfe = NULL;
     DbInfo  dbinf(db);
     UINT32  index;
+    FileEntryQueue   workq;
 
     if (!dbinf.get())
     {
@@ -36,6 +38,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
             (strcmp(fe.fe->path, TREESYNC_DB) != 0))
         {
             fh.add(fe.fe);
+            workq.add(fe.fe);
         }
         else
         {
@@ -44,7 +47,6 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         }
     }
 
-    FileEntryList   files_processed;
 
     FileSeq  fiseq(db);
     int i;
@@ -62,12 +64,11 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         fe.fe = fh.find(fiseq.data.file_path.string);
         if (fe.fe)
         {
-            fel->remove(fe.fe);
+            workq.remove(fe.fe);
             // unchanged or modified.
-            if ((fe.fef->size != fiseq.data.size.v)   ||
-                (fe.fef->mtime != fiseq.data.mtime.v)  )
+            if ((        fe.fef->size  != fiseq.data.size.v)   ||
+                ((UINT32)fe.fef->mtime != fiseq.data.mtime.v)  )
             {
-//                printf("modified: %s/%s\n", root_dir, fe.fe->path);
                 // file is modified.
                 // recalculate the md5 of the file and update
                 // both the list entry and the database.
@@ -77,7 +78,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
                 fiseq.data.size.v = fe.fef->size;
                 fiseq.data.mtime.v = fe.fef->mtime;
                 fiseq.put(true);
-                files_processed.add(fe.fe);
+                fe.fef->modified = true;
             }
             else
             {
@@ -85,46 +86,43 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
                 // calculation by copying out of the database.
                 for (i=0; i < 16; i++)
                     fe.fef->md5[i] = fiseq.data.md5hash.array[i].v;
-                files_processed.add(fe.fe);
             }
         }
         else
         {
             // deleted file.
-//            printf("deleted: %s/%s\n", root_dir, fiseq.data.file_path.string);
+            // add a deleted marker to the fel so that we will know
+            // to delete it from the other tree if it is found to still
+            // exist there.
 
-            // delete it from the database as well.
-            fiseq.del();
+            fe.fef = new FileEntryFile(fiseq.data.file_path.string);
+            fe.fef->size = 0;
+            fe.fef->mtime = 0;
+            memset(fe.fef->md5, 0, 16);
 
-            // if we are looking at the last item, 
-            // just delete it. else pull last item down to this slot.
-            UINT32 last_ind = dbinf.data.num_files.v-1;
-            if (index != last_ind)
+            if (fiseq.data.mtime.v != 0)
             {
-                fiseq.key.index.v = last_ind;
-                if (!fiseq.get())
-                    fprintf(stderr, "error fetching last\n");
-                fiseq.del();
-                fiseq.key.index.v = index;
+                // indicate in the database that the file has been
+                // deleted.
+
+                fiseq.data.size.v = 0;
+                fiseq.data.mtime.v = 0;
                 fiseq.put(true);
+                fe.fef->deleted = true;
             }
-            // decrement the total number of files in the database.
-            dbinf.data.num_files.v--;
-            // force the loop to look at this same index number
-            // again so that we don't end up skipping the one
-            // that we just pulled down.
-            index--;
+
+            fel->add(fe.fe);
         }
     }
 
-    // now identify the files created: whatever is left on fel
+    // now identify the files created: whatever is left on workq
     // after the above, is a new file.
 
-    while ((fe.fe = fel->dequeue_head()) != NULL)
+    while ((fe.fe = workq.dequeue_head()) != NULL)
     {
-//        printf("created: %s/%s\n", root_dir, fe.fe->path);
         calc_md5(root_dir, fe.fe->path, fe.fef->md5);
-        files_processed.add(fe.fe);
+
+        fe.fef->created = true;
 
         // add a new entry to the database for this item.
         fiseq.key.index.v = dbinf.data.num_files.v;
@@ -142,9 +140,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
 
     // time to clean up the mess.
 
-    while ((fe.fe = files_processed.dequeue_head()) != NULL)
-    {
-        fh.remove(fe.fe);
-        fel->add(fe.fe);
-    }
+    for (fe.fe = fel->get_head(); fe.fe; fe.fe = fel->get_next(fe.fe))
+        if (fh.onthislist(fe.fe))
+            fh.remove(fe.fe);
 }

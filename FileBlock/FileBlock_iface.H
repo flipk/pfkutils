@@ -265,10 +265,11 @@ public:
 
     /** defragment and compact the file.
      *
-     * \param full whether to perform a quick or full compaction.  note that
-     *   a full compaction requires all FileBlock objects to be released.
+     * \param max_percent  the maximum percentage of free space allowed in
+     *    the file.  0 means to completely compact the entire file until
+     *    it is contiguous.
      */
-    virtual void compact(bool full) = 0;
+    virtual void compact(int max_percent) = 0;
     // @}
 
     /** @name Statistics */

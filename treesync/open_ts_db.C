@@ -9,6 +9,7 @@
 #include "FileList.H"
 #include "db.H"
 #include "protos.H"
+#include "macros.H"
 
 Btree *
 open_ts_db(char *dir)
