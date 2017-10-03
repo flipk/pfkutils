@@ -1,5 +1,5 @@
 
-AC_INIT([pfkutils], [3.3], [pknaack@netscape.net])
+AC_INIT([pfkutils], [3.4], [pknaack@netscape.net])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 
 AC_CONFIG_SRCDIR([main/main.C])
@@ -57,7 +57,6 @@ AC_DEFUN([PFK_ARG_ENABLE],
 
 PFK_ARG_ENABLE([etg],        [build encrypted telnet gate tools])
 PFK_ARG_ENABLE([pfkbak],     [build backup server])
-PFK_ARG_ENABLE([itsfs],      [build ITS file system server])
 PFK_ARG_ENABLE([syslog],     [build my syslog tools])
 PFK_ARG_ENABLE([checksize],  [build checksize tool])
 PFK_ARG_ENABLE([treescan],   [build treescan tool])

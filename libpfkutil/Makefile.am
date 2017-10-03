@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libpfkutil.la
 
-libpfkutil_ladir = ${includedir}/pfkutil
+libpfkutil_ladir = ${includedir}/util
 libpfkutil_la_HEADERS = \
 	pk-md5.h types.H bst.H m.h fd_mgr.H base64.h inet_aton.h
 libpfkutil_la_SOURCES = \

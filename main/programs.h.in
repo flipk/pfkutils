@@ -1,7 +1,6 @@
 
 #define PFK_BUILD_ETG        @PFK_BUILD_etg@
 #define PFK_BUILD_PFKBAK     @PFK_BUILD_pfkbak@
-#define PFK_BUILD_ITSFS      @PFK_BUILD_itsfs@
 #define PFK_BUILD_SYSLOG     @PFK_BUILD_syslog@
 #define PFK_BUILD_CHECKSIZE  @PFK_BUILD_checksize@
 #define PFK_BUILD_TREESCAN   @PFK_BUILD_treescan@
@@ -19,11 +18,6 @@ PROG(1,pfkteld,"Telnet daemon")
 
 #if PFK_BUILD_PFKBAK
 PROG(0,pfkbak,"Incremental and full-history backup tool")
-#endif
-
-#if PFK_BUILD_ITSFS
-PROG(0,itsfssvr,"ITS file system server")
-xxx
 #endif
 
 #if PFK_BUILD_SYSLOG

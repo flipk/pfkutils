@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libpfkthread.la
 
-libpfkthread_ladir = ${includedir}/pfkthread
+libpfkthread_ladir = ${includedir}/thread
 
 
 libpfkthread_la_HEADERS = \

@@ -1,6 +1,5 @@
 autoconf:
   - syslog ini files
-  - itsfs (optional)
   - autoconfize pfkstat
   - autoconfize treescan
   - d3des implementation duplication (util & etg)

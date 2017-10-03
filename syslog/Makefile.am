@@ -1,4 +1,6 @@
 
+pkgdatadir = $(datadir)/syslog
+
 noinst_LIBRARIES = libsyslog.a
 
 libsyslog_a_SOURCES = \
@@ -7,5 +9,11 @@ libsyslog_a_SOURCES = \
 	rules.h \
 	strip_chars.c strip_chars.h \
 	syslog-postprocess.c syslogd.c
+
+dist_pkgdata_DATA = \
+	custom.ini \
+	simple.ini \
+	quiet.ini \
+	sample.ini
 
 AM_INCLUDES = -I../libpfkutil

@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libpfkfb.la
 
-libpfkfb_ladir = ${includedir}/pfkfb
+libpfkfb_ladir = ${includedir}/fb
 libpfkfb_la_HEADERS = \
 	BlockCache.H Btree.H BtreeDbClasses.H FileBlockLocal.H \
 	FileBlock_iface.H PageCache.H PageIO.H

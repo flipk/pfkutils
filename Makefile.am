@@ -2,6 +2,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = \
+	contrib \
 	libpfkdll2 \
 	libpfkutil \
 	libpfkfb \
@@ -21,7 +22,7 @@ if PFK_AM_BUILD_etg
 SUBDIRS += teld enctelgate
 endif
 
-SUBDIRS += main contrib environ scripts
+SUBDIRS += main environ scripts
 
 CONFIG_HDR_DEST = $(DESTDIR)$(exec_prefix)/include
 
