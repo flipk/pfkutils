@@ -2,6 +2,7 @@
 #include "ExtentMap.H"
 
 #include <stdlib.h>
+#include <string.h>
 
 Extents :: Extents( void )
 {
@@ -18,7 +19,7 @@ Extents :: ~Extents( void )
         if (e->used)
             hash.remove(e);
         else
-            bucket(e->size)->remove(e);
+            remove_from_bucket(e);
         delete e;
     }
 }
@@ -61,7 +62,7 @@ Extents :: add( off_t _offset, UINT32 _size )
 {
     Extent * e = new Extent( _offset, _size );
     list.add(e);
-    bucket(_size)->add(e);
+    add_to_bucket(e);
 }
 
 void
@@ -91,7 +92,7 @@ Extents :: alloc( UINT32 size )
 
     for ( b = size_to_bucket(size);
           b < NUM_BUCKETS;
-          b++ )
+          b = find_next_bucket(b+1) )
     {
         e = buckets[b].dequeue_head();
         if (e)
@@ -103,6 +104,9 @@ Extents :: alloc( UINT32 size )
         printf("ERROR! NO BUCKETS??\n");
         exit(1);
     }
+
+    if (buckets[b].get_cnt() == 0)
+        clear_bit(b);
 
     id = alloc_id();
 
@@ -120,7 +124,7 @@ Extents :: alloc( UINT32 size )
     e->size -= size;
     e->offset += size;
     list.add_before(ne, e);
-    bucket(e->size)->add(e);
+    add_to_bucket(e);
     hash.add(ne);
 
     return ne;
@@ -153,7 +157,7 @@ Extents :: free( Extent * e )
         e->offset = e2->offset;
         e->size += e2->size;
         list.remove(e2);
-        bucket(e2->size)->remove(e2);
+        remove_from_bucket(e2);
         delete e2;
     }
     e2 = list.get_next(e);
@@ -161,10 +165,10 @@ Extents :: free( Extent * e )
     {
         e->size += e2->size;
         list.remove(e2);
-        bucket(e2->size)->remove(e2);
+        remove_from_bucket(e2);
         delete e2;
     }
 
     // add to bucket after updating size!
-    bucket(e->size)->add(e);
+    add_to_bucket(e);
 }

@@ -57,24 +57,8 @@ class Extents {
     }
     ExtentBucketList  buckets[ NUM_BUCKETS ];
     UINT64 bucket_bitmap[ BITMAP_ARRAY_SIZE ]; // 0 == empty
-    int get_bit(int bucket) {
-        return (bucket_bitmap[bucket >> 6] >> (bucket & 0x3F)) & 1;
-    }
-    void set_bit(int bucket) {
-        bucket_bitmap[bucket >> 6] |=  (1 << (bucket & 0x3F));
-    }
-    void clear_bit(int bucket) {
-        bucket_bitmap[bucket >> 6] &= ~(1 << (bucket & 0x3F));
-    }   
     int find_next_bucket(int bucket) {
-
-
-
-//xxx UNTESTED
-
-
         UINT64 reg;
-        // finish out current doubleword
         if ((bucket & 0x3F) != 0)
         {
             reg = bucket_bitmap[bucket >> 6];
@@ -89,17 +73,12 @@ class Extents {
         }
         if (bucket == NUM_BUCKETS)
             return bucket;
-        // check the next whole doublewords
         while ((reg = bucket_bitmap[bucket >> 6]) == 0)
         {
+            bucket += 64;
             if (bucket == NUM_BUCKETS)
                 return bucket;
-            bucket += 64;
         }
-        // if a matching doubleword is found, 
-        // zip thru its bits to find the first bitmatch; 
-        // termination is guaranteed because we only got here
-        // by knowing reg is nonzero.
         while (1)
         {
             if (reg & 1)
@@ -107,6 +86,26 @@ class Extents {
             bucket++;
             reg >>= 1;
         }
+    }
+    void set_bit(int bucket) {
+        bucket_bitmap[bucket >> 6] |=  (1ULL << (bucket & 0x3F));
+    }
+    void clear_bit(int bucket) {
+        bucket_bitmap[bucket >> 6] &= ~(1ULL << (bucket & 0x3F));
+    }
+    void add_to_bucket( Extent * e ) {
+        int b = size_to_bucket(e->size);
+        ExtentBucketList * bucket = &buckets[b];
+        bucket->add(e);
+        if (bucket->get_cnt() == 1)
+            set_bit(b);
+    }
+    void remove_from_bucket( Extent * e ) {
+        int b = size_to_bucket(e->size);
+        ExtentBucketList * bucket = &buckets[b];
+        bucket->remove(e);
+        if (bucket->get_cnt() == 0)
+            clear_bit(b);
     }
 public:
     Extents(void);
