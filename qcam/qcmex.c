@@ -7,11 +7,12 @@
 int
 qcmex_main( int argc, char ** argv )
 {
-    FILE * inf;
     char * dir, * movfile, * decomp, * decomp2;
-    char  framefile[250];
+    int done, frame, l, fd1, fds[2], children;
     struct qcam_softc * qs;
-    int done, frame, l;
+    char  framefile[250];
+    FILE * outf, * inf;
+    pid_t pid;
 
     if ( argc != 3 )
     {
@@ -40,8 +41,6 @@ qcmex_main( int argc, char ** argv )
     }
     if ( decomp )
     {
-        int fd1, fds[2];
-        pid_t pid;
         pipe( fds );
         fd1 = open( movfile, O_RDONLY );
         if ( fd1 < 0 )
@@ -50,6 +49,11 @@ qcmex_main( int argc, char ** argv )
             return 1;
         }
         pid = fork();
+        if ( pid < 0 )
+        {
+            fprintf( stderr, "could not fork decompressor!\n" );
+            return 1;
+        }
         if ( pid > 0 )
         {
             /* parent */
@@ -77,11 +81,6 @@ qcmex_main( int argc, char ** argv )
             fprintf( stderr, "cannot exec decompressor!\n" );
             exit(1);
         }
-        if ( pid < 0 )
-        {
-            fprintf( stderr, "could not fork decompressor!\n" );
-            return 1;
-        }
     }
     else
     {
@@ -99,23 +98,63 @@ qcmex_main( int argc, char ** argv )
 
     done = 0;
     frame = 1;
+    children = 0;
     while ( !done )
     {
-        FILE * outf;
         pgm_read( qs, inf );
         if ( feof(inf) )
             done++;
-        sprintf( framefile, "%s/frame%05d.pgm", dir, frame );
-        printf( "writing frame %d\n", frame++ );
-        outf = fopen( framefile, "w" );
-        if ( !outf )
+        sprintf( framefile, "%s/frame%05d.jpg", dir, frame );
+        fprintf( stderr, "  %d \r", frame++ );
+        fflush( stderr );
+        fd1 = open( framefile, O_WRONLY | O_CREAT, 0644 );
+        if ( fd1 < 0 )
         {
             fprintf( stderr, "unable to create frame file '%s'\n", framefile );
             return 1;
         }
+        pipe( fds );
+        pid = fork();
+        if ( pid < 0 )
+        {
+            fprintf( stderr, "cannot fork!!!\n" );
+            return 1;
+        }
+        if ( pid > 0 )
+        {
+            /* parent */
+            close( fd1 );
+            close( fds[0] );
+            outf = fdopen( fds[1], "w" );
+            children ++;
+        }
+        if ( pid == 0 )
+        {
+            close( fds[1] );
+            if ( fds[0] != 0 )
+            {
+                dup2( fds[0], 0 );
+                close( fds[0] );
+            }
+            if ( fd1 != 1 )
+            {
+                dup2( fd1, 1 );
+                close( fd1 );
+            }
+            execl( "/usr/local/bin/cjpeg", "cjpeg", NULL );
+            close(0);
+            close(1);
+            fprintf( stderr, "cannot exec decompressor!\n" );
+            exit(1);
+        }
         pgm_writehdr( qs, outf );
         pgm_write( qs, outf );
         fclose( outf );
+        if ( children >= 10 )
+        {
+            wait( NULL );
+            children--;
+        }
     }
 
     return 0;
