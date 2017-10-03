@@ -9,6 +9,25 @@
 class _BTDatum;
 class BtreeInternal;
 
+/** helper class for Btree::printinfo.  the user should populate
+ * one of these before calling Btree::printinfo to help it decide
+ * how to format the data. */
+class BtreePrintinfo {
+public:
+    static const int NODE_INFO       = 1;
+    static const int BTREE_INFO      = 2;
+    static const int KEY_REC_PTR     = 4;
+    static const int DATA_REC_PTR    = 8;
+    static const int _FIRST_USER_OPT = 16;
+    int options;
+    BtreePrintinfo( int _options ) { options = _options; }
+    virtual ~BtreePrintinfo(void) { /* placeholder */ }
+    /** format an item */
+    virtual bool print_item( UINT32 key_fbn, UINT32 data_fbn ) = 0;
+    virtual void print( const char * format, ... )
+        __attribute__ ((format( printf, 2, 3 ))) = 0;
+};
+
 /** The interface to a Btree file with FileBlockInterface backend.
  * The constructor is not public, because the user should not construct
  * these with 'new'.  Instead the user should call Btree::open method,
@@ -32,8 +51,15 @@ public:
     /** take a file without a Btree in it, and add the required signatures.
      * after this, the Btree::open method will be able to open the file.
      * \param fbi the FileBlockInterface to access the file.
+     * \param order the desired order of the btree; must be odd, greator
+     *              than 1, and less than BtreeInternal::MAX_ORDER.
      * \return true if the init was successful, false if error. */
-    static bool init_file( FileBlockInterface * fbi );
+    static bool init_file( FileBlockInterface * fbi, int order );
+    /** check if a file is a valid btree file.
+     * \param fbi the FileBlockInterface to access the file.
+     * \return true if the file appears to be a valid btree file,
+     *              false if not. */
+    static bool valid_file( FileBlockInterface * fbi );
     /** Return a pointer to the FileBlockInterface backend.  This allows the
      * user of Btree to store their own data directly in the file without
      * going only through the Btree API.
@@ -71,50 +97,101 @@ public:
     virtual bool put( _BTDatum * key, _BTDatum * data ) = 0;
     /** delete an item from the database given only the key.
      * this function will search for the key/data pair using the key,
-     * and then free all disk space associated with the key and its data. */
+     * and then free all disk space associated with the key and its data.
+     * \param key  the key to locate the item that should be deleted.
+     * \return true if the item was deleted, false if not found or error. */
     virtual bool del  ( _BTDatum * key  ) = 0;
+    /** display debugging information about a file. uses the BtreePrintinfo
+     * to help it display items and print strings.  pi->print_item should
+     * return false if it wants walking the tree to stop.  this function
+     * returns false if pi->print_item returned false for some item.
+     * \param pi the BtreePrintinfo helper object
+     * \return true if walked all the way to the end of the database,
+     *         false if pi->print_item returned false and caused it to stop. */
+    virtual bool printinfo( BtreePrintinfo * pi ) = 0;
 };
 
+/** a base class for a BTREE unit of data (key or contents).
+ * this is a pure virtual class which represents a unit of data.
+ * the unit of data can be either a key or the data contents.
+ * the unit of data can either be an ordinary heap-based object,
+ * or it can be pointing directly into a FileBlock object.
+ * it is intended to be used with the BTDatum template below.
+ * the Btree object only knows this type, it does not know any
+ * derived types, and will access all of the virtual methods.
+ */
 class _BTDatum {
 protected:    
-    friend class BtreeInternal;
-    Btree * bt;
+    Btree * bt;       /**< the btree this object belongs to */
+    FileBlock * fb;   /**< the block on disk which holds this data */
 public:
-    FileBlock * fb;
+    /** the constructor takes the btree pointer, and inits FileBlock
+     * pointer to NULL. */
     _BTDatum(Btree * _bt) { bt = _bt; fb = NULL; }
+    /** the destructor is empty and virtual just in case the derived
+     * objects needs cleanup. */
     virtual ~_BTDatum(void) { /*placeholder*/ }
-    virtual void  setptr (UCHAR *) = 0;
+    /** if we have created or found a FileBlock for this data,
+     * Btree will call this to assign the FileBlock pointer. */
     virtual void  setfb (FileBlock *) = 0;
+    /** this returns a pointer to the datum; this will either be
+     * an internal heap-based object, or a pointer into the FileBlock. */
     virtual UCHAR *  get_ptr (void) = 0;
+    /** this returns the size of the datum; this method must account
+     * for the contents of the object, if the object is variable sized. */
     virtual int     get_size (void) = 0;
+    /** this returns the maximum size of the datum; this method must not
+     * depend on the contents of the object, as it might be called before
+     * the memory for the object is allocated. */
     virtual int get_max_size (void) = 0;
 };
 
-// type T must have the following members, with the following
-// suggested implementations:
-//    UCHAR * get_ptr (void) { return (UCHAR*) this; }
-//    int get_size (void) { return sizeof(T); }
-//    static int get_max_size (void) { return sizeof(T); }
-// if type T has a constructor, it must take no arguments.
-
+/** a template for cleanly encapsulating a user type into a datum.
+ * it is a derived type from _BTDatum and thus is suitable as an argument
+ * to Btree methods.
+ * \param T the data type for the contents of this object.
+ * type T must have the following members, with the following
+ * suggested implementations:
+ * <pre>
+ *    UCHAR * get_ptr (void) { return (UCHAR*) this; }
+ *    int get_size (void) { return sizeof(T); }
+ *    static int get_max_size (void) { return sizeof(T); }
+ * </pre>
+ * if type T has a constructor, it must take no arguments.
+ */
 template <class T>
 class BTDatum : public _BTDatum {
 public:
+    /** default constructor; this does NOT populate the Btree pointer,
+     * and thus is only suitable for a key during a get or delete
+     * operation. */
+    BTDatum(void) : _BTDatum(NULL) { d = NULL; }
+    /** constructor which takes a Btree pointer; this one is required
+     * for any datum which will reside in a FileBlock, such as a data
+     * pointer in a get call. */
     BTDatum(Btree * _bt) : _BTDatum(_bt) { d = NULL; }
+    /** destructor which automatically releases the memory or FileBlock;
+     * be sure to mark data as dirty if you have modified! */
     ~BTDatum(void) { release(); }
+    /** allocate heap memory for type T; this is required for building
+     * a key for a get or delete operation. */
     void alloc(void) {
         if (fb) { bt->get_fbi()->release(fb); fb = NULL; d = NULL; }
         if (d) { delete d; d = NULL; }
         d = new T;
     }
+    /** release any resources; just like destructor but under the user's
+     * control.  */
     void release(void) {
         if (fb) { bt->get_fbi()->release(fb); fb = NULL; d = NULL; }
         if (d) { delete d; d = NULL; }
     }
+#if 0 // xxx necessary?
     /*virtual*/ void  setptr (UCHAR *ptr) {
         release();
         d = (T *) ptr;
     }
+#endif
     /*virtual*/ void  setfb (FileBlock * _fb) {
         release();
         fb = _fb;
@@ -123,5 +200,8 @@ public:
     /*virtual*/ UCHAR *  get_ptr (void) { return (UCHAR*) d; }
     /*virtual*/ int     get_size (void) { return d->size(); }
     /*virtual*/ int get_max_size (void) { return T::max_size(); }
+    /** the actual data pointer; this will either point into the heap
+     * if this is a heap-based object, or it will point into a FileBlock
+     * if this data is in the file. */
     T * d;
 };

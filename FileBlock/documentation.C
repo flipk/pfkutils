@@ -441,8 +441,31 @@ Next: \ref BtreeStructure
  */
 
 /** \page BtreeStructure BTREE File Interface
+
+The BTREE is a data storage/retrieval mechanism.  It uses a "key" data
+structure to index the data, so that if the proper key is provided,
+the corresponding data can be located quickly.
+
+At the lowest conceptual level, a "key" and its corresponding "data"
+are just sequences of bytes of arbitrary length and contents.
+
+Keys must be unique.  If a "put" is done on two key/data pairs where
+the keys are the same number of bytes and have the same contents, the
+data portion of the second "put" will replace the data of the first in
+the file.
+
+The "key" and "data" units are specified with UCHAR pointers and an int
+specifying a length.  A UCHAR and int together are known as a "datum".
+
+To retrieve data from a Btree, construct a key datum with the proper
+contents, and call the "get" method.  It will return a data datum which
+has been populated with the matching data.
  
 \todo document btree
+
+\section BtreeTemplate BTREE Template types
+
+\todo document BTDatum
 
 Next: \ref BtreeInternalStructure
 
@@ -549,13 +572,16 @@ Finally, compare this with the use of the new template type:
 
 There is no longer a need for a typecast. All the data is still available
 in emp.fb, but the user no longer needs to keep anything but the one single
-variable (emp).  Also, the user does not need to explicitely call a release
+variable (emp).  Also, the user does not need to explicitly call a release
 or unlock method when done, because the descructor of the FileBlockT type
 does this for him.  (A "release" method is available, in case there are
-timing considerations, but it is not usually necessary.)  This interface
-is considerably simpler than the previous interaces.
+timing considerations, but it is not usually necessary.)  Also, if a second
+"get" is called on this object, this is an implicit release on the first
+datum, so if the first datum had been modified and marked dirty, this second
+get would cause the first data to be properly flushed back to the file.
 
+This interface is considerably simpler than the previous interaces.
 
+A similar discussion can be found for the BTDatum types, on the Btree page.
 
  */
-    
