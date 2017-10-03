@@ -13,6 +13,7 @@
 	PROG(0,i2,better internet pipe fitting)
 	PROG(0,m,hex/dec/bin mathematics on command line)
 	PROG(0,random_hex,generate a random hex number)
+	PROG(0,random_text,generate a random hex number)
 	PROG(0,pkstgen,phil knaacks state machine generator)
 	PROG(0,genpw,generate random passwords)
 	PROG(0,mytar,my tar program)

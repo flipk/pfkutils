@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int
-random_hex_main( int argc, char ** argv )
+static int
+random_main( int hex, int argc, char ** argv )
 {
     int num;
 
@@ -11,7 +11,26 @@ random_hex_main( int argc, char ** argv )
         exit( 1 );
     num = atoi( argv[1] );
     while ( num-- > 0 )
-        putchar( "0123456789abcdef"[random()%16] );
+    {
+        if (hex)
+            putchar( "0123456789abcdef"[random()%16] );
+        else
+            putchar(
+ "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+             [random()%62] );
+    }
     putchar( '\n' );
     return 0;
+}
+
+int
+random_text_main( int argc, char ** argv )
+{
+    return random_main( 0, argc, argv );
+}
+
+int
+random_hex_main( int argc, char ** argv )
+{
+    return random_main( 1, argc, argv );
 }
