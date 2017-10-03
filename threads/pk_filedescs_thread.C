@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 PK_File_Descriptor_Thread :: PK_File_Descriptor_Thread(
     PK_File_Descriptor_Manager * _mgr )

@@ -49,8 +49,12 @@ PK_Timer_Manager :: ~PK_Timer_Manager( void )
 
     pthread_mutex_destroy( &mutex );
     delete timers;
-    close( fds[0] );
+
+    // why does closing fd[1] first, make cygwin work,
+    // where closing fd[0] first makes it hang?
+
     close( fds[1] );
+    close( fds[0] );
 }
 
 int
@@ -217,7 +221,9 @@ PK_Timer_Manager :: _thread2( void )
     PK_Timer * t;
     while ( 1 )
     {
-        read( fds[0], &c, 1 );
+        if (read( fds[0], &c, 1 ) <= 0)
+            break;
+
         pthread_testcancel();
         global_time++;
         do {

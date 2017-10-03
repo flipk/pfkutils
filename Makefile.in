@@ -45,7 +45,7 @@ ELIBS+=  mytar/libmytar.a -lX11 enctelgate/libetg.a
 
 #ifdef cygwin32
 CSRCS+=	treescan.c 
-DIRS+= bt itsfs mytar
+DIRS+= bt itsfs mytar threads
 ELIBS+= bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
