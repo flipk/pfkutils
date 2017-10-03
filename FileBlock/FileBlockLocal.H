@@ -34,13 +34,13 @@ entry, if a free region, is also on a bucket-list.  There are a
 significant number of bucket lists, each corresponding to free regions
 of different sizes.
 
-The extent-map is stored on the disk starting with the first page.
-
-\todo needs more information here.
+The extent-map is stored on the disk in pieces.  The location of the
+first piece is identified in the file-information block.
 
 A flush-operation becomes rather expensive, because the entire linked
 list of all extent-map entries must be serially written to the list of
-extent-map file pages.  This is the only disadvantage of this technique.
+extent-map file pages.  This is the only disadvantage of this
+technique.
 
 \section FileBlockBuckets FileBlock Buckets
 
@@ -74,15 +74,17 @@ position.
 
 \section FileBlockAccess FileBlock Access Methods
 
-There is a single allocation function which supports all the features
-required in the allocator; all other allocation functions are merely
-front-ends to this one function.
+\todo document the access methods.
 
-\todo needs more information here.
+\section Compacting
+
+\todo document the compaction algorithm.
 
 Next: \ref FileBlockLocalFileFormat
 
-\page FileBlockLocalFileFormat FileBlockLocal File Format
+*/
+
+/** \page FileBlockLocalFileFormat FileBlockLocal File Format
 
 The first few bytes of the first page contains a unique signature
 which identifies the file as a FileBlock file.  This signature must be
@@ -90,9 +92,51 @@ added when the file is first created.  The contents of the signature
 is the ASCII string \em "FILE BLOCK LOCAL" with no trailing NUL (this
 consumes 16 bytes).
 
+All 4-byte or 8-byte numeric fields are encoded in big-endian format.
+
+The size for blocks of extents maps is flexible.  The recommended
+value is 8KB; however they must not be more than 64KB in size.
+
+The next 8 bytes are an off_t identifying the position in the file
+where the first 8KB of the extents map begins.  The 4 bytes following
+this offset describe the size of this block in the file.
+
+Following this are 64 4-byte units identifying block ids where file-
+information blocks exist.  The value 0 means no information block is
+populated in this slot.  The file information block functionality is
+not yet designed or implemented.
+
+\todo design and document file-information block system.
+
+The extent map entries are encoded 8KB at a time.  First the size of
+an extent is encoded as a 4-byte big-endian number.  If the extent is
+free, the highest-order bit is cleared.  If the extent is used, the
+highest-order bit is set.  Also, if the extent is used, the size is
+followed by a 4-byte encoding of the block id.  If the extent is free,
+the block id is not present.
+
+The last 12 bytes of this 8KB block contain an 8-byte file-offset of
+the next block containing extent map entries (a sort of "next"
+pointer).  The last 4 bytes of this 12-byte region contain the size of
+the next block.
+
+If at the end of the an 8KB block there is not enough space to place
+the block id of a used extent prior to the 12-byte next-pointer
+region, there are two options.  One is to allocate the block 4-bytes
+larger than 8KB to make space, the other is to place the block id in
+the start of the next block.  Both are acceptable practices.
+
+A size value of zero indicates the end of the extent-map list.
+
+The file blocks where the the extent map is stored are themselves
+encoded in the extent map.  This must be taken into account when the
+extent map is being parsed to produce the file blocks.
+
+\see FileBlockHeader
+
  */
 
-/** \brief A "Local File" implementation of FileBlockInterface
+/** A "Local File" implementation of FileBlockInterface.
  * 
  * This class talks to a BlockCache to implement file storage.
  * internally it uses an ExtentMap to keep track of the condition
@@ -103,19 +147,45 @@ consumes 16 bytes).
 /** \todo the file info junk must be added here eventually */
 
 class FileBlockLocal : public FileBlockInterface {
-    /** \brief the ExtentMap showing used and free portions of the file */
+    /** the ExtentMap showing used and free portions of the file */
     Extents map;
-    /** \brief the interface to read and write the file itself */
+    /** the interface to read and write the file itself */
     BlockCache * bc;
+    /** render the map into on-disk format, alloc space for it
+     * from the map, and then write it to bc.  This function is
+     * static in the class, so that init_file can call it too.
+     * \param m the Extents map to write to disk
+     * \param bc the interface to the file to use.
+     * \param first_piece_pos the position in the file of the first
+     *        piece of the old map.  if this parameter is 0, this
+     *        means it is called from init_file, thus the file has
+     *        no previous map.
+     * \param first_piece_len the length of the first piece of the
+     *        map in the file.  ignored if first_piece_pos is 0. */
+    static void store_map( Extents * m, BlockCache * bc,
+                           off_t * first_piece_pos,
+                           UINT32 * first_piece_len );
 public:
-    /** \brief Constructor
+    /** Constructor.
      * \param _bc a BlockCache object which will be used to access
      *   the contents of the file */
     FileBlockLocal( BlockCache * _bc );
-    /** \brief Destructor
+    /** Destructor.
      * \note This does \b not destroy the BlockCache which was passed in
      *   to the constructor!  The caller must destroy the BlockCache. */
     ~FileBlockLocal( void );
+
+    /** checks for signature etc, returns true if file appears to
+     * be valid.  this function is static so that it can be called
+     * prior to the constructor.
+     * \param bc the interface to the file to check
+     * \return true if file has signature, false if it does not */
+    static bool is_valid_file( BlockCache * bc );
+    /** takes a new file, and writes a signature etc to initialize
+     * the file.  this function is static, because it needs to be called
+     * before the class can be constructed.
+     * \param bc the interface to the file to check. */
+    static void init_file( BlockCache * bc );
 
     /*virtual*/ UINT32 alloc( int size );
     /*virtual*/ void free( UINT32 id );

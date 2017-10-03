@@ -7,23 +7,23 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/** \brief a DLL2 link index for PageCachePage */
+/** a DLL2 link index for PageCachePage */
 enum PAGE_CACHE_LIST_INDICES {
     PAGE_LIST, PAGE_HASH, PAGE_LRU_LOCK, NUM_PAGE_LISTS };
 
-/** \brief Internal representation of a PageCachePage
+/** Internal representation of a PageCachePage
  *
  * This object is derived from PageCachePage and adds linked list
  * pointers and a reference count. */
 class PCPInt : public PageCachePage {
-    /** \brief Reference count; 0 means unlocked, >0 means locked */
+    /** Reference count; 0 means unlocked, >0 means locked */
     int refcount;
-    /** \brief only PageCachePageList can change reference counts on
+    /** only PageCachePageList can change reference counts on
      * this object. */
     friend class PageCachePageList;
-    /** \brief increment reference count */
+    /** increment reference count */
     int ref(void) { return ++refcount; }
-    /** \brief decrement reference count
+    /** decrement reference count.
      * \note Decrementing below zero is a fatal error. */
     int deref(void) {
         if (refcount == 0)
@@ -34,18 +34,17 @@ class PCPInt : public PageCachePage {
         return --refcount;
     }
 public:
-    /** \brief this object can be on 3 linked lists simultaneously,
-     *  see PAGE_CACHE_LIST_INDICES.
+    /** this object can be on 3 linked lists simultaneously,
      * \see PAGE_CACHE_LIST_INDICES */
     LListLinks<PCPInt>  links[NUM_PAGE_LISTS];
-    /** \brief Constructor.
+    /** Constructor.
      * \param _page_number The page number of this page. */
     PCPInt(int _page_number) : PageCachePage(_page_number) { refcount = 0; }
-    /** \brief helper which checks reference count. */
+    /** helper which checks reference count. */
     bool is_locked(void) { return (refcount != 0); }
 };
 
-/** \brief DLL2 hash helper class for PageCachePage */
+/** DLL2 hash helper class for PageCachePage */
 class PCPIntHashCompare {
 public:
     static int hash_key( PCPInt * item ) {
@@ -59,7 +58,7 @@ public:
     }
 };
 
-/** \brief a DLL2 container class for PageCachePage objects.
+/** a DLL2 container class for PageCachePage objects.
  *
  * This object contains: <ul>
  *   <li> a linked list of all PageCachePage objects
@@ -68,54 +67,54 @@ public:
  *   <li> a linked list of all locked PageCachePage objects.
  * </ul> */
 class PageCachePageList {
-    /** \brief A linked list of all objects.
+    /** A linked list of all objects.
      * \see PAGE_CACHE_LIST_INDICES */
     LList     <PCPInt,                      PAGE_LIST>  list;
-    /** \brief A hash table of objects, hash key is page number
+    /** A hash table of objects, hash key is page number.
      * \see PAGE_CACHE_LIST_INDICES */
     LListHash <PCPInt,int,PCPIntHashCompare,PAGE_HASH>  hash;
-    /** \brief A least-recently-used list of all unlocked objects
+    /** A least-recently-used list of all unlocked objects,
      * \see PAGE_CACHE_LIST_INDICES */
     LListLRU  <PCPInt,                  PAGE_LRU_LOCK>  lru;
-    /** \brief A linked list of all locked objects
+    /** A linked list of all locked objects,
      * \see PAGE_CACHE_LIST_INDICES */
     LList     <PCPInt,                  PAGE_LRU_LOCK>  locklist;
 public:
     /** @name Statistics */
     // @{
-    /** \brief return the count of pages currently cached.
+    /** return the count of pages currently cached.
      * \return the count of pages currently cached. */
     int get_cnt    (void) { return list.get_cnt(); }
-    /** \brief return the count of pages currently unlocked.
+    /** return the count of pages currently unlocked.
      * \return the count of pages currently unlocked. */
     int get_lru_cnt(void) { return lru .get_cnt(); }
     // @}
     /** @name Search/Retrieval */
     // @{
-    /** \brief locate a page in cache by its page number.
+    /** locate a page in cache by its page number.
      * \param page_number the number of the page to search for in the hash
      * \return a pointer to the page or NULL if not found. */
     PCPInt * find( int page_number ) { return hash.find( page_number ); }
-    /** \brief return the head of the linked list of all objects 
+    /** return the head of the linked list of all objects.
      * \return head of the linked list of all objects
      * \note The PageCachePageList object should not be manipulated
      *  while the linked list is being walked.  Otherwise the results
      *  may be undefined. */
     PCPInt * get_head  (void      ) { return list.get_head ( ); }
-    /** \brief return the next object in the linked list
+    /** return the next object in the linked list.
      * \param i the current item in the linked list
      * \return the next object in the linked list 
      * \note The PageCachePageList object should not be manipulated
      *  while the linked list is being walked.  Otherwise the results
      *  may be undefined. */
     PCPInt * get_next  (PCPInt * i) { return list.get_next (i); }
-    /** \brief return the oldest item in the least-recently-used list.
+    /** return the oldest item in the least-recently-used list.
      * \return the oldest item in the least-recently-used list. */
     PCPInt * get_oldest(void      ) { return lru.get_oldest( ); }
     // @}
     /** @name Manipulation */
     // @{
-    /** \brief add a PageCachePage to the container
+    /** add a PageCachePage to the container.
      * \param p the PageCachePage to add
      * \param locked indicate whether the item is to be locked or not;
      *    if locked, the item will be put on the locklist; else it will
@@ -132,7 +131,7 @@ public:
         } else
             lru.add(p);
     }
-    /** \brief remove a PageCachePage from the container
+    /** remove a PageCachePage from the container.
      * \param p the PageCachePage to remove */
     void remove( PCPInt * p ) {
         list.remove(p);
@@ -142,7 +141,7 @@ public:
         else
             lru.remove(p);
     }
-    /** \brief mark a PageCachePage as referenced
+    /** mark a PageCachePage as referenced.
      * \param p the PageCachePage to reference
      *
      * If the page was not previously referenced, it will be locked
@@ -153,7 +152,7 @@ public:
             locklist.add(p);
         }
     }
-    /** \brief dereference a PageCachePage
+    /** dereference a PageCachePage.
      * \param p the PageCachePage to dereference
      * 
      * If the page's reference count drops to zero as a result of this

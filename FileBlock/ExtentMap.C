@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/** \brief Allocation of patch of Extent objects
+/** Allocation of patch of Extent objects.
  *
  * For memory efficiency, Extent objects are not allocated and
  * freed one at a time; they are allocated in pages and maintained
@@ -16,28 +16,28 @@
  * this dramatically improves memory allocator overhead. */
 class ExtentsPage {
 public:
-    /** \brief A linked list of all ExtentsPage objects for deletion 
+    /** A linked list of all ExtentsPage objects for deletion 
         when Extents is deleted. */
     LListLinks <ExtentsPage> links[1];
-    /** \brief A number chosen out of a bithat for how many Extent objects
+    /** A number chosen out of a bithat for how many Extent objects
         live in a single object. */
     static const int EXTENTS_PER_PAGE = 4096;
-    /** \brief the actual group of Extent objects */
+    /** the actual group of Extent objects */
     Extent extents[ EXTENTS_PER_PAGE ];
 };
 
-/** \brief Memory allocator for Extent objects
+/** Memory allocator for Extent objects.
  *
  * This class manages free Extent objects.  They're small so the
  * malloc/free overhead would be terrible.  Make a list of ExtentsPages
  * and a list of free Extent objects, and deliver them upon request. */
 class ExtentPool {
-    /** \brief a list of all free Extent objects. */
+    /** a list of all free Extent objects. */
     LList <Extent,EXTENT_LIST> list;
-    /** \brief a list of all ExtentsPage objects. */
+    /** a list of all ExtentsPage objects. */
     LList <ExtentsPage,0> pages;
 public:
-    /** \brief destructor; empties list and deletes all ExtentsPage objs */
+    /** destructor; empties list and deletes all ExtentsPage objs */
     ~ExtentPool(void) {
         Extent * e;
         ExtentsPage * p;
@@ -46,7 +46,7 @@ public:
         while ((p = pages.dequeue_head()) != NULL)
             delete p;
     }
-    /** \brief allocate a new Extent
+    /** allocate a new Extent.
      *
      * This method pulls a free Extent off of the list; or if the list
      * is empty, allocates a new ExtentsPage. */
@@ -68,18 +68,20 @@ public:
             e->used = 0;
         return e;
     }
-    /** \brief free an Extent back to the free list */
+    /** free an Extent back to the free list */
     void free(Extent * e) {
         list.add(e);
     }
 };
 
-/** \brief here is the pool of all free Extent objects */
+/** here is the pool of all free Extent objects */
 static ExtentPool extent_pool;
 
 Extents :: Extents( void )
 {
     memset(bucket_bitmap, 0, sizeof(bucket_bitmap));
+    count_used = 0;
+    count_free = 0;
 }
 
 Extents :: ~Extents( void )
@@ -134,6 +136,7 @@ Extents :: add( off_t _offset, UINT32 _size )
     Extent * e = extent_pool.alloc( _offset, _size );
     list.add(e);
     add_to_bucket(e);
+    count_free ++;
 }
 
 void
@@ -142,6 +145,7 @@ Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
     Extent * e = extent_pool.alloc( _offset, _size, _id );
     list.add(e);
     hash.add(e);
+    count_used ++;
 }
 
 Extent *
@@ -181,12 +185,21 @@ Extents :: alloc( UINT32 size )
 
     id = alloc_id();
 
+    // regardless of what happens next, we have
+    // created a new 'used' extent.  if we are
+    // converting a perfect-match 'free', we must
+    // also decrement count_free.  however if
+    // we are splitting a free one, count_free
+    // actually remains unchanged.
+    count_used ++;
+
     if (e->size == size)
     {
         // flip this one to used and return it.
         e->used = 1;
         e->id = id;
         hash.add(e);
+        count_free --;
         return e;
     }
 
@@ -219,6 +232,7 @@ Extents :: free( Extent * e )
     hash.remove(e);
     e->id = 0;
     e->used = 0;
+    count_used --;
 
     Extent * e2;
 
@@ -229,6 +243,7 @@ Extents :: free( Extent * e )
         e->size += e2->size;
         list.remove(e2);
         remove_from_bucket(e2);
+        count_free --;
         extent_pool.free(e2);
     }
     e2 = list.get_next(e);
@@ -237,9 +252,11 @@ Extents :: free( Extent * e )
         e->size += e2->size;
         list.remove(e2);
         remove_from_bucket(e2);
+        count_free --;
         extent_pool.free(e2);
     }
 
     // add to bucket after updating size!
     add_to_bucket(e);
+    count_free ++;
 }

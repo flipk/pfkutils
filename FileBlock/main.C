@@ -1,6 +1,8 @@
 #if 0
-files="PageCache.C BlockCache.C FileBlockLocal.C ExtentMap.C"
-files="$files ../dll2/dll2_hash.C main.C"
+files="        PageCache.C BlockCache.C"
+files="$files  FileBlockLocal.C FileBlockLocalMap.C"
+files="$files  ExtentMap.C"
+files="$files  ../dll2/dll2_hash.C main.C"
 defs="-D_FILE_OFFSET_BITS=64"
 opts="-Wall -Werror -g3"
 incs="-I../h -I../dll2"
@@ -47,6 +49,9 @@ main(int argc, char ** argv)
 
     io = new PageIOFileDescriptor(fd);
     bc = new BlockCache(io, 12*1024*1024);
+
+    FileBlockLocal::init_file( bc );
+
     fbi = new FileBlockLocal( bc );
 
     //xxx

@@ -85,7 +85,7 @@ PageCache :: release( PageCachePage * _p, bool dirty )
     }
 }
 
-/** \brief compare page numbers of two PCPInt objects, for qsort
+/** compare page numbers of two PCPInt objects, for qsort.
  * \param _a the first PCPInt to compare
  * \param _b the second PCPInt to compare
  * \return positive if _a's page number is greator than _b's page number,

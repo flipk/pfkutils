@@ -7,6 +7,8 @@
 #ifndef __PAGE_IO_H__
 #define __PAGE_IO_H__
 
+#include <sys/types.h>
+
 /** \page PageIO PageIO object
 
 The lowest layer is a derived object from PageIO.  This object knows
@@ -25,7 +27,9 @@ Next: \ref PageCache
 
 */
 
-/** \brief Pure-virual interface class for accessing a file.
+class PageCachePage;
+
+/** Pure-virual interface class for accessing a file.
  *
  * This is an abstraction of how to get and put pages to a file.
  * The idea is that the underlying implementation could be anything--
@@ -34,22 +38,22 @@ Next: \ref PageCache
  * path, etc. */
 class PageIO {
 public:
-    /** \brief virtual destructor placeholder
+    /** virtual destructor placeholder.
      *
      * This class provides a virtual destructor, so that any derived
      * classes can implement their own destructors which are invoked
      * when this object is destroyed. */
     virtual ~PageIO(void) { /* placeholder */ }
-    /** \brief Fetch a page from the file
+    /** Fetch a page from the file.
      * \param pg A PageCachePage object to populate
      * \return true if the fetch succeeded, false if error
      * \note This method assumes pg->page_number was already populated */
     virtual bool  get_page( PageCachePage * pg ) = 0;
-    /** \brief Write a page to the file
+    /** Write a page to the file.
      * \param pg A PageCachePage to write
      * \return true if the write succeeded, false if error */
     virtual bool  put_page( PageCachePage * pg ) = 0;
-    /** \brief return size of the file in pages
+    /** return size of the file in pages.
      * \param page_aligned pointer to a bool; if NULL, it is ignored;
      *  if not NULL, the bool will be written with true if the size of
      *  the file is an even multiple of the page size, or false if the 
@@ -57,23 +61,23 @@ public:
      * \note This method rounds up the return value to the nearest page,
      *  if the size of the file is not an even multiple of a page size. */
     virtual int   get_num_pages(bool * page_aligned = NULL) = 0;
-    /** \brief return size of the file in bytes. */
+    /** return size of the file in bytes. */
     virtual off_t get_size(void) = 0;
 };
 
-/** \brief An example implementation of PageIO using a file descriptor.
+/** An example implementation of PageIO using a file descriptor.
  *
  * This class is an example of how to create a PageIO object.
  * This one is useful for local files.  Just open(2) the file
  * and pass the fd to this class. */
 class PageIOFileDescriptor : public PageIO {
-    /** \brief The file descriptor of the file being accessed. */
+    /** The file descriptor of the file being accessed. */
     int fd;
 public:
-    /** \brief Constructor
+    /** Constructor.
      * \param _fd The file descriptor of the file to access */
     PageIOFileDescriptor(int _fd);
-    /** \brief Destructor
+    /** Destructor.
      * \note This destructor does \b NOT close the file descriptor!  */
     /*virtual*/ ~PageIOFileDescriptor(void);
 
