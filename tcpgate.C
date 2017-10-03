@@ -27,7 +27,7 @@
 extern "C" int tcpgate_main( int argc, char ** argv );
 extern "C" int pipe_main( int argc, char ** argv );
 
-FDMAP_LIST * list;
+static FDMAP_LIST * list;
 
 FDMAP_DATA :: FDMAP_DATA( int _fd, bool connecting )
     : buf( BUFSIZE )
@@ -85,6 +85,9 @@ FDMAP_LISTEN :: handle_select_r( void )
     // once the connection succeeds, a select-for-write will
     // complete successfully. if the connection fails, a 
     // select-for-read will complete first.
+
+    // actually i'm not so sure about that. it might be bullshit.
+    // but the getpeername() trick in select_w seems to work better.
 
     if ( connect( nfd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
     {

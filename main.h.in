@@ -25,6 +25,7 @@
 #endif
 	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,tcpgate2,TCP gateways for bridging)
+	PROG(0,tcpgate3,TCP gateways for bridging)
 	PROG(0,pkfstat,file stats written by pk)
 	PROG(0,itsfsriw,ITS file system remote inode worker)
 	PROG(0,xtermbar,change title in the xterm)

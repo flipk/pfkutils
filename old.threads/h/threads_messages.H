@@ -151,12 +151,13 @@ public:
         FOR_NOTHING   = 0,
         FOR_READ      = 1,
         FOR_WRITE     = 2,
-        FOR_READWRITE = 3,
+        FOR_READWRITE = 3, // = FOR_READ + FOR_WRITE, intentional
         FOR_ERROR     = 4  // only in indication response
     };
     ThreadMessages( int max_mqids, int my_eid,
                     int max_eids, int max_fds );
     ~ThreadMessages( void );
+
 private:
     int max_mqids;
     int my_eid;

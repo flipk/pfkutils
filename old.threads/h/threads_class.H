@@ -41,6 +41,7 @@ protected:
         SELECT_FOR_WRITE = Threads::SELECT_FOR_WRITE
     };
     enum fd_mq_t {
+        FOR_NOTHING      = ThreadMessages::FOR_NOTHING,
         FOR_READ         = ThreadMessages::FOR_READ,
         FOR_WRITE        = ThreadMessages::FOR_WRITE,
         FOR_ERROR        = ThreadMessages::FOR_ERROR

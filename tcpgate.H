@@ -3,10 +3,13 @@
 
 enum { FDMAP_MAIN_LIST, FDMAP_DEL_LIST, FDMAP_NUM_LISTS };
 
+struct FDMAP_DATA;
 struct FDMAP {
     LListLinks<FDMAP> links[FDMAP_NUM_LISTS];
     int fd;
+    FDMAP_DATA * other_fd; // used by FDMAP_DATA only
 
+    FDMAP( void ) { other_fd = NULL; }
     virtual bool sel_r( void ) = 0;
     virtual bool sel_w( void ) = 0;
     virtual void handle_select_r( void ) = 0;
@@ -42,7 +45,6 @@ public:
 
 class FDMAP_DATA : public FDMAP {
 
-    FDMAP_DATA * other_fd;
 
     static const int BUFSIZE = 16384;
 

@@ -1,8 +1,3 @@
-#if 0
-set -e -x
-g++  -Ithreads/h tcpgate3.C threads/libthreads.a -o z
-exit 0
-#endif
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,12 +14,56 @@ exit 0
 #include <errno.h>
 #include <fcntl.h>
 
-#include "tcpgate.H"
 #include "threads.H"
+
+// symbol conflict with tcpgate.C which defines all these
+// methods too; rename them.
+
+#define FDMAP GATE3_FDMAP
+#define FDMAP_DATA GATE3_FDMAP_DATA
+#define FDMAP_LISTEN GATE3_FDMAP_LISTEN
+
+#include "tcpgate.H"
 
 #define VERBOSE 0
 
-FDMAP_LIST * list;
+static FDMAP_LIST        * list;
+static FDMAP_DELETE_LIST * dellist;
+static FDMAP_LIST        * newlist;
+
+class TcpGate3Stats;
+static TcpGate3Stats * gatestats;
+
+class TcpGate3Stats  : public Thread {
+    void entry( void );
+    int bytes;
+public:
+    TcpGate3Stats( void )
+        : Thread( "stats", 5, 10000 )
+        {
+            bytes = 0;
+            gatestats = this;
+            resume( tid );
+        }
+    ~TcpGate3Stats( void ) { }
+    void register_bytes( int v ) { bytes += v; }
+};
+
+void
+TcpGate3Stats :: entry( void )
+{
+    int i = 0;
+    while ( 1 )
+    {
+        printf( "bytes: %d\n", bytes );
+        sleep( tps() );
+        if ( ++i == 10 )
+        {
+            i = 0;
+            th->printinfo();
+        }
+    }
+}
 
 FDMAP_DATA :: FDMAP_DATA( int _fd, bool connecting )
     : buf( BUFSIZE )
@@ -81,6 +120,9 @@ FDMAP_LISTEN :: handle_select_r( void )
     // complete successfully. if the connection fails, a 
     // select-for-read will complete first.
 
+    // actually i'm not so sure about that. it might be bullshit.
+    // but the getpeername() trick in select_w seems to work better.
+
     if ( connect( nfd, (struct sockaddr *)&sa, sizeof( sa )) < 0 )
     {
         if ( errno != EINPROGRESS )
@@ -98,8 +140,8 @@ FDMAP_LISTEN :: handle_select_r( void )
     a->set_other( b );
     b->set_other( a );
 
-    list->add( a );
-    list->add( b );
+    newlist->add( a );
+    newlist->add( b );
 }
 
 void
@@ -115,6 +157,8 @@ FDMAP_DATA :: handle_select_w( void )
             {
                 printf( "fd %d not connected during write\n", fd );
                 closeit();
+                dellist->add( this );
+                dellist->add( other_fd );
                 return;
             }
 
@@ -138,16 +182,27 @@ FDMAP_DATA :: handle_select_w( void )
 #endif
 
         if ( cc <= 0 )
+        {
             closeit();
+            dellist->add( this );
+            dellist->add( other_fd );
+        }
         else
+        {
             buf.record_read( cc );
+            gatestats->register_bytes( cc );
+        }
     }
 
     if ( buf.empty() )
     {
         want_write = false;
         if ( want_close )
+        {
             closeit();
+            dellist->add( this );
+            dellist->add( other_fd );
+        }
     }
 }
 
@@ -163,6 +218,8 @@ FDMAP_DATA :: handle_select_r( void )
         printf( "fd %d NOT connected\n", fd );
 #endif
         closeit();
+        dellist->add( this );
+        dellist->add( other_fd );
         return;
     }
     other_fd->_handle_select_r();
@@ -183,7 +240,11 @@ FDMAP_DATA :: _handle_select_r( void )
     if ( cc < 0 )
     {
         if ( e != EAGAIN )
+        {
             closeit();
+            dellist->add( this );
+            dellist->add( other_fd );
+        }
     }
     else if ( cc == 0 )
     {
@@ -211,6 +272,7 @@ FDMAP_DATA :: _handle_select_r( void )
 
 class TcpGate3Thread : public Thread {
     void entry( void );
+    void maybereg( FDMAP * fdm );
     int mq;
     int argc;
     char ** argv;
@@ -224,9 +286,44 @@ public:
 };
 
 void
+TcpGate3Thread :: maybereg( FDMAP * fdm )
+{
+    int forval;
+    if ( fdm->fd != -1 )
+    {
+        forval = FOR_NOTHING;
+        if ( fdm->sel_r() ) forval += FOR_READ;
+        if ( fdm->sel_w() ) forval += FOR_WRITE;
+        if ( forval != FOR_NOTHING )
+        {
+            register_fd_mq( fdm->fd, (void*)fdm, (fd_mq_t)forval, mq );
+#if VERBOSE
+            printf( "fd %d registered for %d\n", fdm->fd, forval );
+#endif
+        }
+    }
+    fdm = fdm->other_fd;
+    if ( fdm && fdm->fd != -1 )
+    {
+        forval = FOR_NOTHING;
+        if ( fdm->sel_r() ) forval += FOR_READ;
+        if ( fdm->sel_w() ) forval += FOR_WRITE;
+        if ( forval != FOR_NOTHING )
+        {
+            register_fd_mq( fdm->fd, (void*)fdm, (fd_mq_t)forval, mq );
+#if VERBOSE
+            printf( "fd %d registered for %d\n", fdm->fd, forval );
+#endif
+        }
+    }
+}
+
+void
 TcpGate3Thread :: entry( void )
 {
-    list = new FDMAP_LIST;
+    list    = new FDMAP_LIST;
+    dellist = new FDMAP_DELETE_LIST;
+    newlist = new FDMAP_LIST;
 
     argc -= 1;
     argv += 1;
@@ -248,7 +345,7 @@ TcpGate3Thread :: entry( void )
         }
 
         port        = atoi( argv[0] );
-        host        =       argv[1];
+        host        =       argv[1]  ;
         remote_port = atoi( argv[2] );
 
         argc -= 3;
@@ -269,7 +366,6 @@ TcpGate3Thread :: entry( void )
         }
 
         fd = socket( AF_INET, SOCK_STREAM, 0 );
-
         if ( fd < 0 )
         {
             printf( "socket failed: %s\n", strerror( errno ));
@@ -304,103 +400,83 @@ TcpGate3Thread :: entry( void )
 
     // now start main event loop
 
-    fd_set zrfds;
-    FD_ZERO( &zrfds );
-
     if ( register_mq( mq, "fdactive" ) == false )
     {
         printf( "could not register mq\n" );
         return;
     }
 
-//xxx
+    FDMAP * fdm, * fdnm;
+
+    for ( fdm = list->get_head(); fdm; fdm = list->get_next(fdm) )
+        maybereg( fdm );
 
     while ( 1 )
     {
-        fd_set rfds, wfds;
-        int cc, max;
-        FDMAP * m, * nm;
+        union {
+            FdActiveMessage * fam;
+            Message * m;
+        } m;
+        int mqout;
 
-        FD_ZERO( &rfds );
-        FD_ZERO( &wfds );
+        m.m = recv( 1, &mq, &mqout, WAIT_FOREVER );
 
-        max = 0;
-        for ( m = list->get_head(); m; m = list->get_next(m) )
+        if ( m.m->type.get() != FdActiveMessage::TYPE )
         {
-            if ( m->fd != -1 )
-            {
-                bool inc_max = false;
-                if ( m->sel_r() )
-                {
-                    FD_SET( m->fd, &rfds );
-                    inc_max = true;
-                }
-                if ( m->sel_w() )
-                {
-                    FD_SET( m->fd, &wfds );
-                    inc_max = true;
-                }
-                if ( inc_max )
-                    if ((m->fd+1) > max )
-                        max = m->fd + 1;
-            }
+            printf( "unknown type %#x received\n", m.m->type.get() );
+            delete m.m;
+            continue;
         }
 
-        cc = ::select( max, &rfds, &wfds, NULL, NULL );
-        if ( cc < 0 )
-        {
-            printf( "select error: %s\n", strerror( errno ));
-            return;
-        }
+        fdm = (FDMAP*) m.fam->arg;
+        fd_mq_t activity = (fd_mq_t) m.fam->activity.get();
+        delete m.m;
 
-        FDMAP_DELETE_LIST del;
-
-        if ( cc > 0 )
-        {
-#if 0 /* for debug */
-            for ( int i = 0; i < max; i++ )
-            {
-                if ( FD_ISSET(i, &rfds))
-                    printf( "select %d for read\n", i );
-                if ( FD_ISSET(i, &wfds))
-                    printf( "select %d for write\n", i );
-            }
+#if VERBOSE
+        printf( "fd %d selected for %s\n",
+                fdm->fd,
+                (activity == FOR_READ) ? "read" : "write" );
 #endif
-            for ( m = list->get_head(); m; m = nm )
-            {
-                nm = list->get_next(m);
-                if ( m->fd != -1 )
-                    if ( FD_ISSET( m->fd, &wfds ))
-                        m->handle_select_w();
-                if ( m->fd != -1 )
-                    if ( FD_ISSET( m->fd, &rfds ))
-                        m->handle_select_r();
-                if ( m->fd == -1 )
-                    del.add( m );
-            }
+
+        if ( activity == FOR_READ )
+            fdm->handle_select_r();
+        else
+            fdm->handle_select_w();
+
+        maybereg( fdm );
+
+        for ( fdm = dellist->get_head(); fdm; fdm = fdnm )
+        {
+            fdnm = dellist->get_next( fdm );
+            list->remove( fdm );
+            dellist->remove( fdm );
+            delete fdm;
         }
 
-        // delete any fds which require deleting
-
-        for ( m = del.get_head(); m; m = nm )
+        for ( fdm = newlist->get_head(); fdm; fdm = fdnm )
         {
-            nm = del.get_next( m );
-            list->remove( m );
-            del.remove( m );
-            delete m;
+            fdnm = newlist->get_next( fdm );
+            newlist->remove( fdm );
+            list->add( fdm );
+            maybereg( fdm );
         }
     }
 
     delete list;
+    delete dellist;
+    delete newlist;
 }
 
+extern "C" int tcpgate3_main( int argc, char ** argv );
+
 int
-main( int argc, char ** argv )
+tcpgate3_main( int argc, char ** argv )
 {
     ThreadParams p;
-    p.my_eid = 0;
+    p.my_eid = 1;
     Threads th( &p );
     new TcpGate3Thread( argc, argv );
+    new TcpGate3Stats;
     th.loop();
     return 0;
 }
