@@ -55,14 +55,6 @@ class test1 : public PK_Thread, PK_Message_Ext_Handler {
         }
         return NULL;
     }
-    /*virtual*/ void connection_started( void )
-    { printf("test1 connection started\n"); }
-    /*virtual*/ void connection_established( void )
-    { printf("test1 connection established\n"); }
-    /*virtual*/ void connection_failed( int errno )
-    { printf("test1 connection failed: %s\n", strerror(errno) ); }
-    /*virtual*/ void connection_lost( int errno )
-    { printf("test1 connection lost: %s\n", strerror(errno) ); }
 public:
     test1( void ) { set_name( (char*)"test1" ); resume(); }
 };
@@ -105,7 +97,6 @@ test1 :: entry( void )
 }
 
 class test2 : public PK_Thread, PK_Message_Ext_Handler {
-    bool done;
     void entry( void );
     /*virtual*/ pk_msg_ext * make_msg( UINT16 type ) {
         switch (type)
@@ -117,14 +108,6 @@ class test2 : public PK_Thread, PK_Message_Ext_Handler {
         }
         return NULL;
     }
-    /*virtual*/ void connection_started( void )
-    { printf("test2 connection started\n"); }
-    /*virtual*/ void connection_established( void )
-    { printf("test2 connection established\n"); }
-    /*virtual*/ void connection_failed( int errno )
-    { printf("test2 connection failed: %s\n", strerror(errno) ); }
-    /*virtual*/ void connection_lost( int errno )
-    { printf("test2 connection lost: %s\n", strerror(errno) ); }
 public:
     test2( void ) { set_name( (char*)"test2" ); resume(); }
 };
@@ -143,8 +126,7 @@ test2 :: entry( void )
         TestMsg2 * tm2;
     } u;
 
-    done = false;
-    while (!done)
+    while (true)
     {
         u.msg = tcp->recv(10);
 

@@ -318,43 +318,9 @@ struct BST_UINT8_t : public BST {
     }
 };
 
-
-template <int dim>
-struct BST_FIXED_BINARY : public BST {
-    BST_FIXED_BINARY(BST *parent) : BST(parent) { }
-    unsigned char binary[dim];
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        UCHAR * ptr;
-        switch (str->get_op())
-        {
-        case BST_OP_ENCODE:
-            ptr = str->get_ptr(dim);
-            if (!ptr)
-                return false;
-            memcpy(ptr, binary, dim);
-            return true;
-        case BST_OP_CALC_SIZE:
-            ptr = str->get_ptr(dim);
-            if (!ptr)
-                return false;
-            return true;
-        case BST_OP_DECODE:
-            ptr = str->get_ptr(dim);
-            if (!ptr)
-                return false;
-            memcpy(binary, ptr, dim);
-            return true;
-        case BST_OP_MEM_FREE:
-            return true;
-        }
-        return false;
-    }
-};
-
-
-struct BST_VAR_BINARY : public BST {
-    BST_VAR_BINARY(BST *parent) : BST(parent) { binary = NULL; size = 0; }
-    ~BST_VAR_BINARY(void) { if (binary) delete[] binary; }
+struct BST_BINARY : public BST {
+    BST_BINARY(BST *parent) : BST(parent) { binary = NULL; size = 0; }
+    ~BST_BINARY(void) { if (binary) delete[] binary; }
     int size;
     unsigned char * binary;
     void alloc(int c) {
@@ -380,7 +346,7 @@ struct BST_VAR_BINARY : public BST {
     }
     /*virtual*/ bool bst_op( BST_STREAM * str ) {
         UCHAR * ptr;
-        BST_UINT32_t   count(NULL);
+        BST_UINT16_t   count(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -429,7 +395,7 @@ struct BST_STRING : public BST {
     char * string;
     /*virtual*/ bool bst_op( BST_STREAM *str ) {
         UCHAR * ptr;
-        BST_UINT32_t  len(NULL);
+        BST_UINT16_t  len(NULL);
         switch (str->get_op())
         {
         case BST_OP_ENCODE:
@@ -517,7 +483,7 @@ public:
             else
             {
                 if (!pointer)
-                    pointer = new T;
+                    pointer = new T(NULL);
                 if (!pointer->bst_op(str))
                     return false;
             }

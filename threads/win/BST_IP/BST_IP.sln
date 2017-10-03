@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BST_IP", "BST_IP\BST_IP.vcproj", "{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BST_IP_TESTER", "BST_IP_TESTER\BST_IP_TESTER.vcproj", "{76097578-1F05-480B-B46C-E64468E59E12}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2} = {6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}.Debug|Win32.Build.0 = Debug|Win32
+		{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}.Release|Win32.ActiveCfg = Release|Win32
+		{6EC25D07-2619-4D1E-9024-E29E7B3FA0F2}.Release|Win32.Build.0 = Release|Win32
+		{76097578-1F05-480B-B46C-E64468E59E12}.Debug|Win32.ActiveCfg = Debug|Win32
+		{76097578-1F05-480B-B46C-E64468E59E12}.Debug|Win32.Build.0 = Debug|Win32
+		{76097578-1F05-480B-B46C-E64468E59E12}.Release|Win32.ActiveCfg = Release|Win32
+		{76097578-1F05-480B-B46C-E64468E59E12}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

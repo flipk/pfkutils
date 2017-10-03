@@ -38,14 +38,11 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     : PK_Message_Ext_Link(_handler),
       PK_Message_Ext_Manager(_handler,this)
 {
-    PK_Message_Ext_Link::handler->connection_started();
-
     fd = socket( AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
     {
         int err = errno;
         fprintf( stderr, "socket: %s\n", strerror( err ));
-        PK_Message_Ext_Link::handler->connection_failed(err);
         return;
     }
 
@@ -59,7 +56,6 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     {
         int err = errno;
         fprintf( stderr, "bind: %s\n", strerror( err ));
-        PK_Message_Ext_Link::handler->connection_failed(err);
         close(fd);
         fd = -1;
         return;
@@ -71,15 +67,13 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     {
         int err = errno;
         fprintf( stderr, "accept: %s\n", strerror( err ));
-        PK_Message_Ext_Link::handler->connection_failed(err);
         close(fd);
         fd = -1;
         return;
     }
     close(fd);
     fd = new_fd;
-
-    PK_Message_Ext_Link::handler->connection_established();
+    connected = true;
 }
 
 PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
@@ -88,14 +82,11 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     : PK_Message_Ext_Link(_handler),
       PK_Message_Ext_Manager(_handler,this)
 {
-    PK_Message_Ext_Link::handler->connection_started();
-
     fd = socket( AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
     {
         int err = errno;
         fprintf( stderr, "socket: %s\n", strerror( err ));
-        PK_Message_Ext_Link::handler->connection_failed(err);
         return;
     }
 
@@ -111,7 +102,6 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
             int err = errno;
             fprintf(stderr, "host lookup of '%s': %s\n",
                     host, strerror( err ));
-            PK_Message_Ext_Link::handler->connection_failed(err);
             close(fd);
             fd = -1;
             return;
@@ -123,13 +113,12 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     {
         int err = errno;
         fprintf( stderr, "connect: %s\n", strerror( err ));
-        PK_Message_Ext_Link::handler->connection_failed(err);
         close(fd);
         fd = -1;
         return;
     }
 
-    PK_Message_Ext_Link::handler->connection_established();
+    connected = true;
 }
 
 PK_Message_Ext_Link_TCP :: ~PK_Message_Ext_Link_TCP(void)
@@ -153,7 +142,7 @@ PK_Message_Ext_Link_TCP :: write( UCHAR * buf, int buflen )
         cc = ::write(fd, ptr, buflen);
         if (cc <= 0)
         {
-            PK_Message_Ext_Link::handler->connection_lost(errno);
+            connected = false;
             return false;
         }
         ptr += cc;
@@ -194,7 +183,7 @@ PK_Message_Ext_Link_TCP :: read ( UCHAR * buf, int buflen, int ticks )
     cc = ::read(fd, buf, buflen);
     if (cc <= 0)
     {
-        PK_Message_Ext_Link::handler->connection_lost((cc == 0) ? errno : 0);
+        connected = false;
         return -1;
     }
 

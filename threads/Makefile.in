@@ -29,7 +29,7 @@ LINKFL+= -lrt
 #  ?
 #endif
 
-all: $(LIB) t1 t2 t3
+all: $(LIB) t1 t2 t3 t4
 
 $(LIB): $(OBJS)
 	rm -f $(LIB)
@@ -44,6 +44,9 @@ t2: $(LIB) test-2.C
 
 t3: $(LIB) test-3.C
 	$(GCCLINK) -g3 test-3.C -Ih $(LIB) ../dll2/libdll2.a -o t3
+
+t4: $(LIB) test-4.C
+	$(GCCLINK) -g3 test-4.C -Ih $(LIB) ../dll2/libdll2.a -o t4
 
 .C.o:
 	$(GCC) -c $*.C

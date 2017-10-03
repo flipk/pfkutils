@@ -67,22 +67,23 @@ PK_Message_Ext_Manager :: send( pk_msg_ext * msg )
 }
 
 inline UINT16
-PK_Message_Ext_Manager :: get_byte( int ticks )
+PK_Message_Ext_Manager :: get_byte( int ticks, bool beginning )
 {
     if (rcvbufpos >= rcvbufsize)
     {
-        rcvbufsize = rcvbufpos = 0;
-        int cc = link->read(rcvbuf, MAX_MSG_SIZE, ticks);
-        if (cc == 0)
+        if (beginning)
+            rcvbufsize = rcvbufpos = 0;
+        int bytes_read = link->read(
+            rcvbuf, MAX_MSG_SIZE - rcvbufsize, ticks);
+        if (bytes_read == 0)
             return 0xFFFF;
-        if (cc < 0)
+        if (bytes_read < 0)
         {
             int err = errno;
-            printf("get_byte: read: %s\n", strerror(errno));
-            handler->connection_lost(err);
+            printf("get_byte: read: %s\n", strerror(err));
             return 0xFFFF;
         }
-        rcvbufsize = cc;
+        rcvbufsize += bytes_read;
     }
 
     return (UINT16) rcvbuf[rcvbufpos++];
@@ -106,7 +107,7 @@ PK_Message_Ext_Manager :: recv( int ticks )
         switch (s)
         {
         case STATE_HEADER_HUNT_1:
-            byte = get_byte(ticks);
+            byte = get_byte(ticks, true);
             if (byte == 0xFFFF)
                 goto bail;
             if (byte == ((pk_msg_ext_hdr::MAGIC >> 24) & 0xFF))
