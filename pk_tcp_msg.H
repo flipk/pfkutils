@@ -47,6 +47,7 @@ struct pk_tcp_msg {
     bool verif_magic( void ) { return magic.get() == magic_value; }
     int get_len( void ) { return length.get(); }
     UINT16 get_type( void ) { return type.get(); }
+    char * get_ptr(void) { return (char*) this; }
     template <class T> bool convert( T ** ptr ) {
         if ( type.get() != T::TYPE )
             return false;

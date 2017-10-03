@@ -1,0 +1,34 @@
+
+ENC TEL GATE PROXY + ENC TEL GATE WORKER
+----------------------------------------
+
+- create adm hookup listening tcp port 
+- when connection received
+   - create 'user' adm gate port
+   - create 'network' adm gate port
+      - create packet encoder and decoder.
+- user and network exchange raw data; all raw data passes
+  through packet_decoder filter.
+- if packet_decoder finds a packet, pipeno is examined; pipe manager
+  in pipe mgr array indexed by pipeno is given this packet.
+
+
+
+PROTOCOL
+--------
+the protocol exhanged between the worker and proxy is as
+follows. packets may be up to 1600 bytes long.  Packets are base64
+encoded with a meaningless newline inserted every 72 characters.
+
+A packet begins with the 4 character sequence "PFK1".
+What follows is a sequence of N 4-character base64-encoded characters.
+Each 4-character group translates into three bytes.
+Every 72 characters, a newline is inserted.
+The packet contains the following data:
+	- two-byte big-endian packet length value (len)
+	- (len) bytes of packet data.
+	- two-byte big-endian checksum value
+		- note the checksum is calculated over only the data bytes
+The packet decoder acts as a filter, removing every character
+sequence recognized as a packet and passing through every character
+which is not part of a packet.

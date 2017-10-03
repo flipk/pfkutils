@@ -26,7 +26,7 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
 {
     m->set_checksum();
     int l = m->get_len();
-    char * p = (char*) m;
+    char * p = m->get_ptr();
     while ( l > 0 )
     {
         int cc = user_write( user_arg, fd, p, l );
@@ -54,7 +54,7 @@ pk_tcp_msgr :: recv_pending( void )
 bool
 pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
 {
-    char * buf = (char*) m;
+    char * buf = m->get_ptr();
     states state = HEADER;
     int stateleft = sizeof( pk_tcp_msg );
 
