@@ -898,7 +898,8 @@ Threads :: vprintf( char * format, va_list ap )
     if ( current )
     {
         if ( current->print_header )
-            snprintf( pb, max, "%s(%d): ", threadname, current->tid );
+            snprintf( pb, max, "%d:%d:%s: ",
+                      timers->get_tick(), current->tid, threadname );
         else
             pb[0] = 0;
     }

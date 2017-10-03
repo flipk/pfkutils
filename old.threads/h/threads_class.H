@@ -48,80 +48,80 @@ protected:
     };
     static const int default_prio = 10;
     static const int default_stack_size = 16384;
-    int tps( void ) { return th->timers->get_tps(); }
-    int tick( void ) { return th->timers->get_tick(); }
-    int my_eid( void ) { return th->msgs->get_my_eid(); }
-    bool sleep( int t ) { return th->sleep( t ); }
-    void yield( void ) { th->yield(); }
-    bool suspend( tid_t t ) { return th->suspend( t ); }
-    bool resume( tid_t t ) { return th->resume( t ); }
-    void register_fd( int fd ) { th->register_fd( fd ); }
-    int read( int fd, void * buf, int sz ) {
+    static int tps( void ) { return th->timers->get_tps(); }
+    static int tick( void ) { return th->timers->get_tick(); }
+    static int my_eid( void ) { return th->msgs->get_my_eid(); }
+    static bool sleep( int t ) { return th->sleep( t ); }
+    static void yield( void ) { th->yield(); }
+    static bool suspend( tid_t t ) { return th->suspend( t ); }
+    static bool resume( tid_t t ) { return th->resume( t ); }
+    static void register_fd( int fd ) { th->register_fd( fd ); }
+    static int read( int fd, void * buf, int sz ) {
         return th->read( fd, buf, sz );
     }
-    int write( int fd, void * buf, int sz ) {
+    static int write( int fd, void * buf, int sz ) {
         return th->write( fd, buf, sz );
     }
-    int select( int nrfds, int * rfds, int nwfds, int * wfds,
+    static int select( int nrfds, int * rfds, int nwfds, int * wfds,
                 int nofds, int * ofds, int ticks ) {
         return th->select( nrfds, rfds, nwfds, wfds,
                            nofds, ofds, ticks );
     }
-    tid_t create( char * name, int prio, int stack, 
+    static tid_t create( char * name, int prio, int stack, 
                   bool susp, Threads::FUNCPTR func, void * arg ) {
         return th->create( name, prio, stack, susp, func, arg );
     }
-    bool register_mq( int &mqid, char * mqname ) {
+    static bool register_mq( int &mqid, char * mqname ) {
         return th->msgs->register_mq( mqid, mqname );
     }
-    bool unregister_mq( int mqid ) {
+    static bool unregister_mq( int mqid ) {
         return th->msgs->unregister_mq( mqid );
     }
-    bool lookup_mq( int eid, int &mqid, char * mqname ) {
+    static bool lookup_mq( int eid, int &mqid, char * mqname ) {
         return th->msgs->lookup_mq( eid, mqid, mqname );
     }
-    bool send( Message * m, MessageAddress * ma ) {
+    static bool send( Message * m, MessageAddress * ma ) {
         return th->msgs->send( m, ma );
     }
-    Message * recv( int numqs, int * mqs, int * mqout, int timeout ) {
+    static Message * recv( int numqs, int * mqs, int * mqout, int timeout ) {
         return th->msgs->recv( numqs, mqs, mqout, timeout );
     }
-    bool register_eid( int eid, int mqid ) {
+    static bool register_eid( int eid, int mqid ) {
         return th->msgs->register_eid( eid, mqid );
     }
-    bool unregister_eid( int eid ) {
+    static bool unregister_eid( int eid ) {
         return th->msgs->unregister_eid( eid );
     }
-    bool register_fd_mq( int fd, void * arg, fd_mq_t t, int mqid ) {
+    static bool register_fd_mq( int fd, void * arg, fd_mq_t t, int mqid ) {
         return th->msgs->register_fd_mq(
             fd, arg, (ThreadMessages::fd_mq_t)t, mqid );
     }
-    bool unregister_fd_mq( int fd ) {
+    static bool unregister_fd_mq( int fd ) {
         return th->msgs->unregister_fd_mq( fd );
     }
-    int set( int ticks, Message * m ) {
+    static int set( int ticks, Message * m ) {
         return th->timers->set( ticks, m );
     }
-    int set( int ticks, tid_t tid ) {
+    static int set( int ticks, tid_t tid ) {
         return th->timers->set( ticks, tid );
     }
-    bool cancel( int timerid, Message ** m ) {
+    static bool cancel( int timerid, Message ** m ) {
         return th->timers->cancel( timerid, m );
     }
-    bool cancel( int timerid ) {
+    static bool cancel( int timerid ) {
         return th->timers->cancel( timerid );
     }
-    ThreadSemaphore * seminit( char * name, int v ) {
+    static ThreadSemaphore * seminit( char * name, int v ) {
         return th->sems->seminit( name, v );
     }
-    void semdelete( ThreadSemaphore * s ) {
+    static void semdelete( ThreadSemaphore * s ) {
         th->sems->semdelete( s );
     }
-    int vprintf( char * format, va_list ap ) 
-        __attribute__ ((format( printf, 2, 0 )));
-    int printf( char * format, ... )
-        __attribute__ ((format( printf, 2, 3 )));
-    void print_header( bool flag ) {
+    static int vprintf( char * format, va_list ap ) 
+        __attribute__ ((format( printf, 1, 0 )));
+    static int printf( char * format, ... )
+        __attribute__ ((format( printf, 1, 2 )));
+    static void print_header( bool flag ) {
         th->print_header( flag );
     }
 };

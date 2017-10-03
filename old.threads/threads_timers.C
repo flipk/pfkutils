@@ -97,6 +97,12 @@ ThreadTimers :: new_timer( int ticks )
 int
 ThreadTimers :: set( int ticks, Message * m )
 {
+    if ( ticks == 0 )
+    {
+        ::fprintf(stderr, "bogus timer set 0\n" );
+        ::kill(0,6);
+    }
+
     timerCommand * c = new timerCommand;
     c->a = SET_TIMER;
     c->p = new_timer( ticks );
@@ -109,6 +115,12 @@ ThreadTimers :: set( int ticks, Message * m )
 int
 ThreadTimers :: set( int ticks, Threads::tid_t tid )
 {
+    if ( ticks == 0 )
+    {
+        ::fprintf(stderr, "bogus timer set 0\n" );
+        ::kill(0,6);
+    }
+
     timerCommand * c = new timerCommand;
     c->a = SET_TIMER;
     c->p = new_timer( ticks );
@@ -247,8 +259,14 @@ ThreadTimers :: process_cmds( void )
         }
         else if ( c->a == CANCEL_TIMER )
         {
-            oq.remove( c->p );
-            hash.remove( c->p );
+            // if the cancel and the expiry were in the same
+            // iteration of the while in thread(), then process_tick
+            // will have already removed p from the lists.
+            if ( oq.onthislist( c->p ))
+            {
+                oq.remove( c->p );
+                hash.remove( c->p );
+            }
         }
 
         if ( c->a == CANCEL_TIMER && c->p->enabled )
@@ -279,31 +297,37 @@ ThreadTimers :: process_tick( void )
         oq.remove( p );
         hash.remove( p );
 
-        // expire p
-
-        Message * m = p->get_m();
-        if ( m != NULL )
+        if ( p->enabled )
         {
-            if ( th->msgs->send( m, &m->dest ) == false )
-                printf( "timerid %d failed to send msg\n",
-                        p->timerid );
-        }
-        else
-        {
-            // this requeueing mechanism is really
-            // gross; should investigate a better way
-            // to fix it.
+            // expire p
 
-            if (( th->valid_tid( p->mtid.tid )) &&
-                ( th->resume( p->mtid.tid ) == false ))
+            Message * m = p->get_m();
+            if ( m != NULL )
             {
-                oq.add( p, p->tickarg );
-                hash.add( p );
-                p = NULL;
+                if ( th->msgs->send( m, &m->dest ) == false )
+                    printf( "timerid %d failed to send msg\n",
+                            p->timerid );
             }
-        }
+            else
+            {
+                // this requeueing mechanism is really
+                // gross; should investigate a better way
+                // to fix it.
 
-        if ( p != NULL )
-            delete p;
+                if (( th->valid_tid( p->mtid.tid )) &&
+                    ( th->resume( p->mtid.tid ) == false ))
+                {
+                    oq.add( p, p->tickarg );
+                    hash.add( p );
+                    p = NULL;
+                }
+            }
+
+            if ( p != NULL )
+                delete p;
+        }
+        // if p is disabled, that means there's a pending cancel
+        // operation on it, so do not call 'delete' on it! 
+        // process_cmds will see it and delete it.
     }
 }

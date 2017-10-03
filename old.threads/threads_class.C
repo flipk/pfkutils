@@ -30,12 +30,14 @@ Thread :: _entry( void * arg )
     delete t;
 }
 
+//static
 int
 ThreadShortCuts :: vprintf( char * format, va_list ap )
 {
     return th->vprintf( format, ap );
 }
 
+//static
 int
 ThreadShortCuts :: printf( char * format, ... )
 {

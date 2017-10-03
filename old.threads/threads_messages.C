@@ -206,13 +206,16 @@ ThreadMessages :: recv( int numqids, int * mqids,
 
     if ( wtr.whichwoke == -1 )
     {
-        int timerid = -1;
-        if ( timeout != Threads::WAIT_FOREVER )
-            timerid = th->timers->set( timeout, th->current->tid );
-        th->current->state = TH_MSGWAIT;
-        th->reschedule();
-        if ( timerid != -1 )
-            (void) th->timers->cancel( timerid );
+        if ( timeout != Threads::NO_WAIT )
+        {
+            int timerid = -1;
+            if ( timeout != Threads::WAIT_FOREVER )
+                timerid = th->timers->set( timeout, th->current->tid );
+            th->current->state = TH_MSGWAIT;
+            th->reschedule();
+            if ( timerid != -1 )
+                (void) th->timers->cancel( timerid );
+        }
     }
 
     for ( i = 0; i < numqids; i++ )
