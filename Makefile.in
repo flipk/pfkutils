@@ -12,21 +12,16 @@ PROG=	pkutils.exe
 PROG=	pkutils
 #endif
 
-HDRS=	sudo.h main_prog.h m.h main.h regex.h
-CSRCS=	crnl.c he.c inet_aton.c \
-	m.c regex.c main.c random-hex.c fmtsdiff.c \
-	xtermbar.c genpw.c waitpid.c pkfstat.c pk-md5.c
-CPPSRCS= rmstar.C pk_msg.C fd_mgr.C
-OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
+HDRS=	sudo.h main_prog.h main.h 
+CSRCS=	main.c 
+OBJS= $(CSRCS:.c=.o)
 LIBS= -lcurses -lm -lpthread -lz
 
-DIRS= implode tags.make tags.view ipipe2 dll2 
+DIRS= implode tags.make tags.view ipipe2 dll2 util syslog states
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
-	ipipe2/libi2.a 
-
-DIRS+= states
-ELIBS+= states/libstates.a
+	ipipe2/libi2.a util/libutil.a syslog/libsyslog.a \
+	states/libstates.a
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
@@ -62,7 +57,7 @@ ELIBS+= bt/libbt.a itsfs/libitsfs.a
 #endif
 
 #ifdef freebsd
-CSRCS+=	treescan.c sudo.c
+CSRCS+=	sudo.c
 LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
 #endif
 

@@ -5,7 +5,7 @@ HDRS= ipipe_acceptor.H ipipe_connector.H ipipe_factories.H ipipe_forwarder.H ipi
 
 OBJS= $(SRCS:.C=.o)
 CC=  g++
-INCS= -I../dll2 -I..
+INCS= -I../dll2 -I.. -I../util
 DEFS= -DDLL2_INCLUDE_BTREE=0 -DI2_ZLIB -DI2_MD5
 LIBS= -lz -lpthread
 OPTS= -O3 -Wall -Werror

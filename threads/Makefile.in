@@ -1,6 +1,6 @@
 
 LIB= libpkthr.a
-CPPFLAGS= -Ih -Iint -I.. -I../dll2
+CPPFLAGS= -Ih -Iint -I.. -I../dll2 -I../util
 GCC= gcc $(CPPFLAGS) -O3
 GCCLINK= g++ $(CPPFLAGS) $(LINKFL)
 SRCS=  pk_messages.C pk_semaphores.C pk_threads.C pk_timers.C stringhash.C \

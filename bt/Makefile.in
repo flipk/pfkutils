@@ -5,7 +5,7 @@ SRCS= recnoblock.C btree.C print_tree.C
 ALLSRCS= $(SRCS) test.C
 OBJS= $(SRCS:.C=.o)
 FLAGS= -O3
-INCS=  -I../threads/h -I../dll2 -I..
+INCS=  -I../threads/h -I../dll2 -I.. -I../util
 
 all: $(LIB) rbt rbto
 

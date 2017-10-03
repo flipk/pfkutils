@@ -14,10 +14,9 @@
 
 #include "regex.h"
 #include "rules.h"
-#include "strip_chars.c"
-#include "config_file.c"
-#include "process_line.c"
-#include "regex.c"
+#include "strip_chars.h"
+#include "config_file.h"
+#include "process_line.h"
 
 void
 usage(void)
@@ -28,7 +27,7 @@ usage(void)
 }
 
 int
-main( int argc, char ** argv )
+postprocess_syslog_main( int argc, char ** argv )
 {
     char buf[ MAX_LINE_LEN ];
     int len;

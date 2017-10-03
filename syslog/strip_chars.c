@@ -1,6 +1,11 @@
 
+#include <stdlib.h>
+#include <string.h>
+
+#include "strip_chars.h"
+
 int
-strip_chars(char *buf,int len)
+strip_chars(char *buf, int len)
 {
     char *inbuf = buf;
     char *obuf = (char*) malloc(len);

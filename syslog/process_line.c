@@ -1,4 +1,12 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "regex.h"
+#include "rules.h"
+#include "process_line.h"
+#include "config_file.h"
+
 void
 process_line(char *line, int len, char *line_wo_date, int len_wo_date)
 {
@@ -74,6 +82,10 @@ process_line(char *line, int len, char *line_wo_date, int len_wo_date)
             fwrite(line_wo_date, len_wo_date, 1, stdout);
             fprintf(stdout, "\n");
         }
+        break;
+
+    default:
+        // do nothing? throw error?
         break;
     }
 }

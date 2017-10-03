@@ -14,13 +14,13 @@
 
 #include "regex.h"
 #include "rules.h"
-#include "strip_chars.c"
-#include "config_file.c"
-#include "process_line.c"
-#include "regex.c"
+#include "strip_chars.h"
+#include "config_file.h"
+#include "process_line.h"
+#include "regex.h"
 
 int
-main( int argc, char ** argv )
+syslogd_main( int argc, char ** argv )
 {
     int fd, len;
     char buf[ MAX_LINE_LEN + 40 ];

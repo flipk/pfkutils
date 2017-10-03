@@ -1,5 +1,13 @@
 
-#define DEFAULT_CONFIG_FILE "syslogd.ini"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+
+#include "regex.h"
+#include "rules.h"
+#include "config_file.h"
+#include "strip_chars.h"
 
 /* see sample.ini */
 
@@ -10,6 +18,12 @@ FILE * raw_output_file = NULL;
 #if DEBUG_LOG
 FILE * debug_log_file;
 #endif
+
+struct rule_file * rule_files;
+struct rule_file * rule_files_tail;
+int next_rule_id = 1;
+struct rule * rules;
+struct rule * rules_tail;
 
 void
 syntax_error(void)
@@ -45,7 +59,6 @@ void
 parse_config_file(char *config_file)
 {
     FILE * f;
-    char * cp1;
     char line[MAX_LINE_LEN];
     char match[MAX_LINE_LEN];
     int match_len;
@@ -275,6 +288,10 @@ parse_config_file(char *config_file)
                     exit(1);
                 }
                 rp->action = ACTION_COMPARE_STORE;
+                break;
+
+            default:
+                // nothing? perhaps error?
                 break;
             }
             rp->next = NULL;

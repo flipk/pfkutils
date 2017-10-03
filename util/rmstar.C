@@ -8,7 +8,8 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
-#include "dll2/dll2.H"
+
+#include "dll2.H"
 
 class rmstar_item {
     void * operator new( size_t s, int itemlen ) {
@@ -115,7 +116,7 @@ rmthings( RMSTAR_LIST * l )
 
     rmstar_item * i;
 
-    while ( i = l->get_head())
+    while ((i = l->get_head()) != NULL)
     {
         l->remove( i );
         path = i->item;
@@ -217,7 +218,7 @@ rmstar_main( int argc, char ** argv )
         buf[0] = 0;
         if ( fgets( buf, 79, stdin ) && buf[0] == 'y' )
         {
-            while ( i = log.get_head() )
+            while ( (i = log.get_head()) != NULL )
             {
                 log.remove( i );
                 printf( "%s", i->item );

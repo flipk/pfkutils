@@ -68,6 +68,7 @@ export IFDEFSYM
 for f in $makefiles ; do
     rm -f $f
     $awk -f configure.awk < $f.in > $f
+#    chmod a-w $f
 done
 
 $awk -f configure.awk < main.h.in > main.h.tmp
@@ -124,6 +125,5 @@ else
 fi
 
 make depend
-find . -name Makefile | xargs chmod a-w
 
 exit 0

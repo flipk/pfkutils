@@ -3,7 +3,7 @@ TARG= libmytar.a
 SRCS= file_db.C update_file.C extract_file.C update_dir.C main.C
 HDRS= file_db.H update_file.H extract_file.H update_dir.H
 COPTS= -O3 -Wall -Werror
-INCS= -I .. -I ../dll2 -I ../bt
+INCS= -I.. -I../dll2 -I../bt -I../util
 DEFS= 
 
 _OBJS= $(SRCS:.C=.o)

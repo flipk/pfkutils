@@ -7,8 +7,8 @@ struct rule_file {
     int enable_stdout;
 };
 
-struct rule_file * rule_files;
-struct rule_file * rule_files_tail;
+extern struct rule_file * rule_files;
+extern struct rule_file * rule_files_tail;
 
 typedef enum {
     ACTION_COMPARE_IGNORE,
@@ -24,6 +24,6 @@ struct rule {
     struct rule_file * file;
 };
 
-int next_rule_id = 1;
-struct rule * rules;
-struct rule * rules_tail;
+extern int next_rule_id;
+extern struct rule * rules;
+extern struct rule * rules_tail;
