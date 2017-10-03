@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /* define following to "0" to save some CPU time on the list operations--
    beware of the safety checks it turns off, though. 

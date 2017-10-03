@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file FileBlockLocal.C
  * \brief implements FileBlockLocal class
@@ -39,6 +44,7 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 FileBlockLocal :: ~FileBlockLocal( void )
 {
     flush();
+    delete bc;
 }
 
 //static
@@ -117,6 +123,31 @@ FileBlockLocal :: init_file( BlockCache * bc )
 
     for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
         fbh.d->file_info_block_ids[i].set( 0 );
+}
+
+//static
+FileBlockInterface *
+FileBlockInterface :: _openFile( const char * filename, int max_bytes,
+                                 bool create, int mode )
+{
+    int options = O_RDWR;
+    if (create)
+        options |= O_CREAT;
+#ifdef O_LARGEFILE
+    options |= O_LARGEFILE;
+#endif
+    int fd = ::open( filename, options, mode );
+    if (fd < 0)
+        return NULL;
+    PageIO * pageio = new PageIOFileDescriptor(fd);
+    BlockCache * bc = new BlockCache( pageio, max_bytes );
+    if (create)
+        FileBlockInterface::init_file(bc);
+    FileBlockInterface * fbi = open(bc);
+    if (fbi)
+        return fbi;
+    delete bc;
+    return NULL;
 }
 
 //virtual

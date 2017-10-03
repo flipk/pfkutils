@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file PageCache.H
  * \brief Define interfaces:
@@ -42,7 +47,7 @@ public:
      *  to resonable levels. */
     PageCache( PageIO * _io, int _max_pages );
     /** Destructor.
-     * \note This destructor does \b NOT delete the PageIO object!
+     * \note This destructor deletes the PageIO object too!
      * \note All in-use pages should be released prio to destroying this
      *   object! */
     ~PageCache(void);

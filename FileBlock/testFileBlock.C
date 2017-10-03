@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file testFileBlock.C
  * \brief Test harness for FileBlock
@@ -32,12 +37,12 @@ struct info {
     info(void) { inuse = false; }
 };
 
-#define TESTFILE "/tmp/testfile.db"
+#define TESTFILE "testfile.db"
 
 #define VERBOSE 0
 #define XOR_CONSTANT 0x12345678
 
-#define TEST 1
+#define TEST 3
 
 #if TEST==1
 int testFileBlockSignalOccurred = 0;
@@ -321,4 +326,140 @@ out:
 
     return 0;
 }
+
+#elif TEST==3
+
+#include "bst.H"
+
+class CrapUnion : public BST_UNION {
+public:
+    enum { ONE, TWO, MAX };
+    CrapUnion(void) : BST_UNION(MAX) { }
+    ~CrapUnion(void) { bst_free(); }
+    BST_UINT32_t   one;
+    BST_STRING     two;
+    /*virtual*/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two };
+        return bst_do_union(str, fields);
+    }
+};
+
+class CrapType : public FileBlockBST {
+public:
+    CrapType(FileBlockInterface * _fbi) : FileBlockBST(_fbi) { }
+    ~CrapType(void) { bst_free(); }
+    BST_UINT32_t one;
+    BST_UINT32_t two;
+    CrapUnion un;
+    /*virtual*/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two, &un, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+struct JunkType : public BST {
+    ~JunkType(void) { bst_free(); }
+    BST_UINT32_t one;
+    BST_STRING   two;
+    /*virtual*/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+int
+main()
+{
+#if 0
+    int fd;
+    (void) unlink( TESTFILE );
+    fd = open(TESTFILE, O_RDWR | O_CREAT, 0644);
+    if (fd < 0)
+    {
+        fprintf(stderr, "unable to open file\n");
+        exit( 1 );
+    }
+    PageIO      * io = new PageIOFileDescriptor(fd);
+    BlockCache  * bc = new BlockCache(io, 256*1024*1024);
+    FileBlockInterface::init_file( bc );
+    FileBlockInterface * fbi = FileBlockInterface::open( bc );
+#else
+    (void) unlink( TESTFILE );
+    FileBlockInterface * fbi = 
+        FileBlockInterface::createFile( TESTFILE, 256*1024*1024, 0644 );
+#endif
+
+    {
+        JunkType  j, k;
+        j.one.v = 24;
+        j.two.strdup((char*)"this is a stupid test");
+        UCHAR * jptr;
+        int jlen = 0;
+        jptr = j.bst_encode( &jlen );
+        if (jptr)
+        {
+            for (int i = 0; i < jlen; i++)
+                printf("%02x", jptr[i]);
+            printf("\n");
+
+            if (!k.bst_decode(jptr,jlen))
+                printf("decode failure\n");
+            else
+            {
+                printf("%d %s\n", k.one.v, k.two.string);
+            }
+
+            delete[] jptr;
+        }
+        else
+            printf("jptr is null\n");
+    }
+
+    UINT32 newid = 0;
+    CrapType c(fbi);
+    CrapType d(fbi);
+    CrapType e(fbi);
+
+    c.one.v = 4;
+    c.two.v = 5;
+    c.un.which.v = CrapUnion::ONE;
+    c.un.one.v = 6;
+
+    if (c.putnew( &newid ) == false)
+        printf("putnew failed\n");
+    else
+        printf("allocated new block %d\n", newid);
+
+    if (d.get(newid) == false)
+        printf("get failed\n");
+    else
+    {
+        printf("get d succeeded: %d %d ", d.one.v, d.two.v);
+        if (d.un.which.v != CrapUnion::ONE)
+            printf("incorrect d union\n");
+        else
+            printf("%d\n", d.un.one.v);
+        d.un.which.v = CrapUnion::TWO;
+        d.un.two.strdup((char*)"this is a test");
+        d.one.v++;
+        d.two.v--;
+        if (d.put() == false)
+            printf("put failed\n");
+    }
+
+    if (e.get(newid) == false)
+        printf("get e failed\n");
+    else
+    {
+        printf("get e succeeded: %d %d ", e.one.v, e.two.v);
+        if (e.un.which.v != CrapUnion::TWO)
+            printf("incorrect e union\n");
+        else
+            printf("%s\n", e.un.two.string);
+    }
+
+    delete fbi;
+    return 0;
+}
+
 #endif

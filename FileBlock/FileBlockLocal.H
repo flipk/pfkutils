@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file FileBlockLocal.H
  * \brief Defines the FileBlockLocal implementation of FileBlockInterface
@@ -54,8 +59,8 @@ public:
      *   the contents of the file */
     FileBlockLocal( BlockCache * _bc );
     /** Destructor.
-     * \note This does \b not destroy the BlockCache which was passed in
-     *   to the constructor!  The caller must destroy the BlockCache. */
+     * \note This destroys the BlockCache which was passed in
+     *   to the constructor! */
     ~FileBlockLocal( void );
 
     /** checks for signature etc, returns true if file appears to

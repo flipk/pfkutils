@@ -1,3 +1,9 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
+
 #if 0
 ccsimso -I /usr/test/bssdata2/tornado3/vxsim20.0/target/h -DCPU=SIMSPARCSOLARIS -c buffered_printf.c
 exit 0

@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file BlockCache.H
  * \brief the BlockCache interface definition
@@ -76,8 +81,7 @@ public:
      *   the cache. */
     BlockCache( PageIO * _io, int max_bytes );
     /** destructor.
-     * \note This destructor does \b NOT delete the io object! it is assumed
-     * the user may want to use io for other accesses for other purposes. */
+     * \note This destructor deletes the PageIO object! */
     ~BlockCache( void );
     /** get a block from the file.
      * \param offset the position in the file where the block starts.

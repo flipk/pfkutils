@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file FileBlock_iface.H
  * \brief Define FileBlock object and FileBlockInterface pure-virtual
@@ -78,6 +83,8 @@ public:
     virtual ~FileBlockInterface(void) { }
     // @}
 
+    /** @name File open/close methods */
+    // @{
     /** checks for signature etc, returns true if file appears to
      * be valid.  this function is static so that it can be called
      * prior to the constructor.
@@ -99,6 +106,42 @@ public:
      * before the class can be constructed.
      * \param bc the interface to the file to check. */
     static void init_file( BlockCache * bc );
+
+    /** backend of openFile/createFile.
+     * \param filename full path to file to open
+     * \param max_bytes size of the cache.
+     * \param create if false, and file does not exist, returns error.
+     *      if true, and file already exists or cannot be
+     *      created, returns error.
+     * \param mode the mode of the file to create, see open(2). ignored if
+     *     create==false.
+     * \return a pointer to an FBI to use or NULL if error.
+     */
+    static FileBlockInterface * _openFile( const char * filename,
+                                           int max_bytes,
+                                           bool create, int mode );
+    /** open a file.  this method creates a PageIO, PageCache, 
+     * BlockCache, and FileBlockInterface, and returns the latter.
+     * \param filename full path to the file to open.
+     * \param max_bytes size of the cache.
+     * \return pointer to an FBI or NULL if the file couldn't be found
+     *     or opened. */
+    static FileBlockInterface * openFile( const char * filename,
+                                          int max_bytes ) {
+        return _openFile( filename, max_bytes, false, 0 );
+    }
+    /** create a file.  this method creates a PageIO, PageCache, 
+     * BlockCache, and FileBlockInterface, and returns the latter.
+     * \param filename full path to the file to open.
+     * \param max_bytes the size of the cache.
+     * \param mode the file mode when creating the file (see open(2)).
+     * \return pointer to an FBI or NULL if the file already exists or
+     *     cannot be created. */
+    static FileBlockInterface * createFile( const char * filename,
+                                            int max_bytes, int mode ) {
+        return _openFile( filename, max_bytes, true, mode );
+    }
+    // @}
 
     /** @name Allocation management */
     // @{
@@ -253,5 +296,120 @@ struct FileBlockT
     /** a pointer to the actual data */
     T * d;
 };
+
+#include "bst.H"
+#include <signal.h>
+
+/** A base class for a data type which uses the ByteSTream interface.
+ */
+class FileBlockBST : public BST {
+    /** this object needs to remember the FileBlockInterface object. */
+    FileBlockInterface * fbi;
+    UINT32 id;
+    bool meminuse;
+public:
+    FileBlockBST(FileBlockInterface * _fbi) {
+        fbi = _fbi;
+        id = 0;
+        meminuse = false;
+    }
+    ~FileBlockBST(void) {
+        if (meminuse)
+        {
+            fprintf(stderr,"ERROR: types derived from FileBlockBST must "
+                    "call free in their destructors!\n");
+            kill(0,SIGABRT);
+        }
+    }
+    bool get( UINT32 _id ) {
+        bst_free();
+        id = _id;
+        FileBlock * fb = fbi->get(id);
+        if (!fb)
+            return false;
+        BST_STREAM str(fb->get_ptr(), fb->get_size());
+        str.start(BST_OP_DECODE);
+        bool retval = bst_op(&str);
+        fbi->release(fb,false);
+        if (retval)
+            meminuse = true;
+        return retval;
+    }
+private:
+    bool put( bool newblock ) {
+        if (id == 0 && newblock == false)
+            return false;
+        BST_STREAM   str(NULL,65536);
+        str.start(BST_OP_CALC_SIZE);
+        if (bst_op(&str) == false)
+            return false;
+        int size = str.get_finished_size();
+        if (newblock)
+        {
+            id = fbi->alloc(size);
+            if (id == 0)
+                return false;
+        }
+        else
+        {
+            fbi->realloc(id,size);
+        }
+        FileBlock * fb = fbi->get(id,true);
+        if (!fb)
+            return false;
+        str.start(BST_OP_ENCODE,fb->get_ptr(),fb->get_size());
+        bool retval = bst_op(&str);
+        fbi->release(fb,true);
+        meminuse = true;
+        return retval;
+    }
+public:
+    bool put( void ) { return put(false); }
+    bool putnew( UINT32 * retid ) { 
+        bool ret = put(true);
+        if (ret)
+            *retid = id;
+        return ret;
+    }
+    // this overrides BST::bst_free so that we can get our
+    // own meminuse tracking.
+    void bst_free( void ) {
+        BST_STREAM str(NULL,0);
+        str.start(BST_OP_MEM_FREE);
+        bst_op(&str);
+        meminuse = false;
+        id = 0;
+    }
+};
+
+/* example class using FileBlockBST types and a union:
+
+class CrapUnion : public BST_UNION {
+public:
+    enum { ONE, TWO, MAX };
+    CrapUnion(void) : BST_UNION(MAX) { }
+    ~CrapUnion(void) { bst_free(); }
+    BST_UINT32_t   one;
+    BST_STRING     two;
+    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two };
+        return bst_do_union(str, fields);
+    }
+};
+
+class CrapType : public FileBlockBST {
+public:
+    CrapType(FileBlockInterface * _fbi) : FileBlockBST(_fbi) { }
+    ~CrapType(void) { bst_free(); }
+    BST_UINT32_t one;
+    BST_UINT32_t two;
+    CrapUnion un;
+    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two, &un, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+*/
 
 #endif /* __FILE_BLOCK_H__ */

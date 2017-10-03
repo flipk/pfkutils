@@ -1,3 +1,9 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
+
 #if 0
 set -e -x
 gcc -O3 encrypt.c timing.c keyfile.c gmp-4.1.2/.libs/libgmp.a -o e

@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file PageIO.H
  * \brief Defines interfaces: PageIO, PageIOFileDescriptor.
@@ -60,7 +65,7 @@ public:
      * \param _fd The file descriptor of the file to access */
     PageIOFileDescriptor(int _fd);
     /** Destructor.
-     * \note This destructor does \b NOT close the file descriptor!  */
+     * \note This destructor closes the file descriptor too!  */
     /*virtual*/ ~PageIOFileDescriptor(void);
 
     // doxygen comments not required, because they will be inherited

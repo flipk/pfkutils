@@ -1,37 +1,7 @@
 /*
- * This code is originally written by Phillip F Knaack.
- * There are absolutely no restrictions on the use of this code.  It is
- * NOT GPL!  If you use this code in a product, you do NOT have to release
- * your alterations, nor do you have to acknowledge in any way that you
- * are using this software.
- * The only thing I ask is this: do not claim you wrote it.  My name
- * should appear in this file forever as the original author, and every
- * person who modifies this file after me should also place their names
- * in this file (so those that follow know who broke what).
- * This restriction is not enforced in any way by any license terms, it
- * is merely a personal request from me to you.  If you wanted, you could
- * even completely remove this entire comment and place a new one with your
- * company's confidential proprietary license on it-- but if you are a good
- * internet citizen, you will comply with my request out of the goodness
- * of your heart.
- * If you do use this code and you make a buttload of money off of it,
- * I would appreciate a little kickback-- but again this is a personal
- * request and is not required by any licensing of this code.  (Of course
- * in the offchance that anyone every actually DOES make a lot of money 
- * using this code, I know I'm going to regret that statement, but at
- * this point in time it feels like the right thing to say.)
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
  */
 
 #ifndef __BYTESTREAM_H__
@@ -82,8 +52,15 @@ public:
     }
     // reset the current buffer position to the beginning, used
     // to reset the stream state for beginning a new operation.
-    void start(BST_OP _op) {
+    void start(BST_OP _op, UCHAR * _buffer=NULL, int _size=0) {
         op = _op; 
+        if (_buffer && _size)
+        {
+            if (my_buffer)
+                delete[] buffer;
+            buffer = _buffer;
+            buffer_size = _size;
+        }
         ptr = buffer;
         size = 0;
         remaining = buffer_size;
@@ -94,6 +71,10 @@ public:
     // return the amount of data in the buffer; used at the end
     // of an encode to collect the size of the constructed bytestream.
     int get_finished_size(void) { return size; }
+#if 0 /* needs testing */
+private:
+    friend class BST;
+#endif
     // return the inprogress operation.  used by bst_op in all data types.
     BST_OP get_op(void) { return op; }
     // return the current working pointer.  used by bst_op in all 
@@ -106,6 +87,11 @@ public:
         UCHAR * ret = ptr;
         remaining -= step;
         size += step;
+        if (op == BST_OP_CALC_SIZE)
+            // return something, anything, that is not NULL,
+            // because the user may have specified a NULL buffer ptr
+            // for the calc op.
+            return (UCHAR*)1;
         ptr += step;
         return ret;
     }
@@ -121,10 +107,45 @@ protected:
         return true;
     }
 public:
-    virtual ~BST(void) { /* placeholder */ }
+    virtual ~BST(void) { /*placeholder*/ }
     // return true if operation was successful; 
     // return false if some problem (out of buffer, etc)
     virtual bool bst_op( BST_STREAM *str ) = 0;
+    int bst_calc_size(void) {
+        BST_STREAM str(NULL,65536);
+        str.start(BST_OP_CALC_SIZE);
+        bst_op(&str);
+        return str.get_finished_size();
+    }
+    UCHAR * bst_encode( int * len ) {
+        *len = bst_calc_size();
+        UCHAR * buffer = new UCHAR[*len];
+        if (bst_encode(buffer, len) == false)
+        {
+            *len = 0;
+            delete[] buffer;
+            return NULL;
+        }
+        return buffer;
+    }
+    bool bst_encode( UCHAR * buffer, int * len ) {
+        BST_STREAM str(buffer,*len);
+        str.start(BST_OP_ENCODE);
+        if (bst_op(&str) == false)
+            return false;
+        *len = str.get_finished_size();
+        return true;
+    }
+    bool bst_decode( UCHAR * buffer, int len ) {
+        BST_STREAM str(buffer,len);
+        str.start(BST_OP_DECODE);
+        return bst_op(&str);
+    }
+    void bst_free(void) {
+        BST_STREAM str(NULL,0);
+        str.start(BST_OP_MEM_FREE);
+        bst_op(&str);
+    }
 };
 
 // BST base types follow.
@@ -319,6 +340,11 @@ struct BST_STRING : public BST {
         };
         return false;
     }
+    void strdup(char * str) {
+        int len = strlen(str) + 1;
+        string = new char[len];
+        memcpy(string, str, len);
+    }
 };
 
 // it is legal for pointer to be NULL pointer.
@@ -385,7 +411,7 @@ template <class T>
 class BST_VAR_ARRAY : public BST {
 public:
     BST_VAR_ARRAY(void) { array = NULL; num_items = 0; }
-    virtual ~BST_VAR_ARRAY(void) { free(); }
+    virtual ~BST_VAR_ARRAY(void) { bst_var_array_free(); }
     int num_items;
     T ** array;
     void alloc(int c) {
@@ -412,7 +438,7 @@ public:
         array = narray;
         num_items = c;
     }
-    void free(void) {
+    void bst_var_array_free(void) {
         if (array)
         {
             for (int i=0; i < num_items; i++)
@@ -448,7 +474,7 @@ public:
             for (i=0; i < num_items; i++)
                 if (!array[i]->bst_op(str))
                     return false;
-            free();
+            bst_var_array_free();
             return true;
         }
         return false;
@@ -456,40 +482,99 @@ public:
 };
 
 // base class for an object with a union in it.
+#include <signal.h>
+#include <stdio.h>
 
 class BST_UNION : public BST {
+    int max;
 public:
-    bool bst_do_union( BST_STREAM *str, BST_UINT8_t *which,
-                       int max_which, BST ** fields ) {
-        if (!which->bst_op(str))
+    BST_UINT8_t  which;
+    BST_UNION( int _max ) { max = _max; which.v = max; }
+    ~BST_UNION(void) {
+        if (which.v != max) 
+        {
+            fprintf(stderr, "types derived from BST_UNION must "
+                    "free memory in their destructor!\n");
+            kill(0,SIGABRT);
+        }
+    }
+    bool bst_do_union( BST_STREAM *str, BST ** fields ) {
+        if (!which.bst_op(str))
             return false;
-        if (which->v >= max_which)
+        if (which.v >= max)
             return false;
-        if (!fields[which->v]->bst_op(str))
+        if (!fields[which.v]->bst_op(str))
             return false;
+        if (str->get_op() == BST_OP_MEM_FREE)
+            which.v = max;
         return true;
     }
 };
 
-/* example class using a union:
+/* example class using multiple fields, and a union:
 
-   class example_union : public BST_UNION {
-   public:
-     enum { ONE, TWO, MAX };  // values assigned to 'which'
-     BST_UINT8_t   which; // indicates which field in the union is in use
-     // union fields start here; note we don't actually use "union" keyword;
-     // downside is this uses more space on the transmitter and receiver,
-     // upside is bytestream does not.
-     BST_UINT32_t  one;
-     BST_STRING    two;
-     // union fields end here
-     /@virtual@/ bool bst_op( BST_STREAM *str ) {
-       // values in enum correspond to indexes in this array.
-       BST * fields[] = { &one, &two };
-       return bst_do_union(str,&which,MAX,fields);
-     }
-   };
+class CrapUnion : public BST_UNION {
+public:
+    enum { ONE, TWO, MAX };
+    CrapUnion(void) : BST_UNION(MAX) { }
+    ~CrapUnion(void) { bst_free(); }
+    // recall that you can also use BST_POINTER <> template too,
+    // if you want to save space in the Union type.
+    BST_UINT32_t   one;
+    BST_STRING     two;
+    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two };
+        return bst_do_union(str, fields);
+    }
+};
 
-*/
+class CrapType : public BST {
+public:
+    ~CrapType(void) { bst_free(); }
+    BST_UINT32_t one;
+    BST_UINT32_t two;
+    CrapUnion un;
+    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two, &un, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+
+another useful example:
+
+struct JunkType : public BST {
+    ~JunkType(void) { bst_free(); }
+    BST_UINT32_t one;
+    BST_STRING   two;
+    /@virtual@/ bool bst_op( BST_STREAM *str ) {
+        BST * fields[] = { &one, &two, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+void func(void) {
+    JunkType  j, k;
+    j.one.v = 24;
+    j.two.strdup((char*)"this is a stupid test");
+    int jlen = 0;
+    UCHAR * jptr = j.bst_encode( &jlen );
+    if (!jptr)
+        printf("encode failure\n");
+    else
+    {
+        for (int i = 0; i < jlen; i++)
+            printf("%02x", jptr[i]);
+        printf("\n");
+        if (!k.bst_decode(jptr,jlen))
+            printf("decode failure\n");
+        else
+            printf("%d %s\n", k.one.v, k.two.string);
+        delete[] jptr;
+    }
+}
+
+
+ */
 
 #endif /* __BYTESTREAM_H__ */

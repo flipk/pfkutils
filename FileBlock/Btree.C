@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file Btree.C
  * \brief implementation of Btree and BtreeInternal objects
@@ -12,6 +17,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <fcntl.h>
 
 const char BtreeInternal::BTInfoFileInfoName[] = "PFKBTREEINFO";
 
@@ -91,6 +97,24 @@ BtreeInternal :: valid_file( FileBlockInterface * _fbi )
     return true;
 }
 
+//static
+Btree *
+Btree :: _openFile( const char * filename, int max_bytes,
+                    bool create, int mode, int order )
+{
+    FileBlockInterface * fbi = NULL;
+    fbi = FileBlockInterface::_openFile(filename,max_bytes,create,mode);
+    if (!fbi)
+        return NULL;
+    if (create)
+        Btree::init_file( fbi, order );
+    Btree * bt = open(fbi);
+    if (bt)
+        return bt;
+    delete fbi;
+    return NULL;
+}
+
 BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
     : info(_fbi)
 {
@@ -121,18 +145,20 @@ BtreeInternal :: BtreeInternal( FileBlockInterface * _fbi )
 BtreeInternal :: ~BtreeInternal(void)
 {
     delete node_cache;
+    info.release();
+    delete fbi;
 }
 
 //static
 int
-BtreeInternal :: compare_keys( BTKey * one, BTKey * two )
+BtreeInternal :: compare_keys( UCHAR * key, int keylen, BTKey * two )
 {
-    int onesize = one->keylen;
+    int onesize = keylen;
     int twosize = two->keylen;
     int comparelen = (onesize > twosize) ? twosize : onesize;
     int result;
 
-    result = memcmp( one->data, two->data, comparelen );
+    result = memcmp( key, two->data, comparelen );
     if (result != 0)
         return (result > 0) ? 1 : -1;
     if (onesize > twosize)
@@ -143,7 +169,7 @@ BtreeInternal :: compare_keys( BTKey * one, BTKey * two )
 }
 
 int
-BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
+BtreeInternal :: walknode( BTNode * n, UCHAR * key, int keylen, bool *exact )
 {
     if (n->numitems == 0)
     {
@@ -154,7 +180,7 @@ BtreeInternal :: walknode( BTNode * n, BTKey * key, bool *exact )
     int i,res = 0;
     for (i=0; i < n->numitems; i++)
     {
-        res = compare_keys( key, n->keys[i] );
+        res = compare_keys( key, keylen, n->keys[i] );
         if (res <= 0)
             break;
     }
@@ -305,10 +331,8 @@ BtreeInternal :: splitnode( BTNode * n, BTKey ** key, UINT32 * data_fbn,
 
 //virtual
 bool
-BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
+BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
 {
-    int keysz;
-    BTKey * key;
     bool ret = false;
     bool exact;
     int idx;
@@ -316,16 +340,12 @@ BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
     BTNode * curn;
     UINT32 data_fbn = 0;
 
-    keysz = _key->encode_size();
-    key = new(keysz) BTKey(keysz);
-    _key->encode(key->data);
-
     curfbn = info.d->root_fbn.get();
 
     while (data_fbn == 0 && curfbn != 0)
     {
         curn = node_cache->get(curfbn);
-        idx = walknode( curn, key, &exact );
+        idx = walknode( curn, key, keylen, &exact );
         if (exact)
             data_fbn = curn->datas[idx];
         if (curn->leaf)
@@ -337,12 +357,10 @@ BtreeInternal :: get( _BTDatum * _key, _BTDatum * data )
 
     if (data_fbn != 0)
     {
-        FileBlock * fb = fbi->get(data_fbn);
-        data->decode(fb);
+        *data = data_fbn;
         ret = true;
     }
 
-    delete key;
     return ret;
 }
 
@@ -360,7 +378,8 @@ struct nodewalker {
 
 //virtual
 bool
-BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
+BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
+                      bool replace )
 {
     if (iterate_inprogress)
     {
@@ -369,19 +388,12 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
         exit(1);
     }
 
-    int i, keysz, datasz;
-    BTKey * key;
     bool ret = false;
     nodewalker * nodes = NULL, * nw = NULL;
-    UINT32 curfbn, right_fbn = 0, data_fbn;
+    UINT32 curfbn, right_fbn = 0;
     BTNode * curn;
     int curidx;
-    FileBlock * fb = NULL;
-
-    keysz = _key->encode_size();
-    key = new(keysz) BTKey(keysz);
-    _key->encode(key->data);
-    datasz = data->encode_size();
+    BTKey * newkey;
 
     // start walking down from the rootnode a level at a time,
     // until we either find an exact match or we hit a leaf.
@@ -395,22 +407,25 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
     while(1)
     {
         bool exact;
-        curidx = walknode( curn, key, &exact );
+        curidx = walknode( curn, key, keylen, &exact );
         nodes = new nodewalker(nodes, curfbn, curn, curidx);
 
         if (exact)
         {
             // found an exact match in the tree.
-            // realloc the data for this item and copy in
-            // our new data but only if replace is set.
+            // if the new data block id is different from the one we found,
+            // free the old one and insert the new one to the node.
 
             if (replace == false)
                 goto out;
 
-            fbi->realloc(curn->datas[curidx], datasz);
-            fb = fbi->get(curn->datas[curidx], /*for_write*/ true);
-            data->encode(fb->get_ptr());
-            fbi->release(fb);
+            if (curn->datas[curidx] != data_id)
+            {
+                fbi->free(curn->datas[curidx]);
+                curn->datas[curidx] = data_id;
+                curn->mark_dirty();
+            }
+
             ret = true;
             goto out;
         }
@@ -427,16 +442,17 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
 
     // if we hit this point that means we haven't seen an
     // exact match, so we should insert at the leaf level.
+    // we need to make a new BTKey.
+
+    newkey = new(keylen) BTKey(keylen);
+    memcpy(newkey->data, key, keylen);
+
     // if we overflow a node here, split the node and start
     // promoting up the tree. keep splitting and promoting up
     // until we reach a node where we're not overflowing a node.
     // if we reach the root and we overflow the root, split the
     // root and create a new root with the promoted item.
 
-    data_fbn = fbi->alloc(datasz);
-    fb = fbi->get(data_fbn, true);
-    data->encode(fb->get_ptr());
-    fbi->release(fb);
     ret = true;
     info.d->numrecords.set( info.d->numrecords.get() + 1 );
     info.mark_dirty();
@@ -452,6 +468,8 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
     {
         if (curn->numitems < ORDER_MO)
         {
+            int i;
+
             // this node is not full, so we can insert
             // into this node at the appropriate index,
             // and be done. slide over recs in this node
@@ -467,8 +485,8 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
                 curn->datas[i] = curn->datas[i-1];
             }
 
-            curn->keys[curidx] = key;
-            curn->datas[curidx] = data_fbn;
+            curn->keys[curidx] = newkey;
+            curn->datas[curidx] = data_id;
             curn->ptrs[curidx+1] = right_fbn;
             curn->mark_dirty();
 
@@ -481,7 +499,7 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
         // promote a pivot record. split_node locates the pivot
         // and updates 'newr' to point to the pivot.
 
-        right_fbn = splitnode( curn, &key, &data_fbn, right_fbn, curidx );
+        right_fbn = splitnode( curn, &newkey, &data_id, right_fbn, curidx );
 
         nw = nodes;
         if (nw)
@@ -503,8 +521,8 @@ BtreeInternal :: put( _BTDatum * _key, _BTDatum * data, bool replace )
             newroot->numitems = 1;
             newroot->ptrs[0] = info.d->root_fbn.get();
             newroot->ptrs[1] = right_fbn;
-            newroot->keys[0] = key;
-            newroot->datas[0] = data_fbn;
+            newroot->keys[0] = newkey;
+            newroot->datas[0] = data_id;
             curn->root = false;
             newroot->root = true;
             newroot->leaf = false;
@@ -527,13 +545,13 @@ out:
     }
 
     if (ret == false)
-        delete key;
+        delete newkey;
     return ret;
 }
 
 //virtual
 bool
-BtreeInternal :: del( _BTDatum * _key  )
+BtreeInternal :: del( UCHAR * key, int keylen )
 {
     bool ret = false;
 
@@ -543,10 +561,6 @@ BtreeInternal :: del( _BTDatum * _key  )
                 "is in progress!\n");
         exit(1);
     }
-
-    int keysz = _key->encode_size();
-    BTKey * key = new(keysz) BTKey(keysz);
-    _key->encode(key->data);
 
     nodewalker * nodes = NULL, * nw = NULL;
     bool exact;
@@ -565,7 +579,7 @@ BtreeInternal :: del( _BTDatum * _key  )
 
     while(1)
     {
-        idx = walknode( curn, key, &exact );
+        idx = walknode( curn, key, keylen, &exact );
         nodes = new nodewalker(nodes, curfbn, curn, idx);
         if (exact || curn->leaf)
             break;
@@ -1005,7 +1019,6 @@ BtreeInternal :: del( _BTDatum * _key  )
     info.d->numrecords.set( info.d->numrecords.get() - 1 );
     info.mark_dirty();
 
-    delete key;
     return ret;
 }
 

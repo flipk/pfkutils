@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file documentation.C
  * \brief container for doxygen documentation.
@@ -295,26 +300,23 @@ first piece is identified in the file-information block.
 
 A flush-operation becomes rather expensive, because the entire linked
 list of all extent-map entries must be serially written to the list of
-extent-map file pages.  This is the only disadvantage of this
+extent-map file pages.  This is a disadvantage of this
 technique.
 
 \section FileBlockBuckets FileBlock Buckets
 
-The list of buckets is configurable by the user when the FileBlock
-object is created.  The reason, is that the bucket-list which is
-useful varies greatly by application.  If a given application uses
-only 3 different block sizes, then a small but specific bucket-list
-may be appropriate for speed.  On the other hand if bucket sizes vary
-greatly by a large range, the application may define a short list of
-ranges comprising the most common bucket sizes.  Or, if it is
-important to optimize the size of the file as much as possible, it may
-be desirable to define a much larger bucket-list with small increments
-between them.  This will be slower to search for appropriate sizes,
-but will dramatically improve file space utilization.
+The free buckets are an array representing every multiple of 32 bytes
+from 32 to 65536.  The buckets are arranged as an indexable array,
+where the index is derived from a few bits of the piece size. Each
+bucket is an in-memory btree (from dll2_btree.H) sorted by file
+position.  This is done to maximize packing in the file.  Each time
+that an allocation is performed, the caller is guaranteed to get the
+lowest available piece of that size in the entire file.
 
-Another option which needs investigation, is to arrange the
-bucket-list as an indexable array, where the index is derived from a
-few bits of the piece size.
+Insertions into the bucket list are fast because of the
+bitfield-indexing technique and speed of a memory-btree.  A
+(significant) disadvantage of this technique is the memory
+requirements.
 
 \section FileBlockHash FileBlock Hash
 
@@ -327,6 +329,9 @@ to unused holes earlier in the file.  But the block itself is still
 retrieved using the same identifier, so that the application storing
 data in the file is unaware the blocks have moved to a different
 position.
+
+A disadvantage of this techique is the size of the data structure
+required to manage all the unique identifiers in the file.
 
 \section FileBlockAccess FileBlock Access Methods
 
@@ -360,6 +365,20 @@ See the section \ref Templates for an example of the access methods.
 \section Compacting
 
 \note At this time the Compaction algorithm does not yet exist.
+
+One possible implementation requires halting access to the file and
+creating an entirely new file, walking the original file in block
+order and simply tail-allocating from the new file, guaranteeing the
+new file is completely packed.  While this guarantees perfect packing
+and excellent performance (due to the linear nature of both the reader
+and the writer) it unfortunately requires the access to the file to be
+halted-- an unacceptable step for any program intended to run
+continuously for long periods.
+
+It may be a long time (if ever) before a compaction algorithm is
+designed, due to the recent addition of memory-btrees in the
+free-bucket list; this addition will dramatically reduce the long-term
+fragmentation of the file.
 
 \todo design and implement the compaction algorithm.
 
@@ -518,8 +537,6 @@ has been populated with the matching data.
 \todo document btree
 
 \section BtreeTemplate BTREE Template types
-
-\todo document BTDatum
 
 Next: \ref BtreeInternalStructure
 

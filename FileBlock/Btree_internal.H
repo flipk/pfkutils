@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file Btree_internal.H
  * \brief declaration of nitty gritty guts of Btree / BtreeInternal objects.
@@ -272,17 +277,22 @@ class BtreeInternal : public Btree {
     /** the cache of all nodes currently in use. */
     BTNodeCache  * node_cache;
     /** compare two btree keys, and return -1, 0, or 1 depending on
-     * what order they should be placed in.
-     * \param one the first key to compare
+     * what order they should be placed in. the first key is in pointer/len
+     * form, to handle arguments to get/put/del, while the second is in
+     * BTKey form to handle members of a node.
+     * \param key pointer to the first item's key data.
+     * \param keylen length of the first item's key data.
      * \param two the second key to compare
      * \return -1 if one is "less than" two, 0 if one is binary equivalent
      *         to two, 1 if one is "greator than" two.
      */
-    static int compare_keys( BTKey * one, BTKey * two );
-    /** compare key to each key in node.
+    static int compare_keys( UCHAR * key, int keylen, BTKey * two );
+    /** compare key to each key in node.  key is in pointer/len form to 
+     * handle arguments to get/put/del.
      * if exact match is found, *exact is set to true.
      * \param n the node to walk through
-     * \param key the key to compare to each key in the node
+     * \param key pointer to key data
+     * \param keylen length of the key data
      * \param exact a pointer to a bool, which this function will set to
      *              true or false prior to returning to indicate if the key
      *              matches a key in the node exactly or not.
@@ -291,7 +301,7 @@ class BtreeInternal : public Btree {
      *  <li> if this is a non-leaf, the pointer at that index should be
      * followed to get closer to the desired item. </ul>
      */
-    int walknode( BTNode * n, BTKey * key, bool *exact );
+    int walknode( BTNode * n, UCHAR * key, int keylen, bool *exact );
     /** take full node plus 1 item and split into 2 nodes
      * plus 1 "pivot" item between them.  Supply a key and an associated
      * data, plus a node pointer to the right of that key, and an index
@@ -352,8 +362,9 @@ public:
     /** free all memory associated with the btree and sync all nodes
      * back to the file. */
     /*virtual*/ ~BtreeInternal( void );
-    /*virtual*/ bool get( _BTDatum * key, _BTDatum * data );
-    /*virtual*/ bool put( _BTDatum * key, _BTDatum * data, bool replace );
-    /*virtual*/ bool del( _BTDatum * key  );
+    /*virtual*/ bool get( UCHAR * key, int keylen, UINT32 * data_id );
+    /*virtual*/ bool put( UCHAR * key, int keylen, UINT32 data_id,
+                          bool replace );
+    /*virtual*/ bool del( UCHAR * key, int keylen );
     /*virtual*/ bool iterate( BtreeIterator * bti );
 };

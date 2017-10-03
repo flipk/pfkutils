@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /** \file testBtree.C
  * \brief test harness for Btree and BtreeInternal objects
@@ -18,7 +23,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define TEST 2
+#define TEST 1
 
 #define TEST_FILE "testfile.db"
 #define MAX_BYTES (256*1024*1024)
@@ -54,18 +59,24 @@ public:
     
 #if TEST==1
 
-struct crapkey {
-    UINT32_t key;
-    UCHAR * get_ptr (void) { return (UCHAR*) this; }
-    int get_size (void) { return 4; }
+struct crapkey : public BST {
+    ~crapkey(void) { bst_free(); }
+    BST_UINT32_t key;
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {
+        BST * fields[] = { &key, NULL };
+        return bst_do_fields( str, fields );
+    }
 };
 
-struct crapdata {
-    UINT32_t data;
-    UCHAR * get_ptr (void) { return (UCHAR*) this; }
-    int get_size (void) { return 4; }
+struct crapdata : public FileBlockBST {
+    crapdata(FileBlockInterface * _fbi) : FileBlockBST(_fbi) { }
+    ~crapdata(void) { bst_free(); }
+    BST_UINT32_t data;
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {
+        BST * fields[] = { &data, NULL };
+        return bst_do_fields( str, fields );
+    }
 };
-
 
 struct ramcopy {
     bool infile;
@@ -76,32 +87,15 @@ struct ramcopy {
 int
 main()
 {
-    int fd, options;
-
     unlink( TEST_FILE );
-    options = O_RDWR | O_CREAT;
-#ifdef O_LARGEFILE
-    options |= O_LARGEFILE;
-#endif
-    fd = open( TEST_FILE, options, 0644 );
-    if (fd < 0)
-    {
-        printf("file create error %d: %s\n", errno, strerror(errno));
-        return 1;
-    }
+    Btree * bt = Btree::createFile( TEST_FILE, MAX_BYTES, 0644, 13 );
 
-    PageIO * pageio = new PageIOFileDescriptor(fd);
-    BlockCache * bc = new BlockCache( pageio, MAX_BYTES );
-    FileBlockInterface::init_file(bc);
-    FileBlockInterface * fbi = FileBlockInterface::open(bc);
-    Btree::init_file( fbi, 13 );
-    Btree * bt = Btree::open(fbi);
+    crapkey    key;
+    crapdata   data(bt->get_fbi());
+    UINT32     data_fbn;
 
-    BTDatum <crapkey>   key(bt);
-    BTDatum <crapdata>  data(bt);
-
-#define ITERATIONS 0x0100000
-#define ITEMS      0x0010000
+#define ITERATIONS 0x100000
+#define ITEMS      0x010000
 
     ramcopy  ram[ITEMS];
     int iter, ind;
@@ -121,40 +115,40 @@ main()
         {
             if ((random() & 0xff) > 0x80)
             {
-                key.alloc();
-                key.d->key.set(ind);
+                key.key.v = ind;
                 if (bt->del( &key ) == false)
                     fprintf(stderr,"\r %d delete %d failed\n",iter,ind);
                 ram[ind].infile = false;
-                key.release();
                 deletes++;
             }
             else
             {
-                key.alloc();
-                key.d->key.set(ind);
-                if (bt->get( &key, &data ) == false)
+                key.key.v = ind;
+                if (bt->get( &key, &data_fbn ) == false)
                     fprintf(stderr,"\r %d query %d failed\n", iter, ind);
-                else if (data.d->data.get() != ram[ind].data)
-                    fprintf(stderr,"\r %d query %d data mismatch\n", iter, ind);
-                key.release();
-                data.release();
+                else
+                {
+                    if (!data.get(data_fbn))
+                        fprintf(stderr,"\r %d data retrieval %d failed\n",
+                                iter, ind);
+                    else if (data.data.v != ram[ind].data)
+                        fprintf(stderr,"\r %d query %d data mismatch\n",
+                                iter, ind);
+                }
                 queries++;
             }
         }
         else
         {
             ram[ind].data = random();
-            key.alloc();
-            data.alloc();
-            key.d->key.set(ind);
-            data.d->data.set(ram[ind].data);
-            if (bt->put( &key, &data ) == false)
+            key.key.v = ind;
+            data.data.v = ram[ind].data;
+            if (!data.putnew( &data_fbn ))
+                fprintf(stderr,"\r %d data put %d failed\n", iter, ind);
+            if (bt->put( &key, data_fbn ) == false)
                 fprintf(stderr,"\r %d put %d failed\n", iter, ind);
             else
                 ram[ind].infile = true;
-            key.release();
-            data.release();
             inserts++;
         }
     }
@@ -162,14 +156,12 @@ main()
             "\ncompleted %d iterations; %d inserts, %d deletes, %d queries\n",
             ITERATIONS, inserts, deletes, queries);
 
-    myIterator iterator(fbi);
+#if 0  /* uncomment to enable dumping the database at the end. */
+    myIterator iterator(bt->get_fbi());
     bt->iterate( &iterator );
+#endif
 
     delete bt;
-    delete fbi;
-    delete bc;
-    delete pageio;
-    close(fd);
 
     return 0;
 }

@@ -1,3 +1,8 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 //    suppose record_size is 16 and page_size is 4096.  then:
 // a 'record' is 16 bytes.

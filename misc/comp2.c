@@ -1,3 +1,9 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
+
 #if 0
 set -e -x
 gcc -DCOMP=1 pk.c -o pkcomp  -Lzlib-1.2.1/ -lz -g3

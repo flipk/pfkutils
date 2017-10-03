@@ -1,4 +1,10 @@
 /*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
+
+/*
  * Connectix QuickCam parallel-port camera video capture driver.
  * Copyright (c) 1997, Phillip F Knaack.
  *

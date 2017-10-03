@@ -1,20 +1,17 @@
+/*
+ * This file is licensed under the GPL version 2.
+ * Refer to the file LICENSE in this distribution or
+ * just search for GPL v2 on the website www.gnu.org.
+ */
 
 /*
  * (c-set-style "BSD")
  *
  * carriage-return line-feed converter
  * 
- * crnl takes each filename on the command line, and renames it
- * to the name with "~" appended. it then reads the file, adding
- * 0x0D (carriage return) after each 0x0A (line feed) to make the
- * resulting file MSDOS-readable.
- * 
- * "crnl -d" takes each filename on the command line and also renames
- * it as above. it then reads the file, removing 0x0D characters from
- * the input stream, making the text file unix-readable.
- *
- * this is superior to "dos2unix" because it leaves behind the original
- * file, and will also convert in both directions.
+ * this tool converts text files between dos, unix, and mac formats.
+ * its like dos2unix except it supports all 3 formats, to and from,
+ * and leaves the original file behind with a ~ on the end.
  */
 
 #include <stdio.h>
