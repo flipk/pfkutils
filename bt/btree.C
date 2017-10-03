@@ -138,26 +138,34 @@ Btree :: fetch_rec( int keyblockno, int datablockno )
     ret->key.recno = keyblockno;
     ret->data.recno = datablockno;
 
-    ret->key.ptr = fbn->get_block( ret->key.recno,
-                                   ret->key.len,
-                                   ret->key.magic );
-
-    if ( ret->key.ptr == NULL )
+    if ( ret->key.recno != -1 )
     {
-        delete ret;
-        return NULL;
+        ret->key.ptr = fbn->get_block( ret->key.recno,
+                                       ret->key.len,
+                                       ret->key.magic );
+        if ( ret->key.ptr == NULL )
+        {
+            delete ret;
+            return NULL;
+        }
     }
+    else
+        ret->key.ptr = NULL;
 
-    ret->data.ptr = fbn->get_block( ret->data.recno,
-                                    ret->data.len,
-                                    ret->data.magic );
-
-    if ( ret->data.ptr == NULL )
+    if ( ret->data.recno != -1 )
     {
-        fbn->unlock_block( ret->key.magic, false );
-        delete ret;
-        return NULL;
+        ret->data.ptr = fbn->get_block( ret->data.recno,
+                                        ret->data.len,
+                                        ret->data.magic );
+        if ( ret->data.ptr == NULL )
+        {
+            fbn->unlock_block( ret->key.magic, false );
+            delete ret;
+            return NULL;
+        }
     }
+    else
+        ret->data.ptr = NULL;
 
     return ret;
 }
@@ -218,46 +226,42 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
 }
 
 void
-Btree :: dumptree( printinfo * pi )
+Btree :: dumptree( btree_printinfo * pi )
 {
-    if ( pi->debug )
+    if ( pi->options & btree_printinfo::BTREE_INFO )
     {
-        pi->pr( pi->arg,
-                "bti: \n"
-                "  recno = %d\n"
-                "  rootblockno = %d\n"
-                "  numnodes = %d\n"
-                "  numrecords = %d\n"
-                "  depth = %d\n"
-                "  order = %d\n",
-                bti->bti_recno,  bti->rootblockno, bti->numnodes,
-                bti->numrecords, bti->depth,       bti->order     );
+        pi->print( "bti: \n"
+                   "  recno = %d\n"
+                   "  rootblockno = %d\n"
+                   "  numnodes = %d\n"
+                   "  numrecords = %d\n"
+                   "  depth = %d\n"
+                   "  order = %d\n",
+                   bti->bti_recno,  bti->rootblockno, bti->numnodes,
+                   bti->numrecords, bti->depth,       bti->order     );
     }
     dumpnode( pi, bti->rootblockno );
 }
 
 bool
-Btree :: dumpnode( printinfo * pi, int recno )
+Btree :: dumpnode( btree_printinfo * pi, int recno )
 {
     int i;
     node *n = fetch_node( recno );
-    if ( pi->debug )
+    if ( pi->options & btree_printinfo::NODE_INFO )
     {
-        pi->pr( pi->arg,
-                "node at %d:\n"
-                "  numitems = %d (%s %s)\n"
-                "  data =    ",
-                recno, n->nd->get_numitems(),
-                n->nd->is_root() ? "root" : "-", 
-                n->nd->is_leaf() ? "leaf" : "-" );
+        pi->print( "node at %d:\n"
+                   "  numitems = %d (%s %s)\n"
+                   "  data =    ",
+                   recno, n->nd->get_numitems(),
+                   n->nd->is_root() ? "root" : "-", 
+                   n->nd->is_leaf() ? "leaf" : "-" );
         for ( i = 0; i < n->nd->get_numitems(); i++ )
-            pi->pr( pi->arg, "%03d/%03d   ",
-                    n->nd->d[i].key,
-                    n->nd->d[i].data );
-        pi->pr( pi->arg, "\n  ptrs = " );
+            pi->print( "%03d/%03d   ", n->nd->d[i].key, n->nd->d[i].data );
+        pi->print( "\n  ptrs = " );
         for ( i = 0; i <= n->nd->get_numitems(); i++ )
-            pi->pr( pi->arg, "%03d       ", n->nd->d[i].ptr );
-        pi->pr( pi->arg, "\n" );
+            pi->print( "%03d       ", n->nd->d[i].ptr );
+        pi->print( "\n" );
     }
     for ( i = 0; i < n->nd->get_numitems(); i++ )
     {
@@ -267,20 +271,24 @@ Btree :: dumpnode( printinfo * pi, int recno )
                 unlock_node( n );
                 return false;
             }
-        rec * r = fetch_rec( n->nd->d[i].key,
-                             n->nd->d[i].data );
-        char * s = pi->spr( pi->arg, recno,
-                            r->key.recno, r->key.ptr, r->key.len,
-                            r->data.recno, r->data.ptr, r->data.len,
-                            &r->data.dirty );
+        rec * r = fetch_rec( pi->options & btree_printinfo::KEY_REC_PTR ?
+                             n->nd->d[i].key : -1,
+                             pi->options & btree_printinfo::DATA_REC_PTR ?
+                             n->nd->d[i].data : -1 );
+        char * s = pi->sprint_element(
+            recno,
+            n->nd->d[i].key, r->key.ptr, r->key.len,
+            n->nd->d[i].data, r->data.ptr, r->data.len,
+            &r->data.dirty );
+
         if ( s == NULL )
         {
             unlock_rec( r );
             unlock_node( n );
             return false;
         }
-        pi->pr( pi->arg, "%s", s );
-        pi->sprf( pi->arg, s );
+        pi->print( "%s", s );
+        pi->sprint_element_free( s );
         unlock_rec( r );
     }
     if ( !n->nd->is_leaf() )

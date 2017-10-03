@@ -179,15 +179,28 @@ struct btcollect {
         }
 };
 
-//static
-char *
-id_name_db :: btdump_sprint( void * arg, int noderec,
-                             int keyrec, void * key, int keylen,
-                             int datrec, void * dat, int datlen,
-                             bool *datdirty )
-{
-    btcollect * btc = (btcollect *)arg;
 
+class id_name_db_printinfo : public btree_printinfo {
+    btcollect * btc;
+public:
+    id_name_db_printinfo( btcollect * _btc ) :
+        btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
+        btc = _btc;
+    }
+    /*virtual*/ char * sprint_element( int noderec,
+                                       int keyrec, void * key, int keylen,
+                                       int datrec, void * dat, int datlen,
+                                       bool * datdirty );
+    /*virtual*/ void sprint_element_free( char * s ) { /* nothing */ }
+    /*virtual*/ void print( char * format, ... ) { /* nothing */ }
+};
+
+char *
+id_name_db_printinfo :: sprint_element( int noderec,
+                                        int keyrec, void * key, int keylen,
+                                        int datrec, void * dat, int datlen,
+                                        bool *datdirty )
+{
     if ( memcmp( btc->cmpkey, key, 5 ) == 0 )
     {
         int id;
@@ -200,21 +213,7 @@ id_name_db :: btdump_sprint( void * arg, int noderec,
     }
 
     // return non-null so dumptree doesn't stop here.
-    return (char*) 1;
-}
-
-//static
-void
-id_name_db :: btdump_sprintfree( void * arg, char * s )
-{
-    // does nothing!
-}
-
-//static
-void
-id_name_db :: btdump_print( void * arg, char * format, ... )
-{
-    // does nothing!
+    return ".";
 }
 
 void
@@ -239,9 +238,7 @@ id_name_db :: _periodic_purge( bool all, int id )
 {
     uchar cmpstr[ 5 ];
     btcollect btc;
-    Btree::printinfo pi = {
-        btdump_sprint, btdump_sprintfree, btdump_print, &btc, false
-    };
+    id_name_db_printinfo pi( &btc );
 
     btc.cmpkey[0] = 'P';
     memcpy( btc.cmpkey + 1, &id, 4 );
@@ -264,12 +261,36 @@ id_name_db :: _periodic_purge( bool all, int id )
 }
 #include <stdarg.h>
 
-//static
+#define DUMPFILE "BTREEDUMP"
+
+class id_name_db_real_printinfo : public btree_printinfo {
+    FILE * f;
+public:
+    id_name_db_real_printinfo(void) :
+        btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
+        f = fopen( DUMPFILE, "w" );
+    }
+    ~id_name_db_real_printinfo( void ) {
+        fclose( f );
+        chown( DUMPFILE, 1000, 1000 );
+        chmod( DUMPFILE, 0666 );
+    }
+    /*virtual*/ char * sprint_element( int noderec,
+                                       int keyrec, void * key, int keylen,
+                                       int datrec, void * dat, int datlen,
+                                       bool * datdirty );
+    /*virtual*/ void sprint_element_free( char * s );
+    /*virtual*/ void print( char * format, ... );
+};
+
+#undef DUMPFILE
+
 char *
-id_name_db :: btdump_real_sprint( void * arg, int noderec,
-                                  int keyrec, void * _key, int keylen,
-                                  int datrec, void * _dat, int datlen,
-                                  bool *datdirty )
+id_name_db_real_printinfo :: sprint_element(
+    int noderec,
+    int keyrec, void * _key, int keylen,
+    int datrec, void * _dat, int datlen,
+    bool *datdirty )
 {
     int i;
     unsigned char * key = (unsigned char*) _key;
@@ -289,48 +310,29 @@ id_name_db :: btdump_real_sprint( void * arg, int noderec,
     outp += sprintf( outp, "\n" );
 
     // return non-null so dumptree doesn't stop here.
-    return out;
+    return ".";
 }
 
 //static
 void
-id_name_db :: btdump_real_sprintfree( void * arg, char * s )
+id_name_db_real_printinfo :: sprint_element_free( char * s )
 {
     delete[] s;
 }
 
 //static
 void
-id_name_db :: btdump_real_print( void * arg, char * format, ... )
+id_name_db_real_printinfo :: print( char * format, ... )
 {
     va_list ap;
     va_start( ap, format );
-    vfprintf( (FILE*)arg, format, ap );
+    vfprintf( f, format, ap );
     va_end( ap );
 }
 
 void
 id_name_db :: dump_btree( void )
 {
-    Btree::printinfo pi;
-    FILE * f;
-
-#define DUMPFILE "BTREEDUMP"
-
-    f = fopen( DUMPFILE, "w" );
-
-    pi.spr   = &btdump_real_sprint;
-    pi.sprf  = &btdump_real_sprintfree;
-    pi.pr    = &btdump_real_print;
-    pi.arg   = (void*)f;
-    pi.debug = false;
-
+    id_name_db_real_printinfo pi;
     bt->dumptree( &pi );
-
-    fclose( f );
-    chown( DUMPFILE, 1000, 1000 );
-    chmod( DUMPFILE, 0666 );
-
-#undef DUMPFILE
-
 }

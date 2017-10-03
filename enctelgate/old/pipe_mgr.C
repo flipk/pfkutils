@@ -2,6 +2,11 @@
 #include "pipe_mgr.H"
 
 // xxx whole file incomplete
+struct Pipe_instance {
+    Pipe_instance( );
+    ~Pipe_instance( void );
+
+};
 
 Pipe_Mgr :: Pipe_Mgr( void )
 {
@@ -10,6 +15,16 @@ Pipe_Mgr :: Pipe_Mgr( void )
 }
 
 Pipe_Mgr :: ~Pipe_Mgr( void )
+{
+}
+
+int
+Pipe_Mgr :: register_proxy( fd_interface * fdi )
+{
+}
+
+void
+Pipe_Mgr :: unregister_proxy( int pipe )
 {
 }
 

@@ -83,13 +83,28 @@ typedef LList <i_file_entry,0>  ListOfFiles;
 
 int signature;
 
-static char *
-regen_sprintf( void * arg, int noderec,
-               int keyrec, void * key, int keylen,
-               int datrec, void * dat, int datlen,
-               bool *datdirty )
+class treesync_regen_printinfo : public btree_printinfo {
+    ListOfFiles * file_entries;
+public:
+    treesync_regen_printinfo( ListOfFiles * _file_entries ) :
+        btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
+        file_entries = _file_entries;
+    }
+    /*virtual*/ char * sprint_element( int noderec,
+                                       int keyrec, void * key, int keylen,
+                                       int datrec, void * dat, int datlen,
+                                       bool * datdirty );
+    /*virtual*/ void sprint_element_free( char * s ) { /* nothing */ }
+    /*virtual*/ void print( char * format, ... ) { /* nothing */ }
+};
+
+char *
+treesync_regen_printinfo :: sprint_element(
+    int noderec,
+    int keyrec, void * key, int keylen,
+    int datrec, void * dat, int datlen,
+    bool *datdirty )
 {
-    ListOfFiles    * file_entries = (ListOfFiles *) arg;
     db_file_entry  * dfe = (db_file_entry *) dat;
 
     if ( dfe->random_signature != signature )
@@ -108,19 +123,7 @@ regen_sprintf( void * arg, int noderec,
         file_entries->add( entry );
     }
 
-    return ".";
-}
-
-static void
-regen_sprintf_free( void * arg, char * s )
-{
-//    ListOfFiles * file_entries = (ListOfFiles *) arg;
-}
-
-static void
-regen_printfunc( void * arg, char * format, ... )
-{
-//    ListOfFiles * file_entries = (ListOfFiles *) arg;
+    return "."; // return non-null so dumptree keeps going
 }
 
 void
@@ -285,15 +288,9 @@ regenerate_database( bool backup )
     // now search bt file looking for entries with mismatching
     // signature; these files have been deleted.
 
-    Btree::printinfo  printinfo = {
-        regen_sprintf,
-        regen_sprintf_free,
-        regen_printfunc,    
-        &file_entries,
-        false
-    };
+    treesync_regen_printinfo pi( &file_entries );
 
-    dbfile->dumptree( &printinfo );
+    dbfile->dumptree( &pi );
 
     while ( entry = file_entries.dequeue_head() )
     {

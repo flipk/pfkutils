@@ -1,0 +1,93 @@
+
+bt database stores:
+- file length
+- file last modification time (mtime)
+- touch number (for delete detection)
+- last_scan (for modification detection)
+- num_segments (top bit stolen for 'new' entries)
+
+sequence:
+- call scan_start
+- copy database to database.new
+- scan the tree, updating datbase.new and building scan_list
+- form tcp connection to remote agent
+- 'first' sends scan_list to second
+- 'second' compares to its own scan_list
+- behavior follows this matrix:
+
+			first status
+		| NF	NEW	DELETED	SAME	CHANGED
+-------------------------------------------------------
+	NF	| -	F2S	CI	CI	CI
+	NEW	| S2F	C/NA	CI	C/NA	C/NA
+second	DELETED	| CI	CI	NA	D1	C
+status	SAME	| CI	C/NA	D2	C/NA	F2S/NA
+	CHANGED	| CI	C/NA	C	S2F/NA	C/NA
+
+NOTES:	- NF = not found on list
+	- C = flag file conflict (and delete from list)
+	- CI = flag "impossible" conflict (indicates a bug in tsn)
+	- NA = take no action, file is ok (update db, delete from list)
+	- Dx = delete on 1st or 2nd side
+	- F2S = first seconds file contents to second
+	- S2F = second sends file to first
+	- in the "*/NA" cases, requires comparison of
+	  whole-digests to resolve "/".
+	- S2F/F2S requires comparison of segment-digests.
+
+message handling use-cases:
+
+first does send-scan-list
+- for each entry on scan-list
+   - send whole-digest
+   - waitfor whole-digest-ack
+     - (actually allow N outstanding acks to keep pipeline loaded)
+- send sync-done
+
+second gets whole-digest
+- send whole-digest-ack
+- look up on scan-list
+- look up in table first {new,del,same,chg} vs second {nf,new,del,same,chg}
+- where "*/NA" found, compare whole-digests to resolve "/"
+- outcome:
+   - F2S : send start-segment-digest,
+           (n) segment-digest,
+           end-segment-digest
+   - S2F : send request-segment-digests
+   - C or CI : print and send conflict-notification
+   - NA : send file-ok-notification
+   - D1 : send delete-request
+   - D2 : delete file, send file-ok-notification
+
+second gets sync-done
+- walk scan_list looking for remaining items;
+  for each, lookup NF state in table;
+  - outcome:
+    - CI: print and send conflict-notification
+    - S2F: request-segment-digests;
+      - waitfor start-segment-digest sequence
+- send sync-done
+- close tcp, scan_finish, exit
+
+first gets sync-done
+- close tcp, scan_finish, exit
+
+either gets start-segment-digest
+- while !end-segment-digest
+   - expect segment-digest : compare segment digest,
+     if mismatch, send file-contents
+
+either gets file-contents
+- open file, seek, write contents
+
+first gets request-segment-digests
+- send start-segment-digest, (n) segment-digest, end-segment-digest
+
+first gets conflict-notification
+- print conflict
+
+first gets file-ok-notification
+- no action
+
+first gets delete-request
+- delete file

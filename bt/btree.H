@@ -38,6 +38,30 @@
 // a linked list off of a btree record or something like that.
 //
 
+class btree_printinfo {
+public:
+    static const int NODE_INFO       = 1;
+    static const int BTREE_INFO      = 2;
+    static const int KEY_REC_PTR     = 4;
+    static const int DATA_REC_PTR    = 8;
+    static const int _FIRST_USER_OPT = 16;
+    int options;
+    btree_printinfo( int _options ) { options = _options; }
+    virtual ~btree_printinfo( void ) { /*placeholder*/ }
+    // sprintelement should return null if dumptree/dumpnode should stop.
+    virtual char * sprint_element( int noderec,
+                                   int keyrec, void * key, int keylen,
+                                   int datrec, void * dat, int datlen,
+                                   bool * datdirty ) = 0;
+    // dumpnode will call sprintelementfree when its done
+    // actually doing the printing.
+    virtual void sprint_element_free( char * s ) = 0;
+    // this is the function that actually prints.
+    virtual void print( char * format, ... )
+        __attribute__ ((format( printf, 2, 3 ))) = 0;
+
+};
+
 class Btree {
 public:
     enum put_retval {
@@ -177,29 +201,10 @@ public:
         bti = (btreeinfo*) fbn->get_block( bn, dummy, bti_magic );
     }
 
-    // sprintelement should return null if dumptree/dumpnode should stop.
-    typedef char * (*sprintelement)( void * arg, int noderec,
-                                     int keyrec, void * key, int keylen,
-                                     int datrec, void * dat, int datlen,
-                                     bool * datdirty );
-    // dumpnode will call sprintelementfree when its done
-    // actually doing the printing.
-    typedef void (*sprintelementfree)( void * arg, char * s );
-    // this is the function that actually prints.
-    typedef void (*printfunc)( void * arg, char * format, ... )
-        __attribute__ ((format( printf, 3, 4 )));
 
-    struct printinfo {
-        sprintelement      spr;
-        sprintelementfree  sprf;
-        printfunc          pr;
-        void*              arg;
-        bool               debug;
-    };
-
-    void dumptree( printinfo * );
+    void dumptree( btree_printinfo * );
 private:
-    bool dumpnode( printinfo *, int recno ); // return false to stop
+    bool dumpnode( btree_printinfo *, int recno ); // return false to stop
 
 public:
     void  unlock_rec( rec * );
