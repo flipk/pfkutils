@@ -62,7 +62,7 @@ usage( void )
 "are not enough stack args for calculation results in error. more than one\n"
 "stack item left at the end is also an error.\n"
 "\n"
-"valid ops are: + - * times / and or xor not swap32 swap16 \n"
+"valid ops are: + - * times / %% and or xor not swap32 swap16 \n"
 "               rshift >> lshift << lt < lteq <= gt > gteq >= eq == \n"
 "\n"
 "examples:\n"
@@ -121,6 +121,7 @@ static const char * arg_expr_string = "\
 ^(-)$|\
 ^(\\*|times)$|\
 ^(/)$|\
+^(%)$|\
 ^(and)$|\
 ^(or)$|\
 ^(xor)$|\
@@ -157,7 +158,7 @@ static const char * arg_expr_string = "\
 enum arg_type {
     ARG_DUMMY = 0, /* the zeroth entry of a regmatch_t */
     ARG_FLAG,
-    ARG_PLUS, ARG_MINUS, ARG_TIMES, ARG_DIVIDE,
+    ARG_PLUS, ARG_MINUS, ARG_TIMES, ARG_DIVIDE, ARG_MOD,
     ARG_AND, ARG_OR, ARG_XOR, ARG_NOT,
     ARG_SWAP32, ARG_SWAP16, ARG_RSHFT, ARG_LSHFT,
     ARG_LT, ARG_LTEQ, ARG_GT, ARG_GTEQ, ARG_EQ,
@@ -175,7 +176,7 @@ enum arg_type {
  */
 static char * arg_type_names[] = {
     "dummy", "flag",
-    "plus", "minus", "times", "divide",
+    "plus", "minus", "times", "divide", "modulo",
     "and", "or", "xor", "not",
     "swap32", "swap16", "rshift", "lshift", "less",
     "lesseq", "greater", "greatereq", "equal",
@@ -430,6 +431,7 @@ operation2( int operation, M_INT64 arg1, M_INT64 arg2 )
         DO_OP( ARG_MINUS,   -   );
         DO_OP( ARG_TIMES,   *   );
         DO_OP( ARG_DIVIDE,  /   );
+        DO_OP( ARG_MOD,     %   );
         DO_OP( ARG_AND,     &   );
         DO_OP( ARG_OR,      |   );
         DO_OP( ARG_XOR,     ^   );
@@ -613,7 +615,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
         case ARG_PLUS:    case ARG_MINUS:    case ARG_TIMES:
         case ARG_DIVIDE:  case ARG_RSHFT:    case ARG_LSHFT:
         case ARG_LT:      case ARG_LTEQ:     case ARG_GT:
-        case ARG_GTEQ:    case ARG_EQ:
+        case ARG_GTEQ:    case ARG_EQ:       case ARG_MOD:
         case ARG_AND:     case ARG_OR:       case ARG_XOR:
 
             if ( top < 2 )

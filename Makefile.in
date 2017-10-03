@@ -27,8 +27,8 @@ ELIBS=	implode/libimplode.a \
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a 
-DIRS+= bt qcam xlock threads itsfs mytar
-ELIBS+= itsfs/libitsfs.a mytar/libmytar.a
+DIRS+= bt qcam xlock threads mytar
+ELIBS+= mytar/libmytar.a
 #endif
 
 #ifdef linux
@@ -59,7 +59,7 @@ ELIBS+= bt/libbt.a itsfs/libitsfs.a
 
 #ifdef freebsd
 CSRCS+=	sudo.c
-LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
+LIBS+= -lmd -L/usr/X11R6/lib -lX11 -lXau -lXdmcp -static
 #endif
 
 CPPFLAGS= -I/usr/X11R6/include -I.

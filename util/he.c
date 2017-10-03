@@ -211,7 +211,11 @@ get_file_data( off_t pos, unsigned char *data, int len )
         /* ??? wtf? */
         _lseek64( file_descriptor, pos, SEEK_SET );
 #else
+#ifdef FreeBSD
         lseek64( file_descriptor, pos, SEEK_SET );
+#else
+        lseek( file_descriptor, pos, SEEK_SET );
+#endif
 #endif
         rlen = len;
     }
