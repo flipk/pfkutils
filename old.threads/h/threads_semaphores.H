@@ -4,9 +4,10 @@
 class ThreadSemaphore;
 struct semWaiter;
 
+typedef LList<ThreadSemaphore,0> ThreadSemaphoreList;
+
 class ThreadSemaphores {
-    ThreadSemaphore * first;
-    ThreadSemaphore * last;
+    ThreadSemaphoreList  sem_list;
 public:
     ThreadSemaphores( void );
     ~ThreadSemaphores( void );
@@ -17,11 +18,13 @@ public:
     void printsems( FILE * );
 };
 
+typedef LList<semWaiter,0> semWaiterList;
+
 class ThreadSemaphore {
-    semWaiter * waitlist;
-    semWaiter * waitlist_end;
-    ThreadSemaphore * next;
-    ThreadSemaphore * prev;
+public:
+    LListLinks<ThreadSemaphore> links[1];
+private:
+    semWaiterList  waitlist;
     char * name;
     int v;
     void enqueue( semWaiter * );
@@ -32,10 +35,6 @@ class ThreadSemaphore {
     // to create and destroy these.
     ThreadSemaphore( char * _name, int _v ) {
         v = _v;
-        next = NULL;
-        prev = NULL;
-        waitlist = NULL;
-        waitlist_end = NULL;
         int name_l = strlen( _name ) + 1;
         name = new char[ name_l ];
         memcpy( name, _name, name_l );

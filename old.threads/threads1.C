@@ -126,8 +126,8 @@ Threads :: Threads( ThreadParams * p )
     try {
         msgs = new ThreadMessages( p->max_mqids, p->my_eid,
                                    p->max_eids, p->max_fds );
-        timers = new ThreadTimers( p->tps, p->timerhashsize );
         sems = new ThreadSemaphores;
+        timers = new ThreadTimers( p->tps, p->timerhashsize );
     }
     catch (...) {
         throw constructor_failed();

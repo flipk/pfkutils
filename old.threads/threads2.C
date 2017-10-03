@@ -109,10 +109,11 @@ Threads :: ~Threads( void )
 #if !defined(SOLARIS) && !defined(CYGWIN)
     malloclock_die();
 #endif
+    delete timers;
+
     th = NULL;
     sems->semdelete( forksem );
 
-    delete timers;
     delete msgs;
     delete sems;
 

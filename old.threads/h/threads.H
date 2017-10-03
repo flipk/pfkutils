@@ -247,5 +247,6 @@ extern Threads * th;
 #include "threads_semaphores.H"
 #include "threads_class.H"
 #include "threads_messages_tcp.H"
+#include "threads_messages_udp.H"
 
 #endif // __THREADS_H_

@@ -20,16 +20,16 @@
  */
 
 class timerParams;
-class timerCommand;
 
 enum timer_lists {
     TIMER_LIST_QUEUE, TIMER_LIST_HASH, TIMER_NUMLISTS
 };
 
 class ThreadTimers {
-    LListHash     <timerParams,TIMER_LIST_HASH > hash;
-    LListOrderedQ <timerParams,TIMER_LIST_QUEUE> oq;
-    LList         <timerCommand,0>               cmds;
+    LListHash     <timerParams,TIMER_LIST_HASH >  hash;
+    LListOrderedQ <timerParams,TIMER_LIST_QUEUE>  oq;
+
+    ThreadSemaphore * timer_sem;
 
     int tps;
     int tick;
@@ -38,7 +38,6 @@ class ThreadTimers {
     static void _thread( void * arg );
     void thread( void );
     void process_tick( void );
-    void process_cmds( void );
     void setup_helper( void );
     timerParams * new_timer( int ticks );
 

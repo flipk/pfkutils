@@ -12,15 +12,11 @@
 #include "threads_timers_internal.H"
 
 struct semWaiter {
-    semWaiter * next;
-    semWaiter * prev;
+    LListLinks<semWaiter> links[1];
     Threads::tid_t tid;
-    bool onq;
     bool giver_awoke;
     semWaiter( Threads::tid_t _tid ) {
         tid = _tid;
-        next = prev = NULL;
-        onq = false;
         giver_awoke = false;
     }
 };
@@ -28,40 +24,16 @@ struct semWaiter {
 void
 ThreadSemaphore :: enqueue( semWaiter * w )
 {
-    w->next = NULL;
-
-    if ( waitlist_end != NULL )
-    {
-        waitlist_end->next = w;
-        w->prev = waitlist_end;
-        waitlist_end = w;
-    }
-    else
-    {
-        w->prev = NULL;
-        waitlist = waitlist_end = w;
-    }
-
-    w->onq = true;
+    waitlist.add( w );
 }
 
 void
 ThreadSemaphore :: unenqueue( semWaiter * w )
 {
-    if ( w->onq == false )
+    if ( !waitlist.onlist( w ))
         return;
 
-    if ( w->next != NULL )
-        w->next->prev = w->prev;
-    else
-        waitlist_end = w->prev;
-
-    if ( w->prev != NULL )
-        w->prev->next = w->next;
-    else
-        waitlist = w->next;
-
-    w->onq = false;
+    waitlist.remove( w );
 }
 
 semWaiter *
@@ -69,27 +41,27 @@ ThreadSemaphore :: dequeue( void )
 {
     semWaiter * ret;
 
-    ret = waitlist;
+    ret = waitlist.get_head();
     if ( ret != NULL )
-        unenqueue( ret );
+        waitlist.remove( ret );
 
     return ret;
 }
 
 ThreadSemaphores :: ThreadSemaphores( void )
 {
-    first = last = NULL;
 }
 
 ThreadSemaphores :: ~ThreadSemaphores( void )
 {
     ThreadSemaphore * s, * ns;
-    for ( s = first; s != NULL; s = ns )
+    for ( s = sem_list.get_head(); s; s = ns )
     {
-        ns = s->next;
+        ns = sem_list.get_next(s);
+        sem_list.remove(s);
         TH_DEBUG_ALL(( 0, "ThreadSemaphores",
                        "semaphore '%s' not cleaned up at exit",
-                       first->name ));
+                       s->name ));
         delete s;
     }
 }
@@ -99,34 +71,14 @@ ThreadSemaphores :: seminit( char * name, int v )
 {
     ThreadSemaphore * ret;
     ret = new ThreadSemaphore( name, v );
-    ret->next = NULL;
-    if ( last != NULL )
-    {
-        last->next = ret;
-        ret->prev = last;
-        last = ret;
-    }
-    else
-    {
-        ret->prev = NULL;
-        first = last = ret;
-    }
+    sem_list.add( ret );
     return ret;
 }
 
 void
-ThreadSemaphores :: semdelete( ThreadSemaphore *s )
+ThreadSemaphores :: semdelete( ThreadSemaphore * s )
 {
-    if ( s->next != NULL )
-        s->next->prev = s->prev;
-    else
-        last = s->prev;
-
-    if ( s->prev != NULL )
-        s->prev->next = s->next;
-    else
-        first = s->next;
-
+    sem_list.remove( s );
     delete s;
 }
 
@@ -185,7 +137,7 @@ ThreadSemaphores :: printsems( FILE * f )
     ThreadSemaphore * s;
     fprintf( f, "%-11s %5s\n", "semname", "value" );
     fprintf( f, "-----------------\n" );
-    for ( s = first; s; s = s->next )
+    for ( s = sem_list.get_head(); s; s = sem_list.get_next(s) )
     {
         fprintf( f, "%-11s %5d\n", s->name, s->v );
     }

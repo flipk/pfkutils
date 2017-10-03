@@ -19,51 +19,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-enum timer_action {
-    SEND_MESSAGE = 1,
-    RESUME_TID
-};
+#include <netinet/in.h>
+#include <netdb.h>
 
-class timerParams {
+class MessagesUdp : public Thread {
+
+    int connid;
+    encrypt_iface * cr;
+    bool verbose;
+    bool die;
+
+    int fd;
+
+    struct other_eid_defs;
+    struct other_eid_defs * others;
+    int * mqids; // 0 is fd active mqid
+    int nummqids;
+
+    char body[ 16384 ];
+
+    void entry( void );
+    void read_packet( void );
+
+    static const int MY_PRIO = NUM_PRIOS-1;
+    static const int MY_STACK = 65536;
+
 public:
-    // required for LList classes
-    LListLinks<timerParams> links[ TIMER_NUMLISTS ];
-    // required by the LListHash
-    int hash_key( void ) { return timerid; }
-    // required by the LListOrderedQ
-    int ordered_queue_key;
+    MessagesUdp( int connid, encrypt_iface * _cr,
+                 int port, bool _verbose );
+    ~MessagesUdp( void );
 
-    int timerid;
-    timer_action a;
-    int tickarg;
-    union {
-        Threads::tid_t tid;
-        Message *m;
-    } mtid;
-
-    timerParams( int _timerid, int ticks ) {
-        timerid = _timerid;
-        tickarg = ticks;
-    }
-    ~timerParams( void ) {
-        if ( a == SEND_MESSAGE  &&  mtid.m != NULL )
-            delete mtid.m;
-    }
-    void setv( Message * m ) {
-        a = SEND_MESSAGE;
-        mtid.m = m;
-    }
-    void setv( int tid ) {
-        a = RESUME_TID;
-        mtid.tid = tid;
-    }
-    Message * get_m( void ) {
-        Message * ret = NULL;
-        if (a == SEND_MESSAGE)
-        {
-            ret = mtid.m;
-            mtid.m = NULL;
-        }
-        return ret;
-    }
+    bool register_entity( unsigned long remote_ip,
+                          int remote_port,
+                          int eid );
+    bool unregister_entity( int eid );
+    void kill( void );
 };

@@ -31,12 +31,17 @@
 #include "threads_messages_internal.H"
 #include "threads_timers_internal.H"
 
+#define LOCK()    timer_sem->take()
+#define UNLOCK()  timer_sem->give()
+
 ThreadTimers :: ThreadTimers( int _tps, int hash_size )
     : hash( hash_size )
 {
     tps = _tps;
     die = false;
     tick = 0;
+
+    timer_sem = ThreadShortCuts::seminit( "TimerHash", 1 );
 
     mytid = th->create( "timer", Threads::NUM_PRIOS-1, 16384,
                         false, _thread, (void*)this );
@@ -53,14 +58,15 @@ ThreadTimers :: ~ThreadTimers( void )
         hash.remove( p );
         delete p;
     }
+    ThreadShortCuts::semdelete( timer_sem );
 }
 
 void
 ThreadTimers :: printtimers( FILE * f )
 {
-#define FORMAT1 "timerid","action","arg","en","onq","tickrel"
-#define FORMAT2 "%11s %6s %3s %2s %3s %7s\n"
-#define FORMAT3 "%11d %6s %3d %2d %3d %7d\n"
+#define FORMAT1 "timerid","act","arg","onq","tickrel"
+#define FORMAT2 "%11s %3s %3s %3s %7s\n"
+#define FORMAT3 "%11d %3s %3d %3d %7d\n"
 #define FORMAT4 "-------------------------------------\n"
 
     fprintf( f, FORMAT2, FORMAT1 );
@@ -70,16 +76,18 @@ ThreadTimers :: printtimers( FILE * f )
     for ( p = oq.get_head(); p; p = oq.get_next(p))
         fprintf( f, FORMAT3,
                  p->timerid, 
-                 p->a == RESUME_TID ? "resume" : "msg",
+                 p->a == RESUME_TID ? "res" : "msg",
                  p->a == RESUME_TID ?
                  p->mtid.tid : p->mtid.m->dest.mid.get(),
-                 p->enabled, oq.onlist(p), p->ordered_queue_key );
+                 oq.onlist(p), p->ordered_queue_key );
 
 #undef  FORMAT1
 #undef  FORMAT2
 #undef  FORMAT3
 }
 
+// assumption:  this function is only called 
+//              while LOCK is in effect!
 
 timerParams *
 ThreadTimers :: new_timer( int ticks )
@@ -103,14 +111,14 @@ ThreadTimers :: set( int ticks, Message * m )
         ::kill(0,6);
     }
 
-    timerCommand * c = new timerCommand;
-    c->a = SET_TIMER;
-    c->p = new_timer( ticks );
-    c->p->setv( m );
-    int timerid = c->p->timerid;
-    cmds.add( c );
-    ThreadShortCuts::resume( mytid );
-    return timerid;
+    LOCK();
+    timerParams * p = new_timer( ticks );
+    p->setv( m );
+    oq.add( p, ticks );
+    hash.add( p );
+    UNLOCK();
+
+    return p->timerid;
 }
 
 int
@@ -122,13 +130,14 @@ ThreadTimers :: set( int ticks, Threads::tid_t tid )
         ::kill(0,6);
     }
 
-    timerCommand * c = new timerCommand;
-    c->a = SET_TIMER;
-    c->p = new_timer( ticks );
-    c->p->setv( tid );
-    int timerid = c->p->timerid;
-    cmds.add( c );
-    return timerid;
+    LOCK();
+    timerParams * p = new_timer( ticks );
+    p->setv( tid );
+    oq.add( p, p->tickarg );
+    hash.add( p );
+    UNLOCK();
+
+    return p->timerid;
 }
 
 bool
@@ -136,16 +145,20 @@ ThreadTimers :: cancel( int timerid, Message ** m )
 {
     if ( m )
         *m = NULL;
+
+    LOCK();
     timerParams * p = hash.find( timerid );
     if ( p == NULL )
+    {
+        UNLOCK();
         return false;
+    }
     if ( m != NULL )
         *m = p->get_m();
-    timerCommand * c = new timerCommand;
-    c->a = CANCEL_TIMER;
-    c->p = p;
-    p->enabled = false;
-    cmds.add( c );
+    oq.remove( p );
+    hash.remove( p );
+    UNLOCK();
+
     return true;
 }
 
@@ -240,43 +253,9 @@ ThreadTimers :: thread( void )
         int r = th->read( helper_fd, &dummy, 1 );
         if ( r > 0 )
             process_tick();
-        process_cmds();
 
     } while ( die == false );
     close( p[0] );
-}
-
-void
-ThreadTimers :: process_cmds( void )
-{
-    timerCommand * c, * nc;
-    for ( c = cmds.get_head(); c; c = nc )
-    {
-        nc = cmds.get_next(c);
-        cmds.remove( c );
-
-        if ( c->a == SET_TIMER )
-        {
-            oq.add( c->p, c->p->tickarg );
-            hash.add( c->p );
-        }
-        else if ( c->a == CANCEL_TIMER )
-        {
-            // if the cancel and the expiry were in the same
-            // iteration of the while in thread(), then process_tick
-            // will have already removed p from the lists.
-            if ( oq.onthislist( c->p ))
-            {
-                oq.remove( c->p );
-                hash.remove( c->p );
-            }
-        }
-
-        if ( c->a == CANCEL_TIMER && c->p->enabled )
-            delete c->p;
-
-        delete c;
-    }
 }
 
 void
@@ -291,47 +270,51 @@ ThreadTimers :: process_tick( void )
 
     while ( 1 )
     {
+        LOCK();
         p = oq.get_head();
         if ( !p )
+        {
+            UNLOCK();
             break;
+        }
         if ( p->ordered_queue_key > 0 )
+        {
+            UNLOCK();
             break;
+        }
 
         oq.remove( p );
         hash.remove( p );
+        UNLOCK();
 
-        if ( p->enabled )
+        // expire p
+
+        Message * m = p->get_m();
+        if ( m != NULL )
         {
-            // expire p
-
-            Message * m = p->get_m();
-            if ( m != NULL )
-            {
-                if ( th->msgs->send( m, &m->dest ) == false )
-                    printf( "timerid %d failed to send msg\n",
-                            p->timerid );
-            }
-            else
-            {
-                // this requeueing mechanism is really
-                // gross; should investigate a better way
-                // to fix it.
-
-                if (( th->valid_tid( p->mtid.tid )) &&
-                    ( th->resume( p->mtid.tid ) == false ))
-                {
-                    oq.add( p, p->tickarg );
-                    hash.add( p );
-
-                    p = NULL;
-                }
-            }
-
-            if ( p != NULL )
-                delete p;
+            if ( th->msgs->send( m, &m->dest ) == false )
+                printf( "timerid %d failed to send msg\n",
+                        p->timerid );
         }
-        // if p is disabled, that means there's a pending cancel
-        // operation on it, so do not call 'delete' on it! 
-        // process_cmds will see it and delete it.
+        else
+        {
+            // this requeueing mechanism is really
+            // gross; should investigate a better way
+            // to fix it.
+
+            if (( th->valid_tid( p->mtid.tid )) &&
+                ( th->resume( p->mtid.tid ) == false ))
+            {
+                LOCK();
+                oq.add( p, p->tickarg );
+                hash.add( p );
+                UNLOCK();
+
+                p = NULL;
+            }
+        }
+
+        if ( p != NULL )
+            delete p;
     }
 }

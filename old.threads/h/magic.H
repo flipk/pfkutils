@@ -49,6 +49,8 @@ enum MagicNumbers {
     MagicNumbers_Messages_NewKeyAckInt          = 0x1fe16547,
     MagicNumbers_Messages_LookupReq             = 0xbe788abf,
     MagicNumbers_Messages_LookupReply           = 0xbb28b0f3,
+    MagicNumbers_Messages_conn_ind              = 0x094a699a,
+    MagicNumbers_Messages_discon_ind            = 0x26f33c08,
 
     MagicNumbers_Threads_PrintMessage           = 0x24fec2ea
 
