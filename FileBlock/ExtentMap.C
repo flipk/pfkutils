@@ -94,7 +94,6 @@ Extents :: ~Extents( void )
         if (e->used)
         {
             idhash.remove(e);
-            offsethash.remove(e);
         }
         else
             remove_from_bucket(e);
@@ -148,7 +147,6 @@ Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
     Extent * e = extent_pool.alloc( _offset, _size, _id );
     list.add(e);
     idhash.add(e);
-    offsethash.add(e);
     count_used ++;
 }
 
@@ -156,12 +154,6 @@ Extent *
 Extents :: find_id( UINT32 id )
 {
     return idhash.find(id);
-}
-
-Extent *
-Extents :: find_offset( off_t offset )
-{
-    return offsethash.find(offset);
 }
 
 /** \note Sizes are always rounded up to the nearest 32-byte boundary. */
@@ -173,13 +165,13 @@ Extents :: alloc( UINT32 size )
 
     int b;
     UINT32 id;
-    Extent * e;
+    Extent * e = NULL;
 
     for ( b = size_to_bucket(size);
           b < NUM_BUCKETS;
           b = find_next_bucket(b+1) )
     {
-        e = buckets[b].dequeue_head();
+        e = buckets[b].get_first();
         if (e)
             break;
     }
@@ -189,6 +181,8 @@ Extents :: alloc( UINT32 size )
         fprintf(stderr,"ERROR! NO BUCKETS??\n");
         exit(1);
     }
+
+    buckets[b].remove(e);
 
     if (buckets[b].get_cnt() == 0)
         clear_bit(b);
@@ -209,7 +203,6 @@ Extents :: alloc( UINT32 size )
         e->used = 1;
         e->id = id;
         idhash.add(e);
-        offsethash.add(e);
         count_free --;
         return e;
     }
@@ -225,7 +218,6 @@ Extents :: alloc( UINT32 size )
     list.add_before(ne, e);
     add_to_bucket(e);
     idhash.add(ne);
-    offsethash.add(ne);
 
     return ne;
 }
@@ -239,14 +231,6 @@ Extents :: free_id( UINT32 id )
 }
 
 void
-Extents :: free_offset( off_t offset )
-{
-    Extent * e = find_offset(offset);
-    if (e)
-        free(e);
-}
-
-void
 Extents :: free( Extent * e )
 {
     if (!e->used)
@@ -254,7 +238,6 @@ Extents :: free( Extent * e )
 
     // remove from hash before clearing id!
     idhash.remove(e);
-    offsethash.remove(e);
     e->id = 0;
     e->used = 0;
     count_used --;

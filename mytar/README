@@ -1,4 +1,12 @@
 
+TODO:
+   - delete files which are gone, first, before writing anything.
+   - if you can't open a file because its busy or something, just
+     skip it, mark it as up to date and leave it.
+   - combine all piece-md5s together into one data block to reduce
+     the amount of btree lookups required during the hunt for pieces
+     to update.
+
 this is a tool for archiving a set of files or a directory tree into
 an archive file, much like 'tar' does.  the difference is that this
 tool can selectively replace/update individual files in the archive in

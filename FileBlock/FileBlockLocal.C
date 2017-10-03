@@ -26,14 +26,11 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
         exit(1);
     }
 
-    BlockCacheT <FileBlockHeader>  fbh(bc);
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
     fbh.get( FILE_BLOCK_HEADER_POSITION );
 
-    load_map( fbh.data->piece_map_start.get(), 
-              fbh.data->piece_map_len.get() );
-
-    free_map( fbh.data->piece_map_start.get(), 
-              fbh.data->piece_map_len.get() );
+    load_map( fbh.data );
+    free_map( fbh.data );
 
     map_present = false;
 }
@@ -42,14 +39,13 @@ FileBlockLocal :: FileBlockLocal( BlockCache * _bc )
 FileBlockLocal :: ~FileBlockLocal( void )
 {
     flush();
-    /** \todo */
 }
 
 //static
 bool
 FileBlockLocal :: is_valid_file( BlockCache * bc )
 {
-    BlockCacheT <FileBlockHeader>  fbh(bc);
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
     bool ret = false;
 
     if (fbh.get( FILE_BLOCK_HEADER_POSITION ) == false)
@@ -66,8 +62,8 @@ FileBlockLocal :: is_valid_file( BlockCache * bc )
 void
 FileBlockLocal :: init_file( BlockCache * bc )
 {
-    BlockCacheT <FileBlockHeader>  fbh(bc);
-//    int i;
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
+    int i;
 
     if (fbh.get( FILE_BLOCK_HEADER_POSITION ) == false)
         return;
@@ -83,7 +79,7 @@ FileBlockLocal :: init_file( BlockCache * bc )
     UINT32 len;
 
     // one entry to cover the file header itself.
-    len = sizeof(FileBlockHeader);
+    len = sizeof(FileBlockLocalHeader);
 
     // be sure to round up to the nearest block boundary.
     len = ((((len - 1) >> 5) + 1) << 5);
@@ -96,12 +92,110 @@ FileBlockLocal :: init_file( BlockCache * bc )
     len = 0x7fffffffUL;
     m.add( pos, len );
 
-    store_map( &m, bc,
-               &fbh.data->piece_map_start,
-               &fbh.data->piece_map_len );
+    store_map( &m, bc, fbh.data );
 
-//    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
-//        fbh->file_info_block_ids[i].set( 0 );
+    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
+        fbh.data->file_info_block_ids[i].set( 0 );
+}
+
+//virtual
+UINT32
+FileBlockLocal :: get_data_info_block( char * info_name )
+{
+    UINT32 id = 0;
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
+    if (fbh.get( FILE_BLOCK_HEADER_POSITION ) == false)
+        return 0;
+
+    int i;
+    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
+    {
+        FileBlockT <FileInfoBlockId>  fib(this);
+        id = fbh.data->file_info_block_ids[i].get();
+        if (id == 0)
+            continue;
+        if (fib.get(id) == false)
+            continue;
+        if (strncmp(info_name, fib.data->string,
+                    sizeof(fib.data->string)) == 0)
+            return fib.data->id.get();
+    }
+
+    // it wasn't found
+    return 0;
+}
+
+//virtual
+void
+FileBlockLocal :: set_data_info_block( UINT32 info_id, char *info_name )
+{
+    UINT32 id = 0;
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
+    if (fbh.get( FILE_BLOCK_HEADER_POSITION ) == false)
+        return;
+
+    int i;
+    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
+    {
+        id = fbh.data->file_info_block_ids[i].get();
+        if (id == 0)
+            break;
+    }
+
+    if (id != 0)
+    {
+        fprintf(stderr, "out of file info blocks!!\n");
+        return;
+    }
+
+//    fbh.mark_dirty();
+    id = alloc( sizeof(FileInfoBlockId) );
+    fbh.data->file_info_block_ids[i].set( id );
+
+    FileBlockT <FileInfoBlockId>  fib(this);
+    fib.get(id, true);
+//    fib.mark_dirty();
+    fib.data->id.set( info_id );
+    strncpy( fib.data->string, info_name, sizeof(fib.data->string) );
+}
+
+//virtual
+void
+FileBlockLocal :: del_data_info_block( char * info_name )
+{
+    UINT32 id = 0;
+    BlockCacheT <FileBlockLocalHeader>  fbh(bc);
+    FileBlockT <FileInfoBlockId>  fib(this);
+
+    if (fbh.get( FILE_BLOCK_HEADER_POSITION ) == false)
+        return;
+
+    int i;
+    for (i=0; i < MAX_FILE_INFO_BLOCKS; i++)
+    {
+        id = fbh.data->file_info_block_ids[i].get();
+        if (id == 0)
+            continue;
+        if (fib.get(id) == false)
+            continue;
+        if (strncmp(info_name, fib.data->string,
+                    sizeof(fib.data->string)) == 0)
+            break;
+    }
+
+    if (i == MAX_FILE_INFO_BLOCKS)
+        // it wasn't found
+        return;
+
+    if (fib.get(id) == false)
+        return;
+
+    free(fib.data->id.get());
+    fib.release();
+    free(id);
+
+    fbh.data->file_info_block_ids[i].set(0);
+    fbh.mark_dirty();
 }
 
 //virtual
@@ -110,10 +204,9 @@ FileBlockLocal :: alloc( int size )
 {
     if (map_present)
     {
-        BlockCacheT <FileBlockHeader>  fbh(bc);
+        BlockCacheT <FileBlockLocalHeader>  fbh(bc);
         fbh.get( FILE_BLOCK_HEADER_POSITION );
-        free_map( fbh.data->piece_map_start.get(),
-                  fbh.data->piece_map_len.get() );
+        free_map( fbh.data );
         map_present = false;
     }
     Extent * e;
@@ -127,10 +220,9 @@ FileBlockLocal :: free( UINT32 id )
 {
     if (map_present)
     {
-        BlockCacheT <FileBlockHeader>  fbh(bc);
+        BlockCacheT <FileBlockLocalHeader>  fbh(bc);
         fbh.get( FILE_BLOCK_HEADER_POSITION );
-        free_map( fbh.data->piece_map_start.get(),
-                  fbh.data->piece_map_len.get() );
+        free_map( fbh.data );
         map_present = false;
     }
     map.free_id( id );
@@ -173,20 +265,17 @@ FileBlockLocal :: flush(void)
     // so that allocations start early in the file?
 
     {
-        BlockCacheT <FileBlockHeader>  fbh(bc);
+        BlockCacheT <FileBlockLocalHeader>  fbh(bc);
         fbh.get( FILE_BLOCK_HEADER_POSITION );
 
         if (map_present)
-            free_map( fbh.data->piece_map_start.get(),
-                      fbh.data->piece_map_len.get() );
+            free_map( fbh.data );
 
-        store_map( &map, bc,
-                   &fbh.data->piece_map_start,
-                   &fbh.data->piece_map_len );
+        store_map( &map, bc, fbh.data );
+        fbh.mark_dirty();
 
         map_present = true;
 
-        fbh.mark_dirty();
     }
 
     bc->flush();

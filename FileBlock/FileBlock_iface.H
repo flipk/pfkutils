@@ -23,6 +23,8 @@ it is for file space rather than memory space.
 The FileBlock interface is composed of a number of lower-level object
 types.  Click on the following links to read about each of them.
 
+\todo document FileBlockT and BlockCacheT data types.
+
 <ul>
 <li> \ref PageIO (see classes PageIO and PageIOFileDescriptor)
 <li> \ref PageCache (see classes PageCachePage and PageCache)
@@ -84,10 +86,9 @@ public:
  *
  * This is a pure-virtual class whose purpose is to abstract the
  * access of files.  
+ *
+ * \todo document file-info block stuff.
  */
-/** \todo We need to implement the information block stuff
- *        in FileBlockInterface */
-
 class FileBlockInterface {
 public:
     /** Destructor.
@@ -113,9 +114,9 @@ public:
 
     // retrieve an information block from the file
     // identified by some unique name.
-//    virtual UINT32 get_data_info_block( char * info_name ) = 0;
-//    virtual void   set_data_info_block( UINT32 id, char *info_name ) = 0;
-//    virtual void   del_data_info_block( char * info_name ) = 0;
+    virtual UINT32 get_data_info_block( char * info_name ) = 0;
+    virtual void   set_data_info_block( UINT32 id, char *info_name ) = 0;
+    virtual void   del_data_info_block( char * info_name ) = 0;
 
     /** retrieve a block from the file.
      *
@@ -189,6 +190,7 @@ struct FileBlockT
      *        value in the file was and you're overwriting it from scratch
      * \return true if the block was fetched OK and false if not. */
     bool get( UINT32 id, bool for_write = false ) {
+        release();
         fb = fbi->get( id, for_write );
         if (!fb) return false;
         data = (T *) fb->get_ptr();

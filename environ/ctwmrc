@@ -172,6 +172,7 @@ menu "defops"
 	"Firefox"	f.exec "firefox &"
 	"Thunderbird"	f.exec "thunderbird &"
 	"Emacs-Lone"	f.exec "emacs-lone &"
+	"FBSD"		f.exec "fbsd &"
 	"Lock"		!"xlock&"
         ""		f.nop
 	"Iconify"	f.iconify

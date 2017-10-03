@@ -143,18 +143,14 @@ enum EXTENT_MAP_LIST_INDICES {
                             list using this index.  this index is not used
                             for an Extent in the ExtentFreePool.
                             \see ExtentBucketList, ExtentIDHash */
-    EXTENT_OFFSET_HASH,  /**< an Extent representing a 'used' block is on
-                            the offset hash using this index.  'free' 
-                            Extent objects and Extent objects on the
-                            ExtentFreePool do not use this index. 
-                            \see ExtentOffsetHash */
     EXTENT_NUM_LISTS     /**< dimension of the links array in Extent */
 };
 
 /** an "extent" : a position and a size.
  * 
  * An Extent is identified by an identifier (if it is describing a
- * region which is in use) and includes a size and offset. */
+ * region which is in use) and includes a size and offset.
+ */
 class Extent {
     friend class ExtentsPage;
     /** constructor does nothing.
@@ -217,25 +213,41 @@ public:
     }
 };
 
+/** DLL2 btree helper class for Extent objects in the bucket list,
+ * where the key is the file offset. */
+class ExtentBucketComparator {
+public:
+    static int key_compare( Extent * item, off_t key ) {
+	if (item->offset < key) return 1;
+	if (item->offset > key) return -1;
+	return 0;
+    }
+    static int key_compare( Extent * item, Extent * item2 ) {
+	if (item->offset < item2->offset) return 1;
+	if (item->offset > item2->offset) return -1;
+	return 0;
+    }
+    static char * key_format( Extent * item ) {
+	// not used
+	return NULL;
+    }
+};
+
 /** a typedef for a DLL2 list of ordered Extent objects.
  * \see EXTENT_MAP_LIST_INDICES */
 typedef LList <Extent, EXTENT_LIST>            ExtentOrderedList;
 
 /** a typedef for a DLL2 list of Extent objects used for free-bucket lists.
  * \see EXTENT_MAP_LIST_INDICES */
-typedef LList <Extent, EXTENT_ID_HASH>         ExtentBucketList;
+typedef LListBTREE <Extent, off_t,
+		    ExtentBucketComparator,
+		    EXTENT_ID_HASH, 25>         ExtentBucketList;
 
 /** a typedef for a DLL2 hash on the identifier.
  * \see EXTENT_MAP_LIST_INDICES */
 typedef LListHash <Extent, UINT32,
                    ExtentIDHashComparator,
                    EXTENT_ID_HASH>             ExtentIDHash;
-
-/** a typedef for a DLL2 hash on the start offset.
- * \see EXTENT_MAP_LIST_INDICES */
-typedef LListHash <Extent, off_t,
-                   ExtentOffsetHashComparator,
-                   EXTENT_OFFSET_HASH>         ExtentOffsetHash;
 
 /** manages a list of Extent objects.
  *
@@ -260,13 +272,6 @@ class Extents {
      * key for the hash is the identifier.
      * \see EXTENT_MAP_LIST_INDICES */
     ExtentIDHash idhash;
-    /** hash list of used blocks, where hash key is start offset.
-     *
-     * If an Extent is marked as used, the identifier field will be
-     * valid, and the Extent will be on this hash list.  The search
-     * key for the hash is the start offset.
-     * \see EXTENT_MAP_LIST_INDICES */
-    ExtentOffsetHash  offsethash;
 
     /** count of Extent objects in the 'used' state */
     int count_used;
@@ -416,16 +421,6 @@ public:
      *  performing any other manipulations on the Extents object, because
      *  this Extent object may have been altered or deleted. */
     Extent * find_id( UINT32 id );
-    /** locate an Extent by its start offset.
-     * \param offset the 64-bit start offset of the Extent.
-     * \return a pointer to the Extent.
-     * \note The returned Extent object is still on an internal linked
-     *  list.  The user does not have to do anything to release the Extent
-     *  back to this object when the user is done with it.
-     * \note The user must not reference this Extent pointer after
-     *  performing any other manipulations on the Extents object, because
-     *  this Extent object may have been altered or deleted. */
-    Extent * find_offset( off_t offset );
     /** allocate a new Extent of a certain size.
      * \param size The size of the Extent required.
      * \return a pointer to the Extent.
@@ -449,13 +444,7 @@ public:
      * two regions are coalesced into a single larger free Extent. */
     void free_id( UINT32 id );
     /** Free up an Extent that is no longer needed.
-     * \param offset The 64-bit offset of the Extent.
-     * This method returns the Extent back to the free bucket queue.
-     * If the region described is adjacent to other free regions, the
-     * two regions are coalesced into a single larger free Extent. */
-    void free_offset( off_t offset );
-    /** Free up an Extent that is no longer required.
-     * \param e The Extent to be freed.
+     * \param e the Extent to be freed.
      * This method returns the Extent back to the free bucket queue.
      * If the region described is adjacent to other free regions, the
      * two regions are coalesced into a single larger free Extent. */

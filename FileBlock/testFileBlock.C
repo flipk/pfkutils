@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 /** unit of test data stored in the file to test the API. */
 struct TestData {
@@ -31,8 +32,21 @@ struct info {
     info(void) { inuse = false; }
 };
 
+#define TESTFILE "/tmp/testfile.db"
+
 #define VERBOSE 0
 #define XOR_CONSTANT 0x12345678
+
+#define TEST 1
+
+#if TEST==1
+int testFileBlockSignalOccurred = 0;
+
+static void
+sighandler( int sig, siginfo_t * info, void * extra )
+{
+    testFileBlockSignalOccurred = 1;
+}
 
 int
 main(int argc, char ** argv)
@@ -44,8 +58,8 @@ main(int argc, char ** argv)
 
     srandom( getpid() * time(NULL) );
 
-    (void) unlink( "testfile.db" );
-    fd = open("testfile.db", O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+    (void) unlink( TESTFILE );
+    fd = open(TESTFILE, O_RDWR | O_CREAT | O_LARGEFILE, 0644);
     if (fd < 0)
     {
         fprintf(stderr, "unable to open file\n");
@@ -57,8 +71,13 @@ main(int argc, char ** argv)
     FileBlockLocal::init_file( bc );
     fbi = new FileBlockLocal( bc );
 
+#if 1
 #define ITEMS 1000000
-#define LOOPS 100000000
+#define LOOPS 10000000
+#else
+#define ITEMS 100
+#define LOOPS 1000
+#endif
 
     info * infos = new info[ITEMS];
 
@@ -70,11 +89,22 @@ main(int argc, char ** argv)
     time_t last, now;
     time(&last);
 
+    struct sigaction act;
+
+    act.sa_sigaction = sighandler;
+    sigfillset( &act.sa_mask );
+    act.sa_flags = SA_RESTART | SA_SIGINFO;
+
+    sigaction( SIGINT, &act, NULL );
+
     int loop;
     for (loop = 0; loop < LOOPS; loop++)
     {
         int index = random() % ITEMS;
         info * i = &infos[index];
+
+        if (testFileBlockSignalOccurred)
+            break;
 
         if (i->inuse)
         {
@@ -85,10 +115,10 @@ main(int argc, char ** argv)
 #if VERBOSE
                 printf("%d: getting id 0x%x extra %d -> "
                        "id 0x%x idxor 0x%x seq 0x%x\n",
-                   loop, i->id, i->extra,
-                   td.data->id.get(),
-                   td.data->idxor.get(),
-                   td.data->seq.get());
+                       loop, i->id, i->extra,
+                       td.data->id.get(),
+                       td.data->idxor.get(),
+                       td.data->seq.get());
 #endif
                 if (td.data->id.get() != i->id)
                     printf("%d: ERROR id mismatch\n", loop);
@@ -161,7 +191,10 @@ main(int argc, char ** argv)
         }
     }
 
-    fprintf(stderr, "\n");
+    fprintf( stderr,
+             " %d : %d creates, %d reads, %d deletes, %d flushes  \n",
+             LOOPS - loop, count_create, count_read,
+             count_delete, count_flush );
 
     delete[] infos;
 
@@ -170,5 +203,115 @@ main(int argc, char ** argv)
     delete io;
     close(fd);
 
+    (void) unlink( TESTFILE );
+
     return 0;
 }
+
+#elif TEST==2
+
+struct CRAP {
+    UINT32_t   junk;
+};
+
+int
+main( int argc, char ** argv )
+{
+    int           fd;
+    PageIO      * io;
+    BlockCache  * bc;
+    FileBlockInterface * fbi;
+
+    if (strcmp(argv[1], "init") == 0)
+    {
+        (void) unlink( TESTFILE );
+        fd = open(TESTFILE, O_RDWR | O_CREAT | O_LARGEFILE, 0644);
+    }
+    else
+    {
+        fd = open(TESTFILE, O_RDWR | O_LARGEFILE);
+    }
+
+    if (fd < 0)
+    {
+        fprintf(stderr, "unable to open file\n");
+        exit( 1 );
+    }
+
+    io = new PageIOFileDescriptor(fd);
+    bc = new BlockCache(io, 256*1024*1024);
+
+    if (strcmp(argv[1], "init") == 0)
+    {
+        FileBlockLocal::init_file( bc );
+        goto out;
+    }
+
+    fbi = new FileBlockLocal( bc );
+
+    if (strcmp(argv[1], "1") == 0)
+    {
+        UINT32 id;
+        FileBlockT <CRAP>  crap(fbi);
+
+        id = fbi->alloc(sizeof(CRAP));
+        crap.get(id,true);
+        crap.data->junk.set( 0x12345678 );
+        fbi->set_data_info_block(id,(char*)"CRAP");
+
+        id = fbi->alloc(sizeof(CRAP));
+        crap.get(id,true);
+        crap.data->junk.set( 0x12345679 );
+        fbi->set_data_info_block(id,(char*)"CRAP2");
+
+        id = fbi->alloc(sizeof(CRAP));
+        crap.get(id,true);
+        crap.data->junk.set( 0x82345679 );
+        fbi->set_data_info_block(id,(char*)"CRAP3");
+    }
+
+    if (strcmp(argv[1], "2") == 0)
+    {
+        UINT32 id;
+
+        id = fbi->get_data_info_block((char*)"CRAP");
+        if (id > 0)
+        {
+            FileBlockT <CRAP>  crap(fbi);
+            if (crap.get(id) == true)
+                printf("got junk %#x\n", crap.data->junk.get());
+        }
+
+        id = fbi->get_data_info_block((char*)"CRAP2");
+        if (id > 0)
+        {
+            FileBlockT <CRAP>  crap(fbi);
+            if (crap.get(id) == true)
+                printf("got junk %#x\n", crap.data->junk.get());
+        }
+
+        id = fbi->get_data_info_block((char*)"CRAP3");
+        if (id > 0)
+        {
+            FileBlockT <CRAP>  crap(fbi);
+            if (crap.get(id) == true)
+                printf("got junk %#x\n", crap.data->junk.get());
+        }
+    }
+
+    if (strcmp(argv[1], "3") == 0)
+    {
+        fbi->del_data_info_block((char*)"CRAP");
+        fbi->del_data_info_block((char*)"CRAP2");
+        fbi->del_data_info_block((char*)"CRAP3");
+    }
+
+    delete fbi;
+out:
+    delete bc;
+    delete io;
+    close(fd);
+
+    return 0;
+}
+#endif

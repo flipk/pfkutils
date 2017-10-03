@@ -29,7 +29,7 @@ information blocks exist.  The value 0 means no information block is
 populated in this slot.  The file information block functionality is
 not yet designed or implemented.
 
-\todo design and document file-information block system.
+\todo document file-information block system.
 
 \section FileBlockLocalFileFormatFileHeaderPieceMap Piece Map
 
@@ -147,22 +147,34 @@ public:
     BlockCacheBlock * get_bcb( void ) { return bcb; }
 };
 
+/** information about one particular type.
+ * the caller provides a unique string to identify it, and we
+ * return the unique block id they should fetch. */
+struct FileInfoBlockId {
+    static const int max_string_len = 512;
+    UINT32_t  id;
+    char      string[ max_string_len ];
+};
+
 /** This struct appears at the beginning of a FileBlockLocal file. 
  * \see \ref FileBlockLocalFileFormat */
-struct FileBlockHeader {
+struct FileBlockLocalHeader {
     /** This is FILE_BLOCK_SIGNATURE. */
     char signature[ FILE_BLOCK_SIGNATURE_LEN ];
     /** file offset where the extent map starts in the file. */
     UINT64_t  piece_map_start;
+    /** unique identifier of the piece map */
+    UINT32_t  piece_map_id;
     /** length of the first piece of the extent map */
     UINT32_t  piece_map_len;
     /* file info blocks have not yet been designed */
-//    UINT32_t  file_info_block_ids[ MAX_FILE_INFO_BLOCKS ];
+    UINT32_t  file_info_block_ids[ MAX_FILE_INFO_BLOCKS ];
 };
 
 /** this struct appears at FileBlockHeader::piece_map_start position. */
 struct PieceMapEntry {
     UINT64_t  offset;
+    UINT32_t  id;
     UINT32_t  len;
 };
 

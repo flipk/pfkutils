@@ -108,8 +108,8 @@ class LListBTREE {
                 }
 
                 // then insert new item.
-                n->keys [n->cur  ] = *nt;
-                n->nodes[n->cur+1] = right;
+                n->keys [(int) n->cur  ] = *nt;
+                n->nodes[(int) n->cur+1] = right;
 
                 // new pivot is left in leftnode.
                 *nt = n->keys[HALF_ORDER];
@@ -214,8 +214,7 @@ public:
 
             NODESTORE store;
             NODE * n = root;
-            T * t;
-            int i, v;
+            int i;
 
             // start walking down from the rootnode a level at a time,
             // until we either find an exact match or we hit a leaf.
@@ -229,7 +228,7 @@ public:
                 {
                     int k = 
                         BTREE_Key_Comparator::key_compare(
-                            n->keys[n->cur], nt);
+                            n->keys[(int)n->cur], nt);
                     if ( k == 0 )
                         DLL2BAIL(( "ERROR! LListBTREE item is duplicate!\n" ));
                     if ( k <= 0 )
@@ -244,7 +243,7 @@ public:
                 if ( n->leaf )
                     break;
 
-                n = n->nodes[n->cur];
+                n = n->nodes[(int)n->cur];
             }
 
             // if we hit this point that means we haven't seen an
@@ -270,8 +269,8 @@ public:
                         n->nodes[i] = n->nodes[i-1];
                     for ( i = ORDER_MT; i >= n->cur; i-- )
                         n->keys[i] = n->keys[i-1];
-                    n->keys [n->cur]   = nt;
-                    n->nodes[n->cur+1] = right;
+                    n->keys [(int)n->cur]   = nt;
+                    n->nodes[(int)n->cur+1] = right;
                     numitems++;
                     break;
                 }
@@ -312,8 +311,7 @@ public:
         {
             NODESTORE store;
             NODE * n = root, * foundn = 0;
-            T * t;
-            int i, v, foundnindex;
+            int i, foundnindex;
 
             // begin walking down the tree looking for the
             // item. at each node, store a pointer and index
@@ -353,7 +351,7 @@ public:
 
             if ( !exact )
                 DLL2BAIL(( "item not found\n" ));
-            if ( n->keys[n->cur] != dt )
+            if ( n->keys[(int)n->cur] != dt )
                 DLL2BAIL(( "didn't find the same item!\n" ));
 
             // store the ref to the node which contains the deleted item.
@@ -417,7 +415,6 @@ public:
                     break;
 
                 NODE *parent, *l_sib = 0, *r_sib = 0;
-                int parentindex;
                 enum sibwho { SIB_NONE, SIB_LEFT, SIB_RIGHT }; // sibling
                 sibwho whichsib_steal = SIB_NONE, whichsib_coalesce = SIB_NONE;
 
@@ -488,12 +485,12 @@ public:
                         }
 
                         // pull down pivot item from parent
-                        n->keys[0] = parent->keys[ parent->cur ];
+                        n->keys[0] = parent->keys[ (int) parent->cur ];
                         n->numkeys++;
 
                         // steal item from left sib and put in parent node.
                         i = l_sib->numkeys;
-                        parent->keys[ parent->cur ] = l_sib->keys[ i-1 ];
+                        parent->keys[ (int) parent->cur ] = l_sib->keys[ i-1 ];
 
                         // and steal pointer, too
                         n->nodes[ 0 ] = l_sib->nodes[ i ];
@@ -507,10 +504,10 @@ public:
                     case SIB_RIGHT:
                         // pull down pivot item from parent down into curnod
                         i = n->numkeys;
-                        n->keys[i] = parent->keys[ parent->cur ];
+                        n->keys[i] = parent->keys[ (int) parent->cur ];
 
                         // pull right sib's smallest item up into parent
-                        parent->keys[ parent->cur ] = r_sib->keys[0];
+                        parent->keys[ (int) parent->cur ] = r_sib->keys[0];
 
                         // grab lowest pointer in right sib for curnod
                         n->nodes[i+1] = r_sib->nodes[0];
@@ -531,12 +528,16 @@ public:
                         r_sib->keys [i]   = 0;
                         r_sib->nodes[i+1] = 0;
                         break;
+
+		    case SIB_NONE:
+			// satisfy complaining compilers
+			break;
                     }
                 }
 
                 if ( whichsib_coalesce != SIB_NONE )
                 {
-                    NODE * l, * r;
+                    NODE * l = NULL, * r = NULL;
 
                     switch ( whichsib_coalesce )
                     {
@@ -544,7 +545,7 @@ public:
                         l = l_sib;
                         r = n;
                         // since we're going to the left, 
-                        // we have to adjust parentindex so that it
+                        // we have to adjust parent index so that it
                         // points to the data item which pivots l from r
                         parent->cur--;
                         break;
@@ -552,9 +553,13 @@ public:
                     case SIB_RIGHT:
                         l = n;
                         r = r_sib;
-                        // in this case parentindex already points to
+                        // in this case parent index already points to
                         // the item which pivots l from r
                         break;
+
+		    case SIB_NONE:
+			// satisfy complaining compilers
+			break;
                     }
 
                     // slide items in r all the way to the right.
@@ -581,7 +586,7 @@ public:
                     r->nodes[i] = l->nodes[i];
 
                     // also get the pivot item from the parent.
-                    r->keys[i] = parent->keys[ parent->cur ];
+                    r->keys[i] = parent->keys[ (int) parent->cur ];
 
                     // adjust item count.  this node is full!
                     // (a half-full node plus a node which is 1 less than
@@ -628,6 +633,10 @@ public:
                     case SIB_RIGHT:
                         delete_item = n;
                         break;
+
+		    case SIB_NONE:
+			// satisfy complaining compilers
+			break;
                     }
 
                     numnodes--;
@@ -647,6 +656,11 @@ public:
             numitems--;
             items.remove(dt);
         }
+
+    int get_cnt()
+        {
+	    return items.get_cnt();
+	}
 
     void _printtree( NODE * n )
         {
@@ -673,12 +687,16 @@ public:
             _printtree( root );
         }
 
-#if 0
     T * get_first( void ) 
         {
             // walk nodes[0] down to leaf, then return keys[0]
+	    NODE * n = root;
+	    while ( !n->leaf )
+		n = n->nodes[0];
+	    return n->keys[0];
         }
 
+#if 0
     T * get_next( T * t )
         {
             // find t in the tree; if it has a pointer to its right,

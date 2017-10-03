@@ -85,6 +85,7 @@ Next: \ref FileBlockLocalFileFormat
 */
 
 class FileBlockLocalInt;
+struct FileBlockLocalHeader;
 
 /** A "Local File" implementation of FileBlockInterface.
  * 
@@ -94,8 +95,6 @@ class FileBlockLocalInt;
  * \note The contents of the ExtentMap is stored within the file
  *       itself; the ExtentMap will also have entries marking the 
  *       portions of the file in use where the ExtentMap is stored. */
-/** \todo the file info junk must be added here eventually */
-
 class FileBlockLocal : public FileBlockInterface {
     /** linked list of all currently open blocks. */
     LList <FileBlockLocalInt,0>   FBLlist;
@@ -106,28 +105,22 @@ class FileBlockLocal : public FileBlockInterface {
     /** the interface to read and write the file itself */
     BlockCache * bc;
     /** read in a map from the file.
-     * \param pos the position in the file of the piece map.
-     * \param len the length of the first piece of the
-     *        map in the file. */
-    void load_map( UINT64 pos, UINT32 len );
+     * \param fbh a pointer to a header structure describing
+     *            the file. */
+    void load_map( FileBlockLocalHeader * fbh );
     /** free all disk space used by Extent pieces and piece maps.
-     * \param pos the position in the file of the piece map.
-     * \param len the length of the first piece of the
-     *        map in the file. */
-    void free_map( UINT64 pos, UINT32 len );
+     * \param fbh a pointer to a header structure describing
+     *            the file. */
+    void free_map( FileBlockLocalHeader * fbh );
     /** render the map into on-disk format, alloc space for it
      * from the map, and then write it to bc.  This function is
      * static in the class, so that init_file can call it too.
      * \param m the Extents map to write to disk
      * \param bc the interface to the file to use.
-     * \param pos pointer to the position in the file of the first
-     *        piece of the old map.  if this parameter is 0, this
-     *        means it is called from init_file, thus the file has
-     *        no previous map.
-     * \param len pointer to the length of the first piece of the
-     *        map in the file.  ignored if first_piece_pos is 0. */
+     * \param fbh a pointer to a header structure describing
+     *            the file. */
     static void store_map( Extents * m, BlockCache * bc,
-                           UINT64_t * pos, UINT32_t * len );
+                           FileBlockLocalHeader * fbh );
 public:
     /** Constructor.
      * \param _bc a BlockCache object which will be used to access
@@ -149,6 +142,10 @@ public:
      * before the class can be constructed.
      * \param bc the interface to the file to check. */
     static void init_file( BlockCache * bc );
+
+    /*virtual*/ UINT32 get_data_info_block( char * info_name );
+    /*virtual*/ void   set_data_info_block( UINT32 id, char *info_name );
+    /*virtual*/ void   del_data_info_block( char * info_name );
 
     /*virtual*/ UINT32 alloc( int size );
     /*virtual*/ void free( UINT32 id );

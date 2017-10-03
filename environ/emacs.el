@@ -3,22 +3,28 @@
 ;
 
 (custom-set-variables
-  ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
+  ;; custom-set-variables was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
+  ;; If there is more than one, they won't work right.
  '(blink-matching-paren-distance nil)
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)
  '(menu-bar-mode t)
- '(tool-bar-mode nil nil (tool-bar))
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
-)
+ '(tool-bar-mode nil nil (tool-bar)))
 
 (custom-set-faces
-  ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
+  ;; custom-set-faces was added by Custom.
+  ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
- )
+  ;; If there is more than one, they won't work right.
+ '(cursor ((t (:background "white" :foreground "black"))))
+ '(menu ((((type x-toolkit)) (:background "grey85" :foreground "black"))))
+ '(mouse ((t (:background "white" :foreground "black"))))
+ '(scroll-bar ((t (:background "grey85" :foreground "red")))))
 
 (line-number-mode 1)
 (column-number-mode 1)

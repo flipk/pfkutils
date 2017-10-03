@@ -22,6 +22,11 @@ alias lib='cd $Lib'
 alias ssh='myssh'
 alias q='ssh qcomm.cig.mot.com'
 
+fbsd() {
+    ip=`cat $HOME/notes/ip/fbsd`
+    vncviewer -geometry +0+91 $ip:1 -passwd .vnc/passwd &
+}
+
 odin() {
     shellstring "ssh odin"
     \ssh 10.19.173.30

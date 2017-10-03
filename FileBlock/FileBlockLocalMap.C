@@ -18,12 +18,15 @@
 #include <unistd.h>
 
 void
-FileBlockLocal :: load_map( UINT64 pos, UINT32 len )
+FileBlockLocal :: load_map( FileBlockLocalHeader * fbh )
 {
     PieceMapEntry * pme;
     BlockCacheBlock * piecemap_block;
 
-    piecemap_block = bc->get( pos, len );
+    // can't use BlockCacheT because pme has to be an array
+
+    piecemap_block = bc->get( fbh->piece_map_start.get(),
+                              fbh->piece_map_len.get() );
 
     pme = (PieceMapEntry *) piecemap_block->get_ptr();
 
@@ -91,13 +94,16 @@ FileBlockLocal :: load_map( UINT64 pos, UINT32 len )
 }
 
 void
-FileBlockLocal :: free_map( UINT64 pos, UINT32 len )
+FileBlockLocal :: free_map( FileBlockLocalHeader * fbh )
 {
     PieceMapEntry * pme;
     BlockCacheBlock * piecemap_block;
 
+    // can't use BlockCacheT because pme must be an array.
+
     //   fetch old piece-map
-    piecemap_block = bc->get( pos, len );
+    piecemap_block = bc->get( fbh->piece_map_start.get(),
+                              fbh->piece_map_len.get() );
 
     pme = (PieceMapEntry *) piecemap_block->get_ptr();
 
@@ -105,20 +111,20 @@ FileBlockLocal :: free_map( UINT64 pos, UINT32 len )
     //      map.free
     while (pme->offset.get() != 0)
     {
-        map.free_offset( pme->offset.get() );
+        map.free_id( pme->id.get() );
         pme++;
     }
 
     bc->release( piecemap_block, false );
 
     //   free piece-map
-    map.free_offset( pos );
+    map.free_id( fbh->piece_map_id.get() );
 }
 
 //static
 void
 FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
-                             UINT64_t * pos, UINT32_t * len )
+                             FileBlockLocalHeader * fbh )
 {
     PieceMapEntry * pme;
     BlockCacheBlock * piecemap_block;
@@ -153,8 +159,9 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
     piecemap_block = bc->get( e->offset, e->size, true );
     pme = (PieceMapEntry *) piecemap_block->get_ptr();
 
-    pos->set( e->offset );
-    len->set( e->size );
+    fbh->piece_map_start.set( e->offset );
+    fbh->piece_map_id.set( e->id );
+    fbh->piece_map_len.set( e->size );
 
     UINT32_t * pieces[num_pieces];
     BlockCacheBlock * bcbs[num_pieces];
@@ -167,6 +174,7 @@ FileBlockLocal :: store_map( Extents * m, BlockCache * bc,
         UINT32 size = i==(num_pieces-1) ? bytes_in_last_piece : PIECE_SIZE;
         Extent * e = m->alloc( size );
         pme[i].offset.set( e->offset );
+        pme[i].id.set( e->id );
         pme[i].len.set( size );
         bcbs[i] = bc->get( e->offset, size, true );
         pieces[i] = (UINT32_t*) bcbs[i]->get_ptr();

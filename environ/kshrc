@@ -71,7 +71,7 @@ else
        }
 fi
 
-__verbose RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST options=$- args=$*
+__verbose 0=$0 RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST options=$- args=$*
 
 # if this is a login shell, unset these vars to make sure
 # they get regenerated.
@@ -272,6 +272,9 @@ if __isksh ; then
 	if __iscpe ; then
 	    _ps="${_ps}:CPE"
 	fi
+        if [[ "x$WIND_BASE" != x ]] ; then
+            _ps="${_ps} in ${WIND_BASE##*/}"
+        fi
         _ps="${_ps} pid $$ on $TTY"
 	if [[ x$WINDOW != x ]] ; then
 	    _ps="${_ps}, scr $STY-$WINDOW"
@@ -643,6 +646,26 @@ EOF
     rm -f $lisp
 }
 
+merge2() {
+    typeset lisp
+
+    if [ $# -ne 3 ] ; then
+	echo usage : file-A file-B output
+	return
+    fi
+
+    lisp=$HOME/merge3.$$
+
+    cat << EOF > $lisp
+        (tool-bar-mode 0)
+        (ediff-merge-files "$1" "$2" nil "$3")
+EOF
+
+    emacs -g 162x54+5+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
 d1() {
     DISPLAY=${DISPLAY%%:*}:1.0 $* &
 }
@@ -755,6 +778,10 @@ unset __MYSHELL_LAUNCHER
 #
 
 ksh_new=$HOME/bin/pdksh
+
+if [ $0 = "/bin/ksh" ] ; then
+    SHELL=/bin/ksh
+fi
 
 if __isksh ; then
     if [[ x$GOOD_SHELL = x ]] ; then
