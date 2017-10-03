@@ -1,10 +1,10 @@
 
 #include "base64.h"
 
-static inline uchar
+static inline unsigned char
 value_to_b64( int v )
 {
-    static uchar table[] = 
+    static unsigned char table[] = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     if ( v >= sizeof(table)   ||   v < 0 )
         return -1;
@@ -12,7 +12,7 @@ value_to_b64( int v )
 }
 
 static inline int
-b64_to_value( uchar b64 )
+b64_to_value( unsigned char b64 )
 {
     static char table[] = {   /* table starts with char 0x20 */
         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
@@ -31,7 +31,7 @@ b64_to_value( uchar b64 )
 }
 
 int
-b64_is_valid_char( uchar c )
+b64_is_valid_char( unsigned char c )
 {
     if ( c == '=' )
         return 1;
@@ -42,7 +42,7 @@ b64_is_valid_char( uchar c )
 
 /* return 4 if ok, 0 if not ok */
 int
-b64_encode_quantum( uchar * in3, int in_len, uchar * out4 )
+b64_encode_quantum( unsigned char * in3, int in_len, unsigned char * out4 )
 {
     int v,val;
 
@@ -81,7 +81,7 @@ b64_encode_quantum( uchar * in3, int in_len, uchar * out4 )
 
 /* return length of bytes decoded, or 0 if not ok */
 int
-b64_decode_quantum( uchar * in4, uchar * out3 )
+b64_decode_quantum( unsigned char * in4, unsigned char * out3 )
 {
     int val=0,v;
     int ret;

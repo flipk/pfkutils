@@ -7,7 +7,7 @@
 class packet_encoder_io {
 public:
     virtual ~packet_encoder_io( void ) { /* placeholder */ }
-    virtual void outbytes( uchar *, int ) = 0;
+    virtual void outbytes( unsigned char *, int ) = 0;
 };
 
 class packet_encoder {
@@ -15,16 +15,16 @@ class packet_encoder {
     packet_encrypt_decrypt_io * encrypter;
 
     int   encoded_len;
-    uchar encoded_packet[ PACKET_ENCODED_MAX_LENGTH ];
+    unsigned char encoded_packet[ PACKET_ENCODED_MAX_LENGTH ];
 
     int   b64_in;
-    uchar b64_in_chars[3];
+    unsigned char b64_in_chars[3];
 
     void start_packet( void );
-    void add_byte( uchar c );
+    void add_byte( unsigned char c );
     void end_packet( void );
 
-    void add_bytes( uchar * c, int len ) {
+    void add_bytes( unsigned char * c, int len ) {
         while ( len-- > 0 )
             add_byte( *c++ );
     }
@@ -32,7 +32,7 @@ class packet_encoder {
 public:
     packet_encoder( packet_encoder_io * _io,
                     packet_encrypt_decrypt_io * _encrypter );
-    void encode_packet( uchar *, int );
+    void encode_packet( unsigned char *, int );
 };
 
 #endif /* __PACKET_ENCODER_H__ */

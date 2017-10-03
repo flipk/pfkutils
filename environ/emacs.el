@@ -10,17 +10,15 @@
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)
  '(menu-bar-mode t)
+ '(tool-bar-mode nil nil (tool-bar))
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
- '(tool-bar-mode nil nil (tool-bar)))
+)
 
 (custom-set-faces
   ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
   ;; Your init file should contain only one such instance.
  )
-
-(load "~/.elisp/myshell.el")
-(load "~/.elisp/myfiles.el")
 
 (line-number-mode 1)
 (column-number-mode 1)
@@ -47,7 +45,7 @@
 	  hilit-inhibit-rebinding nil
 	  hilit-quietly           t)
          (require 'hilit19)
-         (load "~/.elisp/myserver.el")
+         ; (load "~/.elisp/myserver.el")
          (server-start)))
       ((not window-system)
        (progn

@@ -16,10 +16,10 @@ public:
     d3des_crypt( const unsigned char * hexkey )  // [8]
         : crypt( hexkey ) { /* nothing */ }
     /*virtual*/ ~d3des_crypt( void ) { /* nothing */ }
-    /*virtual*/ void encrypt_packet( uchar * in,  int    in_len,
-                                     uchar * out, int * out_len );
-    /*virtual*/ bool decrypt_packet( uchar * in,  int    in_len,
-                                     uchar * out, int * out_len );
+    /*virtual*/ void encrypt_packet( unsigned char * in,  int    in_len,
+                                     unsigned char * out, int * out_len );
+    /*virtual*/ bool decrypt_packet( unsigned char * in,  int    in_len,
+                                     unsigned char * out, int * out_len );
 };
 
 // return false if file could not be written

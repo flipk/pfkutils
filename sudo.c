@@ -46,6 +46,13 @@ sudo_main( int argc, char ** argv )
     setuid(newuid);
     setgid(newgid);
 
+    if (getuid() != newuid  ||
+	getgid() != newgid)
+    {
+	printf("sorry, binary not installed setuid?\n");
+	exit(1);
+    }
+
     if (homedir)
     {
         chdir(homedir);

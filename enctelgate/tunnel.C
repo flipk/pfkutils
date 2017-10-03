@@ -74,7 +74,7 @@ Tunnel_fd :: unregister_encoder_fd( void )
 fd_interface :: rw_response
 Tunnel_fd :: read ( fd_mgr * )
 {
-    uchar buf[ 5000 ];
+    unsigned char buf[ 5000 ];
     int   len;
 
     len = ::read( fd, buf, sizeof(buf) );

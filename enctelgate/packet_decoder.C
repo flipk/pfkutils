@@ -18,7 +18,7 @@ packet_decoder :: packet_decoder( packet_decoder_io * _io,
 }
 
 void
-packet_decoder :: unput( uchar c )
+packet_decoder :: unput( unsigned char c )
 {
     int new_in;
     new_in = unput_in + 1;
@@ -41,7 +41,7 @@ packet_decoder :: unput_flush( void )
 }
 
 void
-packet_decoder :: add_output( uchar * c, int len )
+packet_decoder :: add_output( unsigned char * c, int len )
 {
     while ( len > 0 )
     {
@@ -65,7 +65,7 @@ packet_decoder :: flush_output( void )
 }
 
 void
-packet_decoder :: input_byte( uchar c )
+packet_decoder :: input_byte( unsigned char c )
 {
     stats.in_bytes ++;
 
@@ -115,8 +115,8 @@ packet_decoder :: input_byte( uchar c )
     if ( ++b64_in == 4 )
     {
         int cc;
-        uchar b64_out_3[3];
-        uchar * cp = b64_out_3;
+        unsigned char b64_out_3[3];
+        unsigned char * cp = b64_out_3;
 
         cc = b64_decode_quantum( b64_in_4, b64_out_3 );
         while ( cc-- > 0 && state != STATE_HDR_HUNT )
@@ -130,7 +130,7 @@ packet_decoder :: input_byte( uchar c )
 }
 
 void
-packet_decoder :: input_decoded_byte( uchar c )
+packet_decoder :: input_decoded_byte( unsigned char c )
 {
     switch ( state )
     {
@@ -184,7 +184,7 @@ packet_decoder :: input_decoded_byte( uchar c )
                 unput_discard();
                 if ( decrypter )
                 {
-                    uchar decbuf[ input_packet_length * 15 / 10 ];
+                    unsigned char decbuf[ input_packet_length * 15 / 10 ];
                     int   declen = sizeof( decbuf );
                     bool result =
                         decrypter->decrypt_packet( input_packet,

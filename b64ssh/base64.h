@@ -8,13 +8,13 @@ extern "C" {
 
 #include "types.H"
 
-int b64_is_valid_char( uchar c );
+int b64_is_valid_char( unsigned char c );
 
 /* return 4 if ok, 0 if not ok */
-int b64_encode_quantum( uchar * in3, int in_len, uchar * out4 );
+int b64_encode_quantum( unsigned char * in3, int in_len, unsigned char * out4 );
 
 /* return length of bytes decoded, or 0 if not ok */
-int b64_decode_quantum( uchar * in4, uchar * out3 );
+int b64_decode_quantum( unsigned char * in4, unsigned char * out3 );
 
 
 #ifdef __cplusplus

@@ -16,6 +16,14 @@
 	PROG(0,genpw,generate random passwords)
 	PROG(0,mytar,my tar program)
 	PROG(0,btpt,BTree print-tree diags)
+#ifdef linux
+	PROG(1,sudo,do a command as the superuser)
+	PROG(0,xlock,xlock screen)
+/*	PROG(0,pdksh,pdksh shell) */
+	PROG(0,etg_genkey,encrypted telnet gate key generator)
+	PROG(0,etg_proxy,encrypted telnet gate key proxy)
+	PROG(0,etg_worker,encrypted telnet gate key worker)
+#endif
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)
 	PROG(1,qcam,quickcam interface program)

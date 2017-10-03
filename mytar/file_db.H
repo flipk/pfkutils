@@ -61,6 +61,7 @@ typedef LList <file_info,0> file_info_list;
 
 class file_db_iterator {
 public:
+    virtual ~file_db_iterator(void) { /* placeholder */ }
     // NOTE THAT FILE_INFO STRUCTURES PASSED TO THIS FUNCTION
     // ARE NOT FREED WHEN CALL IS DONE, IT IS UP TO THIS FUNCTION
     // TO FREE IT IF IT DOESN'T WANT TO KEEP IT

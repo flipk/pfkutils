@@ -13,7 +13,7 @@
 bool
 d3des_crypt_genkey( void )
 {
-    uchar   key[8];
+    unsigned char   key[8];
     int     i, fd;
 
     for ( i = 0; i < 8; i++ )
@@ -35,7 +35,7 @@ d3des_crypt_genkey( void )
 d3des_crypt *
 d3des_crypt_loadkey( void )
 {
-    uchar  key[8];
+    unsigned char  key[8];
     int    cc, fd;
 
     fd = open( KEYFILE, O_RDONLY );
@@ -55,14 +55,14 @@ d3des_crypt_loadkey( void )
 
 //virtual
 void
-d3des_crypt :: encrypt_packet( uchar * in,  int in_len,
-                               uchar * out, int * _out_len )
+d3des_crypt :: encrypt_packet( unsigned char * in,  int in_len,
+                               unsigned char * out, int * _out_len )
 {
     in_len += 2; // account for length field itself
 
     bool    first            = true;
-    uchar   temp[8];
-    uchar * src;
+    unsigned char   temp[8];
+    unsigned char * src;
     int     out_len = 0;
 
     while ( in_len >= 8 )
@@ -110,13 +110,13 @@ d3des_crypt :: encrypt_packet( uchar * in,  int in_len,
 
 //virtual
 bool
-d3des_crypt :: decrypt_packet( uchar * in,  int in_len,
-                               uchar * out, int * _out_len )
+d3des_crypt :: decrypt_packet( unsigned char * in,  int in_len,
+                               unsigned char * out, int * _out_len )
 {
     bool     first            = true;
     int      out_len = 0;
-    uchar    temp[8];
-    uchar  * dest;
+    unsigned char    temp[8];
+    unsigned char  * dest;
 
     while ( in_len >= 8 )
     {

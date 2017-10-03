@@ -21,7 +21,7 @@ packet_encoder :: start_packet( void )
 }
 
 void
-packet_encoder :: add_byte( uchar c )
+packet_encoder :: add_byte( unsigned char c )
 {
     int linectr = PACKET_HEADER_LENGTH + PACKET_LENGTH_LENGTH;
     b64_in_chars[ b64_in++ ] = c;
@@ -61,7 +61,7 @@ packet_encoder :: end_packet( void )
 }
 
 void
-packet_encoder :: encode_packet( uchar *pkt, int pkt_len )
+packet_encoder :: encode_packet( unsigned char *pkt, int pkt_len )
 {
     if ( pkt_len > PACKET_MAX_PAYLOAD_DATA )
     {
@@ -75,7 +75,7 @@ packet_encoder :: encode_packet( uchar *pkt, int pkt_len )
 
     if ( encrypter )
     {
-        uchar encbuf[ pkt_len * 15 / 10 ];
+        unsigned char encbuf[ pkt_len * 15 / 10 ];
         int   enclen = sizeof( encbuf );
 
         encrypter->encrypt_packet( pkt, pkt_len, encbuf, &enclen );

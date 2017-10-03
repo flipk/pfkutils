@@ -24,7 +24,7 @@ protected:
 public:
     Adm_pkt_encoder_io ( void ) { /* nothing */ }
     void setup_me      ( Adm_Gate_fd * _me    ) { me = _me; }
-    /*virtual*/ void outbytes ( uchar * buf, int len ) {
+    /*virtual*/ void outbytes ( unsigned char * buf, int len ) {
         if ( me->write_to_fd( (char*)buf, len ) == false )
             printf( "Adm_pkt_encoder_io outbytes failure\n" );
     }
@@ -32,7 +32,7 @@ public:
 
 //virtual
 void
-Adm_pkt_decoder_io :: outbytes ( uchar * buf, int len )
+Adm_pkt_decoder_io :: outbytes ( unsigned char * buf, int len )
 {
     if ( other->write_to_fd( (char*)buf, len ) == false )
         printf( "Adm_pkt_decoder_io outybtes failed\n" );
@@ -101,7 +101,7 @@ Adm_Gate_fd :: read( fd_mgr * )
     // since the write threshold is 1/2 of max_write,
     // then 1/3 is safe for this.
 
-    uchar   read_buf [ max_write / 3 ];
+    unsigned char   read_buf [ max_write / 3 ];
     int     cc;
 
     cc = ::read( fd, read_buf, sizeof( read_buf ));
@@ -217,7 +217,7 @@ Adm_Gate_fd :: write_to_fd( char * buf, int len )
 }
 
 bool
-Adm_Gate_fd :: write_packet_to_fd( uchar * buf, int len )
+Adm_Gate_fd :: write_packet_to_fd( unsigned char * buf, int len )
 {
     encoder->encode_packet( buf, len );
 }

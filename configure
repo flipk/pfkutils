@@ -52,7 +52,7 @@ case $ARCH in
     Linux-*)
 	def=linux
 	awk=awk
-	ARCH=linux
+#	ARCH=linux
 	;;
     *)
 	echo "unknown arch $ARCH, please modify configure and Makefile.in's"

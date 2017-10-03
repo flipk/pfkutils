@@ -52,10 +52,10 @@ void print_stats( void );
 class packet_encrypt_decrypt_io {
 public:
     virtual ~packet_encrypt_decrypt_io( void ) { /* placeholder */ }
-    virtual bool decrypt_packet( uchar * in,  int in_len,
-                                 uchar * out, int * out_len ) = 0;
-    virtual void encrypt_packet( uchar * in,  int in_len,
-                                 uchar * out, int * out_len ) = 0;
+    virtual bool decrypt_packet( unsigned char * in,  int in_len,
+                                 unsigned char * out, int * out_len ) = 0;
+    virtual void encrypt_packet( unsigned char * in,  int in_len,
+                                 unsigned char * out, int * out_len ) = 0;
 };
 
 #endif /* __PACKET_H__ */

@@ -35,9 +35,11 @@ ELIBS+= pdksh-5.2.14/ksh.o itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
 #ifdef linux
+CSRCS+=	sudo.c
 ELIBS+= bt/libbt.a xlock/libxlock.a
 DIRS+=  bt xlock threads mytar
-ELIBS+= mytar/libmytar.a
+# ELIBS+= pdksh-5.2.14/ksh.o
+ELIBS+=  mytar/libmytar.a -lX11
 #endif
 
 #ifdef cygwin32

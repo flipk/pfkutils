@@ -479,9 +479,9 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     }
 
     UCHAR outbuf[ buflen + 64 ];
-    UINT32 outlen = sizeof(outbuf);
+    uLongf outlen = sizeof(outbuf);
 
-    (void) compress( outbuf, (uLongf*)&outlen, (const Bytef*)buf, buflen );
+    (void) compress( outbuf, &outlen, (const Bytef*)buf, buflen );
 
     blockno = d3->blockno.get();
     if ( outlen != d3->size.get() )

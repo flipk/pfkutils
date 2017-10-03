@@ -21,7 +21,7 @@ public:
     ~Telgate_pkt_decoder_io( void ) {
         tun_fdi->unregister_encoder_fd();
     }
-    /*virtual*/ void outpacket( uchar * buf, int len ) {
+    /*virtual*/ void outpacket( unsigned char * buf, int len ) {
         if ( tun_fdi->write_to_fd( (char*)buf, len ) == false )
             printf( "failed to write to tun fd?\n" );
     }

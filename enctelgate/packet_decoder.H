@@ -4,12 +4,11 @@
 
 #include "packet.H"
 
-
 class packet_decoder_io {
 public:
     virtual ~packet_decoder_io( void ) { /* nothing */ }
-    virtual void outbytes( uchar *, int ) = 0;
-    virtual void outpacket( uchar *, int ) = 0;
+    virtual void outbytes( unsigned char *, int ) = 0;
+    virtual void outpacket( unsigned char *, int ) = 0;
 };
 
 class packet_decoder {
@@ -22,36 +21,36 @@ class packet_decoder {
            STATE_GET_CKSUM } state;
     int substate;
 
-    uchar  input_packet[ PACKET_ENCODED_MAX_LENGTH ];
+    unsigned char  input_packet[ PACKET_ENCODED_MAX_LENGTH ];
     short  input_packet_length;
     short  input_left;
-    ushort input_checksum;
-    ushort calculated_checksum;
+    unsigned short input_checksum;
+    unsigned short calculated_checksum;
 
     int    b64_in;
-    uchar  b64_in_4[4];
+    unsigned char  b64_in_4[4];
 
     int    first_char_after_packet;
 
-    uchar  unput_buffer[ PACKET_MAX_B64_DATA ];
+    unsigned char  unput_buffer[ PACKET_MAX_B64_DATA ];
     int    unput_in;
-    void   unput( uchar c );
+    void   unput( unsigned char c );
     void   unput_flush( void );
     void   unput_discard( void ) { unput_in = 0; }
 
     static const int output_max = 1000;
-    uchar  output_buffer[ output_max ];
+    unsigned char  output_buffer[ output_max ];
     int    output_pos;
-    void   add_output( uchar * c, int len );
+    void   add_output( unsigned char * c, int len );
     void   flush_output( void );
 
-    void   input_byte( uchar c );
-    void   input_decoded_byte( uchar c );
+    void   input_byte( unsigned char c );
+    void   input_decoded_byte( unsigned char c );
 
 public:
     packet_decoder( packet_decoder_io * _io,
                     packet_encrypt_decrypt_io * _decrypter );
-    void input_bytes( uchar * buffer, int len ) {
+    void input_bytes( unsigned char * buffer, int len ) {
         while ( len-- > 0 )
             input_byte( *buffer++ );
         flush_output();

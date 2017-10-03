@@ -18,8 +18,8 @@ public:
     Adm_pkt_decoder_io ( void ) { /* nothing */ }
     void setup_me      ( Adm_Gate_fd * _me    ) { me = _me; }
     void setup_other   ( Adm_Gate_fd * _other ) { other = _other; }
-    /*virtual*/ void outbytes ( uchar *, int );
-    /*virtual*/ void outpacket( uchar *, int ) = 0;
+    /*virtual*/ void outbytes ( unsigned char *, int );
+    /*virtual*/ void outpacket( unsigned char *, int ) = 0;
 };
 
 class Adm_Gate_fd : public fd_interface {
@@ -50,7 +50,7 @@ public:
     /*virtual*/ void select_rw ( fd_mgr *, bool * rd, bool * wr );
     /*virtual*/ bool over_write_threshold( void );
     /*virtual*/ bool write_to_fd( char * buf, int len );
-    /*       */ bool write_packet_to_fd( uchar * buf, int len );
+    /*       */ bool write_packet_to_fd( unsigned char * buf, int len );
 };
 
 #endif /* __ADM_GATE_H__ */
