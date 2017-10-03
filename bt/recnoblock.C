@@ -14,6 +14,11 @@
 // 
 // bitmap pages are stored in a separate cache from the data pages.
 
+// TODO:
+//    add an option to write updates to a separate file as a journal,
+//    for rollback purposes-- each 'commit' call results in all updates
+//    stored in the journal being copied back to the file.
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

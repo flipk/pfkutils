@@ -24,15 +24,15 @@
 //      as long as you call unlock_rec with a "true" dirty flag
 //      when you are done.
 //    if you want to change the size of the data portion then
-//      you must use the fileblocknumber "fbn" interface to
-//      allocate a new locked block, then unlock and free the
-//      old block within the rec.  
-//  (this is why "get_fbn" is public.)
+//      you must delete the record and create a new one. <-- xxx
 //
 // to delete a record
 //    call delete_rec.
 //
-// note also that with "get_fbn" public you are then allowed to store
+//
+//  TODO:  fix the "xxx" above.
+//
+// note also that with "get_fbn" public you are allowed to store
 // other data in this file as well, but you are required to do your
 // own maintenence on the block numbers. you may for instance chain
 // a linked list off of a btree record or something like that.
