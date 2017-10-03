@@ -82,7 +82,7 @@ database entries:
                    FileInfo info
                        uint32 file_id
                        uint64 size
-                       uint32 atime
+                       uint32 mtime
                        uint32 num_pieces
                    string link_target
 
