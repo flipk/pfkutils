@@ -1,8 +1,4 @@
 
-// xxx todo : compare md5 digests!!
-//            update database after transferring a file, so
-//             we don't have to regen the db again after syncing.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -260,7 +256,6 @@ get_created_changed(void)
                          cfn->filename, strerror( errno ));
             }
             remaining = cfn->file_length.get();
-//            printf( "writing '%s'\n", cfn->filename );
         }
         else if ( mpmt.convert( &cfc ))
         {
@@ -298,12 +293,17 @@ put_created_changed(void)
     ChangedFileContents  cfc;
     ChangedFileDone      cfd;
 
+    int files_done = 0;
+    UINT32 bytes_done = 0;
+    time_t now, last_print;
+
     struct stat sb;
     UINT32 remaining, pos, blk_size;
     int cc, fd;
     FileEntry * fe, * nfe;
 
     printf( "sending file contents\n" );
+    time( &last_print );
 
     for ( fe = file_list.get_head(); fe; fe = nfe )
     {
@@ -332,6 +332,7 @@ put_created_changed(void)
         pos = 0;
 
         tcp_channel->send( &cfn );
+        files_done++;
 
 //        printf( "sending '%s' of size %d\n", cfn.filename, remaining );
         while ( remaining > 0 )
@@ -349,12 +350,24 @@ put_created_changed(void)
 
             tcp_channel->send( &cfc );
             remaining -= blk_size;
+            bytes_done += blk_size;
+
+            if ( time( &now ) != last_print )
+            {
+                printf( "\r  transferred %d files (%d bytes)   ",
+                        files_done, bytes_done );
+                fflush( stdout );
+                last_print = now;
+            }
         }
 
         close( fd );
     }
 
     tcp_channel->send( &cfd );
+
+    printf( "\r  transferred %d files (%d bytes)   \n",
+            files_done, bytes_done );
 }
 
 void
@@ -376,12 +389,13 @@ get_removed(void)
         {
             if ( !checked_trash )
             {
-                if ( mkdir( ".trash", 0700 ) == 0 )
+                if ( mkdir( TREESYNC_FILE_PREFIX "trash", 0700 ) == 0 )
                     trashdir = true;
                 else if ( errno == EEXIST )
                     trashdir = true;
                 else
-                    fprintf( stderr, "mkdir .trash: %s\n", strerror( errno ));
+                    fprintf( stderr, "mkdir " TREESYNC_FILE_PREFIX
+                             "trash: %s\n", strerror( errno ));
                 checked_trash = true;
             }
 
@@ -393,7 +407,8 @@ get_removed(void)
 
                 for ( counter = 1; counter < 300; counter++ )
                 {
-                    sprintf( n, ".trash/%s-%d", rfn->filename+1, counter );
+                    sprintf( n, TREESYNC_FILE_PREFIX "trash/%s-%d",
+                             rfn->filename+1, counter );
 
                     for ( p = n; *p != '/'; p++ )
                         ;
@@ -408,7 +423,7 @@ get_removed(void)
                     if ( rename( rfn->filename, n ) == 0 )
                         break;
 
-                    fprintf( stderr, "remove '%s': rename ->%s: %s\n",
+                    fprintf( stderr, "rename '%s' ->%s: %s\n",
                              rfn->filename, n, strerror( errno ));
                     break;
                 }
@@ -491,5 +506,4 @@ trade_files( void )
         get_removed();
         put_removed();
     }
-
 }

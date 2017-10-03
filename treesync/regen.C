@@ -1,8 +1,6 @@
 
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
@@ -14,6 +12,9 @@
 #include "treesync.h"
 #include "regen.H"
 
+#define DEB_PR      1
+#define DEB_SAME_PR 0
+
 FileList        file_list;
 
 #define CLEAR(f) memset( &f, 0, sizeof(f) )
@@ -22,7 +23,6 @@ class i_file_entry_bad { };
 struct i_file_entry {
     LListLinks  <i_file_entry>   links[1];
     struct stat sb;
-    unsigned char digest[16]; // md5 digest
     char filename[0]; // must be last
 
     void initsb( void ) {
@@ -99,6 +99,10 @@ regen_sprintf( void * arg, int noderec,
         memcpy( fname, key, keylen );
         fname[keylen] = 0;
 
+#if DEB_PR
+        printf( "deleted: %s\n", fname );
+#endif
+
         entry = i_file_entry::new_entry(fname,false);
         file_entries->add( entry );
     }
@@ -118,44 +122,14 @@ regen_printfunc( void * arg, char * format, ... )
 //    ListOfFiles * file_entries = (ListOfFiles *) arg;
 }
 
-#include "md5.h"
-
-static bool
-calc_md5sum( char * filename, unsigned char * digest )
-{
-    MD5_CTX  ctx;
-    FILE * f;
-    unsigned char buf[ 65536 ];
-    unsigned int  len;
-
-    f = fopen( filename, "r" );
-    if ( !f )
-        return false;
-
-    MD5Init( &ctx );
-
-    while ( !feof(f) )
-    {
-        len = fread( buf, 1, sizeof(buf), f );
-        MD5Update( &ctx, buf, len );
-    }
-
-    fclose(f);
-
-    MD5Final( digest, &ctx );
-
-    return true;
-}
-
 void
-regenerate_database( void )
+regenerate_database( bool backup )
 {
     Btree                * dbfile;
     FileBlockNumber      * fbn;
     ListOfFiles            file_entries;
     bool                   created = false;
 
-    srandom( time(NULL) * getpid() );
     signature = random();
 
     {
@@ -166,11 +140,12 @@ regenerate_database( void )
         }
         else
         {
-            // make backup file
-            system( "cp "
-                    TREESYNC_DB_FILE
-                    " "
-                    TREESYNC_DB_FILE ".bak" );
+            if ( backup )
+                // make backup file
+                system( "cp "
+                        TREESYNC_DB_FILE
+                        " "
+                        TREESYNC_DB_FILE ".bak" );
         }
     }
 
@@ -193,7 +168,8 @@ regenerate_database( void )
 
     // then begin parsing the list until its empty
     i_file_entry * entry, * ne;
-    for ( entry = file_entries.get_head(); entry; entry = ne )
+    while ( entry = file_entries.dequeue_head() )
+//    for ( entry = file_entries.get_head(); entry; entry = ne )
     {
         if ( S_ISDIR( entry->sb.st_mode ))
         {
@@ -236,78 +212,72 @@ regenerate_database( void )
             Btree::rec  * rec;
             int name_length = strlen( entry->filename );
             db_file_entry * dfe;
-            unsigned char digest[16];
 
-            if ( calc_md5sum( entry->filename, digest ))
+            rec = dbfile->get_rec( (UCHAR*) entry->filename, name_length );
+            if ( rec == NULL )
             {
-                rec = dbfile->get_rec( (UCHAR*) entry->filename, name_length );
-                if ( rec == NULL )
+                // new entry
+
+                rec = dbfile->alloc_rec( name_length,
+                                         sizeof( db_file_entry ));
+                if ( !rec )
                 {
-                    // new entry
+                    fprintf( stderr, "alloc_rec failed!!\n" );
+                    return;
+                }
 
-                    rec = dbfile->alloc_rec( name_length,
-                                             sizeof( db_file_entry ));
-                    if ( !rec )
-                    {
-                        fprintf( stderr, "alloc_rec failed!!\n" );
-                        return;
-                    }
+                memcpy( rec->key.ptr, entry->filename, name_length );
+                dfe = (db_file_entry *) rec->data.ptr;
+                dfe->random_signature = signature;
+                dfe->sb = entry->sb;
 
-                    memcpy( rec->key.ptr, entry->filename, name_length );
-                    dfe = (db_file_entry *) rec->data.ptr;
-                    dfe->random_signature = signature;
+                dbfile->put_rec( rec );
+
+                file_list.add( 
+                    FileEntry::new_entry( 
+                        entry->filename,
+                        FileEntry::NEW,
+                        entry->sb.st_size ));
+
+#if DEB_PR
+                printf( "new: %s\n", entry->filename );
+#endif
+            }
+            else
+            {
+                // existing entry
+
+                dfe = (db_file_entry *) rec->data.ptr;
+                dfe->random_signature = signature;
+                if ( memcmp( &dfe->sb,
+                             &entry->sb, sizeof(struct stat) ) != 0 )
+                {
+                    // entry was updated
                     dfe->sb = entry->sb;
-                    memcpy( dfe->digest, digest, sizeof(digest) );
 
-                    dbfile->put_rec( rec );
+#if DEB_PR
+                    printf( "changed: %s\n", entry->filename );
+#endif
 
                     file_list.add( 
-                        FileEntry::new_entry( 
+                        FileEntry::new_entry(
                             entry->filename,
-                            FileEntry::NEW,
+                            FileEntry::CHANGED,
                             entry->sb.st_size ));
-
-#define DEB_PR 0
-#if DEB_PR
-                    printf( "new: %s\n", entry->filename );
-#endif
                 }
+#if DEB_SAME_PR
                 else
-                {
-                    // existing entry
-
-                    dfe = (db_file_entry *) rec->data.ptr;
-                    dfe->random_signature = signature;
-                    if ( memcmp( dfe->digest, digest, sizeof(digest) ) != 0 )
-                    {
-                        // entry was updated
-                        dfe->sb = entry->sb;
-                        memcpy( dfe->digest, digest, sizeof(digest) );
-
-#if DEB_PR
-                        printf( "changed: %s\n", entry->filename );
+                    printf( "same: %s\n", entry->filename );
 #endif
 
-                        file_list.add( 
-                            FileEntry::new_entry(
-                                entry->filename,
-                                FileEntry::CHANGED,
-                                entry->sb.st_size ));
-                    }
-#if DEB_PR
-                    else
-                        printf( "same: %s\n", entry->filename );
-#endif
-
-                    // signature update causes all entries to be dirty
-                    rec->data.dirty = true;
-                    dbfile->unlock_rec( rec );
-                }
+                // signature update causes all entries to be dirty
+                rec->data.dirty = true;
+                dbfile->unlock_rec( rec );
             }
         }
 
-        ne = file_entries.get_next( entry );
-        file_entries.remove( entry );
+//        ne = file_entries.get_next( entry );
+//        file_entries.remove( entry );
         delete entry;
     }
 
@@ -340,4 +310,12 @@ regenerate_database( void )
     delete dbfile;
 
     printf( "database regeneration complete\n" );
+}
+
+void
+clean_file_entry_list(void)
+{
+    FileEntry * fe;
+    while ( fe = file_list.dequeue_head() )
+        delete fe;
 }

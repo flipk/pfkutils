@@ -13,7 +13,6 @@
 
 struct db_file_entry {
     int random_signature;  // changes each time 'regen' is run
-    unsigned char digest[16];
     struct stat sb;
 };
 

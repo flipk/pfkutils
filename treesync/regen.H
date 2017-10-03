@@ -39,6 +39,7 @@ typedef LList <FileEntry,0> FileList;
 
 extern FileList  file_list;
 
-void regenerate_database( void );
+void regenerate_database   ( bool backup );
+void clean_file_entry_list ( void );
 
 #endif /* __REGEN_H_ */

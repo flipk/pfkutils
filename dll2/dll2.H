@@ -6,6 +6,10 @@
 #include <signal.h>
 #include "lognew.H"
 
+#ifndef DLL2_CHECKSUMS
+#define DLL2_CHECKSUMS 1
+#endif
+
 // NOTE:  - LList::add adds at the 'tail' of the list.
 //        - 'next' pointers point towards the tail, 'prev' towards head.
 //        - LList::add_after adds to 'existing's' 'next' pointer so new
@@ -30,14 +34,33 @@ private:
     T * next;
     T * prev;
     void * onlist;
+#if DLL2_CHECKSUMS
+    unsigned int checksum;
+    unsigned int calc_checksum(void) {
+        return 0xb09d3086U + (unsigned int) next +
+            (unsigned int) prev + (unsigned int) onlist;
+    }
+    void validate(void) {
+        if ( checksum != calc_checksum())
+            DLL2BAIL(( "CHECKSUM ERROR IN DLL2 ELEMENT\n" ));
+    }
+    void recalc(void) { checksum = calc_checksum(); }
+#else
+    void validate(void) {}
+    void recalc(void) {}
+#endif
 public:
     LListLinks( void ) {
         next = prev = NULL;
         onlist = 0;
+        recalc();
     }
     ~LListLinks( void ) {
         if ( onlist != 0 )
             DLL2BAIL(( "ERROR LLIST ITEM DELETED BUT STILL ON A LIST!\n" ));
+#if DLL2_CHECKSUMS
+        checksum = 0;
+#endif
     }
 };
 
@@ -50,10 +73,35 @@ class LList
     T * head;
     T * tail;
     int cnt;
+#if DLL2_CHECKSUMS
+    unsigned int checksum;
+    unsigned int calc_checksum(void) {
+        return 0x2df692f8U + (unsigned int) head +
+            (unsigned int) tail + (unsigned int) cnt;
+    }
+    void validate(void) {
+        if ( checksum != calc_checksum())
+            DLL2BAIL(( "CHECKSUM ERROR IN DLL2 LLIST\n" ));
+    }
+    void recalc(void) { checksum = calc_checksum(); }
+#else
+    void validate(void) { }
+    void recalc(void) { }
+#endif
 public:
-    LList( void ) { head = tail = NULL;  cnt = 0; }
+    LList( void ) { head = tail = NULL;  cnt = 0; recalc(); }
+    ~LList( void ) {
+        validate();
+        if ( head || tail || cnt )
+            DLL2BAIL(( "LLIST DELETED BUT NOT EMPTY\n" ));
+#if DLL2_CHECKSUMS
+        checksum = 0;
+#endif
+    }
     void add( T * x ) {
+        validate();
         LListLinks<T> * ll = & x->links[instance];
+        ll->validate();
         if ( onlist( x )) 
             DLL2BAIL(( "ERROR LLIST ENTRY ALREADY ON LIST %#x\n",
                    (int)ll->onlist ));
@@ -61,32 +109,50 @@ public:
         ll->next = NULL;
         ll->prev = tail;
         if ( tail )
+        {
             tail->links[instance].next = x;
+            tail->links[instance].recalc();
+        }
         else
             head = x;
+        ll->recalc();
         tail = x;
         cnt++;
+        recalc();
     }
     void remove( T * x ) {
+        validate();
         LListLinks<T> * ll = & x->links[instance];
+        ll->validate();
         if ( !onthislist( x ))
             DLL2BAIL(( "ERROR LLIST ENTRY NOT ON THIS LIST %#x != %#x\n",
                    (int)ll->onlist, (int)this ));
         ll->onlist = 0;
         if ( ll->next )
+        {
             ll->next->links[instance].prev = ll->prev;
+            ll->next->links[instance].recalc();
+        }
         else
             tail = ll->prev;
         if ( ll->prev )
+        {
             ll->prev->links[instance].next = ll->next;
+            ll->prev->links[instance].recalc();
+        }
         else
             head = ll->next;
         ll->next = ll->prev = NULL;
+        ll->recalc();
         cnt--;
+        recalc();
     }
     void add_after( T * item, T * existing ) {
+        validate();
         LListLinks<T> * exll = & existing->links[instance];
         LListLinks<T> * itll = & item->links[instance];
+        exll->validate();
+        itll->validate();
         if ( !onthislist( existing ))
             DLL2BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
                    "NOT ON THIS LIST\n" ));
@@ -98,14 +164,23 @@ public:
         itll->prev = existing;
         exll->next = item;
         if ( itll->next )
+        {
             itll->next->links[instance].prev = item;
+            itll->next->links[instance].recalc();
+        }
         else
             tail = item;
+        exll->recalc();
+        itll->recalc();
         cnt++;
+        recalc();
     }
     void add_before( T * item, T * existing ) {
+        validate();
         LListLinks<T> * exll = & existing->links[instance];
         LListLinks<T> * itll = & item->links[instance];
+        exll->validate();
+        itll->validate();
         if ( !onthislist( existing ))
             DLL2BAIL(( "ERROR CANNOT DO add_after WHEN EXISTING ITEM "
                    "NOT ON THIS LIST\n" ));
@@ -117,10 +192,16 @@ public:
         itll->next = existing;
         exll->prev = item;
         if ( itll->prev )
+        {
             itll->prev->links[instance].next = item;
+            itll->prev->links[instance].recalc();
+        }
         else
             head = item;
+        exll->recalc();
+        itll->recalc();
         cnt++;
+        recalc();
     }
     bool onlist ( T * t ) {
         return t->links[instance].onlist != 0;
@@ -142,19 +223,25 @@ public:
         return ret;
     }
     T * get_head ( void ) {
+        validate();
         return head;
     }
     T * get_tail ( void ) {
+        validate();
         return tail;
     }
     T * get_next( T * x ) {
+        validate();
         if ( !onthislist( x ))
             DLL2BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
+        x->links[instance].validate();
         return x->links[instance].next;
     }
     T * get_prev( T * x ) {
+        validate();
         if ( !onthislist( x ))
             DLL2BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
+        x->links[instance].validate();
         return x->links[instance].prev;
     }
 };
