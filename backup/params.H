@@ -27,10 +27,6 @@
 #ifndef __PFKBAK_PARAMS_H__
 #define __PFKBAK_PARAMS_H__
 
-#define      CACHE_SIZE (256*1024*1024)
-#define DATA_CACHE_SIZE  (32*1024*1024)
-#define BTREE_ORDER  15
-
 enum backop {
     BAK_NONE,
     BAK_CREATE_FILE,
@@ -45,9 +41,9 @@ enum backop {
 };
 
 enum verblevel {
-    VERB_QUIET,
-    VERB_1,
-    VERB_2
+    VERB_QUIET,    // display nothing.
+    VERB_1,        // display progress chart.
+    VERB_2         // display filenames as it goes.
 };
 
 extern backop               pfkbak_op;

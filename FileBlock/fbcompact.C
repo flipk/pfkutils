@@ -3,10 +3,6 @@
 #include <time.h>
 #include "FileBlock_iface.H"
 
-// largest allowed free space in a file is 1% or 1MB
-// whichever is smaller.
-#define MAX_FREE (1*1024*1024)
-
 static UINT32 max_free = 0;
 
 static bool
@@ -16,11 +12,7 @@ compaction_status_function(FileBlockStats *stats, void *arg)
         // don't bother compacting a small file.
         return false;
     if (max_free == 0)
-    {
         max_free = stats->num_aus / 100;
-        if (max_free > (MAX_FREE / stats->au_size))
-            max_free = (MAX_FREE / stats->au_size);
-    }
     static time_t last = 0;
     if (stats->free_aus <= max_free)
         return false;

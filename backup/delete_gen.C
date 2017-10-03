@@ -31,6 +31,7 @@
 #include <FileList.H>
 
 #include <stdlib.h>
+#include <time.h>
 
 /** delete a generation or a range of generations from a backup.
  *
@@ -78,13 +79,26 @@ pfkbak_delete_gen ( UINT32 baknum,
     }
     backup_info.put(true);
 
+    UINT32 file_count = backup_info.data.file_count.v;
     UINT32 file_number;
+    time_t now, last_progress;
 
-    for (file_number = 0;
-         file_number < backup_info.data.file_count.v;
-         file_number++)
+    time( &last_progress );
+
+    for (file_number = 0; file_number < file_count; file_number++)
     {
         PfkBackupFileInfo  file_info(pfkbak_meta);
+
+        if (time( &now ) != last_progress)
+        {
+            UINT32 progress = file_number * 1000 / file_count;
+            if (pfkbak_verb == VERB_1)
+            {
+                printf("\rprogress: %3d.%d%% ", progress/10, progress%10);
+                fflush(stdout);
+            }
+            last_progress = now;
+        }
 
         file_info.key.backup_number.v = baknum;
         file_info.key.file_number.v = file_number;
@@ -92,6 +106,12 @@ pfkbak_delete_gen ( UINT32 baknum,
         if (!file_info.get())
             // skip the hole.
             continue;
+
+        if (pfkbak_verb == VERB_2)
+        {
+            printf("%s", file_info.data.file_path.string);
+            fflush(stdout);
+        }
 
         {
             BST_ARRAY  <BST_UINT32_t> * genlist = &file_info.data.generations;
@@ -127,7 +147,6 @@ pfkbak_delete_gen ( UINT32 baknum,
             if (!piece_info.get())
                 // probably end of file.
                 break;
-
 
             BST_ARRAY <PfkBackupVersion> * verlist =
                 &piece_info.data.versions;
@@ -182,5 +201,9 @@ pfkbak_delete_gen ( UINT32 baknum,
             else
                 piece_info.del();
         }
+        if (pfkbak_verb == VERB_2)
+            printf("\n");
     }
+    if (pfkbak_verb == VERB_1)
+        printf("\rprogress: %3d.%d%%\n", 100, 0);
 }

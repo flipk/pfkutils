@@ -47,6 +47,8 @@ enum file_state {
                           timestamp and size as recorded in the database. */
 };
 
+static UINT64 bytes_written;
+
 /** add the data for a file piece to the database.
  * this function will also compress the data before adding it,
  * if compression seems relevant; if compression results in expansion,
@@ -79,6 +81,8 @@ put_piece_data( UINT32 baknum, UINT32 file_number,
 
     uLongf csize = compressBound( usize );
     UCHAR cbuf[ csize ];
+
+    bytes_written += usize;
 
     (void) compress2( cbuf, &csize,
                       (const Bytef*)buffer, usize,
@@ -382,6 +386,8 @@ pfkbak_update_backup ( UINT32 baknum )
     PfkBackupInfo   bakinfo(pfkbak_meta);
     UINT32  gen_num;
 
+    bytes_written = 0;
+
     bakinfo.key.backup_number.v = baknum;
 
     if (!bakinfo.get())
@@ -420,6 +426,12 @@ pfkbak_update_backup ( UINT32 baknum )
 
     // generate a file list.
 
+    if (pfkbak_verb > VERB_QUIET)
+    {
+        printf("scanning... ");
+        fflush(stdout);
+    }
+
     TSFileEntryList * fel;
     fel = treesync_generate_file_list(".");
 
@@ -431,17 +443,29 @@ pfkbak_update_backup ( UINT32 baknum )
         TSFileEntryFile * fef;
     } fe;
     TSFileEntry     * nfe;
+    UINT64            total_bytes = 0;
+    UINT64            processed_bytes = 0;
 
     for (fe.fe = fel->get_head(); fe.fe; fe.fe = nfe)
     {
         nfe = fel->get_next(fe.fe);
         if (fe.fe->type == TSFileEntry::TYPE_FILE)
+        {
             hash.add(fe.fe);
+            total_bytes += fe.fef->size;
+        }
         else
         {
             fel->remove(fe.fe);
             delete fe.fe;
         }
+    }
+
+    if (pfkbak_verb > VERB_QUIET)
+    {
+        printf("found %d files, %lld bytes\n",
+               hash.get_cnt(), total_bytes);
+        fflush(stdout);
     }
 
     UINT32 file_number;
@@ -455,6 +479,9 @@ pfkbak_update_backup ( UINT32 baknum )
     };
     unused_file_number * unused_head = NULL;
     PfkBackupFileInfo  file_info(pfkbak_meta);
+    time_t last_progress;
+
+    time( &last_progress );
 
     for (file_number = 0;
          file_number < bakinfo.data.file_count.v;
@@ -490,13 +517,27 @@ pfkbak_update_backup ( UINT32 baknum )
             fel->remove(fe.fe);
             hash.remove(fe.fe);
 
+            processed_bytes += fe.fef->size;
+            if (time( &now ) != last_progress )
+            {
+                UINT32 progress = processed_bytes * 1000 / total_bytes;
+                if (pfkbak_verb == VERB_1)
+                {
+                    printf("\rprogress: %3d.%d%%   bytes: %lld  written: %lld ",
+                           progress/10, progress%10,
+                           processed_bytes, bytes_written);
+                    fflush(stdout);
+                }
+                last_progress = now;
+            }
+
             // file found!
             if ( (fe.fef->size  != file_info.data.size.v )  ||
                  (fe.fef->mtime != file_info.data.mtime.v)  )
             {
                 // file was modified!
 
-                if (pfkbak_verb > VERB_QUIET)
+                if (pfkbak_verb == VERB_2)
                 {
                     printf("%s", fe.fef->path);
                     fflush(stdout);
@@ -506,7 +547,7 @@ pfkbak_update_backup ( UINT32 baknum )
                            baknum, file_number, gen_num,
                            &file_info, fe.fef );
 
-                if (pfkbak_verb > VERB_QUIET)
+                if (pfkbak_verb == VERB_2)
                     printf("\n");
             }
             else
@@ -545,7 +586,21 @@ pfkbak_update_backup ( UINT32 baknum )
 
         // file created!
 
-        if (pfkbak_verb > VERB_QUIET)
+        processed_bytes += fe.fef->size;
+        if (time( &now ) != last_progress )
+        {
+            UINT32 progress = processed_bytes * 1000 / total_bytes;
+            if (pfkbak_verb == VERB_1)
+            {
+                printf("\rprogress: %3d.%d%%   bytes: %lld  written: %lld ",
+                       progress/10, progress%10,
+                       processed_bytes, bytes_written);
+                fflush(stdout);
+            }
+            last_progress = now;
+        }
+
+        if (pfkbak_verb == VERB_2)
         {
             printf("%s", fe.fef->path);
             fflush(stdout);
@@ -580,12 +635,17 @@ pfkbak_update_backup ( UINT32 baknum )
 
         file_info.put(true);
 
-        if (pfkbak_verb > VERB_QUIET)
+        if (pfkbak_verb == VERB_2)
             printf("\n");
 
         delete fe.fe;
     }
     delete fel;
+
+    if (pfkbak_verb == VERB_1)
+        printf("\rprogress: %3d.%d%%   bytes: %lld  written: %lld\n",
+               100, 0,
+               processed_bytes, bytes_written);
 
     while (unused_head != NULL)
     {

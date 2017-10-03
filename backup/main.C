@@ -35,6 +35,11 @@
 #include "database_elements.H"
 #include "protos.H"
 
+#define SEPARATE_DATA_FILE 1
+#define META_CACHE_SIZE (256*1024*1024)
+#define DATA_CACHE_SIZE ( 16*1024*1024)
+#define BTREE_ORDER  15
+
 /** the btree key for the database info uses this string constant.
  */
 const char * PfkBackupDbInfoKey::INFO_KEY = "PfkBakDbInfo";
@@ -158,10 +163,16 @@ pfkbak_main(int argc, char ** argv)
     Btree * bt = NULL;
     FileBlockInterface * fbi = NULL;
 
+#if SEPARATE_DATA_FILE
+    int bt_cache_size = META_CACHE_SIZE;
+#else
+    int bt_cache_size = DATA_CACHE_SIZE;
+#endif
+
     // create or open btree file
     if (pfkbak_op == BAK_CREATE_FILE)
     {
-        bt = Btree::createFile( pfkbak_file, CACHE_SIZE,
+        bt = Btree::createFile( pfkbak_file, bt_cache_size,
                                 0600, BTREE_ORDER );
 
         if (!bt)
@@ -171,6 +182,7 @@ pfkbak_main(int argc, char ** argv)
             return 1;
         }
 
+#if SEPARATE_DATA_FILE
         fbi = FileBlockInterface::createFile( pfkbak_data_file,
                                               DATA_CACHE_SIZE, 0600 );
 
@@ -180,10 +192,13 @@ pfkbak_main(int argc, char ** argv)
                     pfkbak_data_file, strerror(errno));
             return 1;
         }
+#else
+        fbi = bt->get_fbi();
+#endif
     }
     else
     {
-        bt = Btree::openFile( pfkbak_file, CACHE_SIZE );
+        bt = Btree::openFile( pfkbak_file, bt_cache_size );
 
         if (!bt)
         {
@@ -200,6 +215,7 @@ pfkbak_main(int argc, char ** argv)
             return 1;
         }
 
+#if SEPARATE_DATA_FILE
         fbi = FileBlockInterface::openFile( pfkbak_data_file,
                                             DATA_CACHE_SIZE );
 
@@ -209,6 +225,9 @@ pfkbak_main(int argc, char ** argv)
                     pfkbak_data_file, strerror(errno));
             return 1;
         }
+#else
+        fbi = bt->get_fbi();
+#endif
     }
 
     pfkbak_meta = bt;
@@ -281,6 +300,8 @@ pfkbak_main(int argc, char ** argv)
     }
 
     delete bt;
+#if SEPARATE_DATA_FILE
     delete fbi;
+#endif
     return 0;
 }
