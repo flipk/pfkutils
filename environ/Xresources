@@ -75,10 +75,10 @@ Xmessage*font:   -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
 
 Emacs*verticalScrollBar.background:  grey85
 Emacs*verticalScrollBar.troughColor: grey50
-Emacs.pane.menubar*foreground:       black
+Emacs.pane.menubar*foreground:       yellow
 Emacs.fsb_popup*foreground:          black
-Emacs*fsb*foreground:                black
-Emacs*menu*foreground:               black
+Emacs*fsb*foreground:                yellow
+Emacs*menu*foreground:               yellow
 Emacs*foreground:                    yellow
 Emacs*background:                    black
 Emacs*cursorColor:                   white
