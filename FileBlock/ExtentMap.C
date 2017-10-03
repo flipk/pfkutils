@@ -4,6 +4,50 @@
 #include <stdlib.h>
 #include <string.h>
 
+class ExtentsPage {
+public:
+    LListLinks <ExtentsPage> links[1];
+    static const int EXTENTS_PER_PAGE = 4096;
+    Extent extents[ EXTENTS_PER_PAGE ];
+};
+
+class ExtentPool {
+    LList <Extent,EXTENT_LIST> list;
+    LList <ExtentsPage,0> pages;
+public:
+    ~ExtentPool(void) {
+        Extent * e;
+        ExtentsPage * p;
+        while ((e = list.dequeue_head()) != NULL)
+            ;
+        while ((p = pages.dequeue_head()) != NULL)
+            delete p;
+    }
+    Extent * alloc(off_t _offset, UINT32 _size, UINT32 _id=0) { 
+        if (list.get_cnt() == 0)
+        {
+            ExtentsPage * p = new ExtentsPage;
+            pages.add(p);
+            for (int i = 0; i < ExtentsPage::EXTENTS_PER_PAGE; i++)
+                list.add( &p->extents[i] );
+        }
+        Extent * e = list.dequeue_head();
+        e->offset = _offset;
+        e->size = _size;
+        e->id = _id;
+        if (_id != 0)
+            e->used = 1;
+        else
+            e->used = 0;
+        return e;
+    }
+    void free(Extent * e) {
+        list.add(e);
+    }
+};
+
+static ExtentPool extent_pool;
+
 Extents :: Extents( void )
 {
     memset(bucket_bitmap, 0, sizeof(bucket_bitmap));
@@ -20,7 +64,7 @@ Extents :: ~Extents( void )
             hash.remove(e);
         else
             remove_from_bucket(e);
-        delete e;
+        extent_pool.free(e);
     }
 }
 
@@ -29,9 +73,7 @@ Extents :: print( void )
 {
     Extent * e;
     int i = 0;
-    for ( e = list.get_head();
-          e;
-          e = list.get_next(e) )
+    for ( e = get_head(); e; e = get_next(e) )
     {
         printf( "%d : offset %lld size %d (%s)",
                 i++, e->offset, e->size, e->used ? "USED" : "FREE");
@@ -60,7 +102,7 @@ Extents :: alloc_id( void )
 void
 Extents :: add( off_t _offset, UINT32 _size )
 {
-    Extent * e = new Extent( _offset, _size );
+    Extent * e = extent_pool.alloc( _offset, _size );
     list.add(e);
     add_to_bucket(e);
 }
@@ -68,7 +110,7 @@ Extents :: add( off_t _offset, UINT32 _size )
 void
 Extents :: add( off_t _offset, UINT32 _size, UINT32 _id )
 {
-    Extent * e = new Extent( _offset, _size, _id );
+    Extent * e = extent_pool.alloc( _offset, _size, _id );
     list.add(e);
     hash.add(e);
 }
@@ -120,7 +162,7 @@ Extents :: alloc( UINT32 size )
     }
 
     // split this one in two.
-    Extent * ne = new Extent( e->offset, size, id );
+    Extent * ne = extent_pool.alloc( e->offset, size, id );
     e->size -= size;
     e->offset += size;
     list.add_before(ne, e);
@@ -158,7 +200,7 @@ Extents :: free( Extent * e )
         e->size += e2->size;
         list.remove(e2);
         remove_from_bucket(e2);
-        delete e2;
+        extent_pool.free(e2);
     }
     e2 = list.get_next(e);
     if (e2 && e2->used == 0)
@@ -166,7 +208,7 @@ Extents :: free( Extent * e )
         e->size += e2->size;
         list.remove(e2);
         remove_from_bucket(e2);
-        delete e2;
+        extent_pool.free(e2);
     }
 
     // add to bucket after updating size!

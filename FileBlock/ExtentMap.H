@@ -8,19 +8,15 @@
 enum { EXTENT_LIST, EXTENT_HASH, NUM_LISTS };
 
 class Extent {
+    friend class ExtentsPage;
+    Extent(void) { /* nothing */ }
+    ~Extent(void) { /* nothing */ }
 public:
     LListLinks <Extent> links[ NUM_LISTS ];
     off_t offset;
     UINT32 id;  // this field is valid only when used==1
     UINT32 used : 1;
     UINT32 size : 31;
-
-    Extent( off_t _offset, UINT32 _size ) {
-        id = 0;   offset = _offset; size = _size; used = 0;
-    }
-    Extent( off_t _offset, UINT32 _size, UINT32 _id ) {
-        id = _id; offset = _offset; size = _size; used = 1;
-    }
 };
 
 class ExtentHashComparator {
@@ -52,9 +48,6 @@ class Extents {
         return bucket;
     }
     UINT32 alloc_id(void);
-    ExtentBucketList * bucket( UINT32 size ) {
-        return &buckets[size_to_bucket(size)];
-    }
     ExtentBucketList  buckets[ NUM_BUCKETS ];
     UINT64 bucket_bitmap[ BITMAP_ARRAY_SIZE ]; // 0 == empty
     int find_next_bucket(int bucket) {
@@ -119,6 +112,9 @@ public:
     Extent * alloc( UINT32 size );
     void free( UINT32 id );
     void free( Extent * e );
+    // linked list walking
+    Extent * get_head(void) { return list.get_head(); }
+    Extent * get_next(Extent * e) { return list.get_next(e); }
 };
 
 #endif /* __EXTENT_MAP_H__ */
