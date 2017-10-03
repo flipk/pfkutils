@@ -23,18 +23,21 @@
 #endif
 
 const char * help_msg =
-"i2 [-svnd] [-i infile] [-o outfile] [-m size] [-z[r|t]] port      (passive)\n"
-"i2 [-svnd] [-i infile] [-o outfile] [-m size] [-z[r|t]] host port (active)\n"
-"i2 [-d] -f port host port [port host port...]\n"
+"i2 [-svnd] [-I[r|z]] [-i file] [-O] [-o file] [-m size] [-z[r|t]] port\n"
+"i2 [-svnd] [-I[r|z]] [-i file] [-O] [-o file] [-m size] [-z[r|t]] host port\n"
 "    -i: redirect fd 0 to input file\n"
 "    -o: redirect fd 1 to output file\n"
-"    -m: max output file size is <max> bytes\n"
+"   -Ir: input is random data (implies -n)\n"
+"   -Iz: input is zero data (implies -n)\n"
+"    -O: discard output data\n"
+"    -m: max output file size in bytes\n"
 "    -n: do not read from stdin\n"
 "    -s: display stats of transfer at end\n"
 "    -v: verbose stats during transfer (0.5 second updates), implies -s\n"
-"    -d: debug mode\n"
 "   -zr: uncompress any data received from network\n"
 "   -zt: compress any data transmitted to network\n"
+"i2 [-d] -f port host port [port host port...]\n"
+"    -d: debug mode\n"
 "    -f: forward local port to remote host/port\n"
 ;
 /*
@@ -105,9 +108,12 @@ i2_main( int argc,  char ** argv )
     bool txz      = false;
     bool tcpgate  = false;
     bool debug    = false;
+    bool inrand   = false;
+    bool outdisc  = false;
     char * inp_file = NULL;
     char * out_file = NULL;
     char * zarg     = NULL;
+    char * Iarg     = NULL;
     int ch;
     int flags;
     M_INT64 max_size = 0;
@@ -131,7 +137,7 @@ i2_main( int argc,  char ** argv )
         return 1;
     }
 
-    while (( ch = getopt( argc, argv, "svnfdz:i:o:m:" )) != -1 )
+    while (( ch = getopt( argc, argv, "svnfdOz:i:I:o:m:" )) != -1 )
     {
         switch ( ch )
         {
@@ -142,7 +148,9 @@ i2_main( int argc,  char ** argv )
         case 'd':  debug    = true;        break;
         case 'z':  zarg     = optarg;      break;
         case 'i':  inp_file = optarg;      break;
+        case 'I':  Iarg     = optarg;      break;
         case 'o':  out_file = optarg;      break;
+        case 'O':  outdisc  = true;        break;
         case 'm':
         {
             int result;
@@ -166,6 +174,32 @@ i2_main( int argc,  char ** argv )
 
     argc -= optind;
     argv += optind;
+
+    if ( out_file && outdisc )
+    {
+        fprintf( stderr, 
+                 "-O and -o are mutually exclusive\n" );
+        exit( 1 );
+    }
+
+    if ( Iarg )
+    {
+        if ( inp_file )
+        {
+            fprintf( stderr,
+                     "-I and -i are mutually exclusive\n" );
+            exit( 1 );
+        }
+        inp_file = "/dev/zero";
+        switch ( *Iarg )
+        {
+        case 'r':  inrand = true; break;
+        case 'z':  /* nothing */  break;
+        default:
+            fprintf( stderr, "-I should only be followed by z or r\n" );
+            exit( 1 );
+        }
+    }
 
     if ( tcpgate )
     {
@@ -295,7 +329,8 @@ i2_main( int argc,  char ** argv )
         {
             int port = atoi( argv[0] );
             ipipe_new_connection * inc =
-                new ipipe_forwarder_factory( rcvunz, txz, rollover );
+                new ipipe_forwarder_factory( rcvunz, txz, rollover,
+                                             outdisc, inrand );
             fdi = new ipipe_acceptor( port, inc );
             mgr.register_fd( fdi );
         }
@@ -311,7 +346,8 @@ i2_main( int argc,  char ** argv )
             hostname_to_ipaddr( host, &sa.sin_addr );
 
             ipipe_new_connection * inc =
-                new ipipe_forwarder_factory( rcvunz, txz, rollover );
+                new ipipe_forwarder_factory( rcvunz, txz, rollover,
+                                             outdisc, inrand );
             fdi = new ipipe_connector( &sa, inc );
             mgr.register_fd( fdi );
         }

@@ -11,6 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <fcntl.h>
 
 #define MULTIPLE_FILES 1
 
@@ -19,6 +20,8 @@ file_db :: file_db( char * fname, bool create_it )
     struct stat sb;
     int    c1 = 1000;  // ?
     int order =   29;  // ?
+
+    srandom( time(NULL) * getpid() );
 
     int fnamelen = strlen(fname);
     char fname0[ fnamelen + 6 ]; // ".nodes"
@@ -34,6 +37,56 @@ file_db :: file_db( char * fname, bool create_it )
 #else
     strcpy( fname0, fname );
 #endif
+
+    // fetch version file
+    mytar_sig  sig;
+    int  sig_fd, cc;
+    sig_fd = open( MYTAR_SIGFILE, O_RDONLY );
+    if (sig_fd > 0)
+    {
+        cc = read( sig_fd, &sig, sizeof(sig) );
+        if (cc != sizeof(sig))
+        {
+            fprintf(stderr,
+                    "error: signature file '%s' truncated\n", MYTAR_SIGFILE);
+            exit( 1 );
+        }
+        if (!sig.valid())
+        {
+            fprintf(stderr,
+                    "error: signature file '%s' invalid\n",
+                    MYTAR_SIGFILE);
+            exit( 1 );
+        }
+        close(sig_fd);
+    }
+    else
+    {
+        // signature file did not exist
+        if ( !create_it )
+        {
+            fprintf(stderr, "warning: signature file '%s' "
+                    "not found, creating\n", MYTAR_SIGFILE);
+        }
+        // create it
+        sig.init();
+        sig_fd = open( MYTAR_SIGFILE, O_CREAT | O_WRONLY, 0644 );
+        if (sig_fd < 0)
+        {
+            fprintf(stderr, "unable to create signature file: %s\n",
+                    strerror(errno));
+            exit(1);
+        }
+        cc = write( sig_fd, &sig, sizeof(sig));
+        if (cc != sizeof(sig))
+        {
+            fprintf(stderr, "unable to write signature file: %s\n",
+                    strerror(errno));
+            exit(1);
+        }
+        close( sig_fd );
+        chmod( MYTAR_SIGFILE, 0444 );
+    }
 
     if ( create_it )
     {
@@ -71,7 +124,9 @@ file_db :: file_db( char * fname, bool create_it )
     }
 
     if ( create_it )
+    {
         Btree::new_file( fbn_nodes, order );
+    }
 
     bt = new Btree( fbn_nodes, fbn_keys, fbn_data );
     if ( !bt )
@@ -81,8 +136,45 @@ file_db :: file_db( char * fname, bool create_it )
         exit( 1 );
     }
 
-    srandom( time(NULL) * getpid() );
+    Btree::rec * rec;
+    if ( create_it )
+    {
+        Btree::new_file( fbn_nodes, order );
+        write_signature( &sig );
+    }
+    else
+    {
+        rec = bt->get_rec( (UCHAR*)MYTAR_SIGKEY, sizeof(MYTAR_SIGKEY) );
+        if (!rec)
+        {
+            fprintf(stderr, "NOTE: backup does not have signature; adding\n");
+            write_signature( &sig );
+        }
+        else
+        {
+            datum_0_data * d0d = (datum_0_data *) rec->data.ptr;
+            if (sig.version.get() != d0d->version.get())
+            {
+                fprintf(stderr, "error:  backup signature does not "
+                        "match signature file!\n");
+                exit( 1 );
+            }
+            bt->unlock_rec(rec);
+        }
+    }
+
     current_mark = random();
+}
+
+void
+file_db :: write_signature( mytar_sig * sig )
+{
+    Btree::rec * rec;
+    rec = bt->alloc_rec( sizeof(MYTAR_SIGKEY), sizeof(mytar_sig) );
+    strcpy( (char*) rec->key.ptr, MYTAR_SIGKEY );
+    datum_0_data * d0d = (datum_0_data *) rec->data.ptr;
+    d0d->version = sig->version;
+    bt->put_rec( rec );
 }
 
 file_db :: ~file_db( void )

@@ -20,6 +20,9 @@ class ipipe_forwarder : public fd_interface {
     bool dowuncomp;
     bool dowrite;
     bool dowcomp;
+    bool outdisc;
+    bool inrand;
+
     bool reader_done;
     bool writer_done;
 
@@ -46,7 +49,8 @@ class ipipe_forwarder : public fd_interface {
 public:
     ipipe_forwarder( int _fd, bool doread, bool dowrite,
                      bool dowuncomp, bool dowcomp,
-                     ipipe_rollover * _rollover );
+                     ipipe_rollover * _rollover,
+                     bool _outdisc, bool _inrand );
 
     void register_others( ipipe_forwarder * _w, ipipe_forwarder * _r ) {
         writer = _w;  reader = _r;

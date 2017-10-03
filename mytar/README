@@ -13,16 +13,18 @@ although it is not true with ZIP and some other formats.  with this
 tool, you can extract a single file or directory instantly because it
 can seek directly to the part of the archive which stores that file.
 
-future versions may include compression, for example using libz to
+this version also includes compression, for example using libz to
 block-compress each file.
 
 modes of operation:
 
 	create an 'mtar' file:
-		mytar c file.mtar directory
+		cd directory
+		mytar c file.mtar
 
 	freshen/update an 'mtar' file:
-		mytar u file.mtar directory
+		cd directory
+		mytar u file.mtar 
 
 	list contents of 'mtar' file:
 		mytar t file.mtar

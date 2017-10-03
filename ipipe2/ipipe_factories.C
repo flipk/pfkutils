@@ -8,13 +8,15 @@
 
 //////////// ipipe_forwarder_factory
 
-ipipe_forwarder_factory :: ipipe_forwarder_factory( bool _dowuncomp,
-                                                    bool _dowcomp,
-                                                    ipipe_rollover * _rollover )
+ipipe_forwarder_factory :: ipipe_forwarder_factory
+( bool _dowuncomp, bool _dowcomp, ipipe_rollover * _rollover,
+  bool _outdisc, bool _inrand )
 {
     dowuncomp  = _dowuncomp ;
     dowcomp    = _dowcomp   ;
     rollover   = _rollover  ;
+    outdisc    = _outdisc   ;
+    inrand     = _inrand    ;
 }
 
 //virtual
@@ -24,12 +26,16 @@ ipipe_forwarder_factory :: new_conn( fd_mgr * mgr, int new_fd )
     ipipe_forwarder * ifn, * if0, * if1;
 
     //  fd      read   write  w_uncomp   w_comp   rollover
+    //  outdisc  inrand
     if0 = new ipipe_forwarder( 
-        0,      true,  false, false,     false,   NULL     );
+        0,      true,  false, false,     false,   NULL,
+        false,   inrand );
     ifn = new ipipe_forwarder(
-        new_fd, true,  true,  false,     dowcomp, NULL     );
+        new_fd, true,  true,  false,     dowcomp, NULL,
+        false,   false  );
     if1 = new ipipe_forwarder(
-        1,      false, true,  dowuncomp, false,   rollover );
+        1,      false, true,  dowuncomp, false,   rollover,
+        outdisc, false  );
 
     //                   writer reader
     if0->register_others(  ifn, NULL );
@@ -85,8 +91,10 @@ ipipe_proxy2_factory :: new_conn( fd_mgr * mgr, int new_fd )
 {
     ipipe_forwarder * ifa, * ifb;
 
-    ifa = new ipipe_forwarder(    fda,  true, true, false, false, NULL );
-    ifb = new ipipe_forwarder( new_fd,  true, true, false, false, NULL );
+    ifa = new ipipe_forwarder( fda,     true, true, false, false,
+                               NULL, false, false );
+    ifb = new ipipe_forwarder( new_fd,  true, true, false, false,
+                               NULL, false, false );
 
     ifa->register_others(  ifb, ifb );
     ifb->register_others(  ifa, ifa );

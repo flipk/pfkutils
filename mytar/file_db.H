@@ -5,6 +5,7 @@
 #include "pk-md5.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 static inline
 char *
@@ -78,6 +79,7 @@ class file_db {
     file_info_list  update_list;
     file_info_list  add_list;
     friend class file_db_iterate_pi;
+    void write_signature( struct mytar_sig * );
     file_info * _get_info_from_block( UINT32 id, UCHAR * data_block, int len );
 public:
     file_db( char * fname, bool create_it );
@@ -121,6 +123,34 @@ public:
 };
 
 #ifdef FILE_DB_INTERNAL
+
+// datum 0
+//    key = "MYTARSIGVERSION"
+//    data = version
+
+struct datum_0_data {
+    UINT32_t  version;
+};
+
+#define MYTAR_SIGKEY "MYTARSIGVERSION"
+#define MYTAR_SIGFILE "0MTARSIG.BIN"
+#define MYTAR_SIG_MAGIC 0x8c7d5b3dUL
+
+struct mytar_sig {
+    UINT32_t   magic;
+    UINT32_t   version;
+    UINT32_t   checksum;
+    void init(void) {
+        magic.set( MYTAR_SIG_MAGIC );
+        version.set( random() );
+        checksum.set( magic.get() + version.get() );
+    }
+    bool valid(void) {
+        if (magic.get() != MYTAR_SIG_MAGIC)
+            return false;
+        return checksum.get() == (magic.get() + version.get());
+    }
+};
 
 // datum 1
 //    key = "n" plus ascii filename with no nul

@@ -21,9 +21,12 @@ class ipipe_forwarder_factory : public ipipe_new_connection {
     bool dowuncomp;
     bool dowcomp;
     ipipe_rollover * rollover;
+    bool outdisc;
+    bool inrand;
 public:
     ipipe_forwarder_factory( bool dowuncomp, bool dowcomp,
-                             ipipe_rollover * _rollover );
+                             ipipe_rollover * _rollover,
+                             bool _outdisc, bool _inrand );
     virtual ~ipipe_forwarder_factory( void ) { /* nothing */ }
     // return false if the acceptor should die off
     virtual new_conn_response new_conn( fd_mgr *, int new_fd );

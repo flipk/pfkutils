@@ -9,7 +9,8 @@
 
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp,
-                                    ipipe_rollover * _rollover )
+                                    ipipe_rollover * _rollover,
+                                    bool _outdisc, bool _inrand )
 {
     fd            = _fd;
     doread        = _doread;
@@ -17,6 +18,8 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     dowuncomp     = _dowuncomp;
     dowcomp       = _dowcomp;
     rollover      = _rollover;
+    outdisc       = _outdisc;
+    inrand        = _inrand;
     reader_done   = false;
     writer_done   = false;
     reader        = NULL;
@@ -131,7 +134,16 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
 
     char * bufptr = writer->write_space();
     int len = writer->contig_write_space_remaining();
-    int cc = ::read( fd, bufptr, len );
+    int cc;
+
+    if ( inrand )
+    {
+        for ( cc = 0; cc < len; cc++ )
+            bufptr[cc] = random();
+        cc = len;
+    }
+    else
+        cc = ::read( fd, bufptr, len );
 
     if ( cc < 0 )
     {
@@ -192,7 +204,12 @@ ipipe_forwarder :: write( fd_mgr * mgr )
     if ( len > 0 )
     {
         char * bufptr = buf->read_pos();
-        int    cc     = ::write( fd, bufptr, len );
+        int cc;
+
+        if ( outdisc )
+            cc = len;
+        else
+            cc = ::write( fd, bufptr, len );
 
         if ( cc < 0 )
         {
