@@ -21,6 +21,22 @@
 #include <pthread.h>
 #include <inttypes.h>
 
+class thread_slinger_semaphore
+{
+    pthread_mutex_t  mutex;
+    pthread_cond_t  waiter;
+    int value;
+    void   lock( void ) { pthread_mutex_lock  ( &mutex ); }
+    void unlock( void ) { pthread_mutex_unlock( &mutex ); }
+public:
+    thread_slinger_semaphore(void);
+    ~thread_slinger_semaphore(void);
+    void init(int init_val) { value = init_val; }
+    void give(void);
+    // return false if timeout
+    bool take(struct timespec * expire);
+};
+
 struct thread_slinger_message
 {
     thread_slinger_message * next;
@@ -29,18 +45,26 @@ struct thread_slinger_message
 class _thread_slinger_queue
 {
     pthread_mutex_t   mutex;
-    pthread_cond_t   waiter;
+    pthread_cond_t  _waiter;
+    pthread_cond_t  *waiter;
+    thread_slinger_semaphore  _waiter_sem;
+    thread_slinger_semaphore * waiter_sem;
     thread_slinger_message * head;
     thread_slinger_message * tail;
     int count;
-    void   _lock( void ) { pthread_mutex_lock  ( &mutex ); }
-    void _unlock( void ) { pthread_mutex_unlock( &mutex ); }
+    void   lock( void ) { pthread_mutex_lock  ( &mutex ); }
+    void unlock( void ) { pthread_mutex_unlock( &mutex ); }
+    thread_slinger_message * __dequeue(void);
 protected:
     _thread_slinger_queue(void);
     ~_thread_slinger_queue(void);
     void _enqueue(thread_slinger_message *);
     thread_slinger_message * _dequeue(int uSecs);
     int _get_count(void) { return count; }
+    static thread_slinger_message * _dequeue(
+        _thread_slinger_queue ** queues,
+        int num_queues, int uSecs,
+        int *which_queue=NULL);
 };
 
 template <class T>
@@ -50,6 +74,11 @@ public:
     void enqueue(T * msg) { _enqueue(msg); }
     T * dequeue(int uSecs=0) { return (T *) _dequeue(uSecs); }
     int get_count(void) { return _get_count(); }
+    static T * dequeue(_thread_slinger_queue ** queues, int num_queues,
+                       int uSecs=0, int *which_queue=NULL) {
+        return (T *) _dequeue(queues,
+                              num_queues, uSecs, which_queue);
+    }
 };
 
 template <class T, int count>

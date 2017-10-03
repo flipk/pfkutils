@@ -26,6 +26,8 @@ exit 0
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#define TEST 2
+
 #include "thread_slinger.H"
 
 #include <stdio.h>
@@ -38,9 +40,16 @@ struct myMessage : public thread_slinger_message
     int b; // some other field
 };
 
+#if TEST==1
 thread_slinger_pool<myMessage,2>  p;
+#elif TEST==2
+thread_slinger_pool<myMessage,5>  p;
+#endif
 
-thread_slinger_queue<myMessage>   q;
+typedef thread_slinger_queue<myMessage> myMsgQ;
+
+myMsgQ q;
+myMsgQ q2;
 
 void * t1( void * dummy )
 {
@@ -96,14 +105,81 @@ void * t2( void * dummy )
     return NULL;
 }
 
+void * t3( void * dummy )
+{
+    uintptr_t  val = (uintptr_t) dummy;
+    while (1)
+    {
+#if 1
+        myMessage * m = p.alloc(random()%5000);
+        if (m)
+        {
+            if (val == 0)
+                q.enqueue(m);
+            else
+                q2.enqueue(m);
+            if (val == 0)
+                printf("+");
+            else
+                printf("=");
+        }
+        else
+        {
+            if (val == 0)
+                printf("-");
+            else
+                printf("_");
+        }
+        fflush(stdout);
+#endif
+        usleep(random()%30000);
+    }
+    return NULL;
+}
+
+void * t4(void * dummy)
+{
+    _thread_slinger_queue * qs[2];
+
+    qs[0] = &q;
+    qs[1] = &q2;
+
+    while (1)
+    {
+        int which;
+        myMessage * m = myMsgQ::dequeue((_thread_slinger_queue**)&qs,
+                                         2,(int)(random()%1000),&which);
+        if (m)
+        {
+            printf(".");
+            p.release(m);
+        }
+        else
+        {
+            printf("!");
+        }
+        fflush(stdout);
+        usleep(random()%10000);
+    }
+
+    return NULL;
+}
+
 int
 main()
 {
     pthread_t id;
+#if TEST==1
     pthread_create( &id, NULL, t1, (void*) 0 );
     pthread_create( &id, NULL, t1, (void*) 1 );
     pthread_create( &id, NULL, t2, (void*) 0 );
     pthread_create( &id, NULL, t2, (void*) 1 );
     pthread_join(id,NULL);
+#elif TEST==2
+    pthread_create( &id, NULL, t3, (void*) 0 );
+    pthread_create( &id, NULL, t3, (void*) 1 );
+    pthread_create( &id, NULL, t4, (void*) 0 );
+    pthread_join(id,NULL);
+#endif
     return 0;
 }
