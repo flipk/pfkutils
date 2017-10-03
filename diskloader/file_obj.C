@@ -10,6 +10,50 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define VERBOSE 0
+
+//static
+void
+file_obj :: create_directories(int max_num_files)
+{
+    int ind1, ind2, topdirs;
+    char path[64];
+    topdirs = ((max_num_files-1) / 10000) + 1;
+    for (ind1 = 0; ind1 < topdirs; ind1++)
+    {
+        printf("\rcreating %d of %d ", ind1, topdirs);
+        fflush(stdout);
+        sprintf(path, "%03d", ind1);
+        if (mkdir(path, 0755) < 0)
+            printf("error mkdir: %d:%s\n", errno, strerror(errno));
+        else
+            for (ind2 = 0; ind2 < 100; ind2++)
+            {
+                sprintf(path, "%03d/%02d", ind1, ind2);
+                if (mkdir(path, 0755) < 0)
+                    printf("error mkdir: %d:%s\n", errno, strerror(errno));
+            }
+    }
+    printf("\n");
+}
+
+//static
+void
+file_obj :: destroy_directories(int max_num_files)
+{
+    int ind1, topdirs;
+    char cmd[80];
+    topdirs = ((max_num_files-1) / 10000) + 1;
+    for (ind1 = 0; ind1 < topdirs; ind1++)
+    {
+        printf("\rdestroying %d of %d ", ind1, topdirs);
+        fflush(stdout);
+        sprintf(cmd, "rm -rf %03d", ind1);
+        system(cmd);
+    }
+    printf("\n");
+}
+
 file_obj :: file_obj(void)
 {
     exists = false;
@@ -23,8 +67,6 @@ file_obj :: init(int _ind)
     int ind1;
     int ind2;
     int fileind;
-    char dir1[64];
-    char dir2[64];
 
     ind1 = _ind / 10000;
     _ind = _ind % 10000;
@@ -32,29 +74,25 @@ file_obj :: init(int _ind)
     _ind = _ind % 100;
     fileind = _ind;
 
-    sprintf(dir1, "%03d", ind1);
-    mkdir(dir1, 0755);
-    sprintf(dir2, "%03d/%02d", ind1, ind2);
-    mkdir(dir2, 0755);
     sprintf(path, "%03d/%02d/%02d", ind1, ind2, fileind);
 }
 
 file_obj :: ~file_obj(void)
 {
-    if (exists)
-        unlink(path);
 }
 
 void
-file_obj :: create(void)
+file_obj :: create(int max_file_size)
 {
     seed = random();
-    size = (random() % MAX_FILE_SIZE) & 0x7ffffffc;
+    size = (random() % max_file_size) & 0x7ffffffc;
 #if 0
     printf("creating '%s' of size %d with seed %d\n",
            path, size, seed);
 #else
+#if VERBOSE
     printf("c"); fflush(stdout);
+#endif
 #endif
 
     FILE * f = fopen(path, "w");
@@ -80,7 +118,9 @@ file_obj :: create(void)
 void
 file_obj :: verify(void)
 {
+#if VERBOSE
     printf("v"); fflush(stdout);
+#endif
     FILE * f = fopen(path, "r");
     if (!f)
     {
@@ -115,7 +155,9 @@ file_obj :: verify(void)
 void
 file_obj :: destroy(void)
 {
+#if VERBOSE
     printf("d"); fflush(stdout);
+#endif
     if (unlink(path) < 0)
         fprintf(stderr, "file '%s' unlink error: %d: %s\n",
                 path, errno, strerror(errno));

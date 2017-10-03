@@ -1,5 +1,4 @@
 
-#include "config.h"
 #include <stdint.h>
 
 struct file_obj {
@@ -9,11 +8,13 @@ struct file_obj {
     uint32_t size;
     bool busy;
 
-
+    static void create_directories(int max_num_files);
+    static void destroy_directories(int max_num_files);
     file_obj(void);
     ~file_obj(void);
     void init(int ind);
-    void create(void);
+    void create(int max_file_size);
     void verify(void);
     void destroy(void);        
+
 };
