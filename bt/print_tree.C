@@ -26,9 +26,9 @@ public:
         btree_printinfo( NODE_INFO | BTREE_INFO |
                          KEY_REC_PTR | DATA_REC_PTR ) { }
     /*virtual*/ ~my_pi( void ) { /* nothing */ }
-    /*virtual*/ char * sprint_element( int noderec,
-                                       int keyrec, void * key, int keylen,
-                                       int datrec, void * dat, int datlen,
+    /*virtual*/ char * sprint_element( UINT32 noderec,
+                                       UINT32 keyrec, void * key, int keylen,
+                                       UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty ) {
 
         printf( "key : " );

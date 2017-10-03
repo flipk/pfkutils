@@ -8,14 +8,6 @@
 
 enum { BT_DLL2_LRU,  BT_DLL2_HASH,  BT_DLL2_EXTRA, BT_DLL2_COUNT };
 
-#ifndef FBN_DEFAULT_RECORD_SIZE
-#define FBN_DEFAULT_RECORD_SIZE    16
-#endif
-
-#ifndef FBN_DEFAULT_PAGE_SIZE
-#define FBN_DEFAULT_PAGE_SIZE    4096
-#endif
-
 class FileBlockNumber {
     int        recordsize;    // number of bytes in a record
     int          pagesize;    // number of bytes in a page
@@ -28,13 +20,14 @@ class FileBlockNumber {
     static const int   block_signature = 0x504b;  // "PK"
     static const int  user_buffer_flag = 1;
 
-    // cache parameters
-    static const int         sync_time =  3;       // in seconds
-    static const int           max_age = 15;  // in seconds
+    // cache parameters in seconds
+    static const int         sync_time =  3;
+    static const int           max_age = 15;
 
-    struct page;         // private
-    struct FBN_page_hash_1;  // private
-    typedef LListHashLRU <page,int,FBN_page_hash_1,
+    // private structures
+    struct page;
+    struct FBN_page_hash_1;
+    typedef LListHashLRU <page,UINT32,FBN_page_hash_1,
                           BT_DLL2_HASH,BT_DLL2_LRU> page_lru;
     typedef LList<page,BT_DLL2_EXTRA> extra_list;
     page_lru bitmaps;    // key is segment number
@@ -92,6 +85,7 @@ public:
     // returns number of pages written
     int flush( void );
 
+    // return some statistics
     void cache_info( int * bitmap_pages, int * data_pages, int * dirty );
     void file_info( int * num_segments, int * recs_in_use, int * recs_free );
 };

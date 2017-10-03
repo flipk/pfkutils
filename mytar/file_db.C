@@ -69,20 +69,20 @@ file_db :: ~file_db( void )
 
 //static
 void
-file_db :: calc_blocks( UINT64 file_size,
-                        UINT32 * num_blocks,
-                        UINT32 * last_block_size )
+file_db :: calc_pieces( UINT64 file_size,
+                        UINT32 * num_pieces,
+                        UINT32 * last_piece_size )
 {
     UINT32 quotient, remainder;
 
-    quotient  = file_size / BLOCK_SIZE;
-    remainder = file_size % BLOCK_SIZE;
+    quotient  = file_size / PIECE_SIZE;
+    remainder = file_size % PIECE_SIZE;
 
     if ( remainder != 0 )
         quotient++;
 
-    *num_blocks      = quotient;
-    *last_block_size = remainder;
+    *num_pieces      = quotient;
+    *last_piece_size = remainder;
 }
 
 file_info *
@@ -165,11 +165,10 @@ file_db :: update_info( file_info * inf )
     rec->data.dirty = true;
     bt->unlock_rec( rec );
 
-    sync_blocklist( inf );
     delete inf;
 }
 
-void
+UINT32
 file_db :: add_info( file_info * inf )
 {
     int fname_len = strlen(inf->fname);  // not counting trailing NUL
@@ -191,18 +190,24 @@ file_db :: add_info( file_info * inf )
 
     rec = bt->alloc_rec( fname_len+1, // count 'n' but not NUL
                          sizeof(id) );
-    ((char*)rec->key.ptr)[0] = 'n';
-    memcpy( rec->key.ptr+1, inf->fname, fname_len );
-    *(UINT32*)rec->data.ptr = id;
+    datum_1_key * d1k = (datum_1_key *) rec->key.ptr;
+    datum_1     * d1  = (datum_1 *) rec->data.ptr;
+
+    d1k->prefix_n = 'n';
+    memcpy( d1k->fname, inf->fname, fname_len );
+    d1->id.set( id );
+
     bt->put_rec( rec );
 
     // make the datum_2
 
     rec = bt->alloc_rec( sizeof(id) + 1,
                          sizeof(datum_2) + fname_len ); // no NUL
-    ((char*)rec->key.ptr)[0] = 'i';
-    memcpy( rec->key.ptr+1, &id, sizeof(id) );
-    datum_2 * d2 = (datum_2 *) rec->data.ptr;
+    datum_2_key * d2k = (datum_2_key *) rec->key.ptr;
+    datum_2     * d2  = (datum_2     *) rec->data.ptr;
+
+    d2k->prefix_i = 'i';
+    d2k->  id = id;
 
     d2-> size = inf->size;
     d2->mtime = inf->mtime;
@@ -214,33 +219,9 @@ file_db :: add_info( file_info * inf )
     memcpy( d2->fname, inf->fname, fname_len );
     bt->put_rec( rec );
 
-    sync_blocklist( inf );
-}
+    delete inf;
 
-void
-file_db :: sync_blocklist( file_info * inf )
-{
-    char key[ sizeof(UINT32)*2 + 1 ];
-    UINT32 num_blocks, last_block_size;
-    UINT32 block_num;
-
-    memcpy( key+1, &inf->id, sizeof(UINT32) );
-
-    calc_blocks( inf->size, &num_blocks, &last_block_size );
-
-    // check if block# n+1 exists
-    //   if so, delete it and repeat check for n+2, etc
-
-    for ( block_num = num_blocks; ; block_num++ )
-    {
-        memcpy( key+5, &block_num, sizeof(UINT32) );
-        key[0] = 'd';
-        if ( bt->delete_rec( (UCHAR*)key,
-                             sizeof(key) ) == Btree::DELETE_KEY_NOT_FOUND )
-            break;
-        key[0] = 'D';
-        (void) bt->delete_rec( (UCHAR*)key, sizeof(key) );
-    }
+    return id;
 }
 
 struct delete_id {
@@ -263,16 +244,16 @@ public:
     }
     /*virtual*/ ~file_db_delete_old_pi( void ) { /* nothing */ }
 
-    /*virtual*/ char * sprint_element( int noderec,
-                                       int keyrec, void * key, int keylen,
-                                       int datrec, void * dat, int datlen,
+    /*virtual*/ char * sprint_element( UINT32 noderec,
+                                       UINT32 keyrec, void * key, int keylen,
+                                       UINT32 datrec, void * dat, int datlen,
                                        bool * datdirty )
     {
         if ( ((char*)key)[0] == 'i' )
         {
             FileBlockNumber * fbn = bt->get_fbn();
             UINT32 magic;
-            datum_2 * d2 = (datum_2 *) fbn->get_block( datrec, magic );
+            datum_2 * d2 = (datum_2 *) fbn->get_block( datrec, &magic );
             if ( d2 )
             {
                 if ( d2->mark.get() != current_mark )
@@ -302,9 +283,8 @@ void
 file_db :: delete_old( void )
 {
     Btree::rec * d2rec;
-    char key[9];
     datum_2 * d2;
-    UINT32  id, blocknum;
+    UINT32  id;
 
     file_db_delete_old_pi   pi( bt, current_mark );
 
@@ -317,9 +297,10 @@ file_db :: delete_old( void )
         delete did;
 
         // locate the datum 2
-        key[0] = 'i';
-        memcpy( key+1, &id, sizeof(UINT32) );
-        d2rec = bt->get_rec( (UCHAR*)key, 5 );
+        datum_2_key  d2k;
+        d2k.prefix_i = 'i';
+        d2k.id.set( id );
+        d2rec = bt->get_rec( (UCHAR*)&d2k, sizeof(d2k) );
         if ( !d2rec )
         {
             fprintf( stderr, "warning, internal error in delete_old\n" );
@@ -329,54 +310,95 @@ file_db :: delete_old( void )
 
         // delete the datum 1 using filename located in datum 2
         int fname_len = d2rec->data.len - sizeof(datum_2);
-        char * d2key = new char[ fname_len + 1 ];
-        d2key[0] = 'n';
-        memcpy( d2key+1, d2->fname, fname_len );
-        (void) bt->delete_rec( (UCHAR*) d2key, fname_len+1 );
-        delete[] d2key;
+        char * d1key = new char[ fname_len + 1 ];
+        datum_1_key * d1k = (datum_1_key *) d1key;
+        d1k->prefix_n = 'n';
+        memcpy( d1k->fname, d2->fname, fname_len );
+        (void) bt->delete_rec( (UCHAR*) d1k, fname_len+1 );
+        delete[] d1key;
 
         // delete the datum 2
         bt->delete_rec( d2rec );
 
-        // delete all datum 3's and 4's using 'size' field from datum 2
-        for ( blocknum = 0; ; )
+        // delete all datum 3's and 4's
+
+        datum_3_key   d3k;
+        datum_3     * d3;
+        d3k.prefix_d = 'd';
+        d3k.id.set( id );
+        UINT32 piecenum;
+        for ( piecenum = 0; ; )
         {
-            memcpy( key+5, &blocknum, sizeof(UINT32) );
-            key[0] = 'd';
-            if ( bt->delete_rec( (UCHAR*) key,
-                                 9 ) == Btree::DELETE_KEY_NOT_FOUND )
+            d3k.piece_num.set( piecenum );
+            Btree::rec * d3rec;
+            d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof( d3k ));
+            if ( d3rec == NULL )
                 break;
-            key[0] = 'D';
-            (void) bt->delete_rec( (UCHAR*) key, 9 );
+            d3 = (datum_3 *) d3rec->data.ptr;
+            if ( d3->size.get() > 0 )
+                bt->get_fbn()->free( d3->blockno.get() );
+            bt->delete_rec( d3rec );
         }
     }
 }
 
+
 void
-file_db :: update_block( file_info * inf, UINT32 block_num,
+file_db :: truncate_pieces( UINT32 id, UINT32 num_pieces )
+{
+    UINT32 piece_num;
+
+    // check if piece# n+1 exists
+    //   if so, delete it and repeat check for n+2, etc
+
+    datum_3_key   d3k;
+    d3k.prefix_d = 'd';
+    d3k.id.set( id );
+
+    for ( piece_num = num_pieces; ; piece_num++ )
+    {
+        datum_3     * d3;
+        Btree::rec  * d3rec;
+
+        d3k.piece_num.set( piece_num );
+
+        d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof(d3k) );
+        if ( d3rec == NULL )
+            break;
+        d3 = (datum_3 *) d3rec->data.ptr;
+        if ( d3->size.get() > 0 )
+            bt->get_fbn()->free( d3->blockno.get() );
+        bt->delete_rec( d3rec );
+    }
+}
+
+void
+file_db :: update_piece( UINT32 id, UINT32 piece_num,
                          char * buf, int buflen )
 {
     MD5_CTX       ctx;
     MD5_DIGEST    dig;
-    char          key[9];
+    datum_3_key   d3k;
     datum_3     * d3;
     Btree::rec  * d3rec;
-    Btree::rec  * d4rec;
     bool          d3_created = false;
+    UINT32        blockno;
+    UINT32        block_magic;
+    UCHAR       * ptr;
 
     MD5Init( &ctx );
     MD5Update( &ctx, (unsigned char *) buf, (unsigned int) buflen );
     MD5Final( &dig, &ctx );
 
-    memcpy( key+1, &inf->id, sizeof(UINT32) );
-    memcpy( key+5, &block_num, sizeof(UINT32) );
+    d3k.prefix_d = 'd';
+    d3k.id.set( id );
+    d3k.piece_num.set( piece_num );
 
-    key[0] = 'd';
-    d3rec = bt->get_rec( (UCHAR*) key, sizeof(key) );
+    d3rec = bt->get_rec( (UCHAR*) &d3k, sizeof(d3k ));
     if ( !d3rec )
     {
-        d3rec = bt->alloc_rec( sizeof(key), sizeof(datum_3) );
-        memcpy( d3rec->key.ptr, key, sizeof(key) );
+        d3rec = bt->alloc_rec( sizeof(d3k), sizeof(datum_3) );
+        memcpy( d3rec->key.ptr, &d3k, sizeof(d3k) );
         d3 = (datum_3 *) d3rec->data.ptr;
         d3_created = true;
     }
@@ -386,29 +408,37 @@ file_db :: update_block( file_info * inf, UINT32 block_num,
         if ( memcmp( &d3->digest, &dig, sizeof(dig) ) == 0 )
         {
             // match! no need to update contents.
+            printf( "match on piece %d\n", piece_num );
             bt->unlock_rec( d3rec );
             return;
         }
     }
 
-    d3->bsize = buflen;
+    blockno = d3->blockno.get();
+    if ( buflen != d3->size.get() )
+    {
+        if ( d3->size.get() != 0 )
+            bt->get_fbn()->free( blockno );
+        blockno = bt->get_fbn()->alloc( buflen );
+        d3->size.set( buflen );
+        d3->blockno.set( blockno );
+    }
     memcpy( &d3->digest, &dig, sizeof(dig) );
     d3rec->data.dirty = true;
+
     if ( !d3_created )
         bt->unlock_rec( d3rec );
     else
         bt->put_rec( d3rec );
 
-    key[0] = 'D';
-    (void) bt->delete_rec( (UCHAR*) key, sizeof(key) );
-    d4rec = bt->alloc_rec( sizeof(key), buflen );
-    memcpy( d4rec->key.ptr, key, sizeof(key) );
-    memcpy( d4rec->data.ptr, buf, buflen );
-    bt->put_rec( d4rec );
+    ptr = bt->get_fbn()->get_block_for_write( blockno, NULL, &block_magic );
+    memcpy( ptr, buf, buflen );
+    bt->get_fbn()->unlock_block( block_magic, true );
+    printf( "updated piece %d\n", piece_num );
 }
 
 void
-file_db :: extract_block( file_info * inf, UINT32 block_num,
+file_db :: extract_piece( UINT32 id, UINT32 piece_num,
                           char * buf, int * buflen )
 {
     

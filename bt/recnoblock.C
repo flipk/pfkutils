@@ -36,6 +36,9 @@
 #define RECNOBLOCK_INTERNAL
 #include "recnoblock.H"
 
+#define FBN_DEFAULT_RECORD_SIZE    16
+#define FBN_DEFAULT_PAGE_SIZE    4096
+
 FileBlockNumber :: FileBlockNumber( char * file, int h1, int h2, int c1,
                                     int _record_size, int _page_size )
     throw ( constructor_failed )

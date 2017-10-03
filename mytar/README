@@ -49,19 +49,17 @@ are the following types of records stored in this file:
 			owner id, group id
 			file mode in 0777 format (rwxrwxrwx)
 	- file content info:  this is a small record describing a
-		block of file data. each block has a sequence number
-		identifying it within the block stream.  each block
-		has an md5sum so that if this block has not changed,
+		piece of file data. each piece has a sequence number
+		identifying it within the piece stream.  each piece
+		has an md5sum so that if this piece has not changed,
 		it need not be rewritten.
-	    key  : "d" plus file id number plus block number
-	    data : md5sum
-	- file contents:  this is a block of file data.  a series of
+	    key  : "d" plus file id number plus piece number
+	    data : piecesize + recno_block_num + md5sum
+	- file contents:  this is a piece of file data.  a series of
 		these are strung together to hold the contents of a
-		file.
-	    key  : "D" plus file id number plus block number
-	    data : N bytes of the file data where "N" is no longer
-			than the largest block supported by the btree
-			library. 
+		file.  these are stored as pure raw recnoblock data
+		items, identified by recno_block_num field in the previous
+		datum.  they are not btree keys.
 
 
 algorithms:
@@ -89,8 +87,9 @@ algorithms:
             delete entry from file_db
   foreach entry in list of files to add
      construct new db_ent
-     foreach block in the file
-     
+     foreach piece in the file
+       ?
+
   foreach entry in list of files to update
      update_file
 

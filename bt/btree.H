@@ -49,9 +49,9 @@ public:
     btree_printinfo( int _options ) { options = _options; }
     virtual ~btree_printinfo( void ) { /*placeholder*/ }
     // sprintelement should return null if dumptree/dumpnode should stop.
-    virtual char * sprint_element( int noderec,
-                                   int keyrec, void * key, int keylen,
-                                   int datrec, void * dat, int datlen,
+    virtual char * sprint_element( UINT32 noderec,
+                                   UINT32 keyrec, void * key, int keylen,
+                                   UINT32 datrec, void * dat, int datlen,
                                    bool * datdirty ) = 0;
     // dumpnode will call sprintelementfree when its done
     // actually doing the printing.
