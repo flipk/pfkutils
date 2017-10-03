@@ -113,9 +113,6 @@ sigint_handler( int s )
     seteuid( getuid() );
 }
 
-extern "C" void  print_malloc( char *s );
-extern "C" void sprint_malloc( char *s );
-
 #ifdef LOG_PACKETS
 static void
 log_packet( char * s, uchar * buf, int len )
@@ -139,10 +136,7 @@ int _itsfssvr_main( int argc, char ** argv );
 int
 itsfssvr_main( int argc, char ** argv )
 {
-    int ret;
-    ret = _itsfssvr_main( argc, argv );
-    print_malloc( "shutdown" );
-    return ret;
+    return _itsfssvr_main( argc, argv );
 }
 
 id_name_db * inode_name_db;
@@ -632,9 +626,6 @@ update_status_info( void )
              _globs->nfs_rpc_udp_fd, _globs->slave_rendevous_fd,
              _globs->source_port,
              _globs->nfs_rpc_call_count, uptime.tv_sec, uptime.tv_usec );
-    UPDATE(f);
-
-    sprint_malloc( f );
     UPDATE(f);
 
     _globs->sprintinfo( f );

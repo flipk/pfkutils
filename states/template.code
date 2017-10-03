@@ -2,7 +2,7 @@
 %
 % variables:
 % headerfile, machine, statenamelist,
-% stateprelist, statetransitions, endimpl
+% stateprelist, statetransitions, startimpl, endimpl
 %
 
 /*
@@ -13,6 +13,8 @@
  */
 
 #include "@@headerfile@@"
+
+@@startimpl@@
 
 @@machine@@_STATE_MACHINE :: @@machine@@_STATE_MACHINE( char * name
             @@constructor_args@@ )

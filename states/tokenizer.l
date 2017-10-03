@@ -50,6 +50,7 @@ machine_dcode	{ RET( VTEXT_DCODE ); }
 starthdr	{ RET( VTEXT_STARTHDR ); }
 machine_data	{ RET( VTEXT_DATA     ); }
 endhdr		{ RET( VTEXT_ENDHDR   ); }
+startimpl	{ RET( VTEXT_STARTIMPL  ); }
 endimpl		{ RET( VTEXT_ENDIMPL  ); }
 inputs		{ RET( INPUTS ); }
 outputs		{ RET( OUTPUTS ); }

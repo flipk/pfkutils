@@ -21,6 +21,9 @@ PK_Semaphores :: ~PK_Semaphores( void )
     PK_Semaphore * s;
     while ( s = list.dequeue_head() )
     {
+        fprintf( stderr, "while destroying semaphore manager: "
+                 "deleted stale semaphore '%s'\n",
+                 s->get_name() );
         hash.remove( s );
         delete s;
     }

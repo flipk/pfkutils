@@ -29,6 +29,7 @@ extern void yyerror( char * e );
 %token VTEXT_STARTHDR
 %token VTEXT_DATA
 %token VTEXT_ENDHDR
+%token VTEXT_STARTIMPL
 %token VTEXT_ENDIMPL
 
 %token <value> NUMBER
@@ -42,8 +43,8 @@ extern void yyerror( char * e );
 %type  <we>    inputdef
 %type  <we>    actiondefs
 %type  <we>    actiondef
-%type  <we>    calldefs
-%type  <we>    calldef
+%type  <we>    casedefs
+%type  <we>    casedef
 
 %start statefile
 
@@ -71,6 +72,8 @@ stmt
 	  { machine.destructor_code = $2; }
 	| VTEXT_STARTHDR VTEXT
 	  { machine.startv = $2; }
+	| VTEXT_STARTIMPL VTEXT
+	  { machine.startimplv = $2; }
 	| INPUTS LB  inputlist	RB
 	  { inputlist_add_timeout(); }
 	| OUTPUTS LB  outputlist  RB
@@ -177,7 +180,14 @@ actiondefs
 	: actiondef
 	  { $$ = $1; }
 	| actiondef actiondefs
-	  { $1->next = $2; $$ = $1; }
+	  {
+	    if ( $1 == NULL )
+	      $$ = $2;
+	    else {
+	      $1->next = $2;
+	      $$ = $1;
+	    }
+	  }
 	;
 
 actiondef
@@ -194,13 +204,13 @@ actiondef
 	    add_call( $2 );
 	    $$ = $2;
 	  }
-	| SWITCH ident LB calldefs RB
+	| SWITCH ident LB casedefs RB
 	  {
 	    $2->type = SWITCH_ACTION;
 	    $2->ex[0] = $4;
 	    $$ = $2;
 	  }
-	| CALL ident LB calldefs RB
+	| CALL ident LB casedefs RB
 	  {
 	    $2->type = CALL_ACTION;
 	    $2->ex[0] = $4;
@@ -233,14 +243,14 @@ actiondef
 	  }
 	;
 
-calldefs
-	: calldef
+casedefs
+	: casedef
 	  { $$ = $1; }
-	| calldef calldefs
+	| casedef casedefs
 	  { $1->next = $2; $$ = $1; }
 	;
 
-calldef
+casedef
 	: CASE ident LB actiondefs RB
 	  {
 	    $2->type = CALL_RESULT;

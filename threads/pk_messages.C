@@ -81,11 +81,21 @@ PK_Message_Manager :: destroy( int qid )
     if ( mq )
     {
         pk_msg_int * m; 
+        int count = 0;
         while ( m = mq->dequeue() )
+        {
             // note the caveat : if you're going to destroy a 
             // msgq that isn't empty, you can only use 'new'
             // to allocate messages for it.
             delete m;
+            count ++;
+        }
+        if ( count != 0 )
+        {
+            fprintf( stderr, "while destroying mq '%s': "
+                     "deleted %d stale messages\n",
+                     mq->name, count );
+        }
         delete mq;
     }
     return ret;
@@ -189,4 +199,45 @@ PK_Message_Manager :: recv( int num_qids, int * qids,
         pthread_cond_destroy( &cond );
 
     return ret;
+}
+
+//
+
+PK_Message_Queue_List :: ~PK_Message_Queue_List( void )
+{
+    PK_Message_Queue * mq;
+    while ( mq = list.dequeue_head() )
+    {
+        fprintf( stderr, "while deleting message queue manager: "
+                 "deleting mq '%s'\n", mq->name );
+        id_hash.remove( mq );
+        name_hash.remove( mq );
+        delete mq;
+    }
+}
+
+//
+
+PK_Message_Queue :: ~PK_Message_Queue( void )
+{
+    pk_msg_int * m;
+    int count = 0;
+    while ( m = messages.dequeue_head() )
+    {
+        delete m;
+        count++;
+    }
+    if ( count > 0 )
+    {
+        fprintf( stderr, "while deleting mq '%s': "
+                 "deleting %d stale messages\n",
+                  name, count );
+    }
+    if ( waiter )
+    {
+        fprintf( stderr, "deleting message queue while "
+                 "thread still waiting on it!\n" );
+        kill(0,6);
+    }
+    free( name );
 }

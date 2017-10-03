@@ -12,12 +12,12 @@ typedef struct {
     WENTLIST inputs;
     WENTLIST outputs;
     WENTLIST states;
-    WENT * calls;       /* follow ex[1] next pointers */
-    WENT ** next_call;  /* for building calls list    */
+    WENTLIST calls;
     VERBATIM * constructor_args;
     VERBATIM * constructor_code;
     VERBATIM * destructor_code;
     VERBATIM * startv;
+    VERBATIM * startimplv;
     VERBATIM * datav;
     VERBATIM * endhdrv;
     VERBATIM * endimplv;

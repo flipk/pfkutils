@@ -18,12 +18,11 @@ init_machine( struct args * args )
     machine.entries = 0;
     machine.args = args;
     machine.line_number = 1;
-    machine.calls = NULL;
-    machine.next_call = &machine.calls;
     machine.name.listname = "name";
     machine.inputs.listname = "inputs";
     machine.outputs.listname = "outputs";
     machine.states.listname = "states";
+    machine.calls.listname = "calls";
 }
 
 /*
@@ -99,11 +98,9 @@ destroy_machine( void )
     destroy_list( &nextfreeentry, machine.inputs .head );
     destroy_list( &nextfreeentry, machine.outputs.head );
     destroy_list( &nextfreeentry, machine.states .head );
+    destroy_list( &nextfreeentry, machine.calls  .head );
 
-    /* we don't need to walk the 'calls' list, because all 
-       entries on the call list are guaranteed to be on some
-       other list (like a state_name list), and thus already freed.
-       now nuke the freelist. */
+    /* now nuke the freelist. */
 
     for ( l = freelist; l; l = n )
     {
@@ -141,6 +138,11 @@ destroy_machine( void )
     {
         free( machine.endhdrv->data );
         free( machine.endhdrv );
+    }
+    if ( machine.startimplv )
+    {
+        free( machine.startimplv->data );
+        free( machine.startimplv );
     }
     if ( machine.endimplv )
     {
@@ -376,7 +378,7 @@ process_var( char *cp )
         }
     IFSTR("callenums")
         {
-            for ( w = machine.calls; w; w=w->ex[1] )
+            for ( w = machine.calls.head; w; w=w->next )
             {
                 if ( w->ex[0] )
                 {
@@ -386,6 +388,10 @@ process_var( char *cp )
                         if ( w2->type != CALL_DEFRESULT )
                             printf( "\t\t%s = %d%c\n",
                                     w2->word, w2->ident, 
+                                    w2->next ? ',' : ' ' );
+                    else
+                            printf( "\t\tDEFAULT_%s_ret = %d%c\n",
+                                    w->word, w2->ident, 
                                     w2->next ? ',' : ' ' );
                     printf( "\t};\n" );
                 }
@@ -418,6 +424,12 @@ process_var( char *cp )
                 printf( "%s\n", machine.destructor_code->data );
             return ret;
         }
+    IFSTR("startimpl")
+        {
+            if ( machine.startimplv && machine.startimplv->data )
+                printf( "%s\n", machine.startimplv->data );
+            return ret;
+        }
     IFSTR("endimpl")
         {
             if ( machine.endimplv && machine.endimplv->data )
@@ -432,7 +444,7 @@ process_var( char *cp )
         }
     IFSTR("callprotos")
         {
-            for ( w = machine.calls; w; w=w->ex[1] )
+            for ( w = machine.calls.head; w; w=w->next )
                 if ( w->ex[0] )
                     printf( "\tenum call_%s_retvals call_%s( void );\n",
                             w->word, w->word );
@@ -445,15 +457,24 @@ process_var( char *cp )
         {
             char sm[64];
             sprintf( sm, "%s_STATE_MACHINE", machine.name.head->word );
-            for ( w = machine.calls; w; w=w->ex[1] )
+            for ( w = machine.calls.head; w; w=w->next )
+            {
+                WENT * w2;
                 if ( w->ex[0] )
                     printf( "enum %s::call_%s_retvals\n"
-                            "%s :: call_%s( void )\n{\n}\n\n",
+                            "%s :: call_%s( void )\n{\n",
                             sm, w->word, sm, w->word );
                 else
                     printf( "void\n"
-                            "%s :: call_%s( void )\n{\n}\n\n",
+                            "%s :: call_%s( void )\n{\n",
                             sm, w->word );
+                for ( w2 = w->ex[0]; w2; w2=w2->next )
+                    if ( w2->type != CALL_DEFRESULT )
+                        printf( "\t// return %s;\n", w2->word );
+                    else
+                        printf( "\t// return DEFAULT_%s_ret;\n", w->word );
+                printf( "}\n\n" );
+            }
             return ret;
         }
 

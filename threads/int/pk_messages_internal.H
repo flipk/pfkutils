@@ -5,7 +5,7 @@
 
 #include "stringhash.H"
 
-enum { PK_MSG_IDHASH, PK_MSG_NAMEHASH, PK_MSG_NUMLISTS };
+enum { PK_MSG_LIST, PK_MSG_IDHASH, PK_MSG_NAMEHASH, PK_MSG_NUMLISTS };
 
 class PK_Message_Queue {
     LList <pk_msg_int,0>  messages;
@@ -15,15 +15,7 @@ public:
     PK_Message_Queue( char *_name ) {
         waiter = NULL; name = strdup( _name );
     }
-    ~PK_Message_Queue( void ) {
-        if ( waiter )
-        {
-            fprintf( stderr, "deleting message queue while "
-                     "thread still waiting on it!\n" );
-            kill(0,6);
-        }
-        free( name );
-    }
+    ~PK_Message_Queue( void );
     int    qid;
     char * name;
     // return not-null if someone waiting
@@ -66,6 +58,7 @@ public:
 };
 
 class PK_Message_Queue_List {
+    LList     <PK_Message_Queue,       PK_MSG_LIST>           list;
     LListHash <PK_Message_Queue,int,
                PK_Message_Queue_hash_1,PK_MSG_IDHASH>      id_hash;
     LListHash <PK_Message_Queue,char *,
@@ -73,6 +66,7 @@ class PK_Message_Queue_List {
 public:
     PK_Message_Queue_List( int _hashsize )
         : id_hash( _hashsize ), name_hash( _hashsize ) { }
+    ~PK_Message_Queue_List( void );
 
     PK_Message_Queue * find( int qid ) {
         return id_hash.find( qid );
@@ -81,9 +75,9 @@ public:
         return name_hash.find( n );
     }
     void add( PK_Message_Queue * q ) {
-        id_hash.add( q ); name_hash.add( q );
+        list.add( q ); id_hash.add( q ); name_hash.add( q );
     }
     void remove( PK_Message_Queue * q ) {
-        id_hash.remove( q ); name_hash.remove( q );
+        list.remove( q ); id_hash.remove( q ); name_hash.remove( q );
     }
 };

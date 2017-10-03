@@ -16,7 +16,7 @@ HDRS=	sudo.h main_prog.h m.h main.h regex.h
 CSRCS=	agrep.c crnl.c do_connect.c he.c inet_aton.c \
 	ipipe.c m.c regex.c main.c random-hex.c fmtsdiff.c \
 	xtermbar.c gmarc.c genpw.c waitpid.c pkfstat.c pk-md5.c
-CPPSRCS= rmstar.C tcpgate.C pk_msg.C lognew.C fd_mgr.C
+CPPSRCS= rmstar.C tcpgate.C pk_msg.C fd_mgr.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
 LIBS= -lcurses -lm -lpthread -lz
 

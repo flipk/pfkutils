@@ -39,6 +39,10 @@ PK_Timer_Manager :: ~PK_Timer_Manager( void )
     PK_Timer * t;
     while ( t = timers->get_head() )
     {
+        fprintf( stderr, "while deleting timer manager: "
+                 "deleting stale timer of type %d (%#x)\n",
+                 t->type,
+                 t->type == PK_TIMER_MSG ? t->u.msg.msg->type : 0 );
         timers->remove( t );
         delete t;
     }

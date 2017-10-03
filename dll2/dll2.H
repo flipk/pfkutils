@@ -4,16 +4,16 @@
 
 /* configurable items */
 
-#ifndef DLL2_INCLUDE_LOGNEW
-#define DLL2_INCLUDE_LOGNEW 0
-#endif
-
 #ifndef DLL2_CHECKSUMS
 #define DLL2_CHECKSUMS      1
 #endif
 
 #ifndef DLL2_INCLUDE_BTREE
-#define DLL2_INCLUDE_BTREE  1
+#define DLL2_INCLUDE_BTREE  0
+#endif
+
+#ifndef DLL2_STRICT_WALKING
+#define DLL2_STRICT_WALKING 1
 #endif
 
 #ifndef DLL2BAIL
@@ -25,11 +25,6 @@
 
 #include <sys/types.h>
 #include <signal.h>
-#if DLL2_INCLUDE_LOGNEW
-#include "lognew.H"
-#else
-#define LOGNEW new
-#endif
 
 // NOTE:  - LList::add adds at the 'tail' of the list.
 //        - 'next' pointers point towards the tail, 'prev' towards head.
@@ -250,15 +245,19 @@ public:
     }
     T * get_next( T * x ) {
         validate();
+#if DLL2_STRICT_WALKING
         if ( !onthislist( x ))
             DLL2BAIL(( "ERROR get_next ITEM is not on this list!\n" ));
+#endif
         x->links[instance].validate();
         return x->links[instance].next;
     }
     T * get_prev( T * x ) {
         validate();
+#if DLL2_STRICT_WALKING
         if ( !onthislist( x ))
             DLL2BAIL(( "ERROR get_prev ITEM is not on this list!\n" ));
+#endif
         x->links[instance].validate();
         return x->links[instance].prev;
     }
@@ -295,7 +294,7 @@ private:
 public:
     LListHash ( int _hashsize ) {
         hashsize = _hashsize;
-        hash = LOGNEW theLListHash[ hashsize ];
+        hash = new theLListHash[ hashsize ];
         count = 0;
     }
     ~LListHash ( void ) {
@@ -345,7 +344,11 @@ public:
     void add( T * t ) { list.add( t ); }
     void remove( T * t ) { list.remove( t ); }
     void get_oldest( void ) { list.get_head(); }
-    void promote( T * t ) { list.remove( t ); list.add( t ); }
+    void promote( T * t ) {
+        if ( list.get_head() != t ) {
+            list.remove( t ); list.add( t );
+        }
+    }
     bool onlist( T * t ) { return list.onlist( t ); }
     bool onthislist( T * t ) { return list.onthislist( t ); }
     T * dequeue_head( void ) { 
@@ -421,11 +424,11 @@ public:
         }
         t->ordered_queue_key = new_oq_key;
         if ( cur )
-            oq.add_before( t, cur );
+            oq.add_before( t, cur ); // in the middle of the list
         else if ( prev )
-            oq.add_after( t, prev );
+            oq.add_after( t, prev ); // after the last item of the list
         else
-            oq.add( t );
+            oq.add( t );             // the list was empty
     }
     void remove( T * t ) {
         T * n = oq.get_next( t );

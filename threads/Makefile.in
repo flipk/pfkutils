@@ -13,14 +13,12 @@ OBJS= $(SRCS:.C=.o)
 LINKFL= -lpthread
 
 #ifdef solaris
-CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSOLARIS
+CPPFLAGS+= -DSOLARIS
 LINKFL+= -lsocket
-SRCS+= vsnprintf.c malloclock_stub.C
 #elifdef sunos
-CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DSUNOS
-SRCS+= vsnprintf.c malloclock_stub.C
+CPPFLAGS+= -DSUNOS
 #elifdef cygwin32
-CPPFLAGS+= -DBITFIELDS_FROM_LEFT -DCYGWIN
+CPPFLAGS+= -DCYGWIN
 #else
 #endif
 
