@@ -5,6 +5,7 @@
 #define PFK_BUILD_CHECKSIZE  @PFK_BUILD_checksize@
 #define PFK_BUILD_TREESCAN   @PFK_BUILD_treescan@
 #define PFK_BUILD_SUDO       @PFK_BUILD_sudo@
+#define PFK_BUILD_AMPFK      @PFK_BUILD_ampfk@
 
 #if PFK_BUILD_ETG
 PROG(0,etg_genkey,"Generate enc tel gate keys")
@@ -35,6 +36,10 @@ PROG(0,treescan,"scan a tree producing tree info")
 
 #if PFK_BUILD_SUDO
 PROG(1,sudo,"do a command as the superuser")
+#endif
+
+#if PFK_BUILD_AMPFK
+PROG(0,ampfk,"pfk build utils")
 #endif
 
 PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")

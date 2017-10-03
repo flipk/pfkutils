@@ -232,7 +232,7 @@ class automake_file {
 
     void find_targets(void);
     void make_variables(void);
-    void make_allrule(void);
+    void make_allrule(const std::string &input_filename);
     void make_depfilerules(void);
     void make_targetlinkrules(void);
     void make_targetobjrules(void);
@@ -252,7 +252,8 @@ public:
     ~automake_file(void);
     void tokenize(const std::string &filename); // debug only
     bool parse(const std::string &filename);
-    void output_makefile(const std::string &filename);
+    void output_makefile(const std::string &input_filename,
+                         const std::string &output_filename);
 
     amvariables     input_variables;
     amruleList      input_rules;

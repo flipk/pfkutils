@@ -173,13 +173,11 @@ menu "defops"
 {
 	"Twm"			f.title
 	"Pin"			f.pin
+	"Gnome terminal" 	f.exec "gnome-terminal --disable-factory &"
         "Xterm (x)"		f.exec "x"
         "XtermScreen (X)"	f.exec "xs"
 	"MANUAL"	f.exec "xterm -ut -fg black -bg gray85 -geometry 80x55 &"
-	"Firefox"		f.exec "firefox &"
-	"Thunderbird"		f.exec "thunderbird &"
-	"Emacs-Lone"		f.exec "emacs-lone &"
-	"Lock"			!"xlock&"
+	"Chrome"		f.exec "google-chrome &"
         ""			f.nop
 	"Iconify"		f.iconify
 	"Resize"		f.resize

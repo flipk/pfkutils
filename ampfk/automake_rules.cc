@@ -8,7 +8,7 @@
 using namespace std;
 
 void
-automake_file :: make_allrule(void)
+automake_file :: make_allrule(const string &input_filename)
 {
     amrule * r = new amrule;
     r->targets.add(new amword("all"));
@@ -62,12 +62,22 @@ automake_file :: make_allrule(void)
 
     output_rules.add(r);
 
+    string input_filename_fixed = input_filename;
+
+    size_t last_slash_pos =
+        input_filename_fixed.find_last_of('/');
+
+    if (last_slash_pos != string::npos)
+        input_filename_fixed.erase(0,last_slash_pos+1);
+
+    input_filename_fixed.insert(0, srcdir + "/");
+
     r = new amrule;
 
     r->targets.add(new amword("Makefile"));
-    r->sources.add(new amword(srcdir + "/Makefile.am"));
+    r->sources.add(new amword(input_filename_fixed));
 
-    r->commands.add(new amcommand("ampfk " + srcdir + "/Makefile.am"));
+    r->commands.add(new amcommand("ampfk " + input_filename_fixed));
     r->commands.add(new amcommand("make clean"));
 
     output_rules.add(r);
@@ -321,11 +331,32 @@ automake_file :: make_lexyaccrules(void)
                                           *t->target_underscored->word +
                                           "_YFLAGS) -d " + *src->word));
                     r->commands.add(c);
+
+                    // don't have to check return on find_last_of
+                    // because i know that src will always have 
+                    // both a / and a .
+                    size_t slashpos = src->word->find_last_of('/');
+                    size_t dotpos = src->word->find_last_of('.');
+                    string source_basename = src->word->substr(
+                        slashpos+1,
+                        dotpos - slashpos - 1);
+                    
                     c = new amcommand;
-                    c->cmd.add(new amword("mv y.tab.c " + *obj->word));
+
+                    if (is_cc(w))
+                        c->cmd.add(new amword("mv " + source_basename +
+                                              ".tab.cc " + *obj->word));
+                    else
+                        c->cmd.add(new amword("mv " + source_basename +
+                                              ".tab.c " + *obj->word));
                     r->commands.add(c);
                     c = new amcommand;
-                    c->cmd.add(new amword("mv y.tab.h " + *hdr->word));
+                    if (is_cc(w))
+                        c->cmd.add(new amword("mv " + source_basename +
+                                              ".tab.hh " + *hdr->word));
+                    else
+                        c->cmd.add(new amword("mv " + source_basename +
+                                              ".tab.h " + *hdr->word));
                     r->commands.add(c);
                 }
 

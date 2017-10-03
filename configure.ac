@@ -68,6 +68,7 @@ PFK_ARG_ENABLE([pfkbak],     [build backup server])
 PFK_ARG_ENABLE([syslog],     [build my syslog tools])
 PFK_ARG_ENABLE([checksize],  [build checksize tool])
 PFK_ARG_ENABLE([treescan],   [build treescan tool])
+PFK_ARG_ENABLE([ampfk],      [build pfk automake])
 PFK_ARG_ENABLE([sudo],       [build my version of sudo])
 PFK_ARG_ENABLE([runemacs],   [build cygwin runemacs])
 PFK_ARG_ENABLE([runrxvt],    [build cygwin runrxvt])
@@ -230,6 +231,7 @@ AC_CONFIG_FILES([
     backup/Makefile
     teld/Makefile
     enctelgate/Makefile
+    ampfk/Makefile
     main/Makefile
     main/programs.h
     main/sudo.h

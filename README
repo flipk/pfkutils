@@ -6,11 +6,11 @@ make install
 
 blade:
 
-../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen
+../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen --enable-ampfk
 
 hertz & adler:
 
-../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope
+../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope --enable-ampfk
 
 bohr:
 
@@ -20,11 +20,11 @@ PATH=/open_source/bin-sun/gcc/bin:$PATH make install
 
 kobukvalley:
 
-../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen
+../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen --enable-ampfk
 
 faraday:
 
-../configure --enable-environ=atd --enable-pdksh
+../configure --enable-environ=atd --enable-pdksh --enable-ampfk
 
 sunlogin1:
 

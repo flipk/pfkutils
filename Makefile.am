@@ -22,6 +22,10 @@ if PFK_AM_BUILD_etg
 SUBDIRS += teld enctelgate
 endif
 
+if PFK_AM_BUILD_ampfk
+SUBDIRS += ampfk
+endif
+
 SUBDIRS += main environ scripts
 
 CONFIG_HDR_DEST = $(DESTDIR)$(exec_prefix)/include

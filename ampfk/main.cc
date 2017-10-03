@@ -8,10 +8,18 @@
 
 using namespace std;
 
+extern "C" int ampfk_main(int argc, char ** argv);
+
 int
-main(int argc, char ** argv)
+ampfk_main(int argc, char ** argv)
 {
     automake_file   amf;
+
+    if (argc != 2)
+    {
+        cerr << "usage: ampfk <full path to Makefile.am>" << endl;
+        return 1;
+    }
 
     if (getenv("DEBUG") != NULL)
         amf.tokenize(argv[1]);
@@ -23,7 +31,7 @@ main(int argc, char ** argv)
             return 1;
         }
 
-        amf.output_makefile("Makefile");
+        amf.output_makefile(argv[1], "Makefile");
     }
 
     return 0;

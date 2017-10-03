@@ -64,6 +64,10 @@ is_cc(const amword * w)
         return true;
     if (suffix == "cpp")
         return true;
+    if (suffix == "ll")
+        return true;
+    if (suffix == "yy")
+        return true;
     if (suffix == "L")
         return true;
     if (suffix == "Y")
@@ -77,8 +81,9 @@ is_lex(const amword * w)
     size_t pos = w->word->find_last_of(".");
     if (pos == string::npos)
         return false;
-    if (w->word->at(pos+1) == 'l' ||
-        w->word->at(pos+1) == 'L')
+    if (w->word->at(pos+1) == 'l')
+        return true;
+    if (w->word->at(pos+1) == 'L')
         return true;
     return false;
 }
@@ -89,11 +94,13 @@ is_lex_or_yacc(const amword * w)
     size_t pos = w->word->find_last_of(".");
     if (pos == string::npos)
         return false;
-    if (w->word->at(pos+1) == 'y' ||
-        w->word->at(pos+1) == 'Y')
+    if (w->word->at(pos+1) == 'y')
         return true;
-    if (w->word->at(pos+1) == 'l' ||
-        w->word->at(pos+1) == 'L')
+    if (w->word->at(pos+1) == 'l')
+        return true;
+    if (w->word->at(pos+1) == 'Y')
+        return true;
+    if (w->word->at(pos+1) == 'L')
         return true;
     return false;
 }
@@ -123,9 +130,19 @@ make_c_from_ly(const amtarget * t, const amword * source)
     w->word = new string;
     w->word->assign( *source->word );
     if (w->word->at(pos+1) == 'y')
-        w->word->replace(pos+1, string::npos, "c");
+    {
+        if (w->word->length() == (pos+3))
+            w->word->replace(pos+1, string::npos, "cc");
+        else
+            w->word->replace(pos+1, string::npos, "c");
+    }
     if (w->word->at(pos+1) == 'l')
-        w->word->replace(pos+1, string::npos, "c");
+    {
+        if (w->word->length() == (pos+3))
+            w->word->replace(pos+1, string::npos, "cc");
+        else
+            w->word->replace(pos+1, string::npos, "c");
+    }
     if (w->word->at(pos+1) == 'Y')
         w->word->replace(pos+1, string::npos, "cc");
     if (w->word->at(pos+1) == 'L')
