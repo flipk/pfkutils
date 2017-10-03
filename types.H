@@ -102,12 +102,12 @@ public:
     UINT16_t( UINT16 x ) { set( x ); }
     UINT16 get(void)
         {
-            return (p[1]<<8) | p[0];
+            return (p[0]<<8) | p[1];
         };
     void set( UINT16 v )
         {
-            p[1] = (v >>  8) & 0xff;
-            p[0] =  v    & 0xff;
+            p[0] = (v >>  8) & 0xff;
+            p[1] =  v    & 0xff;
         };
     int size_of(void) { return 2; }
 };

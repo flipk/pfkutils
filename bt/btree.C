@@ -271,7 +271,8 @@ Btree :: dumpnode( printinfo * pi, int recno )
                              n->nd->d[i].data );
         char * s = pi->spr( pi->arg, recno,
                             r->key.recno, r->key.ptr, r->key.len,
-                            r->data.recno, r->data.ptr, r->data.len );
+                            r->data.recno, r->data.ptr, r->data.len,
+                            &r->data.dirty );
         if ( s == NULL )
         {
             unlock_rec( r );

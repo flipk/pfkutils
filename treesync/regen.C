@@ -86,7 +86,8 @@ int signature;
 static char *
 regen_sprintf( void * arg, int noderec,
                int keyrec, void * key, int keylen,
-               int datrec, void * dat, int datlen )
+               int datrec, void * dat, int datlen,
+               bool *datdirty )
 {
     ListOfFiles    * file_entries = (ListOfFiles *) arg;
     db_file_entry  * dfe = (db_file_entry *) dat;

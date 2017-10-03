@@ -294,7 +294,7 @@ public:
         delete[] hash;
     }
     T * find    ( Hash_Key_Type key ) {
-        int h = hashv( Hash_Key_Comparator::hash_key( key ) );
+        int h = hashv( Hash_Key_Comparator::hash_key( key ) & 0x7fffffff );
         T * ret;
         for ( ret = hash[h].get_head(); ret; ret = hash[h].get_next(ret))
             if ( Hash_Key_Comparator::hash_key_compare( ret, key ))
@@ -304,20 +304,20 @@ public:
     int get_cnt( void ) { return count; }
     void add( T * t ) {
         count++;
-        int h = Hash_Key_Comparator::hash_key( t );
+        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
         hash[ hashv( h ) ].add( t );
     }
     void remove( T * t ) {
         count--;
-        int h = Hash_Key_Comparator::hash_key( t );
+        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
         hash[ hashv( h ) ].remove( t );
     }
     bool onlist( T * t ) {
-        int h = Hash_Key_Comparator::hash_key( t );
+        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
         return hash[ hashv( h ) ].onlist( t );
     }
     bool onthislist( T * t ) {
-        int h = Hash_Key_Comparator::hash_key( t );
+        int h = Hash_Key_Comparator::hash_key( t ) & 0x7fffffff;
         return hash[ hashv( h ) ].onthislist( t );
     }
 };

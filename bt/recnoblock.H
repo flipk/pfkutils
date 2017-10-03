@@ -8,9 +8,17 @@
 
 enum { BT_DLL2_LRU,  BT_DLL2_HASH,  BT_DLL2_EXTRA, BT_DLL2_COUNT };
 
+#ifndef FBN_RECORD_SIZE
+#define FBN_RECORD_SIZE    16
+#endif
+
+#ifndef FBN_PAGE_SIZE
+#define FBN_PAGE_SIZE    4096
+#endif
+
 class FileBlockNumber {
-    static const int        recordsize = 16;
-    static const int          pagesize = 4096;
+    static const int        recordsize = FBN_RECORD_SIZE;
+    static const int          pagesize = FBN_PAGE_SIZE;
     static const int     size_overhead = 4;
     static const int   block_signature = 0x504b;  // "PK"
     static const int  user_buffer_flag = 0x80000000;

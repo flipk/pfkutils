@@ -183,7 +183,8 @@ struct btcollect {
 char *
 id_name_db :: btdump_sprint( void * arg, int noderec,
                              int keyrec, void * key, int keylen,
-                             int datrec, void * dat, int datlen )
+                             int datrec, void * dat, int datlen,
+                             bool *datdirty )
 {
     btcollect * btc = (btcollect *)arg;
 
@@ -236,18 +237,15 @@ id_name_db :: purge_mount( int mount_id )
 void
 id_name_db :: _periodic_purge( bool all, int id )
 {
-    Btree::printinfo pi;
     uchar cmpstr[ 5 ];
     btcollect btc;
+    Btree::printinfo pi = {
+        btdump_sprint, btdump_sprintfree, btdump_print, &btc, false
+    };
 
     btc.cmpkey[0] = 'P';
     memcpy( btc.cmpkey + 1, &id, 4 );
 
-    pi.spr   = &btdump_sprint;
-    pi.sprf  = &btdump_sprintfree;
-    pi.pr    = &btdump_print;
-    pi.arg   = &btc;
-    pi.debug = false;
     btc.finished = true;
     if ( all )
         btc.deleted_count = -1;
@@ -270,7 +268,8 @@ id_name_db :: _periodic_purge( bool all, int id )
 char *
 id_name_db :: btdump_real_sprint( void * arg, int noderec,
                                   int keyrec, void * _key, int keylen,
-                                  int datrec, void * _dat, int datlen )
+                                  int datrec, void * _dat, int datlen,
+                                  bool *datdirty )
 {
     int i;
     unsigned char * key = (unsigned char*) _key;

@@ -37,13 +37,15 @@ class id_name_db {
 
     static char * btdump_sprint( void * arg, int noderec,
                                  int keyrec, void * key, int keylen,
-                                 int datrec, void * dat, int datlen );
+                                 int datrec, void * dat, int datlen,
+                                 bool *datdirty );
     static void   btdump_sprintfree( void * arg, char * s );
     static void   btdump_print( void * arg, char * format, ... );
 
     static char * btdump_real_sprint( void * arg, int noderec,
                                       int keyrec, void * key, int keylen,
-                                      int datrec, void * dat, int datlen );
+                                      int datrec, void * dat, int datlen,
+                                      bool *datdirty );
     static void   btdump_real_sprintfree( void * arg, char * s );
     static void   btdump_real_print( void * arg, char * format, ... );
     void _periodic_purge( bool all, int id );

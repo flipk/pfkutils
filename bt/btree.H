@@ -66,7 +66,7 @@ public:
 private:
     static const int BTI_MAGIC = 0x0d83f386;
     static const int NODE_MAGIC = 0x4463ab2c;
-    static const int MAX_BTI_HUNT = 300;
+    static const int MAX_BTI_HUNT = 8192;
 
     int BTREE_ORDER;
     int HALF_ORDER;
@@ -180,7 +180,8 @@ public:
     // sprintelement should return null if dumptree/dumpnode should stop.
     typedef char * (*sprintelement)( void * arg, int noderec,
                                      int keyrec, void * key, int keylen,
-                                     int datrec, void * dat, int datlen );
+                                     int datrec, void * dat, int datlen,
+                                     bool * datdirty );
     // dumpnode will call sprintelementfree when its done
     // actually doing the printing.
     typedef void (*sprintelementfree)( void * arg, char * s );
