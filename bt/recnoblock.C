@@ -196,7 +196,7 @@ FileBlockNumber :: get_data_page( int page_num, bool for_write )
         dellist.add( candidate );
     }
 
-    while ( candidate = dellist.get_head() )
+    while ((candidate = dellist.get_head()) != NULL)
     {
         dellist.remove( candidate );
         data.remove( candidate );
@@ -264,7 +264,7 @@ FileBlockNumber :: release_page ( page * p )
 
 UCHAR *
 FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
-                               UINT32 *magic, bool for_write, bool do_error )
+                               ULONG *magic, bool for_write, bool do_error )
 {
     // which file segment is this block in?
     int seg_num        = blockno / recs_per_segment;
@@ -317,14 +317,14 @@ FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
 
     if (( rec_in_pag + recs ) < recs_per_page )
     {
-        *magic = (UINT32) datpg;
+        *magic = (ULONG) datpg;
         return recptr + size_overhead;
     }
 
     // else it crosses a page boundary and we need to
     // return a user_buffer instead.
 
-    user_buffer * ub = new( size, __FILE__, __LINE__ ) user_buffer( blockno );
+    user_buffer * ub = new( size, (char*)__FILE__, __LINE__ ) user_buffer( blockno );
 
     if ( for_write )
     {
@@ -373,7 +373,7 @@ FileBlockNumber :: _get_block( UINT32 blockno, int *sizep,
         }
     }
 
-    *magic = (UINT32) ub  | user_buffer_flag;
+    *magic = (ULONG) ub  | user_buffer_flag;
 
     // note that the user buffer contains the sig and size info too
     // though the pointer we return to the caller skips that.
@@ -404,7 +404,7 @@ memcpydiff( UCHAR * dest, UCHAR * src, int len )
 }
 
 void
-FileBlockNumber :: unlock_block( UINT32 magic, bool dirty )
+FileBlockNumber :: unlock_block( ULONG magic, bool dirty )
 {
     if ( magic & user_buffer_flag )
     {
@@ -486,7 +486,7 @@ FileBlockNumber :: alloc( int bytes )
         kill(0,6);
     }
 
-    page * bm, * next_bm;
+    page * bm, * next_bm = NULL;
     UINT32 blockno;
     int seg_num, bit, bitstart, recs, cnt, largest_seg;
     bool overlaps = false;
@@ -836,7 +836,7 @@ int
 main()
 {
     int size, v;
-    UINT32 magic;
+    ULONG magic;
     UCHAR * buf;
     time_t start, stop, last, now;
 
@@ -855,7 +855,7 @@ main()
         fprintf( lf, "S %d\n", seed );
     memset( &td, 0, sizeof( td ));
     unlink( "testdb" );
-    FileBlockNumber f( "testdb", 1000, 16, 4096 );
+    FileBlockNumber f( (char*)"testdb", 1000, 16, 4096 );
 
     time( &last );
     start = last;

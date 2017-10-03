@@ -37,7 +37,7 @@ PK_Timer_Manager :: ~PK_Timer_Manager( void )
     PK_Timers_global = NULL;
 
     PK_Timer * t;
-    while ( t = timers->get_head() )
+    while ((t = timers->get_head()) != NULL)
     {
         fprintf( stderr, "while deleting timer manager: "
                  "deleting stale timer of type %d (%#x)\n",
@@ -61,7 +61,7 @@ int
 PK_Timer_Manager :: _create( PK_Timer * nt, int ticks )
 {
     int tid;
-    PK_Timer * t;
+    PK_Timer * t = NULL;
     _lock();
     do {
         tid = random() & 0x7fffffff;
@@ -171,6 +171,7 @@ PK_Timer_Manager :: timer_thread1( void * arg )
 {
     PK_Timer_Manager * pkts = (PK_Timer_Manager*) arg;
     pkts->_thread1();
+    return NULL;
 }
 
 //static
@@ -179,6 +180,7 @@ PK_Timer_Manager :: timer_thread2( void * arg )
 {
     PK_Timer_Manager * pkts = (PK_Timer_Manager*) arg;
     pkts->_thread2();
+    return NULL;
 }
 
 void

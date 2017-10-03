@@ -80,7 +80,6 @@ void
 PK_Threads :: run( void )
 {
     PK_Thread * t;
-    void * ret;
 
     pthread_mutex_t  mut;
     pthread_mutex_init( &mut, NULL );

@@ -3,8 +3,11 @@ HDRS= dll2.H
 SRCS= dll2_hash.C
 OBJS= $(SRCS:.C=.o)
 LIB= libdll2.a
-FLAGS= -O3
+FLAGS= -O3 -Wall -Werror
 INCS= 
+
+TEST_HASH_OBJS= test_hash.o test_hash_add.o test_hash_del.o
+TEST_BTREE_OBJS= test_btree.o
 
 all: $(LIB) test_hash test_btree
 
@@ -13,11 +16,11 @@ $(LIB): $(OBJS)
 	ar cq $(LIB) $(OBJS)
 	ranlib $(LIB)
 
-test_hash:
-	sh test_hash.C
+test_hash: $(TEST_HASH_OBJS) $(LIB)
+	g++ $(TEST_HASH_OBJS) $(LIB) -o test_hash
 
-test_btree:
-	sh test_btree.C
+test_btree: $(TEST_BTREE_OBJS) $(LIB)
+	g++ $(TEST_BTREE_OBJS) $(LIB) -o test_btree
 
 .C.o:
 	g++ $(INCS) $(FLAGS) -c $*.C

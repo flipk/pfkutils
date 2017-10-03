@@ -79,7 +79,7 @@ public:
     struct field {
         UCHAR *ptr;
         UINT32 recno;
-        UINT32 magic;
+        ULONG magic;
         int len;
         bool dirty;
     };
@@ -89,7 +89,7 @@ public:
     };
     struct btreeinfo {
         // this is the btree info block on disk.
-        UINT32 magic;
+        ULONG magic;
         UINT32 bti_recno;
         UINT32 rootblockno;
         int numnodes;
@@ -144,12 +144,12 @@ private:
     }
     struct node {
         _node * nd;
-        UINT32 magic;
+        ULONG magic;
         bool dirty;
     };
 
     btreeinfo * bti;
-    UINT32 bti_magic;
+    ULONG bti_magic;
 
     // compare 
     int compare_recs( rec *, rec * );

@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "wordentry.h"
 #include "machine.h"
 
@@ -218,7 +220,7 @@ static void emit_action ( int tabs, WENT * w );
 void
 dump_machine( enum dump_type ty )
 {
-    char * tmpl;
+    char * tmpl = NULL;
 
     switch ( ty )
     {
@@ -580,6 +582,11 @@ emit_action( int tabs, WENT * w )
     case STATEINPUT_DEF:
     case CALL_RESULT:
         line_error( "action %d located", w->type );
+        break;
+
+    case CALL_NAME:
+    case CALL_DEFRESULT:
+        /* here only to satisfy compiler. */
         break;
     }
 }

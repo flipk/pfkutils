@@ -202,7 +202,7 @@ Btree :: new_file( FileBlockNumber * fbn, int order )
     btreeinfo * bti;
     UINT32 btibn, rbn;
     int sz;
-    UINT32 btimagic, rootmagic;
+    ULONG btimagic, rootmagic;
     _node * nd;
 
     if (( order & 1 ) == 0 )
@@ -256,7 +256,7 @@ Btree :: dumptree( btree_printinfo * pi )
 {
     if ( pi->options & btree_printinfo::BTREE_INFO )
     {
-        pi->print( "bti: \n"
+        pi->print( (char*)"bti: \n"
                    "  recno = %d\n"
                    "  rootblockno = %d\n"
                    "  numnodes = %d\n"
@@ -276,18 +276,18 @@ Btree :: dumpnode( btree_printinfo * pi, int recno )
     node *n = fetch_node( recno );
     if ( pi->options & btree_printinfo::NODE_INFO )
     {
-        pi->print( "node at %d:\n"
+        pi->print( (char*)"node at %d:\n"
                    "  numitems = %d (%s %s)\n"
                    "  data =    ",
                    recno, n->nd->get_numitems(),
                    n->nd->is_root() ? "root" : "-", 
                    n->nd->is_leaf() ? "leaf" : "-" );
         for ( i = 0; i < n->nd->get_numitems(); i++ )
-            pi->print( "%03d/%03d   ", n->nd->d[i].key, n->nd->d[i].data );
-        pi->print( "\n  ptrs = " );
+            pi->print( (char*)"%03d/%03d   ", n->nd->d[i].key, n->nd->d[i].data );
+        pi->print( (char*)"\n  ptrs = " );
         for ( i = 0; i <= n->nd->get_numitems(); i++ )
-            pi->print( "%03d       ", n->nd->d[i].ptr );
-        pi->print( "\n" );
+            pi->print( (char*)"%03d       ", n->nd->d[i].ptr );
+        pi->print( (char*)"\n" );
     }
     for ( i = 0; i < n->nd->get_numitems(); i++ )
     {
@@ -313,7 +313,7 @@ Btree :: dumpnode( btree_printinfo * pi, int recno )
             unlock_node( n );
             return false;
         }
-        pi->print( "%s", s );
+        pi->print( (char*)"%s", s );
         pi->sprint_element_free( s );
         unlock_rec( r );
     }

@@ -1,5 +1,8 @@
 
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
 #include "main.h"
 
 static struct _dont_log_tags {
@@ -46,7 +49,6 @@ static struct _dont_log_tags {
 int
 maketags_do_logit( char * tagname, int taglen )
 {
-    int i;
     struct _dont_log_tags * dltp;
 
     if ( isdigit( tagname[0] ))

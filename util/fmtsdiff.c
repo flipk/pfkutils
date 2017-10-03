@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*
  * usage:
@@ -45,7 +46,7 @@ fmtsdiff_main( int argc, char ** argv )
 
     while ( 1 )
     {
-        char * cp, c;
+        char * cp, c = 0;
         int isdiffline;
 
         if ( fgets( line, width-1, stdin ) == NULL )

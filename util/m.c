@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 #include "m.h"
 
 #define MAX_STRING_LENGTH 256
@@ -145,11 +148,11 @@ enum arg_type {
 
 #define MAX_MATCHES ARG_MAX
 
+#if 0
 /*
  * Only used in debugging prints; the index into this array
  * must match the above array.
  */
-
 static char * arg_type_names[] = {
     "dummy", "flag",
     "plus", "minus", "times", "divide",
@@ -161,6 +164,7 @@ static char * arg_type_names[] = {
     "hex in @ha,@l", "hex in (0x)@ha,@l", "arbitrary base", "binary", 
     "parse error"
 };
+#endif
 
 static char errbuf[80];
 static int output_base_B = 10;
@@ -213,7 +217,7 @@ parse_flags( char * str, int flags )
  */
 
 static M_INT64
-m_cvt_dec( unsigned char * s )
+m_cvt_dec( char * s )
 {
     M_INT64 ret;
     int neg = 0;
@@ -234,7 +238,7 @@ m_cvt_dec( unsigned char * s )
 }
 
 static M_INT64
-m_cvt_hex( unsigned char * s )
+m_cvt_hex( char * s )
 {
     static const char cvt_matrix[] = {
 /* 0x30 */    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
@@ -267,7 +271,7 @@ m_cvt_hex( unsigned char * s )
 }
 
 static M_INT64
-m_cvt_octal( unsigned char * s )
+m_cvt_octal( char * s )
 {
     M_INT64 ret;
     int neg = 0;
@@ -288,24 +292,24 @@ m_cvt_octal( unsigned char * s )
 }
 
 static M_INT64
-m_cvt_arbitrary( unsigned char * str )
+m_cvt_arbitrary( char * str )
 {
     M_INT64 ret;
-    unsigned char *baseptr;
+    char *baseptr;
     int base;
 
     baseptr = strchr( str, '@' );
     base = atoi( baseptr+1 );
     if ( m_parse_number( &ret, str, baseptr - str, base ) != 0 )
     {
-        sprintf( errbuf, "error parsing arbitrary base number" );
+        // error parsing arbitrary base number
         return 0;
     }
     return ret;
 }
 
 static M_INT64
-m_cvt_binary( unsigned char * s )
+m_cvt_binary( char * s )
 {
     M_INT64 ret;
     for ( ret = 0; *s >= 0x30 && *s <= 0x31; s++ )
@@ -317,7 +321,7 @@ m_cvt_binary( unsigned char * s )
 }
 
 static M_INT64
-parse_assem1( unsigned char * str )
+parse_assem1( char * str )
 {
     int highval, lowval;
     highval = atoi( str );
@@ -327,7 +331,7 @@ parse_assem1( unsigned char * str )
         lowval = atoi( str+1 );
     else
     {
-        sprintf( errbuf, "unparsable arg '%s'", str );
+        // unparsable arg
         return 0;
     }
 
@@ -335,7 +339,7 @@ parse_assem1( unsigned char * str )
 }
 
 static M_INT64
-parse_assem2( unsigned char * str )
+parse_assem2( char * str )
 {
     int highval, lowval;
     highval = m_cvt_hex( str );
@@ -345,7 +349,7 @@ parse_assem2( unsigned char * str )
         lowval = m_cvt_hex( str+1 );
     else
     {
-        sprintf( errbuf, "unparsable arg '%s'", str );
+        // unparsable arg
         return 0;
     }
 
@@ -370,7 +374,7 @@ parse_value( int val_type, char * str )
 #undef  DO_TYPE
     }
 
-    sprintf( errbuf, "parse_value internal error" );
+    // parse_value internal error
     return 0;
 }
 
@@ -392,7 +396,7 @@ operation1( int operation, M_INT64 arg )
             (( arg >>  8 ) & 0x000000ff ) |
             (( arg <<  8 ) & 0x0000ff00 );
     }
-    sprintf( errbuf, "operation1 internal error" );
+    // operation1 internal error
     return 0;
 }
 
@@ -418,7 +422,7 @@ operation2( int operation, M_INT64 arg1, M_INT64 arg2 )
         DO_OP( ARG_EQ,      ==  );
 #undef  DO_OP
     }
-    sprintf( errbuf, "operation2: internal error" );
+    // operation2: internal error
     return 0;
 }
 
@@ -437,7 +441,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     int i, inlength, numargs;
     enum m_math_retvals err;
 
-    errbuf[0] = 0;
     instring = _instring;
     *instring = 0;
     inlength = 1;
@@ -453,7 +456,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
         if (( arglen + inlength + 1 ) > MAX_STRING_LENGTH )
         {
-            *result = (int)"input string overflow";
+            // input string overflow
             return M_MATH_OVERFLOW;
         }
 
@@ -475,7 +478,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     if ( regerr != 0 )
     {
         regerror( regerr, &expr, errbuf, 80 );
-        *result = (M_INT64)&errbuf;
         return M_MATH_REGERR;
     }
 
@@ -487,7 +489,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
         if ( regerr != 0 )
         {
             regerror( regerr, &expr, errbuf, 80 );
-            *result = (int)&errbuf;
             return M_MATH_REGERR;
         }
         so = (int)matches[0].rm_so;
@@ -499,7 +500,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             numargs++;
             if ( numargs == MAX_ARGS )
             {
-                *result = (int)"too many args";
+                // too many args
                 return M_MATH_TOOMANYARGS;
             }
         }
@@ -514,7 +515,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     if ( regerr != 0 )
     {
         regerror( regerr, &expr, errbuf, 80 );
-        *result = (M_INT64)&errbuf;
         return M_MATH_REGERR;
     }
 
@@ -538,7 +538,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
         if ( regerr != 0 )
         {
             regerror( regerr, &expr, errbuf, 80 );
-            ret = (M_INT64)&errbuf;
             err = M_MATH_REGERR;
             goto out;
         }
@@ -560,7 +559,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
             if ( flags == NULL )
             {
-                *result = (int)"flag args not allowed";
+                // flag args not allowed
                 return M_MATH_NOFLAGS;
             }
             *flags = parse_flags( *args, *flags );
@@ -579,14 +578,12 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
             if ( top == STACK_SIZE )
             {
-                ret = (M_INT64)"stack full";
                 err = M_MATH_STACKFULL;
                 goto out;
             }
             stack[ top ] = parse_value( arg_type, *args );
             if ( errbuf[0] != 0 )
             {
-                ret = (M_INT64)&errbuf;
                 err = M_MATH_PARSEVALUEERR;
                 goto out;
             }
@@ -601,16 +598,13 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
             if ( top < 2 )
             {
-                sprintf( errbuf,
-                         "not enough args for %s", *args );
-                ret = (M_INT64)&errbuf;
+                // not enough args for %s
                 err = M_MATH_TOOFEWARGS;
                 goto out;
             }
             if ( arg_type == ARG_DIVIDE && 
                  stack[ top-1 ] == 0 )
             {
-                ret = (M_INT64)"divide by zero";
                 err = M_MATH_DIVIDE_BY_ZERO;
                 goto out;
             }
@@ -620,7 +614,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
                                          stack[ top-1 ] );
             if ( errbuf[0] != 0 )
             {
-                ret = (M_INT64)&errbuf;
                 err = M_MATH_OP2ERR;
                 goto out;
             }
@@ -633,9 +626,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
             if ( top == 0 )
             {
-                sprintf( errbuf,
-                         "not enough args for %s", *args );
-                ret = (M_INT64)&errbuf;
+                // not enough args for %s
                 err = M_MATH_TOOFEWARGS;
                 goto out;
             }
@@ -643,7 +634,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
                                          stack[ top-1 ] );
             if ( errbuf[0] != 0 )
             {
-                ret = (M_INT64)&errbuf;
                 err = M_MATH_OP1ERR;
                 goto out;
             }
@@ -651,16 +641,13 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
         case ARG_ERR:
 
-            sprintf( errbuf, "syntax error(ARG_ERR) at '%s'", *args );
-            ret = (M_INT64)&errbuf;
+            // syntax error(ARG_ERR) at '%s'
             err = M_MATH_SYNTAX;
             goto out;
 
         default:
 
-            sprintf( errbuf, "syntax error(default) at '%s', arg_type = %d",
-                     *args, arg_type );
-            ret = (M_INT64)&errbuf;
+            // syntax error(default)
             err = M_MATH_SYNTAX;
             goto out;
         }
@@ -674,12 +661,10 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
         ret = stack[0];
         if ( top == 0 )
         {
-            ret = (M_INT64)"stack empty";
             err = M_MATH_EMPTYSTACK;
         }
         else if ( top != 1 )
         {
-            ret = (M_INT64)"stack not reduced to one item";
             err = M_MATH_STACKNOTONE;
         }
         if ( flags != NULL  && *flags & FLAGS_32BIT )
@@ -794,7 +779,6 @@ int
 m_main( int argc, char ** argv )
 {
     enum m_math_retvals err;
-    int i;
     int flags = 0;
     M_INT64 result = 0;
 
@@ -805,7 +789,7 @@ m_main( int argc, char ** argv )
 
     if ( err != M_MATH_OK )
     {
-        fprintf( stderr, "error %d: %s\n", err, (char*)(int)result );
+        fprintf( stderr, "error %d\n", err );
         goto out;
     }
 

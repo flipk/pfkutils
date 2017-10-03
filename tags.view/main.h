@@ -1,6 +1,4 @@
 
-#include <stdio.h>
-
 struct fileinfo {
     char * filename;
 };

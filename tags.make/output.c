@@ -1,6 +1,9 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include "main.h"
 
 struct tagfile {
@@ -262,7 +265,7 @@ maketags_output_finish_a_file( TAGS_OUTPUT * to, int done_so_far )
 }
 
 static int
-tag_compare( void * _a, void * _b )
+tag_compare( const void * _a, const void * _b )
 {
     struct tag * a = *(struct tag **)_a;
     struct tag * b = *(struct tag **)_b;

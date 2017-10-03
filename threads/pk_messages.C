@@ -32,7 +32,7 @@ int
 PK_Message_Manager :: create( char * name )
 {
     int qid;
-    PK_Message_Queue * nmq, * mq;
+    PK_Message_Queue * nmq, * mq = NULL;
 
     nmq = new PK_Message_Queue( name );
 
@@ -82,7 +82,7 @@ PK_Message_Manager :: destroy( int qid )
     {
         pk_msg_int * m; 
         int count = 0;
-        while ( m = mq->dequeue() )
+        while ((m = mq->dequeue()) != NULL)
         {
             // note the caveat : if you're going to destroy a 
             // msgq that isn't empty, you can only use 'new'
@@ -210,7 +210,7 @@ PK_Message_Manager :: recv( int num_qids, int * qids,
 PK_Message_Queue_List :: ~PK_Message_Queue_List( void )
 {
     PK_Message_Queue * mq;
-    while ( mq = list.dequeue_head() )
+    while ((mq = list.dequeue_head()) != NULL)
     {
         fprintf( stderr, "while deleting message queue manager: "
                  "deleting mq '%s'\n", mq->name );
@@ -226,7 +226,7 @@ PK_Message_Queue :: ~PK_Message_Queue( void )
 {
     pk_msg_int * m;
     int count = 0;
-    while ( m = messages.dequeue_head() )
+    while ((m = messages.dequeue_head()) != NULL)
     {
         delete m;
         count++;

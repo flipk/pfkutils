@@ -4,7 +4,7 @@ HDRS= recnoblock.H btree.H
 SRCS= recnoblock.C btree.C print_tree.C
 ALLSRCS= $(SRCS) test.C
 OBJS= $(SRCS:.C=.o)
-FLAGS= -O3
+FLAGS= -O3 -Wall -Werror
 INCS=  -I../threads/h -I../dll2 -I.. -I../util -I../h
 
 all: $(LIB) rbt rbto

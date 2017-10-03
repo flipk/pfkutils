@@ -1,11 +1,3 @@
-#if 0
-g++ -g3 -c test_hash.C
-g++ -g3 -c test_hash_add.C
-g++ -g3 -c test_hash_del.C
-g++ -g3 -c dll2_hash.C
-g++ test_hash.o test_hash_add.o test_hash_del.o dll2_hash.o -o th
-exit 0
-#endif
 
 #include <stdio.h>
 #include <unistd.h>

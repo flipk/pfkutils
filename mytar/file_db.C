@@ -204,7 +204,7 @@ public:
         struct datum_2_key * d2k = (struct datum_2_key *)key;
         if ( d2k->prefix_i == 'i' )
         {
-            UINT32 magic;
+            ULONG magic;
             int data_size;
             UCHAR * data_block =
                 fbn_data->get_block( datrec, &data_size, &magic );
@@ -411,7 +411,7 @@ public:
         if ( d2k->prefix_i == 'i' )
         {
             FileBlockNumber * fbn = bt->get_fbn_data();
-            UINT32 magic;
+            ULONG magic;
             int d2size;
             datum_2 * d2 = (datum_2 *)
                 fbn->get_block( datrec, &d2size, &magic );
@@ -547,7 +547,7 @@ file_db :: update_piece( UINT32 id, UINT32 piece_num,
     Btree::rec  * d3rec;
     bool          d3_created = false;
     UINT32        blockno;
-    UINT32        block_magic;
+    ULONG        block_magic;
     UCHAR       * ptr;
 
     MD5Init( &ctx );
@@ -640,7 +640,8 @@ file_db :: extract_piece( UINT32 id, UINT32 piece_num,
     }
     else
     {
-        UINT32 magic, blockno;
+        ULONG magic;
+        UINT32 blockno;
         UCHAR * ptr;
 
         blockno = d3->blockno.get();

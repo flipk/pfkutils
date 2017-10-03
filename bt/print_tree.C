@@ -115,7 +115,7 @@ btpt_main( int argc, char ** argv )
         for ( bn = 0; bn < maxbn; bn++ )
         {
             int bsize;
-            UINT32 magic;
+            ULONG magic;
             UCHAR * bp = fbn->__get_block( bn, &bsize, &magic );
             if ( bp )
             {

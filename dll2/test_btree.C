@@ -1,10 +1,3 @@
-#if 0
-set -x -e
-g++ -g3 -c test_btree.C
-g++ -g3 -c dll2_hash.C
-g++ -g3 test_btree.o dll2_hash.o -o tb
-exit 0
-#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -89,10 +82,10 @@ public:
         alloc_count = 0;
     }
     ~memory_manager(void) {
-        printf("alloc_count %d, items %d, size %d, peak %d\n",
+        printf("alloc_count %d, items %d, size %ld, peak %ld\n",
                alloc_count, 
                items.get_cnt(),
-               size, peak_size);
+               (long)size, (long)peak_size);
     }
     void * alloc(size_t sz) {
         memory_block * b = new(sz) memory_block(sz);

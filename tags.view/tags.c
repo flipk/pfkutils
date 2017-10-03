@@ -1,6 +1,11 @@
 
-#include "main.h"
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#include "main.h"
 
 static void
 bail( void )

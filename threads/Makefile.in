@@ -21,7 +21,7 @@ CPPFLAGS+= -DSUNOS
 #elifdef cygwin32
 CPPFLAGS+= -DCYGWIN
 #elifdef linux
-CPPFLAGS+= -DLINUX
+CPPFLAGS+= -DLINUX -Wall -Werror
 LINKFL+= -lrt
 #else
 #  ?

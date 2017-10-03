@@ -71,14 +71,6 @@ unlink_all_links( void )
 }
 
 static void
-bail( char *what )
-{
-    printf( "%s failed (%s)\n", what, strerror( errno ));
-    exit( 1 );
-}
-
-
-static void
 remove_privs( void )
 {
     seteuid( getuid() );
@@ -143,7 +135,7 @@ main( int argc, char ** argv )
 
     argv_zero = argv[0];
 
-    if ( prog = rindex( argv[0], '/' ))
+    if ((prog = rindex( argv[0], '/' )) != NULL)
         prog++;
     else
         prog = argv[0];

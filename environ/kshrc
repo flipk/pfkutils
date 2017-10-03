@@ -844,14 +844,17 @@ bind '^I'=complete-list
 bind '^V'=quote
 bind '^@'=set-mark-command
 
+__verbose bindings complete
+
 if __isksh ; then
     if [[ x$XCONSOLE = xyes ]] ; then
         unset XCONSOLE
 	I_AM_XCONSOLE=yes
-        xtermbar Console
+        xsetroot -solid \#203040
         cd $HOME
         xrdb -load .Xresources
         ctwm -W&
+        xtermbar Console
 	xconsole_hook
         SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,console
     else
@@ -907,9 +910,12 @@ fi
 # i don't know why that should be so.
 #
 
+__verbose starting settings
+
 set -o nolog
 set -o emacs
 set -o trackall
 set +o bgnice
 
+__verbose settings complete
 __verbose done with kshrc, enjoy your shell

@@ -18,7 +18,7 @@ PK_Semaphores :: PK_Semaphores( void )
 PK_Semaphores :: ~PK_Semaphores( void )
 {
     PK_Semaphore * s;
-    while ( s = list.dequeue_head() )
+    while ((s = list.dequeue_head()) != NULL)
     {
         fprintf( stderr, "while destroying semaphore manager: "
                  "deleted stale semaphore '%s'\n",

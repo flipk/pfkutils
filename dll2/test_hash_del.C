@@ -5,7 +5,7 @@ void
 del_entries( thing_hash * h, thing_list * l )
 {
     thing * t;
-    while ( t = l->dequeue_head() )
+    while ( (t = l->dequeue_head()) != NULL )
     {
         h->remove( t );
         delete t;

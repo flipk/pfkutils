@@ -32,8 +32,11 @@ $(TARG): $(OBJS)
 #	$(CC) $(INCS) $(DEFS) $(OPTS) -E $*.C > $*.i
 	$(CC) $(INCS) $(DEFS) $(OPTS) -c $*.C
 
+genpw.o: genpw.c
+	$(CC) -c $*.c
+
 .c.o:
-	$(CC) $(INCS) $(DEFS) -O -c $*.c
+	$(CC) $(INCS) $(DEFS) $(OPTS) -c $*.c
 
 depend: xmakefile
 

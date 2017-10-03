@@ -47,7 +47,7 @@ main( int argc, char ** argv )
 			incr_sect /= 2;
 		}
 	}
-	printf( "the size is %lld\n", cur_sect+1 );
+	printf( "the size is %lld\n", (unsigned long long)(cur_sect+1) );
 	close( fd );
 	return 0;
 }

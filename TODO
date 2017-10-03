@@ -1,4 +1,3 @@
 
- - itsfs:why does 'tar zxf somefile.tar' in a remotely mounted tree sometimes
-   produce garbage files?
+ - i2 : print kbps/mbps/fractions
 

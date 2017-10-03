@@ -9,7 +9,7 @@ class test1 : public PK_Thread {
     int set_timer( void );
     int qid;
 public:
-    test1( void ) { set_name( "test1" ); resume(); }
+    test1( void ) { set_name( (char*)"test1" ); resume(); }
 };
 
 PkMsgIntDef( tst_timr, 0x1234,
@@ -21,7 +21,7 @@ test1 :: set_timer( void )
 {
     tst_timr * t;
     t = new tst_timr;
-    t->src_q = -1;
+    t->src_q = (unsigned int)-1;
     t->dest_q = qid;
     return timer_create(5,qid,t);
 }
@@ -36,7 +36,7 @@ test1 :: entry( void )
     } m;
     int timer_id;
 
-    qid = msg_create( "q1" );
+    qid = msg_create( (char*)"q1" );
     timer_id = set_timer();
     register_fd( 0, PK_FD_Read, qid, NULL );
 

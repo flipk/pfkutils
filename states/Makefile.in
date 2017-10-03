@@ -16,6 +16,8 @@ OPTS= -O3 -DSOLARIS=1
 OPTS= -O3 -DLINUX=1
 #endif
 
+WARNS= -Wall -Werror
+
 all: $(TARG)
 
 $(TARG): $(OBJS)
@@ -41,8 +43,14 @@ tokens.h parser.c: parser.y
 	mv y.tab.h tokens.h
 #endif
 
-.c.o:
+parser.o: parser.c
 	gcc $(OPTS) -c $*.c
+
+tokenizer.o: tokenizer.c
+	gcc $(OPTS) -c $*.c
+
+.c.o:
+	gcc $(OPTS) $(WARNS) -c $*.c
 
 templates.c: $(TEMPLATES) tmpl_to_c.c
 	gcc tmpl_to_c.c -o tmpl_to_c

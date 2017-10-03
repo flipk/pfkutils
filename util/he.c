@@ -10,6 +10,12 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+
 #include "m.h"
 
 #if defined(sparc)
@@ -1000,7 +1006,7 @@ do_search( void )
         static unsigned char buf[ SBUFSZ ];
         unsigned char machine[ 80 ];  /* search state machine */
         int cur;            /* current state */
-        int i, interrupt;
+        int i=0, interrupt;
         time_t last_display_time, current_time;
 
         /*
@@ -1385,6 +1391,7 @@ do_rel_move( void )
     char formula_calc[180];
     int formlen_calc, c, i;
     M_INT64 result;
+    M_INT64 whichval = 0;
     enum m_math_retvals mathret;
 
     MAKEWIN( move_win, 12, 56 );
@@ -1460,7 +1467,6 @@ do_rel_move( void )
         if ( formula_calc[i] == '$' )
         {
             int which = formula_calc[i+1];
-            M_INT64 whichval;
             if ( which == '0' )
                 whichval = file_position;
             else if ( which >= 'a' && which <= 'z' )
@@ -1474,7 +1480,7 @@ do_rel_move( void )
                              "  re-edit (y or n) ? ", which );
                 reedit_ask:
                     wrefresh( move_win );
-                    while ( c = getch())
+                    while ((c = getch()) != 0)
                     {
                         if ( c == 'y' )
                             goto reedit;
@@ -1514,8 +1520,7 @@ do_rel_move( void )
     if ( mathret != M_MATH_OK )
     {
         /* handle math error */
-        wprintw( move_win, "  error %d: %s\n\n",
-                 mathret, (char*)(int)result );
+        wprintw( move_win, "  error %d\n\n", mathret );
         wprintw( move_win, "  re-edit (y or n) ? " );
         goto reedit_ask;
     }
@@ -1528,7 +1533,7 @@ do_rel_move( void )
              m_dump_number( result, 10 ));
     wprintw( move_win, "  do you want to go there (y or n) ? " );
     wrefresh( move_win );
-    while ( c = getch())
+    while ((c = getch()) != 0)
     {
         if ( c == 'n' )
             goto out;

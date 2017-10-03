@@ -7,13 +7,13 @@
 class test1 : public PK_Thread {
     void entry( void );
 public:
-    test1( void ) { set_name( "test %d", 1 ); resume(); }
+    test1( void ) { set_name( (char*)"test %d", 1 ); resume(); }
 };
 
 class test2 : public PK_Thread {
     void entry( void );
 public:
-    test2( void ) { set_name( "test %d", 2 ); resume(); }
+    test2( void ) { set_name( (char*)"test %d", 2 ); resume(); }
 };
 
 PkMsgIntDef( testmsg, 4,
@@ -24,8 +24,8 @@ void
 test1 :: entry( void )
 {
     int qids[2], qi;
-    qids[0] = msg_lookup( "q %d", 1 );
-    qids[1] = msg_lookup( "q %d", 2 );
+    qids[0] = msg_lookup( (char*)"q %d", 1 );
+    qids[1] = msg_lookup( (char*)"q %d", 2 );
 
     union {
         pk_msg_int * m;
@@ -40,15 +40,15 @@ test1 :: entry( void )
             qi, m.m->type, m.tm->a );
     delete m.m;
     m.m = msg_recv( 2, qids, &qi, 5 );
-    printf( "received ptr = %#x (expected null)\n", m.m);
+    printf( "received ptr = %#lx (expected null)\n", (unsigned long)m.m);
 }
 
 void
 test2 :: entry( void )
 {
     int qids[2];
-    qids[0] = msg_lookup( "q %d", 1 );
-    qids[1] = msg_lookup( "q %d", 2 );
+    qids[0] = msg_lookup( (char*)"q %d", 1 );
+    qids[1] = msg_lookup( (char*)"q %d", 2 );
 
     testmsg * m;
     m = new testmsg;
@@ -90,8 +90,8 @@ main()
 {
     new PK_Threads( 10 );
 
-    int qid1 = PK_Thread::msg_create( "q %d", 1 );
-    int qid2 = PK_Thread::msg_create( "q %d", 2 );
+    int qid1 = PK_Thread::msg_create( (char*)"q %d", 1 );
+    int qid2 = PK_Thread::msg_create( (char*)"q %d", 2 );
 
     new test3;
     th->run();

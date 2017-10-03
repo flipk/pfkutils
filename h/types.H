@@ -42,6 +42,7 @@
 #endif
 
 #define UINT    unsigned int
+#define ULONG   unsigned long
 #define UINT32  unsigned int
 #define UINT64  unsigned long long
 #define UINT16  unsigned short

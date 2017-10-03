@@ -1,6 +1,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "wordentry.h"
 #include "parse_actions.h"
 #include "machine.h"

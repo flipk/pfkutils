@@ -665,15 +665,15 @@ public:
     void _printtree( NODE * n )
         {
             int i;
-            printf( "node at %#x, numkeys = %d, root = %d, leaf = %d\n",
-                    n, n->numkeys, n->root, n->leaf );
+            printf( "node at %#lx, numkeys = %d, root = %d, leaf = %d\n",
+                    (unsigned long)n, n->numkeys, n->root, n->leaf );
             for ( i = 0 ; i < n->numkeys; i++ )
             {
                 if ( n->nodes[i] )
                     _printtree( n->nodes[i] );
                 if ( n->keys[i] )
-                    printf( "node at %#x index %d -> %s\n",
-                            n, i, 
+                    printf( "node at %#lx index %d -> %s\n",
+                            (unsigned long)n, i, 
                             BTREE_Key_Comparator::key_format(n->keys[i]));
             }
             if ( n->nodes[i] )

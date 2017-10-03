@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <string.h>
 
 /* 
  * This program takes the input string and puts it into the 

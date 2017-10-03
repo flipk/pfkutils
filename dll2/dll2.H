@@ -47,10 +47,10 @@ private:
     T * prev;
     void * onlist;
 #if DLL2_CHECKSUMS
-    unsigned int checksum;
-    unsigned int calc_checksum(void) {
-        return 0xb09d3086U + (unsigned int) next +
-            (unsigned int) prev + (unsigned int) onlist;
+    unsigned long checksum;
+    unsigned long calc_checksum(void) {
+        return 0xb09d3086U + (unsigned long) next +
+            (unsigned long) prev + (unsigned long) onlist;
     }
     void validate(void) {
         if ( checksum != calc_checksum())
@@ -87,10 +87,10 @@ class LList
     T * tail;
     int cnt;
 #if DLL2_CHECKSUMS
-    unsigned int checksum;
-    unsigned int calc_checksum(void) {
-        return 0x2df692f8U + (unsigned int) head +
-            (unsigned int) tail + (unsigned int) cnt;
+    unsigned long checksum;
+    unsigned long calc_checksum(void) {
+        return 0x2df692f8U + (unsigned long) head +
+            (unsigned long) tail + (unsigned long) cnt;
     }
     void validate(void) {
         if ( checksum != calc_checksum())
@@ -116,8 +116,7 @@ public:
         LListLinks<T> * ll = & x->links[instance];
         ll->validate();
         if ( onlist( x )) 
-            DLL2BAIL(( "ERROR LLIST ENTRY ALREADY ON LIST %#x\n",
-                   (int)ll->onlist ));
+            DLL2BAIL(( "ERROR LLIST ENTRY ALREADY ON LIST\n" ));
         ll->onlist = (void*)this;
         ll->next = NULL;
         ll->prev = tail;
@@ -138,8 +137,7 @@ public:
         LListLinks<T> * ll = & x->links[instance];
         ll->validate();
         if ( !onthislist( x ))
-            DLL2BAIL(( "ERROR LLIST ENTRY NOT ON THIS LIST %#x != %#x\n",
-                   (int)ll->onlist, (int)this ));
+            DLL2BAIL(( "ERROR LLIST ENTRY NOT ON THIS LIST\n" ));
         ll->onlist = 0;
         if ( ll->next )
         {

@@ -1,8 +1,11 @@
 
-#include "main.h"
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "main.h"
 
 /* return 1 if match */
 int

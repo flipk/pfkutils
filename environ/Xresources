@@ -55,12 +55,12 @@ XTerm.VT100.Translations: \
    Ctrl <Key>8:     string(0x01) string("8")\n\
    Ctrl <Key>9:     string(0x01) string("9")
 
-!!
-!! This is where zwgc puts zwrites.  
-!! You can actually configure it so different kinds of zwrites
-!! go to different locations on the screen...
-!! but I don't remember how to do that.
-!!
+/*
+ * This is where zwgc puts zwrites.  
+ * You can actually configure it so different kinds of zwrites
+ * go to different locations on the screen...
+ * but I don't remember how to do that.
+ */
 
 Zwgc*geometry: +c+c
 Zwgc*reverseStack: True

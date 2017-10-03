@@ -1,4 +1,7 @@
 
+#include <string.h>
+#include <stdio.h>
+
 #include "main.h"
 
 /**/   char viewtags_input_line[ MAXLINE ];

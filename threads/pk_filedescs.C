@@ -71,6 +71,8 @@ PK_File_Descriptor_Manager :: register_fd( int fd, PK_FD_RW rw,
     // awaken the thread
     char c = 1;
     write(wakeup_pipe[1], &c, 1);
+
+    return pkfdid;
 }
 
 void *

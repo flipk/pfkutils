@@ -29,7 +29,7 @@ class FileBlockNumber {
     int     reserved_bits;
 
     static const int   block_signature = 0x504b;  // "PK"
-    static const int  user_buffer_flag = 1;
+    static const ULONG user_buffer_flag = 1;
 
     // cache parameters in seconds
     static const int         sync_time =  3;
@@ -58,7 +58,7 @@ class FileBlockNumber {
         return recs;
     }
     UCHAR * _get_block( UINT32 blockno, int *size,
-                        UINT32 *magic, bool for_write, bool do_error );
+                        ULONG *magic, bool for_write, bool do_error );
 
     static int compare( page ** a, page ** b );
 
@@ -80,19 +80,19 @@ public:
     int max_block_size( void ) { return (65536 - size_overhead); }
     UINT32 alloc( int bytes );   // return a blockno
     void free( UINT32 blockno );
-    UCHAR * __get_block( UINT32 blockno, int *size, UINT32 *magic ) {
+    UCHAR * __get_block( UINT32 blockno, int *size, ULONG *magic ) {
         return _get_block( blockno, size, magic, false, false );
     }
-    UCHAR * get_block( UINT32 blockno, int *size, UINT32 *magic ) {
+    UCHAR * get_block( UINT32 blockno, int *size, ULONG *magic ) {
         return _get_block( blockno, size, magic, false, true );
     }
-    UCHAR * get_block( UINT32 blockno, UINT32 *magic ) {
+    UCHAR * get_block( UINT32 blockno, ULONG *magic ) {
         return _get_block( blockno, NULL, magic, false, true );
     }
-    UCHAR * get_block_for_write( UINT32 blockno, int *size, UINT32 *magic ) {
+    UCHAR * get_block_for_write( UINT32 blockno, int *size, ULONG *magic ) {
         return _get_block( blockno, size, magic, true, true );
     }
-    void unlock_block( UINT32 magic, bool dirty );
+    void unlock_block( ULONG magic, bool dirty );
     // returns number of pages written
     int flush( void );
 

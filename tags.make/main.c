@@ -3,6 +3,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "main.h"
 
@@ -13,7 +15,7 @@ calc_bytes_used( char ** translation, char * startbrk )
     char *endbrk;
     *translation = "";
     endbrk = sbrk( 0 );
-    bytes = (int)endbrk - (int)startbrk;
+    bytes = (long)endbrk - (long)startbrk;
     if ( bytes > 1e7 )
     {
         bytes /= 1e6;
@@ -35,7 +37,7 @@ maketags_main( int argc, char ** argv )
 {
     TAGS_OUTPUT * out;
     FILE * in;
-    char * startbrk, * endbrk;
+    char * startbrk;
     int i;
     time_t t, t2, starttime;
     int numfiles;
@@ -73,19 +75,19 @@ maketags_main( int argc, char ** argv )
         fclose( in );
         maketags_output_finish_a_file( out, i );
 
-#define PRINTUSE() \
-        { \
-            int bytes; \
-            char * translation; \
- \
-            bytes = calc_bytes_used( &translation, startbrk ); \
-            t = t2; \
-            printf( "\r                          " \
-                    "                                      \r" \
+#define PRINTUSE()                                                      \
+        {                                                               \
+            int bytes;                                                  \
+            char * translation;                                         \
+                                                                        \
+            bytes = calc_bytes_used( &translation, startbrk );          \
+            t = t2;                                                     \
+            printf( "\r                          "                      \
+                    "                                      \r"          \
                     "%d seconds : %d of %d files, %d tags %d %sbytes ", \
-                    time( NULL ) - starttime, \
-                    i, numfiles, out->numtags, bytes, translation ); \
-            fflush( stdout ); \
+                    (int)(time( NULL ) - starttime),                    \
+                    i, numfiles, out->numtags, bytes, translation );    \
+            fflush( stdout );                                           \
         }
 
         if ( time( &t2 ) != t )
@@ -101,7 +103,6 @@ maketags_main( int argc, char ** argv )
     maketags_sort_output( out );
 
     {
-        int numtags = out->numtags;
         char * translation;
         int bytes;
 

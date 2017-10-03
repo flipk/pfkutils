@@ -3,9 +3,12 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
-#include "sudo.h"
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <grp.h>
 
-char * getenv( char * );
+#include "sudo.h"
 
 int
 sudo_main( int argc, char ** argv )
@@ -66,7 +69,7 @@ sudo_main( int argc, char ** argv )
     putenv( envstr );
 
     if (argc == 1) 
-        execl(getenv("SHELL"),"sh",0);
+        execl(getenv("SHELL"), "sh", NULL);
     else
         execvp(argv[1], argv+1);
 

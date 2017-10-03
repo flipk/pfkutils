@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <ctype.h>
 
 #ifndef __FreeBSD__
 int

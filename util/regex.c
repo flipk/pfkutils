@@ -134,29 +134,7 @@
 #   endif
 #  endif
 
-/* This is the normal way of making sure we have a bcopy and a bzero.
-   This is used in most programs--a few other programs avoid this
-   by defining INHIBIT_STRING_HEADER.  */
-#  ifndef INHIBIT_STRING_HEADER
-#   if defined HAVE_STRING_H || defined STDC_HEADERS || defined _LIBC
-#    include <string.h>
-#    ifndef bzero
-#     ifndef _LIBC
-#      define bzero(s, n)	(memset (s, '\0', n), (s))
-#     else
-#      define bzero(s, n)	__bzero (s, n)
-#     endif
-#    endif
-#   else
-#    include <strings.h>
-#    ifndef memcmp
-#     define memcmp(s1, s2, n)	bcmp (s1, s2, n)
-#    endif
-#    ifndef memcpy
-#     define memcpy(d, s, n)	(bcopy (s, d, n), (d))
-#    endif
-#   endif
-#  endif
+#include <string.h>
 
 /* Define the syntax stuff for \<, \>, etc.  */
 

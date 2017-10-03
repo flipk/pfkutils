@@ -13,7 +13,7 @@ PK_File_Descriptor_Thread :: PK_File_Descriptor_Thread(
     PK_File_Descriptor_Manager * _mgr )
 {
     mgr = _mgr;
-    set_name( "PK_FD" );
+    set_name( (char*)"PK_FD" );
     resume();
 }
 
@@ -88,7 +88,7 @@ PK_File_Descriptor_Thread :: entry( void )
                     m->fd = fd->fd;
                     m->rw = (PK_FD_RW)rw;
                     m->obj = fd->obj;
-                    m->src_q = -1;
+                    m->src_q = (unsigned int)-1;
                     m->dest_q = fd->qid;
 
                     if (msg_send(fd->qid, m) == false)

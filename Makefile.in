@@ -71,7 +71,7 @@ CPPFLAGS+= -DFREEBSD
 #elifdef cygwin32
 CPPFLAGS+= -DCYGWIN
 #elifdef linux
-CPPFLAGS+= -DLINUX
+CPPFLAGS+= -DLINUX -Wall -Werror
 #else
 CPPFLAGS+=
 #endif
