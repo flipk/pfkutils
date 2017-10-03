@@ -44,17 +44,11 @@ private:
 
     friend class Inode_remote;
 
-    void init_common( uchar * _path );
-
     Inode         *   _create     ( int dirid,
                                     uchar * name, uchar * target,
                                     inode_file_type nftype, bool hardlink );
 
 public:
-    Inode_remote_tree             ( int tree_id,
-                                    uchar * path,
-                                    u_int remote_addr,
-                                    int remote_port );
     Inode_remote_tree             ( int tree_id,
                                     uchar * path, int fd );
     virtual ~Inode_remote_tree    ( void );

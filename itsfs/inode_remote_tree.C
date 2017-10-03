@@ -29,27 +29,10 @@
 
 Inode_remote_tree :: Inode_remote_tree( int tree_id,
                                         uchar * _path,
-                                        u_int remote_addr,
-                                        int remote_port )
-    : Inode_tree( INODE_REMOTE, tree_id ),
-      rict( remote_addr, remote_port ),
-      hashlru( HASH_SIZE )
-{
-    init_common( _path );
-}
-
-Inode_remote_tree :: Inode_remote_tree( int tree_id,
-                                        uchar * _path,
                                         int fd )
     : Inode_tree( INODE_REMOTE, tree_id ),
       rict( fd ),
       hashlru( HASH_SIZE )
-{
-    init_common( _path );
-}
-
-void
-Inode_remote_tree :: init_common( uchar * _path )
 {
     uchar * p;
     bool dummy;
