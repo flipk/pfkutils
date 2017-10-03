@@ -242,11 +242,11 @@ main( int argc, char ** argv )
     if (argc != 2)
     {
     bail:
-        fprintf(stderr, "usage: t2 getid|getcnt|put\n");
+        fprintf(stderr, "usage: t2 getid|getcnt|put|del\n");
         return 1;
     }
 
-    enum { OP_GETID, OP_GETCNT, OP_PUT } op;
+    enum { OP_GETID, OP_GETCNT, OP_PUT, OP_DEL } op;
 
     if (strcmp(argv[1],"getid")==0)
         op = OP_GETID;
@@ -254,6 +254,8 @@ main( int argc, char ** argv )
         op = OP_GETCNT;
     else if (strcmp(argv[1],"put")==0)
         op = OP_PUT;
+    else if (strcmp(argv[1],"del")==0)
+        op = OP_DEL;
     else
         goto bail;
 
@@ -371,6 +373,12 @@ main( int argc, char ** argv )
                 }
             }
         }
+    }
+    else if (op == OP_DEL)
+    {
+        btcount.alloc();
+        btcount.d->count.set(1);
+        printf( "bt->del returns %d\n", bt->del( &btcount ));
     }
 
     btid.release();

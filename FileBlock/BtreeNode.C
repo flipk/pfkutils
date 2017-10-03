@@ -2,6 +2,8 @@
 /** \file BtreeNode.C
  * \brief implementation of BTNode and BTNodeCache objects
  * \author Phillip F Knaack
+ * \todo remove keystart from node items because it is assumed
+ *    keys are contiguous.
  */
 
 #include "Btree.H"
@@ -203,5 +205,8 @@ BTNodeCache :: delete_node( BTNode * n )
     }
 
     hash.remove(n);
+    UINT32 fbn = n->get_fbn();
     delete n;
+    // xxx verify this is correct!
+    fbi->free(fbn);
 }

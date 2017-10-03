@@ -528,8 +528,10 @@ out:
 
 //virtual
 bool
-BtreeInternal :: del( _BTDatum * key  )
+BtreeInternal :: del( _BTDatum * _key  )
 {
+    bool ret = false;
+
     if (iterate_inprogress)
     {
         fprintf(stderr, "ERROR: cannot modify database while iterate "
@@ -537,9 +539,466 @@ BtreeInternal :: del( _BTDatum * key  )
         exit(1);
     }
 
-    /** \todo implement */
+    int keysz = _key->get_size();
+    BTKey * key = new(keysz) BTKey(keysz);
 
-    return false;
+    memcpy(key->data, _key->get_ptr(), keysz);
+
+    nodewalker * nodes = NULL, * nw = NULL;
+    bool exact;
+    int idx;
+    UINT32 curfbn;
+    BTNode * curn;
+
+    curfbn = info.d->root_fbn.get();
+    curn = node_cache->get(curfbn);
+
+    // begin walking down the tree looking for the
+    // item. at each node, store a pointer and index
+    // to the node in the nodstore.
+    // if we find an exact match, bail out even if its
+    // not the leaf.
+
+    while(1)
+    {
+        idx = walknode( curn, key, &exact );
+        nodes = new nodewalker(nodes, curfbn, curn, idx);
+        if (exact || curn->leaf)
+            break;
+        curfbn = curn->ptrs[idx];
+        curn = node_cache->get(curfbn);
+    }
+
+    // if we didn't find an exact match, unlock all nodes
+    // in the nodstore and return failure code.
+
+    if (!exact)
+    {
+        while(nodes)
+        {
+            nw = nodes;
+            nodes = nw->next;
+            node_cache->release(nw->node);
+            delete nw;
+        }
+        delete key;
+        return false;
+    }
+
+    // go to the right on this last node.
+    nodes->idx ++;
+
+    // record which node contains the deleted item.
+    BTNode * foundn = curn;
+    int foundnindex = idx;
+
+    // free the item.
+    fbi->free( curn->datas[idx] );
+    delete curn->keys[idx];
+    curn->keys[idx] = NULL;
+
+    // if we're not at the leaf, continue walking down to the 
+    // leaf, and store the path we used to get there. the first
+    // time, go to the right, from then on go to leftmost.
+    // this way we can end up at the smallest node to the right
+    // of the target (for pulling up).
+
+    bool _first = true;
+    while ( !curn->leaf )
+    {
+        int fetchwhich = 0;
+        if ( _first )
+        {
+            _first = false;
+            fetchwhich = idx + 1;
+        }
+        curfbn = curn->ptrs[fetchwhich];
+        curn = node_cache->get(curfbn);
+        nodes = new nodewalker(nodes, curfbn, curn, 0);
+        idx = 0;
+    }
+
+    // if we've walked down to a leaf where the deleted item
+    // was in a nonleaf, pull up the smallest leaf item into
+    // the deleted item's slot.
+
+    if (foundn != curn)
+    {
+        foundn->keys[foundnindex] = curn->keys[idx];
+        foundn->datas[foundnindex] = curn->datas[idx];
+        foundn->mark_dirty();
+        curn->mark_dirty();
+    }
+
+    // now in the leaf, slide over the remaining items 
+    // to take up the space of the item that was 
+    // removed or deleted.
+    // don't need to mess with ptrs because we know
+    // that this is a leaf.
+
+    int i;
+    for ( i = idx; i < ORDER_MO; i++ )
+    {
+        curn->keys[i] = curn->keys[i+1];
+        curn->datas[i] = curn->datas[i+1];
+    }
+
+    // clear out the right-hand slot left behind by the slide.
+
+    curn->keys[ORDER_MO-1] = NULL;
+    curn->datas[ORDER_MO-1] = 0;
+    curn->numitems --;
+    curn->mark_dirty();
+
+    ret = true;
+
+    bool oldrootfree = false;
+    UINT32 oldrootfbn = 0;
+
+    // start analyzing nodes for redistribution.
+    // return back up the list of nodes until we 
+    // no longer need to steal or coalesce.
+
+    nw = nodes;
+    while(1)
+    {
+        BTNode * parent;
+        int parentidx;
+        BTNode * lsib = NULL; // left sibling
+        BTNode * rsib = NULL; // right sibling
+        UINT32 lfbn = 0, rfbn = 0; // left and right block ids
+        enum sibwho { SIB_NONE, SIB_LEFT, SIB_RIGHT };
+        sibwho whichsib_steal = SIB_NONE;
+        sibwho whichsib_coalesce = SIB_NONE;
+
+        curn = nw->node;
+        curfbn = nw->fbn;
+
+        if (curn->numitems >= HALF_ORDER  ||  curn->root)
+            break;
+
+        nw = nw->next;
+        if (!nw)
+        {
+            fprintf(stderr,"Btree::delete: case that should never happen!\n");
+            break;
+        }
+
+        parent = nw->node;
+        parentidx = nw->idx;
+
+        // check left sib -- if more than half full we can use 
+        // left sib's rightmost entry to steal; if its only
+        // exactly half full, mark it as candidate for coalescing.
+
+        // first check that we actually have a left sib.
+        if (parentidx > 0)
+        {
+            lfbn = parent->ptrs[parentidx-1];
+            lsib = node_cache->get(lfbn);
+            if (lsib->numitems > HALF_ORDER)
+                whichsib_steal = SIB_LEFT;
+            else
+                whichsib_coalesce = SIB_LEFT;
+        }
+
+        // check right sib -- if more than half full we can use
+        // right sib's leftmost entry to steal. if its only half
+        // full, mark it as candidate for coalescing.
+
+        // if we can steal from the left, don't bother
+        // looking to the right. then check that we
+        // actually have a right sib.
+        if (whichsib_steal == SIB_NONE   &&
+            parentidx < parent->numitems)
+        {
+            rfbn = parent->ptrs[parentidx+1];
+            rsib = node_cache->get(rfbn);
+            if (rsib->numitems > HALF_ORDER)
+                whichsib_steal = SIB_RIGHT;
+            else
+                whichsib_coalesce = SIB_RIGHT;
+        }
+
+        if ( whichsib_steal == SIB_NONE && 
+             whichsib_coalesce == SIB_NONE )
+        {
+            // error! if this ever happens, debug it!
+            fprintf( stderr,
+                     "Btree::delete : can't steal or coalesce! debug me\n" );
+            break;
+        }
+
+        if (whichsib_steal != SIB_NONE)
+        {
+            // steal! and disable coalescing.
+            whichsib_coalesce = SIB_NONE;
+
+            switch ( whichsib_steal )
+            {
+            case SIB_LEFT:
+                // since we're going to the left, 
+                // we have to adjust parentindex so that it
+                // points to the data item which pivots l from r
+                parentidx--;
+
+                // first slide over items in curnod to make room for elt.
+                for (i=ORDER_MO; i > 0; i--)
+                {
+                    if (i != ORDER_MO)
+                    {
+                        curn->keys[i] = curn->keys[i-1];
+                        curn->datas[i] = curn->datas[i-1];
+                    }
+                    curn->ptrs[i] = curn->ptrs[i-1];
+                }
+
+                // pull down pivot from parent
+
+                curn->keys[0] = parent->keys[parentidx];
+                curn->datas[0] = parent->datas[parentidx];
+                curn->numitems ++;
+
+                // steal item from left sib and put in parent node.
+
+                i = lsib->numitems;
+                parent->keys[parentidx] = lsib->keys[i-1];
+                parent->datas[parentidx] = lsib->datas[i-1];
+
+                // and steal pointer too
+
+                curn->ptrs[0] = lsib->ptrs[i];
+                lsib->numitems--;
+
+                // clear out now-unused slots in sibling
+
+                lsib->keys[i-1] = NULL;
+                lsib->datas[i-1] = 0;
+                lsib->ptrs[i] = 0;
+
+                lsib->mark_dirty();
+                curn->mark_dirty();
+                parent->mark_dirty();
+
+                // done!
+                break;
+
+            case SIB_RIGHT:
+                // pull down pivot item from parent down into curnod
+
+                i = curn->numitems;
+                curn->keys[i] = parent->keys[parentidx];
+                curn->datas[i] = parent->datas[parentidx];
+
+                // pull right sib's smallest item up into parent
+
+                parent->keys[parentidx] = rsib->keys[0];
+                parent->datas[parentidx] = rsib->datas[0];
+
+                // grab lowest pointer in right sib for curnod
+
+                curn->ptrs[i+1] = rsib->ptrs[0];
+                curn->numitems ++;
+
+                // slide down items in right sib
+
+                for ( i = 0; i < ORDER_MO; i++ )
+                {
+                    if ( i != (ORDER_MO-1))
+                    {
+                        rsib->keys[i] = rsib->keys[i+1];
+                        rsib->datas[i] = rsib->datas[i+1];
+                    }
+                    rsib->ptrs[i] = rsib->ptrs[i+1];
+                }
+
+                rsib->numitems --;
+
+                // clear out unused slot in sib
+
+                i = rsib->numitems;
+                rsib->keys[i] = NULL;
+                rsib->datas[i] = 0;
+                rsib->ptrs[i+1] = 0;
+
+                rsib->mark_dirty();
+                curn->mark_dirty();
+                parent->mark_dirty();
+
+                // done!
+                break;
+
+            case SIB_NONE:
+                // nothing; only here to satisfy compiler.
+                break;
+            }
+        }
+
+        if (whichsib_coalesce != SIB_NONE)
+        {
+            BTNode * l = NULL, * r = NULL;
+
+            switch ( whichsib_coalesce )
+            {
+            case SIB_LEFT:
+                l = lsib;
+                r = curn;
+                // since we're going to the left, 
+                // we have to adjust parentindex so that it
+                // points to the data item which pivots l from r
+                parentidx--;
+                break;
+
+            case SIB_RIGHT:
+                l = curn;
+                r = rsib;
+                // in this case parentindex already points to
+                // the item which pivots l from r
+                break;
+
+            case SIB_NONE:
+                // nothing; only here to satisfy compiler.
+                break;
+            }
+
+            // slide items in r all the way to the right.
+
+            int nr = r->numitems;
+            int nl = l->numitems;
+
+            int s = ORDER_MO - nr;
+            for (i=nr; i >= 0; i--)
+            {
+                if (i != nr)
+                {
+                    r->keys[s+i] = r->keys[i];
+                    r->datas[s+i] = r->datas[i];
+                }
+                r->ptrs[s+i] = r->ptrs[i];
+            }
+
+            // suck all items of l into left half
+            // of r. adjust ptrs in parent.
+
+            for ( i = 0; i < nl; i++ )
+            {
+                r->keys[i] = l->keys[i];
+                r->datas[i] = l->datas[i];
+                r->ptrs[i] = l->ptrs[i];
+            }
+
+            // there's one more pointer to get.
+            // also get the pivot item from the parent.
+
+            r->ptrs[i] = l->ptrs[i];
+            r->keys[i] = parent->keys[parentidx];
+            r->datas[i] = parent->datas[parentidx];
+
+            // adjust item count.  this node is full!
+            // (a half-full node plus a node which is 1 less than
+            // half full, plus one item from parent node, makes a
+            // full node.)
+
+            r->numitems = ORDER_MO;
+
+            // slide parent items around.
+
+            for ( i = parentidx; i < (ORDER_MO-1); i++ )
+            {
+                parent->keys[i] = parent->keys[i+1];
+                parent->datas[i] = parent->datas[i+1];
+                parent->ptrs[i] = parent->ptrs[i+1];
+            }
+
+            // and one more ptr
+            parent->ptrs[i] = parent->ptrs[i+1];
+
+            // clear out unused positions
+
+            parent->keys[i] = NULL;
+            parent->datas[i] = 0;
+            parent->ptrs[i+1] = 0;
+
+            // if parent is root and size hits zero,
+            // change root pointer in bti, and decrease depth
+
+            parent->numitems--;
+            if (parent->numitems == 0)
+            {
+                if (parent->root == false)
+                {
+                    // should not happen!
+                    fprintf( stderr,
+                             "Btree::delete : error! nonroot node shrunk!\n" );
+                }
+                oldrootfbn = nw->fbn;
+                info.d->root_fbn.set( curfbn );
+                info.d->depth.set( info.d->depth.get() - 1 );
+                info.d->numnodes.set( info.d->numnodes.get() - 1 );
+                r->root = true;
+                oldrootfree = true;
+            }
+
+            parent->mark_dirty();
+            curn->mark_dirty();
+
+            // delete sib
+
+            switch ( whichsib_coalesce )
+            {
+            case SIB_LEFT:
+                node_cache->delete_node( l );
+                lsib = NULL;
+                break;
+
+            case SIB_RIGHT:
+                // can't delete l, because l is curnod.
+                // instead, copy contents over and rename.
+                for (i=0; i < r->numitems; i++)
+                {
+                    curn->keys[i] = r->keys[i];
+                    curn->datas[i] = r->datas[i];
+                    curn->ptrs[i] = r->ptrs[i];
+                }
+                // and one more ptr.
+                curn->ptrs[i] = r->ptrs[i];
+                node_cache->delete_node( r );
+                rsib = NULL;
+                parent->ptrs[parentidx] = curn->get_fbn();
+                break;
+
+            case SIB_NONE:
+                // satisfy bitchy compiler.
+                break;
+            }
+
+            info.d->numnodes.set( info.d->numnodes.get() - 1 );
+        }
+
+        if (lsib)
+            node_cache->release(lsib);
+        if (rsib)
+            node_cache->release(rsib);
+    }
+
+    while (nodes)
+    {
+        nw = nodes;
+        nodes = nw->next;
+        node_cache->release(nw->node);
+        delete nw;
+    }
+
+    if (oldrootfree)
+    {
+        curn = node_cache->get(oldrootfbn);
+        node_cache->delete_node(curn);
+    }
+
+    info.d->numrecords.set( info.d->numrecords.get() - 1 );
+
+    delete key;
+    return ret;
 }
 
 bool
