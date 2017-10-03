@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
+#include <fcntl.h>
 
 #include "fd_mgr.H"
 #include "ipipe_factories.H"
@@ -51,12 +52,12 @@ hostname_to_ipaddr( char * host, void * addr )
     }
 }
 
+extern "C"
 int
-main( int argc,  char ** argv )
+i2_main( int argc,  char ** argv )
 {
     bool stats    = false;
     bool verbose  = false;
-    bool no_stdin = false;
     bool rcvunz   = false;
     bool txz      = false;
     bool tcpgate  = false;
@@ -81,14 +82,14 @@ main( int argc,  char ** argv )
     {
         switch ( ch )
         {
-        case 's':  stats    = true;    break;
-        case 'v':  verbose  = true;    break;
-        case 'n':  no_stdin = true;    break;
-        case 'f':  tcpgate  = true;    break;
-        case 'd':  debug    = true;    break;
-        case 'z':  zarg     = optarg;  break;
-        case 'i':  inp_file = optarg;  break;
-        case 'o':  out_file = optarg;  break;
+        case 's':  stats    = true;        break;
+        case 'v':  verbose  = true;        break;
+        case 'n':  inp_file = "/dev/null"; break;
+        case 'f':  tcpgate  = true;        break;
+        case 'd':  debug    = true;        break;
+        case 'z':  zarg     = optarg;      break;
+        case 'i':  inp_file = optarg;      break;
+        case 'o':  out_file = optarg;      break;
         default:   fprintf( stderr, "%s\n", help_msg ); exit( 1 );
         }
     }
@@ -98,7 +99,7 @@ main( int argc,  char ** argv )
 
     if ( tcpgate )
     {
-        no_stdin = true;
+        inp_file = "/dev/null";
         if ( stats )
         {
             fprintf( stderr,
@@ -124,8 +125,36 @@ main( int argc,  char ** argv )
                 exit( 1 );
             }
 
+    if ( inp_file )
+    {
+        int cc;
+        close( 0 );
+        cc = open( inp_file, O_RDONLY );
+        if ( cc != 0 )
+        {
+            fprintf( stderr,
+                     "unable to open '%s' as stdin (%d,%d:%s)\n",
+                     inp_file, cc, errno, strerror( errno ));
+            exit( 1 );
+        }
+    }
+
+    if ( out_file )
+    {
+        int cc;
+        close( 1 );
+        cc = open( out_file, O_WRONLY | O_CREAT, 0644 );
+        if ( cc != 1 )
+        {
+            fprintf( stderr,
+                     "unable to open '%s' as stdout (%d,%d:%s)\n",
+                     inp_file, cc, errno, strerror( errno ));
+            exit( 1 );
+        }
+    }
+
     fd_mgr         mgr( debug, 1 );
-    fd_interface * fdi;
+    fd_interface * fdi = NULL;
 
     stats_init( &mgr,
                 (!rcvunz && !txz),  // short form if no libz involved
@@ -155,6 +184,8 @@ main( int argc,  char ** argv )
             ipipe_new_connection * inc = new ipipe_proxy_factory( &sa );
             fdi = new ipipe_acceptor( listen_port, inc );
 
+            mgr.register_fd( fdi );
+
             argc -= 3;
             argv += 3;
         }
@@ -167,6 +198,7 @@ main( int argc,  char ** argv )
             ipipe_new_connection * inc =
                 new ipipe_forwarder_factory( rcvunz, txz );
             fdi = new ipipe_acceptor( port, inc );
+            mgr.register_fd( fdi );
         }
         else if ( argc == 2 )
         {
@@ -182,6 +214,7 @@ main( int argc,  char ** argv )
             ipipe_new_connection * inc =
                 new ipipe_forwarder_factory( rcvunz, txz );
             fdi = new ipipe_connector( &sa, inc );
+            mgr.register_fd( fdi );
         }
         else
         {
@@ -190,7 +223,6 @@ main( int argc,  char ** argv )
         }
     }
 
-    mgr.register_fd( fdi );
     mgr.loop();
     stats_done();
 

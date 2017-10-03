@@ -57,6 +57,7 @@ ipipe_connector :: select_for_read( fd_mgr * )
 fd_interface :: rw_response
 ipipe_connector :: read ( fd_mgr * )
 {
+    // error
     return DEL;
 }
 
@@ -74,12 +75,17 @@ fd_interface :: rw_response
 ipipe_connector :: write( fd_mgr * mgr )
 {
     int cc;
-    char buf[1];
-    // BIG XXX BIG XXX    does this work on other OS's ???
-    cc = ::read( fd, buf, 0 );
+    struct sockaddr_in sa;
+    socklen_t salen = sizeof(sa);
+
+    cc = getpeername( fd, (struct sockaddr *)&sa, &salen );
+
     if ( cc < 0 )
-        fprintf( stderr, "connect: %s\n", strerror( errno ));
-    else
-        (void) connection_factory->new_conn( mgr, fd );
+    {
+        fprintf( stderr, "connect: Unable to connect\n" );
+        return DEL;
+    }
+
+    (void) connection_factory->new_conn( mgr, fd );
     return DEL;
 }

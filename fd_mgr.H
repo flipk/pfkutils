@@ -5,7 +5,7 @@
 #define DLL2_INCLUDE_LOGNEW 0
 #define DLL2_CHECKSUMS      1
 #define DLL2_INCLUDE_BTREE  0
-#include "dll2.H"
+#include "dll2/dll2.H"
 
 #include <stdio.h>
 
