@@ -37,22 +37,25 @@ AutoFocusToTransients
 AlwaysShowWindowWhenMovingFromWorkspaceManager
 
 #           geometry        hgrav vgrav grid  iconjust iconregjust iconregalign
-IconRegion "280x60+125+60"  North West  10 10  "left"   "left"     "top"
-IconRegion "900x90+410+25"  North West  10 10  "left"   "left"     "top"
+IconRegion "945x64+246+20"  North West  10 10  "left"   "left"     "top"
 
 AutoSqueeze { "autosqueeze" }
 
 WorkSpaceManagerGeometry "120x60+0+25" 2
 WorkSpaces {
 #	space buttonbg  buttonfg  rootbg
-	"1" { "#203040" "#ffffff" "#203040" }
-	"2" { "#203040" "#ffffff" "#203040" }
-	"3" { "#203040" "#ffffff" "#203040" }
-	"4" { "#203040" "#ffffff" "#203040" }
+	"1" { "#203040" "#ffffff" }
+	"2" { "#203040" "#ffffff" }
+	"3" { "#203040" "#ffffff" }
+	"4" { "#203040" "#ffffff" }
+	"5" { "#203040" "#ffffff" }
+	"6" { "#203040" "#ffffff" }
+	"7" { "#203040" "#ffffff" }
+	"8" { "#203040" "#ffffff" }
 }
 
 NoTitle {
-	"Emacs Minibuffer"
+	"Emacs Minibuffer*"
 	"Doxtrms"
 	"WorkSpaceManager"
 	"XTermScreen"
@@ -150,8 +153,8 @@ Button2 =   : iconmgr     : f.iconify
 
 "Left"	= m : root|window|title : f.prevworkspace
 "Right"	= m : root|window|title : f.nextworkspace
-"Down"	= m : root              : f.downworkspace
-"Up"	= m : root              : f.upworkspace
+"Down"	= m : root|window|title : f.downworkspace
+"Up"	= m : root|window|title : f.upworkspace
 
 "Left"	=   : root              : f.prevworkspace
 "Right"	=   : root              : f.nextworkspace
@@ -168,7 +171,7 @@ menu "defops"
 	"Pin"			f.pin
         "Xterm (x)"		f.exec "x"
         "XtermScreen (X)"	f.exec "xs"
-	"MANUAL"	f.exec "xterm -fg black -bg gray85 -geometry 80x55 &"
+	"MANUAL"	f.exec "xterm -ut -fg black -bg gray85 -geometry 80x55 &"
 	"Firefox"		f.exec "firefox &"
 	"Thunderbird"		f.exec "thunderbird &"
 	"Emacs-Lone"		f.exec "emacs-lone &"

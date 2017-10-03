@@ -14,6 +14,7 @@
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
  '(inhibit-startup-screen t)
+ '(speedbar-show-unknown-files t)
  '(initial-scratch-message "")
  '(menu-bar-mode t)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
@@ -30,46 +31,61 @@
  '(mouse ((t (:background "white" :foreground "black"))))
  '(scroll-bar ((t (:background "grey85" :foreground "red")))))
 
+(defun my-set-colors ()
+  ""
+  (progn
+    (set-foreground-color "yellow")
+    (set-background-color "black")
+    (set-cursor-color "red")))
+
+(defun my-set-colors-hook (frame)
+  ""
+  (interactive)
+  (progn
+    (select-frame frame)
+    (my-set-colors)))
+
+(my-set-colors)
+(add-hook 'after-make-frame-functions 'my-set-colors-hook)
+
 (line-number-mode 1)
 (column-number-mode 1)
 (display-time)
 
 (cond (window-system
        (progn
-         (setq
-	  default-frame-alist '((minibuffer . nil))
-	  initial-frame-alist 'nil
-	  minibuffer-frame-alist
-	  '((top . 0) (left . 20) (width . 155) (height . 1)
-	    (auto-raise . t) (minibuffer-lines . 1)
-	    (vertical-scroll-bars . nil)
-	    (name . "Emacs Minibuffer")
-	    (title . "Emacs Minibuffer"))
-	  special-display-buffer-names
-	  '("*compilation*" "*shell*")
-	  )
-         (setq
-	  hilit-mode-enable-list  '(not text-mode)
-	  hilit-background-mode   'dark
-	  hilit-inhibit-hooks     nil
-	  hilit-inhibit-rebinding nil
-	  hilit-quietly           t)
 	 (let ((desktop (getenv "EMACS_NUMBER")))
-	   (if desktop
-	       (setq server-socket-dir
-		     (concat "/tmp/"
-			     (getenv "USER")
-			     "/emacs-"
-			     desktop))))
-         (server-start)
-	 ))
+	   (let ((minibuftitle (concat "Emacs Minibuffer" desktop)))
+	     (setq
+	      default-frame-alist '((minibuffer . nil))
+	      initial-frame-alist 'nil
+	      minibuffer-frame-alist
+	      '((top . 0) (left . 20) (width . 155) (height . 1)
+		(auto-raise . t) (minibuffer-lines . 1)
+		(vertical-scroll-bars . nil)
+		(name . "Emacs Minibuffer")
+		(cons (cons 'title minibuftitle)))
+	      special-display-buffer-names
+	      '("*compilation*" "*shell*")
+	      hilit-mode-enable-list  '(not text-mode)
+	      hilit-background-mode   'dark
+	      hilit-inhibit-hooks     nil
+	      hilit-inhibit-rebinding nil
+	      hilit-quietly           t)
+	     (if desktop
+		 (setq server-socket-dir
+		       (concat "/tmp/"
+			       (getenv "USER")
+			       "/emacs-"
+			       desktop)))
+	     (server-start)))))
       ((not window-system)
        (progn
          (menu-bar-mode -1))))
 
 (defvar c-mode-indent 4)
 (defvar c-mode-tabs 0)
-(defvar c-mode-tabwidth 4)
+(defvar c-mode-tabwidth 8)
 
 (defun set-c-mode-thingies () "setup for c mode"
   (interactive)
@@ -141,7 +157,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
   "open cscope in an xterm"
   (interactive)
   (call-process "xterm" nil 0 nil
-		"-g" "140x45+225+20"
+		"-g" "185x70+20+20"
 		"-e" 
 		(concat "/home/" (getenv "USER")
 			"/pfk/bin/myemacs-cscope-helper")))

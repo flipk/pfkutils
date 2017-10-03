@@ -4,7 +4,7 @@ XTerm*termName: vt100
 XTerm*jumpScroll:             true
 XTerm*visualBell:             false
 XTerm*scrollBar:              on
-XTerm*utmpInhibit:            off
+XTerm*utmpInhibit:            on
 XTerm*foreground:             green
 XTerm*background:             black
 XTerm*cursorColor:            white
@@ -122,9 +122,10 @@ XDaliClock*mode:          24
 XDaliClock*seconds:       no
 XDaliClock*geometry:      80x18+126+64
 
-xlock*username: this terminal in use by phil 
-xlock*password: knaack@cig.mot.com, 435-0869
-xlock*info: Pager: 2629142399@mobile.mycingular.com                                              
+xlock*username: this terminal in use by phil knaack
+xlock*password: pknaack1@gmail.com, 224-377-9735
+xlock*info: phil knaack
+
 xlock*invalid: Password verification failed.
 xlock*validate: Checking password, please wait.
 xlock*echokeys: False

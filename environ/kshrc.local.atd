@@ -48,7 +48,7 @@ unset uname_s
 lsv() {
         typeset prefix
         if [[ $# -eq 0 ]] ; then
-                prefix=pknaack1_
+                prefix=${USER}_
         else
                 prefix=$1
         fi
@@ -90,6 +90,20 @@ lscol() {
 sv() {
     ct setview $1
 }
+
+setvobs() {
+    export CLEARCASE_AVOBS=`grep -v ^# ~/.vobs`
+}
+
+if __isksh ; then
+    if [[ "x$CLEARCASE_CMDLINE" != "x" ]] ; then
+       setvobs
+    fi
+else
+    if [ "x$CLEARCASE_CMDLINE" != "x" ] ; then
+       setvobs
+    fi
+fi
 
 zeroversion() {
     ct ls $1 | 
