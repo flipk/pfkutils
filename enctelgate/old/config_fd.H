@@ -6,9 +6,15 @@ class Config_fd : public fd_interface {
     Pipe_Mgr * pipe_mgr;
     struct sockaddr_in * last_sa;
 
-public:
-    static const int max_packet = 5000;
+    //xxx seq no validation not done
+    static const int  seq_hist_size = 10;
+    UINT32 seq_nos[ seq_hist_size ];
+    int  seq_no_pos;
 
+    // xxx must store last seq_hist_size replies too
+    //     so that we can reply to repeated requests.
+
+public:
     Config_fd( Pipe_Mgr * _pipe_mgr, short udp_port_no );
     ~Config_fd( void );
 

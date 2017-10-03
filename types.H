@@ -89,4 +89,9 @@ public:
 
 #endif /* __cplusplus */
 
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
 #endif /* __UNIVERSAL_TYPES_H */
