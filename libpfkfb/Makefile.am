@@ -31,10 +31,13 @@ testFileBlock_LDADD = \
 
 htmldestdir = $(DESTDIR)$(datarootdir)/html/fb
 
-all-local:
+all-local: $(abs_builddir)/doxy_timestamp
+
+$(abs_builddir)/doxy_timestamp: $(libpfkfb_la_HEADERS) $(libpfkfb_la_SOURCES)
 if PFK_AM_BUILD_doxygen
 	cd $(abs_srcdir) && doxygen $(abs_builddir)/Doxyfile
 endif
+	touch $(abs_builddir)/doxy_timestamp
 
 install-data-local:
 if PFK_AM_BUILD_doxygen

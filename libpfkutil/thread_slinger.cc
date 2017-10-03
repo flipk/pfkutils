@@ -142,6 +142,11 @@ _thread_slinger_queue :: _enqueue(thread_slinger_message * pMsg)
     pthread_cond_t * w = waiter;
     thread_slinger_semaphore * sem = waiter_sem;
     unlock();
+    // a given queue will have a non-null waiter 
+    // iff the receiver thread is blocked in the single-queue
+    // _dequeue.  it will have a non-null sem
+    // iff the receiver thread is blocked in the multi-queue
+    // _dequeue.
     if (w)
         pthread_cond_signal(w);
     if (sem)

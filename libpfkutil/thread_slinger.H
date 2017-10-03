@@ -23,6 +23,7 @@
 
 class thread_slinger_semaphore
 {
+    // a cheezy implementation of a counting semaphore.
     pthread_mutex_t  mutex;
     pthread_cond_t  waiter;
     int value;
@@ -47,6 +48,11 @@ class _thread_slinger_queue
     pthread_mutex_t   mutex;
     pthread_cond_t  _waiter;
     pthread_cond_t  *waiter;
+    // it's a little bit of a waste to create a sempahore
+    // in every queue; when using the multiple-queue version
+    // of _dequeue, only one of the semaphores is used. however,
+    // this is cheaper IMHO than creating and destroying a semaphore
+    // every time you enter and leave _dequeue(), which is the alternative.
     thread_slinger_semaphore  _waiter_sem;
     thread_slinger_semaphore * waiter_sem;
     thread_slinger_message * head;
@@ -74,6 +80,9 @@ public:
     void enqueue(T * msg) { _enqueue(msg); }
     T * dequeue(int uSecs=0) { return (T *) _dequeue(uSecs); }
     int get_count(void) { return _get_count(); }
+    // the priority of the queues relative to each other
+    // is specified by the order of the queues array. first
+    // queue is highest priority, etc.
     static T * dequeue(_thread_slinger_queue ** queues, int num_queues,
                        int uSecs=0, int *which_queue=NULL) {
         return (T *) _dequeue(queues,
@@ -85,13 +94,16 @@ template <class T, int count>
 class thread_slinger_pool
 {
     thread_slinger_queue<T>  q;
+    T * array;
 public:
     thread_slinger_pool(void) {
-        T * array = new T[count];
+        array = new T[count];
         for (int i = 0; i < count; i++)
             release(array + i);
     }
-    ~thread_slinger_pool(void) { /*cleanup?*/ }
+    ~thread_slinger_pool(void) {
+        delete[] array;
+    }
     T * alloc(int uSecs=0, bool grow=false) { return q.dequeue(uSecs); }
     void release(T * buf) { q.enqueue(buf); }
     int get_count(void) { return q.get_count(); }

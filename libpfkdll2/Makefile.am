@@ -15,10 +15,13 @@ test_hash_LDADD = libpfkdll2.la
 
 htmldestdir = $(DESTDIR)$(datarootdir)/html/dll2
 
-all-local:
+all-local: $(abs_builddir)/doxy_timestamp
+
+$(abs_builddir)/doxy_timestamp: $(libpfkdll2_la_HEADERS) $(libpfkdll2_la_SOURCES)
 if PFK_AM_BUILD_doxygen
 	cd $(abs_srcdir) && doxygen $(abs_builddir)/Doxyfile
 endif
+	touch $(abs_builddir)/doxy_timestamp
 
 install-data-local:
 if PFK_AM_BUILD_doxygen

@@ -47,3 +47,8 @@ endif
 diffdotfiles:
 	@cd environ && make diffdotfiles
 	@cd scripts && make diffdotfiles
+
+CVSTAR= pfkutils_cvs-`date +%Y-%m%d`.tar.bz2
+cvstar:
+	cd /home/flipk/Dropbox/Public && tar jcf $(abs_builddir)/$(CVSTAR) philcvs/CVSROOT philcvs/pfkutils
+	cd $(abs_builddir) && ls -l $(CVSTAR)

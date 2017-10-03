@@ -45,10 +45,13 @@ test_4_LDADD = \
 
 htmldestdir = $(DESTDIR)$(datarootdir)/html/thread
 
-all-local:
+all-local: $(abs_builddir)/doxy_timestamp
+
+$(abs_builddir)/doxy_timestamp: $(libpfkthread_la_HEADERS) $(libpfkthread_la_SOURCES)
 if PFK_AM_BUILD_doxygen
 	cd $(abs_srcdir) && doxygen $(abs_builddir)/Doxyfile
 endif
+	touch $(abs_builddir)/doxy_timestamp
 
 install-data-local:
 if PFK_AM_BUILD_doxygen

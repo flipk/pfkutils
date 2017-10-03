@@ -26,6 +26,9 @@ exit 0
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+// TEST==1 is for testing single-queue dequeue()
+// TEST==2 is for testing multi-queue dequeue()
+
 #define TEST 2
 
 #include "thread_slinger.H"
@@ -110,7 +113,6 @@ void * t3( void * dummy )
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-#if 1
         myMessage * m = p.alloc(random()%5000);
         if (m)
         {
@@ -131,7 +133,6 @@ void * t3( void * dummy )
                 printf("_");
         }
         fflush(stdout);
-#endif
         usleep(random()%30000);
     }
     return NULL;

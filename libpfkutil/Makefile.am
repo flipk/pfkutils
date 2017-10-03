@@ -32,10 +32,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/libpfkdll2
 
 htmldestdir = $(DESTDIR)$(datarootdir)/html/utils
 
-all-local:
+all-local: $(abs_builddir)/doxy_timestamp
+
+$(abs_builddir)/doxy_timestamp: $(libpfkutil_la_HEADERS) $(libpfkutil_la_SOURCES)
 if PFK_AM_BUILD_doxygen
 	cd $(abs_srcdir) && doxygen $(abs_builddir)/Doxyfile
 endif
+	touch $(abs_builddir)/doxy_timestamp
 
 install-data-local:
 if PFK_AM_BUILD_doxygen
