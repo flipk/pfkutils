@@ -28,32 +28,32 @@
 #include "types.H"
 #include "dll2.H"
 
-enum FileEntryLists {
+enum TsFileEntryLists {
     FILE_ENTRY_LIST,
     FILE_ENTRY_QUEUE,
     FILE_ENTRY_HASH,
     FILE_ENTRY_NUM_LISTS
 };
 
-class FileEntry {
+class TSFileEntry {
 public:
-    FileEntry(const char * _path) {
+    TSFileEntry(const char * _path) {
         int plen = strlen(_path);
         path = new char[plen + 1];
         memcpy(path, _path, plen+1);
     }
-    virtual ~FileEntry(void) {
+    virtual ~TSFileEntry(void) {
         if (path)
             delete[] path;
     }
-    LListLinks <FileEntry>  links[ FILE_ENTRY_NUM_LISTS ];
+    LListLinks <TSFileEntry>  links[ FILE_ENTRY_NUM_LISTS ];
     enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
     char * path; // relative to root dir
 };
 
-class FileEntryHashComparator {
+class TSFileEntryHashComparator {
 public:
-    static int hash_key( FileEntry * item ) {
+    static int hash_key( TSFileEntry * item ) {
         return hash_key(item->path);
     }
     static int hash_key( char * path ) {
@@ -64,23 +64,23 @@ public:
             hash = ((hash << 5) + hash) + c;
         return hash;
     }
-    static bool hash_key_compare( FileEntry * item, char *path ) {
+    static bool hash_key_compare( TSFileEntry * item, char *path ) {
         if (strcmp(item->path, path) == 0)
             return true;
         return false;
     }
 };
 
-typedef LList <FileEntry,FILE_ENTRY_LIST> FileEntryList;
-typedef LListHash <FileEntry, char*, 
-                   FileEntryHashComparator,
-                   FILE_ENTRY_HASH> FileEntryHash;
-typedef LList <FileEntry,FILE_ENTRY_QUEUE> FileEntryQueue;
+typedef LList <TSFileEntry,FILE_ENTRY_LIST> TSFileEntryList;
+typedef LListHash <TSFileEntry, char*, 
+                   TSFileEntryHashComparator,
+                   FILE_ENTRY_HASH> TSFileEntryHash;
+typedef LList <TSFileEntry,FILE_ENTRY_QUEUE> TSFileEntryQueue;
 
-class FileEntryFile : public FileEntry {
+class TSFileEntryFile : public TSFileEntry {
 public:
-    FileEntryFile(const char * _path)
-        : FileEntry(_path)
+    TSFileEntryFile(const char * _path)
+        : TSFileEntry(_path)
     {
         type = TYPE_FILE;
         state = STATE_EXISTS;
@@ -91,19 +91,19 @@ public:
     UINT8   md5[MD5_DIGEST_SIZE];
 };
 
-class FileEntryDir : public FileEntry {
+class TSFileEntryDir : public TSFileEntry {
 public:
-    FileEntryDir(const char * _path)
-        : FileEntry(_path)
+    TSFileEntryDir(const char * _path)
+        : TSFileEntry(_path)
     {
         type = TYPE_DIR;
     }
 };
 
-class FileEntryLink : public FileEntry {
+class TSFileEntryLink : public TSFileEntry {
 public:
-    FileEntryLink(const char * _path) 
-        : FileEntry(_path)
+    TSFileEntryLink(const char * _path) 
+        : TSFileEntry(_path)
     {
         link_target = NULL;
         type = TYPE_LINK;
@@ -113,8 +113,8 @@ public:
         link_target = new char[tlen+1];
         memcpy(link_target, _target, tlen+1);
     }
-    ~FileEntryLink(void) { if (link_target) delete[] link_target; }
+    ~TSFileEntryLink(void) { if (link_target) delete[] link_target; }
     char * link_target;
 };
 
-FileEntryList * generate_file_list(const char *root_dir);
+TSFileEntryList * treesync_generate_file_list(const char *root_dir);

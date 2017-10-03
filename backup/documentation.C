@@ -5,8 +5,9 @@ This is the documentation for the PFK Backup Database (pfkbak).
 
 \section PfkBakOverview Overview
 
-The purpose of pfkbak is to provide a means to quickly generate a backup
-of a set of files from one computer to another or from one media to another.
+The purpose of pfkbak is to provide a means to quickly generate a
+backup of a set of files from one computer to another or from one
+media to another.
 
 This is a tool for archiving a set of files or a directory tree into
 an archive file, much like 'tar' does.  The difference is that this
@@ -25,8 +26,8 @@ can seek directly to the part of the archive which stores that file.
 This version also includes compression, for example using libz to
 block-compress each file.
 
-This version also includes incremental backups with file versioning,
-so that the contents of a file from several backups previously can be
+This version also includes incremental backups with full history, so
+that the contents of a file from several backups previously can be
 recovered.  It attempts to be extremely efficient with the file in
 order to minimize the amount of time required to 'freshen' the backup.
 The idea being that backups may be freshened daily or perhaps even
@@ -61,22 +62,22 @@ generations).
 \section PfkBakDefs Definitions
 
 <ul>
-<li>  User files / User file tree / User tree
+<li>  <b> User files / User file tree / User tree </b>
       <br> This term refers to the set of files that the user wishes to
       protect with a backup.
-<li>  Database
+<li>  <b> Database </b>
       <br> This term refers to the backup database file that is produced and
       maintained by the pfkbak tool.
-<li>  Backup run / run
+<li>  <b> Backup run / run </b>
       <br> This term refers to one invocation of the pfkbak tool for the purpose
       of updating the database with the latest version of the user files.
-<li>  Incremental backup
+<li>  <b> Incremental backup </b>
       <br> This term refers to storing only the changes in user files from one
       run to the next, as opposed to a full backup.
-<li>  Full backup
+<li>  <b> Full backup </b>
       <br> Every user file is copied to the backup database regardless of
       change since last run.
-<li>  Backup History
+<li>  <b> Backup History </b>
       <br> This term refers to the ability to retrieve older versions of a file
       from previous runs.  For example if a file was modified or deleted,
       and several runs have been done since the modification, it is possible
@@ -90,7 +91,7 @@ generations).
 The pfkbak tool supports the following features:
 
 <ul>
-<li> Single-file database.
+<li> <b> Single-file database. </b>
      <br> The tool produces, as output, a single data file, which can be
      easily copied to another location or to offline media.  Other
      tools may produce many files, such as a new file or set of files
@@ -100,7 +101,7 @@ The pfkbak tool supports the following features:
      <br> Other file formats cannot be modified in place (e.g. ZIP or TAR).
      The only way to change one file in a ZIP or TAR file is to
      recreate the entire file.
-<li> Multiple user trees per database
+<li> <b> Multiple user trees per database </b>
      <br> The database file can support up to 16 independent virtual backup
      databases within it.  Each backup database is identified with a
      string name, and also remembers the directory path to the user
@@ -111,18 +112,18 @@ The pfkbak tool supports the following features:
      names in a single incremental run, in case a single computer has
      several disjoint directories which need to be backed up.  All of
      the backups listed will be updated before the tool exits.
-<li> On-the-fly compression.
+<li> <b> On-the-fly compression. </b>
      <br> As files are written to the backup database, it is compressed
      using <a href="http://www.zlib.net">zlib</a> at the maximum
      compression setting.  (Most backup utilities offer compression,
      so this is nothing new to pfkbak.)
-<li> Incremental updates.
+<li> <b> Incremental updates. </b>
      <br> Some backup tools copy every file to the backup on every run.
      Some (better) backup tools only copy files which have changed
      since the last run, but in order to do so, they create new
      additional files in addition to the previous backup files.
      pfkbak stores the updates in-place in the single data file.
-<li> Partial file updates.
+<li> <b> Partial file updates. </b>
      <br> Each file is stored in the database as a series of blocks, each
      with its own MD5 hash.  Many file types are only sparsely updated
      in random-access fashion from one backup run to the next, e.g. if
@@ -134,7 +135,7 @@ The pfkbak tool supports the following features:
      have been updated.  This saves considerable time in both
      compression effort and in access time to the database, especially
      if the database is accessed over a network.
-<li> Full history storage.
+<li> <b> Full history storage. </b>
      <br> Each time a backup is run, a new run-record is created in the
      database.  Previous run-records are also preserved, and only
      deleted when you choose.  Each run-record is small, only a
@@ -144,7 +145,7 @@ The pfkbak tool supports the following features:
      blocks since the last run, only the modified blocks are written.
      The remainder of the blocks are not updated, and the new
      run-record simply refers to the previous version of those blocks.
-<li> Moved file detection.
+<li> <b> Moved file detection. </b>
      <br> If a file is moved from one directory to another in the user tree
      in between two runs, most backup tools will identify this as a
      deletion in the old location and a creation in the new place,
@@ -153,7 +154,7 @@ The pfkbak tool supports the following features:
      the file was moved to a new place and then modified, pfkbak will
      still recognize the unaltered blocks.
      \note  This feature is not yet implemented.
-<li> Efficient old run-record deletion.
+<li> <b> Efficient old run-record deletion. </b>
      <br> When an old run is no longer needed, the run-record is deleted
      from the database.  As the run-record is being deleted, any file
      blocks which are no longer referenced by any run-record are also
@@ -424,7 +425,7 @@ The following entries exist in the database file:
          </ul>
       <li> else
          <ul>
-         <li> I don't know.
+         <li> 
          </ul>
       </ul>
    </ul>

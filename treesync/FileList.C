@@ -34,20 +34,20 @@
 #endif
 
 static int
-qsortFileEntryCompare(const void * _a, const void * _b)
+qsortTSFileEntryCompare(const void * _a, const void * _b)
 {
-    FileEntry * a = *(FileEntry**)_a;
-    FileEntry * b = *(FileEntry**)_b;
+    TSFileEntry * a = *(TSFileEntry**)_a;
+    TSFileEntry * b = *(TSFileEntry**)_b;
 
     return -strcmp(a->path, b->path);
 }
 
-FileEntryList * 
-generate_file_list(const char *root_dir)
+TSFileEntryList * 
+treesync_generate_file_list(const char *root_dir)
 {
-    FileEntryList * file_list;
-    FileEntryList   work_list;
-    FileEntry     * current;
+    TSFileEntryList * file_list;
+    TSFileEntryList   work_list;
+    TSFileEntry     * current;
     struct dirent * de;
     DIR           * dir;
     struct stat     sb;
@@ -57,9 +57,9 @@ generate_file_list(const char *root_dir)
     int             cc;
     bool            first_dir = true;
 
-    file_list = new FileEntryList;
+    file_list = new TSFileEntryList;
 
-    current = new FileEntryDir(".");
+    current = new TSFileEntryDir(".");
     work_list.add(current);
 
     while ((current = work_list.dequeue_head()) != NULL)
@@ -100,7 +100,7 @@ generate_file_list(const char *root_dir)
             continue;
         }
 
-//        ((FileEntryDir*)current)->mode = sb.st_mode & 0777;
+//        ((TSFileEntryDir*)current)->mode = sb.st_mode & 0777;
         file_list->add(current);
 
         while ((de = readdir(dir)) != NULL)
@@ -129,13 +129,13 @@ generate_file_list(const char *root_dir)
             }
             else if (S_ISDIR(sb.st_mode))
             {
-                FileEntryDir * fed = new FileEntryDir(rel_path);
+                TSFileEntryDir * fed = new TSFileEntryDir(rel_path);
 //                fed->mode = sb.st_mode & 0777;
                 work_list.add(fed);
             }
             else if (S_ISREG(sb.st_mode))
             {
-                FileEntryFile * fef = new FileEntryFile(rel_path);
+                TSFileEntryFile * fef = new TSFileEntryFile(rel_path);
 //                fef->mode = sb.st_mode & 0777;
                 fef->size = sb.st_size;
                 fef->mtime = sb.st_mtime;
@@ -143,7 +143,7 @@ generate_file_list(const char *root_dir)
             }
             else if (S_ISLNK(sb.st_mode))
             {
-                FileEntryLink * fel = new FileEntryLink(rel_path);
+                TSFileEntryLink * fel = new TSFileEntryLink(rel_path);
                 cc = readlink(temp_path, _rel_path, sizeof(_rel_path)-1);
                 _rel_path[cc] = 0;
                 fel->set_target(_rel_path);
@@ -160,13 +160,13 @@ generate_file_list(const char *root_dir)
 
     // work_list should now be empty.
 
-    FileEntry ** flat = new FileEntry*[file_list->get_cnt()];
+    TSFileEntry ** flat = new TSFileEntry*[file_list->get_cnt()];
     int counter = 0;
 
     while ((current = file_list->dequeue_head()) != NULL)
         flat[counter++] = current;
 
-    qsort(flat, counter, sizeof(FileEntry*), &qsortFileEntryCompare);
+    qsort(flat, counter, sizeof(TSFileEntry*), &qsortTSFileEntryCompare);
 
     while (counter-- > 0)
     {

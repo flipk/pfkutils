@@ -19,4 +19,4 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#define PKUTILS_VERSION "2.122; Sun Nov 23 00:35:59 CST 2008"
+#define PKUTILS_VERSION "2.123; Sat Jan  3 17:22:14 CST 2009"

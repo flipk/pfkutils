@@ -12,17 +12,17 @@
 #include "macros.H"
 
 void
-update_db( char *root_dir, Btree * db, FileEntryList * fel )
+treesync_update_db( char *root_dir, Btree * db, TSFileEntryList * fel )
 {
     union {
-        FileEntry * fe;
-        FileEntryFile * fef;
-        FileEntryDir * fed;
+        TSFileEntry * fe;
+        TSFileEntryFile * fef;
+        TSFileEntryDir * fed;
     } fe;
-    FileEntry * nfe = NULL;
-    DbInfo  dbinf(db);
+    TSFileEntry * nfe = NULL;
+    TreeSyncDbInfo  dbinf(db);
     UINT32  index;
-    FileEntryQueue   workq;
+    TSFileEntryQueue   workq;
 
     dbinf.key.info_key.set((char*)INFO_KEY);
     if (!dbinf.get())
@@ -31,12 +31,12 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         exit(1);
     }
 
-    FileEntryHash   fh;
+    TSFileEntryHash   fh;
 
     for (fe.fe = fel->get_head(); fe.fe; fe.fe = nfe)
     {
         nfe = fel->get_next(fe.fe);
-        if ((fe.fe->type == FileEntry::TYPE_FILE)   &&
+        if ((fe.fe->type == TSFileEntry::TYPE_FILE)   &&
             (strcmp(fe.fe->path, TREESYNC_DB) != 0))
         {
             fh.add(fe.fe);
@@ -49,7 +49,7 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
         }
     }
 
-    FileSeq  fiseq(db);
+    TreeSyncFileInfo  fiseq(db);
 
     // first identify the files deleted, modified, and unchanged.
 
@@ -72,9 +72,9 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
                 // file is modified.
                 // recalculate the md5 of the file and update
                 // both the list entry and the database.
-                calc_md5( root_dir, fe.fe->path, fe.fef->md5 );
+                treesync_calc_md5( root_dir, fe.fe->path, fe.fef->md5 );
                 memcpy(fiseq.data.md5hash.binary, fe.fef->md5, MD5_DIGEST_SIZE);
-                fiseq.data.state.v = FileSeqData::STATE_EXISTS;
+                fiseq.data.state.v = TreeSyncFileInfoData::STATE_EXISTS;
                 fiseq.data.size.v = fe.fef->size;
                 fiseq.data.mtime.v = fe.fef->mtime;
                 fiseq.put(true);
@@ -93,19 +93,19 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
             // to delete it from the other tree if it is found to still
             // exist there.
 
-            fe.fef = new FileEntryFile(fiseq.data.file_path.string);
-            fe.fef->state = FileEntryFile::STATE_DELETED;
+            fe.fef = new TSFileEntryFile(fiseq.data.file_path.string);
+            fe.fef->state = TSFileEntryFile::STATE_DELETED;
             fe.fef->size = 0;
             memset(fe.fef->md5, 0, MD5_DIGEST_SIZE);
 
-            if (fiseq.data.state.v == FileSeqData::STATE_EXISTS)
+            if (fiseq.data.state.v == TreeSyncFileInfoData::STATE_EXISTS)
             {
                 // indicate in the database that the file has been
                 // deleted.  technically we don't know the moment the
                 // file was deleted, so just record the deletion time
                 // as right now.
 
-                fiseq.data.state.v = FileSeqData::STATE_DELETED;
+                fiseq.data.state.v = TreeSyncFileInfoData::STATE_DELETED;
                 fiseq.data.size.v = 0;
                 fiseq.data.mtime.v = time(0);
                 memset(fiseq.data.md5hash.binary, 0, MD5_DIGEST_SIZE);
@@ -124,12 +124,12 @@ update_db( char *root_dir, Btree * db, FileEntryList * fel )
 
     while ((fe.fe = workq.dequeue_head()) != NULL)
     {
-        calc_md5(root_dir, fe.fe->path, fe.fef->md5);
+        treesync_calc_md5(root_dir, fe.fe->path, fe.fef->md5);
 
         // add a new entry to the database for this item.
         fiseq.key.index.v = dbinf.data.num_files.v;
         dbinf.data.num_files.v++;
-        fiseq.data.state.v = FileSeqData::STATE_EXISTS;
+        fiseq.data.state.v = TreeSyncFileInfoData::STATE_EXISTS;
         fiseq.data.file_path.set(fe.fe->path);
         fiseq.data.size.v = fe.fef->size;
         fiseq.data.mtime.v = fe.fef->mtime;

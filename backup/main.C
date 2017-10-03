@@ -152,10 +152,20 @@ main(int argc, char ** argv)
 
     // create or open btree file
     if (pfkbak_op == BAK_CREATE_FILE)
+    {
         bt = Btree::createFile( pfkbak_file, CACHE_SIZE,
                                 0600, BTREE_ORDER );
+    }
     else
+    {
         bt = Btree::openFile( pfkbak_file, CACHE_SIZE );
+        if (!pfkbak_validate_file(bt))
+        {
+            delete bt;
+            fprintf(stderr, "unable to validate database!\n");
+            return 1;
+        }
+    }
 
     if (!bt)
     {

@@ -1,3 +1,4 @@
+
 #include <Btree.H>
 #include <bst.H>
 
@@ -16,24 +17,24 @@ make_trash_dir(char *root)
 }
 
 void
-analyze( char * dir1, FileEntryList * fel1,
-         char * dir2, FileEntryList * fel2 )
+treesync_analyze( char * dir1, TSFileEntryList * fel1,
+                  char * dir2, TSFileEntryList * fel2 )
 {
-    FileEntryHash fh1;
-    FileEntryHash fh2;
-    FileEntryQueue q1;  // work queue for 1
-    FileEntryQueue q2;  // work queue for 2
-    FileEntryQueue c12; // copy 1 to 2
-    FileEntryQueue c21; // copy 2 to 1
-    FileEntryQueue d1;  // delete from 1
-    FileEntryQueue d2;  // delete from 2
+    TSFileEntryHash fh1;
+    TSFileEntryHash fh2;
+    TSFileEntryQueue q1;  // work queue for 1
+    TSFileEntryQueue q2;  // work queue for 2
+    TSFileEntryQueue c12; // copy 1 to 2
+    TSFileEntryQueue c21; // copy 2 to 1
+    TSFileEntryQueue d1;  // delete from 1
+    TSFileEntryQueue d2;  // delete from 2
     union {
-        FileEntry * fe;
-        FileEntryFile * fef;
+        TSFileEntry * fe;
+        TSFileEntryFile * fef;
     } u1;
     union {
-        FileEntry * fe;
-        FileEntryFile * fef;
+        TSFileEntry * fe;
+        TSFileEntryFile * fef;
     } u2;
 
     for (u1.fe = fel1->get_head(); u1.fe; u1.fe = fel1->get_next(u1.fe))
@@ -59,9 +60,9 @@ analyze( char * dir1, FileEntryList * fel1,
             // determine if something must be deleted from dir 1 or dir 2
             // (added to d1 or d2)
 
-            if (u1.fef->state == FileEntryFile::STATE_DELETED)
+            if (u1.fef->state == TSFileEntryFile::STATE_DELETED)
             {
-                if (u2.fef->state == FileEntryFile::STATE_EXISTS)
+                if (u2.fef->state == TSFileEntryFile::STATE_EXISTS)
                 {
                     // exists in 2 but not in 1, do we delete from 2
                     // or copy to 1?
@@ -79,9 +80,9 @@ analyze( char * dir1, FileEntryList * fel1,
                     }
                 }
             }
-            else if (u2.fef->state == FileEntryFile::STATE_DELETED)
+            else if (u2.fef->state == TSFileEntryFile::STATE_DELETED)
             {
-                if (u1.fef->state == FileEntryFile::STATE_EXISTS)
+                if (u1.fef->state == TSFileEntryFile::STATE_EXISTS)
                 {
                     // exists in 1 but not in 2, do we delete from 1
                     // or copy to 2?
@@ -138,11 +139,11 @@ analyze( char * dir1, FileEntryList * fel1,
 
     while ((u1.fe = c12.dequeue_head()) != NULL)
         if (u1.fef->mtime != 0)
-            copy_file(dir1, u1.fe->path, dir2, u1.fe->path);
+            treesync_copy_file(dir1, u1.fe->path, dir2, u1.fe->path);
 
     while ((u2.fe = c21.dequeue_head()) != NULL)
         if (u2.fef->mtime != 0)
-            copy_file(dir2, u2.fe->path, dir1, u2.fe->path);
+            treesync_copy_file(dir2, u2.fe->path, dir1, u2.fe->path);
 
     if (d1.get_cnt() > 0)
         make_trash_dir(dir1);
@@ -150,8 +151,8 @@ analyze( char * dir1, FileEntryList * fel1,
         make_trash_dir(dir2);
 
     while ((u1.fe = d1.dequeue_head()) != NULL)
-        delete_file(dir1, u1.fe->path);
+        treesync_delete_file(dir1, u1.fe->path);
 
     while ((u2.fe = d2.dequeue_head()) != NULL)
-        delete_file(dir2, u2.fe->path);
+        treesync_delete_file(dir2, u2.fe->path);
 }

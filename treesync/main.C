@@ -18,10 +18,10 @@ int treesync_verbose = 0;
 extern "C" int
 treesync_main( int argc, char ** argv )
 {
-    FileEntryList * fel1, * fel2;
+    TSFileEntryList * fel1, * fel2;
     Btree * db1, * db2;
     char * dir1, * dir2;
-    FileEntry * fe;
+    TSFileEntry * fe;
 
     if (argc > 1)
     {
@@ -36,11 +36,11 @@ treesync_main( int argc, char ** argv )
     if (argc == 2)
     {
         dir1 = argv[1];
-        db1 = open_ts_db(dir1);
+        db1 = open_treesync_db(dir1);
         if (!db1)
             return 1;
-        fel1 = generate_file_list(dir1);
-        update_db(dir1, db1, fel1);
+        fel1 = treesync_generate_file_list(dir1);
+        treesync_update_db(dir1, db1, fel1);
         DELETE_LIST(fel1);
         db1->get_fbi()->compact(0);
         delete db1;
@@ -56,18 +56,18 @@ treesync_main( int argc, char ** argv )
     dir1 = argv[1];
     dir2 = argv[2];
 
-    db1 = open_ts_db(dir1);
+    db1 = open_treesync_db(dir1);
     if (!db1)
         return 1;
-    db2 = open_ts_db(dir2);
+    db2 = open_treesync_db(dir2);
     if (!db2)
     {
         delete db1;
         return 1;
     }
 
-    fel1 = generate_file_list(dir1);
-    fel2 = generate_file_list(dir2);
+    fel1 = treesync_generate_file_list(dir1);
+    fel2 = treesync_generate_file_list(dir2);
 
     if (!fel1 || !fel2)
     {
@@ -76,19 +76,19 @@ treesync_main( int argc, char ** argv )
         return 1;
     }
 
-    update_db( dir1, db1, fel1 );
-    update_db( dir2, db2, fel2 );
+    treesync_update_db( dir1, db1, fel1 );
+    treesync_update_db( dir2, db2, fel2 );
 
-    analyze( dir1, fel1, dir2, fel2 );
+    treesync_analyze( dir1, fel1, dir2, fel2 );
 
     DELETE_LIST(fel1);
     DELETE_LIST(fel2);
 
-    fel1 = generate_file_list(dir1);
-    fel2 = generate_file_list(dir2);
+    fel1 = treesync_generate_file_list(dir1);
+    fel2 = treesync_generate_file_list(dir2);
 
-    update_db( dir1, db1, fel1 );
-    update_db( dir2, db2, fel2 );
+    treesync_update_db( dir1, db1, fel1 );
+    treesync_update_db( dir2, db2, fel2 );
 
     DELETE_LIST(fel1);
     DELETE_LIST(fel2);

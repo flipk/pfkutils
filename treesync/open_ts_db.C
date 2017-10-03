@@ -12,7 +12,7 @@
 #include "macros.H"
 
 Btree *
-open_ts_db(char *dir)
+open_treesync_db(char *dir)
 {
     Btree * ret;
     char dbpath[512];
@@ -31,14 +31,14 @@ open_ts_db(char *dir)
                     strerror(errno));
             return NULL;
         }
-        DbInfo  dbi(ret);
+        TreeSyncDbInfo  dbi(ret);
         dbi.key.info_key.set((char*)INFO_KEY);
         dbi.data.num_files.v = 0;
         dbi.data.tool_version.v = TOOL_VERSION;
         dbi.put(true);
     }
 
-    DbInfo  dbi(ret);
+    TreeSyncDbInfo dbi(ret);
     dbi.key.info_key.set((char*)INFO_KEY);
     if (!dbi.get())
     {

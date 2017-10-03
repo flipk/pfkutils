@@ -14,7 +14,7 @@
 #include "protos.H"
 
 void
-copy_file(char *fromroot, char *fromfile,
+treesync_copy_file(char *fromroot, char *fromfile,
           char *toroot,   char *tofile    )
 {
     char from_full_path[512];
@@ -37,7 +37,7 @@ copy_file(char *fromroot, char *fromfile,
         return;
     }
     (void) unlink(to_full_path);
-    if (create_dirs(to_full_path) < 0)
+    if (treesync_create_dirs(to_full_path) < 0)
     {
         close(fd1);
         return;

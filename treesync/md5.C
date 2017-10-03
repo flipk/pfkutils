@@ -7,7 +7,7 @@
 #include "protos.H"
 
 void
-display_md5(char *path, UINT8 *md5)
+treesync_display_md5(char *path, UINT8 *md5)
 {
     int i;
     for (i=0; i < MD5_DIGEST_SIZE; i++)
@@ -16,7 +16,7 @@ display_md5(char *path, UINT8 *md5)
 }
 
 void
-calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
+treesync_calc_md5( char *root_dir, char *relpath, UINT8 * hashbuffer )
 {
     FILE         * f;
     MD5_CTX        ctx;

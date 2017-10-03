@@ -14,7 +14,7 @@
 #include "protos.H"
 
 int
-create_dirs(char * path)
+treesync_create_dirs(char * path)
 {
     // search for every slash. zero it out.
     // attempt a stat. if it exists (and is a dir) skip it.

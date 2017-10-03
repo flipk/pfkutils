@@ -15,7 +15,7 @@
 #include "macros.H"
 
 void
-delete_file(char *root, char *file)
+treesync_delete_file(char *root, char *file)
 {
     char from_full_path[512];
     char   to_full_path[512];

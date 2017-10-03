@@ -19,6 +19,7 @@
  */
 
 void pfkbak_create_file   ( Btree * bt );
+bool pfkbak_validate_file ( Btree * bt );
 void pfkbak_list_backups  ( Btree * bt );
 void pfkbak_create_backup ( Btree * bt, char * root_dir );
 void pfkbak_delete_backup ( Btree * bt );

@@ -5,7 +5,7 @@ HDRS= params.H database_elements.H
 
 OBJS= $(SRCS:.C=.o)
 CC= g++
-INCS= -I ../h -I ../dll2 -I ../FileBlock 
+INCS= -I ../h -I ../util -I ../dll2 -I ../FileBlock 
 DEFS= -D_FILE_OFFSET_BITS=64
 OPTS= -g3
 

@@ -26,13 +26,34 @@
 void
 pfkbak_create_file   ( Btree * bt )
 {
-    BackupFileInfo   bfi(bt);
+    PfkBackupDbInfo   info(bt);
 
-    bfi.data.tool_version.v = TOOL_VERSION;
-    if (bfi.put() == false)
+    info.key.info_key.set((char*)INFO_KEY);
+    info.data.tool_version.v = TOOL_VERSION;
+    info.data.backups.alloc(0);
+    if (info.put() == false)
     {
         fprintf(stderr,"error writing backup info list\n");
     }
+}
+
+bool
+pfkbak_validate_file ( Btree * bt )
+{
+    PfkBackupDbInfo   info(bt);
+
+    info.key.info_key.set((char*)INFO_KEY);
+
+    if (!info.get())
+        return false;
+
+    if (info.data.tool_version.v != TOOL_VERSION)
+    {
+        fprintf(stderr, "tool version mismatch!!\n");
+        return false;
+    }
+
+    return true;
 }
 
 void
