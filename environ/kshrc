@@ -37,6 +37,16 @@
 #
 
 USER=`whoami`
+if [ ! -f /home/$USER/bin/architecture ] ; then
+    if [ -f /home/knaack/bin/architecture ] ; then
+        USER=knaack
+    elif [ -f /home/flipk/bin/architecture ] ; then
+        USER=flipk
+    else
+        echo "i cant find flipk's or knaack's home account!"
+        USER=unknown
+    fi
+fi
 HOME=/home/$USER
 ENV=$HOME/.kshrc
 HOST=`hostname`
@@ -115,9 +125,6 @@ export LAST_HOST
 
 case x$ENV_SET in 
     x)
-        ARCH=`$HOME/bin/architecture`
-        export ARCH
-
         if __isksh ; then
             __extend_path() {
                 if [[ -d $1 ]] ; then
@@ -191,6 +198,9 @@ case x$ENV_SET in
         ;;
 esac
 
+ARCH=`$HOME/bin/architecture`
+export ARCH
+
 # reverse mode : rev or mr      \E[7m
 # exit attributes: sgr0 or me   \E[m
 
@@ -209,6 +219,9 @@ if __isksh ; then
 	_ps="${_ps}$USER@$HOST"
 	if [[ x$WORK_GROUP != x ]] ; then
 	    _ps="${_ps} in $WORK_GROUP"
+	fi
+	if [[ x$CLEARCASE_ROOT != x ]] ; then
+	    _ps="${_ps} in CMBP"
 	fi
         _ps="${_ps} pid $$ on $TTY"
 	if [[ x$WINDOW != x ]] ; then
@@ -609,6 +622,26 @@ fp() {
     print $PWD/$1
 }
 
+sendtree() {
+    if [[ $# -lt 3 ]] ; then
+        echo 'usage: sendtree host port dir [dir..]'
+        return 1
+    fi
+    typeset host port
+    host=$1
+    port=$2
+    shift 2
+    tar cf - $* | ipipe -v $host $port
+}
+
+gettree() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'usage: gettree port'
+        return 1
+    fi
+    ipipe -v $1 | tar xf -
+}
+
 if __isksh ; then
     __sed=''
     if [[ -f /bin/sed ]] ; then
@@ -755,7 +788,7 @@ if __isksh ; then
 	    unset td
 	fi
 	eval `make_file_part "$PWD" file_part`
-	if [[ "x$CLEARCASE_ROOT" == x ]] ; then
+	if [[ "x$CLEARCASE_ROOT" == x || "x$CLEARCASE_ROOT" == x/view/gsdStart ]] ; then
 	    bardisp="$file_part"
 	else
 	    typeset viewname
