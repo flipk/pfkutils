@@ -1,66 +1,197 @@
 
+#ifndef DLL2_ONLIST_VALIDATIONS
+#define DLL2_ONLIST_VALIDATIONS 1
+#endif
+
+#ifndef DLL2_MAGIC_VALIDATIONS
+#define DLL2_MAGIC_VALIDATIONS 1
+#endif
+
 typedef struct {
-    void * next;
-    void * prev;
-    struct DLL2_LIST * onlist;
+    void             * links_next;
+    void             * links_prev;
+    struct DLL2_LIST * links_onlist;
+#if DLL2_MAGIC_VALIDATIONS
+    int                links_magic;
+#endif
 } DLL2_LINKS;
 
 typedef struct DLL2_LIST {
-    void * head;
-    void * tail;
-    int count;
-    int index;
+    void * list_head;
+    void * list_tail;
+    int list_count;
+    int list_index;
+#if DLL2_MAGIC_VALIDATIONS
+    int list_magic;
+#endif
 } DLL2_LIST;
 
-/*
-  some compilers (like some versions of gcc 3) don't allow you to 
-  use the traditional "offsetof" operator:
-  -  #define offsetof(type,field) ((unsigned int)&(((type*)0)->field))
-  an alternative that slips by gcc's rules would be:
-  -  #define offsetof(type,field) ((unsigned int)&(((type*)1)->field)-1)
-  but we're skirting the issue by actually using (&(ptr->field) - ptr).
-*/
-
-#define DLL2_LINKS_OFFSET(item) \
-    (((unsigned int)((item)->links)) - ((unsigned int)(item)))
+/* init/deinit macros used by public */
 
 #define DLL2_LIST_INIT(list,listindex) \
     do { \
-        (list)->head = (list)->tail = 0; \
-        (list)->count = 0; \
-        (list)->index = listindex; \
+        DLL2_LIST_VALIDATE_NOTINIT(list); \
+        (list)->list_head = (list)->list_tail = 0; \
+        (list)->list_count = 0; \
+        (list)->list_index = listindex; \
+        DLL2_INIT_LIST_MAGIC(list); \
     } while ( 0 )
-#define DLL2_LINKS_INIT(item) \
-    memset((item)->links,0,sizeof((item)->links))
+#define DLL2_ITEM_INIT(item) \
+    do { \
+        int __dll2_internal_cnt; \
+        for ( __dll2_internal_cnt = 0; \
+              __dll2_internal_cnt < DLL2_DIM((item)->links); \
+              __dll2_internal_cnt++ ) \
+        { \
+            DLL2_LINKS_VALIDATE_NOTINIT(item,__dll2_internal_cnt); \
+            (item)->links[__dll2_internal_cnt].links_next = 0; \
+            (item)->links[__dll2_internal_cnt].links_prev = 0; \
+            (item)->links[__dll2_internal_cnt].links_onlist = 0; \
+            DLL2_INIT_LINKS_MAGIC(item,__dll2_internal_cnt); \
+        } \
+    } while ( 0 )
+#define DLL2_LIST_DEINIT(list) \
+    do { \
+        if ( (list)->list_count != 0 || \
+             (list)->list_head  != 0 || \
+             (list)->list_tail  != 0 ) \
+        { \
+            (void) dll2_error( __FILE__, __LINE__, \
+                               "dll2_list_deinit not empty!" ); \
+        } \
+        DLL2_DEINIT_LIST_MAGIC(list); \
+    } while ( 0 )
+#define DLL2_ITEM_DEINIT(item) \
+    do { \
+        int __dll2_internal_cnt; \
+        for ( __dll2_internal_cnt = 0; \
+              __dll2_internal_cnt < DLL2_DIM((item)->links); \
+              __dll2_internal_cnt++ ) \
+        { \
+            if ( DLL2_NCMP_ONLIST_F(item,__dll2_internal_cnt,0) || \
+                 (item)->links[__dll2_internal_cnt].links_next   != 0 || \
+                 (item)->links[__dll2_internal_cnt].links_prev   != 0 ) \
+            { \
+                (void) dll2_error( __FILE__, __LINE__, \
+                                   "dll2_item_deinit still on a list!" ); \
+            } \
+            DLL2_DEINIT_LINKS_MAGIC(item,__dll2_internal_cnt); \
+        } \
+    } while ( 0 )
 
-#define DLL2_ONLIST(listindex,item) \
-    ((item)->links[listindex].onlist != 0)
-#define DLL2_ONTHISLIST(list,item) \
-   ((item)->links[(list)->index].onlist == list)
+/* onlist methods used by public */
 
-#define DLL2_ADD(list,item) \
+#define DLL2_LIST_ONLIST(listindex,item) \
+    ((item)->links[listindex].links_onlist != 0)
+#define DLL2_LIST_ONTHISLIST(list,item) \
+    ((item)->links[(list)->list_index].links_onlist == (list))
+
+/* list update methods used by public */
+
+#define DLL2_LIST_ADD(list,item) \
     dll2_list_add((list),DLL2_LINKS_OFFSET(item),(item),__FILE__,__LINE__)
-#define DLL2_REMOVE(list,item) \
+#define DLL2_LIST_REMOVE(list,item) \
     dll2_list_remove((list),DLL2_LINKS_OFFSET(item),(item),__FILE__,__LINE__)
-#define DLL2_ADD_AFTER(list,existing,item)   \
+#define DLL2_LIST_ADD_AFTER(list,existing,item)   \
     dll2_list_add_after((list),DLL2_LINKS_OFFSET(item), \
                         (existing),(item),__FILE__,__LINE__)
-#define DLL2_ADD_BEFORE(list,existing,item)  \
+#define DLL2_LIST_ADD_BEFORE(list,existing,item)  \
     dll2_list_add_before((list),DLL2_LINKS_OFFSET(item), \
                          (existing),(item),__FILE__,__LINE__)
 
-#define DLL2_SIZE(list)              ((list)->count)
-#define DLL2_HEAD(list)              ((list)->head)
-#define DLL2_TAIL(list)              ((list)->tail)
+/* list-walking methods used by public */
 
-#define DLL2_NEXT(list,item) \
-    (((item)->links[(list)->index].onlist==list)? \
-     ((item)->links[(list)->index].next) : \
+#define DLL2_LIST_SIZE(list)              ((list)->list_count)
+#define DLL2_LIST_HEAD(list)              ((list)->list_head)
+#define DLL2_LIST_TAIL(list)              ((list)->list_tail)
+
+#if DLL2_ONLIST_VALIDATIONS
+#define DLL2_LIST_NEXT(list,item) \
+    (((item)->links[(list)->list_index].links_onlist==list)? \
+     ((item)->links[(list)->list_index].links_next) : \
       dll2_error( __FILE__, __LINE__, "dll2_next wrong list" ))
-#define DLL2_PREV(list,item) \
-    (((item)->links[(list)->index].onlist==list)? \
-     ((item)->links[(list)->index].prev) : \
+#define DLL2_LIST_PREV(list,item) \
+    (((item)->links[(list)->list_index].links_onlist==list)? \
+     ((item)->links[(list)->list_index].links_prev) : \
       dll2_error( __FILE__, __LINE__, "dll2_prev wrong list" ))
+#else
+#define DLL2_LIST_NEXT(list,item) \
+    ((item)->links[(list)->list_index].links_next)
+#define DLL2_LIST_PREV(list,item) \
+    ((item)->links[(list)->list_index].links_prev)
+#endif
+
+#if 0   /* HASH IMPLEMENTATION INCOMPLETE */
+typedef struct {
+    int         hash_hashsize;
+    DLL2_LIST * hash_hash;
+    int         hash_count;
+#if DLL2_MAGIC_VALIDATIONS
+    int         hash_magic;
+#endif
+} DLL2_LIST_HASH;
+
+#define DLL2_HASHV(list,key) (key % (list)->hashsize)
+#define DLL2_LISTHASH_INIT(list,hash_size,malloc_func,listindex) \
+    do { \
+        int i; \
+        (list)->hashsize = (hash_size); \
+        (list)->hash = (DLL2_LIST*) \
+            malloc_func( sizeof(DLL2_LIST) * (list)->hashsize ); \
+        (list)->list_count = 0; \
+        for ( i = 0; i < (list)->hashsize; i++ ) \
+            DLL2_LIST_INIT( &((list)->hash), listindex ); \
+    } while ( 0 )  xxx magic
+#endif    /* HASH IMPLEMENTATION INCOMPLETE */
+
+/* internal macros and funcs used by dll2 code */
+
+#define DLL2_LINKS_MAGIC 0x4bf4e59c
+#define DLL2_LIST_MAGIC  0x5c2df716
+#define DLL2_HASH_MAGIC  0x427ec79c
+
+#define DLL2_LINKS_OFFSET(item) \
+    (((unsigned int)((item)->links)) - ((unsigned int)(item)))
+#define DLL2_DIM(array) (sizeof(array) / sizeof(array[0]))
+
+#if DLL2_ONLIST_VALIDATIONS
+#define DLL2_NCMP_ONLIST_T(item,index,ptr) \
+    ((item)->links[index].links_onlist != (ptr))
+#define DLL2_NCMP_ONLIST_F(item,index,ptr) DLL2_NCMP_ONLIST_T(item,index,ptr)
+#else
+#define DLL2_NCMP_ONLIST_T(item,index,ptr) 1
+#define DLL2_NCMP_ONLIST_F(item,index,ptr) 0
+#endif
+
+#if DLL2_MAGIC_VALIDATIONS
+#define DLL2_LIST_ISINIT(list) \
+    ((list)->list_magic == DLL2_LIST_MAGIC)
+#define DLL2_LINKS_ISINIT(item,index) \
+    ((item)->links[index].links_magic == DLL2_LINKS_MAGIC )
+#define DLL2_INIT_LIST_MAGIC(list) \
+    (list)->list_magic = DLL2_LIST_MAGIC
+#define DLL2_INIT_LINKS_MAGIC(item,index) \
+    (item)->links[index].links_magic = DLL2_LINKS_MAGIC;
+#define DLL2_DEINIT_LIST_MAGIC(list) \
+    (list)->list_magic = 0
+#define DLL2_DEINIT_LINKS_MAGIC(item,index) \
+    (item)->links[index].links_magic = 0
+#define DLL2_LIST_VALIDATE_NOTINIT(list) \
+    if ( DLL2_LIST_ISINIT(list) ) \
+        (void) dll2_error( __FILE__, __LINE__, \
+                           "dll2_list_init already initialized?" )
+#define DLL2_LINKS_VALIDATE_NOTINIT(item,index) \
+            if ( DLL2_LINKS_ISINIT(item,index) ) \
+                (void) dll2_error( __FILE__, __LINE__, \
+                                   "dll2_item_init already initialized?" )
+#else
+#define DLL2_INIT_LIST_MAGIC(list) /* nothing */
+#define DLL2_INIT_LINKS_MAGIC(item,index) /* nothing */
+#define DLL2_DEINIT_LIST_MAGIC(list) /* nothing */
+#define DLL2_DEINIT_LINKS_MAGIC(item,index) /* nothing */
+#define DLL2_LIST_VALIDATE_NOTINIT(list) /* nothing */
+#define DLL2_LINKS_VALIDATE_NOTINIT(item,index) /* nothing */
+#endif
 
 extern void dll2_list_add( DLL2_LIST * list, int links_offset,
                            void * item, char * file, int line );

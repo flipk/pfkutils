@@ -3,27 +3,33 @@
 #include "dll2_c.h"
 
 #define LINKS(list,item) \
-    (&((DLL2_LINKS*)(((unsigned int)item) + links_offset))[list->index])
+    (&((DLL2_LINKS*)(((unsigned int)item) + links_offset))[list->list_index])
 
 void
 dll2_list_add( DLL2_LIST * list, int links_offset, void * item,
                char * file, int line )
 {
     DLL2_LINKS * ll = LINKS(list,item);
-    if ( ll->onlist != 0 )
-        dll2_error( file, line, "dll2_list_add wrong list" );
-    ll->onlist = list;
-    ll->next = 0;
-    ll->prev = list->tail;
-    if ( list->head != 0 )
+#if DLL2_MAGIC_VALIDATIONS
+    if ( !DLL2_LIST_ISINIT(list) )
+        dll2_error( file, line, "dll2_list_add list not initialized" );
+    if ( ll->links_magic != DLL2_LINKS_MAGIC )
+        dll2_error( file, line, "dll2_list_add item not initialized" );
+#endif
+    if ( ll->links_onlist != 0 )
+        dll2_error( file, line, "dll2_list_add item already on list" );
+    ll->links_onlist = list;
+    ll->links_next = 0;
+    ll->links_prev = list->list_tail;
+    if ( list->list_head != 0 )
     {
-        ll = LINKS(list,list->tail);
-        ll->next = item;
+        ll = LINKS(list,list->list_tail);
+        ll->links_next = item;
     }
     else
-        list->head = item;
-    list->tail = item;
-    list->count++;
+        list->list_head = item;
+    list->list_tail = item;
+    list->list_count++;
 }
 
 void
@@ -32,25 +38,29 @@ dll2_list_remove( DLL2_LIST * list, int links_offset, void * item,
 {
     DLL2_LINKS * ll = LINKS(list,item);
     DLL2_LINKS * el;
-    if ( ll->onlist != list )
+#if DLL2_MAGIC_VALIDATIONS
+    if ( !DLL2_LIST_ISINIT(list) )
+        dll2_error( file, line, "dll2_list_remove list not initialized" );
+#endif
+    if ( ll->links_onlist != list )
         dll2_error( file, line, "dll2_list_remove wrong list" );
-    ll->onlist = 0;
-    if ( ll->next != 0 )
+    ll->links_onlist = 0;
+    if ( ll->links_next != 0 )
     {
-        el = LINKS(list,ll->next);
-        el->prev = ll->prev;
+        el = LINKS(list,ll->links_next);
+        el->links_prev = ll->links_prev;
     }
     else
-        list->tail = ll->prev;
-    if ( ll->prev != 0 )
+        list->list_tail = ll->links_prev;
+    if ( ll->links_prev != 0 )
     {
-        el = LINKS(list,ll->prev);
-        el->next = ll->next;
+        el = LINKS(list,ll->links_prev);
+        el->links_next = ll->links_next;
     }
     else
-        list->head = ll->next;
-    ll->next = ll->prev = 0;
-    list->count--;
+        list->list_head = ll->links_next;
+    ll->links_next = ll->links_prev = 0;
+    list->list_count--;
 }
 
 void
@@ -60,21 +70,28 @@ dll2_list_add_after( DLL2_LIST * list, int links_offset,
 {
     DLL2_LINKS * ell = LINKS(list,existing);
     DLL2_LINKS * ill = LINKS(list,item);
-    if ( ell->onlist != list )
-        dll2_error( file, line, "dll2_list_add_after wrong list" );
-    if ( ill->onlist != 0 )
+#if DLL2_MAGIC_VALIDATIONS
+    if ( !DLL2_LIST_ISINIT(list) )
+        dll2_error( file, line, "dll2_list_add_after list not initialized" );
+    if ( ill->links_magic != DLL2_LINKS_MAGIC )
+        dll2_error( file, line, "dll2_list_add_after item not initialized" );
+#endif
+    if ( ell->links_onlist != list )
+        dll2_error( file, line, "dll2_list_add_after existing on wrong list" );
+    if ( ill->links_onlist != 0 )
         dll2_error( file, line, "dll2_list_add_after already on list" );
-    ill->onlist = list;
-    ill->next = ell->next;
-    ill->prev = existing;
-    ell->next = item;
-    if ( ill->next )
+    ill->links_onlist = list;
+    ill->links_next = ell->links_next;
+    ill->links_prev = existing;
+    ell->links_next = item;
+    if ( ill->links_next )
     {
-        ill = LINKS(list,ill->next);
-        ill->prev = item;
+        ill = LINKS(list,ill->links_next);
+        ill->links_prev = item;
     }
     else
-        list->tail = item;
+        list->list_tail = item;
+    list->list_count++;
 }
 
 void
@@ -85,23 +102,30 @@ dll2_list_add_before( DLL2_LIST * list, int links_offset,
     DLL2_LINKS * ell, * ill;
     ell = LINKS(list,existing);
     ill = LINKS(list,item);
-    if ( ell->onlist != list )
+#if DLL2_MAGIC_VALIDATIONS
+    if ( !DLL2_LIST_ISINIT(list) )
+        dll2_error( file, line, "dll2_list_add_before list not initialized" );
+    if ( ill->links_magic != DLL2_LINKS_MAGIC )
+        dll2_error( file, line, "dll2_list_add_before item not initialized" );
+#endif
+    if ( ell->links_onlist != list )
         dll2_error( file, line,
                     "dll2_list_add_before existing on wrong list" );
-    if ( ill->onlist != 0 )
+    if ( ill->links_onlist != 0 )
         dll2_error( file, line, 
                     "dll2_list_add_before already on list" );
-    ill->onlist = list;
-    ill->prev = ell->prev;
-    ill->next = existing;
-    ell->prev = item;
-    if ( ill->prev )
+    ill->links_onlist = list;
+    ill->links_prev = ell->links_prev;
+    ill->links_next = existing;
+    ell->links_prev = item;
+    if ( ill->links_prev )
     {
-        ill = LINKS(list,ill->prev);
-        ill->next = item;
+        ill = LINKS(list,ill->links_prev);
+        ill->links_next = item;
     }
     else
-        list->head = item;
+        list->list_head = item;
+    list->list_count++;
 }
 
 void *

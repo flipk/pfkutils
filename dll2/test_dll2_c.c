@@ -19,11 +19,12 @@ typedef struct {
 /* this example code puts NUMITEMS items on each list */
 #define NUMITEMS 10
 
-int
-main()
+DLL2_LIST  lists[DLL2_NUM_LISTS];
+THING      a[NUMITEMS];
+
+void
+test_list(void)
 {
-    DLL2_LIST  lists[DLL2_NUM_LISTS];
-    THING      a[NUMITEMS];
     THING * x;
     int i,j;
 
@@ -40,7 +41,7 @@ main()
 
     for ( i = 0; i < NUMITEMS; i++ )
     {
-        DLL2_LINKS_INIT( &a[i] );
+        DLL2_ITEM_INIT( &a[i] );
         a[i].val = i;
     }
 
@@ -49,41 +50,46 @@ main()
 
     for ( i = 0; i < NUMITEMS; i++ )
     {
-        DLL2_ADD( &lists[ DLL2_LIST_ONE ], &a[ i ] );
-        DLL2_ADD( &lists[ DLL2_LIST_TWO ], &a[ i ] );
+        DLL2_LIST_ADD( &lists[ DLL2_LIST_ONE ], &a[ i ] );
+        DLL2_LIST_ADD( &lists[ DLL2_LIST_TWO ], &a[ i ] );
     }
 
-    DLL2_REMOVE( &lists[ DLL2_LIST_ONE ], &a[ 4 ] );
-    DLL2_ADD_AFTER(  &lists[ DLL2_LIST_ONE ], &a[ 5 ], &a[ 4 ] );
+    DLL2_LIST_REMOVE( &lists[ DLL2_LIST_ONE ], &a[ 4 ] );
+    DLL2_LIST_ADD_AFTER(  &lists[ DLL2_LIST_ONE ], &a[ 5 ], &a[ 4 ] );
 
-    DLL2_REMOVE( &lists[ DLL2_LIST_TWO ], &a[ 6 ] );
-    DLL2_ADD_BEFORE( &lists[ DLL2_LIST_TWO ], &a[ 4 ], &a[ 6 ] );
+    DLL2_LIST_REMOVE( &lists[ DLL2_LIST_TWO ], &a[ 6 ] );
+    DLL2_LIST_ADD_BEFORE( &lists[ DLL2_LIST_TWO ], &a[ 4 ], &a[ 6 ] );
 
 /* and now, two examples of how to walk a list, one
    is from head to tail and the other is tail to head. */
 
 #define WALKLIST_FORW(list) \
-    for ( x = DLL2_HEAD(&lists[(list)]); x; \
-          x = DLL2_NEXT(&lists[(list)],x))
+    for ( x = DLL2_LIST_HEAD(&lists[(list)]); x; \
+          x = DLL2_LIST_NEXT(&lists[(list)],x))
 #define WALKLIST_BACK(list) \
-    for ( x = DLL2_TAIL(&lists[(list)]); x; \
-          x = DLL2_PREV(&lists[(list)],x))
+    for ( x = DLL2_LIST_TAIL(&lists[(list)]); x; \
+          x = DLL2_LIST_PREV(&lists[(list)],x))
 
-    printf( "\n" "list 1 head-to-tail: " );
+    printf( "\n" "list 1 (%d) head-to-tail: ",
+            DLL2_LIST_SIZE(&lists[DLL2_LIST_ONE]));
     WALKLIST_FORW(DLL2_LIST_ONE)
         {
             printf( "%d ", x->val );
         }
+
     printf( "\n" "list 1 tail-to-head: " );
     WALKLIST_BACK(DLL2_LIST_ONE)
         {
             printf( "%d ", x->val );
         }
-    printf( "\n\n" "list 2 head-to-tail: " );
+
+    printf( "\n\n" "list 2 (%d) head-to-tail: ",
+            DLL2_LIST_SIZE(&lists[DLL2_LIST_TWO]));
     WALKLIST_FORW(DLL2_LIST_TWO)
         {
             printf( "%d ", x->val );
         }
+
     printf( "\n" "list 2 tail-to-head: " );
     WALKLIST_BACK(DLL2_LIST_TWO)
         {
@@ -91,5 +97,23 @@ main()
         }
     printf( "\n\n" );
 
+    for ( i = 0; i < NUMITEMS; i++ )
+    {
+        for ( j = 0; j < DLL2_NUM_LISTS; j++ )
+        {
+            if ( DLL2_LIST_ONTHISLIST( &lists[ j ], &a[ i ] ))
+                DLL2_LIST_REMOVE( &lists[ j ], &a[ i ] );
+        }
+        DLL2_ITEM_DEINIT( &a[i] );
+    }
+
+    DLL2_LIST_DEINIT( &lists[ DLL2_LIST_ONE ] );
+    DLL2_LIST_DEINIT( &lists[ DLL2_LIST_TWO ] );
+}
+
+main()
+{
+    test_list();
+    test_list();
     return 0;
 }
