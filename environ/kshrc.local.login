@@ -1,5 +1,12 @@
 
 #
+# vars
+#
+
+LD_LIBRARY_PATH=/apps/public/gcc_3.4.3/lib
+export LD_LIBRARY_PATH
+
+#
 # shortcuts
 #
 
@@ -280,7 +287,7 @@ alias vpp='_vm VXWORKS:PPC750:DIAB:PCU:'
 alias vsp='_vm VXSIM:SPARC:GNU:VXSIM:'
 alias  vm='_vm ""'
 alias vsl='_vl VXSIM:SPARC:GNU:VXSIM:'
-alias  vl='_vl VXWORKS:PPC750:DIAB::'
+alias  vl='_vl VXWORKS:PPC750:DIAB:PCU:'
 
 ctmakefile()  {
     typeset log=log.$$

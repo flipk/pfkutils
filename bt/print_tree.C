@@ -54,8 +54,8 @@ public:
     }
 };
 
-int
-main( int argc, char ** argv )
+extern "C" int
+btpt_main( int argc, char ** argv )
 {
     if ( argc != 3  ||  argv[1][0] != '-' )
     {
@@ -95,13 +95,17 @@ main( int argc, char ** argv )
     if ( flag == GENERIC )
     {
         int i;
-        printf( "recno info:\n"
-                "num_segments = %d, recs_in_use = %d, recs_free = %d\n",
+        printf( "recno info:  "
+                "recordsize = %d, pagesize = %d, segmentsize = %d\n"
+                "num_segments = %d, recs_in_use = %d, recs_free = %d\n"
+                "segments: ",
+                fbn->get_recordsize(), fbn->get_pagesize(),
+                fbn->get_segmentsize(),
                 num_segments, recs_in_use, recs_free );
         for ( i = 0; i < num_segments; i++ )
-            printf( "segment %d : used=%d free=%d%s\n", i, 
-                    perseg_used[i], perseg_free[i], 
-                    (i == (num_segments-1)) ? "    (partial)" : "" );
+            printf( "%d%% ", 
+                    (perseg_used[i] * 100) /
+                    (perseg_used[i] + perseg_free[i]) );
         printf( "\n" );
     }
     if ( flag == RECNO )

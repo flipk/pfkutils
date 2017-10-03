@@ -31,6 +31,7 @@ public:
         else
             pattern_len = 0;
     }
+    virtual ~list_iterator( void ) { }
 };
 
 void
@@ -55,8 +56,8 @@ int list_multiple_mtar( char * dbname, int argc, char ** argv );
 int extract_mtar( char * dbname, char * pattern );
 int extract_multiple_mtar( char * dbname, int argc, char ** argv );
 
-int
-main( int argc, char ** argv )
+extern "C" int
+mytar_main( int argc, char ** argv )
 {
     if ( argc == 1 || argv[1][1] != 0 )
         usage();
@@ -163,10 +164,4 @@ extract_multiple_mtar( char * dbname, int argc, char ** argv )
             return retval;
     }
     return 0;
-}
-
-int
-delete_mtar( char * dbname )
-{
-    
 }

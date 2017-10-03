@@ -6,16 +6,15 @@
   ;; custom-set-variables was added by Custom -- don't edit or cut/paste it!
   ;; Your init file should contain only one such instance.
  '(blink-matching-paren-distance nil)
+; the following is required on isd
+; '(dired-listing-switches "-ao")
  '(display-time-format "%H:%M")
  '(display-time-mail-file (quote false))
  '(file-precious-flag t)
  '(menu-bar-mode t)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
  '(mode-line-inverse-video t)
-; for login start commenting here
- '(tool-bar-mode nil nil (tool-bar))
-; for login end comments here
-)
+ '(tool-bar-mode nil nil (tool-bar)))
 
 (custom-set-faces
   ;; custom-set-faces was added by Custom -- don't edit or cut/paste it!
@@ -32,7 +31,6 @@
 (cond (window-system
        (progn
          (setq
-;for login, start commenting here
 	  default-frame-alist '((minibuffer . nil))
 	  initial-frame-alist 'nil
 	  minibuffer-frame-alist
@@ -41,7 +39,6 @@
 	    (vertical-scroll-bars . nil)
 	    (name . "Emacs Minibuffer")
 	    (title . "Emacs Minibuffer"))
-;for login, end commenting here
 	  special-display-buffer-names
 	  '("*compilation*" "*shell*")
 	  )

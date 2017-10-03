@@ -1,16 +1,25 @@
 
+//    suppose record_size is 16 and page_size is 4096.  then:
 // a 'record' is 16 bytes.
 // a 'block' is a set of contiguous records.
 // a 'page' is 4k (256 records).
 // a 'segment' is 512k (128 pages, 32768 records).
 // a 'bitmap page' is the first page of a segment, containing free-space bits
 // a 'data page' is the other 127 pages of a segment, containing data
+//
+//    suppose record_size is 32 and page_size is 32768.  then:
+// a 'record' is 32 bytes.
+// a 'block' is a set of contiguous records.
+// a 'page' is 32k (1024 records).
+// a 'segment' is 8M (256 pages, 262144 records).
+// a 'bitmap page' is the first page of a segment, containing free-space bits
+// a 'data page' is the other 255 pages of a segment, containing data
+//
 // 
-// since the bitmap takes up the first 256 records of the segment,
-// the first 256 bits (32 bytes, 2 records) of the bitmap page are
-// not bits, instead they are other information, such as number of
-// records in use in that segment, a 'magic' to identify the
-// segment, etc.
+// since the bitmap takes up the first page of the segment,
+// the first few records of the bitmap page do not represent used/free
+// records.  in all but the first segment they are unused data.  in the
+// first segment this is where the file signature block goes.
 // 
 // bitmap pages are stored in a separate cache from the data pages.
 
@@ -65,8 +74,41 @@ FileBlockNumber :: init( char * file, int c1,
                          int _record_size, int _page_size )
     throw ( constructor_failed )
 {
-    recordsize = _record_size;
-    pagesize   = _page_size;
+    recnoblock_header   rbh;
+    fd = open( file, O_RDWR );
+    if ( fd >= 0 )
+    {
+        if ( read( fd, &rbh, sizeof(rbh)) != sizeof(rbh) )
+        {
+            fprintf( stderr, "error: existing file '%s' does not have "
+                     "valid header!\n", file );
+            throw constructor_failed();
+        }
+        if ( rbh.magic.get() != recnoblock_header::RECNOBLOCK_MAGIC )
+        {
+            fprintf( stderr, "error: existing file '%s' does not have "
+                     "valid magic!\n", file );
+            throw constructor_failed();
+        }
+        recordsize = rbh.record_size.get();
+        pagesize   = rbh.page_size.get();
+    }
+    else
+    {
+        fd = open( file, O_RDWR | O_CREAT, 0644 );
+        if ( fd < 0 )
+            throw constructor_failed();
+        recordsize = _record_size;
+        pagesize   = _page_size;
+        rbh.magic.set( recnoblock_header::RECNOBLOCK_MAGIC );
+        rbh.record_size.set( recordsize );
+        rbh.page_size.set( pagesize );
+        if ( write( fd, &rbh, sizeof(rbh)) != sizeof(rbh) )
+        {
+            fprintf( stderr, "error writing header!\n" );
+            kill(0,6);
+        }
+    }
 
     if ( !power_of_2( pagesize ) || !power_of_2( recordsize ))
     {
@@ -103,13 +145,6 @@ FileBlockNumber :: init( char * file, int c1,
     reserved_bits = pagesize / recordsize;
 
     maxpages = c1;
-    fd = open( file, O_RDWR );
-    if ( fd < 0 )
-    {
-        fd = open( file, O_RDWR | O_CREAT, 0644 );
-        if ( fd < 0 )
-            throw constructor_failed();
-    }
     time( &last_sync );
 
     // note this code will not work on a platform where a pointer

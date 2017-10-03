@@ -1,6 +1,6 @@
 
 TARG= libmytar.a
-SRCS= file_db.C update_file.C extract_file.C update_dir.C
+SRCS= file_db.C update_file.C extract_file.C update_dir.C main.C
 HDRS= file_db.H update_file.H extract_file.H update_dir.H
 COPTS= -O3 -Wall -Werror
 INCS= -I .. -I ../dll2 -I ../bt
@@ -10,7 +10,7 @@ _OBJS= $(SRCS:.C=.o)
 OBJS= $(_OBJS:.c=.o)
 
 all: xmakefile
-	@make -f xmakefile $(TARG) t mt
+	@make -f xmakefile $(TARG)
 
 xmakefile: Makefile $(SRCS) $(HDRS)
 	rm -f xmakefile
@@ -35,5 +35,8 @@ mt: main.C $(TARG)
 
 clean:
 	rm -f *.[ao] xmakefile mt t *~
+
+depend:
+	@echo nothing to do
 
 #DEPENDENCIES

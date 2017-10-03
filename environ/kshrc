@@ -151,8 +151,12 @@ case x$ENV_SET in
 
         p=''
         __extend_path ~/bin
+        __extend_path /mot/proj/wibb_bts/cmbp/wibb_cpe/cm-policy/bin
+        __extend_path /mot/proj/wibb_bts/cmbp/bin
+	__extend_path /vobs/sb/linux_tools/montavista/hardhat/devkit/mips/fp_le/bin
         __extend_path /usr/bin/X11
         __extend_path /usr/misc/X11/bin
+	__extend_path /usr/misc/GNU/bin
         __extend_path /opt/site/bin
         __extend_path /opt/local/bin
         __extend_path /opt/gnu/bin
@@ -161,17 +165,22 @@ case x$ENV_SET in
         __extend_path /opt/X11R6.4/bin
         __extend_path /usr/misc/bin
         __extend_path /usr/vendor/bin
+	__extend_path /usr/atria/bin
         __extend_path /usr/mot/bin
+	__extend_path /apps/public/bin
         __extend_path /usr/local/bin
+	__extend_path /usr/local/wmplayer
+	__extend_path /usr/local/X11
         __extend_path /usr/test/gsmtesttools/bin
         __extend_path /usr/test/bsstools/bin
         __extend_path /usr/test/bsstools/misc
         __extend_path /usr/ucb
         __extend_path /usr/etc
         __extend_path /usr/dt/bin
-        __extend_path /usr/ccs/bin
+	__extend_path /usr/ccs/bin
         __extend_path /bin
         __extend_path /usr/bin
+	__extend_path /usr/lib
         __extend_path /sbin
         __extend_path /usr/sbin
         __extend_path /share/scripts
@@ -199,10 +208,6 @@ case x$ENV_SET in
 
         ;;
 esac
-
-if [ `uname -s` = 'Linux' ] ; then
-    PATH=/home/$USER/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11R6/bin:/usr/bin/X11
-fi
 
 ARCH=`$HOME/bin/architecture`
 export ARCH
@@ -256,9 +261,11 @@ export LANG=C
 export EDITOR=vi
 export VISUAL=vi
 export VIEWER=xless
+export CSCOPE_EDITOR=$HOME/bin/ec
 export NPCL_EDITOR=less
 export PAGER=less
 export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q'
+export XLESS='-j5 -c -d -h 5 -i -M -q'
 export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
 
@@ -310,7 +317,6 @@ make_file_part() {
         dir_part="${fp%/*/*}"
         load="${fp##$dir_part/}"
         print $2=\"[$load]\"
-        print td="$fp"
         return
     fi
 
@@ -325,7 +331,6 @@ make_file_part() {
         load="${base##$dir_part/}"
         try="${fp##$base/}"
         print $2="[$load]:$try"
-        print td="$base"
         return
     fi
 
@@ -336,7 +341,6 @@ make_file_part() {
             load=${try%/src*}
             try=${try#*/}
             print $2="[$load]:$try"
-            print td=$lp/$load
             ;;
 
         /usr/vob/*)
@@ -349,7 +353,6 @@ make_file_part() {
             else
                 print $2="${try#/}"
             fi
-            print td=/usr/vob/gsm
             ;;
 
         /view/*/usr/vob/*)
@@ -360,7 +363,6 @@ make_file_part() {
             vobname=${try%%/*}
             try=${try#$vobname/}
             print $2="[$viewname]:${try#/}"
-            print td=/view/$viewname/usr/vob/$vobname
             ;;
 
         *)
@@ -479,7 +481,7 @@ xless() {
 
     typeset OLDLESS
     OLDLESS="$LESS"
-    LESS="-j5 -c -d -h 5 -i -M -q"
+    LESS="$XLESS"
     export LESS
 
     xterm -title "+ ${file##*/}" -name XLESS +sb -g 80x45 -e less $args &
@@ -797,11 +799,6 @@ if __isksh ; then
 	    command cd "$*"
 	fi
 	typeset file_part bardisp
-	if [[ "x$CLEARCASE_ROOT" != x ]] ; then
-	    td=/usr/vob/gsm
-	else
-	    unset td
-	fi
 	eval `make_file_part "$PWD" file_part`
 	if [[ "x$CLEARCASE_ROOT" == x || "x$CLEARCASE_ROOT" == x/view/gsdStart ]] ; then
 	    bardisp="$file_part"
@@ -817,11 +814,7 @@ if __isksh ; then
 		xtermbar "$bardisp"
 	    fi
 	fi
-	if [[ x$td != x ]] ; then
-	    CDPATH=.:$HOME:$td/src/exec:$td/src/exec/os:$td/src:$td/src/exec/tornado101/target/config
-        else
-	    CDPATH=.:$HOME
-	fi
+	CDPATH=.:$ti/src:$cpe/src:$HOME
 	echo $SHELLFILESTRING,$DISPLAY,$viewname,$PWD > $SHELLFILE
     }
     shells() {

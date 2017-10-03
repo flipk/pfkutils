@@ -15,6 +15,8 @@
 	PROG(0,random_hex,generate a random hex number)
 	PROG(0,pkstgen,phil knaacks state machine generator)
 	PROG(0,genpw,generate random passwords)
+	PROG(0,mytar,my tar program)
+	PROG(0,btpt,BTree print-tree diags)
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)
 	PROG(1,qcam,quickcam interface program)

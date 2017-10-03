@@ -1,21 +1,18 @@
 
 LIB= libbt.a
 HDRS= recnoblock.H btree.H
-SRCS= recnoblock.C btree.C
+SRCS= recnoblock.C btree.C print_tree.C
 ALLSRCS= $(SRCS) test.C
 OBJS= $(SRCS:.C=.o)
 FLAGS= -O3
 INCS=  -I../threads/h -I../dll2 -I..
 
-all: $(LIB) rbt rbto print_tree
+all: $(LIB) rbt rbto
 
 $(LIB): $(OBJS)
 	rm -f $(LIB)
 	ar cq $(LIB) $(OBJS)
 	ranlib $(LIB)
-
-print_tree: print_tree.C $(LIB) 
-	g++ print_tree.C $(INCS) $(FLAGS) $(LIB) ../dll2/libdll2.a -o print_tree
 
 rbt: recnoblock.C
 	g++ -g3 $(INCS) -DINCLUDE_MAIN recnoblock.C ../dll2/libdll2.a -o rbt

@@ -65,11 +65,11 @@ update_file( file_db * db, char * fname )
     UINT32 piece, changed_pieces = 0;
     int fd;
     fd = open( fname, O_RDONLY );
-    printf( "%s\n", fname );
+    printf( "%s: ", fname );
+    fflush(stdout);
     if ( fd < 0 )
     {
-        fprintf( stderr, "unable to open file '%s': %s\n",
-                 fname, strerror( errno ));
+        fprintf( stderr, "open: %s\n", strerror( errno ));
         piece = 0;
     }
     else
@@ -83,6 +83,7 @@ update_file( file_db * db, char * fname )
             if ( db->update_piece( id, piece, buf, cc )) 
                 changed_pieces++;
         }
+        printf( "%d/%d\n", changed_pieces, piece );
     }
     close( fd );
 

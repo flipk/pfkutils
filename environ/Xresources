@@ -7,8 +7,6 @@ XTerm*scrollBar:              on
 XTerm*utmpInhibit:            off
 XTerm*foreground:             green
 XTerm*background:             black
-XTerm*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
-XTerm*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
 XTerm*cursorColor:            white
 XTerm*Scrollbar*background:   red
 XTerm*Scrollbar*foreground:   blue
@@ -17,18 +15,21 @@ XTerm*scrollTtyOutput:        false
 XTerm*saveLines:              2000
 XTerm*vt100*charClass: 33:48,35:48,37:48,43:48,45-47:48,95:48,126:48
 
-XTerm*fontMenu*font1*Label:  tiny
-XTerm*VT100*font1:           -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
-XTerm*fontMenu*font2*Label:  small
+XTerm*font:      -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+XTerm*boldFont:  -schumacher-clean-bold-r-normal--12-120-75-75-c-60-*
+
+XTerm*fontMenu*font1*Label:  Tiny
+XTerm*VT100*font1: -schumacher-clean-medium-r-normal--6-60-75-75-c-40-iso646.1991-irv
+XTerm*fontMenu*font2*Label:  Small
 XTerm*VT100*font2:           -schumacher-clean-medium-r-normal--8-80-75-75-c-50-iso646.1991-irv
-XTerm*fontMenu*font3*Label:  exceedhuge
-XTerm*VT100*font3:           10x20
-XTerm*fontMenu*font4*Label:  large
-XTerm*VT100*font4:           -schumacher-clean-medium-r-normal--16-160-75-75-c-80-iso646.1991-irv
-XTerm*fontMenu*font5*Label:  huge
-XTerm*VT100*font5:           -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso8859-9
-XTerm*fontMenu*font6*Label:  wider huge
-XTerm*VT100*font6:           -b&h-lucidatypewriter-medium-r-normal-sans-18-180-75-75-m-110-iso8859-2
+XTerm*fontMenu*font3*Label:  Normal
+XTerm*VT100*font3:           -schumacher-clean-medium-r-normal--12-120-75-75-c-60-*
+XTerm*fontMenu*font4*Label:  Large
+XTerm*VT100*font4:           10x20
+XTerm*fontMenu*font5*Label:  Huge
+XTerm*VT100*font5:           -adobe-courier-medium-r-normal-*-30-*-*-*-*-*-*-*
+XTerm*fontMenu*font6*Label:  Mongo
+XTerm*VT100*font6:           -adobe-courier-medium-r-normal-*-50-*-*-*-*-*-*-*
 
 XTermScreen*termName: vt100
 XTermScreen*utmpInhibit:      on
@@ -38,11 +39,6 @@ XTermScreen*scrollBar:        off
 
 XTerm.VT100.Translations: \
 #override \
-   <Key>F1:  string("chg_lev") string(0x0d)\n\
-   <Key>F2:  string("3stooges") string(0x0d) string("4beatles") string(0x0d)\n\
-   <Key>F3:  string(0x0e)\n\
-   <Key>F4:  string("debug on") string(0x0d)\n\
-   <Key>F5:  string("msg 23 1 0 0 8a04h 1")string(0x0d)\n\
    <Key>F6:  clear-saved-lines()\n\
    <Key>F9:  scroll-back(1,page)\n\
    <Key>F10: scroll-forw(1,page)\n\

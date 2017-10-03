@@ -1,0 +1,130 @@
+
+#FUNCTIONS: lsv lsco sv zeroversion makeorig ccdiff ccdiff2 
+
+stty erase 0x7f
+mips=/vobs/sb/ti_sip_linux/tools/mipsel-linux-uclibc/bin
+ti=/vobs/sb/ti_sip_linux
+vend=/vob/wibb_vendor/Beceem
+cpe=/vob/wibb_cpe
+
+export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q'
+export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
+
+lsv() {
+        typeset prefix
+        if [[ $# -eq 0 ]] ; then
+                prefix=pknaack1_
+        else
+                prefix=$1
+        fi
+        ct lsview ${prefix}* | cut -c3- | awk '{print $1}'
+}
+
+lsvp() {
+    ct lsview wmx-cpe\*$1\* | cut -c3- | awk '{print $1}'
+}
+
+lsco() {
+     ct lsco -cview -avobs -short
+}
+
+sv() {
+    ct setview $1
+}
+
+zeroversion() {
+    ct ls $1 | 
+     sed \
+        -e 's,^\(.*\)  *Rule.*$,\1,'     \
+        -e 's,^\(.*\)  *from.*$,\1,'     \
+        -e 's,^\(.*/\).*$,\1,'          \
+        -e 's,$,0,'
+}
+
+makeorig() {
+    for f in $* ; do
+        zv=`zeroversion $f`
+        rm -f $f.orig
+        echo $zv
+        cp $zv $f.orig
+    done
+}
+
+myscript() {
+    logfile=$1
+    shift
+    MY_INSCRIPT=$HOME/myscript.$$
+    export MY_INSCRIPT
+    echo "$@" > $HOME/myscript.$$
+    script $logfile
+    unset MY_INSCRIPT
+}
+
+if [[ x$MY_INSCRIPT != x ]] ; then
+    sh $MY_INSCRIPT
+    rm -f $MY_INSCRIPT
+    exit 0
+fi
+
+ccdiff() {
+    typeset file_arg
+    typeset opts
+    typeset ofile
+
+    if [[ x$1 == x+g ]] ; then
+        graphical=no
+        shift
+    else
+        graphical=yes
+    fi
+
+    file_arg=$1
+    shift
+    opts=$1
+
+    ofile=`zeroversion $file_arg`
+
+    if [[ $graphical == no ]] ; then
+        sd $file_arg $ofile
+    else
+        xsd $file_arg $ofile
+    fi
+}
+
+ccdiff2() {
+    typeset file_arg
+    typeset opts
+    typeset ofile
+
+    if [[ x$1 == x+g ]] ; then
+        graphical=no
+        shift
+    else
+        graphical=yes
+    fi
+
+    file_arg=$1
+    shift
+    opts=$1
+
+    ofile=`zeroversion $file_arg`
+
+    if [[ $graphical == no ]] ; then
+        sd2 $file_arg $ofile
+    else
+        xsd2 $file_arg $ofile
+    fi
+}
+
+# always make sure my /home/$USER/bin is the first
+# element of the path.
+if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
+    __verbose fixing up busted path
+    PATHhead=${PATH%:/home/${USER}*}
+    PATHtail=${PATH#*${USER}/bin:*}
+    PATH=/home/$USER/bin:$PATHhead:$PATHtail
+    unset PATHhead
+    unset PATHtail
+    export PATH
+fi
+

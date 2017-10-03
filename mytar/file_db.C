@@ -38,7 +38,7 @@ file_db :: file_db( char * fname, bool create_it )
         }
     }
 
-    fbn = new FileBlockNumber( fname, c1 );
+    fbn = new FileBlockNumber( fname, c1, 32, 32768 );
     if ( !fbn )
     {
         fprintf( stderr, 
@@ -356,7 +356,7 @@ file_db :: delete_old( void )
         datum_1_key * d1k = (datum_1_key *) d1key;
         d1k->prefix_n = 'n';
         memcpy( d1k->fname, d2->fname, fname_len );
-        d1k->fname[fname_len+1] = 0;
+        d1k->fname[fname_len] = 0;
         printf( "deleting %s\n", d1k->fname );
         (void) bt->delete_rec( (UCHAR*) d1k, fname_len+1 );
         delete[] d1key;

@@ -20,11 +20,11 @@ CPPSRCS= rmstar.C tcpgate.C pk_msg.C fd_mgr.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
 LIBS= -lcurses -lm -lpthread -lz
 
-DIRS= implode itsfs tags.make tags.view ipipe2 enctelgate dll2
+DIRS= implode itsfs tags.make tags.view ipipe2 enctelgate dll2 mytar
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
 	itsfs/libitsfs.a ipipe2/libi2.a enctelgate/libetg.a \
-	dll2/libdll2.a
+	dll2/libdll2.a mytar/libmytar.a
 
 DIRS+= states
 ELIBS+= states/libstates.a
@@ -99,7 +99,7 @@ pdksh-5.2.14/ksh_precrunch.o::
 
 cscope::
 	find . -name '*.[chCH]' > cscope.files
-	cscope -b
+	rm -f cscope.out ; cscope -b
 
 depend: Makefile.in $(CSRCS) $(CPPSRCS) $(HDRS)
 	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
@@ -119,5 +119,6 @@ clean:
 	done
 	rm -f Makefile sudo.h main_prog.h *core
 	rm -f pf_frontend inst myshell myshell-launcher
+	rm -f cscope.files cscope.out
 
 #DEPENDENCIES

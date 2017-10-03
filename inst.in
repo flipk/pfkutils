@@ -1,6 +1,6 @@
 #!/bin/sh
 
-valid_hosts="blade congo laptop login dell ka"
+valid_hosts="blade laptop login isd"
 files="Xresources Xresources-codetest Xresources-remote ctwmrc kshrc"
 files="$files profile screenrc screenrc.3 xinitrc xsession zephyr.subs"
 files="$files zephyr.vars zwgc.desc hexdump_format"

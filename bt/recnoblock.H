@@ -25,6 +25,11 @@ class FileBlockNumber {
     int  recs_per_segment;
     int     reserved_bits;
 
+public:
+    int get_recordsize (void) { return recordsize; }
+    int get_pagesize   (void) { return pagesize; }
+    int get_segmentsize(void) { return segmentsize; }
+
     static const int   block_signature = 0x504b;  // "PK"
     static const int  user_buffer_flag = 1;
 
@@ -287,6 +292,13 @@ struct user_buffer {
         char * buf = (char*)ptr;
         delete[] buf;
     }
+};
+
+struct recnoblock_header {
+    static const UINT32 RECNOBLOCK_MAGIC = 0xed4d94ccUL;
+    UINT32_t  magic;
+    UINT16_t  record_size;
+    UINT16_t  page_size;
 };
 
 #endif /* RECNOBLOCK_INTERNAL */

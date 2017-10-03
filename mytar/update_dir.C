@@ -40,7 +40,7 @@ update_dir( file_db * db, char * dirname )
     {
         struct stat sb;
 
-        if ( stat( di->fname, &sb ) < 0 )
+        if ( lstat( di->fname, &sb ) < 0 )
         {
             fprintf( stderr, "unable to stat '%s': %s\n",
                      di->fname, strerror( errno ));
@@ -75,8 +75,6 @@ update_dir( file_db * db, char * dirname )
         {
             update_file( db, di->fname );
         }
-        else
-            fprintf( stderr, "ignoring object '%s'\n", di->fname );
 
     next_entry:
         delete di;
