@@ -125,5 +125,6 @@ else
 fi
 
 make depend
+cd pdksh-5.2.14/ && ./configure
 
 exit 0

@@ -40,8 +40,9 @@ cp $scripts  $bindir
 (
     cd $bindir
     chmod a+x $scripts
-    rm -f pkutils
+    rm -f pkutils pdksh
     ln -s pf_frontend pkutils
+    ln -s pf_frontend pdksh
     for l in $launchers ; do
         rm -f $l
         ln -s myshell-launcher $l
@@ -56,7 +57,7 @@ cp pkutils $destdir/pkutils.new
     if [ -f sudo ] ; then
         sudo chown root:wheel pkutils.new
         sudo chmod 4755 pkutils.new
-        sudo mv -f pkutils.new pkutils
+        sudo mv -f pkutils.new pkutils || mv -f pkutils.new pkutils
     else
         mv -f pkutils.new pkutils
     fi
@@ -69,9 +70,9 @@ cp pkutils $destdir/pkutils.new
 
 if [ -f pdksh-5.2.14/ksh ] ; then
     echo setting up pdksh
-    cp pdksh-5.2.14/ksh $destdir/ksh.new
-    strip $destdir/ksh.new
-    mv -f $destdir/ksh.new $destdir/ksh
+    cp pdksh-5.2.14/ksh $destdir/pdksh.new
+    strip $destdir/pdksh.new
+    mv -f $destdir/pdksh.new $destdir/pdksh
 fi
 
 cd environ

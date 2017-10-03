@@ -81,7 +81,7 @@ CFLAGS= -O3 $(CPPFLAGS)
 # needs to be last
 ELIBS+=	dll2/libdll2.a
 
-all: subdirs $(PROG)
+all: subdirs $(PROG) ksh
 
 $(PROG): $(OBJS) $(ELIBS)
 	g++ -o $(PROG) $(OBJS) $(ELIBS) $(LIBS)
@@ -102,7 +102,7 @@ subdirs::
 	gcc $(CFLAGS) -c $*.C
 
 ksh::
-	cd pdksh-5.2.14 && ./configure && make
+	cd pdksh-5.2.14 && make
 
 cscope::
 	find . -name '*.[chCH]' > cscope.files
@@ -127,5 +127,6 @@ clean:
 	rm -f Makefile sudo.h main_prog.h *core
 	rm -f pf_frontend inst myshell myshell-launcher
 	rm -f cscope.files cscope.out
+	cd pdksh-5.2.14 && make clean
 
 #DEPENDENCIES

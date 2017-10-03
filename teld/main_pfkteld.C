@@ -12,7 +12,6 @@
 
 #include "pick.H"
 
-/// xxxx change to etg_worker
 #define SHELL "etg_worker", "etg_worker", NULL
 
 static int
@@ -73,9 +72,16 @@ pfkteld_main()
 
     while (1)
     {
-        sock = accept(fd, NULL, NULL);
+        socklen_t slen = sizeof(sa);
+        sock = accept(fd, (struct sockaddr *)&sa, &slen);
         if (sock > 0)
         {
+            unsigned int addr = ntohl(sa.sin_addr.s_addr);
+
+            fprintf(stderr, "\npfkteld: accepting new connection from "
+                    "%d.%d.%d.%d\n\n",
+                    (addr >> 24) & 0xFF,(addr >> 16) & 0xFF,
+                    (addr >>  8) & 0xFF,(addr >>  0) & 0xFF);
             if (child_count > 10)
             {
                 close(sock);
