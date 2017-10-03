@@ -28,6 +28,7 @@ int
 main()
 {
     ThreadParams p;
+    p.debug = ThreadParams::DEBUG_PRINTSTACKINFO;
     p.my_eid = 1;
     Threads th( & p );
     (void) new testh( 1 );

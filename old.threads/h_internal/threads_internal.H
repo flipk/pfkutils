@@ -62,13 +62,23 @@
 
 #endif
 
+#define THREAD_STATE_LIST \
+THREAD_STATE_LIST_ITEM( TH_UNKNOWN   ) \
+THREAD_STATE_LIST_ITEM( TH_READY     ) \
+THREAD_STATE_LIST_ITEM( TH_SUSPENDED ) \
+THREAD_STATE_LIST_ITEM( TH_DEAD      ) \
+THREAD_STATE_LIST_ITEM( TH_CURR      ) \
+THREAD_STATE_LIST_ITEM( TH_SLEEP     ) \
+THREAD_STATE_LIST_ITEM( TH_IOWAIT    ) \
+THREAD_STATE_LIST_ITEM( TH_MSGWAIT   ) \
+THREAD_STATE_LIST_ITEM( TH_SEMWAIT   ) \
+THREAD_STATE_LIST_ITEM( TH_NONEXIST  ) \
+THREAD_STATE_LIST_ITEM( TH_MAXSTATE  )
+
 enum thread_state {
-    // these must match statenames table at end of this file
-    TH_READY = 1,   TH_DEAD,
-    TH_SUSPENDED,   TH_CURR,
-    TH_SLEEP,       TH_IOWAIT,
-    TH_MSGWAIT,     TH_SEMWAIT,
-    TH_NONEXIST,    TH_MAXSTATE
+#define THREAD_STATE_LIST_ITEM(item) item,
+    THREAD_STATE_LIST
+#undef  THREAD_STATE_LIST_ITEM
 };
 
 struct _Thread {
@@ -127,16 +137,10 @@ public:
 #ifdef _INCLUDE_THREAD_STATENAMES
 //static
 const char * _Thread::_statenames[] = { 
-    // these must match thread_state enum defs at top of this file
-    "TH_INVALID",
-    "TH_READY",
-    "TH_DEAD",
-    "TH_SUSPEND",
-    "TH_CURR",
-    "TH_SLEEP",
-    "TH_IOWAIT",
-    "TH_MSGWAIT",
-    "TH_SEMWAIT",
-    "TH_NONEXIST"
+#define THREAD_STATE_LIST_ITEM(item) #item ,
+    THREAD_STATE_LIST
+#undef  THREAD_STATE_LIST_ITEM
 };
 #endif
+
+#undef  THREAD_STATE_LIST

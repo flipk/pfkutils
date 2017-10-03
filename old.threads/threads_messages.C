@@ -131,23 +131,24 @@ ThreadMessages :: send( Message * m, MessageAddress * addr )
             mqid = eid_mqids[eid];
         else
         {
-            DEBUG1(( 0, "thmsgs", "send : invalid eid %d",
-                     eid ));
+            TH_DEBUG( DEBUG_MSGS,
+                      ( 0, "thmsgs", "send : invalid eid %d", eid ));
             return false;
         }
     }
 
     if ( mqid == -1 || (unsigned)mqid >= (unsigned)max_mqids )
     {
-        DEBUG1(( 0, "thmsgs", "send : invalid "
-                 "mqid %d (eid was %d)", mqid, eid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "send : invalid "
+                    "mqid %d (eid was %d)", mqid, eid ));
         return false;
     }
 
     if ( mqs[mqid] == NULL )
     {
-        DEBUG1(( 0, "thmsgs", "send : mqid %d doesn't exist",
-                 mqid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "send : mqid %d doesn't exist", mqid ));
         return false;
     }
 
@@ -177,14 +178,14 @@ ThreadMessages :: recv( int numqids, int * mqids,
         mqid = mqids[i];
         if ( (unsigned)mqid >= (unsigned)max_mqids )
         {
-            DEBUG2(( 0, "thmsgs", "recv : mqid %d invalid",
-                     mqid ));
+            TH_DEBUG( DEBUG_MSGS,
+                      ( 0, "thmsgs", "recv : mqid %d invalid value", mqid ));
             continue; // skip this mqid
         }
         if ( mqs[mqid] == NULL )
         {
-            DEBUG1(( 0, "thmsgs", "recv : mqid %d invalid",
-                     mqid ));
+            TH_DEBUG( DEBUG_MSGS,
+                      ( 0, "thmsgs", "recv : mqid %d doesn't exist", mqid ));
             continue; // skip
         }
         if ( mqs[mqid]->get_count() > 0 )
@@ -195,10 +196,9 @@ ThreadMessages :: recv( int numqids, int * mqids,
         }
         if ( mqs[mqid]->wait != NULL )
         {
-            DEBUG1(( 0, "thmsgs", 
-                     "recv : mqid %d already "
-                     "has waiter (tid %d)", mqid, 
-                     mqs[mqid]->wait->tid ));
+            TH_DEBUG( DEBUG_MSGS,
+                      ( 0, "thmsgs", "recv : mqid %d already "
+                        "has waiter (tid %d)", mqid, mqs[mqid]->wait->tid ));
             continue; // skip
         }
         mqs[mqid]->wait = &wtr;
@@ -246,16 +246,15 @@ ThreadMessages :: register_mq( int &mqid, char * mqname )
 
     if ( mqid == max_mqids )
     {
-        DEBUG1(( 0, "thmsgs",
-                 "register_mq : "
-                 "out of mqids" ));
+        TH_DEBUG_ALL(( 0, "thmsgs", "register_mq : out of mqids" ));
         return false;
     }
 
     if ( mqs[mqid] != NULL )
     {
-        DEBUG1(( 0, "thmsgs", "mq %d (%s) exists (making %s)",
-                 mqid, mqs[mqid]->mqname, mqname ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "mq %d (%s) exists (making %s)",
+                    mqid, mqs[mqid]->mqname, mqname ));
         return false;
     }
 
@@ -341,15 +340,16 @@ ThreadMessages :: unregister_mq( int mqid )
 {
     if ( (unsigned)mqid >= (unsigned)max_mqids )
     {
-        DEBUG2(( 0, "thmsgs", "unregister_mq : invalid "
-                 "mqid %d", mqid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "unregister_mq : invalid mqid %d", mqid ));
         return false;
     }
 
     if ( mqs[mqid] == NULL )
     {
-        DEBUG2(( 0, "thmsgs", "unregister_mq : mqid %d "
-                 "doesn't exist", mqid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "unregister_mq : mqid %d "
+                    "doesn't exist", mqid ));
         return false;
     }
 
@@ -364,15 +364,15 @@ ThreadMessages :: register_eid( int eid, int mqid )
 {
     if ( (unsigned)eid > (unsigned)max_eids )
     {
-        DEBUG1(( 0, "thmsgs", "register_eid : invalid eid %d",
-                 eid ));
+        TH_DEBUG_ALL(( 0, "thmsgs", "register_eid : invalid eid %d", eid ));
         return false;
     }
 
     if ( eid_mqids[eid] != -1 )
     {
-        DEBUG1(( 0, "thmsgs", "register_eid : eid %d already "
-                 "registered!", eid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "register_eid : eid %d already "
+                    "registered!", eid ));
         return false;
     }
 
@@ -385,15 +385,15 @@ ThreadMessages :: unregister_eid( int eid )
 {
     if ( (unsigned)eid > (unsigned)max_eids )
     {
-        DEBUG1(( 0, "thmsgs", "unregister_eid : invalid eid %d",
-                 eid ));
+        TH_DEBUG_ALL(( 0, "thmsgs", "unregister_eid : invalid eid %d", eid ));
         return false;
     }
 
     if ( eid_mqids[eid] == -1 )
     {
-        DEBUG1(( 0, "thmsgs", "unregister_eid : eid %d is not "
-                 "registered!", eid ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "unregister_eid : eid %d is not "
+                    "registered!", eid ));
         return false;
     }
 
@@ -410,16 +410,17 @@ ThreadMessages :: register_fd_mq( int fd, void * arg,
 {
     if ( (unsigned)fd >= (unsigned)max_fds )
     {
-        DEBUG1(( 0, "thmsgs", "register_read_fd_mq : "
-                 "fd %d is too high (> %d)", fd, max_fds ));
+        TH_DEBUG_ALL(( 0, "thmsgs", "register_read_fd_mq : "
+                       "fd %d is too high (> %d)", fd, max_fds ));
         return false;
     }
 
     if ( fd_mqids[fd].mqid != -1  &&
          ( fd_mqids[fd].mqid != mqid  ||  fd_mqids[fd].arg != arg ))
     {
-        DEBUG1(( 0, "thmsgs", "register_read_fd_mq : "
-                 "fd %d already registered!", fd ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "register_read_fd_mq : "
+                    "fd %d already registered!", fd ));
         return false;
     }
 
@@ -436,15 +437,16 @@ ThreadMessages :: unregister_fd_mq( int fd )
 {
     if ( (unsigned)fd >= (unsigned)max_fds )
     {
-        DEBUG1(( 0, "thmsgs", "unregister_read_fd_mq : "
-                 "fd %d is too high (> %d)", fd, max_fds ));
+        TH_DEBUG_ALL(( 0, "thmsgs", "unregister_read_fd_mq : "
+                       "fd %d is too high (> %d)", fd, max_fds ));
         return false;
     }
 
     if ( fd_mqids[fd].mqid == -1 )
     {
-        DEBUG1(( 0, "thmsgs", "unregister_read_fd_mq : "
-                 "fd %d is not registered!", fd ));
+        TH_DEBUG( DEBUG_MSGS,
+                  ( 0, "thmsgs", "unregister_read_fd_mq : "
+                    "fd %d is not registered!", fd ));
         return false;
     }
 
@@ -516,7 +518,8 @@ ThreadMessages :: _msgs_fd( void )
                             numwfds, mywfds,
                             10, out, 
                             Threads :: WAIT_FOREVER );
-            DEBUG0(( 0, "msgs_fd", "select %d(%d)", r, errno ));
+            TH_DEBUG( DEBUG_MSGSFD,
+                      ( 0, "msgs_fd", "select %d(%d)", r, errno ));
             if ( r > 0 )
             {
                 send_indications( r, out );
@@ -557,16 +560,17 @@ ThreadMessages :: send_indications( int num, int * outs )
         // a recipient running at the same prio as us might
         // resume immediately and have problems reregistering.
 
-        DEBUG0(( 0, "thmsgs", "ind for fd %d to mqid %d",
-                 fd, fd_mqids[fd].mqid ));
+        TH_DEBUG( DEBUG_MSGSFD,
+                  ( 0, "thmsgs", "ind for fd %d to mqid %d",
+                    fd, fd_mqids[fd].mqid ));
 
         _unregister_fd_mq( fd );
 
         if ( send( fam, &fam->dest ) == false )
         {
-            DEBUG1(( 0, "thmsgs", "msgs_fd : "
-                     "failure sending message for "
-                     "fd %d", fd ));
+            TH_DEBUG( DEBUG_MSGSFD,
+                      ( 0, "thmsgs", "msgs_fd : "
+                        "failure sending message for fd %d", fd ));
             delete fam;
         }
     }
@@ -578,7 +582,8 @@ ThreadMessages :: send_error_indication( int fd )
     int mqid = fd_mqids[fd].mqid;
     _unregister_fd_mq( fd );
 
-    DEBUG0(( 0, "thmsgs", "sending error indication for fd %d", fd ));
+    TH_DEBUG( DEBUG_MSGSFD,
+              ( 0, "thmsgs", "sending error indication for fd %d", fd ));
     FdActiveMessage * fam = new FdActiveMessage;
 
     fam->fd.set( fd );
@@ -587,8 +592,9 @@ ThreadMessages :: send_error_indication( int fd )
 
     if ( send( fam, &fam->dest ) == false )
     {
-        DEBUG1(( 0, "thmsgs", "send_error_indication : "
-                 "error sending error indication for fd %d", fd ));
+        TH_DEBUG( DEBUG_MSGSFD,
+                  ( 0, "thmsgs", "send_error_indication : "
+                    "error sending error indication for fd %d", fd ));
         delete fam;
     }
 }

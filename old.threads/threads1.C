@@ -39,15 +39,6 @@
 // stops being active;  thus it can be possible for one thread
 // doing lots of fd activity to starve other threads blocked on fds.
 //
-// todo:
-//   - can't select for read AND write on a fd at the same time
-//     (design flaw). workaround is to dup() the descriptor and
-//     then you can use one for read and the other for write.
-//   - implement 'stack margin' function from old threads.3
-//   - timer management is rather inefficient -- linked list
-//     management is probably O(n)
-//   - message queue id management has many O(n) operations too
-//
 
 #include <string.h>
 #include <stdio.h>
@@ -69,7 +60,7 @@ Threads :: Threads( ThreadParams * p )
 {
     if ( th != NULL )
     {
-        DEBUG2(( 0, "constructor", "th already exists!" ));
+        TH_DEBUG_ALL(( 0, "constructor", "th already exists!" ));
         throw constructor_failed();
     }
 

@@ -7,7 +7,7 @@
 #include "parse_actions.h"
 #include "tokens.h"
 
-#ifdef FREEBSD
+#if defined(FREEBSD) || defined(CYGWIN32)
 #define myinput input
 #endif
 

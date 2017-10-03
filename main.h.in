@@ -13,9 +13,7 @@
 	PROG(0,m,hex/dec/bin mathematics on command line)
 	PROG(0,newtail,tails multiple files)
 	PROG(0,random_hex,generate a random hex number)
-#ifndef cygwin32
 	PROG(0,pkstgen,phil knaacks state machine generator)
-#endif
 	PROG(0,genpw,generate random passwords)
 #ifdef freebsd
 	PROG(1,sudo,do a command as the superuser)

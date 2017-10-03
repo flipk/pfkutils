@@ -136,17 +136,16 @@ protected:
             int stack_size = default_stack_size ) {
         if ( th == NULL ) 
         {
-            DEBUG1(( 0, "Thread constructor",
-                     "thread %s : no global "
-                     "th object!\n", name ));
+            TH_DEBUG_ALL(( 0, "Thread constructor",
+                           "thread %s : no global th object!\n", name ));
             throw constructor_failed();
         }
         tid = th->create( name, prio, stack_size, true,
                           &_entry, (void*)this );
         if ( tid == INVALID_TID )
         {
-            DEBUG1(( 0, "Thread constructor",
-                     "error creating thread %s\n", name ));
+            TH_DEBUG_ALL(( 0, "Thread constructor",
+                           "error creating thread %s\n", name ));
             throw constructor_failed();
         }
     }

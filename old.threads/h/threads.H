@@ -35,22 +35,27 @@
 #include "magic.H"
 #include "../../dll2/dll2.H"
 
-// debug0 : print msg only if debug level > 1
-// debug1 : print msg only if debug level > 0
-// debug2 : print msg always
-
-#define DEBUG0(x) \
-   do { if ( th && th->debug > 1 ) { debug_print x; }} while ( 0 )
-#define DEBUG1(x) \
-   do { if ( th && th->debug > 0 ) { debug_print x; }} while ( 0 )
-#define DEBUG2(x) \
-   do { debug_print x; } while ( 0 )
-
 void debug_print( int myerrno, char * hdr, char * format, ... )
     __attribute__ ((format( printf, 3, 4 )));
 void _debug_print( int myerrno, char * hdr, char * format, va_list ap );
 
+#define TH_DEBUG(val,x) \
+   do { if ( th && (th->debug & ThreadParams::val) ) \
+        { debug_print x; }} while ( 0 )
+#define TH_DEBUG_ALL(x) \
+   do { debug_print x; } while ( 0 )
+
 struct ThreadParams {
+    static const int DEBUG_NONE            = 0;
+    static const int DEBUG_FD              = 1;
+    static const int DEBUG_ENQ             = 2;
+    static const int DEBUG_CTXSW           = 4;
+    static const int DEBUG_MSGS            = 8;
+    static const int DEBUG_MSGSFD          = 16;
+    static const int DEBUG_CHECKSTACK      = 32;
+    static const int DEBUG_PRINTSTACKINFO  = 64;
+    static const int DEBUG_ALL             = 0xffffffff;
+
     int debug;
     int max_threads;
     int max_fds;
@@ -61,7 +66,7 @@ struct ThreadParams {
     int timerhashsize;
     // defaults chosen out of a bithat
     ThreadParams( void ) {
-        debug = 0;
+        debug = DEBUG_NONE;
         max_threads = 32;
         max_fds = 32;
         max_mqids = 32;

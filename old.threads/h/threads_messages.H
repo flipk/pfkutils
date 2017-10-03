@@ -127,7 +127,8 @@ public:
         else
         {
             delete[] temp_buf;
-            DEBUG1(( 0, "decrypt", "crypt->decrypt failed\n" ));
+            TH_DEBUG( DEBUG_MSGS,
+                      ( 0, "decrypt", "crypt->decrypt failed\n" ));
             return false;
         }
     }

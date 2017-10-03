@@ -76,7 +76,7 @@ main( int argc, char ** argv )
     }
 
     ThreadParams p;
-    p.debug = 1;
+    p.debug = ThreadParams::DEBUG_NONE;
     p.my_eid = active ? 1 : 2;
     Threads th( &p );
 

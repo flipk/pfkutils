@@ -8,6 +8,8 @@ TEMPLATES= template.code template.header template.skel \
 
 #ifdef freebsd
 OPTS= -O3 -DFREEBSD=1
+#elifdef cygwin32
+OPTS= -O3 -DCYGWIN32=1
 #else
 OPTS= -O3 -DSOLARIS=1
 #endif
@@ -19,7 +21,11 @@ $(TARG): $(OBJS)
 	ar cq $(TARG) $(OBJS)
 
 tokenizer.c: tokenizer.l tokens.h
+#ifdef cygwin32
+	flex tokenizer.l
+#else
 	lex tokenizer.l
+#endif
 	mv lex.yy.c tokenizer.c
 
 tokens.h parser.c: parser.y

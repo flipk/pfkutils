@@ -26,11 +26,8 @@ ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
 	threads/libthreads.a itsfs/libitsfs.a
 
-#ifdef cygwin32
-#else
 DIRS+= states
 ELIBS+= states/libstates.a
-#endif
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a

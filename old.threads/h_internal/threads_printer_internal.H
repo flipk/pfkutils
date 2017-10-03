@@ -25,7 +25,7 @@ class ThreadPrinter : public Thread {
     bool die;
 public:
     ThreadPrinter( void )
-        : Thread( "printer", 1, 16384 ) {
+        : Thread( "printer", 1, 65536 ) {
         mqid = -1;
         resume( tid );
     }

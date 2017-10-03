@@ -87,9 +87,9 @@ ThreadSemaphores :: ~ThreadSemaphores( void )
     for ( s = first; s != NULL; s = ns )
     {
         ns = s->next;
-        DEBUG2(( 0, "ThreadSemaphores",
-                 "semaphore '%s' not cleaned up at exit",
-                 first->name ));
+        TH_DEBUG_ALL(( 0, "ThreadSemaphores",
+                       "semaphore '%s' not cleaned up at exit",
+                       first->name ));
         delete s;
     }
 }

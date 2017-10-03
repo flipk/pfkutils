@@ -97,7 +97,7 @@ _debug_print( int myerrno, char * hdr, char * format, va_list ap )
 //    if ( th != NULL )
 //        th->printf( str );
 //    else
-        printf( str );
+    printf( str );
 }
 
 extern void malloclock_die( void );
@@ -121,15 +121,15 @@ Threads :: ~Threads( void )
 
     if ( numthreads > 0 )
     {
-        DEBUG2(( 0, "destructor", "not all threads are dead!" ));
+        TH_DEBUG_ALL(( 0, "destructor", "not all threads are dead!" ));
         for ( i = 0; i < max_threads; i++ )
         {
             if ( threads[i] != NULL )
             {
-                DEBUG2(( 0, "destructor",
-                         "Thread %s(%d) still alive",
-                         threads[i]->name,
-                         threads[i]->tid ));
+                TH_DEBUG_ALL(( 0, "destructor",
+                               "Thread %s(%d) still alive",
+                               threads[i]->name,
+                               threads[i]->tid ));
                 delete threads[i];
             }
         }
@@ -145,8 +145,9 @@ Threads :: valid_fd( int fd )
 {
     if ( fd > max_fds )
     {
-        DEBUG1(( 0, "valid_fd",
-                 "fd %d > max_fds (%d)!", fd, max_fds ));
+        TH_DEBUG( DEBUG_FD,
+                  ( 0, "valid_fd",
+                    "fd %d > max_fds (%d)!", fd, max_fds ));
         return false;
     }
     return true;
@@ -164,8 +165,9 @@ Threads :: take_fd( int fd, bool for_read )
     if ( descriptors[fd] != NULL   &&
          descriptors[fd] != current )
     {
-        DEBUG2(( 0, "take_fd",
-                 "fd %d already registered to another tid %#x", fd, current ));
+        TH_DEBUG_ALL(( 0, "take_fd",
+                       "fd %d already registered to another tid %#x",
+                       fd, current ));
         return false;
     }
 
@@ -202,8 +204,8 @@ Threads :: release_fd( int fd, bool for_read )
     if ( descriptors[fd] != NULL   &&
          descriptors[fd] != current )
     {
-        DEBUG2(( 0, "release-fd",
-                 "fd %d owner is %#x!", fd, descriptors[fd] ));
+        TH_DEBUG_ALL(( 0, "release-fd",
+                       "fd %d owner is %#x!", fd, descriptors[fd] ));
         return;
     }
 
@@ -242,6 +244,9 @@ void
 Threads :: kill( void )
 {
     current->state = TH_DEAD;
+    if ( debug & ThreadParams::DEBUG_PRINTSTACKINFO )
+        ::printf( "thread %s exits, stack left = %d of %d\n",
+                  current->name, current->stackleft(), current->stacksize );
     free_later = current;
     numthreads--;
     threads[current->tid] = NULL;
@@ -258,7 +263,8 @@ Threads :: enqueue( _Thread * t )
     int prio = t->prio;
     if ( readyq[prio].onlist(t) )
     {
-        DEBUG0(( 0, "enqueue", "%s already onq", t->name ));
+        TH_DEBUG( DEBUG_ENQ,
+                  ( 0, "enqueue", "%s already onq", t->name ));
         return false;
     }
     readyq[prio].add( t );
@@ -329,8 +335,8 @@ Threads :: reschedule( void )
     {
         // this should never happen; if it does,
         // debug why and fix it.
-        DEBUG2(( 0, "reschedule",
-                 "WARNING: from->state was not CURR!" ));
+        TH_DEBUG_ALL(( 0, "reschedule",
+                       "WARNING: from->state was not CURR!" ));
         from->state = TH_CURR;
     }
 
@@ -353,7 +359,8 @@ Threads :: reschedule( void )
 
     to->switches++;
 
-    DEBUG0(( 0, "resched", "sw %s to %s", from->name, to->name ));
+    TH_DEBUG( DEBUG_CTXSW,
+              ( 0, "resched", "sw %s to %s", from->name, to->name ));
     // switch to the new thread.
 
     current = (_Thread *)to;
@@ -361,14 +368,17 @@ Threads :: reschedule( void )
 // NB: this adds considerable expense to context switch time.
 //     however, it is immensely valuable in terms of catching bugs.
 
-    if ( to->stacksize && to->stackleft() < 5000 )
+    if ( debug & ThreadParams::DEBUG_CHECKSTACK )
     {
-        char msg[ 132 ];
-        sprintf( msg,
-                 "WARNING: STACK OVERFLOW IN TASK %s (%d of %d)\n",
-                 to->name, to->stackleft(), to->stacksize );
-        ::write( 1, msg, strlen( msg ));
-        exit( 1 );
+        if ( to->stacksize && to->stackleft() < 5000 )
+        {
+            char msg[ 132 ];
+            sprintf( msg,
+                     "WARNING: STACK OVERFLOW IN TASK %s (%d of %d)\n",
+                     to->name, to->stackleft(), to->stacksize );
+            ::write( 1, msg, strlen( msg ));
+            exit( 1 );
+        }
     }
 
     if (!(_setjmp( from->jb )))
@@ -586,13 +596,21 @@ Threads :: create( char * name, int prio, int stacksize,
 
     stacksize += ADDTL_STACK;
 
+    if ( debug & ThreadParams::DEBUG_PRINTSTACKINFO )
+        ::printf( "task %s created with stack %d\n", name, stacksize );
+
+    // always add 32k for safety -- for some reason some platforms
+    // (like cygwin32) use a lot more stack than other platforms.
+
+    stacksize += 32768;
+
     for ( tid = 0; tid < max_threads; tid++ )
         if ( threads[tid] == NULL )
             break;
 
     if ( tid == max_threads )
     {
-        DEBUG1(( 0, "create", "out of threads" ));
+        TH_DEBUG_ALL(( 0, "create", "ran out of threads!" ));
         return INVALID_TID;
     }
 
