@@ -17,7 +17,7 @@
  *
  * additional criteria that i enforce:
  *
- *   - exactly 9 chars long
+ *   - exactly 8 chars long
  *   - every letter alternates hands on keyboard (i'm lazy)
  *   - never more than 2 digits (i'm lazy)
  *   - only one letter is capitalized (i'm lazy)
@@ -26,10 +26,10 @@
  *   - never use '6' .. on some keyboards its on the right
  *    hand and on others its on the left.
  *
- * oh, and it does all this in 274 characters.
+ * oh, and it does all this in 259 characters.
  */
 
-genpw_main(a,h,g,i,l,c,p,r){char w[9];srandom(getpid()*time(w[8]=0));while(!r|h^1|!g|g>2){l=(p=random()%8)%2;for(h=g=r=i=0;i<8;i++,l^=1){(a=(c="yuiophjklnm7890---__qwertasdfgzxcvb12345"[random()%20+l*20])>96)&&!i?r++:c==45||c==95?h++:c<58?g++:0;w[i]=i==p?!a?r=0:c-32:c;}}puts(w);}
+genpw_main(a,h,g,i,l,c,p,r){char w[9];srand(time(w[8]=0));for(;!r|h^1|!g|g>2;){l=(p=rand()%8)%2;for(h=g=r=i=0;i<8;i++,l^=1){(a=(c="yuiophjklnm7890---__qwertasdfgzxcvb12345"[rand()%20+l*20])>96)&&!i?r++:c==45||c==95?h++:c<58?g++:0;w[i]=i==p?!a?r=0:c-32:c;}}puts(w);}
 
 #if 0
 /*
@@ -47,26 +47,26 @@ genpw_main(a,h,g,i,l,c,p,r){char w[9];srandom(getpid()*time(w[8]=0));while(!r|h^
 main(a,h,g,i,l,c,p,r)
 {
     char w[9];
-    srandom( getpid() * time(w[8]=0) );
-
-    while ( !r | h^1 | !g | g > 2 )
+    srand(time(w[8]=0));
+    for ( ; !r | h^1 | !g | g>2; )
     {
-        l = ( p = random() % 8 ) % 2;
-        for ( h = g = r = i = 0; i < 8; i++, l^=1 )
+        l = (p=rand()%8) %2;
+        for (h=g=r=i=0; i < 8; i++, l^=1 )
         {
             (a=
-             (c=
-              "yuiophjklnm7890---__qwertasdfgzxcvb12345"
-              [random()%20+l*20])
-             >96)
-                &&
+             (c="yuiophjklnm7890---__qwertasdfgzxcvb12345"
+              [rand()%20+l*20]
+                 )>96) && 
                 !i ? r++ :
-                    c==45 || c==95 ? h++ :
-                    c<58 ? g++ : 0;
-            w[i]=  i==p ? !a ? r=0 : c-32 : c;
+                c==45 || c==95 ? h++ :
+                c < 58 ? g++ : 0;
+            w[i]= i==p ? !a ? r=0 : c-32 : c;
         }
     }
     puts(w);
 }
+
+main(a,h,g,i,l,c,p,r){char w[9];srandom(time(w[8]=0));for(;!r|h^1|!g|g>2;){l=(p=random()%8)%2;for(h=g=r=i=0;i<8;i++,l^=1){(a=(c="yuiophjklnm7890---__qwertasdfgzxcvb12345"[random()%20+l*20])>96)&&!i?r++:c==45||c==95?h++:c<58?g++:0;w[i]=i==p?!a?r=0:c-32:c;}}puts(w);}
+
 
 #endif

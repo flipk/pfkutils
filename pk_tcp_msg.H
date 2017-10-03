@@ -7,9 +7,27 @@
 #include <unistd.h>
 #include "types.H"
 
+#define PkTcpMsgDef( classname, typevalue, body ) \
+class classname : public pk_tcp_msg { \
+public: \
+    static const int TYPE = typevalue ; \
+    classname( void ) : pk_tcp_msg( sizeof( classname ), TYPE ) { } \
+    body \
+};
+
+#define PkTcpMsgDef2( classname, typevalue, \
+                      constructargs, constructor, body ) \
+class classname : public pk_tcp_msg { \
+public: \
+    static const int TYPE = typevalue ; \
+    classname( constructargs ) : pk_tcp_msg( sizeof( classname ), TYPE ) \
+        { constructor } \
+    body \
+};
+
 struct pk_tcp_msg {
-    pk_tcp_msg( UINT16 _type, UINT16 _length )
-        : type( _type ), length( _length ) { }
+    pk_tcp_msg( UINT16 _length, UINT16 _type )
+        : length( _length ), type( _type ) { }
     void set_checksum( void ) { checksum.set( calc_checksum()); }
     bool verif_checksum( void ) { return checksum.get() == calc_checksum(); }
     bool verif_magic( void ) { return magic.get() == magic_value; }
@@ -35,8 +53,18 @@ private:
 class pk_tcp_msgr {
     enum states { HEADER, BODY };
     int fd;
+    void * user_arg;
+    typedef int (*user_func)(void *arg, int fd, void * buf, int buflen);
+    user_func  user_read;
+    user_func  user_write;
 public:
-    pk_tcp_msgr( int _fd ) { fd = _fd; }
+    pk_tcp_msgr( user_func rdr, user_func wrtr, void * _user_arg, int _fd )
+    {
+        fd = _fd;
+        user_read = rdr;
+        user_write = wrtr;
+        user_arg = _user_arg;
+    }
     ~pk_tcp_msgr( void ) { close( fd ); }
     bool send( pk_tcp_msg * m );
     bool recv( pk_tcp_msg * m, int max_size );

@@ -9,7 +9,7 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
     char * p = (char*) m;
     while ( l > 0 )
     {
-        int cc = ::write( fd, p, l );
+        int cc = user_write( user_arg, fd, p, l );
         if ( cc <= 0 )
             return false;
         p += cc;
@@ -26,7 +26,7 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
     int stateleft = sizeof( pk_tcp_msg );
     while ( 1 )
     {
-        int cc = read( fd, buf, stateleft );
+        int cc = user_read( user_arg, fd, buf, stateleft );
         if ( cc <= 0 )
             return false;
         stateleft -= cc;
@@ -52,3 +52,32 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
         }
     }
 }
+
+
+#if 0
+
+/* example definition of a message */
+
+PkTcpMsgDef( TestMessage, 0x12345,
+             int a;
+             int b;
+    );
+
+int read_func ( void *, int, void *, int );
+int write_func( void *, int, void *, int );
+
+struct user_data {
+    int junk;
+};
+
+int
+testfunc( void )
+{
+    user_data ud;
+    TestMessage tm;
+    pk_tcp_msgr mgr( read_func, write_func, &ud, 1 );
+
+    mgr.send( &tm );
+}
+
+#endif
