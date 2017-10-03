@@ -105,6 +105,26 @@ else
     }
 fi
 
+if [ -z "$PFK_CCS_BTS" ] ; then
+    __isbts() {
+	return 1
+    }
+else
+    __isbts() {
+	return 0
+    }
+fi
+
+if [ -z "$PFK_CCS_CPE" ] ; then
+    __iscpe() {
+	return 1
+    }
+else
+    __iscpe() {
+	return 0
+    }
+fi
+
 if __isksh ; then
     if [[ x$LAST_HOST != x$HOST ]] ; then
 	__verbose from $LAST_HOST to $HOST, regen ENV
@@ -157,9 +177,14 @@ case x$ENV_SET in
 
         p=''
         __extend_path ~/bin
-        __extend_path /mot/proj/wibb_bts/cmbp/wibb_cpe/cm-policy/bin
+	if __iscpe ; then
+            __extend_path /mot/proj/wibb_bts/cmbp/wibb_cpe/cm-policy/bin
+	    __extend_path /vobs/sb/linux_tools/montavista/hardhat/devkit/mips/fp_le/bin
+	fi
+	if __isbts ; then
+            __extend_path /mot/proj/wibb_bts/cmbp/wibb_bts/cm-policy/bin
+	fi
         __extend_path /mot/proj/wibb_bts/cmbp/bin
-	__extend_path /vobs/sb/linux_tools/montavista/hardhat/devkit/mips/fp_le/bin
         __extend_path /usr/bin/X11
         __extend_path /usr/misc/X11/bin
 	__extend_path /usr/misc/GNU/bin
@@ -240,6 +265,12 @@ if __isksh ; then
 	fi
 	if [[ x$CLEARCASE_ROOT != x ]] ; then
 	    _ps="${_ps} in CMBP"
+	fi
+	if __isbts ; then
+	    _ps="${_ps}:BTS"
+	fi
+	if __iscpe ; then
+	    _ps="${_ps}:CPE"
 	fi
         _ps="${_ps} pid $$ on $TTY"
 	if [[ x$WINDOW != x ]] ; then

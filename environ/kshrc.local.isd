@@ -7,9 +7,15 @@ vend=/vob/wibb_vendor/Beceem
 Drv=$vend/Source/Drv/Source
 Lib=$vend/Source/Lib/BeceemWiMAX
 cpe=/vob/wibb_cpe
+mac=/vob/wibb_bts/mac/code/mac_sw
+bts=/vob/wibb_bts
+wrvx=/mot/proj/wibb_wr/pnele14ve32d
 
 alias ti='cd $ti'
+alias mac='cd $mac'
+alias bts='cd $bts'
 alias abs='cd /vob/wibb_cpe/src/abs_layer/src'
+alias cpe='cd $cpe'
 alias vend='cd $vend'
 alias drv='cd $Drv'
 alias lib='cd $Lib'
@@ -39,6 +45,12 @@ EOF
     cat ~/zzz.xclearcase >>  ~/.xclearcase
     rm -f ~/zzz.xclearcase
     xlsvtree $*
+}
+
+wrenv() {
+    print starting vxworks shell in $wrvx
+    $wrvx/wrenv.sh -p vxworks-6.2
+    print vxworks shell complete
 }
 
 xcs() {
