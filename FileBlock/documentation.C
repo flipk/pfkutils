@@ -498,6 +498,9 @@ However if a long-running program wishes to frequently flush in order
 to maintain consistency in the file, this time can become prohibitive
 as the file size becomes large.
 
+A program crash while the file is open can unfortunately be rather 
+catastrophic as well.
+
 One possible optimization to the on-disk format might be to change the
 format it is stored in.  Instead of making the extent offset an
 implicit summation of all previous extent sizes, the offset could be

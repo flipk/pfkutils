@@ -38,7 +38,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define TEST 1
+#define TEST 2
 
 #define TEST_FILE "testfile.db"
 #define MAX_BYTES (256*1024*1024)
@@ -131,8 +131,9 @@ main()
             if ((random() & 0xff) > 0x80)
             {
                 key.key.v = ind;
-                if (bt->del( &key ) == false)
+                if (bt->del( &key, &data_fbn ) == false)
                     fprintf(stderr,"\r %d delete %d failed\n",iter,ind);
+                bt->get_fbi()->free(data_fbn);
                 ram[ind].infile = false;
                 deletes++;
             }
@@ -183,9 +184,95 @@ main()
 
 #elif TEST==2
 
+struct crapkey : public BST {
+    ~crapkey(void) { bst_free(); }
+    BST_UINT32_t key;
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {
+        BST * fields[] = { &key, NULL };
+        return bst_do_fields( str, fields );
+    }
+};
+
+struct ramcopy {
+    bool infile;
+    UINT32 data;
+    ramcopy(void) { infile = false; }
+};
+
 int
 main()
 {
+    unlink( TEST_FILE );
+    Btree * bt = Btree::createFile( TEST_FILE, MAX_BYTES, 0644, 13 );
+
+    crapkey    key;
+    UINT32     data;
+
+#define ITERATIONS 0x100000
+#define ITEMS      0x010000
+
+    ramcopy  ram[ITEMS];
+    int iter, ind;
+    int inserts = 0, queries = 0, deletes = 0;
+    time_t now, last;
+
+    time( &last );
+    for (iter = 0; iter < ITERATIONS; iter++)
+    {
+        if (time(&now) != last)
+        {
+            last = now;
+            fprintf(stderr, "\r %d ", iter);
+        }
+        ind = (random() >> 8) & (ITEMS-1);
+        if (ram[ind].infile)
+        {
+            if ((random() & 0xff) > 0x80)
+            {
+                key.key.v = ind;
+                if (bt->del( &key, &data ) == false)
+                    fprintf(stderr,"\r %d delete %d failed\n",iter,ind);
+                ram[ind].infile = false;
+                deletes++;
+            }
+            else
+            {
+                key.key.v = ind;
+                if (bt->get( &key, &data ) == false)
+                    fprintf(stderr,"\r %d query %d failed\n", iter, ind);
+                else
+                {
+                    if (data != ram[ind].data)
+                        fprintf(stderr,"\r %d query %d data mismatch\n",
+                                iter, ind);
+                }
+                queries++;
+            }
+        }
+        else
+        {
+            ram[ind].data = random();
+            data = ram[ind].data;
+            key.key.v = ind;
+            if (bt->put( &key, data ) == false)
+                fprintf(stderr,"\r %d put %d failed\n", iter, ind);
+            else
+                ram[ind].infile = true;
+            inserts++;
+        }
+    }
+    fprintf(stderr,
+            "\ncompleted %d iterations; %d inserts, %d deletes, %d queries\n",
+            ITERATIONS, inserts, deletes, queries);
+
+#if 0  /* uncomment to enable dumping the database at the end. */
+    myIterator iterator(bt->get_fbi());
+    bt->iterate( &iterator );
+#endif
+
+    delete bt;
+
+    return 0;
 }
 
 #endif

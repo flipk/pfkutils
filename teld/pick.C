@@ -106,7 +106,7 @@ pfk_key_pick( bool verbose )
     {
         if (verbose)
             printf("\r\n\r\nResponse header incomplete (%d)\r\n\r\n",
-                   strlen(resp+10));
+                   (int)strlen(resp+10));
         else
             BYE();
         return false;

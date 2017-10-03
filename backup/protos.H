@@ -21,6 +21,7 @@
 void pfkbak_create_file   ( Btree * bt );
 void pfkbak_list_backups  ( Btree * bt );
 void pfkbak_create_backup ( Btree * bt, char * root_dir );
+void pfkbak_delete_backup ( Btree * bt );
 void pfkbak_update_backup ( Btree * bt, char * root_dir );
 void pfkbak_delete_gens   ( Btree * bt, int argc, char ** argv );
 void pfkbak_list_files    ( Btree * bt, char * gen );

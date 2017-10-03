@@ -349,7 +349,7 @@ bool
 BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
 {
     bool ret = false;
-    bool exact;
+    bool exact = false;
     int idx;
     UINT32 curfbn;
     BTNode * curn;
@@ -357,9 +357,10 @@ BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
 
     curfbn = info.d->root_fbn.get();
 
-    while (data_fbn == 0 && curfbn != 0)
+    while (!exact && curfbn != 0)
     {
         curn = node_cache->get(curfbn);
+        exact = false;
         idx = walknode( curn, key, keylen, &exact );
         if (exact)
             data_fbn = curn->datas[idx];
@@ -370,7 +371,7 @@ BtreeInternal :: get( UCHAR * key, int keylen, UINT32 * data )
         node_cache->release(curn);
     }
 
-    if (data_fbn != 0)
+    if (exact)
     {
         *data = data_fbn;
         ret = true;
@@ -394,13 +395,24 @@ struct nodewalker {
 //virtual
 bool
 BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
-                      bool replace )
+                      bool replace, bool * replaced, UINT32 * old_data_id )
 {
     if (iterate_inprogress)
     {
         fprintf(stderr, "ERROR: cannot modify database while iterate "
                 "is in progress!\n");
         exit(1);
+    }
+
+    if (replace)
+    {
+        if (replaced == NULL)
+        {
+            fprintf(stderr, "ERROR: Btree::put: must provide "
+                    "replaced/old data ptrs\n");
+            exit(1);
+        }
+        *replaced = false;
     }
 
     bool ret = false;
@@ -436,7 +448,8 @@ BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
 
             if (curn->datas[curidx] != data_id)
             {
-                fbi->free(curn->datas[curidx]);
+                *replaced = true;
+                *old_data_id = curn->datas[curidx];
                 curn->datas[curidx] = data_id;
                 curn->mark_dirty();
             }
@@ -567,7 +580,7 @@ out:
 
 //virtual
 bool
-BtreeInternal :: del( UCHAR * key, int keylen )
+BtreeInternal :: del( UCHAR * key, int keylen, UINT32 *old_data_id )
 {
     bool ret = false;
 
@@ -627,7 +640,7 @@ BtreeInternal :: del( UCHAR * key, int keylen )
     int foundnindex = idx;
 
     // free the item.
-    fbi->free( curn->datas[idx] );
+    *old_data_id = curn->datas[idx];
     delete curn->keys[idx];
     curn->keys[idx] = NULL;
 

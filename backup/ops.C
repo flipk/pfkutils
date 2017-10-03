@@ -45,7 +45,7 @@ pfkbak_list_backups  ( Btree * bt )
         fprintf(stderr, "could not retrieve backup info list\n");
         return;
     }
-    printf("backup currently contains %d backups.\n",
+    printf("file contains %d backups.\n",
            bil.data.backup_ids.num_items);
     for (int i = 0; i < bil.data.backup_ids.num_items; i++)
     {
@@ -57,10 +57,8 @@ pfkbak_list_backups  ( Btree * bt )
             fprintf(stderr, "could not retrieve backup id %d\n",  id);
             continue;
         }
-        printf("backup id %d:\n"
-               "    name: %s\n"
-               "    num generations: %d\n"
-               "    next generation: %d\n",
+        printf("backup id %d name: %s\n"
+               "    gen count: %d  next gen: %d\n",
                id,
                bi.data.backup_name.string,
                bi.data.generations.num_items,
@@ -69,14 +67,12 @@ pfkbak_list_backups  ( Btree * bt )
         {
             GenerationInfo * gen;
             gen = bi.data.generations.array[j];
-            printf("        generation id: %d\n"
-                   "        num files: %d\n"
-                   "        num bytes: %lld\n"
-                   "        time taken: %s\n",
+            printf("    generation id: %d (taken: %s)\n"
+                   "        num files: %d   num bytes: %lld\n",
                    gen->generation_id.v,
+                   gen->date_time.string,
                    gen->num_files.v,
-                   gen->num_bytes.v,
-                   gen->date_time.string);
+                   gen->num_bytes.v );
         }
     }
 }
@@ -136,6 +132,11 @@ pfkbak_create_backup ( Btree * bt, char * root_dir )
 
 void
 pfkbak_update_backup ( Btree * bt, char * root_dir )
+{
+}
+
+void
+pfkbak_delete_backup ( Btree * bt )
 {
 }
 

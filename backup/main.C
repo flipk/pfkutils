@@ -35,6 +35,7 @@ usage(void)
 "\n"
 "list backups:   pfkbak -L[Vv] BACKUP-FILE\n"
 "create backup:  pfkbak -c[Vv] BACKUP-FILE:BACKUP-NAME DIR\n"
+"delete backup:  pfkbak -D[Vv] BACKUP-FILE:BACKUP-NAME\n"
 "update backup:  pfkbak -u[Vv] BACKUP-FILE:BACKUP-NAME DIR\n"
 "\n"
 "delete gens:    pfkbak -d[Vv] BACKUP-FILE:BACKUP-NAME GenN A-B -B\n"
@@ -103,6 +104,7 @@ main(int argc, char ** argv)
         OP('C',CREATE_FILE);
         OP('L',LIST_BACKUPS);
         OP('c',CREATE_BACKUP);
+        OP('D',DELETE_BACKUP);
         OP('u',UPDATE_BACKUP);
         OP('d',DELETE_GENS);
         OP('l',LIST_FILES);
@@ -118,6 +120,7 @@ main(int argc, char ** argv)
     {
     case BAK_CREATE_FILE:
     case BAK_LIST_BACKUPS:
+    case BAK_DELETE_BACKUP:
         if (argc != 3) usage(); break;
 
     case BAK_CREATE_BACKUP:
@@ -148,6 +151,7 @@ main(int argc, char ** argv)
         if (pfkbak_name != NULL) usage(); break;
 
     case BAK_CREATE_BACKUP:
+    case BAK_DELETE_BACKUP:
     case BAK_UPDATE_BACKUP:
     case BAK_LIST_FILES:
     case BAK_DELETE_GENS:
@@ -189,6 +193,9 @@ main(int argc, char ** argv)
         break;
     case BAK_CREATE_BACKUP:
         pfkbak_create_backup( bt, argv[3] );
+        break;
+    case BAK_DELETE_BACKUP:
+        pfkbak_delete_backup( bt );
         break;
     case BAK_UPDATE_BACKUP:
         pfkbak_update_backup( bt, argv[3] );

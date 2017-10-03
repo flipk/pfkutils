@@ -379,7 +379,7 @@ public:
     /*virtual*/ ~BtreeInternal( void );
     /*virtual*/ bool get( UCHAR * key, int keylen, UINT32 * data_id );
     /*virtual*/ bool put( UCHAR * key, int keylen, UINT32 data_id,
-                          bool replace );
-    /*virtual*/ bool del( UCHAR * key, int keylen );
+                          bool replace, bool * replaced, UINT32 * old_data_id );
+    /*virtual*/ bool del( UCHAR * key, int keylen, UINT32 * old_data_id );
     /*virtual*/ bool iterate( BtreeIterator * bti );
 };

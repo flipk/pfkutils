@@ -25,46 +25,63 @@
 
 #include "types.H"
 #include "dll2.H"
-#include "pk-md5.h"
-
-enum { FILE_ENTRY_LIST, NUM_FILE_ENTRY_LISTS };
 
 class FileEntry {
 public:
-    FileEntry(void) { name = NULL; }
-    virtual ~FileEntry(void) { if (name) delete[] name; }
-    LListLinks <FileEntry>  links[ NUM_FILE_ENTRY_LISTS ];
+    FileEntry(const char * _path)
+    {
+        int plen = strlen(_path);
+        path = new char[plen + 1];
+        memcpy(path, _path, plen+1);
+    }
+    virtual ~FileEntry(void)
+    {
+        if (path) delete[] path;
+    }
+    LListLinks <FileEntry>  links[ 1 ];
     enum { TYPE_FILE, TYPE_DIR, TYPE_LINK } type;
-    char * name; // partial only 
+    char * path; // relative to root dir
 };
 
-typedef LList <FileEntry,FILE_ENTRY_LIST> FileEntryList;
+typedef LList <FileEntry,0> FileEntryList;
 
 class FileEntryFile : public FileEntry {
 public:
-    FileEntryFile(void) { type = TYPE_FILE; }
-    /*virtual*/ ~FileEntryFile(void) { }
+    FileEntryFile(const char * _path)
+        : FileEntry(_path)
+    {
+        type = TYPE_FILE;
+    }
+    UINT16  mode; // as in chmod-kind of mode
     UINT64  size;
     time_t  atime;
 };
 
 class FileEntryDir : public FileEntry {
 public:
-    FileEntryDir(void) { type = TYPE_DIR; files = new FileEntryList; }
-    /*virtual*/ ~FileEntryDir(void) {
-        FileEntry * fe;
-        while ((fe = files->dequeue_head()) != NULL)
-            delete fe;
-        delete files;
+    FileEntryDir(const char * _path)
+        : FileEntry(_path)
+    {
+        type = TYPE_DIR;
     }
-    FileEntryList * files;
+    UINT16  mode; // as in chmod-kind of mode
 };
 
 class FileEntryLink : public FileEntry {
 public:
-    FileEntryLink(void) { type = TYPE_LINK; target = NULL; }
-    /*virtual*/ ~FileEntryLink(void) { if (target) delete[] target; }
-    char * target;
+    FileEntryLink(const char * _path) 
+        : FileEntry(_path)
+    {
+        link_target = NULL;
+        type = TYPE_LINK;
+    }
+    void set_target(const char * _target) {
+        int tlen = strlen(_target);
+        link_target = new char[tlen+1];
+        memcpy(link_target, _target, tlen+1);
+    }
+    ~FileEntryLink(void) { if (link_target) delete[] link_target; }
+    char * link_target;
 };
 
-FileEntryDir * generate_file_list( const char * root_dir );
+void generate_file_list(const char *root_dir);

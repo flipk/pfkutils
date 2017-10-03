@@ -206,6 +206,7 @@ struct FileInfoData : public FileBlockBST {
     BST_UINT32_t  num_pieces;    /**< number of 32k piece descriptors */
     BST_UINT16_t  refcount;      /**< how many directories (generations)
                                     reference this file */
+    BST_UINT16_t  file_mode;     /**< as in chmod kind of mode */
     FilePieces    first_pieces;  /**< the first set of pieces for this file;
                                     if not enough room, follow next_pieces_fbn
                                     to find a FileInfoExtended. */

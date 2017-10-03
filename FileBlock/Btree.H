@@ -119,13 +119,15 @@ public:
     /** the destructor closes the Btree portion of the file. 
      * \note This destructor ALSO deletes the FileBlockInterface! */
     virtual ~Btree( void ) { }
-    /** search the Btree looking for the key. if found, return the FBN id of
-     * the corresponding data.  the Btree library does not retrieve the data
-     * record itself, only the FBN id of it.
+    /** search the Btree looking for the key. if found, return the data field
+     * associated with this key.
      * \param key pointer to key data.
      * \param keylen length of the key data.
      * \param data_id pointer to the user's variable that will be populated
-     *          with the FBN id of the corresponding data.
+     *          with the data corresponding to the key.  this data will
+     *          exactly match the data specified to the put method when
+     *          this key was put in the database.  it can be an FBN id,
+     *          but the Btree API makes no assumptions about it.
      * \return true if the data was found (and the 'data_id' parameter will be
      *         populated with the relevant data), or false if the data was 
      *         not found (key not present).*/
@@ -134,7 +136,7 @@ public:
      * this method will encode the BST bytestream and then call the 
      * pointer/length version of the get method.
      * \param key the key data, in BST form.
-     * \param data_id a pointer to the data_fbn that will be returned 
+     * \param data_id a pointer to the data that will be returned 
      *      if the search was successful.
      * \return true if the key was found or false if it was not found.
      */
@@ -152,25 +154,48 @@ public:
     /** store the key and data into the file.  If the given key already exists
      * in the file, the behavior depends on the replace argument.  If replace
      * is false, this function will return false.  If replace is true, the 
-     * old FBN id will be freed from the file and the data_id argument will
-     * replace it in the file.
+     * old data will be put into *old_data_id, and *replaced will be set 
+     * to true.  this API does not make any assumptions about the meaning
+     * of the data_id or old_data_id-- the user may specify any 32 bit data
+     * which is meaningful to the application.  the assumption is that the
+     * most common usage is to place FileBlockInterface FBN numbers in this
+     * field.  in this case, when a data is replaced, the disposition of the
+     * old FBN is left to the user, for example to call
+     * get_fbi()->free(old_data_id) or place the old_data_id in some other
+     * data structure if the data is still relevant.
      * \param key pointer to the key data.
      * \param keylen length of the key data.
-     * \param data_id FBN id of the data block.
+     * \param data_id user data to associate with the key.
      * \param replace indicate whether to replace (overwrite) or fail.
+     * \param replaced a pointer to a user's bool; if a matching key was
+     *     found in the btree, the corresponding data will be returned, the
+     *     new data_id will replace it, and *replaced will be set to true.
+     *     if the key was new in the database, *replaced will be set to false.
+     * \param old_data_id a pointer to a user's variable.  if *replaced is
+     *     set to true (see the replaced param above) then *old_data_id will
+     *     contain the old data associated with the key prior to replacement.
      * \return true if the item was put in the database; false if the key
      *         already exists and replace argument is false. */
     virtual bool put( UCHAR * key, int keylen, UINT32 data_id,
-                      bool replace=false ) = 0;
+                      bool replace=false, bool *replaced=NULL,
+                      UINT32 *old_data_id=NULL ) = 0;
     /** a version of the put method which supports key in BST form.
      * \param key the key data in BST form.  this key will be encoded into
      *     a temporary buffer before calling the pointer/length form of put.
-     * \param data_id the data FBN of the corresponding data
+     * \param data_id the data the user wishes to associate with the key.
      * \param replace if a matching key is found, this argument indicates
-     *      whether it will replace the old data_fbn, or just fail.
+     *      whether it will replace the old data_id, or just fail.
+     * \param replaced a pointer to a user's bool; if a matching key was
+     *     found in the btree, the corresponding data will be returned, the
+     *     new data_id will replace it, and *replaced will be set to true.
+     *     if the key was new in the database, *replaced will be set to false.
+     * \param old_data_id a pointer to a user's variable.  if *replaced is
+     *     set to true (see the replaced param above) then *old_data_id will
+     *     contain the old data associated with the key prior to replacement.
      * \return true if put was successful, or false if an error or if the
      *    key already exists and replace==false. */
-    bool put( BST * key, UINT32 data_id, bool replace=false ) {
+    bool put( BST * key, UINT32 data_id, bool replace=false,
+              bool *replaced=NULL, UINT32 *old_data_id=NULL ) {
         int keylen = 0;
         UCHAR * keybuf = key->bst_encode( &keylen );
         bool retval = false;
@@ -186,18 +211,28 @@ public:
      * and then free all disk space associated with the key and its data.
      * \param key  pointer to the key data.
      * \param keylen length of the key data.
+     * \param old_data_id if the matching key was found, and the record
+     *    is deleted, *old_data_id will be populated with the data value
+     *    that was present in the btree.  the disposition of this data is
+     *    left to the user, i.e. if it was being used to store FBN numbers,
+     *    presumably the user will wish to free the associated file block.
      * \return true if the item was deleted, false if not found or error. */
-    virtual bool del  ( UCHAR * key, int keylen ) = 0;
+    virtual bool del  ( UCHAR * key, int keylen, UINT32 *old_data_id ) = 0;
     /** a BST version of del.
      * \param key the key data to delete.
+     * \param old_data_id if the matching key was found, and the record
+     *    is deleted, *old_data_id will be populated with the data value
+     *    that was present in the btree.  the disposition of this data is
+     *    left to the user, i.e. if it was being used to store FBN numbers,
+     *    presumably the user will wish to free the associated file block.
      * \return true if the key/data was deleted or false if not. */
-    bool del( BST * key ) {
+    bool del( BST * key, UINT32 *old_data_id ) {
         int keylen = 0;
         UCHAR * keybuf = key->bst_encode( &keylen );
         bool retval = false;
         if (keybuf)
         {
-            retval = del( keybuf, keylen );
+            retval = del( keybuf, keylen, old_data_id );
             delete[] keybuf;
         }
         return retval;
