@@ -695,6 +695,8 @@ remote_inode_server_tcp :: ~remote_inode_server_tcp( void )
     close( fd );
 }
 
+#include <time.h>
+
 void
 remote_inode_server_tcp :: dispatch_loop( bool checkparent )
 {

@@ -13,7 +13,7 @@ typedef struct DLL2_LIST {
 } DLL2_LIST;
 
 /*
-  some compilers (like gcc version 3) don't allow you to 
+  some compilers (like some versions of gcc 3) don't allow you to 
   use the traditional "offsetof" operator:
   -  #define offsetof(type,field) ((unsigned int)&(((type*)0)->field))
   an alternative that slips by gcc's rules would be:

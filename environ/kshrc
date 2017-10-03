@@ -198,6 +198,10 @@ case x$ENV_SET in
         ;;
 esac
 
+if [ `uname -s` = 'Linux' ] ; then
+    PATH=/home/$USER/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/X11R6/bin:/usr/bin/X11
+fi
+
 ARCH=`$HOME/bin/architecture`
 export ARCH
 

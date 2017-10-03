@@ -60,7 +60,7 @@ public:
         ll->onlist = (void*)this;
         ll->next = NULL;
         ll->prev = tail;
-        if ( head )
+        if ( tail )
             tail->links[instance].next = x;
         else
             head = x;
@@ -197,8 +197,12 @@ public:
         return ret;
     }
     int get_cnt( void ) { return count; }
-    void add( T * t ) { hash[ hashv( t->hash_key() ) ].add( t ); }
-    void remove( T * t ) { hash[ hashv( t->hash_key() ) ].remove( t ); }
+    void add( T * t ) {
+        count++; hash[ hashv( t->hash_key() ) ].add( t );
+    }
+    void remove( T * t ) {
+        count--; hash[ hashv( t->hash_key() ) ].remove( t );
+    }
     bool onlist( T * t ) {
         return hash[ hashv( t->hash_key() ) ].onlist( t );
     }

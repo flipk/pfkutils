@@ -28,7 +28,7 @@ alias ps2='/bin/ps -u $USER -o pid,tty,pri,vsz,osz,rss,comm'
 alias fi=find_include
 alias whom='/usr/test/bsstools/bin/whom'
 
-#FUNCTIONS: lsv sv svlp lbsub lbsol lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile 
+#FUNCTIONS: lsv lsvp sv lbsub lbsol lbapp lbappccs lbsun lbcomp lbgsd zeroversion makeorig ccdiff ccdiff2 dis tman pr cr riw vdp vmp vpp vsp vm vsl vl ctmakefile
 
 lsv() {
 	typeset prefix
@@ -40,18 +40,17 @@ lsv() {
 	ct lsview ${prefix}* | cut -c3- | awk '{print $1}'
 }
 
+lsvp() {
+    load=`print $1 | /bin/sed -e 's/\(.\)\(.\)\(.\)\(.\)/\1.\2.\3_rel-\4./'`
+    ct lsview gsm_\*$load | cut -c3- | awk '{print $1}'
+}
+
 cdv() {
     cd /view/$1/usr/vob/gsm
 }
 
 sv() {
     ct setview $1
-}
-
-svlp() {
-    load=`print $1 | /bin/sed -e 's/\(.\)\(.\)\(.\)\(.\)/\1.\2.\3.\4./'`
-    ct setview rel_$load
-    cd .
 }
 
 lbsub() {
