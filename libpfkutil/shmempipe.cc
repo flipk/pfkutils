@@ -135,6 +135,7 @@ shmempipe :: shmempipe( shmempipeMasterConfig * pConfig )
     m_otherBufferList = &m_pHeader->master2slave;
 
     m_bufferListsInitialized = true;
+    m_bReaderRunning = false;
 
     pthread_mutexattr_t mattr;
     pthread_mutexattr_init( &mattr );
@@ -459,8 +460,9 @@ shmempipe :: readerThread(void)
     while (m_bReaderStop == false)
     {
         bool signalled = false;
-        shmempipeMessage * pMsg = m_myBufferList->dequeue(m_shmemPtr,
-                                                          &signalled, true, true);
+        shmempipeMessage * pMsg
+            = m_myBufferList->dequeue(m_shmemPtr,
+                                      &signalled, true, true);
         if (pMsg)
         {
             lockStats();
