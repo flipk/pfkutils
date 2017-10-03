@@ -10,8 +10,8 @@ DEC= decrypt.o keyfile.o timing.o
 #FLAGS= -O3 -ftest-coverage -fprofile-arcs
 #FLAGS= -O3 -fbranch-probabilities
 
-LIB= gmp-4.1.3/.libs/libgmp.a
-INC= -Igmp-4.1.3
+LIB= libgmp.a
+INC= 
 
 all: xmakefile
 	@make -f xmakefile _all

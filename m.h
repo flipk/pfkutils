@@ -31,3 +31,8 @@ enum m_math_retvals m_do_math( int argc, char ** argv,
 /* this returns a static global pointer, so it does not have
    to be freed, however it doesn't survive two successive calls. */
 char * m_dump_number( M_INT64 num, int base );
+
+/* this parses the string in the given base and either returns
+   zero with a valid number, or returns -1 with no valid number.
+   0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz  */
+int    m_parse_number( M_INT64 * result, char * string, int len, int base );

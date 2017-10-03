@@ -1,4 +1,12 @@
 
+/* TODO: convert all cvt functions to use the new
+ *       m_parse_number function instead of having individual
+ *       implementations.
+ *       perhaps even drastically simplifying the implementation
+ *       so that all outputs are specified directly as base instead
+ *       of hex/octal/binary/etc.
+ */
+
 #include <sys/types.h>
 #include "regex.h"
 #include <stdio.h>
@@ -19,26 +27,19 @@ usage( void )
 "\n"
 "if no options given, all output formats are done simultaneously.\n"
 "\n"
-"    -s  assembly format output\n"
-"    -b  binary format output\n"
-"    -d  decimal format output\n"
-"    -u  unsigned decimal output\n"
-"    -h  hex output\n"
-"    -o  octal output\n"
-"    -x  print this help message\n"
-"    -4  restrict output to 32 bits (4 bytes)\n"
+"    -s       assembly format output\n"
+"    -b       binary format output\n"
+"    -B base  output in arbitrary base\n"
+"    -d       decimal format output\n"
+"    -u       unsigned decimal output\n"
+"    -h       hex output\n"
+"    -o       octal output\n"
+"    -x       print this help message\n"
+"    -4       restrict output to 32 bits (4 bytes)\n"
 "\n"
 "when inputting hex numbers, can use either '0x' prefix or 'h' suffix.\n"
 "if hex number contains letters, no prefix or suffix required. \n"
 "ppc assembly format also supported, enter in form '@ha,@l' with comma.\n"
-        );
-    if ( isatty( 1 ) && isatty( 2 ))
-    {
-        char buf[20];
-        fprintf( stderr, "Press [Enter] to continue....\n" );
-        read( 0, buf, 20 );
-    }
-    fprintf( stderr,
 "\n"
 "calculations are stack-based -- push args then call operation. operation\n"
 "pops required arguments then pushes back result. stack can be up to 20 deep\n"
@@ -61,6 +62,18 @@ usage( void )
 "note on the last example that even though @ha looks like decimal it is\n"
 "interpreted as hex because the @l is given in hex.  @ha and @l can be in\n"
 "hex or dec, but they must both be the same radix.\n"
+"\n"
+"input numbers can be of the following forms: \n"
+"                       -?[0-7]+o : octal\n"
+"                         -?[0-9] : decimal\n"
+"                       [0-9a-f]+ : hex (implicit)\n"
+"                   -?0x[0-9a-f]+ : hex (prefix format)\n"
+"                      [0-9a-f]+h : hex (emon format)\n"
+"               -?[0-9]+,-?[0-9]+ : assembly decimal implicit\n"
+"     -?0x[0-9a-f]+,-?0x[0-9a-f]+ : assembly hex explicit\n"
+"           -?[0-9A-Za-z]+@[0-9]+ : arbitrary base (number@base)\n"
+"                        [01]+bin : binary explicit\n"
+"\n"
         );
     exit( 0 );
 }
@@ -88,7 +101,7 @@ static const char * whtsp_expr_string = "[ \t\r\n]+";
  */
 
 static const char * arg_expr_string = "\
-^(-[sbduho4x]+)$|\
+^(-[sbBduho4x]+)$|\
 ^(\\+)$|\
 ^(-)$|\
 ^(\\*|times)$|\
@@ -113,6 +126,7 @@ static const char * arg_expr_string = "\
 ^([0-9a-f]+h)$|\
 ^(-?[0-9]+,-?[0-9]+)$|\
 ^(-?0x[0-9a-f]+,-?0x[0-9a-f]+)$|\
+^(-?[0-9A-Za-z]+@[0-9]+)$|\
 ^([01]+bin)$|\
 ^(.*)$\
 ";
@@ -133,7 +147,7 @@ enum arg_type {
     ARG_SWAP32, ARG_SWAP16, ARG_RSHFT, ARG_LSHFT,
     ARG_LT, ARG_LTEQ, ARG_GT, ARG_GTEQ, ARG_EQ,
     ARG_OCTAL, ARG_DECIMAL, ARG_HEX_IMPL, ARG_HEX_P, ARG_HEX_H,
-    ARG_HEX_ASSEM1, ARG_HEX_ASSEM2, ARG_BINARY, ARG_ERR,
+    ARG_HEX_ASSEM1, ARG_HEX_ASSEM2, ARG_ARBITRARY, ARG_BINARY, ARG_ERR,
     ARG_MAX
 };
 
@@ -152,19 +166,21 @@ static char * arg_type_names[] = {
     "lesseq", "greater", "greatereq", "equal",
     "octal with 'o'", "decimal",
     "hex implied", "hex w/prefix", "hex with 'h'",
-    "hex in @ha,@l", "hex in (0x)@ha,@l", "binary", 
+    "hex in @ha,@l", "hex in (0x)@ha,@l", "arbitrary base", "binary", 
     "parse error"
 };
 
 static char errbuf[80];
+static int output_base_B = 10;
 
 #define FLAGS_HEX_ASSM   0x01
 #define FLAGS_BINARY     0x02
-#define FLAGS_DECIMAL    0x04
-#define FLAGS_UDECIMAL   0x08
-#define FLAGS_HEX        0x10
-#define FLAGS_OCTAL      0x20
-#define FLAGS_32BIT      0x40
+#define FLAGS_BASE       0x04
+#define FLAGS_DECIMAL    0x08
+#define FLAGS_UDECIMAL   0x10
+#define FLAGS_HEX        0x20
+#define FLAGS_OCTAL      0x40
+#define FLAGS_32BIT      0x80
 
 static int
 parse_flags( char * str, int flags )
@@ -183,6 +199,12 @@ parse_flags( char * str, int flags )
             DOFLG('o',FLAGS_OCTAL   );
             DOFLG('4',FLAGS_32BIT   );
 #undef      DOFLG
+        case 'B':
+            /* flag to the main parse loop that it
+               needs to update the base global. */
+            output_base_B = -1;
+            flags |= FLAGS_BASE;
+            break;
         case 'x':  usage(); break;
         }
         str++;
@@ -274,6 +296,23 @@ m_cvt_octal( unsigned char * s )
 }
 
 static M_INT64
+m_cvt_arbitrary( unsigned char * str )
+{
+    M_INT64 ret;
+    unsigned char *baseptr;
+    int base;
+
+    baseptr = strchr( str, '@' );
+    base = atoi( baseptr+1 );
+    if ( m_parse_number( &ret, str, baseptr - str, base ) != 0 )
+    {
+        sprintf( errbuf, "error parsing arbitrary base number" );
+        return 0;
+    }
+    return ret;
+}
+
+static M_INT64
 m_cvt_binary( unsigned char * s )
 {
     M_INT64 ret;
@@ -327,14 +366,15 @@ parse_value( int val_type, char * str )
     switch ( val_type )
     {
 #define DO_TYPE( type, func ) case type : return func ( str )
-        DO_TYPE( ARG_DECIMAL,     m_cvt_dec    );
-        DO_TYPE( ARG_HEX_IMPL,    m_cvt_hex    );
-        DO_TYPE( ARG_HEX_H,       m_cvt_hex    );
-        DO_TYPE( ARG_HEX_P,       m_cvt_hex    );
-        DO_TYPE( ARG_OCTAL,       m_cvt_octal  );
-        DO_TYPE( ARG_BINARY,      m_cvt_binary );
-        DO_TYPE( ARG_HEX_ASSEM1,  parse_assem1 );
-        DO_TYPE( ARG_HEX_ASSEM2,  parse_assem2 );
+        DO_TYPE( ARG_DECIMAL,     m_cvt_dec       );
+        DO_TYPE( ARG_HEX_IMPL,    m_cvt_hex       );
+        DO_TYPE( ARG_HEX_H,       m_cvt_hex       );
+        DO_TYPE( ARG_HEX_P,       m_cvt_hex       );
+        DO_TYPE( ARG_OCTAL,       m_cvt_octal     );
+        DO_TYPE( ARG_ARBITRARY,   m_cvt_arbitrary );
+        DO_TYPE( ARG_BINARY,      m_cvt_binary    );
+        DO_TYPE( ARG_HEX_ASSEM1,  parse_assem1    );
+        DO_TYPE( ARG_HEX_ASSEM2,  parse_assem2    );
 #undef  DO_TYPE
     }
 
@@ -532,12 +572,18 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
                 return M_MATH_NOFLAGS;
             }
             *flags = parse_flags( *args, *flags );
+            if ( output_base_B == -1 )
+            {
+                args++; numargs--;
+                output_base_B = atoi(*args);
+            }
             break;
 
         case ARG_BINARY:       case ARG_OCTAL:        
         case ARG_DECIMAL:      case ARG_HEX_IMPL:
         case ARG_HEX_P:        case ARG_HEX_H:
         case ARG_HEX_ASSEM1:   case ARG_HEX_ASSEM2:
+        case ARG_ARBITRARY:
 
             if ( top == STACK_SIZE )
             {
@@ -612,9 +658,16 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             break;
 
         case ARG_ERR:
+
+            sprintf( errbuf, "syntax error(ARG_ERR) at '%s'", *args );
+            ret = (M_INT64)&errbuf;
+            err = M_MATH_SYNTAX;
+            goto out;
+
         default:
 
-            sprintf( errbuf, "syntax error at '%s'", *args );
+            sprintf( errbuf, "syntax error(default) at '%s', arg_type = %d",
+                     *args, arg_type );
             ret = (M_INT64)&errbuf;
             err = M_MATH_SYNTAX;
             goto out;
@@ -643,6 +696,61 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
 
     *result = ret;
     return err;
+}
+
+int
+m_parse_number( M_INT64 * result, char * string, int len, int base )
+{
+    M_INT64 ret = 0;
+    int neg = 0;
+
+    if ( len > 0 && *string == '-' )
+    {
+        neg = 1;
+        string++;
+        len--;
+    }
+
+    while ( len-- > 0 )
+    {
+        char c;
+        int val = 0;
+
+        c = *string++;
+        if ( base <= 36 && islower(c) )
+            c = toupper(c);
+        if ( c < '0' )
+            return -1;
+        if ( c <= '9' )
+            val = c - '0';
+        else if ( c <= 'Z' )
+        {
+            if ( c < 'A' )
+                return -1;
+            val = c - 'A' + 10;
+        }
+        else if ( c < 'z' )
+        {
+            if ( c < 'a' )
+                return -1;
+            val = c - 'a' + 36;
+        }
+        else
+            return -1;
+
+        if ( val >= base )
+            return -1;
+
+        ret *= base;
+        ret += val;
+    }
+
+    if ( neg )
+        *result = -ret;
+    else
+        *result = ret;
+
+    return 0;
 }
 
 char *
@@ -676,7 +784,10 @@ m_dump_number( M_INT64 num, int base )
         {
             M_INT64 quot = num / base;
             int dig = num % base;
-            intret[ intretpos++ ] = "0123456789abcdef"[ dig ];
+            intret[ intretpos++ ] =
+                "0123456789"
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                "abcdefghijklmnopqrstuvwxyz"[ dig ];
             num = quot;
         }
         do {
@@ -722,9 +833,13 @@ m_main( int argc, char ** argv )
             upper += 1;   /* perform the @ha adjustment */
         printf( "0x%x,0x%x\n", upper, lower );
     }
+    if ( flags & FLAGS_BASE )
+    {
+        printf( "%s\n", m_dump_number( result, output_base_B ));
+    }
     if ( flags & FLAGS_BINARY )
     {
-        printf( "%s\n", m_dump_number( result, 2 ));                
+        printf( "%s\n", m_dump_number( result, 2 ));
     }
     if ( flags & FLAGS_DECIMAL )
     {
