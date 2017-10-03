@@ -174,6 +174,8 @@ public:
         return false;
     }
 
+    int get_numthreads( void ) { return numthreads; }
+
     // suspend a thread
     bool suspend( tid_t tid );
 

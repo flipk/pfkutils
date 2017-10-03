@@ -48,6 +48,7 @@ protected:
     };
     static const int default_prio = 10;
     static const int default_stack_size = 16384;
+    static int get_numthreads( void ) { return th->get_numthreads(); }
     static int tps( void ) { return th->timers->get_tps(); }
     static int tick( void ) { return th->timers->get_tick(); }
     static int my_eid( void ) { return th->msgs->get_my_eid(); }
