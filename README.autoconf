@@ -88,3 +88,19 @@ quick start:
  configure.ac: installing `./install-sh'
  configure.ac: installing `./missing'
  src/Makefile.am: installing `./depcomp'
+
+----
+
+regen configure.tar:
+
+cd ~/proj
+rm -rf pfkutils
+cvs -d /home/flipk/Dropbox/Public/philcvs get pfkutils
+cd pfkutils
+find . -type f > ../0
+autoreconf -i -f -v
+find . -type f > ../1
+files=`diff ../0 ../1 | awk '/>/ { print $2 }'`
+tar cf configure.tar $files
+rm -f ../0 ../1
+cvs commit -m sync configure.tar

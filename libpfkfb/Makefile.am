@@ -28,3 +28,21 @@ testFileBlock_LDADD = \
 	libpfkfb.la \
 	../libpfkdll2/libpfkdll2.la \
 	../libpfkutil/libpfkutil.la
+
+htmldestdir = $(DESTDIR)$(datarootdir)/html/fb
+
+all-local:
+if PFK_AM_BUILD_doxygen
+	cd $(abs_srcdir) && doxygen $(abs_builddir)/Doxyfile
+endif
+
+install-data-local:
+if PFK_AM_BUILD_doxygen
+	mkdir -p $(htmldestdir) || true
+	mkdir -p $(mandir) || true
+	cd $(abs_builddir)/dox/html && \
+		$(AMTAR) cf - . | ( cd $(htmldestdir) ; $(AMTAR) xf - )
+	cd $(abs_builddir)/dox/man && \
+		$(AMTAR) cf - . | ( cd $(mandir) ; $(AMTAR) xf - )
+	cp $(abs_builddir)/libpfkfb.tag $(datarootdir)
+endif

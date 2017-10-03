@@ -1,6 +1,6 @@
 
 m4_define([PFKUTILS_MAJOR_VERSION], 3)
-m4_define([PFKUTILS_MINOR_VERSION], 6)
+m4_define([PFKUTILS_MINOR_VERSION], 7)
 
 AC_INIT([pfkutils],
         [PFKUTILS_MAJOR_VERSION.PFKUTILS_MINOR_VERSION],
@@ -74,6 +74,7 @@ PFK_ARG_ENABLE([runrxvt],    [build cygwin runrxvt])
 PFK_ARG_ENABLE([ctwm],       [build claude's tab window manager])
 PFK_ARG_ENABLE([pdksh],      [build public domain korn shell])
 PFK_ARG_ENABLE([cscope],     [build cscope])
+PFK_ARG_ENABLE([doxygen],    [build doxygen documentation])
 
 # AC_USE_SYSTEM_EXTENSIONS
 
@@ -197,9 +198,13 @@ AC_CONFIG_FILES([
     pfkutils_version.h
     Makefile
     libpfkdll2/Makefile
+    libpfkdll2/Doxyfile
     libpfkfb/Makefile
+    libpfkfb/Doxyfile
     libpfkthread/Makefile
+    libpfkthread/Doxyfile
     libpfkutil/Makefile
+    libpfkutil/Doxyfile
     i2/Makefile
     syslog/Makefile
     backup/Makefile
