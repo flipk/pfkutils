@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/if.h>
+#include <linux/if_tun.h>
 
 Tunnel_fd :: Tunnel_fd( char * _device,
                         char * _my_address,
@@ -36,6 +40,17 @@ Tunnel_fd :: Tunnel_fd( char * _device,
     }
 
     printf( "opened tunnel device '%s'\n", device );
+#ifdef linux
+    struct ifreq ifr;
+    memset(&ifr,0,sizeof(ifr));
+    ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
+    if (ioctl( fd, TUNSETIFF, &ifr ) < 0)
+    {
+        fprintf(stderr, "tun ioctl failed: %s\n", strerror(errno));
+        exit( 1 );
+    }
+    printf("tunnel device activated\n");
+#endif
 }
 
 //virtual

@@ -176,7 +176,11 @@ i2_main( int argc,  char ** argv )
     {
         int cc;
         close( 0 );
+#ifdef O_LARGEFILE
+        cc = open( inp_file, O_RDONLY | O_LARGEFILE );
+#else
         cc = open( inp_file, O_RDONLY );
+#endif
         if ( cc != 0 )
         {
             fprintf( stderr,
@@ -190,7 +194,12 @@ i2_main( int argc,  char ** argv )
     {
         int cc;
         close( 1 );
+#ifdef O_LARGEFILE
+        cc = open( out_file,
+                   O_WRONLY | O_CREAT | O_TRUNC | O_LARGEFILE, 0644 );
+#else
         cc = open( out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644 );
+#endif
         if ( cc != 1 )
         {
             fprintf( stderr,
