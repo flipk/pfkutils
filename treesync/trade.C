@@ -1,4 +1,8 @@
 
+// xxx todo : compare md5 digests!!
+//            update database after transferring a file, so
+//             we don't have to regen the db again after syncing.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

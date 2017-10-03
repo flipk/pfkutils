@@ -22,6 +22,7 @@ class i_file_entry_bad { };
 struct i_file_entry {
     LListLinks  <i_file_entry>   links[1];
     struct stat sb;
+    unsigned char digest[16]; // md5 digest
     char filename[0]; // must be last
 
     void initsb( void ) {
@@ -39,6 +40,17 @@ struct i_file_entry {
 #endif
     }
 
+    static i_file_entry * new_entry( char * _str, bool val ) {
+        return new(_str) i_file_entry(_str,val);
+    }
+    static i_file_entry * new_entry( char * _str1, char * _str2 ) {
+        return new(_str1,_str2) i_file_entry(_str1,_str2);
+    }
+    static void operator delete( void * ptr ) {
+        free( ptr );
+    }
+
+private:
     i_file_entry( char * newname, bool validate ) {
         strcpy( filename, newname );
         if ( validate )
@@ -46,12 +58,10 @@ struct i_file_entry {
         else
             memset( &sb, 0, sizeof(sb) );
     }
-
     i_file_entry( char * newname1, char * newname2 ) {
         sprintf( filename, "%s/%s", newname1, newname2 );
         initsb();
     }
-
     static void * operator new( size_t __len, char * str ) {
         int len;
         len = sizeof(i_file_entry);
@@ -66,9 +76,6 @@ struct i_file_entry {
         len += strlen( str1 ) + strlen( str2 ) + 3;
         void * ret = (void*) malloc( len );
         return ret;
-    }
-    static void operator delete( void * ptr ) {
-        free( ptr );
     }
 };
 
@@ -92,7 +99,7 @@ regen_sprintf( void * arg, int noderec,
         memcpy( fname, key, keylen );
         fname[keylen] = 0;
 
-        entry = new(fname) i_file_entry(fname,false);
+        entry = i_file_entry::new_entry(fname,false);
         file_entries->add( entry );
     }
 
@@ -111,6 +118,35 @@ regen_printfunc( void * arg, char * format, ... )
 //    ListOfFiles * file_entries = (ListOfFiles *) arg;
 }
 
+#include "md5.h"
+
+static bool
+calc_md5sum( char * filename, unsigned char * digest )
+{
+    MD5_CTX  ctx;
+    FILE * f;
+    unsigned char buf[ 65536 ];
+    unsigned int  len;
+
+    f = fopen( filename, "r" );
+    if ( !f )
+        return false;
+
+    MD5Init( &ctx );
+
+    while ( !feof(f) )
+    {
+        len = fread( buf, 1, sizeof(buf), f );
+        MD5Update( &ctx, buf, len );
+    }
+
+    fclose(f);
+
+    MD5Final( digest, &ctx );
+
+    return true;
+}
+
 void
 regenerate_database( void )
 {
@@ -125,7 +161,17 @@ regenerate_database( void )
     {
         struct stat sb;
         if ( stat( TREESYNC_DB_FILE, &sb ) < 0 )
+        {
             created = true;
+        }
+        else
+        {
+            // make backup file
+            system( "cp "
+                    TREESYNC_DB_FILE
+                    " "
+                    TREESYNC_DB_FILE ".bak" );
+        }
     }
 
     fbn = new FileBlockNumber( TREESYNC_DB_FILE,
@@ -143,7 +189,7 @@ regenerate_database( void )
     dbfile = new Btree( fbn );
 
     // add initial entry to file list
-    file_entries.add( new(".") i_file_entry(".",true) );
+    file_entries.add( i_file_entry::new_entry( ".", true ));
 
     // then begin parsing the list until its empty
     i_file_entry * entry, * ne;
@@ -170,9 +216,7 @@ regenerate_database( void )
                         continue;
 
                     try {
-                        ne =
-                            new(entry->filename,nam)
-                            i_file_entry(entry->filename,nam);
+                        ne = i_file_entry::new_entry( entry->filename, nam );
                         file_entries.add( ne );
                     }
                     catch ( ... ) {
@@ -192,55 +236,66 @@ regenerate_database( void )
             Btree::rec  * rec;
             int name_length = strlen( entry->filename );
             db_file_entry * dfe;
+            unsigned char digest[16];
 
-            rec = dbfile->get_rec( (UCHAR*) entry->filename, name_length );
-            if ( rec == NULL )
+            if ( calc_md5sum( entry->filename, digest ))
             {
-                // new entry
-
-                rec = dbfile->alloc_rec( name_length,
-                                         sizeof( db_file_entry ));
-                if ( !rec )
+                rec = dbfile->get_rec( (UCHAR*) entry->filename, name_length );
+                if ( rec == NULL )
                 {
-                    fprintf( stderr, "alloc_rec failed!!\n" );
-                    return;
-                }
+                    // new entry
 
-                memcpy( rec->key.ptr, entry->filename, name_length );
-                dfe = (db_file_entry *) rec->data.ptr;
-                dfe->random_signature = signature;
-                dfe->sb = entry->sb;
+                    rec = dbfile->alloc_rec( name_length,
+                                             sizeof( db_file_entry ));
+                    if ( !rec )
+                    {
+                        fprintf( stderr, "alloc_rec failed!!\n" );
+                        return;
+                    }
 
-                dbfile->put_rec( rec );
-
-                file_list.add( 
-                    new(entry->filename)
-                    FileEntry( entry->filename,
-                               FileEntry::NEW,
-                               entry->sb.st_size ));
-            }
-            else
-            {
-                // existing entry
-
-                dfe = (db_file_entry *) rec->data.ptr;
-                dfe->random_signature = signature;
-                if ( memcmp( &dfe->sb,
-                             &entry->sb, sizeof(struct stat) ) != 0 )
-                {
-                    // entry was updated
+                    memcpy( rec->key.ptr, entry->filename, name_length );
+                    dfe = (db_file_entry *) rec->data.ptr;
+                    dfe->random_signature = signature;
                     dfe->sb = entry->sb;
+                    memcpy( dfe->digest, digest, sizeof(digest) );
+
+                    dbfile->put_rec( rec );
 
                     file_list.add( 
-                        new(entry->filename)
-                        FileEntry( entry->filename,
-                                   FileEntry::CHANGED,
-                                   entry->sb.st_size ));
-                }
+                        FileEntry::new_entry( 
+                            entry->filename,
+                            FileEntry::NEW,
+                            entry->sb.st_size ));
 
-                // signature update causes all entries to be dirty
-                rec->data.dirty = true;
-                dbfile->unlock_rec( rec );
+//                    printf( "new: %s\n", entry->filename );
+                }
+                else
+                {
+                    // existing entry
+
+                    dfe = (db_file_entry *) rec->data.ptr;
+                    dfe->random_signature = signature;
+                    if ( memcmp( dfe->digest, digest, sizeof(digest) ) != 0 )
+                    {
+                        // entry was updated
+                        dfe->sb = entry->sb;
+                        memcpy( dfe->digest, digest, sizeof(digest) );
+
+//                        printf( "changed: %s\n", entry->filename );
+
+                        file_list.add( 
+                            FileEntry::new_entry(
+                                entry->filename,
+                                FileEntry::CHANGED,
+                                entry->sb.st_size ));
+                    }
+//                    else
+//                        printf( "same: %s\n", entry->filename );
+
+                    // signature update causes all entries to be dirty
+                    rec->data.dirty = true;
+                    dbfile->unlock_rec( rec );
+                }
             }
         }
 
@@ -265,10 +320,11 @@ regenerate_database( void )
     while ( entry = file_entries.dequeue_head() )
     {
         file_list.add( 
-            new(entry->filename)
-            FileEntry( entry->filename,
-                       FileEntry::REMOVED,
-                       entry->sb.st_size ));
+            FileEntry::new_entry(
+                entry->filename,
+                FileEntry::REMOVED,
+                entry->sb.st_size ));
+
         dbfile->delete_rec( (UCHAR*) entry->filename,
                             strlen( entry->filename ));
         delete entry;
