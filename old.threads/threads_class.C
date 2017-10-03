@@ -31,13 +31,13 @@ Thread :: _entry( void * arg )
 }
 
 int
-Thread :: vprintf( char * format, va_list ap )
+ThreadShortCuts :: vprintf( char * format, va_list ap )
 {
     return th->vprintf( format, ap );
 }
 
 int
-Thread :: printf( char * format, ... )
+ThreadShortCuts :: printf( char * format, ... )
 {
     va_list ap; 
     va_start( ap, format );

@@ -30,7 +30,7 @@
 //       on your own tid at some point. see the DemonstrationThread
 //       class defn at the end of this file.
 
-class Thread {
+class ThreadShortCuts {
 protected:
     typedef Threads::tid_t tid_t;
     enum constants {
@@ -48,28 +48,6 @@ protected:
     };
     static const int default_prio = 10;
     static const int default_stack_size = 16384;
-    class constructor_failed { };
-    Thread( char * name, int prio = default_prio,
-            int stack_size = default_stack_size ) {
-        if ( th == NULL ) 
-        {
-            DEBUG1(( 0, "Thread constructor",
-                     "thread %s : no global "
-                     "th object!\n", name ));
-            throw constructor_failed();
-        }
-        tid = th->create( name, prio, stack_size, true,
-                          &_entry, (void*)this );
-        if ( tid == INVALID_TID )
-        {
-            DEBUG1(( 0, "Thread constructor",
-                     "error creating thread %s\n", name ));
-            throw constructor_failed();
-        }
-    }
-    virtual ~Thread( void ) { }
-
-    tid_t tid;
     int tps( void ) { return th->timers->get_tps(); }
     int tick( void ) { return th->timers->get_tick(); }
     int my_eid( void ) { return th->msgs->get_my_eid(); }
@@ -146,11 +124,36 @@ protected:
     void print_header( bool flag ) {
         th->print_header( flag );
     }
+};
+
+class Thread : public ThreadShortCuts {
+protected:
+    class constructor_failed { };
+    tid_t tid;
+
+    Thread( char * name, int prio = default_prio,
+            int stack_size = default_stack_size ) {
+        if ( th == NULL ) 
+        {
+            DEBUG1(( 0, "Thread constructor",
+                     "thread %s : no global "
+                     "th object!\n", name ));
+            throw constructor_failed();
+        }
+        tid = th->create( name, prio, stack_size, true,
+                          &_entry, (void*)this );
+        if ( tid == INVALID_TID )
+        {
+            DEBUG1(( 0, "Thread constructor",
+                     "error creating thread %s\n", name ));
+            throw constructor_failed();
+        }
+    }
+    virtual ~Thread( void ) { }
     virtual void entry( void ) = 0;
 private:
     static void _entry( void * arg );
 };
-
 
 // you would create a thread instance of this class
 // by calling     'new DemonstrationThread( somevalue )'
