@@ -14,7 +14,6 @@
  '(inhibit-startup-buffer-menu t)
  '(inhibit-startup-echo-area-message (getenv "USER"))
  '(inhibit-startup-screen t)
- '(initial-buffer-choice t)
  '(initial-scratch-message "")
  '(menu-bar-mode t)
  '(mode-line-format (quote (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] " (line-number-mode "L%l ") (column-number-mode "C%c ") (-3 . "%p"))))
@@ -145,7 +144,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 		"-g" "140x45+225+20"
 		"-e" 
 		(concat "/home/" (getenv "USER")
-			"/bin/myemacs-cscope-helper")))
+			"/pfk/bin/myemacs-cscope-helper")))
 
 (defun cscope-rebuild ()
   "rebuild cscope database"
@@ -154,7 +153,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 		"-g" "80x10+200+200"
 		"-e" 
 		(concat "/home/" (getenv "USER")
-			"/bin/myemacs-cscope-rebuild-helper")))
+			"/pfk/bin/myemacs-cscope-rebuild-helper")))
 
 (defun clearcase-checkout-file ()
   "checkout a clearcase file"
@@ -168,7 +167,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 			"-g" "80x10+200+200" "-e"
 			(concat "/home/"
 				(getenv "USER")
-				"/bin/myemacs-checkout-helper "
+				"/pfk/bin/myemacs-checkout-helper "
 				(buffer-file-name)))
 	  (message "Checked out file %s." fname))
       (message "File is already checked out?"))))
@@ -189,11 +188,13 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key [f27] 'beginning-of-buffer)
 (global-set-key [f33] 'end-of-buffer)
 
+(setq frame-title-format (list "emacs" (getenv "EMACS_NUMBER") "%*%b %m"))
+
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+(put 'scroll-left 'disabled nil)
+(put 'erase-buffer 'disabled nil)
 
 (garbage-collect)
 (message "Press F1 for a list of local keybindings.")
 
-(put 'scroll-left 'disabled nil)
-(put 'erase-buffer 'disabled nil)

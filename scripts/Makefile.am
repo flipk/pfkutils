@@ -4,6 +4,14 @@ PFK_SCRIPT_FILES = \
 	changed \
 	doxtrms \
 	ec \
+	ec1 \
+	ec2 \
+	ec3 \
+	ec4 \
+	ec5 \
+	ec6 \
+	ec7 \
+	ec8 \
 	emacsn \
 	make_linux_cscope \
 	mcs \

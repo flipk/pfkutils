@@ -1,15 +1,18 @@
 #!/bin/sh
 
-if [ $# -ne 1 ] ; then
-   echo usage: emacsn NUMBER
+if [ $# -lt 2 ] ; then
+   echo usage: emacsn NUMBER files
    exit 1
 fi
 
 export EMACS_NUMBER=$1
 echo export EMACS_NUMBER=$1
+
+shift
+
 export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
 echo export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
 
-emacs &
+emacs $* &
 
 exit 0
