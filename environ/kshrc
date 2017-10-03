@@ -661,10 +661,19 @@ ediff() {
     lisp=$HOME/ediff.$$
 
     cat << EOF > $lisp
+    	(custom-set-variables
+	  '(ediff-split-window-function 'split-window-horizontally)
+	  '(blink-matching-paren-distance nil)
+	  '(inhibit-startup-buffer-menu t)
+ 	  '(inhibit-startup-echo-area-message (getenv "USER"))
+ 	  '(inhibit-startup-screen t)
+ 	  '(menu-bar-mode nil)
+ 	  '(tool-bar-mode nil)
+	  )
         (ediff "$1" "$2")
 EOF
 
-    emacs -g 162x54+5+5 --no-init-file --load $lisp
+    emacs -g 162x70+5+5 --no-init-file --load $lisp
 
     rm -f $lisp
 }
