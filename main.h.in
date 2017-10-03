@@ -36,7 +36,9 @@
 #endif
 	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,pkfstat,file stats written by pk)
+#ifndef linux
 	PROG(0,itsfsriw,ITS file system remote inode worker)
+#endif
 	PROG(0,xtermbar,change title in the xterm)
 	PROG(0,gmarc,get me a real copy)
 	PROG(0,fmtsdiff,format sdiff output)

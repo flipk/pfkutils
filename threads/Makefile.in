@@ -19,8 +19,11 @@ LINKFL+= -lsocket -lrt
 CPPFLAGS+= -DSUNOS
 #elifdef cygwin32
 CPPFLAGS+= -DCYGWIN
+#elifdef linux
+CPPFLAGS+= -DLINUX
+LINKFL+= -lrt
 #else
-# linux: LINKFL+= -lrt
+#  ?
 #endif
 
 all: $(LIB) t1 

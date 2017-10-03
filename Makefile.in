@@ -20,35 +20,43 @@ CPPSRCS= rmstar.C tcpgate.C pk_msg.C fd_mgr.C
 OBJS= $(CSRCS:.c=.o) $(CPPSRCS:.C=.o) 
 LIBS= -lcurses -lm -lpthread -lz
 
-DIRS= implode itsfs tags.make tags.view ipipe2 enctelgate dll2 mytar
+DIRS= implode tags.make tags.view ipipe2 enctelgate dll2 
 ELIBS= implode/libimplode.a \
 	tags.make/libmaketags.a tags.view/libviewtags.a \
-	itsfs/libitsfs.a ipipe2/libi2.a enctelgate/libetg.a \
-	mytar/libmytar.a
+	ipipe2/libi2.a enctelgate/libetg.a
 
 DIRS+= states
 ELIBS+= states/libstates.a
 
 #ifdef freebsd
 ELIBS+= bt/libbt.a qcam/libqcam.a xlock/libxlock.a treesync/libts.a
-DIRS+= bt qcam xlock treesync threads
+DIRS+= bt qcam xlock treesync threads itsfs mytar
+ELIBS+= pdksh-5.2.14/ksh.o itsfs/libitsfs.a mytar/libmytar.a
+#endif
 
-ELIBS+= pdksh-5.2.14/ksh_precrunch.o
+#ifdef linux
+ELIBS+= bt/libbt.a xlock/libxlock.a
+DIRS+=  bt xlock threads mytar
+ELIBS+= mytar/libmytar.a
 #endif
 
 #ifdef cygwin32
 CSRCS+=	treescan.c 
-ELIBS+= treesync/libts.a bt/libbt.a
-DIRS+= bt treesync
+DIRS+= bt treesync itsfs mytar
+ELIBS+= treesync/libts.a bt/libbt.a itsfs/libitsfs.a mytar/libmytar.a
 #endif
 
 #ifdef solaris
 LIBS+= -lsocket -lnsl
 CSRCS+= vsnprintf_stub.c
+DIRS+= itsfs bt mytar
+ELIBS+= bt/libbt.a itsfs/libitsfs.a  mytar/libmytar.a
 #endif
 
 #ifdef sunos
 LIBS+= -ltermcap
+DIRS+= itsfs bt
+ELIBS+= bt/libbt.a itsfs/libitsfs.a 
 #endif
 
 #ifdef freebsd
@@ -57,7 +65,6 @@ LIBS+= -lmd -L/usr/X11R6/lib -lX11 -static
 #endif
 
 CPPFLAGS= -I/usr/X11R6/include -I.
-CFLAGS= -O3 $(CPPFLAGS)
 
 #ifdef sunos
 CPPFLAGS+= -DSUNOS
@@ -67,9 +74,13 @@ CPPFLAGS+= -DSOLARIS
 CPPFLAGS+= -DFREEBSD
 #elifdef cygwin32
 CPPFLAGS+= -DCYGWIN
+#elifdef linux
+CPPFLAGS+= -DLINUX
 #else
 CPPFLAGS+=
 #endif
+
+CFLAGS= -O3 $(CPPFLAGS)
 
 # needs to be last
 ELIBS+=	dll2/libdll2.a
@@ -85,7 +96,7 @@ $(PROG): $(OBJS) $(ELIBS)
 subdirs::
 	@for d in $(DIRS) ; do \
 		echo making in $$d ; \
-		( cd $$d ; make ) ; \
+		( cd $$d ; make ) || exit 1 ; \
 	done
 
 .c.o:
@@ -94,10 +105,8 @@ subdirs::
 .C.o:
 	gcc $(CFLAGS) -c $*.C
 
-#ifdef freebsd
-pdksh-5.2.14/ksh_precrunch.o::
+pdksh-5.2.14/ksh.o::
 	cd pdksh-5.2.14/ && sh PK_MAKE_PDKSH
-#endif
 
 
 cscope::

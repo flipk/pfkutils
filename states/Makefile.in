@@ -10,8 +10,10 @@ TEMPLATES= template.code template.header template.skel \
 OPTS= -O3 -DFREEBSD=1
 #elifdef cygwin32
 OPTS= -O3 -DCYGWIN32=1
-#else
+#elifdef solaris
 OPTS= -O3 -DSOLARIS=1
+#elifdef linux
+OPTS= -O3 -DLINUX=1
 #endif
 
 all: $(TARG)

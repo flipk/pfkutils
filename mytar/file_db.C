@@ -103,7 +103,7 @@ public:
     }
     // this is the function that actually prints.
     virtual void print( char * format, ... )
-        __attribute__ ((format( printf, 2, 3 ))) {
+    {
         // nothing
     }
 };
@@ -313,7 +313,7 @@ public:
         // nothing
     }
     /*virtual*/ void print( char * format, ... )
-        __attribute__ ((format( printf, 2, 3 ))) {
+    {
         // nothing
     }
 };
@@ -330,7 +330,7 @@ file_db :: delete_old( void )
     bt->dumptree( &pi );
 
     delete_id * did;
-    while ( did = pi.list.dequeue_head() )
+    while (( did = pi.list.dequeue_head() ))
     {
         id = did->id;
         delete did;

@@ -49,6 +49,11 @@ case $ARCH in
 	ARCH=cygwin32
 	EXE_NAME=1
 	;;
+    Linux-*)
+	def=linux
+	awk=awk
+	ARCH=linux
+	;;
     *)
 	echo "unknown arch $ARCH, please modify configure and Makefile.in's"
 	exit 1

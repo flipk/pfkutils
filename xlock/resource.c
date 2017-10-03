@@ -506,7 +506,7 @@ static void
 open_display()
 {
     if (display != NULL) {
-        extern char *strchr();
+//        extern char *strchr();
         char       *colon = strchr(display, ':');
         int         n = colon - display;
 

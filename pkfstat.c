@@ -41,7 +41,7 @@ pkfstat_main( int argc, char ** argv )
                     sb.st_dev, sb.st_ino, sb.st_mode, sb.st_nlink,
                     sb.st_uid, sb.st_gid, sb.st_rdev, (int)sb.st_size,
                     (int)sb.st_blocks, sb.st_blksize
-#if !defined(SOLARIS) && !defined(CYGWIN)
+#if !defined(SOLARIS) && !defined(CYGWIN) && !defined(LINUX)
                     , sb.st_flags, sb.st_gen
 #endif
                 );

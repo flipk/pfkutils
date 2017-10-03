@@ -7,11 +7,11 @@
 #include "parse_actions.h"
 #include "tokens.h"
 
-#if defined(FREEBSD) || defined(CYGWIN32)
+#if defined(FREEBSD) || defined(CYGWIN32) || defined(LINUX)
 #define myinput input
 #endif
 
-#ifdef SOLARIS
+#if defined(SOLARIS)
 #define myinput yyinput
 #endif
 

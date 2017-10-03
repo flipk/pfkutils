@@ -36,7 +36,7 @@ update_dir( file_db * db, char * dirname )
     di = new dir_item( dirname );
     lst.add( di );
 
-    while ( di = lst.dequeue_head() )
+    while (( di = lst.dequeue_head() ))
     {
         struct stat sb;
 
@@ -57,7 +57,7 @@ update_dir( file_db * db, char * dirname )
                 goto next_entry;
             }
             struct dirent * de;
-            while ( de = readdir(d) )
+            while (( de = readdir(d) ))
             {
                 char combined_name[ 512 ];
                 if ( strcmp( de->d_name, "." ) == 0  ||

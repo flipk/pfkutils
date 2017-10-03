@@ -16,7 +16,7 @@ extract_file( file_db * db, char * fname )
 
     if ( !inf )
     {
-        fprintf( stderr, "file '%s' not found in database!\n" );
+        fprintf( stderr, "file '%s' not found in database!\n", fname );
         return;
     }
 
@@ -26,7 +26,7 @@ extract_file( file_db * db, char * fname )
     char * dirname_p = dirname;
     memcpy( dirname, fname, l );
 
-    while ( dirname_p = strchr( dirname_p, '/' ))
+    while (( dirname_p = strchr( dirname_p, '/' )))
     {
         *dirname_p = 0;
 

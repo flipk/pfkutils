@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include <unistd.h>
+#include <sys/types.h>
 #define u_int32_t unsigned int
 
 typedef struct MD5Context {

@@ -46,7 +46,7 @@ public:
         // nothing
     }
     virtual void print( char * format, ... )
-        __attribute__ ((format( printf, 2, 3 ))) {
+    {
         va_list ap;
         va_start( ap, format );
         vprintf( format, ap );

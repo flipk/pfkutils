@@ -10,6 +10,9 @@ cpe=/vob/wibb_cpe
 export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4'
 export XLESS='-j5 -c -d -h 5 -i -M -q -x 4'
 
+LD_LIBRARY_PATH=/apps/public/gcc_3.3/sparc-sun-solaris2.8/lib
+export LD_LIBRARY_PATH
+
 lsv() {
         typeset prefix
         if [[ $# -eq 0 ]] ; then

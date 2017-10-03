@@ -39,8 +39,8 @@ update_file( file_db * db, char * fname )
     else
     {
         // file found in archive, compare info.
-        if ( inf->uid != sb.st_uid  ||
-             inf->gid != sb.st_gid  ||
+        if ( (unsigned int)inf->uid != (unsigned int)sb.st_uid  ||
+             (unsigned int)inf->gid != (unsigned int)sb.st_gid  ||
              inf->mode != (sb.st_mode & 0777) )
         {
             inf->uid = sb.st_uid;

@@ -3,7 +3,7 @@
 #define __RECNOBLOCK_H__
 
 // 
-// the 6 args to the constructor of this class are:
+// the 4 args to the constructor of this class are:
 //    char * file
 //    int c1            // maximum number of data pages held in memory
 //    int _record_size  // bytes in record, default=16
@@ -24,11 +24,6 @@ class FileBlockNumber {
     int     recs_per_page;
     int  recs_per_segment;
     int     reserved_bits;
-
-public:
-    int get_recordsize (void) { return recordsize; }
-    int get_pagesize   (void) { return pagesize; }
-    int get_segmentsize(void) { return segmentsize; }
 
     static const int   block_signature = 0x504b;  // "PK"
     static const int  user_buffer_flag = 1;
@@ -71,6 +66,9 @@ private:
                      int _record_size, int _page_size )
         throw ( constructor_failed );
 public:
+    int get_recordsize (void) { return recordsize; }
+    int get_pagesize   (void) { return pagesize; }
+    int get_segmentsize(void) { return segmentsize; }
     static const int     size_overhead = 4;    // two for sig, two for size
     FileBlockNumber( char * file, int c1,
                      int _record_size, int _page_size )
