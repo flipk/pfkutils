@@ -23,172 +23,165 @@
 #include "Btree.H"
 #include "FileBlock_iface.H"
 
+/** base type for any btree key. every btree key will have a prefix
+ * byte which is unique to the type.  This struct's constructor ensures
+ * that the prefix byte is populated. */
 struct DatabaseKeys : public BST {
-    enum Prefixes {
-        PREFIX_BACKUP_INFO_LIST,
-        PREFIX_BACKUP_INFO,
-        PREFIX_DIR_INFO,
-        PREFIX_FILE_INFO,
-        PREFIX_PIECE_INFO
+    enum Prefix {
+        PREFIX_BACKUP_INFO_LIST,   /**< used by BackupInfoListKey */
+        PREFIX_BACKUP_INFO,        /**< used by BackupInfoKey     */
+        PREFIX_DIR_INFO,           /**< used by DirectoryInfoKey  */
+        PREFIX_FILE_INFO           /**< used by FileInfoKey       */
     };
+    DatabaseKeys( Prefix _p ) { prefix.v = _p; }
     BST_UINT8_t    prefix;
 };
 
+/** this is the very first data structure in the heirarchy of data
+ * structures found in a backup.  this maps to BackupInfoListData
+ * which will list all the individual backups found in this file. */
 struct BackupInfoListKey : public DatabaseKeys {
-    static const unsigned char myprefix = PREFIX_BACKUP_INFO_LIST;
+    BackupInfoListKey(void) : DatabaseKeys(PREFIX_BACKUP_INFO_LIST) { }
     // no additional data required for this key
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &prefix, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST( &prefix );
 };
 
+/** companion to BackupInfoListKey, this lists all the backup identifiers
+ * found in the file.  look each backup ID individually using
+ * BackupInfoKey. */
 struct BackupInfoListData : public FileBlockBST {
     BackupInfoListData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
     BST_VAR_ARRAY <BST_UINT32_t>   backup_ids;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &backup_ids, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST( &backup_ids );
 };
 
+/** linked from BackupInfoListData, this lets you locate
+ * a BackupInfoData which lists all the generations found in a backup. */
 struct BackupInfoKey : public DatabaseKeys {
-    static const unsigned char myprefix = PREFIX_BACKUP_INFO;
+    BackupInfoKey(void) : DatabaseKeys(PREFIX_BACKUP_INFO) { }
     BST_UINT32_t   backup_id;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &prefix, &backup_id, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST( &prefix, &backup_id );
 };
 
+/** contained within a BackupInfoData. */
 struct GenerationInfo : public BST {
-    BST_UINT64_t   num_bytes;
-    BST_UINT32_t   num_files;
-    BST_UINT32_t   root_dir_id;
-    BST_STRING     date_time;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &num_bytes, &num_files,
-                           &root_dir_id, &date_time, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_UINT32_t   generation_id;   /**< identifier of generation       */
+    BST_UINT32_t   num_files;       /**< number of files in generation  */
+    BST_UINT64_t   num_bytes;       /**< number of bytes in generation  */
+    BST_STRING     date_time;       /**< when was this generation taken */
+    BST_UINT32_t   root_dir_id;     /**< pointer to DirectoryInfoKey    */
+    BST_FIELD_LIST( &generation_id, &num_files,
+                    &root_dir_id, &num_bytes, &date_time );
 };
 
+/** companion to BackupInfoKey, this lists info about a backup, such
+ * as its name, pointer to root directory, and contains a list of all
+ * active generations. */
 struct BackupInfoData : public FileBlockBST {
     BackupInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    BST_STRING     backup_name;
-    BST_VAR_ARRAY <GenerationInfo>  generations;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &backup_name, &generations, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_STRING     backup_name;            /**< text name of this backup. */
+    BST_UINT32_t   next_generation_id;     /**< next id# to use           */
+    BST_VAR_ARRAY <GenerationInfo>  generations; /**< list of all gens    */
+    BST_FIELD_LIST( &backup_name, &next_generation_id, &generations );
 };
 
+/** linked from GenerationInfo as well as from other DirectoryEntry. 
+ * associated with DirectoryInfoData. */
 struct DirectoryInfoKey : public DatabaseKeys {
-    static const unsigned char myprefix = PREFIX_DIR_INFO;
-    BST_UINT32_t  dir_id;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &prefix, &dir_id, NULL };
-        return bst_do_fields( str, fields );
-    }
+    DirectoryInfoKey(void) : DatabaseKeys(PREFIX_DIR_INFO) { }
+    BST_UINT32_t  dir_id;  /**< from GenerationInfo or DirectoryEntry */
+    BST_FIELD_LIST( &prefix, &dir_id );
 };
 
+/** entry in a directory can be either a dir, file, or symlink. handle
+ * that as a union. */
 struct DirectoryFileUnion : public BST_UNION {
     enum { DIRECTORY, FILE, LINK, MAX };
     DirectoryFileUnion(void) : BST_UNION(MAX) { }
-    ~DirectoryFileUnion(void) { bst_free(); }
-    BST_UINT32_t   dir_id;
-    BST_UINT32_t   file_id;
-    BST_STRING     link_target;
-    /*virtual*/ bool bst_op( BST_STREAM *str ) {
-        BST * fields[] = { &dir_id, &file_id, &link_target };
-        return bst_do_union(str, fields);
-    }
+    BST_UINT32_t   dir_id;        /**< if directory, locate DirectoryInfoKey */
+    BST_UINT32_t   file_id;       /**< if file, locate a FileInfoKey         */
+    BST_STRING     link_target;   /**< if link, target is right here         */
+    BST_UNION_LIST( &dir_id, &file_id, &link_target );
 };
 
+/** one directory entry */
 struct DirectoryEntry : public BST {
-    BST_STRING          name;
-    DirectoryFileUnion  info; 
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &name, &info, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_STRING          name;    /**< the name of the file, dir, or link */
+    DirectoryFileUnion  info;    /**< more data about the item here      */
+    BST_FIELD_LIST( &name, &info );
 };
 
+/** a whole directory.  note that these are unique in a generation,
+ * that is to say a given dir is found only in one generation.  the next
+ * generation creates a whole new tree of these. */
 struct DirectoryInfoData : public FileBlockBST {
     DirectoryInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    BST_VAR_ARRAY <DirectoryEntry>  entries;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &entries, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_VAR_ARRAY <DirectoryEntry>  entries;  /**< list of entries in dir */
+    BST_FIELD_LIST( &entries );
 };
 
+/** information about a file, found in FileInfoData.
+ * note that these are shared among trees.
+ * you get here from DirectoryInfoData entries.  While every generation 
+ * has a complete copy of the tree, FileInfoKey and FileInfoData are shared
+ * among all the generations that have it.  that's also why there's a refcount
+ * in the file info. */
 struct FileInfoKey : public DatabaseKeys {
-    static const unsigned char myprefix = PREFIX_FILE_INFO;
-    BST_UINT32_t  file_id;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &prefix, &file_id, NULL };
-        return bst_do_fields( str, fields );
-    }
+    FileInfoKey(void) : DatabaseKeys(PREFIX_FILE_INFO) { }
+    BST_UINT32_t  file_id;  /**< id number of this file */
+    BST_FIELD_LIST( &prefix, &file_id );
 };
 
+/** a data type for storing an MD5 hash. */
 typedef BST_FIXED_BINARY <16> BST_MD5_HASH;
 
-/* when piece list doesn't fit in FileInfoData, the list
- * extends into a linked list of these. */
-struct FilePieceListData : public FileBlockBST {
-    FilePieceListData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    BST_VAR_ARRAY  <BST_MD5_HASH> pieces;
-    BST_UINT32_t  next_pieces_fbn;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &pieces, &next_pieces_fbn, NULL };
-        return bst_do_fields( str, fields );
-    }
+/** everything you need to know about one single 32k piece of data,
+ * such as which generations it belongs to, etc.  found in FileInfoData. */
+struct PieceVersions : public BST {
+    BST_VAR_ARRAY <BST_UINT32_t>  generations;  /**< list all gen#s */
+    BST_MD5_HASH   md5;       /**< hash of this piece */
+    BST_UINT16_t   csize;     /**< compressed size of this piece */
+    BST_UINT16_t   usize;     /**< uncompressed size of this piece */
+    BST_UINT32_t   data_fbn;  /**< fbn of the BinaryData */
+    BST_FIELD_LIST(&generations, &md5, &csize, &usize, &data_fbn);
 };
 
+/** info about a bunch of 32k pieces. find a linked list of these by
+ * following the next pointer to describe a whole file.
+ * found in FileInfoData. */
+struct FilePieces : public BST {
+    BST_VAR_ARRAY <PieceVersions> pieces;    /**< a group of pieces */
+    BST_UINT32_t  next_pieces_fbn;    /**< pointer to FileInfoExtended */
+    BST_FIELD_LIST(&pieces, &next_pieces_fbn);
+};
+
+/** data companion to FileInfoKey.  everything you ever wanted to know
+ * about a file except its name (which is in the directory). */
 struct FileInfoData : public FileBlockBST {
     FileInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    BST_UINT64_t  size;
-    BST_UINT32_t  atime;
-    BST_UINT32_t  num_pieces;
-//    static const int max_pieces_per_fbn = 2000;
-    static const int max_pieces_per_fbn = 20; // for testing the functionality
-    BST_VAR_ARRAY  <BST_MD5_HASH> pieces;
-    BST_UINT32_t  next_pieces_fbn;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &size, &atime, &num_pieces,
-                           &pieces, &next_pieces_fbn, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_UINT64_t  size;          /**< size of this file in bytes */
+    BST_UINT32_t  atime;         /**< last access time of this file (time_t) */
+    BST_UINT32_t  num_pieces;    /**< number of 32k piece descriptors */
+    BST_UINT16_t  refcount;      /**< how many directories (generations)
+                                    reference this file */
+    FilePieces    first_pieces;  /**< the first set of pieces for this file;
+                                    if not enough room, follow next_pieces_fbn
+                                    to find a FileInfoExtended. */
+    BST_FIELD_LIST( &size, &atime, &num_pieces, &refcount, &first_pieces );
 };
 
-struct PieceInfoKey : public DatabaseKeys {
-    static const unsigned char myprefix = PREFIX_PIECE_INFO;
-    BST_MD5_HASH   hash;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &prefix, &hash, NULL };
-        return bst_do_fields( str, fields );
-    }
+/** if there wasn't enough room in FileInfoData for all the pieces of a 
+ * large file, follow next_pieces_fbn to find more of these.  */
+struct FileInfoExtended : public FileBlockBST {
+    FileInfoExtended(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    FilePieces    next_pieces;   /**< group of piece descriptors */
+    BST_FIELD_LIST( &next_pieces );
 };
 
-struct PieceInfoData : public FileBlockBST {
-    PieceInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
-    BST_UINT32_t   reference_count;
-    BST_UINT16_t   comp_size;  // compressed size
-    BST_UINT16_t   uncomp_size;  // uncompressed size
-    BST_UINT32_t   data_fbn;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &reference_count, &comp_size,
-                           &uncomp_size, &data_fbn, NULL };
-        return bst_do_fields( str, fields );
-    }
-};
-
+/** finally at the end of all that: the libz-compressed 32kb data piece
+ * of a file. */
 struct BinaryData : public FileBlockBST {
     BinaryData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
     BST_VAR_BINARY   data;
-    /*virtual*/ bool bst_op( BST_STREAM * str ) {
-        BST * fields[] = { &data, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST( &data );
 };

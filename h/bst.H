@@ -162,6 +162,18 @@ public:
     }
 };
 
+#define BST_FIELD_LIST(list...)                     \
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {   \
+        BST * fields[] = { list, NULL };            \
+        return bst_do_fields( str, fields );        \
+    }
+
+#define BST_UNION_LIST(list...)                     \
+    /*virtual*/ bool bst_op( BST_STREAM * str ) {   \
+        BST * fields[] = { list };                  \
+        return bst_do_union( str, fields );         \
+    }
+
 // BST base types follow.
 
 struct BST_UINT64_t : public BST {
@@ -601,14 +613,7 @@ class BST_UNION : public BST {
 public:
     BST_UINT8_t  which;
     BST_UNION( int _max ) { max = _max; which.v = max; }
-    ~BST_UNION(void) {
-        if (which.v != max) 
-        {
-            fprintf(stderr, "types derived from BST_UNION must "
-                    "free memory in their destructor!\n");
-            kill(0,SIGABRT);
-        }
-    }
+    virtual ~BST_UNION(void) { bst_free(); }
     bool bst_do_union( BST_STREAM *str, BST ** fields ) {
         if (!which.bst_op(str))
             return false;
@@ -628,15 +633,11 @@ class CrapUnion : public BST_UNION {
 public:
     enum { ONE, TWO, MAX };
     CrapUnion(void) : BST_UNION(MAX) { }
-    ~CrapUnion(void) { bst_free(); }
     // recall that you can also use BST_POINTER <> template too,
     // if you want to save space in the Union type.
     BST_UINT32_t   one;
     BST_STRING     two;
-    /@virtual@/ bool bst_op( BST_STREAM *str ) {
-        BST * fields[] = { &one, &two };
-        return bst_do_union(str, fields);
-    }
+    BST_UNION_LIST(&one, &two);
 };
 
 class CrapType : public BST {
@@ -645,10 +646,7 @@ public:
     BST_UINT32_t one;
     BST_UINT32_t two;
     CrapUnion un;
-    /@virtual@/ bool bst_op( BST_STREAM *str ) {
-        BST * fields[] = { &one, &two, &un, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST(&one, &two, &un);
 };
 
 
@@ -658,10 +656,7 @@ struct JunkType : public BST {
     ~JunkType(void) { bst_free(); }
     BST_UINT32_t one;
     BST_STRING   two;
-    /@virtual@/ bool bst_op( BST_STREAM *str ) {
-        BST * fields[] = { &one, &two, NULL };
-        return bst_do_fields( str, fields );
-    }
+    BST_FIELD_LIST(&one, &two);
 };
 
 void func(void) {
