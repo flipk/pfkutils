@@ -3,8 +3,10 @@ TARG= libutil.a
 CSRCS= base64.c pk-md5.c regex.c checksize.c crnl.c fmtsdiff.c genpw.c \
 	he.c inet_aton.c m.c random-hex.c waitpid.c xtermbar.c
 CHDRS= base64.h pk-md5.h regex.h m.h
-CPPSRCS= fd_mgr.C pk_msg.C rmstar.C
-CPPHDRS= ../h/circular_buffer.H fd_mgr.H lognew.H pk_msg.H pk_msg_int.H magic.H
+CPPSRCS= fd_mgr.C rmstar.C
+CPPHDRS= ../h/circular_buffer.H fd_mgr.H lognew.H 
+
+# magic.H
 
 OBJS= $(CPPSRCS:.C=.o) $(CSRCS:.c=.o)
 CC=  gcc

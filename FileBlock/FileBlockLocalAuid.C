@@ -248,8 +248,11 @@ FileBlockLocal :: translate_auid( FB_AUID_T auid )
 
     FB_AUN_T l3_table_aun = l2tab->entries[l2_index].get();
     if (l3_table_aun == 0)
+    {
+        release( l2fb );
         // no translation
         return 0;
+    }
     FileBlock   * l3fb = get_aun( l3_table_aun );
     AuidL23Tab  * l3tab = (AuidL23Tab*)l3fb->get_ptr();
 
@@ -338,8 +341,11 @@ FileBlockLocal :: lookup_stack( UINT32 index )
     FB_AUN_T sl3_table_aun = sl2tab->entries[sl2_index].get();
     FileBlock   * sl3fb;
     if (sl3_table_aun == 0)
+    {
+        release( sl2fb );
         // no translation
         return 0;
+    }
     sl3fb = get_aun( sl3_table_aun );
     AuidL23Tab  * sl3tab = (AuidL23Tab*)sl3fb->get_ptr();
 

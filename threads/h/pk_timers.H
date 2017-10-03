@@ -22,7 +22,6 @@
 #define __TIMERS_H__
 
 #include "dll2.H"
-#include "pk_msg_int.H"
 #include "pk_messages.H"
 
 class PK_Timer;

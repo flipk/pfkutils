@@ -50,6 +50,6 @@ depend: Makefile.in $(SRCS) $(HDRS)
 
 clean:
 	rm -f xmakefile $(LIB) *.core  *.o *~
-	rm -f Makefile t1
+	rm -f Makefile t1 t2
 
 #DEPENDENCIES

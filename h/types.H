@@ -21,14 +21,8 @@
 #ifndef __UNIVERSAL_TYPES_H
 #define __UNIVERSAL_TYPES_H
 
-#ifndef NULL
-#define NULL 0
-#endif
-
-#define UINT    unsigned int
-#define ULONG   unsigned long
-#define UINT32  unsigned int
 #define UINT64  unsigned long long
+#define UINT32  unsigned int
 #define UINT16  unsigned short
 #define UINT8   unsigned char
 #define UCHAR   unsigned char
@@ -136,10 +130,5 @@ public:
 };
 
 #endif /* __cplusplus */
-
-#ifndef MAX
-#define MAX(a,b) (((a)>(b))?(a):(b))
-#define MIN(a,b) (((a)<(b))?(a):(b))
-#endif
 
 #endif /* __UNIVERSAL_TYPES_H */

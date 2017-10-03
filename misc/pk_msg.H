@@ -41,7 +41,8 @@ public: \
 }
 
 // the COMMA definition is useful if the 'constructor' argument below
-// would like to insert member-constructions
+// would like to insert member-constructions.  yeah, i know, it's kind
+// of gross -- i admit, not my finest hour.
 #define COMMA ,
 
 #define PkMsgDef2( classname, typevalue, body, \

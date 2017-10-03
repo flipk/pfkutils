@@ -26,8 +26,6 @@
 extern "C" {
 #endif
 
-#include "types.H"
-
 int b64_is_valid_char( unsigned char c );
 
 /* return 4 if ok, 0 if not ok */

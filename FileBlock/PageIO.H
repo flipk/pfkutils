@@ -28,6 +28,7 @@
 #define __PAGE_IO_H__
 
 #include <sys/types.h>
+#include <stdio.h>
 
 class PageCachePage;
 
