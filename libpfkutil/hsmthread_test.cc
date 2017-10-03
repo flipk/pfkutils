@@ -72,10 +72,6 @@ main()
         t5->join();
         Threads::cleanup();
     }
-    catch (DLL3::ListError le)
-    {
-        std::cout << le.Format();
-    }
     catch (ThreadError te)
     {
         std::cout << te.Format();

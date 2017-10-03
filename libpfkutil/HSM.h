@@ -259,7 +259,7 @@ struct HSMSubEntry : public HSMSubHash_t::Links
     HSMEvent::Type type;
     std::vector<ActiveHSMBase*> activeObjs;
     HSMSubEntry(HSMEvent::Type _t) : type(_t) { }
-    ~HSMSubEntry(void) throw () { }
+    ~HSMSubEntry(void) { }
 };
 class HSMSubEntryHash {
 public:

@@ -38,7 +38,7 @@ WebAppConnection :: WebAppConnection(void)
 }
 
 //virtual
-WebAppConnection :: ~WebAppConnection(void) ALLOW_THROWS
+WebAppConnection :: ~WebAppConnection(void)
 {
     if (connData)
         delete connData;

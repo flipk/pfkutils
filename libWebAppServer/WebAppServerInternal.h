@@ -37,16 +37,6 @@ For more information, please refer to <http://unlicense.org>
 #include "serverPorts.h"
 #include "LockWait.h"
 
-#ifdef __GNUC__
-# if __GNUC__ >= 6
-#  define ALLOW_THROWS noexcept(false)
-# else
-#  define ALLOW_THROWS
-# endif
-#else
-# define ALLOW_THROWS
-#endif
-
 namespace WebAppServer {
 
 std::ostream &operator<<(std::ostream &ostr, const WebAppType type);
@@ -64,7 +54,7 @@ struct WebAppServerConfigRecord {
                              int _pollInterval)
         : type(_type), port(_port), route(_route), cb(_cb),
           pollInterval(_pollInterval) { };
-    virtual ~WebAppServerConfigRecord(void) ALLOW_THROWS { }
+    virtual ~WebAppServerConfigRecord(void) { }
 };
 std::ostream &operator<<(std::ostream &ostr,
                              const WebAppServerConfigRecord &cr);
@@ -76,7 +66,7 @@ struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord,
                                     const std::string _route,
                                     WebAppConnectionCallback *_cb,
                                     int _pollInterval);
-    /*virtual*/ ~WebAppServerFastCGIConfigRecord(void) ALLOW_THROWS;
+    /*virtual*/ ~WebAppServerFastCGIConfigRecord(void);
     // ConnList key : visitorId cookie
     typedef std::map<std::string,WebAppConnection*> ConnList_t;
     typedef std::map<std::string,WebAppConnection*>::iterator ConnListIter_t;
@@ -93,7 +83,7 @@ class WebAppConnectionDataFastCGI;
 
 class WebAppConnectionData {
 public:
-    virtual ~WebAppConnectionData(void) ALLOW_THROWS { }
+    virtual ~WebAppConnectionData(void) { }
     virtual void sendMessage(const WebAppMessage &) = 0;
     WebAppConnectionDataWebsocket * ws(void);
     WebAppConnectionDataFastCGI * fcgi(void);
@@ -104,7 +94,7 @@ class WebAppConnectionDataWebsocket : public WebAppConnectionData {
 public:
     WebAppConnectionDataWebsocket(WebSocketConnection * _connBase)
         : connBase(_connBase) { }
-    virtual ~WebAppConnectionDataWebsocket(void) ALLOW_THROWS { }
+    virtual ~WebAppConnectionDataWebsocket(void) { }
     /*virtual*/ void sendMessage(const WebAppMessage &m);
     WebSocketConnection * connBase;
 };

@@ -33,11 +33,12 @@ inline thread_slinger_message::thread_slinger_message(void)
     refcount = 0;
 }
 
-inline thread_slinger_message::~thread_slinger_message(void) ALLOW_THROWS
+inline thread_slinger_message::~thread_slinger_message(void)
 {
     if (_slinger_next != NULL)
-        throw ThreadSlingerError(
-            ThreadSlingerError::MessageOnListDestructor);
+    {
+        ThreadSlingerError tse(ThreadSlingerError::MessageOnListDestructor);
+    }
 }
 
 inline void
@@ -56,9 +57,9 @@ thread_slinger_message::deref(void)
     {
         if (_slinger_pool != NULL)
             _slinger_pool->release(this);
-        else
-            throw ThreadSlingerError(
-                ThreadSlingerError::DerefNoPool);
+        else {
+            ThreadSlingerError tse(ThreadSlingerError::DerefNoPool);
+        }
     }
 }
 
@@ -160,7 +161,10 @@ template <class T>
 void thread_slinger_pool<T>::release(T * buf)
 {
     if (buf->_slinger_pool != this)
-        throw ThreadSlingerError(ThreadSlingerError::MessageNotFromThisPool);
+    {
+        ThreadSlingerError tse(ThreadSlingerError::MessageNotFromThisPool);
+        return;
+    }
     q.enqueue(buf);
     WaitUtil::Lock  lock(&statsLockable);
     usedCount--;

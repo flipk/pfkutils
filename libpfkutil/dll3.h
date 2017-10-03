@@ -38,40 +38,8 @@ For more information, please refer to <http://unlicense.org>
 #include "LockWait.h"
 #include "BackTrace.h"
 
-#ifdef __GNUC__
-# if __GNUC__ >= 6
-#  define ALLOW_THROWS noexcept(false)
-# else
-#  define ALLOW_THROWS
-# endif
-#else
-# define ALLOW_THROWS
-#endif
-
 /** all dynamic linked list version 3 templates under this namespace */
 namespace DLL3 {
-
-/** a basic catchable error type for all DLL3 related errors. */
-struct ListError : BackTraceUtil::BackTrace {
-    /** a list of all the possible errors that can happen */
-    enum ListErrValue {
-        ITEM_NOT_VALID,   //!< a referenced item is missing MAGIC (corrupt?)
-        ALREADY_ON_LIST,  //!< the item's list links are already on another list
-        STILL_ON_A_LIST,  //!< can't delete an item when it's still on a list
-        LIST_NOT_EMPTY,   //!< can't delete a list if it's not empty
-        LIST_NOT_LOCKED,  //!< you forgot to lock a list before using it
-        NOT_ON_THIS_LIST, //!< the referenced item isn't on this list
-        __NUMERRS
-    } err;
-    static const std::string errStrings[__NUMERRS];
-    ListError(ListErrValue _e) : err(_e) {
-        std::cerr << "throwing ListError: " << Format() << std::endl;
-    }
-    /** return a descriptive string matching the error */
-    /*virtual*/ const std::string _Format(void) const;
-};
-// internal: shorthand for throwing a list error.
-#define __DLL3_LISTERR(e) throw ListError(ListError::e)
 
 // internal: shorthand for all the template boilerplates
 #define __DLL3_LIST List<T,uniqueIdentifier,lockWarn,validate>
@@ -91,8 +59,7 @@ template <class T, int uniqueIdentifier,
           bool lockWarn=true, bool validate=true>
 class List : public WaitUtil::Lockable {
 public:
-    /** any item that goes on this list must derive from this type.
-     * \throw may throw ListError on delete */
+    /** any item that goes on this list must derive from this type. */
     class Links {
         friend class __DLL3_LIST;
         static const int MAGIC = 0x5e061ed;
@@ -102,7 +69,7 @@ public:
         __DLL3_LIST * lst;
     public:
         Links(void);
-        ~Links(void) ALLOW_THROWS;
+        ~Links(void);
         void checkvalid(__DLL3_LIST * _lst);
     };
 private:
@@ -114,10 +81,9 @@ private:
     void _add_head(Links * item);
 public:
     List(void);
-    ~List(void) ALLOW_THROWS;
+    ~List(void);
     /** add the item to the head of this list.
-     * \param item  the item to add.
-     * \throw may throw ListError */
+     * \param item  the item to add. */
     void add_head(Links * item);
     void add_tail(Links * item);
     void add_before(Links * item, Links * existing);
@@ -176,10 +142,10 @@ public:
         void checkvalid(__DLL3_HASH * _hsh);
     public:
         Links(void);
-        virtual ~Links(void) ALLOW_THROWS;
+        virtual ~Links(void);
     };
     Hash(void);
-    ~Hash(void) ALLOW_THROWS;
+    ~Hash(void);
 private:
     void _add(Links * item);
 public:
@@ -215,10 +181,10 @@ public:
         void checkvalid(__DLL3_HASHLRU * _hlru);
     public:
         Links(void);
-        virtual ~Links(void) ALLOW_THROWS;
+        virtual ~Links(void);
     };
     HashLRU(void);
-    ~HashLRU(void) ALLOW_THROWS;
+    ~HashLRU(void);
     void add(Links * item);
     void remove(Links * item);
     void promote(Links * item);
@@ -232,7 +198,6 @@ public:
 #undef  __DLL3_HASH_TEMPL
 #undef  __DLL3_LIST
 #undef  __DLL3_LIST_TEMPL
-#undef  __DLL3_LISTERR
 
 }; // namespace DLL3
 

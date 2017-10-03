@@ -32,16 +32,6 @@ For more information, please refer to <http://unlicense.org>
 #include <iostream>
 #include <inttypes.h>
 
-#ifdef __GNUC__
-# if __GNUC__ >= 6
-#  define ALLOW_THROWS noexcept(false)
-# else
-#  define ALLOW_THROWS
-# endif
-#else
-# define ALLOW_THROWS
-#endif
-
 /** utility class for managing a file descriptor with a thread.
  * this class spawns a thread internally and calls 'select' on
  * the provided file descriptor, calling user callback methods
@@ -150,7 +140,7 @@ public:
      * most resources.
      * \note the fd is NOT closed by this method! this is left up to
      *    the user's derived virtual destructor, if required. */
-    virtual ~fdThreadLauncher(void) ALLOW_THROWS;
+    virtual ~fdThreadLauncher(void);
 
     /** start the thread, managing the given descriptor.
      * \note this function blocks until the thread is confirmed to have

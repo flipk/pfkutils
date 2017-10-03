@@ -82,7 +82,7 @@ fdThreadLauncher :: startFdThread(int _fd, int _pollInterval)
     }
 }
 
-fdThreadLauncher :: ~fdThreadLauncher(void) ALLOW_THROWS
+fdThreadLauncher :: ~fdThreadLauncher(void)
 {
     stopFdThread();
 }

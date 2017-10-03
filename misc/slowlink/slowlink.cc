@@ -185,9 +185,6 @@ main(int argc, char ** argv)
     catch (DLL3::ListError e) {
         fprintf(stderr, "DLL3 error: %s\n", e.Format().c_str());
     }
-    catch (ThreadSlinger::ThreadSlingerError e) {
-        fprintf(stderr, "msgq error: %s\n", e.Format().c_str());
-    }
     return 0;
 }
 

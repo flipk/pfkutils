@@ -36,16 +36,6 @@ For more information, please refer to <http://unlicense.org>
 #include "LockWait.h"
 #include "dll3.h"
 
-#ifdef __GNUC__
-# if __GNUC__ >= 6
-#  define ALLOW_THROWS noexcept(false)
-# else
-#  define ALLOW_THROWS
-# endif
-#else
-# define ALLOW_THROWS
-#endif
-
 namespace ThreadSlinger {
 
 /** exception object for errors from this library */
@@ -58,7 +48,9 @@ struct ThreadSlingerError : BackTraceUtil::BackTrace {
         __NUMERRS
     } err;
     static const std::string errStrings[__NUMERRS];
-    ThreadSlingerError(errValue _e) : err(_e) { }
+    ThreadSlingerError(errValue _e) : err(_e) {
+        std::cerr << "Throwing ThreadSlingerError:\n" << Format();
+    }
     /** handy utility function for printing error and stack backtrace */
     /*virtual*/ const std::string _Format(void) const;
 };
@@ -70,7 +62,7 @@ class thread_slinger_message;
 
 class thread_slinger_pool_base : public poolList_t::Links {
 public:
-    virtual ~thread_slinger_pool_base(void) ALLOW_THROWS { }
+    virtual ~thread_slinger_pool_base(void) { }
     virtual void release(thread_slinger_message * m) = 0;
     virtual void getCounts(int &used, int &free, std::string &name) = 0;
 };
@@ -84,7 +76,7 @@ public:
     thread_slinger_message * _slinger_next;
     thread_slinger_pool_base * _slinger_pool;
     thread_slinger_message(void);
-    virtual ~thread_slinger_message(void) ALLOW_THROWS;
+    virtual ~thread_slinger_message(void);
     /** return the message's name, user of this class may override this */
     virtual const std::string msgName(void) { return "thread_slinger_message"; }
     /** increase reference count */
@@ -114,7 +106,7 @@ class _thread_slinger_queue
     thread_slinger_message * __dequeue(void);
 protected:
     _thread_slinger_queue(void);
-    ~_thread_slinger_queue(void) ALLOW_THROWS;
+    ~_thread_slinger_queue(void);
     void _enqueue(thread_slinger_message *);
     thread_slinger_message * _dequeue(int uSecs);
     int _get_count(void) { return count; }
@@ -227,7 +219,6 @@ Interesting classes:
 <li> \ref thread_slinger_message
 <li> \ref thread_slinger_queue
 <li> \ref thread_slinger_pool
-<li> \ref ThreadSlingerError
 </ul>
 
 \code

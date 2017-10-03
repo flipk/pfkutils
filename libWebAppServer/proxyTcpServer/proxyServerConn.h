@@ -37,7 +37,7 @@ For more information, please refer to <http://unlicense.org>
 class proxyServerConnWacShim : public WebAppServer::WebAppConnection
 {
 public:
-    virtual ~proxyServerConnWacShim(void) ALLOW_THROWS { }
+    virtual ~proxyServerConnWacShim(void) { }
     virtual bool wacDoPoll(void) = 0;
 private:
     /*virtual*/ bool doPoll(void) { return wacDoPoll(); }
@@ -46,7 +46,7 @@ private:
 class proxyServerConnfdtlShim : public fdThreadLauncher
 {
 public:
-    virtual ~proxyServerConnfdtlShim(void) ALLOW_THROWS { }
+    virtual ~proxyServerConnfdtlShim(void) { }
     virtual bool fdtlDoPoll(void) = 0;
 private:
     /*virtual*/ bool doPoll(void) { return fdtlDoPoll(); }
@@ -69,7 +69,7 @@ private:
     proxyTcp::ProxyMsg  pm_out;
     WaitUtil::Lockable  sendLock;
     void sendProxyMsg(void);
-    ~proxyServerConn(void) ALLOW_THROWS;
+    ~proxyServerConn(void);
 
     // implement WebAppConnection
 
