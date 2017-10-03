@@ -42,6 +42,7 @@ if PFK_AM_BUILD_ctwm
 endif
 
 install-exec-local:
+	mkdir -p $(DESTDIR)$(bindir) || true
 if PFK_AM_BUILD_cscope
 	cp $(CSCOPE)/src/cscope $(DESTDIR)$(bindir)/cscope.new
 	chmod 755 $(DESTDIR)$(bindir)/cscope.new
