@@ -1,0 +1,14 @@
+
+- create flat array of X file paths, indexed [0,X-1]
+- create Y threads
+- each thread:
+   1- generate random number N in [0,X-1]
+   2- if file path [N] is in use, go back to 1
+   3- mark file path [N] as in-use (mutex protected)
+   4- if this file does not exist
+      41- create it, generate random seed, generate random contents
+      42- save seed in file path obj, mark file as existing
+   5- if file does exist
+      51- open it, reinit random seed, read contents, verify
+      52- generate random [0,99], if >50 delete file and mark as gone
+   6- mark it as not-in-use, go back to 1

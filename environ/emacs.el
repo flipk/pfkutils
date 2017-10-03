@@ -23,7 +23,13 @@
  '(verilog-auto-delete-trailing-whitespace t)
  '(verilog-auto-inst-column 10)
  '(verilog-auto-newline nil)
- '(verilog-indent-begin-after-if nil))
+ '(verilog-indent-begin-after-if nil)
+ '(mouse-buffer-menu-maxlen 100)
+ '(mouse-buffer-menu-mode-mult 4)
+)
+
+(setq mouse-buffer-menu-mode-groups
+      '((".*" . "Buffers")))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
