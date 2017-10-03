@@ -24,6 +24,9 @@
  * \author Phillip F Knaack
  */
 
+#ifndef __BTREE_H__
+#define __BTREE_H__
+
 #include "FileBlock_iface.H"
 #include "bst.H"
 
@@ -249,3 +252,5 @@ public:
      */
     virtual bool iterate( BtreeIterator * bti ) = 0;
 };
+
+#endif /* __BTREE_H__ */

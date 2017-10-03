@@ -267,8 +267,6 @@ public:
      *
      * \param full whether to perform a quick or full compaction.  note that
      *   a full compaction requires all FileBlock objects to be released.
-     *
-     * \note This function is currently unimplemented!
      */
     virtual void compact(bool full) = 0;
     // @}

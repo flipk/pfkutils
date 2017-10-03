@@ -8,22 +8,10 @@ protected:
     DB_ITEM(Btree * _bt) { bt = _bt; }
     bool _put(BST * key, FileBlockBST * data, bool replace) {
         FB_AUID_T data_fbn;
-        if (!data->idvalid())
+        if (data->putnew( &data_fbn ) == false)
         {
-            if (data->putnew( &data_fbn ) == false)
-            {
-                printf("putnew failure\n");
-                return false;
-            }
-        }
-        else
-        {
-            if (data->put() == false)
-            {
-                printf("put failure\n");
-                return false;
-            }
-            data_fbn = data->get_id();
+            printf("putnew failure\n");
+            return false;
         }
         bool replaced;
         FB_AUID_T old_data_id;
@@ -33,9 +21,9 @@ protected:
             printf("bt put failure\n");
             return false;
         }
-        if (replaced)
+        if (replace && replaced)
         {
-            data->get_fbi()->free(old_data_id);
+            bt->get_fbi()->free(old_data_id);
         }
         return true;
     }
@@ -45,6 +33,13 @@ protected:
             return false;
         if (data->get(data_fbn) == false)
             return false;
+        return true;
+    }
+    bool _del(BST * key, FileBlockBST * data) {
+        FB_AUID_T  data_fbn;
+        if (bt->del(key, &data_fbn)==false)
+            return false;
+        bt->get_fbi()->free(data_fbn);
         return true;
     }
 };
@@ -57,7 +52,8 @@ protected:
         datum##Key key;                                                 \
         datum##Data data;                                               \
         bool put(bool repl=false) { return _put(&key, &data, repl); }   \
-        bool get(void) { return _get(&key, &data); }                    \
+        bool get(void)            { return _get(&key, &data); }         \
+        bool del(void)            { return _del(&key, &data); }         \
     }
 
 /*
@@ -75,6 +71,8 @@ To use DB_ITEM_CLASS and DB_ITEM, do the following:
 - define a Data struct derived from FileBlockBST; the base class
   constructor of course requires the FileBlockInterface pointer.
   add a BST_FIELD_LIST to this one for all the fields as well.
+  and remember: types derived from FileBlockBST must call free
+  in their destructors!
 
 - invoke DB_ITEM_CLASS(myClass) macro; this automatically creates
   a myClass type definition which is derived from DB_ITEM and 

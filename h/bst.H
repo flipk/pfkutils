@@ -465,7 +465,9 @@ struct BST_STRING : public BST {
         };
         return false;
     }
-    void strdup(char * str) {
+    void set(char * str) {
+        if (string)
+            delete[] string;
         int len = strlen(str) + 1;
         string = new char[len];
         memcpy(string, str, len);

@@ -110,6 +110,27 @@ FileBlockLocal :: validate( bool verbose )
                        au.d->bucket_next(),
                        au.d->bucket_prev());
             printf("\n");
+            if (au.d->used() && au.d->auid() != 0)
+            {
+                FileBlock * fb = get(au.d->auid());
+                UCHAR * ptr = fb->get_ptr();
+                int size = fb->get_size();
+                printf("  contents:\n");
+                for (int pos = 0; pos < size; pos++)
+                {
+                    if ((pos & 15) == 0)
+                        printf("    ");
+                    printf("%02x", ptr[pos]);
+                    if ((pos & 3) == 3)
+                        printf(" ");
+                    if ((pos & 15) == 7)
+                        printf(" ");
+                    if ((pos & 15) == 15)
+                        printf("\n");
+                }
+                printf("\n");
+                release(fb);
+            }
         }
         if (au_size == 0)
             break;

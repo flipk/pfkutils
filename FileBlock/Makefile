@@ -16,12 +16,13 @@ CC=	g++
 INCS=	-I../h -I../dll2
 DEFS=	-D_FILE_OFFSET_BITS=64 \
 	-DDLL2_INCLUDE_BTREE=1 -DDLL2_CHECKSUMS=0 -DDLL2_STRICT_WALKING=0
-OPTS=	-Wall -Werror -g3
+OPTS=	-Wall -Werror -O3
 LIBS=	../dll2/dll2_hash.o
 TESTSRCS= testFileBlock.C testBtree.C
+EXTRAS=   t1 t2 fbdump fbcompact btdump
 
 all: xmakefile
-	@make -f xmakefile $(TARG) t1 t2
+	@make -f xmakefile $(TARG) $(EXTRAS)
 
 
 xmakefile: Makefile $(TESTSRCS) $(SRCS) $(HDRS)
@@ -42,6 +43,15 @@ t1: $(TARG)   testFileBlock.o
 t2: $(TARG)   testBtree.o
 	$(CC) testBtree.o     $(TARG) $(LIBS) -o $@
 
+fbdump: $(TARG)  fbdump.o
+	$(CC)    fbdump.o  $(TARG) $(LIBS) -o fbdump
+
+fbcompact: $(TARG)  fbcompact.o
+	$(CC)       fbcompact.o $(TARG) $(LIBS) -o fbcompact
+
+btdump: $(TARG)  btdump.o
+	$(CC)    btdump.o $(TARG) $(LIBS) -o btdump
+
 doc::
 	doxygen
 
@@ -51,5 +61,7 @@ doc::
 depend: xmakefile
 
 clean:
-	rm -f $(TARG) testfile.db xmakefile tmp *~ *.o *.a *.obj *.i t1 t2
+	rm -f $(TARG) testfile.db xmakefile tmp
+	rm -f *~ *.o *.a *.obj *.i
+	rm -f t1 t2 fbdump
 	rm -rf doc

@@ -729,7 +729,6 @@ BtreeInternal :: del( UCHAR * key, int keylen, FB_AUID_T *old_data_id )
             node_cache->release(nw->node);
             delete nw;
         }
-        delete key;
         return false;
     }
 
