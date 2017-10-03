@@ -78,6 +78,10 @@ lbsub() {
     __verbose bsub complete
 }
 
+vil() {
+    vi /home/knaack/notes/logs/`date '+%Y-%m-%d-%A'`
+}
+
 lbsol() {
     lbsub comp251 $*
 }

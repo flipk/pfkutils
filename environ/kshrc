@@ -51,6 +51,7 @@ export USER HOME ENV HOST TMP TMPDIR TEMP
 if [ -f $HOME/.verbose ] ; then
        __verbose() {
                echo $$ $*
+               echo `hostname` `tty` `date` $$ $* >> $HOME/.verbose
        }
 else
        __verbose() {
@@ -598,7 +599,7 @@ myemacs() {
     if [ $started = yes ] ; then
 	emacsclient --no-wait display:$DISPLAY
     else
-        emacs -geometry 80x33+0-200 &
+        emacs -geometry 80x33+0+125 &
     fi
 
     unset INSIDE_EMACS

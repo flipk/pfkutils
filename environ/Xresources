@@ -43,9 +43,7 @@ XTerm.VT100.Translations: \
    <Key>F3:  string(0x0e)\n\
    <Key>F4:  string("debug on") string(0x0d)\n\
    <Key>F5:  string("msg 23 1 0 0 8a04h 1")string(0x0d)\n\
-   <Key>F6:  string(0x01) string("d")\n\
-   <Key>F7:  scroll-back(1,line)\n\
-   <Key>F8:  scroll-forw(1,line)\n\
+   <Key>F6:  clear-saved-lines()\n\
    <Key>F9:  scroll-back(1,page)\n\
    <Key>F10: scroll-forw(1,page)\n\
    Ctrl <Key>Left:  string(0x01) string("p")\n\

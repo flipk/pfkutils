@@ -17,23 +17,30 @@ DontMoveOff
 NoGrabServer
 SqueezeTitle
 WarpUnmapped
+NoRaiseOnMove
 PackNewWindows
+NoShowOccupyAll
+NoRaiseOnResize
 StartInMapState
 SchrinkIconTitles
 DecorateTransients
 AutoRelativeResize
+#IconifyByUnmapping
 RestartPreviousState
 CenterFeedbackWindow
 ShortAllWindowsMenus
 ShowWorkSpaceManager
 AutoFocusToTransients
+#ReallyMoveInWorkspaceManager
 AlwaysShowWindowWhenMovingFromWorkspaceManager
 
-IconRegion "0900x60-0+0" North East  10 10 "center" "center" "top"
+#           geometry        hgrav vgrav grid  iconjust iconregjust iconregalign
+#IconRegion "280x50+125+60"  North West  10 10  "left"   "left"     "top"
+IconRegion "900x100+410+25" North West  10 10  "left"   "left"     "top"
 
 AutoSqueeze { "autosqueeze" }
 
-WorkSpaceManagerGeometry "120x60+188-0" 2
+WorkSpaceManagerGeometry "120x60+0+25" 2
 WorkSpaces {
 #	space buttonbg  buttonfg  rootbg
 	"1" { "#203040" "#ffffff" "#203040" }
@@ -49,6 +56,11 @@ NoTitle {
 	"XTermScreen"
 	"NoTitle"
 	"XDaliClock"
+}
+
+IconManagerDontShow {
+	"Emacs Minibuffer"
+	"Doxtrms"
 }
 
 OccupyAll {
@@ -85,6 +97,7 @@ Function "move-or-iconify" { f.move f.deltastop f.iconify }
 
 Button1 =   : root        : f.menu "defops"
 Button3 =   : root        : f.menu "TwmAllWindows"
+Button3 = s : root        : f.menu "TwmWindows"
 Button2 = s : window|icon : f.iconify
 Button2 = m : window|icon : f.resize
 Button3 = m : window|icon : f.function "move-or-raise"
@@ -112,6 +125,8 @@ Button2 =   : iconmgr     : f.iconify
 "6"     =   : root        : f.gotoworkspace "6"
 "7"     =   : root        : f.gotoworkspace "7"
 "8"     =   : root        : f.gotoworkspace "8"
+
+"F7"	=   : window            : f.raiselower
 
 "0"     = m : root|window|title : f.toggleworkspacemgr
 "1"     = m : root|window|title : f.gotoworkspace "1"
@@ -158,24 +173,15 @@ menu "defops"
         "Lower"		f.lower
         "Info"          f.identify
         "Occupy"	f.occupy
-        ""		f.nop
-        "1"		f.gotoworkspace "1"
-        "2"		f.gotoworkspace "2"
-        "3"		f.gotoworkspace "3"
-        "4"		f.gotoworkspace "4"
-        "5"		f.gotoworkspace "5"
-        "6"		f.gotoworkspace "6"
-        "7"		f.gotoworkspace "7"
-        "8"		f.gotoworkspace "8"
+        "Kill"		f.destroy
+        "Delete"	f.delete
         ""		f.nop
         "Focus"		f.focus
         "Unfocus"	f.unfocus
         "Show Iconmgr"	f.showiconmgr
         "Hide Iconmgr"	f.hideiconmgr
         ""		f.nop
-        "Kill"		f.destroy
-        "Delete"	f.delete
-        ""		f.nop
+	"Reload Res"	!"xrdb -remove ; xrdb -load ~/.Xresources"
         "Restart"	f.restart
 	"Exit"		f.quit
 }
