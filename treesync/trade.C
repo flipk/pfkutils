@@ -28,7 +28,6 @@ trade_read( void * arg, int fd, void * buf, int buflen )
     int cc = read( fd, buf, buflen );
     if ( cc <= 0 )
         tcp_closed = true;
-//    printf( "read %d of %d bytes from fd %d\n", cc, buflen, fd );
     return cc;
 }
 
@@ -36,7 +35,6 @@ static int
 trade_write( void * arg, int fd, void * buf, int buflen )
 {
     int cc = write( fd, buf, buflen );
-//    printf( "wrote %d of %d bytes on fd %d\n", cc, buflen, fd );
     return cc;
 }
 
@@ -334,7 +332,6 @@ put_created_changed(void)
         tcp_channel->send( &cfn );
         files_done++;
 
-//        printf( "sending '%s' of size %d\n", cfn.filename, remaining );
         while ( remaining > 0 )
         {
             blk_size = remaining;

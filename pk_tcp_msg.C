@@ -1,5 +1,25 @@
 
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#include <sys/select.h>
+
 #include "pk_tcp_msg.H"
+
+pk_tcp_msgr :: pk_tcp_msgr( user_func rdr, user_func wrtr,
+                            void * _user_arg, int _fd )
+{
+    fd         = _fd;
+    user_read  = rdr;
+    user_write = wrtr;
+    user_arg   = _user_arg;
+}
+
+pk_tcp_msgr :: ~pk_tcp_msgr( void )
+{
+    close( fd );
+}
 
 bool
 pk_tcp_msgr :: send( pk_tcp_msg * m )
@@ -19,18 +39,35 @@ pk_tcp_msgr :: send( pk_tcp_msg * m )
 }
 
 bool
+pk_tcp_msgr :: recv_pending( void )
+{
+    fd_set  rfds;
+    struct timeval tv = { 0, 0 };
+    FD_ZERO( &rfds );
+    FD_SET( fd, &rfds );
+    select( fd+1, &rfds, NULL, NULL, &tv );
+    if ( FD_ISSET( fd, &rfds ))
+        return true;
+    return false;
+}
+
+bool
 pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
 {
     char * buf = (char*) m;
     states state = HEADER;
     int stateleft = sizeof( pk_tcp_msg );
+
     while ( 1 )
     {
         int cc = user_read( user_arg, fd, buf, stateleft );
+
         if ( cc <= 0 )
             return false;
+
         stateleft -= cc;
         buf += cc;
+
         if ( stateleft == 0 )
         {
             switch ( state )
@@ -38,15 +75,22 @@ pk_tcp_msgr :: recv( pk_tcp_msg * m, int max_size )
             case HEADER:
                 if ( !m->verif_magic() )
                     return false;
+
                 stateleft = m->get_len();
                 if ( stateleft > max_size )
                     return false;
+
                 stateleft -= sizeof( pk_tcp_msg );
+                if ( stateleft == 0 )
+                    return true;
+
                 state = BODY;
                 break;
+
             case BODY:
                 if ( !m->verif_checksum() )
                     return false;
+
                 return true;
             }
         }

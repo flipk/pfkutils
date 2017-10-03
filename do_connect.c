@@ -26,7 +26,7 @@ do_connect( char * host, int port )
 
     if (sock < 0)
     {
-        fprintf( stderr, "socket failed with err %d\n", errno );
+        fprintf( stderr, "socket: %s\n", strerror( errno ));
         exit( 1 );
     }
 
@@ -50,7 +50,7 @@ do_connect( char * host, int port )
         if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0) 
         {
             fprintf( stderr,
-                     "bind failed with error %d\n", errno );
+                     "bind: %s\n", strerror( errno ));
             exit( 1 );
         }
 
@@ -61,7 +61,7 @@ do_connect( char * host, int port )
         if (ear < 0)
         {
             fprintf( stderr,
-                     "accept failed with error %d\n", errno );
+                     "accept: %s\n", strerror( errno ));
             exit( 1 );
         }
 
@@ -75,16 +75,17 @@ do_connect( char * host, int port )
             if ((he = gethostbyname(host)) == NULL)
             {
                 fprintf( stderr,
-                         "gethostbyname failed, error %d\n", errno );
+                         "gethostbyname: %s\n", strerror( errno ));
                 exit( 1 );
             }
             bcopy((char *)he->h_addr, (char*)&sa.sin_addr,
                   he->h_length);
         }
+
         if ((connect(sock, (struct sockaddr *)&sa, sizeof sa)) < 0)
         {
             fprintf( stderr,
-                     "connect failed with error %d\n", errno );
+                     "connect: %s\n", strerror( errno ));
             exit( 1 );
         }
     }

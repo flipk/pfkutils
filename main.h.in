@@ -23,6 +23,10 @@
 	PROG(1,itsfssvr,ITS file system server)
 	PROG(0,xlock,xlock screen)
 	PROG(0,pdksh,pdksh shell)
+	PROG(0,ts,treesync server)
+#endif
+#ifdef cygwin32
+	PROG(0,ts,treesync server)
 #endif
 	PROG(0,tcpgate,TCP gateways for bridging)
 	PROG(0,tcpgate2,TCP gateways for bridging)

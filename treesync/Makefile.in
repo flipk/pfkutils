@@ -1,0 +1,39 @@
+
+#ifdef cygwin32
+DEFS= -DPK_CYGWIN=1
+#else
+DEFS= -DPK_CYGWIN=0
+#endif
+
+DEFS+= -O3
+INCS= -I../bt -I../dll2 -I../threads/h -I..
+LIBS= ../bt/libbt.a ../threads/libthreads.a ../do_connect.o
+SRCS= regen.C treesync.C trade.C
+OBJS= regen.o treesync.o trade.o
+LIB= libts.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	rm -f $(LIB)
+	ar cq $(LIB) $(OBJS)
+	ranlib $(LIB)
+
+regen.o: regen.C
+
+.C.o:
+	g++ $(DEFS) $(INCS) -c $*.C
+
+.c.o:
+	gcc $(DEFS) $(INCS) -c $*.c
+
+clean:
+	rm -f *.o *~ $(LIB) *core  Makefile
+
+depend: Makefile.in $(SRCS) $(HDRS)
+	awk 'BEGIN { copy=1; } { if ( copy ) print } /^#DEPENDENCIES/ { copy=0; }' < Makefile > x
+	gcc -M $(INCS) $(SRCS) >> x
+	mv x Makefile
+	
+#DEPENDENCIES
+

@@ -9,8 +9,10 @@
 
 extern "C" int do_connect( char * host, int port );
 
+extern "C" int ts_main( int argc, char ** argv );
+
 int
-main( int argc, char ** argv )
+ts_main( int argc, char ** argv )
 {
     int fd, port;
     char * host;
