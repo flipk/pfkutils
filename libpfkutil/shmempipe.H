@@ -131,6 +131,9 @@ struct shmempipeStats {
     }
 };
 
+// todo : inline all methods below
+// todo : add a cleanup method
+
 struct shmempipeBufferList {
 private:
     uint32_t head; // dequeue from head
@@ -139,7 +142,11 @@ private:
     // shmempipeMessage::next points towards tail
     pthread_mutex_t  mutex;
     pthread_cond_t   empty_cond;
-    bool needspoke;
+    // needsPoke is only used to wake up the reader thread
+    // when we're dying. it will kick the reader thread
+    // out of the dequeue sleep and force it to return 
+    // NULL so the reader thread will die.
+    bool bNeedsPoke;
     bool bIsWaiting;
     void   lock(void) { pthread_mutex_lock  ( &mutex ); }
     void unlock(void) { pthread_mutex_unlock( &mutex ); }
@@ -147,7 +154,7 @@ public:
     void init(void);
     bool empty(void) { return head == 0; }
     void poke(void) {
-        lock(); needspoke = true; unlock();
+        lock(); bNeedsPoke = true; unlock();
         pthread_cond_signal( &empty_cond );
     }
     uint32_t get_count(void) { return count; }
@@ -184,7 +191,7 @@ public:
         uint32_t msgoff;
         shmempipeMessage * pMsg = NULL;
         lock();
-        if (head == 0 && !needspoke) {
+        if (head == 0 && !bNeedsPoke) {
             if (bWait)
             {
                 bIsWaiting = true;
@@ -194,7 +201,7 @@ public:
                     *pSignalled = true;
             }
         }
-        if (head != 0 && !needspoke) {
+        if (head != 0 && !bNeedsPoke) {
             msgoff = head;
             pMsg = (shmempipeMessage *)(msgoff + base);
             head = pMsg->next;
@@ -203,7 +210,7 @@ public:
             count--;
         }
         if (pMsg == NULL)
-            needspoke = false;
+            bNeedsPoke = false;
         unlock();
         return pMsg;
     }

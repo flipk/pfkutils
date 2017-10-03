@@ -188,8 +188,9 @@ shmempipe :: shmempipe( shmempipeSlaveConfig * pConfig )
 
 shmempipe :: ~shmempipe(void)
 {
-    if (m_shmemPtr != 0)
-        munmap((void*)m_shmemPtr, (size_t)m_shmemLimit);
+
+    // todo: call all shmempipeBufferList :: cleanup methods
+
     if (m_bReaderRunning)
         stopReaderThread();
     if (m_bCloserRunning)
@@ -200,6 +201,8 @@ shmempipe :: ~shmempipe(void)
         close(m_myPipeFd);
     if (m_otherPipeFd > 0)
         close(m_otherPipeFd);
+    if (m_shmemPtr != 0)
+        munmap((void*)m_shmemPtr, m_fileSize);
     if (m_bMaster)
     {
         (void) unlink(m_filename.filename);
@@ -213,7 +216,7 @@ shmempipeBufferList :: init(void)
 {
     head = tail = 0;
     count = 0;
-    needspoke = false;
+    bNeedsPoke = false;
     bIsWaiting = false;
     pthread_mutexattr_t mattr;
     pthread_condattr_t  cattr;
@@ -244,9 +247,14 @@ shmempipe  :: startCloserThread(void)
         usleep(1);
 }
 
+// todo : instead of bCloserRunning,  have state enum
+
 void
 shmempipe  :: stopCloserThread(void)
 {
+
+    // todo : use pthread cancel if in the open-pipes state.
+
     if (m_bCloserRunning)
     {
         close(m_closerPipe[1]);
@@ -269,6 +277,9 @@ void
 shmempipe :: closerThread(void)
 {
     m_bCloserRunning = true;
+
+    // todo : install pthread cleanup handler to reset closer state.
+
     if (m_bMaster)
     {
         // open my pipe, wait for connect indication.
@@ -314,6 +325,7 @@ shmempipe :: closerThread(void)
     m_callbacks.connectCallback = &dummyCallback;
     m_bConnected = true;
     startReaderThread();
+
     while (1)
     {
         fd_set rfds;
@@ -337,6 +349,7 @@ shmempipe :: closerThread(void)
                 break;
         }
     }
+
     m_bConnected = false;
     stopReaderThread();
     m_callbacks.disconnectCallback(this, m_callbacks.arg);
@@ -381,7 +394,6 @@ shmempipe :: stopReaderThread(void)
         m_myBufferList->poke();
         while (m_bReaderRunning)
             usleep(1);
-        // cleanup?
     }
 }
 
