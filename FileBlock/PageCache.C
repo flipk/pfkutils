@@ -70,12 +70,14 @@ Next: \ref BlockCache
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 
 PageCache :: PageCache( PageIO * _io, int _max_pages )
 {
     io = _io;
     max_pages = _max_pages;
     pgs = new PageCachePageList;
+    time( &last_flush );
 }
 
 PageCache :: ~PageCache(void)
@@ -140,13 +142,21 @@ PageCache :: release( PageCachePage * _p, bool dirty )
         p = pgs->get_oldest();
         pgs->remove(p);
         if (p->dirty)
+        {
             if (!io->put_page(p))
             {
                 fprintf(stderr, "error putting page %d\n",
                         p->page_number);
                 exit( 1 );
             }
+        }
         delete p;
+    }
+    time_t now;
+    if ( time( &now ) != last_flush )
+    {
+        last_flush = now;
+        flush();
     }
 }
 

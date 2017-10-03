@@ -127,6 +127,6 @@ PageIOFileDescriptor :: get_size(void)
 void
 PageIOFileDescriptor :: truncate_pages(int num_pages)
 {
-    off_t size = num_pages * PageCache::PAGE_SIZE;
+    off_t size = (off_t)num_pages * PageCache::PAGE_SIZE;
     ftruncate(fd, size);
 }

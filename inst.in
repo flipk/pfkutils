@@ -18,7 +18,7 @@ HOST=$1
 localrc=kshrc.local.$HOST
 
 bindir=/home/MY_USERNAME/bin
-destdir=$bindir/MY_ARCH
+destdir=$bindir/`./architecture`
 
 mkdir -p $destdir
 

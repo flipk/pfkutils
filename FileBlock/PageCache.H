@@ -52,6 +52,8 @@ class PageCache {
     PageIO * io;
     /** the compound data type for storing the cached pages. */
     PageCachePageList * pgs;
+    /** the last time the file was flushed to disk. */
+    time_t last_flush;
 public:
     /** a constant indicating how big a page is. */
     static const int PAGE_SIZE = 4096;

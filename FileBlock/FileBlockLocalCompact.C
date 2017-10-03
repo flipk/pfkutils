@@ -363,11 +363,11 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         printf("last used au is at %d, auid %d,  size is %d\n",
                aun, auid, num_aus);
 #endif
-#if 0
-        // keep this in reserve, it does solve the problem nicely.
+
+        // don't bother downshifting the whole file just for one block.
         if (num_aus > free_aus)
             break;
-#endif
+
         bucket = ffu_bucket(num_aus);
 #if DEBUG_COMPACTION
         printf("bucket is %d\n", bucket);

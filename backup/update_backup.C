@@ -69,29 +69,30 @@ put_piece_data( UINT32 baknum, UINT32 file_number,
 {
     PfkBackupFilePieceData   piece_data(pfkbak_meta);
     UINT32 data_fbn = 0;
+    UCHAR * final_buffer;
+    UINT16  final_size;
 
     // unfortunately, we have to compress to a temp buffer
     // and then copy it to the FileBlock, because we don't know
     // how big to make the FileBlock until the compression is
     // complete! bummer.
 
-    UCHAR cbuf[ usize + 64 ];
-    uLongf csize = usize + 64;
+    uLongf csize = compressBound( usize );
+    UCHAR cbuf[ csize ];
 
-    UCHAR * final_buffer;
-    UINT16  final_size;
+    (void) compress2( cbuf, &csize,
+                      (const Bytef*)buffer, usize,
+                      Z_BEST_SPEED );
 
-    (void) compress( cbuf, &csize, (const Bytef*)buffer, usize );
-
-    if (csize >= usize)
-    {
-        final_buffer = buffer;
-        final_size = usize;
-    }
-    else
+    if (csize < usize)
     {
         final_buffer = cbuf;
         final_size = csize;
+    }
+    else
+    {
+        final_buffer = buffer;
+        final_size = usize;
     }
 
     data_fbn = pfkbak_data->alloc( final_size );
