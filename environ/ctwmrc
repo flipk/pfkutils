@@ -61,6 +61,7 @@ NoTitle {
 	"Vncviewer"
 	"TWM Icon Manager"
 	"firefox-bin"
+	"thunderbird-bin"
 }
 
 IconManagerDontShow {
@@ -166,6 +167,7 @@ menu "defops"
         "Xterm"		f.exec "x"
         "XtermScreen"	f.exec "xs"
 	"Firefox"	f.exec "firefox &"
+	"Thunderbird"	f.exec "thunderbird &"
 	"Lap"		!"lap&"
 	"Runner"	!"run0&"
 	":2"		!"colon2&"
