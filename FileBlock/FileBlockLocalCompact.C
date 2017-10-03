@@ -281,7 +281,7 @@ FileBlockLocal :: move_unit( void *l, FB_AUID_T auid,
 
 //virtual
 void
-FileBlockLocal :: compact( int max_percent )
+FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
 {
     L2L3s  l2l3tables;
     L2L3AUN * l2l3ent;
@@ -333,8 +333,19 @@ FileBlockLocal :: compact( int max_percent )
                free_aus, last_aun, (free_aus*100)/last_aun);
 #endif
 
-        if (((free_aus*100)/last_aun) <= (UINT32)max_percent)
-            break;
+        {
+            FileBlockStats stats;
+
+            stats.au_size      = AU_SIZE;
+            stats.used_aus     = fh.d->info.used_aus    .get();
+            stats.free_aus     = fh.d->info.free_aus    .get();
+            stats.used_regions = fh.d->info.used_extents.get();
+            stats.free_regions = fh.d->info.free_extents.get();
+            stats.num_aus      = fh.d->info.num_aus     .get();
+            
+            if (func(&stats, arg) == false)
+                break;
+        }
 
         AUHead  au(bc);
         au.get(last_aun);

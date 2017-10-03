@@ -90,6 +90,8 @@ struct FileBlockStats {
     UINT32  num_aus;       /**< file size, in aus */
 };
 
+typedef bool (*FileBlockCompactionStatusFunc)(FileBlockStats *stats, void *arg);
+
 /** A generic interface to read and write FileBlocks.
  *
  * This is a pure-virtual class whose purpose is to abstract the
@@ -265,11 +267,19 @@ public:
 
     /** defragment and compact the file.
      *
-     * \param max_percent  the maximum percentage of free space allowed in
-     *    the file.  0 means to completely compact the entire file until
-     *    it is contiguous.
+     * \param func  A pointer to a user-supplied function which 'compact'
+     *          will call with statistics on the ongoing state of the
+     *          compaction. The user's function should return true if the
+     *          compaction should be continued or false if the compaction
+     *          should complete. The user's function may make this decision
+     *          based on any goal the user desires, be it percentage of free
+     *          space desired, absolute number of regions, amount of time
+     *          which has passed, or even the detected presence of more 
+     *          file operations required (so that a compaction-during-idle
+     *          functionality may be implemented if desired).
+     * \param arg  An argument to pass to the user's function.
      */
-    virtual void compact(int max_percent) = 0;
+    virtual void compact(FileBlockCompactionStatusFunc func, void * arg) = 0;
     // @}
 
     /** @name Statistics */

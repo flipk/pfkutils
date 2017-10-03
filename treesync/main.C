@@ -3,10 +3,26 @@
 
 #include <Btree.H>
 #include <bst.H>
+#include <time.h>
 
 #include "FileList.H"
 #include "db.H"
 #include "protos.H"
+
+static bool
+compaction_status_function(FileBlockStats *stats, void *arg)
+{
+    static time_t last = 0;
+    if (stats->free_regions < 10)
+        return false;
+    time_t now = time(NULL);
+    if (now != last)
+    {
+        printf("free aus: %d\n", stats->free_aus);
+        last = now;
+    }
+    return true;
+}
 
 int treesync_verbose = 0;
 
@@ -42,7 +58,7 @@ treesync_main( int argc, char ** argv )
         fel1 = treesync_generate_file_list(dir1);
         treesync_update_db(dir1, db1, fel1);
         DELETE_LIST(fel1);
-        db1->get_fbi()->compact(0);
+        db1->get_fbi()->compact(compaction_status_function, NULL);
         delete db1;
         return 0;
     }
@@ -93,8 +109,8 @@ treesync_main( int argc, char ** argv )
     DELETE_LIST(fel1);
     DELETE_LIST(fel2);
 
-    db1->get_fbi()->compact(0);
-    db2->get_fbi()->compact(0);
+    db1->get_fbi()->compact(compaction_status_function, NULL);
+    db2->get_fbi()->compact(compaction_status_function, NULL);
 
     delete db1;
     delete db2;

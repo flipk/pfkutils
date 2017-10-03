@@ -60,15 +60,13 @@ enum file_state {
  * @param md5hash the calculated m5 hash of this piece
  * @param buffer a pointer to the data for the piece
  * @param usize the (uncompressed) size of this buffer
- * @param do_compression pointer to caller's bool indicating if we should
- *              be compressing this file.
  *
  * @return true if data added okay, false if there was an error.
  */
 static bool
 put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
                 UINT32 piece_number, UCHAR * md5hash,
-                UCHAR * buffer, int usize, bool * do_compression )
+                UCHAR * buffer, int usize )
 {
     PfkBackupFilePieceData   piece_data(bt);
     UINT32 data_fbn = 0;
@@ -84,32 +82,17 @@ put_piece_data( Btree * bt, UINT32 baknum, UINT32 file_number,
     UCHAR * final_buffer;
     UINT16  final_size;
 
-    if (*do_compression)
-    {
-        (void) compress( cbuf, &csize, (const Bytef*)buffer, usize );
+    (void) compress( cbuf, &csize, (const Bytef*)buffer, usize );
 
-        if (csize >= usize)
-        {
-            final_buffer = buffer;
-            final_size = usize;
-            *do_compression = false;
-
-            if (pfkbak_verb > VERB_QUIET)
-            {
-                printf(" (STORE)");
-                fflush(stdout);
-            }
-        }
-        else
-        {
-            final_buffer = cbuf;
-            final_size = csize;
-        }
-    }
-    else
+    if (csize >= usize)
     {
         final_buffer = buffer;
         final_size = usize;
+    }
+    else
+    {
+        final_buffer = cbuf;
+        final_size = csize;
     }
 
     data_fbn = bt->get_fbi()->alloc( final_size );
@@ -182,9 +165,11 @@ walk_file( file_state state, Btree * bt,
         fd = open(fef->path, O_RDONLY);
         if ( fd < 0 )
         {
-            fprintf(stderr, "ERROR : modified but cannot open: %s\n",
-                    fef->path);
+            fprintf(stderr, "ERROR : modified but cannot open: %s: %s\n",
+                    fef->path, strerror(errno));
             fd = -1;
+            // pretend the file was not modified in this case.
+            state = STATE_UNMODIFIED;
         }
     }
 
@@ -197,7 +182,6 @@ walk_file( file_state state, Btree * bt,
     UCHAR buffer[PIECE_SIZE];
     UCHAR  md5hash[MD5_DIGEST_SIZE];
     PfkBackupFilePieceInfo   piece_info(bt);
-    bool do_compression = true;
 
     // walk all the pieces.
     for (piece_number = 0; ; piece_number++)
@@ -236,7 +220,7 @@ walk_file( file_state state, Btree * bt,
             // put data fbn.
 
             put_piece_data( bt, baknum, file_number, piece_number,
-                            md5hash, buffer, piece_len, &do_compression );
+                            md5hash, buffer, piece_len );
         }
         else
         {
@@ -317,8 +301,7 @@ walk_file( file_state state, Btree * bt,
                     piece_info.put(true);
 
                     put_piece_data( bt, baknum, file_number, piece_number,
-                                    md5hash, buffer, piece_len,
-                                    &do_compression );
+                                    md5hash, buffer, piece_len );
                 }
 
                 break;

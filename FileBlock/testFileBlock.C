@@ -85,6 +85,21 @@ print_stats(const char *header, FileBlockStats *stats)
             stats->used_regions, stats->free_regions, stats->num_aus);
 }
 
+static bool
+compaction_status_function(FileBlockStats *stats, void *arg)
+{
+    static time_t last = 0;
+    if (stats->free_regions < 10)
+        return false;
+    time_t now = time(NULL);
+    if (now != last)
+    {
+        printf("free aus: %d\n", stats->free_aus);
+        last = now;
+    }
+    return true;
+}
+
 int
 main(int argc, char ** argv)
 {
@@ -210,7 +225,7 @@ main(int argc, char ** argv)
 
         if ((loop % ITEMS) == 0)
         {
-//            fbi->compact(0);
+//            fbi->compact(0);  // xxx must repair
             fbi->flush();
             count_flush++;
         }
@@ -234,7 +249,7 @@ main(int argc, char ** argv)
     FileBlockStats  stat;
     fbi->get_stats(&stat);
     print_stats("Before compaction", &stat);
-    fbi->compact(0);
+    fbi->compact(compaction_status_function, NULL);
     fbi->get_stats(&stat);
     print_stats("After compaction", &stat);
     fbi->validate(false);

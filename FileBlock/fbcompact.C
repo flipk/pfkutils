@@ -1,7 +1,39 @@
 
 #include <stdio.h>
-
+#include <time.h>
 #include "FileBlock_iface.H"
+
+#if 0
+static bool
+compaction_status_function(FileBlockStats *stats, void *arg)
+{
+    static time_t last = 0;
+    if (stats->free_regions < 10)
+        return false;
+    time_t now = time(NULL);
+    if (now != last)
+    {
+        printf("free regions: %d\n", stats->free_regions);
+        last = now;
+    }
+    return true;
+}
+#else
+static bool
+compaction_status_function(FileBlockStats *stats, void *arg)
+{
+    static time_t last = 0;
+    if (stats->free_aus < 100)
+        return false;
+    time_t now = time(NULL);
+    if (now != last)
+    {
+        printf("free aus: %d\n", stats->free_aus);
+        last = now;
+    }
+    return true;
+}
+#endif
 
 extern "C" int
 fbcompact_main(int argc, char ** argv)
@@ -41,7 +73,7 @@ fbcompact_main(int argc, char ** argv)
 
     printf("\npacking...\n");
 
-    fbi->compact(0);
+    fbi->compact(compaction_status_function, NULL);
 
     fbi->get_stats( &stats );
     printf("\nstats after:\n"

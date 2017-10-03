@@ -152,6 +152,13 @@ pfkbak_main(int argc, char ** argv)
     {
         bt = Btree::createFile( pfkbak_file, CACHE_SIZE,
                                 0600, BTREE_ORDER );
+
+        if (!bt)
+        {
+            fprintf(stderr, "unable to create file: %s: %s\n",
+                    pfkbak_file, strerror(errno));
+            return 1;
+        }
     }
     else
     {
@@ -170,14 +177,6 @@ pfkbak_main(int argc, char ** argv)
             fprintf(stderr, "unable to validate database!\n");
             return 1;
         }
-    }
-
-    if (!bt)
-    {
-        fprintf(stderr, "unable to %s file: %s: %s\n",
-                pfkbak_op == BAK_CREATE_FILE ? "create" : "open",
-                pfkbak_file, strerror(errno));
-        return 1;
     }
 
     switch (pfkbak_op)

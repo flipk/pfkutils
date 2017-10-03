@@ -118,14 +118,14 @@ FileBlockLocal :: validate( bool verbose )
                 printf("  contents:\n");
                 for (int pos = 0; pos < size; pos++)
                 {
-                    if ((pos & 15) == 0)
+                    if ((pos & 31) == 0)
                         printf("    ");
                     printf("%02x", ptr[pos]);
                     if ((pos & 3) == 3)
                         printf(" ");
-                    if ((pos & 15) == 7)
+                    if ((pos & 7) == 7)
                         printf(" ");
-                    if ((pos & 15) == 15)
+                    if ((pos & 31) == 31)
                         printf("\n");
                 }
                 printf("\n");

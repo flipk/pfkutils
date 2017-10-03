@@ -482,7 +482,8 @@ public:
     /*virtual*/ void        release            ( FileBlock * blk,
                                                  bool dirty = false );
     /*virtual*/ void        flush              ( void );
-    /*virtual*/ void        compact            ( int max_percent );
+    /*virtual*/ void        compact            ( FileBlockCompactionStatusFunc
+                                                 func, void * arg );
     /*virtual*/ void        get_stats          ( FileBlockStats * stats );
 
     /** debug information.
