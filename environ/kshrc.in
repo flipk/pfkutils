@@ -142,6 +142,7 @@ case x$ENV_SET in
         __extend_path /usr/bin/X11
         __extend_path /usr/misc/X11/bin
         __extend_path /opt/site/bin
+        __extend_path /opt/local/bin
         __extend_path /opt/gnu/bin
         __extend_path /usr/X11R6/bin
         __extend_path /usr/openwin/bin
