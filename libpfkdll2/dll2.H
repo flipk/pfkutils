@@ -1301,12 +1301,21 @@ public:
     void rehash( int newhashsize ) { hash.rehash( newhashsize ); }
 };
 
-/** \todo document LListOrderedQ */
-/** \todo document btree API */
-
-// to use LListOrderedQ, type T must have the following member:
-//    - int ordered_queue_key
-
+/** an ordered queue for timer lists. an item is populated with the 
+ * number of ticks until it should expire; when it is added to the list,
+ * it is added in the correct position in between items which expire
+ * before and after this one. on each tick, the remaining number of ticks
+ * of the head item is decremented. if it reaches zero it must be removed
+ * and expired. the next event to process automatically percolates to the
+ * top. when an item is inserted, the tick count in each item is updated
+ * to be equal to the number of ticks after the item in front of it on
+ * the list when it should expire.
+ * \note In order to use LList, type T must have the following member: 
+ *       \code int ordered_queue_key;   \endcode
+ * \ingroup dll2listtypes
+ * \param T the type of the items to store in the list
+ * \param instance the list instance number, basically the LListLinks index
+ */
 template <class T, int instance>
 class LListOrderedQ {
 private:

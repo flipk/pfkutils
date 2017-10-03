@@ -22,26 +22,57 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <stdio.h>
+
+#ifdef HAVE_CONFIG_H
+#include "pfkutils_config.h"
+#endif
 
 int
 pfkstat_main( int argc, char ** argv )
 {
     struct stat sb;
 
-    printf( "%7s %10s %6s %4s %4s %4s %7s %7s %4s %5s"
-#if 0
-#if !defined(SOLARIS) && !defined(CYGWIN)
-            " %6s %4s"
+    printf( "%7s"  // dev
+            " %10s" // ino
+            " %6s" // mode
+            " %4s" // nlnk
+            " %4s" // uid
+            " %4s" // gid
+#if HAVE_STRUCT_STAT_ST_RDEV
+            " %7s" // rdev
 #endif
+            " %7s" // size
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+            " %4s" // blks
+#endif
+#if HAVE_STRUCT_STAT_ST_BLKSIZE
+            " %5s" // blksz
+#endif
+#if HAVE_STRUCT_STAT_ST_FLAGS
+            " %6s" // flags
+#endif
+#if HAVE_STRUCT_STAT_ST_GEN
+            " %4s" // gen
 #endif
             "\n",
             "dev", "ino", "mode", "nlnk",
-            "uid", "gid", "rdev", "size",
-            "blks", "blksz"
-#if 0
-#if !defined(SOLARIS) && !defined(CYGWIN)
-            , "flags", "gen"
+            "uid", "gid"
+#if HAVE_STRUCT_STAT_ST_RDEV
+            , "rdev" //xxx
 #endif
+            , "size"
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+            , "blks" //xxx
+#endif
+#if HAVE_STRUCT_STAT_ST_BLKSIZE
+            , "blksz" //xxx
+#endif
+#if HAVE_STRUCT_STAT_ST_FLAGS
+            , "flags"
+#endif
+#if HAVE_STRUCT_STAT_ST_GEN
+            , "gen"
 #endif
         );
     printf( "----------------------------------------"
@@ -57,20 +88,46 @@ pfkstat_main( int argc, char ** argv )
         if ( stat( argv[0], &sb ) < 0 )
             printf( "stat failed: %s\n", strerror( errno ));
         else
-            printf( "%07x %10d %6o %4d %4d %4d %07x %7d %4d %5d"
-#if 0
-#if !defined(SOLARIS) && !defined(CYGWIN)
-                    " %06x %4d"
+            printf( "%07x" // dev
+                    " %10d" // ino
+                    " %6o" // mode
+                    " %4d" // nlink
+                    " %4d" // uid
+                    " %4d" // gid
+#if HAVE_STRUCT_STAT_ST_RDEV
+                    " %07x" // rdev
 #endif
+                    " %7d" // size
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+                    " %4d" // blocks
+#endif
+#if HAVE_STRUCT_STAT_ST_BLKSIZE
+                    " %5d" // blksize
+#endif
+#if HAVE_STRUCT_STAT_ST_FLAGS
+                    " %06x" // flags
+#endif
+#if HAVE_STRUCT_STAT_ST_GEN
+                    " %4d" // gen
 #endif
                     "\n",
                     sb.st_dev, sb.st_ino, sb.st_mode, sb.st_nlink,
-                    sb.st_uid, sb.st_gid, sb.st_rdev, (int)sb.st_size,
-                    (int)sb.st_blocks, sb.st_blksize
-#if 0
-#if !defined(SOLARIS) && !defined(CYGWIN) && !defined(LINUX)
-                    , sb.st_flags, sb.st_gen
+                    sb.st_uid, sb.st_gid
+#if HAVE_STRUCT_STAT_ST_RDEV
+                    , sb.st_rdev
 #endif
+                    , (int)sb.st_size
+#if HAVE_STRUCT_STAT_ST_BLOCKS
+                    , (int)sb.st_blocks
+#endif
+#if HAVE_STRUCT_STAT_ST_BLKSIZE
+                    , sb.st_blksize
+#endif
+#if HAVE_STRUCT_STAT_ST_FLAGS
+                    , sb.st_flags
+#endif
+#if HAVE_STRUCT_STAT_ST_GEN
+                    , sb.st_gen
 #endif
                 );
 

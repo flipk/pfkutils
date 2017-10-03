@@ -113,6 +113,11 @@ fi
 
 AC_SUBST([PFK_SHELL_PATH], [$pfk_shell_path])
 
+AC_CHECK_PROG(pfk_have_whoami, whoami, yes, no)
+if test $pfk_have_whoami = "no" ; then
+  AC_MSG_ERROR([whoami is required to build pfkutils], [1])
+fi
+
 # Checks for libraries.
 AC_SEARCH_LIBS([pthread_create], [pthread], [],
    [AC_MSG_ERROR([pthreads is required for pfkutils])], [])
@@ -153,10 +158,12 @@ AC_TYPE_PID_T
 # AC_C_RESTRICT
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
-# AC_CHECK_MEMBERS([struct stat.st_blksize])
-# AC_CHECK_MEMBERS([struct stat.st_rdev])
-# AC_STRUCT_ST_BLOCKS
-# AC_STRUCT_DIRENT_D_INO
+AC_CHECK_MEMBERS([struct stat.st_flags])
+AC_CHECK_MEMBERS([struct stat.st_gen])
+AC_CHECK_MEMBERS([struct stat.st_blksize])
+AC_CHECK_MEMBERS([struct stat.st_rdev])
+AC_STRUCT_ST_BLOCKS
+AC_STRUCT_DIRENT_D_INO
 AC_TYPE_INT8_T
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
@@ -236,9 +243,6 @@ AC_CONFIG_FILES([
     scripts/pf_frontend
     scripts/Makefile
 ])
-
-#  AC_CONFIG_SUBDIRS([contrib/cscope-15.7a])
-#  AC_CONFIG_SUBDIRS([contrib/pdksh-5.2.14])
 
 m4_undivert(PFK_NOTICES_DIVERSION)
 

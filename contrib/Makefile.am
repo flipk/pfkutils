@@ -11,7 +11,7 @@ if PFK_AM_BUILD_cscope
 	set -e ; if [ ! -f $(CSCOPE)/Makefile ] ; then \
 		cd $(builddir)/$(CSCOPE) && $(abs_srcdir)/$(CSCOPE)/configure --prefix=$(exec_prefix) ; \
 	fi
-	make -C $(builddir)/$(CSCOPE) all
+	cd $(builddir)/$(CSCOPE) ; make all
 endif
 if PFK_AM_BUILD_pdksh
 	if [ ! -d $(builddir)/$(PDKSH) ] ; then \
@@ -20,7 +20,7 @@ if PFK_AM_BUILD_pdksh
 	set -e ; if [ ! -f $(PDKSH)/Makefile ] ; then \
 		cd $(builddir)/$(PDKSH) && $(abs_srcdir)/$(PDKSH)/configure --prefix=$(exec_prefix) ; \
 	fi
-	make -C $(builddir)/$(PDKSH) all
+	cd $(builddir)/$(PDKSH) ; make all
 endif
 if PFK_AM_BUILD_ctwm
 	if [ ! -d $(builddir)/$(CTWM) ] ; then \
@@ -38,7 +38,7 @@ if PFK_AM_BUILD_ctwm
 	set -e ; if [ ! -f $(CTWM)/Makefile ] ; then \
 		cd $(abs_builddir)/$(CTWM) && xmkmf ; \
 	fi
-	make -C $(abs_builddir)/$(CTWM) all
+	cd $(abs_builddir)/$(CTWM) ; make all
 endif
 
 install-exec-local:
@@ -78,17 +78,17 @@ endif
 clean-local:
 if PFK_AM_BUILD_cscope
 	set -e ; if [ -f $(CSCOPE)/Makefile ] ; then \
-		make -C $(CSCOPE) clean ; \
+		cd $(CSCOPE) ; make clean ; \
 	fi
 endif
 if PFK_AM_BUILD_pdksh
 	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-		make -C $(PDKSH) clean ; \
+		cd $(PDKSH) ; make clean ; \
 	fi
 endif
 if PFK_AM_BUILD_ctwm
 	set -e ; if [ -f $(CTWM)/Makefile ] ; then \
-		make -C $(CTWM) clean ; \
+		cd $(CTWM) ; make clean ; \
 	fi
 	rm -f $(CTWM)/Makefile
 endif
@@ -96,17 +96,17 @@ endif
 distclean-local:
 if PFK_AM_BUILD_cscope
 	set -e ; if [ -f $(CSCOPE)/Makefile ] ; then \
-		make -C $(CSCOPE) distclean ; \
+		cd $(CSCOPE) ; make distclean ; \
 	fi
 endif
 if PFK_AM_BUILD_pdksh
 	set -e ; if [ -f $(PDKSH)/Makefile ] ; then \
-		make -C $(PDKSH) distclean ; \
+		cd $(PDKSH) ; make distclean ; \
 	fi
 endif
 if PFK_AM_BUILD_ctwm
 	set -e ; if [ -f $(CTWM)/Makefile ] ; then \
-		make -C $(CTWM) clean ; \
+		cd $(CTWM) ; make clean ; \
 	fi
 	rm -f $(CTWM)/Makefile
 endif

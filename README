@@ -1,12 +1,24 @@
 
-#autoreconf --install
-#mkdir BUILD
-#cd BUILD
+blade:
 
 ../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-treescan --enable-doxygen
 
-# --enable-etg
+hertz:
 
-#  --enable-runemacs
-#  --enable-runrxvt
+../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope
 
+bohr:
+
+STRIP=true ../configure --enable-environ=atd --enable-pdksh
+
+kobukvalley:
+
+../configure --enable-environ=atd --enable-ctwm --enable-pdksh --enable-cscope --enable-doxygen
+
+faraday:
+
+../configure --enable-environ=atd --enable-pdksh
+
+sunlogin1:
+
+STRIP=true ../configure --enable-environ=atd --enable-pdksh

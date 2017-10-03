@@ -60,11 +60,11 @@
 	      default-frame-alist '((minibuffer . nil))
 	      initial-frame-alist 'nil
 	      minibuffer-frame-alist
-	      '((top . 0) (left . 20) (width . 155) (height . 1)
-		(auto-raise . t) (minibuffer-lines . 1)
-		(vertical-scroll-bars . nil)
-		(name . "Emacs Minibuffer")
-		(cons (cons 'title minibuftitle)))
+	      (cons (cons 'title minibuftitle)
+		    '((top . 0) (left . 20) (width . 155) (height . 1)
+		      (auto-raise . t) (minibuffer-lines . 1)
+		      (vertical-scroll-bars . nil)
+		      (name . "Emacs Minibuffer")))
 	      special-display-buffer-names
 	      '("*compilation*" "*shell*")
 	      hilit-mode-enable-list  '(not text-mode)

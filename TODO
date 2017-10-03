@@ -1,3 +1,6 @@
+
+- document libpfkutil
+
 autoconf:
   - autoconfize pfkstat
   - d3des implementation duplication (util & etg)
