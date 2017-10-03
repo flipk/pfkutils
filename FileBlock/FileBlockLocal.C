@@ -86,10 +86,14 @@ FileBlockLocal :: unlock_block( FileBlockCookie *cookie )
 void
 FileBlockLocal :: flush(void)
 {
+    // should first sort all of the bucket-lists by file position
+    // so that allocations start early in the file.
 }
 
 //virtual
 void
 FileBlockLocal :: compact(int time_limit)
 {
+    // should first sort all of the bucket-lists by file position
+    // so that allocations start early in the file.
 }

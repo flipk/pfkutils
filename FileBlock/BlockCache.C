@@ -46,10 +46,7 @@ BlockCache :: get( off_t offset, int size, bool for_write )
     int remaining = 0;
     int pg_offset = offset_in_starting_page;
 
-    if (num_pages == 1)
-        // allow ptr to point directly into the page cache
-        ret->ptr = ret->pages[0]->get_ptr() + offset_in_starting_page;
-    else
+    if (num_pages > 1)
     {
         // need a temporary buf
         ret->ptr = new UCHAR[size];
@@ -106,6 +103,10 @@ BlockCache :: get( off_t offset, int size, bool for_write )
             pg_offset = 0; // following page starts at beginning
         }
     }
+
+    if (num_pages == 1)
+        // allow ptr to point directly into the page cache
+        ret->ptr = ret->pages[0]->get_ptr() + offset_in_starting_page;
 
     return ret;
 }
