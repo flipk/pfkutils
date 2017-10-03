@@ -1,8 +1,15 @@
 
+autoconf
+automake
+libtool
+doxygen
+graphviz
+
 gcc
 g++
 flex
 byacc
+bison
 imake
 zlib-devel
 ncurses-devel
