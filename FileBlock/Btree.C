@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -408,7 +408,7 @@ BtreeInternal :: put( UCHAR * key, int keylen, UINT32 data_id,
     UINT32 curfbn, right_fbn = 0;
     BTNode * curn;
     int curidx;
-    BTKey * newkey;
+    BTKey * newkey = NULL;
 
     // start walking down from the rootnode a level at a time,
     // until we either find an exact match or we hit a leaf.
@@ -560,7 +560,8 @@ out:
     }
 
     if (ret == false)
-        delete newkey;
+        if (newkey)
+            delete newkey;
     return ret;
 }
 

@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -147,7 +147,7 @@ FileBlockInterface :: _openFile( const char * filename, int max_bytes,
 {
     int options = O_RDWR;
     if (create)
-        options |= O_CREAT;
+        options |= O_CREAT | O_EXCL;
 #ifdef O_LARGEFILE
     options |= O_LARGEFILE;
 #endif

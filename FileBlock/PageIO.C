@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -27,6 +27,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "PageCache.H"
 #include "PageIO.H"
@@ -44,6 +46,13 @@ PageIOFileDescriptor :: ~PageIOFileDescriptor( void )
 bool
 PageIOFileDescriptor :: get_page( PageCachePage * pg )
 {
+    // this will probably cause problems for someone.
+    if (sizeof(off_t) != 8)
+    {
+        fprintf(stderr, "\n\n\nERROR : size of off_t is not 8! \n\n\n");
+        exit(1);
+    }
+
     off_t offset = (off_t)pg->get_page_number() * (off_t)PageCache::PAGE_SIZE;
     lseek(fd, offset, SEEK_SET);
     int cc = read(fd, pg->get_ptr(), PageCache::PAGE_SIZE);

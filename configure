@@ -11,8 +11,8 @@ if [ "x$1" = x--tar ] ; then
     fi
     ./configure --clean
     cd ..
-    tar cf pkutils${2}.tar pkutils${2}
-    gzip -9 pkutils${2}.tar
+    tar cf pfkutils${2}.tar pfkutils${2}
+    gzip -9 pfkutils${2}.tar
     exit 0
 fi
 
@@ -101,7 +101,7 @@ for f in $precomps ; do
 done
 chmod u+x inst
 
-echo '#define ADMINNAME "pkutils"' > main_prog.h.tmp
+echo '#define ADMINNAME "pfkutils"' > main_prog.h.tmp
 echo '#define BUILD_DATE "' `date` on `hostname` '"' >> main_prog.h.tmp
 
 if cmp main_prog.h.tmp main_prog.h ; then

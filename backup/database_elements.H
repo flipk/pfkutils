@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -18,6 +18,9 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
+#ifndef __DATABASE_ELEMENTS_H__
+#define __DATABASE_ELEMENTS_H__
 
 #include "bst.H"
 #include "Btree.H"
@@ -50,30 +53,10 @@
     s [ label="BinaryData 1" URL="\ref BinaryData" ];
     t [ label="BinaryData 2" URL="\ref BinaryData" ];
     u [ label="FileInfoExtended"  URL="\ref FileInfoExtended" ];
-    a -> b;
-    a -> c;
-    a -> d;
-    b -> e;
-    b -> f;
-    b -> g;
-    e -> h;
-    e -> i;
-    f -> j;
-    f -> k;
-    g -> l;
-    g -> m;
-    e -> n;
-    f -> n;
-    g -> n;
-    h -> o;
-    j -> o;
-    l -> o;
-    o -> p;
-    o -> q;
-    o -> u;
-    u -> r;
-    n -> s;
-    n -> t;
+    a -> b;    a -> c;    a -> d;    b -> e;    b -> f;    b -> g;
+    e -> h;    e -> i;    f -> j;    f -> k;    g -> l;    g -> m;
+    e -> n;    f -> n;    g -> n;    h -> o;    j -> o;    l -> o;
+    o -> p;    o -> q;    o -> u;    u -> r;    n -> s;    n -> t;
   }
  \enddot
 */
@@ -106,6 +89,7 @@ struct BackupInfoListKey : public DatabaseKeys {
  * BackupInfoKey. */
 struct BackupInfoListData : public FileBlockBST {
     BackupInfoListData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~BackupInfoListData(void) { bst_free(); }
     BST_VAR_ARRAY <BST_UINT32_t>   backup_ids;
     BST_FIELD_LIST( &backup_ids );
 };
@@ -134,6 +118,7 @@ struct GenerationInfo : public BST {
  * active generations. */
 struct BackupInfoData : public FileBlockBST {
     BackupInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~BackupInfoData(void) { bst_free(); }
     BST_STRING     backup_name;            /**< text name of this backup. */
     BST_UINT32_t   next_generation_id;     /**< next id# to use           */
     BST_VAR_ARRAY <GenerationInfo>  generations; /**< list of all gens    */
@@ -171,6 +156,7 @@ struct DirectoryEntry : public BST {
  * generation creates a whole new tree of these. */
 struct DirectoryInfoData : public FileBlockBST {
     DirectoryInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~DirectoryInfoData(void) { bst_free(); }
     BST_VAR_ARRAY <DirectoryEntry>  entries;  /**< list of entries in dir */
     BST_FIELD_LIST( &entries );
 };
@@ -214,6 +200,7 @@ struct FilePieces : public BST {
  * about a file except its name (which is in the directory). */
 struct FileInfoData : public FileBlockBST {
     FileInfoData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~FileInfoData(void) { bst_free(); }
     BST_UINT64_t  size;          /**< size of this file in bytes */
     BST_UINT32_t  atime;         /**< last access time of this file (time_t) */
     BST_UINT32_t  num_pieces;    /**< number of 32k piece descriptors */
@@ -229,6 +216,7 @@ struct FileInfoData : public FileBlockBST {
  * large file, follow next_pieces_fbn to find more of these.  */
 struct FileInfoExtended : public FileBlockBST {
     FileInfoExtended(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~FileInfoExtended(void) { bst_free(); }
     FilePieces    next_pieces;   /**< group of piece descriptors */
     BST_FIELD_LIST( &next_pieces );
 };
@@ -237,6 +225,64 @@ struct FileInfoExtended : public FileBlockBST {
  * of a file. */
 struct BinaryData : public FileBlockBST {
     BinaryData(FileBlockInterface *fbi) : FileBlockBST(fbi) { }
+    ~BinaryData(void) { bst_free(); }
     BST_VAR_BINARY   data;
     BST_FIELD_LIST( &data );
 };
+
+class DB_ITEM {
+    Btree * bt;
+protected:
+    DB_ITEM(Btree * _bt) { bt = _bt; }
+    bool _put(BST * key, FileBlockBST * data, bool replace) {
+        UINT32 data_fbn;
+        if (!data->idvalid())
+        {
+            if (data->putnew( &data_fbn ) == false)
+            {
+                printf("putnew failure\n");
+                return false;
+            }
+        }
+        else
+        {
+            if (data->put() == false)
+            {
+                printf("put failure\n");
+                return false;
+            }
+            data_fbn = data->get_id();
+        }
+        if (bt->put(key, data_fbn, replace) == false)
+        {
+            printf("bt put failure\n");
+            return false;
+        }
+        return true;
+    }
+    bool _get(BST * key, FileBlockBST * data) {
+        UINT32 data_fbn;
+        if (bt->get(key, &data_fbn) == false)
+            return false;
+        if (data->get(data_fbn) == false)
+            return false;
+        return true;
+    }
+};
+
+#define DB_ITEM_CLASS(datum)                                            \
+    class datum : public DB_ITEM {                                      \
+    public:                                                             \
+        datum(Btree * _bt) : DB_ITEM(_bt), data(_bt->get_fbi()) { }     \
+        datum##Key key;                                                 \
+        datum##Data data;                                               \
+        bool put(bool repl=false) { return _put(&key, &data, repl); }   \
+        bool get(void) { return _get(&key, &data); }                    \
+    }
+
+DB_ITEM_CLASS(BackupInfoList);
+DB_ITEM_CLASS(BackupInfo);
+DB_ITEM_CLASS(DirectoryInfo);
+DB_ITEM_CLASS(FileInfo);
+
+#endif /* __DATABASE_ELEMENTS_H__ */

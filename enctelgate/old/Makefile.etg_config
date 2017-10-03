@@ -2,7 +2,7 @@
 TARG=	etg_config
 c_SRCS= 
 cpp_SRCS= main_config_cmd.C
-INCS=	-I ../pkutils -I ../pkutils/dll2
+INCS=	-I ../pfkutils -I ../pkutils/dll2
 CFLAGS= -g3 $(INCS)
 
 SRCS= $(c_SRCS) $(cpp_SRCS)

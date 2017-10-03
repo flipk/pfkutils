@@ -7,9 +7,9 @@
 #
 
 #ifdef cygwin32
-PROG=	pkutils.exe
+PROG=	pfkutils.exe
 #else
-PROG=	pkutils
+PROG=	pfkutils
 #endif
 
 HDRS=	sudo.h main_prog.h main.h 
@@ -31,8 +31,8 @@ ELIBS+= itsfs/libitsfs.a mytar/libmytar.a
 
 #ifdef linux
 CSRCS+=	sudo.c
-ELIBS+= bt/libbt.a xlock/libxlock.a enctelgate/libetg.a pfkteld/libteld.a
-DIRS+=  bt xlock threads mytar enctelgate pfkteld
+ELIBS+= bt/libbt.a xlock/libxlock.a enctelgate/libetg.a teld/libteld.a
+DIRS+=  bt xlock threads mytar enctelgate teld
 ELIBS+=  mytar/libmytar.a
 LIBS+= -L/usr/X11R6/lib -lX11
 #endif

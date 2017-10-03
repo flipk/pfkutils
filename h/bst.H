@@ -1,5 +1,5 @@
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -541,7 +541,9 @@ public:
         if (c == num_items)
             return;
         int i;
-        T ** narray = new T*[c];
+        T ** narray = NULL;
+        if (c > 0)
+            narray = new T*[c];
         if (c > num_items)
         {
             for (i=0; i < num_items; i++)

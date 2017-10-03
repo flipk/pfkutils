@@ -4,13 +4,13 @@ c_SRCS= base64.c
 cpp_SRCS= adm_gate.C adm_hookup.C main_proxy.C \
 	packet_decoder.C packet_encoder.C pipe_mgr.C \
 	adm_pkt_io.C config_fd.C
-INCS=	-I ../pkutils -I ../pkutils/dll2
+INCS=	-I ../pfkutils -I ../pkutils/dll2
 CFLAGS= -g3 $(INCS)
 
 SRCS= $(c_SRCS) $(cpp_SRCS)
 OBJS= $(c_SRCS:.c=.o) $(cpp_SRCS:.C=.o)
-LIBS= ../pkutils/fd_mgr.o
-LIBDEP= ../pkutils/fd_mgr.o
+LIBS= ../pfkutils/fd_mgr.o
+LIBDEP= ../pfkutils/fd_mgr.o
 
 all: xmakefile.$(TARG)
 	@[ ! -d logs ] && mkdir logs || true

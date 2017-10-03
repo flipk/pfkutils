@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -71,7 +71,7 @@ main( int argc, char ** argv )
 #elif 0
     /* extract */
 
-    extract_file( db, "TEST/pkutils/old.threads/h_internal/Attic/threads_messages_internal.H,v" );
+    extract_file( db, "TEST/pfkutils/old.threads/h_internal/Attic/threads_messages_internal.H,v" );
 
 #elif 1
     /* extract all */

@@ -40,8 +40,8 @@ cp $scripts  $bindir
 (
     cd $bindir
     chmod a+x $scripts
-    rm -f pkutils pdksh
-    ln -s pf_frontend pkutils
+    rm -f pfkutils pdksh
+    ln -s pf_frontend pfkutils
     ln -s pf_frontend pdksh
     for l in $launchers ; do
         rm -f $l
@@ -49,23 +49,23 @@ cp $scripts  $bindir
     done
 )
 
-echo setting up pkutils
-cp pkutils $destdir/pkutils.new
+echo setting up pfkutils
+cp pfkutils $destdir/pfkutils.new
 (
     cd $destdir
-    strip pkutils.new
+    strip pfkutils.new
     if [ -f sudo ] ; then
-        sudo chown root:wheel pkutils.new
-        sudo chmod 4755 pkutils.new
-        sudo mv -f pkutils.new pkutils || mv -f pkutils.new pkutils
+        sudo chown root:wheel pfkutils.new
+        sudo chmod 4755 pfkutils.new
+        sudo mv -f pfkutils.new pfkutils || mv -f pfkutils.new pfkutils
     else
-        mv -f pkutils.new pkutils
+        mv -f pfkutils.new pfkutils
     fi
-    ./pkutils -dellinks
-    ./pkutils -makelinks
+    ./pfkutils -dellinks
+    ./pfkutils -makelinks
     cd ..
-    ./pkutils -dellinks
-    ./pkutils -makelinks
+    ./pfkutils -dellinks
+    ./pfkutils -makelinks
 )
 
 if [ -f pdksh-5.2.14/ksh ] ; then
@@ -83,7 +83,7 @@ mkdir $HOME/.elisp
 (
 	cd $HOME/.elisp
 	for f in $efiles ; do
-		ln -s ../proj/pkutils/environ/$f
+		ln -s ../proj/pfkutils/environ/$f
 	done
 )
 
@@ -93,15 +93,15 @@ ln -s .elisp/emacs.el .emacs
 
 for f in $files ; do
     rm -f .$f
-    ln -s proj/pkutils/environ/$f .$f
+    ln -s proj/pfkutils/environ/$f .$f
 done
 
 rm -f .Xdefaults
 ln -s .Xresources .Xdefaults
 
-if [ -f proj/pkutils/environ/$localrc ] ; then
+if [ -f proj/pfkutils/environ/$localrc ] ; then
     rm -f .kshrc.local
-    ln -s proj/pkutils/environ/$localrc .kshrc.local
+    ln -s proj/pfkutils/environ/$localrc .kshrc.local
 fi
 
 if [ $HOST = "login" ] ; then

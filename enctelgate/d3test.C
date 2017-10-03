@@ -1,5 +1,5 @@
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -19,7 +19,7 @@
  */
 
 #if 0
-incs="-I ../pkutils"
+incs="-I ../pfkutils"
 flags="-g3"
 g++ $incs $flags -c d3test.C
 g++ $incs $flags -c d3encdec.C

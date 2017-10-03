@@ -43,16 +43,62 @@ generations.)
 
 command line forms:
 
-     pfkbak --list-backups BACKUP-FILE
-     pfkbak --list-gens BACKUP-FILE:BACKUP-NAME
-     pfkbak --delete-gen N,M,X,A-B,-B,... BACKUP-FILE:BACKUP-NAME
-     pfkbak --create-backup-file BACKUP-FILE
-     pfkbak --create-backup BACKUP-FILE:BACKUP-NAME DIR
-     pfkbak --update BACKUP-FILE:BACKUP-NAME DIR
-     pfkbak --list-files [--gen N] [--verbose] BACKUP-FILE:BACKUP-NAME
-     pfkbak --extract-file FILE [--gen N] BACKUP-FILE:BACKUP-NAME
-     pfkbak --extract-dir DIR [--gen N] BACKUP-FILE:BACKUP-NAME
-     pfkbak --extract-files-from LIST-FILE [--gen N] BACKUP-FILE:BACKUP-NAME
+
+create file:    pfkbak -C[Vv] BACKUP-FILE
+
+list backups:   pfkbak -L[Vv] BACKUP-FILE
+create backup:  pfkbak -c[Vv] BACKUP-FILE:BACKUP-NAME DIR
+update backup:  pfkbak -u[Vv] BACKUP-FILE:BACKUP-NAME DIR
+
+delete gens:    pfkbak -d[Vv] BACKUP-FILE:BACKUP-NAME GenN A-B -B
+
+list files:     pfkbak -l[Vv] BACKUP-FILE:BACKUP-NAME GenN
+
+extract:        pfkbak -e[Vv] BACKUP-FILE:BACKUP-NAME GenN [FILE...]
+extract list:   pfkbak -E[Vv] BACKUP-FILE:BACKUP-NAME GenN LIST-FILE
 
 database entries:
 
+   BackupInfoList:
+      key : singleton
+      data : uint32 backup_ids[]
+
+   BackupInfo:
+      key : backup_id
+      data : string backup_name
+             uint32 next_generation_id
+             GenerationInfo generations[]
+                uint32 generation_id
+                uint32 num_files
+                uint64 num_bytes
+                string date_time
+                uint32 root_dir_id
+
+   DirectoryInfo:
+      key : dir_id
+      data : DirectoryEntry entries[]
+                string name
+                union info
+                   uint32 dir_id
+                   uint32 file_id
+                   string link_target
+
+   FileInfo:
+      key : file_id
+      data : uint64 size
+             uint32 atime
+             uint32 num_pieces
+             FilePieces first_pieces
+                PieceVersions pieces
+                   uint32 generations[]
+                   md5hash md5
+                   uint16 csize
+                   uint16 usize
+                   uint32 data_fbn
+                uint32 next_pieces_fbn
+
+   FileInfoExtended:  (not btree!!)
+      FilePieces next_pieces
+
+   BinaryData: (not btree!!)
+      binary data[]

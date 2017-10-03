@@ -1,6 +1,6 @@
 
 /*
-    This file is part of the "pkutils" tools written by Phil Knaack
+    This file is part of the "pfkutils" tools written by Phil Knaack
     (pknaack1@netscape.net).
     Copyright (C) 2008  Phillip F Knaack
 
@@ -379,6 +379,8 @@ private:
         return retval;
     }
 public:
+    bool idvalid(void) { return id!=0; }
+    UINT32 get_id(void) { return id; }
     bool put( void ) { return put(false); }
     bool putnew( UINT32 * retid ) { 
         bool ret = put(true);
