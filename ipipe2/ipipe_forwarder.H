@@ -65,6 +65,8 @@ class ipipe_forwarder : public fd_interface {
 
     ipipe_rollover * rollover;
 
+    FILE * debug_log_file;
+
 public:
     ipipe_forwarder( int _fd, bool doread, bool dowrite,
                      bool dowuncomp, bool dowcomp,

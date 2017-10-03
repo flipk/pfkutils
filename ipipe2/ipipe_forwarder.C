@@ -26,6 +26,16 @@
 #include "ipipe_stats.H"
 #include "ipipe_main.H"
 
+char *
+next_debug_file_name( void )
+{
+    static int debug_file_number = 1;
+    static char filename[32];
+
+    sprintf(filename, "dbg%06d.bin", debug_file_number++);
+    return filename;
+}
+
 ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
                                     bool _dowuncomp, bool _dowcomp,
                                     ipipe_rollover * _rollover,
@@ -78,6 +88,23 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
 #endif
 
     stats_add_conn();
+
+    if (ipipe2_debug_log)
+    {
+        char * filename = next_debug_file_name();
+        debug_log_file = fopen( filename, "w");
+        if (debug_log_file)
+        {
+            // PFK
+        }
+        else
+        {
+            fprintf(stderr, "unable to open debug file %s: %s\n",
+                    filename, strerror(errno));
+        }
+    }
+    else
+        debug_log_file = NULL;
 }
 
 //virtual
@@ -105,6 +132,10 @@ ipipe_forwarder :: ~ipipe_forwarder( void )
         delete buf;
     if (rollover)
         delete rollover;
+    if (debug_log_file)
+    {
+        fclose(debug_log_file);
+    }
 }
 
 //virtual
@@ -202,6 +233,12 @@ ipipe_forwarder :: read ( fd_mgr * mgr )
     stats_add( cc, 0 );
     bytes_read += cc;
     writer->record_write( cc );
+
+    if (debug_log_file && cc > 0)
+    {
+        fwrite(bufptr, cc, 1, debug_log_file);
+        // PFK
+    }
 
     return OK;
 }

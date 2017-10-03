@@ -57,6 +57,7 @@ const char * help_msg =
 "   -zt: compress any data transmitted to network\n"
 "i2 [-d] -f port host port [port host port...]\n"
 "    -d: debug mode\n"
+"    -D: log data transferred\n"
 "    -f: forward local port to remote host/port\n"
 ;
 /*
@@ -80,6 +81,8 @@ hostname_to_ipaddr( char * host, void * addr )
         memcpy( addr, he->h_addr, he->h_length );
     }
 }
+
+bool ipipe2_debug_log = false;
 
 #ifdef I2_MD5
 static MD5Context * md5;
@@ -156,7 +159,7 @@ i2_main( int argc,  char ** argv )
         return 1;
     }
 
-    while (( ch = getopt( argc, argv, "svnfdOz:i:I:o:m:" )) != -1 )
+    while (( ch = getopt( argc, argv, "svnfdDOz:i:I:o:m:" )) != -1 )
     {
         switch ( ch )
         {
@@ -165,6 +168,7 @@ i2_main( int argc,  char ** argv )
         case 'n':  inp_file = (char*)"/dev/null"; break;
         case 'f':  tcpgate  = true;        break;
         case 'd':  debug    = true;        break;
+        case 'D':  ipipe2_debug_log = true; break;
         case 'z':  zarg     = optarg;      break;
         case 'i':  inp_file = optarg;      break;
         case 'I':  Iarg     = optarg;      break;
