@@ -25,14 +25,12 @@ class packet_decoder {
     char   input_packet[ PACKET_ENCODED_MAX_LENGTH ];
     short  input_packet_length;
     short  input_pipeno;
-    ushort input_checksum;
     short  input_left;
+    ushort input_checksum;
+    ushort calculated_checksum;
 
     int   b64_in;
     char  b64_in_4[4];
-
-    uchar  rcvd_checksum[2];
-    ushort calculated_checksum;
 
     bool   first_char_after_packet;
 
@@ -49,7 +47,7 @@ class packet_decoder {
     void   flush_output( void );
 
     void   input_byte( char c );
-    void   input_decoded_byte( uchar c );
+    void   input_decoded_byte( char c );
 
 public:
     packet_decoder( packet_decoder_io * _io );

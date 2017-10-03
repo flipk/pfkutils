@@ -113,8 +113,8 @@ packet_decoder :: input_byte( char c )
     if ( ++b64_in == 4 )
     {
         int cc;
-        uchar b64_out_3[3];
-        uchar * cp = b64_out_3;
+        char b64_out_3[3];
+        char * cp = b64_out_3;
 
         cc = b64_decode_quantum( b64_in_4, b64_out_3 );
         while ( cc-- > 0 && state != STATE_HDR_HUNT )
@@ -128,7 +128,7 @@ packet_decoder :: input_byte( char c )
 }
 
 void
-packet_decoder :: input_decoded_byte( uchar c )
+packet_decoder :: input_decoded_byte( char c )
 {
     switch ( state )
     {
@@ -181,15 +181,15 @@ packet_decoder :: input_decoded_byte( uchar c )
     case STATE_GET_CKSUM:
         input_checksum <<= 8;
         input_checksum += c;
-        if ( ++substate == sizeof( rcvd_checksum ))
+        if ( ++substate == sizeof( input_checksum ))
         {
             state = STATE_HDR_HUNT;
             printf( "switch to STATE_HDR_HUNT\n" );
             substate = 0;
             if ( input_checksum != calculated_checksum )
             {
-//                printf( "checksum error %x != %x\n",
-//                        checksum_convert != calculated_checksum );
+                printf( "checksum error %x != %x\n",
+                        input_checksum != calculated_checksum );
                 unput_flush();
             }
             else

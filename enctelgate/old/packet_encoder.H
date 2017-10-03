@@ -17,20 +17,20 @@ class packet_encoder {
     char encoded_packet[ PACKET_ENCODED_MAX_LENGTH ];
 
     int  b64_in;
-    uchar b64_in_chars[3];
+    char b64_in_chars[3];
 
     void start_packet( void );
-    void add_byte( uchar c );
+    void add_byte( char c );
     void end_packet( void );
 
-    void add_bytes( uchar * c, int len ) {
+    void add_bytes( char * c, int len ) {
         while ( len-- > 0 )
             add_byte( *c++ );
     }
 
 public:
     packet_encoder( packet_encoder_io * _io );
-    void encode_packet( short pipeno, uchar *, int );
+    void encode_packet( short pipeno, char *, int );
 };
 
 #endif /* __PACKET_ENCODER_H__ */

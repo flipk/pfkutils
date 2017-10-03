@@ -2,10 +2,11 @@
 TARG=	t
 HDRS=	base64.h adm_gate.H adm_hookup.H fd_mgr.H \
 	packet.H packet_decoder.H packet_encoder.H \
-	pipe_mgr.H
+	pipe_mgr.H adm_pkt_io.H
 c_SRCS= base64.c 
 cpp_SRCS= adm_gate.C adm_hookup.C fd_mgr.C main.C \
-	packet_decoder.C packet_encoder.C pipe_mgr.C
+	packet_decoder.C packet_encoder.C pipe_mgr.C \
+	adm_pkt_io.C
 INCS=	-I ../pkutils -I ../pkutils/dll2
 CFLAGS= -g3 $(INCS)
 
@@ -38,7 +39,9 @@ $(TARG): $(OBJS)
 
 clean:
 	@echo cleaning
-	@rm -rf *.o *.L *~ $(TARG) xmakefile logs
+	@rm -f *.o *.L *~
+	@rm -f $(TARG) xmakefile *core
+	@rm -rf logs
 
 # DEPENDENCIES automatically appended below this line
 # in the xmakefile

@@ -1,5 +1,6 @@
 
 #include "adm_gate.H"
+#include "adm_pkt_io.H"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -17,46 +18,6 @@
 #else
 #define setsockoptcast void*
 #endif
-
-class Adm_pkt_decoder_io : public packet_decoder_io {
-public:
-    Adm_Gate_fd * me;
-    Adm_Gate_fd * other;
-    Pipe_Mgr    * pipe_mgr;
-    Adm_pkt_decoder_io( Adm_Gate_fd * _me, Pipe_Mgr * _pipe_mgr ) {
-        me = _me;  pipe_mgr = _pipe_mgr;
-    }
-    void setup_other ( Adm_Gate_fd * _other ) { other = _other; }
-    void outbytes( char *, int );
-    void outpacket( short pipeno, char *, int );
-};
-
-class Adm_pkt_encoder_io : public packet_encoder_io {
-public:
-    Adm_Gate_fd * me;
-    Adm_pkt_encoder_io( Adm_Gate_fd * _me ) {
-        me = _me;
-    }
-    void outbytes( char *, int );
-};
-
-void
-Adm_pkt_decoder_io :: outbytes( char *, int )
-{
-    //xxx
-}
-
-void
-Adm_pkt_decoder_io :: outpacket( short pipeno, char *, int )
-{
-    //xxx
-}
-
-void
-Adm_pkt_encoder_io :: outbytes( char *, int )
-{
-    //xxx
-}
 
 Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
                             bool _doread, bool _dowrite,
@@ -92,8 +53,6 @@ Adm_Gate_fd :: Adm_Gate_fd( int _fd, bool _connecting,
         decode_io = NULL;
         decoder   = NULL;
     }
-
-    read_amt = 0;
 }
 
 Adm_Gate_fd :: ~Adm_Gate_fd( void )
@@ -123,6 +82,12 @@ Adm_Gate_fd :: setup_other( Adm_Gate_fd * _other )
 bool
 Adm_Gate_fd :: read( fd_mgr * fdmgr )
 {
+    // since the write threshold is 1/2 of max_write,
+    // then 1/3 is safe for this.
+
+    char    read_buf [ max_write / 3 ];
+    int     cc;
+
     if ( connecting )
     {
         printf( "connection failed\n" );
@@ -132,8 +97,7 @@ Adm_Gate_fd :: read( fd_mgr * fdmgr )
         return false;
     }
 
-    int cc;
-    cc = ::read( fd, read_buf, max_write );
+    cc = ::read( fd, read_buf, sizeof( read_buf ));
 
     if ( cc <= 0 )
     {
@@ -155,15 +119,13 @@ Adm_Gate_fd :: read( fd_mgr * fdmgr )
         // we are not a decoder instance. just pass the
         // data thru.
 
-        read_amt = cc;
-        cc = other_fd->write_buf.write( read_buf, read_amt );
-
-        if ( cc != read_amt )
-            memmove( read_buf, read_buf + cc, read_amt - cc );
-        read_amt -= cc;
-
-        return true;
+        if ( other_fd->write_to_fd( read_buf, cc ) == false )
+        {
+            printf( "error writing pkt to other fd\n" );
+        }
     }
+
+    return true;
 }
 
 bool
@@ -190,30 +152,18 @@ Adm_Gate_fd :: write( fd_mgr * fdmgr )
     return true;
 }
 
-void
-Adm_Gate_fd :: more_forward_data( void )
-{
-    if ( read_amt != 0 )
-    {
-        int cc;
-        //xxx should use new write_to_fd ?
-        cc = other_fd->write_buf.write( read_buf, read_amt );
-        if ( cc != read_amt )
-            memmove( read_buf, read_buf + cc, read_amt - cc );
-        read_amt -= cc;
-    }
-}
-
 bool
 Adm_Gate_fd :: select_for_read( fd_mgr * fdmgr )
 {
     if ( !doread )
         return false;
-    if ( read_amt > 0 )
+    if ( other_fd->over_write_threshold() )
         return false;
-    if ( other_fd->write_buf.free_space() > 0 )
-        return true;
-    return false;
+
+    //xxx : will need some kind of congestion control
+    //      once there are active proxy fds to consider.
+
+    return true;
 }
 
 bool
@@ -223,8 +173,6 @@ Adm_Gate_fd :: select_for_write( fd_mgr * fdmgr )
         return false;
     if ( connecting )
         return true;
-    if ( write_buf.used_space() == 0 )
-        other_fd->more_forward_data();
     if ( write_buf.used_space() == 0 )
         return false;
     return true;
@@ -241,5 +189,14 @@ Adm_Gate_fd :: over_write_threshold( void )
 bool
 Adm_Gate_fd :: write_to_fd( char * buf, int len )
 {
-    //xxx
+    int cc;
+
+    cc = write_buf.write( buf, len );
+    if ( cc != len )
+    {
+        printf( "write_to_fd failed\n" );
+        return false;
+    }
+
+    return true;
 }

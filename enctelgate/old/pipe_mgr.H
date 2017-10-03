@@ -5,6 +5,7 @@
 #include "types.H"
 #include "packet_encoder.H"
 #include "packet_decoder.H"
+#include "fd_mgr.H"
 
 class Pipe_instance;
 
@@ -22,6 +23,11 @@ public:
     void deregister_encoder( void ) {
         encoder = NULL;
     }
+
+    // returns pipe number
+    int   register_proxy( fd_interface * );
+    void  unregister_proxy( int pipeno );
+
     // ?
     void handle_pkt( short pipeno, char * buf, int len );
 };

@@ -32,7 +32,7 @@ b64_is_valid_char( char c )
 
 /* return 4 if ok, 0 if not ok */
 int
-b64_encode_quantum( uchar * in3, int in_len, char * out4 )
+b64_encode_quantum( char * in3, int in_len, char * out4 )
 {
     int v,val;
 
@@ -71,7 +71,7 @@ b64_encode_quantum( uchar * in3, int in_len, char * out4 )
 
 /* return length of bytes decoded, or 0 if not ok */
 int
-b64_decode_quantum( char * in4, uchar * out3 )
+b64_decode_quantum( char * in4, char * out3 )
 {
     int val=0,v;
     int ret;
@@ -107,9 +107,9 @@ b64_decode_quantum( char * in4, uchar * out3 )
     ret = 3;
 
  unpack:
-    out3[0] = (uchar)((val >> 16) & 0xff);
-    out3[1] = (uchar)((val >>  8) & 0xff);
-    out3[2] = (uchar)((val >>  0) & 0xff);
+    out3[0] = (val >> 16) & 0xff;
+    out3[1] = (val >>  8) & 0xff;
+    out3[2] = (val >>  0) & 0xff;
 
     return ret;
 }
