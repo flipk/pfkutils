@@ -1,0 +1,7 @@
+ENV=$HOME/.kshrc
+export ENV
+
+if [ `/bin/uname -s` = "SunOS" ] ; then
+   exec @prefix@/bin/pdksh
+fi
+

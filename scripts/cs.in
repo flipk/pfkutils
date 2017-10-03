@@ -1,0 +1,52 @@
+#!/bin/sh
+
+usage() {
+	echo usage:
+	echo '   cs -e   [use emacs]'
+	echo '   cs -ec  [use emacsclient]'
+	echo '   cs -l   [use less]'
+	echo '   cs -xl  [use xless]'
+	if [ x$CSCOPE_IN_XTERM = x1 ] ; then
+	    echo press enter to close...
+	    read crap
+	fi
+	exit 1
+}
+
+if [ $# -ne 1 ] ; then
+	usage
+fi
+
+case $1 in 
+	-e)
+		CSCOPE_EDITOR=emacs
+		;;
+	-ec)
+		CSCOPE_EDITOR=@prefix@/bin/ec
+		;;
+	-l)
+		CSCOPE_EDITOR=less
+		;;
+	-xl)
+		CSCOPE_EDITOR=xless
+		;;
+	*)
+		usage
+		;;
+esac
+
+export CSCOPE_EDITOR
+
+while [ `pwd` != '/' ] ; do
+    if [ -f cscope.out ] ; then
+        xtermbar CSCOPE-$PWD
+        cscope -dp 3
+        if [ x$CSCOPE_IN_XTERM = x1 ] ; then
+	    echo press enter to close...
+	    read crap
+        fi
+	exit 0
+    fi
+    # else
+    cd ..
+done

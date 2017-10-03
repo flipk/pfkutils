@@ -73,7 +73,6 @@ IconManagerDontShow {
 }
 
 OccupyAll {
-	"Emacs Minibuffer"
 	"Doxtrms"
 }
 

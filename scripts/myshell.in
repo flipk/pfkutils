@@ -1,0 +1,8 @@
+#!/bin/sh
+
+HOME=/home/MY_USERNAME
+ENV=$HOME/.kshrc
+
+export HOME ENV
+
+exec @prefix@/bin/pdksh "$@"

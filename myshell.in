@@ -1,8 +1,0 @@
-#!/bin/sh
-
-HOME=/home/MY_USERNAME
-ENV=$HOME/.kshrc
-
-export HOME ENV
-
-exec $HOME/bin/pdksh "$@"

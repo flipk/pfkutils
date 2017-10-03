@@ -1,4 +1,0 @@
-- errno with respect to read/write/select/connect  sucks!!
-- implement more than one type of semaphore (counting/mutex)
-- implement priority inversion on mutex
-- port threads.C to sparc

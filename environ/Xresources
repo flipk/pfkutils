@@ -67,7 +67,7 @@ XTerm.VT100.Translations: \
  * This is where zwgc puts zwrites.  
  * You can actually configure it so different kinds of zwrites
  * go to different locations on the screen...
- * but I don't remember how to do that.
+ * but I dont remember how to do that.
  */
 
 Zwgc*geometry: +c+c
@@ -109,14 +109,8 @@ Xedit*Scrollbar*background: red
 Xedit*Scrollbar*foreground: blue
 Xedit*cursorColor: yellow
 
-*synchronize.geometry:                    +488-19
-Synchronize*Day-at-a-time*geometry:       660x730-0+0
-
 *zmail.geometry:                     +672+0
 *message_window.geometry:            603x925
-
-Netscape*blinkingEnabled: False
-Netscape*confirmExit:     False
 
 Console.keep:             False
 
@@ -137,23 +131,4 @@ xlock*echokeys: False
 
 xlock*foreground: red
 xlock*background: black
-
-!!
-!! CCT stuff
-!!
-CCT*termName: xterm
-CCT*Geometry:         80x50
-CCT*font:       -*-fixed-*-*-*-*-13-*-*-*-*-*-*-*
-CCT*boldFont:   -*-fixed-*-*-*-*-13-*-*-*-*-*-*-*
-
-!! CCT*Font:             8x13
-!! CCT*boldFont:         8x13bold
-CCT*VT100.Translations: #override\n\
-         <Key>BackSpace: string(0x7f)\n\
-         <Key>Delete:    string(0x08)\n\
-    Meta <Key>C: string("\033[220z")\n\
-    Meta <Key>D: string("\033[220zread /usr/test/template/pm\n")\n\
-    Meta <Key>R: string("_START_CUSTOMER_DOC\nNo changes required.\n_END_CUSTOMER_DOC\033[A\033[A")\n
-
-AcrobatDistiller.compatibilityWarningIssued:    YES
 

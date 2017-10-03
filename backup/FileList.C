@@ -30,10 +30,6 @@
 
 #define TRASH_DIR    "TREESYNC_TRASH"
 
-#if _FILE_OFFSET_BITS != 64
-#error you forgot -D_FILE_OFFSET_BITS=64
-#endif
-
 static int
 qsortTSFileEntryCompare(const void * _a, const void * _b)
 {

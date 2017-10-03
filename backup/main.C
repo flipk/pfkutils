@@ -28,7 +28,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include <version.h>
+#include <pfkutils_config.h>
 
 #include "Btree.H"
 #include "params.H"
@@ -49,7 +49,7 @@ const char * PfkBackupDbInfoKey::INFO_KEY = "PfkBakDbInfo";
 static void
 usage(void)
 {
-    fprintf(stderr, "version: %s\n", PKUTILS_VERSION);
+    fprintf(stderr, "version: %s\n", PACKAGE_STRING);
     fprintf(stderr, "usage: \n"
 "create file:    pfkbak -C[Vv] BACKUP-FILE\n"
 "\n"

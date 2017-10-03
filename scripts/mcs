@@ -24,3 +24,4 @@ rm -f cscope.out
 cscope -bk
 echo done
 
+exit 0

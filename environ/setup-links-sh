@@ -1,0 +1,63 @@
+#!/bin/sh
+
+ENVIRON=@ENVIRON@
+ETCDIR=@ETCDIR@
+KSHRC_LOCAL=@KSHRC_LOCAL@
+DOT_FILES="@DOT_FILES@"
+ELISP_FILES="@ELISP_FILES@"
+SCRIPTS_DIR=@SCRIPTS_DIR@
+PFK_BIN_DIR=@PFK_BIN_DIR@
+
+echo installing dot files for $ENVIRON
+
+cd $HOME
+
+for f in $DOT_FILES kshrc profile ; do
+  echo $f
+  rm -f .$f
+  ln -s $ETCDIR/$f .$f
+done
+
+echo kshrc.local
+rm -f .kshrc.local
+ln -s $ETCDIR/$KSHRC_LOCAL .kshrc.local
+
+echo emacs
+rm -f .emacs
+ln -s .elisp/emacs.el .emacs
+
+rm -rf .elisp
+mkdir .elisp
+cd .elisp
+
+for f in $ELISP_FILES ; do
+  echo $f
+  rm -f $f
+  ln -s $ETCDIR/$f $f
+done
+
+cd $PFK_BIN_DIR
+binaries=`echo *`
+
+cd $ETCDIR
+set -- `grep ^#FUNCTIONS: kshrc`
+shift
+launchers="$*"
+
+set -- `grep ^#FUNCTIONS: $KSHRC_LOCAL`
+shift
+launchers="$launchers $*"
+
+cd $SCRIPTS_DIR
+for f in $launchers ; do
+  echo $f
+  rm -f $f
+  ln -s myshell-launcher $f
+done
+for f in $binaries ; do
+  echo $f
+  rm -f $f
+  ln -s pf_frontend $f
+done
+
+exit 0

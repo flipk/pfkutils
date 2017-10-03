@@ -21,5 +21,5 @@ rm -f cscope.out
 cscope -bk
 echo new cscope.out:
 ls -l cscope.out
-sleep 2
+sleep 1
 exit 0

@@ -196,3 +196,4 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (message "Press F1 for a list of local keybindings.")
 
 (put 'scroll-left 'disabled nil)
+(put 'erase-buffer 'disabled nil)

@@ -1,8 +1,0 @@
-operations,message,*
-message,magic,*
-message,flip,knaack@cig.mot.com
-message,personal,knaack@cig.mot.com
-message,urgent,knaack@cig.mot.com
-message,pager,knaack@cig.mot.com
-message,cmd_log,knaack@cig.mot.com
-message,mailcheck,knaack@cig.mot.com

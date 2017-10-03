@@ -7,6 +7,5 @@ cp $1 $1.orig
 echo ct co -nc $1
 cleartool co -nc $1
 echo '***'
-sleep 2
+sleep 1
 exit 0
-

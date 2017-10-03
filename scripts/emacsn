@@ -6,6 +6,10 @@ if [ $# -ne 1 ] ; then
 fi
 
 export EMACS_NUMBER=$1
+echo export EMACS_NUMBER=$1
 export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
+echo export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
 
 emacs &
+
+exit 0

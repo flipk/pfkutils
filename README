@@ -1,27 +1,11 @@
 
-The following packages are required in order to build pfkutils:
+#autoreconf --install
+#mkdir BUILD
+#cd BUILD
 
-(fedora)
+../configure --enable-environ=blade --enable-pfkbak --enable-syslog --enable-checksize --enable-sudo --enable-ctwm --enable-pdksh --enable-cscope --enable-etg --enable-treescan
 
-bash
-make
-cvs
-gcc
-gcc-c++
-zlib-devel
-ncurses-devel
-byacc
-flex
-
-(ubuntu 10.01)
-
-g++
-cvs
-libncurses5-dev
-zlib1g-dev
-flex
-byacc
-
-also, -Werror is busticated on ubuntu 10 and will have to be removed from 
-all Makefiles
+#  --enable-itsfs
+#  --enable-runemacs
+#  --enable-runrxvt
 

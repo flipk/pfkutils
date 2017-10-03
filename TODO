@@ -1,3 +1,11 @@
+autoconf:
+  - syslog ini files
+  - itsfs (optional)
+  - autoconfize pfkstat
+  - autoconfize treescan
+  - d3des implementation duplication (util & etg)
+  - runemacs (optional)
+  - runrxvt (optional)
 
 threads:
  - implement external tcp messaging in threads
