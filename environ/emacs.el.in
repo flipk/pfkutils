@@ -292,14 +292,12 @@ nEnter c-mode-tabwidth value (4 or 8):")
   (if pfk-make-big-flag
       (progn
 	(message (concat "setting frame font to " pfk-regular-font))
-	(set-face-font 'default pfk-regular-font)
-	(set-face-font 'bold pfk-regular-bold-font)
+	(set-frame-font pfk-regular-font)
 	(setq pfk-make-big-flag nil))
     (progn
-      (message (concat "setting frame font to " pfk-big-font))
-      (set-face-font 'default pfk-big-font)
-      (set-face-font 'bold pfk-big-bold-font)
-      (setq pfk-make-big-flag t))))
+	(message (concat "setting frame font to " pfk-big-font))
+     (set-frame-font pfk-big-font)
+     (setq pfk-make-big-flag t))))
 
 (defun font-existsp (font)
   "Check that a font exists: http://www.emacswiki.org/emacs/SetFonts#toc8"
