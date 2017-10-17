@@ -10,6 +10,7 @@
 #
 #              gitdir="/path/to/.git"
 #              gr="same as ${gitroot[0]}"
+#              gh="same as ${githead[x]}"
 #              gitnummods=1  --- count of modname[] and head[] entries
 #
 #              gitroot[x]="root dir of working tree or submod"
@@ -152,6 +153,7 @@ printHEAD() {
 	headinfo="${head:0:7}"
     fi
     realn githead[$index]=\"$headinfo\"
+    gh=\"$headinfo\"
 }
 
 dbgn realgitdir = $realgitdir
@@ -234,8 +236,8 @@ if [[ $vars == 1 ]] ; then
 	gitrelpath=.
     fi
     realy gitrelpath=\"$gitrelpath\"
-
     realy gitnummods=$index
+    realy gh=$gh
 else
     echo $gitroot
 fi
