@@ -15,6 +15,17 @@ git push --tags
 <or>
 git push origin v3.11
 
+one time, and one time only, you need to do
+   git lfs install
+this will update ~/.gitconfig with lfs stuff like filters and smudges.
+once that exists, "install" never needs to be run again.
+
+within a repo that has lfs enabled, use
+   git lfs track '*.pattern'
+this will update .gitattributes with a line that references this
+pattern, like so:
+   *.bin filter=lfs diff=lfs merge=lfs -text
+
 to reduce the number of files in .git:
    git gc --aggressive
 
