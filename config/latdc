@@ -1,5 +1,8 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# latdc is a quad core xeon
+MAKEJOBS=-j4
+
 PFK_BUILD_pfkbak=0
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0

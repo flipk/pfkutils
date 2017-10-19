@@ -1,5 +1,8 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# blade is a hyperthreaded quad-core-- use it.
+MAKEJOBS=-j8
+
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=1

@@ -1,5 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# windows sucks. don't set MAKEJOBS-- it won't matter.
+
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=1

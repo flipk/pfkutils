@@ -1,5 +1,8 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# adler is a shared machine.
+MAKEJOBS=-j2
+
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0

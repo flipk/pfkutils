@@ -153,10 +153,11 @@ endif
 export VERBOSE
 
 all:
+	$(Q)+make echoconfig
 	$(Q)+make objdirs
 	$(Q)+make preprocs
-	$(Q)+make deps
-	$(Q)+make __INCLUDE_DEPS=1 _all
+	$(Q)+make $(MAKEJOBS) deps
+	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
 
 include $(INCLUDE_MAKEFILES)
 
@@ -169,6 +170,7 @@ echoconfig:
 	@echo PREPROC_TARGETS=$(PREPROC_TARGETS)
 	@echo LIB_TARGETS=$(LIB_TARGETS)
 	@echo PROG_TARGETS=$(PROG_TARGETS)
+	@echo MAKEJOBS=$(MAKEJOBS)
 	@echo '**************** CURRENT CONFIGURATION ************************'
 	@echo ''
 

@@ -1,5 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# this is a single core machine.  don't set MAKEJOBS
+
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
