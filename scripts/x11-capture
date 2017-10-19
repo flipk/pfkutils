@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# note this depends on 'convert' from ImageMagick
+
+file=$HOME/capture-$( date +%Y-%m%d-%H%M%S ).png
+
+xwd | convert - png:$file
+
+echo created $file
+
+exit 0
