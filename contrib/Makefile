@@ -1,5 +1,8 @@
 
-all: $(PROGS)
+all: mkobjdir $(PROGS)
+
+mkobjdir:
+	mkdir -p $(OBJDIR)
 
 install: $(foreach prog,$(PROGS),$(prog)-install )
 
@@ -118,13 +121,15 @@ fluxbox-pfk-install:
 
 ######################################################
 
-# xxx more
 fish-pfk:
 	@echo making fish
+	chmod u+x build-fish.sh
+	./build-fish.sh
 
-# xxx more
 fish-pfk-install:
 	@echo installing fish
+	chmod u+x install-fish.sh
+	./install-fish.sh
 
 ######################################################
 
