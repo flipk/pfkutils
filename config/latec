@@ -1,33 +1,34 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-# latdc is cre's green box, be nice, dont set MAKEJOBS
+# latec is a quad core xeon
+MAKEJOBS=-j4
 
-PFK_BUILD_pfkbak=0
+PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
-PFK_BUILD_treescan=0
+PFK_BUILD_treescan=1
 PFK_BUILD_sudo=0
 PFK_BUILD_ampfk=1
 PFK_BUILD_pfkscript=1
-PFK_BUILD_sessionmgr=0
-PFK_BUILD_xrandr=0
+PFK_BUILD_sessionmgr=1
+PFK_BUILD_xrandr=1
 PFK_BUILD_states=0
 PFK_BUILD_bglog=0
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=0
+PFK_BUILD_libpfkfb=1
 PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
-PFK_BUILD_deduplifier=0
-PFK_BUILD_libwas=0
-PFK_BUILD_libpfkthread=0
+PFK_BUILD_deduplifier=1
+PFK_BUILD_libwas=1
+PFK_BUILD_libpfkthread=1
 PFK_BUILD_wsproxy=0
-PFK_BUILD_xlock=0
-PFK_BUILD_fonts=0
-PFK_BUILD_pfktop=0
-PFK_BUILD_spinner=0
-PFK_BUILD_hilite=0
-PFK_BUILD_do_fft=0
+PFK_BUILD_xlock=1
+PFK_BUILD_fonts=1
+PFK_BUILD_pfktop=1
+PFK_BUILD_spinner=1
+PFK_BUILD_hilite=1
+PFK_BUILD_do_fft=1
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = 
@@ -62,7 +63,7 @@ pfkthr_test-2_LIBS += -lrt
 pfkthr_test-3_LIBS += -lrt
 pfkthr_test-4_LIBS += -lrt
 
-CONTRIB_PROGS= cscope-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk fish-pfk
 
-export PFK_CONFIG_flubox_xinerama=disable
-export PFK_CONFIG_contrib_makejobs=-j1
+export PFK_CONFIG_flubox_xinerama=enable
+export PFK_CONFIG_contrib_makejobs=-j3
