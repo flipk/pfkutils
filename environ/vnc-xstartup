@@ -1,40 +1,26 @@
 #!/bin/sh
 
+# be aware that /bin/sh is bash on fedora, but dash on ubuntu!
+# this means things like PATH wont be set up on ubuntu! gross!
+
 cd $HOME
 ENV=$HOME/.kshrc
 export ENV
+PATH=$HOME/pfk/bin:$PATH
+export PATH
+
+xset +fp $HOME/pfk/fonts
+xrdb -load .Xresources
+set-background.sh
 
 if [ -f $HOME/safe-session ] ; then
     urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
 else
-    xset +fp $HOME/pfk/fonts
-    xrdb -load .Xresources
-    set-background.sh
+    # for safety's sake on that network where it is hard to get to
+    # console, make it so there's a way to fix it if it's busted.
+    urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
     # when the user "logs out" (pfkSessionMgr -c stop) the vnc will be killed.
 fi
 vncserver -kill $DISPLAY
 exit 0
-
-
-# this xrandr stuff is no longer relevant.
-#   - i use tigervnc at home, which does auto desk resizing.
-#   - at work i'm forced to use realvnc which doesn't even support
-#     xrandr --newmode anyway, you need to use .vnc/config* files
-#     to add resolutions.
-#add_size() {
-#    modeline=$( cvt $1 $2 | awk '/^Modeline/ { $1=""; $2=""; print }' )
-#    xrandr --newmode $1x$2 $modeline
-#    xrandr --addmode default $1x$2
-#}
-# note windows 7 :
-#   start bar is 
-#      64 wide (if on side) or
-#      40 tall (if on top/bottom)
-#   and title bars are 24 tall.
-#add_size 1440 900
-#add_size 1376 876
-#add_size 1440 876
-#add_size 1280 1024
-#add_size 1280 1000
-#add_size 1920 1176

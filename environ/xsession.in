@@ -3,20 +3,25 @@
 # since this script is started by lightdm or gdm/xdm, my environment
 # will not be set. i need a few basic things, like PFKARCH and SHELL.
 
+# also, be aware that /bin/sh is bash on fedora, but dash on ubuntu!
+# this means things like PATH wont be set up on ubuntu! gross!
+
 cd $HOME
 PFKARCH=`@prefix@/bin/architecture`
 SHELL=@prefix@/$PFKARCH/bin/pfksh
 ENV=$HOME/.kshrc
 export ENV PFKARCH SHELL
+PATH=$HOME/pfk/bin:$PATH
+export PATH
+
+xset +fp $HOME/pfk/fonts
+xrdb -load .Xresources
+xset m 0
+set-background.sh
 
 if [ -f $HOME/safe-session ] ; then
-    xset m 0
     urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     exit 0
 else
-    xset +fp $HOME/pfk/fonts
-    xrdb -load .Xresources
-    xset m 0
-    set-background.sh
     exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
 fi
