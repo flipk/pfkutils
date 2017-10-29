@@ -35,10 +35,10 @@ For more information, please refer to <http://unlicense.org>
 #include <unistd.h>
 
 #include <google/protobuf/message.h>
-#include <polarssl/entropy.h>
-#include <polarssl/ctr_drbg.h>
-#include <polarssl/ssl.h>
-#include <polarssl/net.h>
+#include <mbedtls/entropy.h>
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/ssl.h>
+#include <mbedtls/net.h>
 
 #include "LockWait.h"
 
@@ -66,11 +66,12 @@ class ProtoSSLMsgs; // forward
 class _ProtoSSLConn
 {
     friend class ProtoSSLMsgs;
-    int fd;
+    mbedtls_net_context netctx;
+    bool netctx_initialized;
     WaitUtil::Lockable fdLock;
     std::string rcvbuf;
     std::string outbuf;
-    ssl_context  sslctx;
+    mbedtls_ssl_context  sslctx;
     MESSAGE &rcvdMessage;
     static void * threadMain(void *);
     void _threadMain(void);
@@ -78,7 +79,8 @@ class _ProtoSSLConn
     bool thread_running;
     int exitPipe[2];
     // used by ProtoSSLMsgs, our friend.
-    bool _startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd);
+    bool _startThread(ProtoSSLMsgs * _msgs, bool isServer,
+                      const mbedtls_net_context &_netctx);
 protected:
     _ProtoSSLConn(MESSAGE &_rcvdMessage);
     virtual ~_ProtoSSLConn(void);
@@ -126,17 +128,18 @@ public:
 class ProtoSSLMsgs
 {
     friend class _ProtoSSLConn;
-    entropy_context entropy;
-    ctr_drbg_context ctr_drbg;
-    x509_crt cacert, mycert;
-    pk_context   mykey;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    mbedtls_x509_crt cacert, mycert;
+    mbedtls_pk_context   mykey;
+    mbedtls_ssl_config   sslcfg;
     std::string  otherCommonName;
     std::string  remoteHost;
     WaitUtil::Lockable connLock;
     typedef std::map<int/*fd*/,_ProtoSSLConn*> connMap;
     connMap conns;
     struct serverInfo {
-        int fd;
+        mbedtls_net_context netctx;
         pthread_t thread_id;
         ProtoSSLMsgs * msgs;
         int exitPipe[2];

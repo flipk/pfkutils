@@ -59,9 +59,11 @@ EOF
 
 genkey Root-CA 'Root CA' ca@example.com `random_text 40` ''
 
-genkey Server-Cert 'Server Cert' server@example.com `random_text 40` Root-CA
+server_pwd="0KZ7QMalU75s0IXoWnhm3BXEtswirfwrXwwNiF6c"
+genkey Server-Cert 'Server Cert' server@example.com $server_pwd Root-CA
 
-genkey Client-Cert 'Client Cert' client@example.com `random_text 40` Root-CA
+client_pwd="IgiLNFWx3fTMioJycI8qXCep8j091yfHOwsBbo6f"
+genkey Client-Cert 'Client Cert' client@example.com $client_pwd Root-CA
 
 exit 0
 

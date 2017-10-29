@@ -19,3 +19,4 @@ test_proto.pb.*
 *.o
 *.a
 xmakefile
+obj.*
