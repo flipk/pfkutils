@@ -52,6 +52,20 @@ tree (i.e. for mirroring)
 
    git lfs fetch --all
 
+to mirror a repo from one place to another:
+   git clone --bare SOURCE-URL
+   cd thingy.git
+   git lfs fetch --all
+   git remote add newthingy DESTINATION-URL
+   git push --mirror newthingy        (will delete branches on newthingy)
+        or
+   git push newthingy --all --force   (which wont delete branches on newth)
+   git lfs push --all newthingy
+
+note that lfs does NOT work with a local repo. the git-lfs client
+ONLY supports http or https servers. there is an lfs-test-server
+program you can use (gross).
+
 if you pushed a commit to github but didn't mean to, you can push again
 to roll it back:
    git push -f origin HEAD^:master
