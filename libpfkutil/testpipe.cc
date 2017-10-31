@@ -63,9 +63,9 @@ class readerThread : public pxfe_pthread
             printf("t1 select returns %d\n", cc);
             if (cc > 0)
             {
-                if (sel.rfds.isset(closerPipe.readEnd))
+                if (sel.rfds.is_set(closerPipe.readEnd))
                     printf("t1 closer pipe\n");
-                if (sel.wfds.isset(fd))
+                if (sel.wfds.is_set(fd))
                 {
                     printf("t1 select for write\n");
                     sleep(1);
@@ -99,9 +99,9 @@ class readerThread : public pxfe_pthread
             printf("t2 select returns %d\n", cc);
             if (cc > 0)
             {
-                if (sel.rfds.isset(closerPipe.readEnd))
+                if (sel.rfds.is_set(closerPipe.readEnd))
                     printf("t2 closer pipe\n");
-                if (sel.rfds.isset(fd))
+                if (sel.rfds.is_set(fd))
                     printf("t2 select for read\n");
             }
             sleep(1);

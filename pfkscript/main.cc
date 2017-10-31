@@ -565,7 +565,7 @@ Screen :: sigwinch_handler(int sig)
             if (cc <= 0)
                 continue;
 
-            if (sel.rfds.isset(ticker.fd()))
+            if (sel.rfds.is_set(ticker.fd()))
             {
                 char c;
                 if (read(ticker.fd(), &c, 1) < 0)
@@ -573,15 +573,15 @@ Screen :: sigwinch_handler(int sig)
                 do_logfile_maintenance();
             }
 
-            if (sel.rfds.isset(master_fd));
+            if (sel.rfds.is_set(master_fd));
                 done = handle_master_sock();
-            if (sel.rfds.isset(0))
+            if (sel.rfds.is_set(0))
                 handle_fd0();
-            if (use_ctrl_sock && sel.rfds.isset(control_sock.getFd()))
+            if (use_ctrl_sock && sel.rfds.is_set(control_sock.getFd()))
                 handle_control_sock();
-            if (listenPortFd > 0 && sel.rfds.isset(listenPortFd))
+            if (listenPortFd > 0 && sel.rfds.is_set(listenPortFd))
                 handle_listen_port();
-            if (listenDataPortFd > 0 && sel.rfds.isset(listenDataPortFd))
+            if (listenDataPortFd > 0 && sel.rfds.is_set(listenDataPortFd))
                 handle_listen_data_port();
         }
         ticker.stopjoin();

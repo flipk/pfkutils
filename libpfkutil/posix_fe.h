@@ -593,7 +593,7 @@ public:
     void zero(void) { FD_ZERO(&fds); max_fd=-1; }
     void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
     void clr(int fd) { FD_CLR(fd, &fds); }
-    bool isset(int fd) { return FD_ISSET(fd, &fds) != 0; }
+    bool is_set(int fd) { return FD_ISSET(fd, &fds) != 0; }
     fd_set *operator()(void) { return max_fd==-1 ? NULL : &fds; }
     int nfds(void) { return max_fd + 1; }
 };
@@ -632,7 +632,7 @@ class pxfe_ticker : public pxfe_pthread {
                         fprintf(stderr, "pxfe_ticker: write failed\n");
                 continue;
             }
-            if (sel.rfds.isset(clfd)) {
+            if (sel.rfds.is_set(clfd)) {
                 if (read(clfd, &c, 1) < 0)
                     fprintf(stderr, "pxfe_ticker: read failed\n");
                 break;

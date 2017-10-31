@@ -61,7 +61,7 @@ class spinnerThread : public pxfe_pthread
             }
             if (cc > 0)
             {
-                if (sel.rfds.isset(pipe.readEnd))
+                if (sel.rfds.is_set(pipe.readEnd))
                 {
                     char c;
                     if (read(pipe.readEnd,&c,1) < 0)

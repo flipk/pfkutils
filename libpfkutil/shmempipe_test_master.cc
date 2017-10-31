@@ -86,7 +86,7 @@ main()
         sel.tv.set(0,100000);
         if (sel.select() <= 0)
             continue;
-        if (sel.rfds.isset(0))
+        if (sel.rfds.is_set(0))
             die = true;
     }
     while (connected && !die)
@@ -105,7 +105,7 @@ main()
         sel.tv.set(0,100000);
         if (sel.select() <= 0)
             continue;
-        if (sel.rfds.isset(0))
+        if (sel.rfds.is_set(0))
             break;
 
     }

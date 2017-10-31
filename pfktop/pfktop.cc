@@ -69,14 +69,14 @@ pfktop_main(int argc, char ** argv)
         sel.tv.set(1,0);
         if (sel.select() > 0)
         {
-            if (sel.rfds.isset(ticker.fd()))
+            if (sel.rfds.is_set(ticker.fd()))
             {
                 int cc = read(ticker.fd(), &c, 1);
                 if (cc <= 0)
                     done = true;
                 list.fetch();
             }
-            if (sel.rfds.isset(0))
+            if (sel.rfds.is_set(0))
             {
                 if (read(0,&c,1) == 1)
                 {
@@ -110,7 +110,7 @@ pfktop_main(int argc, char ** argv)
                     }
                 }
             }
-            if (sel.rfds.isset(winchfd))
+            if (sel.rfds.is_set(winchfd))
             {
                 int cc = read(winchfd, &c, 1);
                 if (cc == 1)

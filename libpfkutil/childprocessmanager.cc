@@ -317,7 +317,7 @@ Manager :: _notifyThread(void)
         sel.tv.set(10,0);
         sel.select();
 
-        if (sel.rfds.isset(rebuildFds[0]))
+        if (sel.rfds.is_set(rebuildFds[0]))
         {
             if (read(rebuildFds[0], &dummy, 1) != 1)
                 done = true;
@@ -336,7 +336,7 @@ Manager :: _notifyThread(void)
             // otherwise this is just meant to make sure we rebuild
             // our fd_sets because the openHandles map has changed.
         }
-        if (!done && sel.rfds.isset(signalFds[0]))
+        if (!done && sel.rfds.is_set(signalFds[0]))
         {
             // the sigchld handler has sent us a pid and status.
             cc = read(signalFds[0], &msg, sizeof(msg));
@@ -375,7 +375,7 @@ Manager :: _notifyThread(void)
                      it++)
                 {
                     h = it->second;
-                    if (sel.rfds.isset(h->fds[0]))
+                    if (sel.rfds.is_set(h->fds[0]))
                         handles.push_back(h);
                 }
             } // key destroyed here

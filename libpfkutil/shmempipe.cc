@@ -345,7 +345,7 @@ shmempipe :: closerThread(void)
             sel.tv.set(1,0);
             if (sel.select() <= 0)
                 continue;
-            if (sel.rfds.isset(m_myPipeFd))
+            if (sel.rfds.is_set(m_myPipeFd))
             {
                 if (read(m_myPipeFd, &c, 1) <= 0)
                 {
@@ -356,7 +356,7 @@ shmempipe :: closerThread(void)
                 }
                 break;
             }
-            if (sel.rfds.isset(m_closerPipe.readEnd))
+            if (sel.rfds.is_set(m_closerPipe.readEnd))
             {
                 printf("shmempipe :: closerThread told to exit from init\n");
                 if (read(m_closerPipe.readEnd, &c, 1) < 0)
@@ -416,7 +416,7 @@ shmempipe :: closerThread(void)
             callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
-        if (sel.rfds.isset(m_closerPipe.readEnd))
+        if (sel.rfds.is_set(m_closerPipe.readEnd))
         {
             printf("shmempipe :: closerThread told to exit from init\n");
             if (read(m_closerPipe.readEnd, &c, 1) < 0)
@@ -425,7 +425,7 @@ shmempipe :: closerThread(void)
             callbacks.disconnectCallback(this, callbacks.arg);
             return;
         }
-        if (sel.rfds.isset(m_myPipeFd))
+        if (sel.rfds.is_set(m_myPipeFd))
         {
             if (read(m_myPipeFd, &c, 1) <= 0)
             {

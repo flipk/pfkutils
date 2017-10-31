@@ -54,7 +54,7 @@ public:
         words[word] &= ~(thebit << bit);
         return true;
     }
-    bool isset(int bitno) {
+    bool is_set(int bitno) {
         if (bitno >= numbits)
             return false;
         int word = bitno / bits_per_word;
@@ -70,7 +70,7 @@ public:
         str << std::endl;
         str << "bits: " << std::dec << std::setw(0);
         for (int bit = 0; bit < numbits; bit++)
-            if (isset(bit))
+            if (is_set(bit))
                 str << bit << " ";
         str << std::endl;
         return str.str();
