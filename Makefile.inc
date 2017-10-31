@@ -164,13 +164,25 @@ include $(INCLUDE_MAKEFILES)
 echoconfig:
 	@echo ''
 	@echo '**************** CURRENT CONFIGURATION ************************'
+ifneq ($(CONFIG),)
 	@echo CONFIG=$(CONFIG)
+endif
+ifneq ($(PFKARCH),)
 	@echo PFKARCH=$(PFKARCH)
+endif
 	@echo OBJDIR=$(OBJDIR)
+ifneq ($(PREPROC_TARGETS),)
 	@echo PREPROC_TARGETS=$(PREPROC_TARGETS)
+endif
+ifneq ($(LIB_TARGETS),)
 	@echo LIB_TARGETS=$(LIB_TARGETS)
+endif
+ifneq ($(PROG_TARGETS),)
 	@echo PROG_TARGETS=$(PROG_TARGETS)
+endif
+ifneq ($(MAKEJOBS),)
 	@echo MAKEJOBS=$(MAKEJOBS)
+endif
 	@echo '**************** CURRENT CONFIGURATION ************************'
 	@echo ''
 
@@ -411,7 +423,7 @@ $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FRO
 		-M $$< -MT $(call FROM_PROTO_TO_O,$(src)) -MF $$@
 )
 
-# here fore reference
+# here for reference
 #$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
 #	@echo making $$@
 #	@cd $$(dir $$<) && $(PROTOC_PATH) \
