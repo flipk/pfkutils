@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org>
 #include "WebSocketClient.h"
 #include "fd_mgr.h"
 #include "posix_fe.h"
-#include "wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.h"
+#include "proxyProtos-proxyMsgs.pb.h"
 #include <sys/time.h>
 
 class proxyClientConn : public fd_interface,

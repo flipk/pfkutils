@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org>
 #include "WebAppServer.h"
 #include "fdThreadLauncher.h"
 #include "LockWait.h"
-#include "wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.h"
+#include "proxyProtos-proxyMsgs.pb.h"
 
 // ugh. both WebAppConnection and fdThreadLauncher have a doPoll method.
 // need to make shim classes so we can implement both separately.

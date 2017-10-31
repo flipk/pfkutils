@@ -2,3 +2,4 @@ wsProxyClient
 wsProxyServer
 proxyMsgs.pb.cc
 proxyMsgs.pb.h
+obj.*
