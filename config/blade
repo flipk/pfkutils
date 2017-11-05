@@ -56,7 +56,7 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETPSHARED = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 
-CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk
+CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j9

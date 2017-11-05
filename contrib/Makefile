@@ -133,6 +133,18 @@ fish-pfk-install:
 
 ######################################################
 
+mscgen-pfk:
+	@echo making mscgen
+	chmod u+x build-mscgen.sh
+	./build-mscgen.sh
+
+mscgen-pfk-install:
+	@echo installing mscgen
+	chmod u+x install-mscgen.sh
+	./install-mscgen.sh
+
+######################################################
+
 clean:
 	cd $(CSCOPE_DIR) && make clean || true
 	cd $(CTWM_DIR) && make clean || true
