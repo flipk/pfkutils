@@ -98,8 +98,8 @@ Mod1 F12 :ToggleWindowTitle
 # open the window menu
 Mod1 space :WindowMenu
 
-# exit fluxbox
-Control Mod1 Delete :Exit
+# exit fluxbox ; disable so citrix works
+# Control Mod1 Delete :Exit
 
 # change to previous/next workspace
 Control Mod1 Left :PrevWorkspace
