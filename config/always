@@ -507,11 +507,15 @@ ifeq ($(PFK_BUILD_wsproxy),1)
 ifeq ($(PFK_BUILD_libwas),0)
 $(error PFK_BUILD_libwas is required for PFK_BUILD_wsproxy)
 endif
+LIB_TARGETS += wsProxyProtos
+
+wsProxyProtos_TARGET = $(OBJDIR)/libwsProxyProtos.a
+wsProxyProtos_PROTOSRCS = \
+	libWebAppServer/proxyTcpServer/proxyMsgs.proto
+
 PROG_TARGETS += wsProxyClient wsProxyServer
 
 wsProxyClient_TARGET = $(OBJDIR)/wsProxyClient
-wsProxyClient_PROTOSRCS = \
-	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyClient_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
 	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
@@ -524,14 +528,10 @@ wsProxyClient_HDRS = \
 	libWebAppServer/proxyTcpServer/proxyClientConn.h \
 	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.h
 wsProxyClient_LIBS = $(PROTOBUF_LIB) -lpthread
-wsProxyClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+wsProxyClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
 wsProxyClient_INSTALL = 1
 
 wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
-# since wsProxyClient already supplied this, pick up the object
-# using EXTRAOBJS instead.
-#wsProxyServer_PROTOSRCS = \
-#	libWebAppServer/proxyTcpServer/proxyMsgs.proto
 wsProxyServer_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
 	$(PROTOBUF_INC)
@@ -541,10 +541,8 @@ wsProxyServer_CXXSRCS = \
 wsProxyServer_HDRS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.h
 wsProxyServer_LIBS = $(PROTOBUF_LIB) -lpthread
-wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
 wsProxyServer_INSTALL = 1
-wsProxyServer_EXTRAOBJS = \
-	$(OBJDIR)/wsProxyClient-libWebAppServer_proxyTcpServer_proxyMsgs.pb.o
 endif
 
 ##############################################
