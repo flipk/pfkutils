@@ -412,7 +412,7 @@ $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_CC, $(src)): $(src)
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_O, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
-		$($(target)_INCS) -I$(PROTOBUF_INC) \
+		$($(target)_INCS) $(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
 )
 
