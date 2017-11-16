@@ -1,4 +1,6 @@
 
+mbedtls_prefix= $(HOME)/pfk/$(PFKARCH)/mbedtls-2.6.1
+
 LIB_TARGETS += protossl
 
 PROG_TARGETS += t
@@ -10,8 +12,8 @@ protossl_INCS = -I$(HOME)/proj/pfkutils/libpfkutil
 t_TARGET = $(OBJDIR)/t
 t_PROTOSRCS = test_proto.proto
 t_CXXSRCS = test.cc
-t_INCS = -I$(HOME)/proj/pfkutils/libpfkutil
-t_LIBS = -lprotobuf -lpthread -lmbedtls -lmbedx509 -lmbedcrypto
+t_INCS = -I$(HOME)/proj/pfkutils/libpfkutil -I$(mbedtls_prefix)/include
+t_LIBS = -lprotobuf -lpthread -L$(mbedtls_prefix)/lib -lmbedtls -lmbedx509 -lmbedcrypto
 t_DEPLIBS = $(protossl_TARGET)
 
 include $(HOME)/pfk/Makefile.inc
