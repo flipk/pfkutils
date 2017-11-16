@@ -1,0 +1,7 @@
+
+to make /dev/ttyUSB* always come up as readable so you can
+minicom without sudo, add a udev rule to chmod it on creation.
+make /etc/udev/rules.d/50-ttyusb.rules :
+
+KERNEL=="ttyUSB[0-9]*", MODE="0666"
+
