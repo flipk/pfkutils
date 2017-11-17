@@ -1,0 +1,7 @@
+
+program that runs all the time holding keys : gnome-keyring-daemon
+
+useful program : seahorse
+
+chromium at work : same password as xlock
+
