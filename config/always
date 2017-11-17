@@ -748,8 +748,11 @@ pfkutils_LIBXRANDR= -lXrandr
 pfkutils_LIBX11= -lX11
 endif
 ifeq ($(PFK_BUILD_do_fft),1)
-pfkutils_CXXSRCS += main/do_fft.cc
-pfkutils_LIBFFTW= -lfftw3
+PROG_TARGETS += do_fft
+do_fft_TARGET = $(OBJDIR)/do_fft
+do_fft_CXXSRCS = main/do_fft.cc
+do_fft_LIBS = -lfftw3
+do_fft_INSTALL = 1
 endif
 pfkutils_HDRS = \
 	$(OBJDIR)/main/programs.h
