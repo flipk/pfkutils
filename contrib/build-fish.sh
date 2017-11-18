@@ -13,6 +13,10 @@ cd "$FISH_DIR"
 dirs=$( find . -type d | sort )
 files=$( find . -type f | sort )
 
+if [ ! -f $OBJDIR/fish/Makefile ] ; then
+    touch configure config.h.in aclocal.m4 FISH-BUILD-VERSION-FILE
+fi
+
 echo making linktree
 
 mkdir -p "$OBJDIR/fish"

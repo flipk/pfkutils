@@ -13,6 +13,12 @@ cd "$MSCGEN_DIR"
 dirs=$( find . -type d | sort )
 files=$( find . -type f | sort )
 
+if [ ! -f $OBJDIR/mscgen/Makefile ] ; then
+    touch config.h.in configure aclocal.m4 ./man/Makefile.in \
+	  ./src/Makefile.in ./Makefile.in ./test/Makefile.in \
+	  ./examples/Makefile.in
+fi
+
 echo making linktree
 
 mkdir -p "$OBJDIR/mscgen"

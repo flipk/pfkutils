@@ -27,6 +27,25 @@ if [ ! -f configure ] ; then
     autoreconf -i
 fi
 
+if [ ! -f $OBJDIR/fluxbox/Makefile ] ; then
+    touch Makefile.in aclocal.m4 build-aux/compile build-aux/config.guess \
+	  build-aux/config.sub build-aux/depcomp build-aux/install-sh \
+	  build-aux/missing config.h.in configure nls/C/Makefile.in \
+	  nls/be_BY/Makefile.in nls/bg_BG/Makefile.in nls/cs_CZ/Makefile.in \
+	  nls/da_DK/Makefile.in nls/de_AT/Makefile.in nls/de_CH/Makefile.in \
+	  nls/de_DE/Makefile.in nls/el_GR/Makefile.in nls/en_GB/Makefile.in \
+	  nls/en_US/Makefile.in nls/es_AR/Makefile.in nls/es_ES/Makefile.in \
+	  nls/et_EE/Makefile.in nls/fi_FI/Makefile.in nls/fr_CH/Makefile.in \
+	  nls/fr_FR/Makefile.in nls/he_IL/Makefile.in nls/it_IT/Makefile.in \
+	  nls/ja_JP/Makefile.in nls/ko_KR/Makefile.in nls/lv_LV/Makefile.in \
+	  nls/mk_MK/Makefile.in nls/nb_NO/Makefile.in nls/nl_NL/Makefile.in \
+	  nls/no_NO/Makefile.in nls/pl_PL/Makefile.in nls/pt_BR/Makefile.in \
+	  nls/pt_PT/Makefile.in nls/ru_RU/Makefile.in nls/sk_SK/Makefile.in \
+	  nls/sl_SI/Makefile.in nls/sv_SE/Makefile.in nls/tr_TR/Makefile.in \
+	  nls/uk_UA/Makefile.in nls/vi_VN/Makefile.in nls/zh_CN/Makefile.in \
+	  nls/zh_TW/Makefile.in
+fi
+
 case x$PFK_CONFIG_flubox_xinerama in
     xenable)
 	xinerama=--enable-xinerama
