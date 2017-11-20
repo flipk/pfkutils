@@ -68,8 +68,8 @@ protected:
     static const int CIPHERED_PAGE_SIZE = PCP_PAGE_SIZE + HMAC_OVERHD;
     PageIO(const std::string &_encryption_password);
     bool ciphering_enabled;
-    void encrypt_page(int page_number, uint8_t * out, const uint8_t * in);
-    void decrypt_page(int page_number, uint8_t * out, const uint8_t * in);
+    void encrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in);
+    void decrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in);
 public:
     /** Create a PageIO, by opening a path. 
      *
@@ -98,11 +98,11 @@ public:
      *  file size is not an even multiple of the page size.
      * \note This method rounds up the return value to the nearest page,
      *  if the size of the file is not an even multiple of a page size. */
-    virtual int   get_num_pages(bool * page_aligned = NULL) = 0;
+    virtual uint64_t get_num_pages(bool * page_aligned = NULL) = 0;
     /** return size of the file in bytes. */
     virtual off_t get_size(void) = 0;
     /** cut the file to a certain size. */
-    virtual void  truncate_pages(int num_pages) = 0;
+    virtual void  truncate_pages(uint64_t num_pages) = 0;
 };
 
 /** An example implementation of PageIO using a file descriptor.
@@ -125,9 +125,9 @@ public:
     // from the base class documentation.
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
-    /*virtual*/ int   get_num_pages(bool * page_aligned = NULL);
+    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
     /*virtual*/ off_t get_size(void);
-    /*virtual*/ void  truncate_pages(int num_pages);
+    /*virtual*/ void  truncate_pages(uint64_t num_pages);
 };
 
 class PageIONetworkTCPServer : public PageIO {
@@ -142,9 +142,9 @@ public:
     // from the base class documentation.
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
-    /*virtual*/ int   get_num_pages(bool * page_aligned = NULL);
+    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
     /*virtual*/ off_t get_size(void);
-    /*virtual*/ void  truncate_pages(int num_pages);
+    /*virtual*/ void  truncate_pages(uint64_t num_pages);
 };
 
 #endif /* __PAGE_IO_H__ */

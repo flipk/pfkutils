@@ -58,7 +58,7 @@ protected:
     /** the number of PageCache pages which this block references.
      * if greator than 1, indicates the block crosses at least one
      * page boundary. */
-    int num_pages;
+    uint64_t num_pages;
     /** indicates if the block has been modified by the user. */
     bool dirty;
     /** pointer to array of PageCachePage objects.  the size of this

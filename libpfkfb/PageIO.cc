@@ -293,7 +293,7 @@ PageIO :: ~PageIO(void)
 
 static inline void
 make_iv(unsigned char IV_plus_sha256[32],
-        const std::string &pass, int page)
+        const std::string &pass, uint64_t page)
 {
     std::ostringstream  ostr;
     ostr << pass << ":" << page;
@@ -304,7 +304,7 @@ make_iv(unsigned char IV_plus_sha256[32],
 }
 
 void
-PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
+PageIO :: encrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
@@ -316,7 +316,7 @@ PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
 }
 
 void
-PageIO :: decrypt_page(int page_number, uint8_t * out, const uint8_t * in)
+PageIO :: decrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
