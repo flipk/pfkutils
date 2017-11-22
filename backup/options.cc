@@ -73,20 +73,36 @@ bkOptions::_parse(int argc, char ** argv)
     string filepath = argv[2];
 
     size_t colon_pos = filepath.find_first_of(':');
+    string filepart, dirtree, password;
+
     if (colon_pos != string::npos)
     {
-        backupfile_index =
-            filepath.substr(0,colon_pos) + ".index" +
-            filepath.substr(colon_pos);
-        backupfile_data  =
-            filepath.substr(0,colon_pos) + ".data" +
-            filepath.substr(colon_pos);
+        filepart = filepath.substr(0,colon_pos);
+        // including the colon
+        password = filepath.substr(colon_pos);
     }
     else
     {
-        backupfile_index = filepath + ".index";
-        backupfile_data  = filepath + ".data";
+        filepart = filepath;
     }
+
+    if (filepart[filepart.length()-1] == '/')
+    {
+        dirtree = "/";
+        filepart.resize(filepart.length()-1);
+    }
+
+    backupfile_index = filepart + ".index" + dirtree + password;
+    backupfile_data  = filepart + ".data"  + dirtree + password;
+
+#if 0 // debug only
+    cout << "filepath = " << filepath << endl;
+    cout << "filepart = " << filepart << endl;
+    cout << "dirtree = " << dirtree << endl;
+    cout << "password = " << password << endl;
+    cout << "backupfile_index = " << backupfile_index << endl;
+    cout << "backupfile_data = " << backupfile_data << endl;
+#endif
 
     string op_str = argv[1];
 

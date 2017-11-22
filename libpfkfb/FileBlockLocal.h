@@ -38,14 +38,14 @@ For more information, please refer to <http://unlicense.org>
 #include "dll3.h"
 
 /** a data type for AU id numbers.  */
-typedef uint32_t   FB_AUN_T;
+typedef uint64_t   FB_AUN_T;
 /** a data type for AU id numbers when encoded in a file */
-typedef UINT32_t FB_AUN_t;
+typedef UINT64_t FB_AUN_t;
 
 /** 
  * fundamental size of an allocation unit.  every allocation is
- * a multiple of this. note that FB_AUN_T is 31 bits long, therefore
- * maximum file size is 512 * 0x7ffffff = ~1TB.
+ * a multiple of this. note that FB_AUN_T is 63 bits long, therefore
+ * maximum file size is .... ginormous.
  */
 #define AU_SIZE 512
 
@@ -87,7 +87,7 @@ private:
  */
 struct InfoBlock {
     /** the file must have a valid signature to be used. */
-    static const uint32_t SIGNATURE = 0x04f78c2a;
+    static const uint32_t SIGNATURE = 0x0ecc0e35;
     UINT32_t  signature;      /**< value is SIGNATURE */
     UINT32_t  num_buckets;    /**< must match BucketList::NUM_BUCKETS */
     UINT16_t  au_size;        /**< must match AU_SIZE */
@@ -238,7 +238,10 @@ class _AUHead {
     /** these 31 bits are used for the size of the region. */
     static const uint32_t SIZE_MASK = 0x7fffffff;
 public:
-    static const int used_size = 12;
+    /** this describes how many bytes this object consumes
+     * in a 'used' block. since "two" is not used, this is
+     * basically sizeof(prev) + sizeof(size_and_used) + sizeof(one). */
+    static const int used_size = 20;
     /** pointer to the previous region in the file. */
     FB_AUN_t  prev;
 private:
@@ -246,7 +249,9 @@ private:
      * used/free flag (1 bit).  \see USED_MASK, \see SIZE_MASK. */
     UINT32_t  size_and_used;
     /** a used region puts the AUID here, while a free region puts
-     * the bucket_prev pointer. */
+     * the bucket_prev pointer. the AUID is a 32 bit quantity but
+     * the AUN is a 64 bit quantity; that's ok, it means an AUID
+     * fits. */
     FB_AUN_t  one;
     /** a free region puts the bucket_next here.  a used region 
      * does not use this space.  it is available for use by the
@@ -285,9 +290,9 @@ public:
             (used ? USED_MASK : 0));
     }
     /** fetch the AUID if this is a used-region. */
-    FB_AUID_T auid        ( void        ) { return one.get(); }
+    FB_AUID_T auid        ( void        ) { return (FB_AUID_T) one.get(); }
     /** set the AUID if this is a used-region. */
-    void      auid        ( FB_AUID_T v ) { one.set(v); }
+    void      auid        ( FB_AUID_T v ) { one.set((FB_AUN_T) v); }
     /** fetch the bucket_next for a free region */
     FB_AUN_T bucket_next ( void       ) { return one.get(); }
     /** set the bucket_next for a free region */

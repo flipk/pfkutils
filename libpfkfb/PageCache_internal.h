@@ -73,7 +73,8 @@ class PCPInt : public PageCachePage,
 public:
     /** Constructor.
      * \param _page_number The page number of this page. */
-    PCPInt(int _page_number) : PageCachePage(_page_number) { refcount = 0; }
+    PCPInt(uint64_t _page_number)
+        : PageCachePage(_page_number) { refcount = 0; }
     /** helper which checks reference count. */
     bool is_locked(void) { return (refcount != 0); }
 };
@@ -82,9 +83,9 @@ class PCPIntHashCompare {
 public:
     static uint32_t obj2hash(const PCPInt &item)
     { return (uint32_t) item.get_page_number(); }
-    static uint32_t key2hash(const int &key)
+    static uint32_t key2hash(const uint64_t key)
     { return (uint32_t) key; }
-    static bool hashMatch(const PCPInt &item, const int &key)
+    static bool hashMatch(const PCPInt &item, const uint64_t key)
     { return (item.get_page_number() == key); }
 };
 
@@ -117,7 +118,7 @@ public:
     /** locate a page in cache by its page number.
      * \param page_number the number of the page to search for in the hash
      * \return a pointer to the page or NULL if not found. */
-    PCPInt * find( int page_number ) { return hash.find( page_number ); }
+    PCPInt * find( uint64_t page_number ) { return hash.find( page_number ); }
     /** return the head of the linked list of all objects.
      * \return head of the linked list of all objects
      * \note The PageCachePageList object should not be manipulated

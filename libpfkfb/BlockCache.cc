@@ -96,7 +96,7 @@ BlockCacheBlock *
 BlockCache :: get( off_t offset, int size, bool for_write )
 {
     off_t ending_offset;
-    int starting_page, ending_page, num_pages, pg, i;
+    uint64_t starting_page, ending_page, num_pages, pg, i;
     int offset_in_starting_page;
     int offset_in_ending_page;
     BCB * ret;

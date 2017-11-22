@@ -104,7 +104,7 @@ PageCache :: ~PageCache(void)
 }
 
 PageCachePage *
-PageCache :: get(int page_number, bool for_write)
+PageCache :: get(uint64_t page_number, bool for_write)
 {
     PCPInt * ret;
     ret = pgs->find( page_number );
@@ -128,7 +128,8 @@ PageCache :: get(int page_number, bool for_write)
     {
         if (!io->get_page(ret))
         {
-            fprintf(stderr, "error getting page %d\n", page_number);
+            fprintf(stderr, "error getting page %"
+                    PRIu64 "\n", page_number);
             exit( 1 );
         }
     }
@@ -152,8 +153,8 @@ PageCache :: release( PageCachePage * _p, bool dirty )
         {
             if (!io->put_page(p))
             {
-                fprintf(stderr, "error putting page %d\n",
-                        p->page_number);
+                fprintf(stderr, "error putting page %"
+                        PRIu64 "\n", p->page_number);
                 exit( 1 );
             }
             somethingFlushed = true;
@@ -167,7 +168,7 @@ PageCache :: release( PageCachePage * _p, bool dirty )
 }
 
 void
-PageCache :: truncate_pages(int num_pages)
+PageCache :: truncate_pages(uint64_t num_pages)
 {
     PCPInt * p, * np;
     for (p = pgs->get_head(); p; p = np)
@@ -178,7 +179,7 @@ PageCache :: truncate_pages(int num_pages)
             if (p->is_locked())
             {
                 fprintf(stderr, "ERROR: PageCache :: truncate_pages: "
-                        "page %d is still locked\n", p->page_number);
+                        "page %" PRIu64 " is still locked\n", p->page_number);
                 return;
             }
             else
@@ -239,7 +240,8 @@ PageCache :: flush(void)
         pgs->ref(p);
         if (!io->put_page(p))
         {
-            fprintf(stderr, "error putting page %d\n", p->page_number);
+            fprintf(stderr, "error putting page %"
+                    PRIu64 "\n", p->page_number);
             exit( 1 );
         }
         // the page is now synced with the file.

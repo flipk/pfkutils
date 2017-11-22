@@ -86,7 +86,29 @@ populate_header(char *header, const std::string &path,
     sprintf(header + 148, "%06o", checksum);
 }
 
-void
+static bool
+do_write(int fd, const void *buf, size_t count)
+{
+    const char * ptr = (const char *) buf;
+    while (count > 0)
+    {
+        errno = 0;
+        int ret = ::write(fd, ptr, count);
+        int e = errno;
+        if (ret <= 0)
+        {
+            fprintf(stderr, "write returned %d: err %d: %s\n",
+                    ret, e, strerror(e));
+            return false;
+        }
+        ptr += ret;
+        count -= ret;
+    }
+    return true;
+}
+
+
+bool
 tarfile_emit_fileheader(int fd, const std::string &path, uint64_t filesize)
 {
     char header[512];
@@ -95,19 +117,25 @@ tarfile_emit_fileheader(int fd, const std::string &path, uint64_t filesize)
     {
         // must emit ././@LongLink shit
         populate_header(header, "././@LongLink", path.size(), true);
-        if ((::write(fd, header, 512) != 512) ||
-            (::write(fd, path.c_str(), path.size()) != path.size()))
+        if ((do_write(fd, header, 512) == false) ||
+            (do_write(fd, path.c_str(), path.size()) == false))
         {
             fprintf(stderr, "tar emit fileheader: write failed\n");
+            return false;
         }
-        tarfile_emit_padding(fd, path.size());
+        if (tarfile_emit_padding(fd, path.size()) == false)
+            return false;
     }
     populate_header(header, path, (uint32_t) filesize, false);
-    if (::write(fd, header, 512) != 512)
+    if (do_write(fd, header, 512) == false)
+    {
         fprintf(stderr, "tar emit fileheader: write failed\n");
+        return false;
+    }
+    return true;
 }
 
-void
+bool
 tarfile_emit_padding(int fd, uint64_t filesize)
 {
     uint64_t lastpage = filesize % 512;
@@ -116,16 +144,24 @@ tarfile_emit_padding(int fd, uint64_t filesize)
         int padding = 512 - lastpage;
         char buf[512];
         memset(buf, 0, padding);
-        if (::write(fd, buf, padding) != padding)
+        if (do_write(fd, buf, padding) == false)
+        {
             fprintf(stderr, "tar emit padding: write failed\n");
+            return false;
+        }
     }
+    return true;
 }
 
-void
+bool
 tarfile_emit_footer(int fd)
 {
     char buf[512 * 2];
     memset(buf, 0, sizeof(buf));
-    if (::write(fd, buf, sizeof(buf)) != sizeof(buf))
+    if (do_write(fd, buf, sizeof(buf)) == false)
+    {
         fprintf(stderr, "tar emit footer: write failed\n");
+        return false;
+    }
+    return true;
 }

@@ -35,9 +35,6 @@ For more information, please refer to <http://unlicense.org>
 class BCB;
 typedef DLL3::List<BCB,1,false>  BlockCacheList_t;
 
-/** DLL2 list index identifiers for blocks on lists */
-enum BLOCK_CACHE_LIST_INDICES { BLOCK_LIST, BLOCK_NUM_LISTS };
-
 /** A BlockCacheBlock plus linked list information */
 class BCB : public BlockCacheBlock,
             public BlockCacheList_t::Links

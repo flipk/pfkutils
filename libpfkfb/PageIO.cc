@@ -74,7 +74,9 @@ static const char * path_pattern = "\
 ^fbsrv:([0-9]+.[0-9]+.[0-9]+.[0-9]+):([0-9]+.):([0-9a-zA-Z]+)$|\
 ^fbsrv:(.+):([0-9]+.)$|\
 ^fbsrv:(.+):([0-9]+.):([0-9a-zA-Z]+)$|\
+^(.+)/:([0-9a-zA-Z]+)$|\
 ^(.+):([0-9a-zA-Z]+)$|\
+^(.+)/$|\
 ^(.+)$";
 
 #define MATCH_LIST \
@@ -94,8 +96,11 @@ static const char * path_pattern = "\
     MATCH_ENTRY(FBSRV_HOSTNAME_ENC) \
     MATCH_ENTRY(FBSRV_PORT_HN_ENC) \
     MATCH_ENTRY(FBSRV_PORT_HN_KEY) \
+    MATCH_ENTRY(FULLPATH_SPLIT_ENC) \
+    MATCH_ENTRY(FULLPATH_SPLIT_KEY) \
     MATCH_ENTRY(FULLPATH_ENC) \
     MATCH_ENTRY(FULLPATH_KEY) \
+    MATCH_ENTRY(FULLPATH_SPLIT_CT) \
     MATCH_ENTRY(FULLPATH_CT) \
     MATCH_ENTRY(MAX_MATCHES)
 
@@ -167,6 +172,7 @@ PageIO :: open( const char * _path, bool create, int mode )
     struct hostent * he;
     int st, en, len, port;
     bool tcp = false;
+    bool splitfile = false;
     std::string str_ip, str_host, str_port, str_key, str_file;
 
     if (ISMATCH(FBSRV_IP_2_CT))
@@ -208,11 +214,24 @@ PageIO :: open( const char * _path, bool create, int mode )
         str_port = SUBSTR(FBSRV_PORT_HN_ENC);
         str_key = SUBSTR(FBSRV_PORT_HN_KEY);
     }
+    else if (ISMATCH(FULLPATH_SPLIT_ENC))
+    {
+        tcp = false;
+        splitfile = true;
+        str_file = SUBSTR(FULLPATH_SPLIT_ENC);
+        str_key = SUBSTR(FULLPATH_SPLIT_KEY);
+    }
     else if (ISMATCH(FULLPATH_ENC))
     {
         tcp = false;
         str_file = SUBSTR(FULLPATH_ENC);
         str_key = SUBSTR(FULLPATH_KEY);
+    }
+    else if (ISMATCH(FULLPATH_SPLIT_CT))
+    {
+        tcp = false;
+        splitfile = true;
+        str_file = SUBSTR(FULLPATH_SPLIT_CT);
     }
     else if (ISMATCH(FULLPATH_CT))
     {
@@ -244,15 +263,27 @@ PageIO :: open( const char * _path, bool create, int mode )
         ret = new PageIONetworkTCPServer(str_key, &ipaddr, port);
     else
     {
-        int options = O_RDWR;
-        if (create)
-            options |= O_CREAT;
+        if (splitfile == false)
+        {
+            int options = O_RDWR;
+            if (create)
+                options |= O_CREAT;
 #ifdef O_LARGEFILE
-        options |= O_LARGEFILE;
+            options |= O_LARGEFILE;
 #endif
-        int fd = ::open( str_file.c_str(), options, mode );
-        if (fd > 0)
-            ret = new PageIOFileDescriptor(str_key, fd);
+            int fd = ::open( str_file.c_str(), options, mode );
+            if (fd > 0)
+                ret = new PageIOFileDescriptor(str_key, fd);
+        }
+        else
+        {
+            PageIODirectoryTree * _ret =
+                new PageIODirectoryTree(str_key, str_file.c_str(), create);
+            if (_ret && _ret->get_ok())
+                ret = _ret;
+            else
+                delete _ret;
+        }
     }
 
     return ret;
@@ -293,7 +324,7 @@ PageIO :: ~PageIO(void)
 
 static inline void
 make_iv(unsigned char IV_plus_sha256[32],
-        const std::string &pass, int page)
+        const std::string &pass, uint64_t page)
 {
     std::ostringstream  ostr;
     ostr << pass << ":" << page;
@@ -304,7 +335,7 @@ make_iv(unsigned char IV_plus_sha256[32],
 }
 
 void
-PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
+PageIO :: encrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
@@ -316,7 +347,7 @@ PageIO :: encrypt_page(int page_number, uint8_t * out, const uint8_t * in)
 }
 
 void
-PageIO :: decrypt_page(int page_number, uint8_t * out, const uint8_t * in)
+PageIO :: decrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);

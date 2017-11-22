@@ -69,7 +69,7 @@ PageIONetworkTCPServer :: put_page( PageCachePage * pg )
 }
 
 //virtual
-int
+uint64_t
 PageIONetworkTCPServer :: get_num_pages(bool * page_aligned)
 {
     return 0;
@@ -84,6 +84,6 @@ PageIONetworkTCPServer :: get_size(void)
 
 //virtual
 void
-PageIONetworkTCPServer :: truncate_pages(int num_pages)
+PageIONetworkTCPServer :: truncate_pages(uint64_t num_pages)
 {
 }

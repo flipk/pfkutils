@@ -92,7 +92,7 @@ public:
      * to the cached page and increase the page's reference count.  If the
      * page is not in cache, the PageIO interface is accessed to retrieve
      * the page from the file. */
-    PageCachePage * get(int page_number, bool for_write);
+    PageCachePage * get(uint64_t page_number, bool for_write);
     /** Release a page from user's access.
      * \param p A PageCachePage previously returned by the get() method.
      * \param dirty The user must indicate if he modified this page, so that
@@ -105,7 +105,7 @@ public:
     void release( PageCachePage * p, bool dirty );
     /** truncate a file.
      */
-    void truncate_pages(int num_pages);
+    void truncate_pages(uint64_t num_pages);
     /** Flush the cache, force synchronization.
      *
      * This method walks the list of all dirty pages, as well as all 
@@ -122,7 +122,7 @@ public:
 class PageCachePage {
     friend class PageCache;
     /** the number of the page in the file this object contains */
-    int page_number;
+    uint64_t page_number;
     /** indicates whether the data has been modified */
     bool dirty;
 protected:
@@ -130,7 +130,7 @@ protected:
      * \param _page_number the number of the page being referenced.
      * \note this constructor does not populate the contents of the page;
      *   it is assumed the caller will do that. */
-    PageCachePage(int _page_number) {
+    PageCachePage(uint64_t _page_number) {
         dirty = false;  page_number = _page_number;
         ptr = new uint8_t[PageIO::PCP_PAGE_SIZE];
     }
@@ -142,7 +142,7 @@ protected:
     uint8_t * ptr;
 public:
     /** access method to return the page number. */
-    int get_page_number(void) const { return page_number; }
+    uint64_t get_page_number(void) const { return page_number; }
     /** access method to get the data pointer. */
     uint8_t * get_ptr(void) const { return ptr; }
     /** user must call this if he has modified the page data. */
