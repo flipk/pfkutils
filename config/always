@@ -229,6 +229,7 @@ libpfkfb_CXXSRCS = \
 	libpfkfb/FileBlockLocalValidate.cc libpfkfb/FileBlock_iface.cc \
 	libpfkfb/PageCache.cc libpfkfb/PageIO.cc \
 	libpfkfb/PageIOFileDescriptor.cc libpfkfb/PageIONetworkTCPServer.cc \
+	libpfkfb/PageIODirectoryTree.cc \
 	libpfkfb/documentation.cc
 libpfkfb_INSTALL_HDRS = \
 	libpfkfb/BlockCache.h libpfkfb/Btree.h libpfkfb/BtreeDbClasses.h \

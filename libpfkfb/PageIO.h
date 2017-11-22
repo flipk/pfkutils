@@ -38,6 +38,7 @@ For more information, please refer to <http://unlicense.org>
 #include <stdio.h>
 #include <string>
 
+#include "dll3.h"
 #include "aes.h"
 #include "sha256.h"
 
@@ -123,6 +124,60 @@ public:
 
     // doxygen comments not required, because they will be inherited
     // from the base class documentation.
+    /*virtual*/ bool  get_page( PageCachePage * pg );
+    /*virtual*/ bool  put_page( PageCachePage * pg );
+    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
+    /*virtual*/ off_t get_size(void);
+    /*virtual*/ void  truncate_pages(uint64_t num_pages);
+};
+
+class PageIODirectoryTree : public PageIO {
+    // this is the limit of how many file descriptors
+    // can be open at once.
+    static const int max_file_pages = 128;
+    bool ok;
+    std::string dirname;
+    int options; // for 'open'
+    uint32_t pgsize;
+    uint64_t num_pages;
+
+    struct pagefile;
+    struct pagefile_pagenum_comp;
+    // this is an LRU:  head = oldest, tail = newest
+    typedef DLL3::List<pagefile,1,false,false> pagefile_list_t;
+    typedef DLL3::Hash<pagefile,uint64_t,
+                       pagefile_pagenum_comp,2,
+                       false,false> pagefile_hash_t;
+    struct pagefile : public pagefile_list_t::Links,
+                      public pagefile_hash_t::Links
+    {
+        pagefile(int _fd, uint64_t _pagenumber)
+            : fd(_fd), pagenumber(_pagenumber) { }
+        ~pagefile(void);
+        int fd;
+        uint64_t pagenumber;
+    };
+    struct pagefile_pagenum_comp {
+        static uint32_t obj2hash(const pagefile &item) {
+            return item.pagenumber & 0xfffffff;
+        }
+        static uint32_t key2hash(const uint64_t key) {
+            return key & 0xfffffff;
+        }
+        static bool hashMatch(const pagefile &item, const uint64_t key) {
+            return item.pagenumber == key;
+        }
+    };
+    pagefile_list_t pagefile_list;
+    pagefile_hash_t pagefile_hash;
+    uint64_t pagefile_number(const PageCachePage *pg);
+    uint64_t pagefile_page(const PageCachePage *pg);
+    pagefile * get_pagefile(const PageCachePage *pg, uint64_t &pgfpg);
+public:
+    PageIODirectoryTree(const std::string &_encryption_password,
+                        const std::string &_dirname, bool create);
+    /*virtual*/ ~PageIODirectoryTree(void);
+    bool get_ok(void) { return ok; }
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
     /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
