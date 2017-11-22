@@ -52,6 +52,7 @@ class bakFile {
     void delete_version(int version);
     bool extract_file(uint32_t version, const std::string &path, int tarfd);
     void _extract(int tarfd);
+    bool match_file_name(const std::string &path);
     void _update(void);
     void create(void);
     void update(void);

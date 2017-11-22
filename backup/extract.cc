@@ -45,6 +45,28 @@ bakFile::extract(void)
     _extract(-1);
 }
 
+bool
+bakFile::match_file_name(const std::string &path)
+{
+    if (opts.paths.size() == 0)
+        // if nothing was specified, all paths match
+        return true;
+
+    for (int ind = 0; ind < opts.paths.size(); ind++)
+    {
+        const string &pattern = opts.paths[ind];
+        size_t len = pattern.length();
+        if (path.compare(0,len,pattern) == 0)
+        {
+            // match!
+            return true;
+        }
+    }
+
+    // matched none of the patterns
+    return false;
+}
+
 // if tarfd is -1 that means extract real files,
 // otherwise write to a tar file.
 void
@@ -78,40 +100,36 @@ bakFile::_extract(int tarfd)
         return;
     }
 
-    if (opts.paths.size() == 0)
+    bakDatum versionindex(bt);
+    uint32_t group = 0;
+    bool fail = false;
+    while (!fail)
     {
-        bakDatum versionindex(bt);
-        uint32_t group = 0;
-        bool fail = false;
-        while (!fail)
+        versionindex.key_versionindex( version, group );
+        if (versionindex.get() == false)
+            break;
+        const BST_ARRAY<BST_STRING> &fns =
+            versionindex.data.versionindex.filenames;
+        for (int ind = 0; ind < fns.length(); ind++)
         {
-            versionindex.key_versionindex( version, group );
-            if (versionindex.get() == false)
-                break;
-            const BST_ARRAY<BST_STRING> &fns =
-                versionindex.data.versionindex.filenames;
-            for (int ind = 0; ind < fns.length(); ind++)
+            const string &path = fns[ind]();
+            if (match_file_name(path))
             {
-                const string &path = fns[ind]();
+                if (opts.verbose)
+                {
+                    cout << "x " << path;
+                    cout.flush();
+                }
                 if (extract_file(version, path, tarfd) == false)
                 {
                     fail = true;
                     break;
                 }
+                if (opts.verbose)
+                    cout << endl;
             }
-            group ++;
         }
-    }
-    else
-    {
-// istead of exact path, consider rolling this into the
-// above loop as a pattern match.
-        for (int ind = 0; ind < opts.paths.size(); ind++)
-        {
-            const string &path = opts.paths[ind];
-            if (extract_file(version, path, tarfd) == false)
-                break;
-        }
+        group ++;
     }
 
     if (tarfd > 0)
