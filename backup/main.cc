@@ -44,6 +44,8 @@ usage(void)
 extern "C" int
 pfkbak_main(int argc, char ** argv)
 {
+    signal(SIGPIPE, SIG_IGN);
+
     bkOptions  opts;
 
     if (opts.parse(argc, argv) == false)

@@ -45,6 +45,8 @@ bakFile::extract(void)
     _extract(-1);
 }
 
+// if tarfd is -1 that means extract real files,
+// otherwise write to a tar file.
 void
 bakFile::_extract(int tarfd)
 {
@@ -80,7 +82,8 @@ bakFile::_extract(int tarfd)
     {
         bakDatum versionindex(bt);
         uint32_t group = 0;
-        while (1)
+        bool fail = false;
+        while (!fail)
         {
             versionindex.key_versionindex( version, group );
             if (versionindex.get() == false)
@@ -90,17 +93,24 @@ bakFile::_extract(int tarfd)
             for (int ind = 0; ind < fns.length(); ind++)
             {
                 const string &path = fns[ind]();
-                extract_file(version, path, tarfd);
+                if (extract_file(version, path, tarfd) == false)
+                {
+                    fail = true;
+                    break;
+                }
             }
             group ++;
         }
     }
     else
     {
+// istead of exact path, consider rolling this into the
+// above loop as a pattern match.
         for (int ind = 0; ind < opts.paths.size(); ind++)
         {
             const string &path = opts.paths[ind];
-            extract_file(version, path, tarfd);
+            if (extract_file(version, path, tarfd) == false)
+                break;
         }
     }
 
@@ -127,7 +137,28 @@ mkdir_minus_p(const string &path)
     }
 }
 
-void
+static bool
+do_write(int fd, const void *buf, size_t count)
+{
+    const char * ptr = (const char *) buf;
+    while (count > 0)
+    {
+        errno = 0;
+        int ret = ::write(fd, ptr, count);
+        int e = errno;
+        if (ret <= 0)
+        {
+            fprintf(stderr, "write returned %d: err %d: %s\n",
+                    ret, e, strerror(e));
+            return false;
+        }
+        ptr += ret;
+        count -= ret;
+    }
+    return true;
+}
+
+bool
 bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
 {
     bakDatum fileinfo(bt);
@@ -135,7 +166,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
     if (fileinfo.get() == false)
     {
         cerr << "version " << version << " file " << path << " not found\n";
-        return;
+        return false;
     }
     const string &hash = fileinfo.data.fileinfo.hash();
     uint64_t filesize = fileinfo.data.fileinfo.filesize();
@@ -145,7 +176,7 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
     if (blobhash.get() == false)
     {
         cerr << "blobhash not found for " << path << endl;
-        return;
+        return false;
     }
 
     FB_AUID_T auid = blobhash.data.blobhash.first_auid();
@@ -164,12 +195,15 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
             int e = errno;
             cerr << "unable to open file " << path << ": "
                  << strerror(e) << endl;
-            return;
+            return false;
         }
     }
     else
     {
-        tarfile_emit_fileheader(tarfd, path, filesize);
+        if (tarfile_emit_fileheader(tarfd, path, filesize) == false)
+        {
+            return false;
+        }
         fd = tarfd;
     }
 
@@ -182,10 +216,9 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
             break;
         if (bfc.data().length() > 0)
         {
-            int cc = ::write(fd,
-                             bfc.data().c_str(),
-                             bfc.data().length());
-            if (cc != bfc.data().length())
+            if (do_write(fd,
+                         bfc.data().c_str(),
+                         bfc.data().length()) == false)
             {
                 cerr << "unable to write to " << path << endl;
             }
@@ -197,10 +230,13 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
 
     if (tarfd > 0)
     {
-        tarfile_emit_padding(tarfd, filesize);
+        if (tarfile_emit_padding(tarfd, filesize) == false)
+            return false;
     }
     else
     {
         close(fd);
     }
+
+    return true;
 }

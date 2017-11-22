@@ -33,11 +33,11 @@ For more information, please refer to <http://unlicense.org>
 #ifndef __PFKBAK_TARFILE_H__
 #define __PFKBAK_TARFILE_H__
 
-void tarfile_emit_fileheader(int fd, const std::string &path,
+bool tarfile_emit_fileheader(int fd, const std::string &path,
                              uint64_t filesize);
 
-void tarfile_emit_padding(int fd, uint64_t filesize);
+bool tarfile_emit_padding(int fd, uint64_t filesize);
 
-void tarfile_emit_footer(int fd);
+bool tarfile_emit_footer(int fd);
 
 #endif /*__PFKBAK_TARFILE_H__*/
