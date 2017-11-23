@@ -40,8 +40,13 @@ bakFile::bakFile(const bkOptions &_opts)
 bool
 bakFile::openFiles(void)
 {
+#if SINGLE_FILE_BACKUP
+    bt = Btree::openFile(opts.backupfile_data.c_str(),
+                         CACHE_SIZE_INDEX);
+#else
     bt = Btree::openFile(opts.backupfile_index.c_str(),
                          CACHE_SIZE_INDEX);
+#endif
     if (bt == NULL)
     {
         cerr << "unable to open btree database\n";
@@ -49,6 +54,9 @@ bakFile::openFiles(void)
     }
     fbi = bt->get_fbi();
 
+#if SINGLE_FILE_BACKUP
+    fbi_data = fbi;
+#else
     fbi_data = FileBlockInterface::openFile(
         opts.backupfile_data.c_str(),  CACHE_SIZE_DATA);
     if (fbi_data == NULL)
@@ -56,6 +64,7 @@ bakFile::openFiles(void)
         cerr << "unable to open btree database\n";
         return false;
     }
+#endif
 
     return true;
 }
@@ -63,19 +72,28 @@ bakFile::openFiles(void)
 bool
 bakFile::createFiles(void)
 {
+#if SINGLE_FILE_BACKUP
+    bt = Btree::createFile(
+        opts.backupfile_data.c_str(), CACHE_SIZE_INDEX,
+        /*file mode*/ 0600, BTREE_ORDER);
+#else
     bt = Btree::createFile(
         opts.backupfile_index.c_str(),
         CACHE_SIZE_INDEX,
         /*file mode*/ 0600, BTREE_ORDER);
+#endif
     if (bt == NULL)
     {
         cerr << "unable to create database index\n";
         return false;
     }
+    fbi = bt->get_fbi();
 
+#if SINGLE_FILE_BACKUP
+    fbi_data = fbi;
+#else
     fbi_data = FileBlockInterface::createFile(
-        opts.backupfile_data.c_str(),
-        CACHE_SIZE_DATA,
+        opts.backupfile_data.c_str(), CACHE_SIZE_DATA,
         /*file mode*/ 0600);
     if (fbi_data == NULL)
     {
@@ -84,6 +102,7 @@ bakFile::createFiles(void)
         bt = NULL;
         return false;
     }
+#endif
 
     return true;
 }
@@ -106,11 +125,13 @@ bakFile::~bakFile(void)
         bt->get_fbi()->compact(&compactionStatus, NULL);
         delete bt;
     }
+#if SINGLE_FILE_BACKUP == 0
     if (fbi_data)
     {
         fbi_data->compact(&compactionStatus, NULL);
         delete fbi_data;
     }
+#endif
 }
 
 void

@@ -33,6 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #include <string>
 #include <vector>
 
+#define SINGLE_FILE_BACKUP 1
+
 enum opcode_t {
     OP_NONE,
     OP_CREATE,
@@ -47,7 +49,9 @@ class bkOptions {
     void printUsage(void);
     bool _parse(int argc, char ** argv);
 public:
+#if SINGLE_FILE_BACKUP == 0
     std::string backupfile_index;
+#endif
     std::string backupfile_data;
     std::string sourcedir; // for create
     opcode_t op;

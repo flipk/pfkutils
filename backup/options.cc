@@ -92,15 +92,21 @@ bkOptions::_parse(int argc, char ** argv)
         filepart.resize(filepart.length()-1);
     }
 
+#if SINGLE_FILE_BACKUP
+    backupfile_data  = filepart            + dirtree + password;
+#else
     backupfile_index = filepart + ".index" + dirtree + password;
     backupfile_data  = filepart + ".data"  + dirtree + password;
+#endif
 
 #if 0 // debug only
     cout << "filepath = " << filepath << endl;
     cout << "filepart = " << filepart << endl;
     cout << "dirtree = " << dirtree << endl;
     cout << "password = " << password << endl;
+#if SINGLE_FILE_BACKUP
     cout << "backupfile_index = " << backupfile_index << endl;
+#endif
     cout << "backupfile_data = " << backupfile_data << endl;
 #endif
 
