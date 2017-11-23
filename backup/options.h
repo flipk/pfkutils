@@ -33,7 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #include <string>
 #include <vector>
 
-#define SINGLE_FILE_BACKUP 1
+#define SINGLE_FILE_BACKUP 0
 
 enum opcode_t {
     OP_NONE,
