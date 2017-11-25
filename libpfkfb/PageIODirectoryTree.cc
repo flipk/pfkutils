@@ -58,7 +58,7 @@ PageIODirectoryTree :: PageIODirectoryTree(
     }
 
     pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
-    num_pages = 0;
+
     options = O_RDWR | O_CREAT;
 #ifdef O_LARGEFILE
     // required on cygwin?
@@ -89,95 +89,20 @@ PageIODirectoryTree :: PageIODirectoryTree(
     else
     {
         pxfe_readdir d;
-        struct fentry;
-        typedef DLL3::List<fentry,1,false,false> fentry_list_t;
-        struct fentry : public fentry_list_t::Links {
-            const std::string name;
+        uint64_t pgfnum = 0;
+        while (1)
+        {
+            pagefile * pf = new pagefile(pgfnum);
+            std::string fname = dirname + "/" + pf->relpath;
             struct stat sb;
-            bool statdone;
-            fentry(const std::string &_name)
-                : name(_name), statdone(false) { }
-            fentry(const fentry &other)
-                : name(other.name), statdone(other.statdone) {
-                if (statdone)
-                    memcpy(&sb, &other.sb, sizeof(sb));
-            }
-            bool dostat(void) {
-                if (!statdone  &&  lstat(name.c_str(), &sb) == 0)
-                    statdone = true;
-                return statdone;
-            }
-        };
-        fentry_list_t  fentries, dentries;
-
-        dentries.add_tail(new fentry(dirname));
-
-        while (dentries.get_cnt() > 0)
-        {
-            fentry *f = dentries.dequeue_head();
-            if (d.open(f->name) == false)
+            if (::stat(fname.c_str(), &sb) < 0)
             {
-                int e = errno;
-                char * err = strerror(e);
-                fprintf(stderr, "PageIODirectoryTree: opendir '%s': %d (%s)\n",
-                        dirname.c_str(), e, err);
+                delete pf;
+                break;
             }
-            else
-            {
-                dirent de;
-                while (d.read(de))
-                {
-                    std::string dname = de.d_name;
-                    if (dname == "." || dname == "..")
-                        continue;
-                    std::string fn = f->name + "/" + dname;
-                    fentry * fe = new fentry(fn);
-                    if (de.d_type == DT_UNKNOWN)
-                    {
-                        // unsupported by this fs, we'll have to
-                        // stat to determine type.
-                        if (fe->dostat() == true)
-                        {
-                            if (S_ISREG(fe->sb.st_mode))
-                                de.d_type = DT_REG;
-                            else if (S_ISDIR(fe->sb.st_mode))
-                                de.d_type = DT_DIR;
-                        }
-                        else
-                        {
-                            int e = errno;
-                            char * err = strerror(e);
-                            fprintf(stderr, "PageIODirectoryTree: unable to "
-                                    "stat %s: %d (%s)\n", fn.c_str(), e, err);
-                        }
-                    }
-                    switch (de.d_type)
-                    {
-                    case DT_REG:
-                        fe->dostat();
-                        fentries.add_tail(fe);
-                        break;
-                    case DT_DIR:
-                        dentries.add_tail(fe);
-                        break;
-                    default:
-                        delete fe;
-                        fprintf(stderr, "PageIODirectoryTree: ignoring "
-                                "%s: unsupported DT_ type %d\n",
-                                fn.c_str(), de.d_type);
-                        /*ignore all other types*/;
-                    }
-                }
-                d.close();
-            }
-            delete f;
-        }
-
-        while (fentries.get_cnt() > 0)
-        {
-            fentry *f = fentries.dequeue_head();
-            num_pages += f->sb.st_size / pgsize;
-            delete f;
+            pagefile_list.add_tail(pf);
+            pagefile_hash.add(pf);
+            pgfnum ++;
         }
 
         ok = true;
@@ -191,84 +116,138 @@ PageIODirectoryTree :: ~PageIODirectoryTree( void )
     {
         pagefile * f = pagefile_list.dequeue_head();
         pagefile_hash.remove(f);
+        if (pagefile_lru.onthislist(f))
+            pagefile_lru.remove(f);
         delete f;
     }
 }
 
+PageIODirectoryTree :: pagefile :: pagefile(uint64_t _pagenumber)
+    : fd(-1), pagenumber(_pagenumber)
+{
+    relpath = format_relpath(pagenumber);
+}
+
 PageIODirectoryTree :: pagefile :: ~pagefile(void)
 {
+    close();
+}
+
+//static
+std::string
+PageIODirectoryTree :: pagefile :: format_relpath(uint64_t _pagenumber)
+{
+    uint64_t  x = _pagenumber;
+    uint32_t level_1 = x & 0xfff;
+    x >>= 12;
+    uint32_t level_2 = x & 0xfff;
+    x >>= 12;
+    uint32_t level_3 = x; // whatever's left over
+
+    std::ostringstream fname_str;
+    fname_str << std::hex << std::setw(3) << std::setfill('0')
+              << level_3;
+    fname_str << "/"
+              << std::hex << std::setw(3) << std::setfill('0')
+              << level_2;
+    fname_str << "/"
+              << std::hex << std::setw(3) << std::setfill('0')
+              << level_1;
+    return fname_str.str();
+}
+
+static void
+mkdir_minus_p(const std::string &path)
+{
+    size_t pos = 0;
+    while (1)
+    {
+        pos = path.find_first_of('/', pos);
+        if (pos == std::string::npos)
+            break;
+        const std::string &shortpath = path.substr(0,pos);
+        if (shortpath != ".")
+            mkdir(shortpath.c_str(), 0700);
+        pos++;
+    }
+}
+
+bool
+PageIODirectoryTree :: pagefile :: open(const std::string &dirname, int options)
+{
     if (fd > 0)
-        close(fd);
+        return true;
+
+    std::string fname = dirname + "/" + relpath;
+    mkdir_minus_p(fname);
+    int new_fd = ::open(fname.c_str(),options,0600);
+    if (new_fd < 0)
+    {
+        int e = errno;
+        char * err = strerror(e);
+        fprintf(stderr, "PageIODirectoryTree :: get_pagefile: "
+                "open '%s' failed: %d (%s)\n",
+                fname.c_str(), e, err);
+        return false;
+    }
+    fd = new_fd;
+    return true;
+}
+
+void
+PageIODirectoryTree :: pagefile :: close(void)
+{
+    if (fd > 0)
+        ::close(fd);
+    fd = -1;
 }
 
 uint64_t
-PageIODirectoryTree :: pagefile_number(const PageCachePage *pg)
+PageIODirectoryTree :: pagefile_number(uint64_t page_number)
 {
-    return pg->get_page_number() / pgsize;
+    return page_number / pgsize;
 }
 
 uint64_t
-PageIODirectoryTree :: pagefile_page(const PageCachePage *pg)
+PageIODirectoryTree :: pagefile_page(uint64_t page_number)
 {
-    return pg->get_page_number() % pgsize;
+    return page_number % pgsize;
 }
 
 PageIODirectoryTree::pagefile *
 PageIODirectoryTree :: get_pagefile(const PageCachePage *pg, uint64_t &pgfpg)
 {
-    uint64_t pgfnum = pagefile_number(pg);
-    pgfpg = pagefile_page(pg);
-    pagefile * pf = pagefile_hash.find(pgfnum);
+    uint64_t page_number = pg->get_page_number();
+    uint64_t pgfnum = pagefile_number(page_number);
+    pgfpg = pagefile_page(page_number);
+    pagefile * pf;
+
+    while (pagefile_lru.get_cnt() >= max_file_pages)
+    {
+        pf = pagefile_lru.dequeue_tail();
+        pf->close();
+    }
+
+    pf = pagefile_hash.find(pgfnum);
     if (pf == NULL)
     {
-        while (pagefile_list.get_cnt() > max_file_pages)
-        {
-            pf = pagefile_list.dequeue_head();
-            pagefile_hash.remove(pf);
-            delete pf;
-        }
-
-        std::ostringstream fname_str;
-        fname_str << dirname << "/";
-
-        uint64_t  x = pgfnum;
-        uint32_t level_1 = x & 0xfff;
-        x >>= 12;
-        uint32_t level_2 = x & 0xfff;
-        x >>= 12;
-        uint32_t level_3 = x; // whatever's left over
-
-        fname_str << std::hex << std::setw(3) << std::setfill('0')
-                  << level_3;
-        mkdir(fname_str.str().c_str(),0700);
-        fname_str << "/"
-                  << std::hex << std::setw(3) << std::setfill('0')
-                  << level_2;
-        mkdir(fname_str.str().c_str(),0700);
-        fname_str << "/"
-                  << std::hex << std::setw(3) << std::setfill('0')
-                  << level_1;
-
-        int new_fd = ::open(fname_str.str().c_str(),options,0600);
-        if (new_fd < 0)
-        {
-            int e = errno;
-            char * err = strerror(e);
-            fprintf(stderr, "PageIODirectoryTree :: get_pagefile: "
-                    "open '%s' failed: %d (%s)\n",
-                    fname_str.str().c_str(), e, err);
-            return NULL;
-        }
-        pf = new pagefile(new_fd, pgfnum);
+        pf = new pagefile(pgfnum);
         pagefile_list.add_tail(pf);
         pagefile_hash.add(pf);
     }
     else
     {
-        //promote this pagefile on the LRU
-        pagefile_list.remove(pf);
-        pagefile_list.add_tail(pf);
+        // we're going to promote this pagefile on the LRU
+        // if it's already on, so remove it from wherever it is.
+        if (pagefile_lru.onthislist(pf))
+            pagefile_lru.remove(pf);
     }
+
+    if (pf->open(dirname,options) == false)
+        // open has already printed an error.
+        return NULL;
+
+    pagefile_lru.add_head(pf);
     return pf;
 }
 
@@ -347,5 +326,46 @@ PageIODirectoryTree :: put_page( PageCachePage * pg )
 void
 PageIODirectoryTree :: truncate_pages(uint64_t num_pages)
 {
-    // xxx this needs to be implemented
+    uint64_t pgfnum = pagefile_number(num_pages);
+    uint64_t pgfpg = pagefile_page(num_pages);
+    off_t offset = (off_t)pgfpg * pgsize;
+    std::string fname;
+
+    // truncate the partial pagefile containing "num_pages".
+    pagefile * pf = pagefile_hash.find(pgfnum);
+    if (pf)
+    {
+        pf->close();
+        if (pagefile_lru.onthislist(pf))
+            pagefile_lru.remove(pf);
+        fname = dirname + "/" + pf->relpath;
+        if (truncate(fname.c_str(), offset) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "truncate %s failed: %d (%s)\n",
+                    fname.c_str(), e, strerror(e));
+        }
+    }
+
+    // remove all pagefiles higher than the one containing "num_pages".
+    while (1)
+    {
+        pgfnum++;
+        pf = pagefile_hash.find(pgfnum);
+        if (pf == NULL)
+            break;
+        pf->close();
+        if (pagefile_lru.onthislist(pf))
+            pagefile_lru.remove(pf);
+        fname = dirname + "/" + pf->relpath;
+        if (unlink(fname.c_str()) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "unlink %s failed: %d (%s)\n",
+                    fname.c_str(), e, strerror(e));
+        }
+        pagefile_list.remove(pf);
+        pagefile_hash.remove(pf);
+        delete pf;
+    }
 }

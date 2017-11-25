@@ -127,23 +127,31 @@ class PageIODirectoryTree : public PageIO {
     std::string dirname;
     int options; // for 'open'
     uint32_t pgsize;
-    uint64_t num_pages;
 
     struct pagefile;
     struct pagefile_pagenum_comp;
-    // this is an LRU:  head = oldest, tail = newest
-    typedef DLL3::List<pagefile,1,false,false> pagefile_list_t;
+    // this is an LRU:  head = newest, tail = oldest.
+    // a pagefile is only on the lru if the fd is open.
+    // it is always on the hash and list, but if not on the
+    // lru then fd is -1.
+    typedef DLL3::List<pagefile,1,false,false> pagefile_lru_t;
     typedef DLL3::Hash<pagefile,uint64_t,
                        pagefile_pagenum_comp,2,
                        false,false> pagefile_hash_t;
+    // this is list of all known page files.
+    typedef DLL3::List<pagefile,3,false,false> pagefile_list_t;
     struct pagefile : public pagefile_list_t::Links,
-                      public pagefile_hash_t::Links
+                      public pagefile_hash_t::Links,
+                      public pagefile_lru_t::Links
     {
-        pagefile(int _fd, uint64_t _pagenumber)
-            : fd(_fd), pagenumber(_pagenumber) { }
+        pagefile(uint64_t _pagenumber);
         ~pagefile(void);
+        static std::string format_relpath(uint64_t _pagenumber);
+        bool open(const std::string &dirname, int options);
+        void close(void);
         int fd;
         uint64_t pagenumber;
+        std::string relpath; // relative to base dirname
     };
     struct pagefile_pagenum_comp {
         static uint32_t obj2hash(const pagefile &item) {
@@ -156,10 +164,11 @@ class PageIODirectoryTree : public PageIO {
             return item.pagenumber == key;
         }
     };
+    pagefile_lru_t pagefile_lru;
     pagefile_list_t pagefile_list;
     pagefile_hash_t pagefile_hash;
-    uint64_t pagefile_number(const PageCachePage *pg);
-    uint64_t pagefile_page(const PageCachePage *pg);
+    uint64_t pagefile_number(uint64_t page_number);
+    uint64_t pagefile_page(uint64_t page_number);
     pagefile * get_pagefile(const PageCachePage *pg, uint64_t &pgfpg);
 public:
     PageIODirectoryTree(const std::string &_encryption_password,
