@@ -92,16 +92,6 @@ public:
      * \param pg A PageCachePage to write
      * \return true if the write succeeded, false if error */
     virtual bool  put_page( PageCachePage * pg ) = 0;
-    /** return size of the file in pages.
-     * \param page_aligned pointer to a bool; if NULL, it is ignored;
-     *  if not NULL, the bool will be written with true if the size of
-     *  the file is an even multiple of the page size, or false if the 
-     *  file size is not an even multiple of the page size.
-     * \note This method rounds up the return value to the nearest page,
-     *  if the size of the file is not an even multiple of a page size. */
-    virtual uint64_t get_num_pages(bool * page_aligned = NULL) = 0;
-    /** return size of the file in bytes. */
-    virtual off_t get_size(void) = 0;
     /** cut the file to a certain size. */
     virtual void  truncate_pages(uint64_t num_pages) = 0;
 };
@@ -126,8 +116,6 @@ public:
     // from the base class documentation.
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
-    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
-    /*virtual*/ off_t get_size(void);
     /*virtual*/ void  truncate_pages(uint64_t num_pages);
 };
 
@@ -180,8 +168,6 @@ public:
     bool get_ok(void) { return ok; }
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
-    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
-    /*virtual*/ off_t get_size(void);
     /*virtual*/ void  truncate_pages(uint64_t num_pages);
 };
 
@@ -197,8 +183,6 @@ public:
     // from the base class documentation.
     /*virtual*/ bool  get_page( PageCachePage * pg );
     /*virtual*/ bool  put_page( PageCachePage * pg );
-    /*virtual*/ uint64_t get_num_pages(bool * page_aligned = NULL);
-    /*virtual*/ off_t get_size(void);
     /*virtual*/ void  truncate_pages(uint64_t num_pages);
 };
 

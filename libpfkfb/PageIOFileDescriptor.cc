@@ -119,36 +119,6 @@ PageIOFileDescriptor :: put_page( PageCachePage * pg )
 }
 
 //virtual
-uint64_t
-PageIOFileDescriptor :: get_num_pages(bool * page_aligned)
-{
-    struct stat sb;
-    off_t pgsize = ciphering_enabled ? CIPHERED_PAGE_SIZE : PCP_PAGE_SIZE;
-    if (fstat(fd, &sb) < 0)
-        return -1;
-    if ((sb.st_size % pgsize) != 0)
-    {
-        if (page_aligned)
-            *page_aligned = false;
-        return (sb.st_size / pgsize) + 1;
-    }
-    // else
-    if (page_aligned)
-        *page_aligned = true;
-    return (sb.st_size / pgsize);
-}
-
-//virtual
-off_t
-PageIOFileDescriptor :: get_size(void)
-{
-    struct stat sb;
-    if (fstat(fd, &sb) < 0)
-        return -1;
-    return sb.st_size;
-}
-
-//virtual
 void
 PageIOFileDescriptor :: truncate_pages(uint64_t num_pages)
 {

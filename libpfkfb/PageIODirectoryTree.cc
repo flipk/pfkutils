@@ -344,22 +344,6 @@ PageIODirectoryTree :: put_page( PageCachePage * pg )
 }
 
 //virtual
-uint64_t
-PageIODirectoryTree :: get_num_pages(bool * page_aligned)
-{
-    // xxx this needs to be implemented
-    return 9;
-}
-
-//virtual
-off_t
-PageIODirectoryTree :: get_size(void)
-{
-    // xxx this needs to be implemented
-    return 9;
-}
-
-//virtual
 void
 PageIODirectoryTree :: truncate_pages(uint64_t num_pages)
 {
