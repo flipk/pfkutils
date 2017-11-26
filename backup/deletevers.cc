@@ -145,6 +145,13 @@ bakFile::delete_version(int version)
 
             const bakData::fileinfo_data &fid = fileinfo.data.fileinfo;
 
+            if (fid.link_contents().size() > 0)
+            {
+                // symlink objects don't have a corresponding blob chain,
+                // so we're done with this file.
+                continue;
+            }
+
             bakDatum blobhash(bt);
             blobhash.key_blobhash( fid.hash(), fid.filesize() );
             if (blobhash.get() == false)

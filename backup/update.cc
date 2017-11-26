@@ -190,7 +190,8 @@ struct fileInfo {
                  << strerror(e) << endl;
             err = true;
         } else {
-            if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode))
+            if (S_ISREG(sb.st_mode) || S_ISDIR(sb.st_mode) ||
+                S_ISLNK(sb.st_mode))
             {
                 mtime.tv_sec = sb.st_mtim.tv_sec;
                 mtime.tv_usec = sb.st_mtim.tv_nsec / 1000;
@@ -205,6 +206,7 @@ struct fileInfo {
         }
     }
     const bool isdir(void) const { return S_ISDIR(sb.st_mode); }
+    const bool islnk(void) const { return S_ISLNK(sb.st_mode); }
 };
 
 void
@@ -258,13 +260,13 @@ bakFile::_update(void)
         const fileInfo &item = todo.front();
         if (item.isdir())
         {
-            DIR * d = opendir(item.name.c_str());
-            if (d)
+            pxfe_readdir d;
+            if (d.open(item.name.c_str()))
             {
-                struct dirent * de;
-                while ((de = readdir(d)) != NULL)
+                struct dirent de;
+                while (d.read(de))
                 {
-                    string dename(de->d_name);
+                    string dename(de.d_name);
                     if (dename == "." || dename == "..")
                         continue;
                     todo.push_back(fileInfo(item.name + "/" + dename));
@@ -272,59 +274,93 @@ bakFile::_update(void)
                         // take it off again
                         todo.pop_back();
                 }
-                closedir(d);
             }
         }
         else
         {
             string hash;
             file_count++;
-            total_bytes += item.sb.st_size;
 
-            bakDatum fileinfo(bt);
-            fileinfo.key_fileinfo( prev_version, item.name );
-            if (fileinfo.get())
+            if (item.islnk())
             {
-                if (
-              (fileinfo.data.fileinfo.time.btv_sec()  != item.mtime.tv_sec ) ||
-              (fileinfo.data.fileinfo.time.btv_usec() != item.mtime.tv_usec) ||
-              (fileinfo.data.fileinfo.filesize()      != item.sb.st_size   )
-                    )
+                char link_contents[PATH_MAX];
+                ssize_t rlsize = readlink(item.name.c_str(), link_contents,
+                                          sizeof(link_contents));
+                if (rlsize > 0)
                 {
-                    if (opts.verbose > 1)
-                        cout << "file ts or hash changed: "
-                             << item.name << endl;
-                    put_file(hash, item.name, item.sb.st_size);
+                    bakDatum fileinfo(bt);
+                    fileinfo.key_fileinfo( version, item.name );
+                    fileinfo.data.fileinfo.hash() = "";
+                    fileinfo.data.fileinfo.time.btv_sec() = 0;
+                    fileinfo.data.fileinfo.time.btv_usec() = 0;
+                    fileinfo.data.fileinfo.filesize() = 0;
+                    fileinfo.data.fileinfo.link_contents().assign(
+                        link_contents, rlsize);
+                    fileinfo.mark_dirty();
+                    if (opts.verbose)
+                    {
+                        cout << "link " << item.name << " --> "
+                             << fileinfo.data.fileinfo.link_contents()
+                             << endl;
+                    }
                 }
                 else
                 {
-                    hash = fileinfo.data.fileinfo.hash();
-                    bakDatum blobhash(bt);
-                    blobhash.key_blobhash( hash, item.sb.st_size );
-                    if (blobhash.get() == false)
-                        cerr << "can't fetch blobhash\n";
-                    else
-                    {
-                        if (opts.verbose > 1)
-                            cout << "bumped refcount on blob "
-                                 << format_hash(hash) << endl;
-                        blobhash.data.blobhash.refcount()++;
-                        blobhash.mark_dirty();
-                    }
-                }  
+                    int e = errno;
+                    char * err = strerror(e);
+                    cerr << "readlink " << item.name << " returns "
+                         << e << "(" << err << ")" << endl;
+                }
             }
             else
             {
-                put_file(hash, item.name, item.sb.st_size);
-            }
+                total_bytes += item.sb.st_size;
 
-            bakDatum newfinfo(bt);
-            newfinfo.key_fileinfo( version, item.name );
-            newfinfo.data.fileinfo.hash()          = hash;
-            newfinfo.data.fileinfo.time.btv_sec()  = item.mtime.tv_sec;
-            newfinfo.data.fileinfo.time.btv_usec() = item.mtime.tv_usec;
-            newfinfo.data.fileinfo.filesize()      = item.sb.st_size;
-            newfinfo.mark_dirty();
+                bakDatum fileinfo(bt);
+                fileinfo.key_fileinfo( prev_version, item.name );
+                if (fileinfo.get())
+                {
+                    if (
+   (fileinfo.data.fileinfo.time.btv_sec()  != item.mtime.tv_sec ) ||
+   (fileinfo.data.fileinfo.time.btv_usec() != item.mtime.tv_usec) ||
+   (fileinfo.data.fileinfo.filesize()      != item.sb.st_size   )
+                        )
+                    {
+                        if (opts.verbose > 1)
+                            cout << "file ts or hash changed: "
+                                 << item.name << endl;
+                        put_file(hash, item.name, item.sb.st_size);
+                    }
+                    else
+                    {
+                        hash = fileinfo.data.fileinfo.hash();
+                        bakDatum blobhash(bt);
+                        blobhash.key_blobhash( hash, item.sb.st_size );
+                        if (blobhash.get() == false)
+                            cerr << "can't fetch blobhash\n";
+                        else
+                        {
+                            if (opts.verbose > 1)
+                                cout << "bumped refcount on blob "
+                                     << format_hash(hash) << endl;
+                            blobhash.data.blobhash.refcount()++;
+                            blobhash.mark_dirty();
+                        }
+                    }  
+                }
+                else
+                {
+                    put_file(hash, item.name, item.sb.st_size);
+                }
+
+                bakDatum newfinfo(bt);
+                newfinfo.key_fileinfo( version, item.name );
+                newfinfo.data.fileinfo.hash()          = hash;
+                newfinfo.data.fileinfo.time.btv_sec()  = item.mtime.tv_sec;
+                newfinfo.data.fileinfo.time.btv_usec() = item.mtime.tv_usec;
+                newfinfo.data.fileinfo.filesize()      = item.sb.st_size;
+                newfinfo.mark_dirty();
+            }
 
             versionindex.data.versionindex.filenames[vind++]() =
                 item.name;

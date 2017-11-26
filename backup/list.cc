@@ -103,28 +103,37 @@ bakFile::listdb(void)
                         {
                             const bakData::fileinfo_data &fi =
                                 fileinfo.data.fileinfo;
-                            cout << "            hash : "
-                                 << format_hash(fi.hash()) << endl;
-                            pxfe_timeval mtv;
-                            fi.time.get(mtv);
-                            cout << "            time : "
-                                 << format_time(mtv) << endl;
-                            cout << "            size : "
-                                 << fi.filesize() << endl;
+                            if (fi.link_contents().size() == 0)
+                            {
+                                cout << "            hash : "
+                                     << format_hash(fi.hash()) << endl;
+                                pxfe_timeval mtv;
+                                fi.time.get(mtv);
+                                cout << "            time : "
+                                     << format_time(mtv) << endl;
+                                cout << "            size : "
+                                     << fi.filesize() << endl;
 
-                            bakDatum blobhash(bt);
-                            blobhash.key_blobhash( fi.hash(),
-                                                   fi.filesize() );
-                            if (blobhash.get() == false)
-                                cerr << "cant fetch blobhash\n";
+                                bakDatum blobhash(bt);
+                                blobhash.key_blobhash( fi.hash(),
+                                                       fi.filesize() );
+                                if (blobhash.get() == false)
+                                    cerr << "cant fetch blobhash\n";
+                                else
+                                {
+                                    cout << "            blob ref : "
+                                         << blobhash.data.blobhash.refcount()
+                                         << endl
+                                         << "            blob first auid : "
+                                         << blobhash.data.blobhash.first_auid()
+                                         << endl;
+                                }
+                            }
                             else
                             {
-                                cout << "            blob ref : "
-                                     << blobhash.data.blobhash.refcount()
-                                     << endl
-                                     << "            blob first auid : "
-                                     << blobhash.data.blobhash.first_auid()
-                                     << endl;
+                                //symlink
+                                cout << "            link target : "
+                                     << fi.link_contents() << endl;
                             }
                         }
                     }

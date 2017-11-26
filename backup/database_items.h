@@ -88,10 +88,11 @@ struct bakData : public BST_UNION {
     } versionindex;
     struct fileinfo_data : public BST {
         fileinfo_data(BST *parent) : BST(parent), hash(this), time(this),
-                                     filesize(this) { }
+                                     filesize(this), link_contents(this) { }
         BST_STRING hash;
         BST_TIMEVAL time;
         BST_UINT64_t filesize;
+        BST_STRING link_contents;
     } fileinfo;
     struct blobhash_data : public BST {
         blobhash_data(BST *parent) : BST(parent), refcount(this),

@@ -186,6 +186,29 @@ bakFile :: extract_file(uint32_t version, const std::string &path, int tarfd)
         cerr << "version " << version << " file " << path << " not found\n";
         return false;
     }
+
+    const string &link_cont = fileinfo.data.fileinfo.link_contents();
+    if (link_cont.size() > 0)
+    {
+        if (opts.verbose)
+        {
+            cout << " --> " << link_cont;
+            cout.flush();
+        }
+        mkdir_minus_p(path);
+        if (symlink(link_cont.c_str(), path.c_str()) < 0)
+        {
+            int e = errno;
+            char * err = strerror(e);
+            if (opts.verbose == 0)
+                cout << "link " << path << " --> "
+                     << link_cont;
+            cout << " : " << e << " (" << err << ")" << endl;
+            return false;
+        }
+        return true;
+    }
+
     const string &hash = fileinfo.data.fileinfo.hash();
     uint64_t filesize = fileinfo.data.fileinfo.filesize();
 
