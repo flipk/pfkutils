@@ -86,6 +86,18 @@ bakFile::_extract(int tarfd)
     }
     const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
 
+    if (dbi.dbinfo_version() != CURRENT_DBINFO_VERSION)
+    {
+        cerr << "NOTICE : dbinfo version mismatch "
+             << dbi.dbinfo_version() << " != "
+             << CURRENT_DBINFO_VERSION
+             << " set OVERRIDE_VERSION=1 to force"
+             << endl;
+        if (getenv("OVERRIDE_VERSION") == NULL)
+            return;
+        cerr << " (OVERRIDE_VERSION found, continuing)" << endl;
+    }
+
     bool found = false;
     for (int cnt = 0; cnt < dbi.versions.length(); cnt++)
         if (dbi.versions[cnt]() == version)

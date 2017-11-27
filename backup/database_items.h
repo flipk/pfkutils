@@ -69,10 +69,13 @@ struct bakData : public BST_UNION {
                     versionindex(this), fileinfo(this), blobhash(this) { }
     struct dbinfo_data : public BST {
         dbinfo_data(BST *parent)
-            : BST(parent), sourcedir(this), nextver(this), versions(this) { }
+            : BST(parent), sourcedir(this), nextver(this),
+              versions(this), dbinfo_version(this) { }
         BST_STRING sourcedir;
         BST_UINT32_t  nextver;
         BST_ARRAY<BST_UINT32_t>  versions;
+        BST_UINT32_t dbinfo_version;
+#define CURRENT_DBINFO_VERSION 3
     } dbinfo;
     struct versioninfo_data : public BST {
         versioninfo_data(BST *parent) : BST(parent), time(this),

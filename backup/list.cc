@@ -53,13 +53,31 @@ bakFile::listdb(void)
         return;
     }
 
+    const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
+
     cout << "dbinfo :\n"
-         << "  sourcedir : " << dbinfo.data.dbinfo.sourcedir() << endl
-         << "  nextver : " << dbinfo.data.dbinfo.nextver() << endl
-         << "  versions :\n";
-    for (int vind = 0; vind < dbinfo.data.dbinfo.versions.length(); vind++)
+         << "  dbinfo_version : " << dbi.dbinfo_version() << endl
+         << "  sourcedir : " << dbi.sourcedir() << endl
+         << "  nextver : " << dbi.nextver() << endl;
+
+    if (dbi.dbinfo_version() != CURRENT_DBINFO_VERSION)
     {
-        uint32_t version = dbinfo.data.dbinfo.versions[vind]();
+        cerr << "NOTICE : dbinfo version mismatch "
+             << dbi.dbinfo_version() << " != "
+             << CURRENT_DBINFO_VERSION
+             << " set OVERRIDE_VERSION=1 to force"
+             << endl;
+        if (getenv("OVERRIDE_VERSION") == NULL)
+            return;
+        cerr << " (OVERRIDE_VERSION found, continuing)" << endl;
+    }
+
+    cout
+         << "  versions :\n";
+
+    for (int vind = 0; vind < dbi.versions.length(); vind++)
+    {
+        uint32_t version = dbi.versions[vind]();
         cout << "    ver: " << version << endl;
         bakDatum versioninfo(bt);
         versioninfo.key_versioninfo( version );

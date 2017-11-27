@@ -49,6 +49,18 @@ bakFile::deletevers(void)
     }
     const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
 
+    if (dbi.dbinfo_version() != CURRENT_DBINFO_VERSION)
+    {
+        cerr << "NOTICE : dbinfo version mismatch "
+             << dbi.dbinfo_version() << " != "
+             << CURRENT_DBINFO_VERSION
+             << " set OVERRIDE_VERSION=1 to force"
+             << endl;
+        if (getenv("OVERRIDE_VERSION") == NULL)
+            return;
+        cerr << " (OVERRIDE_VERSION found, continuing)" << endl;
+    }
+
     bakDatum newdbinfo(bt);
     newdbinfo.key_dbinfo();
     newdbinfo.data.dbinfo.sourcedir() = dbi.sourcedir();

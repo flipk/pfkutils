@@ -41,6 +41,7 @@ bakFile::create(void)
     {
         bakDatum  dat(bt);
         dat.key_dbinfo();
+        dat.data.dbinfo.dbinfo_version() = CURRENT_DBINFO_VERSION;
         dat.data.dbinfo.sourcedir() = opts.sourcedir;
         dat.data.dbinfo.nextver() = 1;
         dat.mark_dirty();

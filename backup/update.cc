@@ -229,11 +229,25 @@ bakFile::_update(void)
         return;
     }
 
-    version = dbinfo.data.dbinfo.nextver();
-    int version_index = dbinfo.data.dbinfo.versions.length() - 1;
+    const bakData::dbinfo_data &dbi = dbinfo.data.dbinfo;
+
+    if (dbi.dbinfo_version() != CURRENT_DBINFO_VERSION)
+    {
+        cerr << "NOTICE : dbinfo version mismatch "
+             << dbi.dbinfo_version() << " != "
+             << CURRENT_DBINFO_VERSION
+             << " set OVERRIDE_VERSION=1 to force"
+             << endl;
+        if (getenv("OVERRIDE_VERSION") == NULL)
+            return;
+        cerr << " (OVERRIDE_VERSION found, continuing)" << endl;
+    }
+
+    version = dbi.nextver();
+    int version_index = dbi.versions.length() - 1;
     if (version_index >= 0)
-        prev_version = dbinfo.data.dbinfo.versions[version_index]();
-    sourcedir = dbinfo.data.dbinfo.sourcedir();
+        prev_version = dbi.versions[version_index]();
+    sourcedir = dbi.sourcedir();
 
     if (chdir(sourcedir.c_str()) < 0)
     {
