@@ -52,7 +52,7 @@ bakFile::match_file_name(const std::string &path)
         // if nothing was specified, all paths match
         return true;
 
-    for (int ind = 0; ind < opts.paths.size(); ind++)
+    for (uint32_t ind = 0; ind < opts.paths.size(); ind++)
     {
         const string &pattern = opts.paths[ind];
         size_t len = pattern.length();

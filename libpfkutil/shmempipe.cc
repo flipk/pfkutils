@@ -383,7 +383,6 @@ shmempipe :: closerThread(void)
     {
         // open other pipe, write connect indication,
         // then try to open my pipe, wait for connect indication.
-        int counter = 0;
 
         m_otherPipeFd = open(m_filename.s2mname, O_WRONLY | O_NONBLOCK);
         if (m_otherPipeFd < 0)

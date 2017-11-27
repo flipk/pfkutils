@@ -77,6 +77,9 @@ Next: \ref BtreeStructure
 
 /** \todo Compaction algorithm should someday reclaim unused L2/L3 tables. */
 
+//redhat needs this for PRIu64 and friends.
+#define __STDC_FORMAT_MACROS 1
+
 #include "FileBlockLocal.h"
 
 #include <stdlib.h>
@@ -156,11 +159,12 @@ addent( L2L3s * l, FB_AUN_T aun,
     l->add(ent);
     if (debug_compaction)
     {
-        printf("add table type %d level %d at aun %d; ", ty, lev, aun);
+        printf("add table type %d level %d at aun %"
+               PRIu64 "; ", ty, lev, aun);
         if (lev == L2)
             printf("  parent is L1 index %d\n", parent_index);
         else
-            printf("  parent is L2 at %d index %d\n",
+            printf("  parent is L2 at aun %" PRIu64 " index %d\n",
                    l->find(parent_aun)->aun, parent_index);
     }
 }
@@ -227,7 +231,8 @@ FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
                         l2l3ent->parent_index].set(new_aun);
                     if (debug_compaction)
                     {
-                        printf("  moved an L2 AUID table from %d to %d "
+                        printf("  moved an L2 AUID table from aun %"
+                               PRIu64 " to %" PRIu64 " "
                                "(pi %d)\n",
                                aun, new_aun, l2l3ent->parent_index);
                     }
@@ -238,8 +243,8 @@ FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
                         l2l3ent->parent_index].set(new_aun);
                     if (debug_compaction)
                     {
-                        printf("  moved an L2 stack table from %d to %d "
-                               "(pi %d)\n",
+                        printf("  moved an L2 stack table from aun %"
+                               PRIu64 " to %" PRIu64 " (pi %d)\n",
                                aun, new_aun, l2l3ent->parent_index);
                     }
                 }
@@ -255,8 +260,9 @@ FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
                 release(fb);
                 if (debug_compaction)
                 {
-                    printf("  moved an L3 %s table from %d to %d "
-                           "(paun %d pi %d)\n",
+                    printf("  moved an L3 %s table from aun %"
+                           PRIu64 " to %" PRIu64 " (paun %"
+                           PRIu64 " pi %d)\n",
                            l2l3ent->type == AUID ? "AUID" : "stack",
                            aun, new_aun, 
                            l2l3ent->parent->aun,
@@ -272,7 +278,8 @@ FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
         }
         else
         {
-            printf("  ERROR: can't find an L2/L3 table for aun %d\n", aun);
+            printf("  ERROR: can't find an L2/L3 table for aun %"
+                   PRIu64 "\n", aun);
             fflush(stdout);
             kill(0,6);
         }
@@ -286,7 +293,8 @@ FileBlockLocal :: move_unit( L2L3s *l2l3tables, FB_AUID_T auid,
         if (debug_compaction)
         {
             new_aun = translate_auid(auid);
-            printf("  moved auid %d from %d to %d\n", auid, old_aun, new_aun);
+            printf("  moved auid %d from aun %"
+                   PRIu64 " to %" PRIu64 "\n", auid, old_aun, new_aun);
         }
     }
 }
@@ -345,8 +353,8 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
 
         if (debug_compaction)
         {
-            printf("free_aus = %d, file_size = %d, percent = %d\n",
-                   free_aus, last_aun, (free_aus*100)/last_aun);
+            printf("free_aus = %d, file_size = %" PRIu64 ", percent = %u\n",
+                   free_aus, last_aun, (uint32_t)((free_aus*100)/last_aun));
         }
 
         {
@@ -372,7 +380,7 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
         au.release();
         if (debug_compaction)
         {
-            printf("last used au is at %d, auid %d,  size is %d\n",
+            printf("last used au is at %" PRIu64 ", auid %d,  size is %d\n",
                    aun, auid, num_aus);
         }
 
@@ -406,7 +414,7 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                 }
                 if (debug_compaction)
                 {
-                    printf("found a free region of size %d at %d\n",
+                    printf("found a free region of size %d at %" PRIu64 "\n",
                            au.d->size(), next_ds_au);
                 }
                 if (au.d->size() == 0)
@@ -440,7 +448,8 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                 au.release();
                 if (debug_compaction)
                 {
-                    printf("downshifting auid %d size %d from %d to %d:\n",
+                    printf("downshifting auid %d size %d from aun %"
+                           PRIu64 " to %" PRIu64 ":\n",
                            auid, num_aus, naun, next_ds_au );
                 }
                 move_unit( &l2l3tables, auid, naun, next_ds_au );
@@ -448,7 +457,8 @@ FileBlockLocal :: compact( FileBlockCompactionStatusFunc func, void * arg )
                 {
                     naun = next_ds_au + num_aus;
                     au.get(naun);
-                    printf("after moving, next %s region size at %d is %d\n",
+                    printf("after moving, next %s region size at aun %"
+                           PRIu64 " is %d\n",
                            au.d->used() ? "USED" : "FREE",
                            naun, au.d->size());
                     au.release();

@@ -289,7 +289,6 @@ Manager :: _notifyThread(void)
     std::vector<Handle*> handles;
     char buffer[4096];
     int cc;
-    int maxfd;
     HandleMap::iterator it;
     Handle * h;
     struct signalMsg msg;

@@ -48,7 +48,7 @@ PageIODirectoryTree :: PageIODirectoryTree(
     const std::string &_encryption_password,
     const std::string &_dirname, bool create)
     : PageIO(_encryption_password),
-      dirname(_dirname), ok(false)
+      ok(false), dirname(_dirname)
 {
     // this will probably cause problems for someone.
     if (sizeof(off_t) != 8)
@@ -69,7 +69,12 @@ PageIODirectoryTree :: PageIODirectoryTree(
     {
         // relative to cwd
         char cwd[PATH_MAX];
-        getcwd(cwd, sizeof(cwd));
+        if (getcwd(cwd, sizeof(cwd)) == NULL)
+        {
+            int e = errno;
+            char * err = strerror(errno);
+            fprintf(stderr, "getcwd failed: %d (%s)\n", e, err);
+        }
         std::string newname = std::string(cwd) + "/" + dirname;
         dirname = newname;
     }
@@ -276,7 +281,7 @@ PageIODirectoryTree :: get_page( PageCachePage * pg )
                 strerror(errno));
         return false;
     }
-    if (cc != pgsize)
+    if (cc != (int) pgsize)
     {
         // zero-fill the remainder of the page.
         memset(bufptr + cc, 0, pgsize - cc);

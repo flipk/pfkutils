@@ -112,7 +112,7 @@ bkOptions::_parse(int argc, char ** argv)
 
     string op_str = argv[1];
 
-    for (int p = 0; p < op_str.length(); p++)
+    for (uint32_t p = 0; p < op_str.length(); p++)
     {
         char c = op_str[p];
         switch (c)

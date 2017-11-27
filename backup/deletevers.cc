@@ -35,7 +35,8 @@ using namespace std;
 void
 bakFile::deletevers(void)
 {
-    int versionindex, version;
+    int versionindex;
+    uint32_t version;
 
     if (openFiles() == false)
         return;
@@ -70,7 +71,7 @@ bakFile::deletevers(void)
 
     // first ensure every version the user specified
     // is actually in the database.
-    for (versionindex = 0; versionindex < opts.versions.size(); versionindex++)
+    for (versionindex = 0; versionindex < (int) opts.versions.size(); versionindex++)
     {
         version = opts.versions[versionindex];
         bool found = false;
@@ -92,8 +93,8 @@ bakFile::deletevers(void)
     {
         version = dbi.versions[versionindex]();
         bool found = false;
-        for (int ind = 0; ind < opts.versions.size(); ind++)
-            if (opts.versions[ind] == version)
+        for (uint32_t ind = 0; ind < opts.versions.size(); ind++)
+            if ((uint32_t) opts.versions[ind] == version)
             {
                 found = true;
                 break;
@@ -106,7 +107,7 @@ bakFile::deletevers(void)
     }
 
     // now actually delete the versions.
-    for (versionindex = 0; versionindex < opts.versions.size(); versionindex++)
+    for (versionindex = 0; versionindex < (int) opts.versions.size(); versionindex++)
     {
         version = opts.versions[versionindex];
         delete_version(version);

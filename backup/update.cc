@@ -335,9 +335,9 @@ bakFile::_update(void)
                 if (fileinfo.get())
                 {
                     if (
-   (fileinfo.data.fileinfo.time.btv_sec()  != item.mtime.tv_sec ) ||
+   ((time_t) fileinfo.data.fileinfo.time.btv_sec()  != item.mtime.tv_sec ) ||
    (fileinfo.data.fileinfo.time.btv_usec() != item.mtime.tv_usec) ||
-   (fileinfo.data.fileinfo.filesize()      != item.sb.st_size   )
+   (fileinfo.data.fileinfo.filesize()      != (uint64_t) item.sb.st_size   )
                         )
                     {
                         if (opts.verbose > 1)

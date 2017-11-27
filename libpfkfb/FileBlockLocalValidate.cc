@@ -29,6 +29,9 @@ For more information, please refer to <http://unlicense.org>
  * \brief Validation and debug functions.
  */
 
+//redhat needs this for PRIu64 and friends.
+#define __STDC_FORMAT_MACROS 1
+
 #include "FileBlockLocal.h"
 
 #include <stdlib.h>
@@ -48,7 +51,7 @@ FileBlockLocal :: validate( bool verbose )
     if (verbose)
     {
         printf("  good signature\n");
-        printf("  used aus: %d  free aus: %d  first au: %d\n"
+        printf("  used aus: %d  free aus: %d  first au: %" PRIu64 "\n"
                "  num_aus: %d used ext: %d  free ext: %d\n",
                fh.d->info.used_aus.get(),
                fh.d->info.free_aus.get(),
@@ -63,12 +66,12 @@ FileBlockLocal :: validate( bool verbose )
         {
             aun = translate_auid(auid);
             if (aun != 0)
-                printf("  auid %d = aun %d\n", auid, aun);
+                printf("  auid %d = aun %" PRIu64 "\n", auid, aun);
         }
         for (aun=0; aun < fh.d->info.auid_stack_top.get(); aun++)
         {
             auid = lookup_stack(aun);
-            printf( "  free stack ind %d -> auid %d\n", aun, auid);
+            printf( "  free stack ind %" PRIu64 " -> auid %d\n", aun, auid);
         }
     }
 
@@ -95,23 +98,23 @@ FileBlockLocal :: validate( bool verbose )
         AUHead  au(bc);
         if (!au.get(aun))
         {
-            printf("ERROR: could not fetch au %d\n", aun);
+            printf("ERROR: could not fetch aun %" PRIu64 "\n", aun);
             return;
         }
         int au_size = au.d->size();
         if (verbose)
         {
-            printf("  %d: %s ", aun,
+            printf("  %" PRIu64 ": %s ", aun,
                    au.d->used() ? "USED" : "FREE");
             if (au_size != 0)
                 printf("size %d ", au_size);
             else
                 printf("LAST ");
-            printf("prev %d ", au.d->prev.get());
+            printf("prev %" PRIu64 " ", au.d->prev.get());
             if (au.d->used())
                 printf("auid %d", au.d->auid());
             else
-                printf("bucket_next %d bucket_prev %d",
+                printf("bucket_next %" PRIu64 " bucket_prev %" PRIu64,
                        au.d->bucket_next(),
                        au.d->bucket_prev());
             printf("\n");
@@ -164,22 +167,24 @@ FileBlockLocal :: validate( bool verbose )
         while (aun != 0)
         {
             if (verbose)
-                printf("%d ", aun);
+                printf("%" PRIu64 " ", aun);
             AUHead  au(bc);
             if (!au.get(aun))
             {
-                printf("ERROR: unable to get free aun %d\n", aun);
+                printf("ERROR: unable to get free aun %" PRIu64 "\n", aun);
                 return;
             }
             if (au.d->used() == true)
             {
-                printf("ERROR: aun %d used but on bucket list %d!\n", aun, i);
+                printf("ERROR: aun %" PRIu64 " used but on "
+                       "bucket list %d!\n", aun, i);
                 return;
             }
             tmp = au.d->bucket_prev();
             if (prev_aun != tmp)
             {
-                printf("ERROR: aun %d has incorrect bucket_prev (%d!=%d)\n",
+                printf("ERROR: aun %" PRIu64 " has incorrect "
+                       "bucket_prev (%" PRIu64 "!=%" PRIu64 ")\n",
                        aun, prev_aun, tmp);
                 return;
             }

@@ -190,7 +190,7 @@ void
 BlockCache :: release( BlockCacheBlock * _bcb, bool dirty )
 {
     BCB * bcb = (BCB *)_bcb;
-    int i;
+    uint32_t i;
 
     if (bcb->dirty)
         dirty = true;
@@ -263,7 +263,7 @@ BlockCache :: flush_bcb(BlockCacheBlock * _bcb)
     uint8_t * uptr = bcb->ptr;
     int remaining = bcb->size;
     int pg_offset = bcb->offset % PageIO::PCP_PAGE_SIZE;
-    int i;
+    uint32_t i;
 
     for (i=0; i < bcb->num_pages; i++)
     {

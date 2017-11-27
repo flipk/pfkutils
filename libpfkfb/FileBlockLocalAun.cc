@@ -66,6 +66,8 @@ Next: \ref AUNBuckets
 */
 
 
+//redhat needs this for PRIu64 and friends.
+#define __STDC_FORMAT_MACROS 1
 
 #include "FileBlockLocal.h"
 
@@ -145,7 +147,8 @@ FileBlockLocal :: alloc_aun( FB_AUN_T desired_aun, AUHead * au, int size )
 
         if (!new_free.get(new_free_aun, true))
         {
-            fprintf(stderr, "unable to fetch aun %d\n", new_free_aun);
+            fprintf(stderr, "unable to fetch aun %"
+                    PRIu64 "\n", new_free_aun);
             exit(1);
         }
         new_free.d->used(false);
@@ -192,7 +195,8 @@ FileBlockLocal :: free_aun( FB_AUN_T aun )
     AUHead au(bc);
     if (!au.get(aun))
     {
-        fprintf(stderr, "FileBlockLocal :: free : unable to get %d\n", aun);
+        fprintf(stderr, "FileBlockLocal :: free : unable to get %"
+                PRIu64 "\n", aun);
         return;
     }
     au.mark_dirty();
@@ -213,7 +217,8 @@ FileBlockLocal :: free_aun( FB_AUN_T aun )
     {
         if (!prev_au.get(prev_aun))
         {
-            fprintf(stderr, "ERROR: unable to get prev %d\n", prev_aun);
+            fprintf(stderr, "ERROR: unable to get prev %"
+                    PRIu64 "\n", prev_aun);
             return;
         }
         if (prev_au.d->used() == false)
@@ -228,7 +233,8 @@ FileBlockLocal :: free_aun( FB_AUN_T aun )
     {
         if (!next_au.get(next_aun))
         {
-            fprintf(stderr, "ERROR: unable to get next %d\n", next_aun);
+            fprintf(stderr, "ERROR: unable to get next %"
+                    PRIu64 "\n", next_aun);
             return;
         }
         if (next_au.d->used() == false)
@@ -351,7 +357,8 @@ FileBlockLocal :: get_aun( FB_AUN_T aun, bool for_write )
 
     if (au.d->used() == false)
     {
-        fprintf(stderr, "FileBlockLocal :: get_aun: au %d is free!\n", aun);
+        fprintf(stderr, "FileBlockLocal :: get_aun: au %"
+                PRIu64 " is free!\n", aun);
         /*DEBUGME*/
         exit(1);
     }

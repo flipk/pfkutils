@@ -35,12 +35,6 @@ For more information, please refer to <http://unlicense.org>
 
 using namespace std;
 
-static int
-usage(void)
-{
-    return 1;
-}
-
 extern "C" int
 pfkbak_main(int argc, char ** argv)
 {

@@ -244,7 +244,7 @@ format_hash(const std::string &hashbin)
     std::string str;
     str.resize(hashbin.size() * 2);
     char * buf = (char*) str.c_str();
-    for (int ind = 0; ind < hashbin.size(); ind++)
+    for (uint32_t ind = 0; ind < hashbin.size(); ind++)
         sprintf(buf + (ind*2), "%02x", hash[ind]);
     return str;
 }

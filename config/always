@@ -148,6 +148,7 @@ $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
 
 LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
+libpfkutil_CXXFLAGS = -Wall -Wformat=2 # -Werror
 libpfkutil_CSRCS = \
 	libpfkutil/base64.c libpfkutil/d3des.c libpfkutil/d3des_orig.c \
 	libpfkutil/inet_aton.c libpfkutil/m.c libpfkutil/md5.c \
@@ -220,6 +221,7 @@ ifeq ($(PFK_BUILD_libpfkfb),1)
 LIB_TARGETS += libpfkfb
 libpfkfb_TARGET = $(OBJDIR)/libpfkfb.a
 libpfkfb_INCS = -Ilibpfkutil -Ilibpfkdll2
+libpfkfb_CXXFLAGS = -Wall -Wformat=2 # -Werror
 libpfkfb_CXXSRCS = \
 	libpfkfb/BlockCache.cc libpfkfb/Btree.cc libpfkfb/BtreeNode.cc \
 	libpfkfb/FileBlockLocal.cc libpfkfb/FileBlockLocalAllocFree.cc \
@@ -269,6 +271,7 @@ $(error PFK_BUILD_libpfkfb is required for PFK_BUILD_pfkbak)
 endif
 LIB_TARGETS += libpfkbak
 libpfkbak_TARGET = $(OBJDIR)/libpfkbak.a
+libpfkbak_CXXFLAGS = -Wall -Wformat=2 -Werror
 libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
 libpfkbak_CXXSRCS = \
 	backup/bakfile.cc backup/create.cc backup/deletevers.cc \

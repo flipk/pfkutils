@@ -170,7 +170,7 @@ PageIO :: open( const char * _path, bool create, int mode )
     char string[512];
     struct in_addr ipaddr;
     struct hostent * he;
-    int st, en, len, port;
+    int port;
     bool tcp = false;
     bool splitfile = false;
     std::string str_ip, str_host, str_port, str_key, str_file;

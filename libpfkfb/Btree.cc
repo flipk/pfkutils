@@ -160,7 +160,7 @@ Btree :: init_file( FileBlockInterface * _fbi, int order )
     root_fbn = n.get_fbn();
     n.store();
 
-    FB_AUID_T  info_fbn;
+    FB_AUID_T  info_fbn = 0;
     BTInfo  info(_fbi);
 
     info.magic.set ( BTInfo::MAGIC );
@@ -1200,7 +1200,7 @@ BtreeInternal :: iterate_node( BtreeIterator * bti, FB_AUID_T node_fbn )
             ret = false;
     }
     node_cache->release(n);
-    return true;
+    return ret;
 }
 
 // virtual
