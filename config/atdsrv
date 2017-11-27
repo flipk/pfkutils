@@ -64,7 +64,8 @@ pfkthr_test-2_LIBS += -lrt
 pfkthr_test-3_LIBS += -lrt
 pfkthr_test-4_LIBS += -lrt
 
-CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk fish-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
+# fish-pfk does not compile on atdsrv - no C++11 support
 
 export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j4

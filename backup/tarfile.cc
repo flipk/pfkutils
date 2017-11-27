@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 #include <string.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 
 using namespace std;
 

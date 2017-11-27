@@ -69,6 +69,9 @@ Next: \ref BlockCache
 
 */
 
+//redhat needs this for PRIu64 and friends.
+#define __STDC_FORMAT_MACROS 1
+
 #include "PageCache.h"
 #include "PageCache_internal.h"
 
