@@ -30,6 +30,7 @@ For more information, please refer to <http://unlicense.org>
 #include "options.h"
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <string>
 #include <iostream>
