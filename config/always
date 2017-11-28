@@ -12,9 +12,8 @@ DOT_FILES = \
 PREPROC_DOT_FILES = \
 	kshrc profile xsession
 
-CXXFLAGS = -Wformat=2
 ifeq ($(WARNINGS),1)
-CXXFLAGS += -Wall
+CXXFLAGS += -Wall -Wformat=2
 endif
 ifeq ($(ERRORS),1)
 CXXFLAGS += -Werror

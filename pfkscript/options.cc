@@ -27,11 +27,13 @@ For more information, please refer to <http://unlicense.org>
 */
 
 #include "options.h"
-#include <stdlib.h>
-#include <string>
-#include <iostream>
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
+#include <string>
+#include <iostream>
 
 using namespace std;
 

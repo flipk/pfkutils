@@ -30,6 +30,8 @@ For more information, please refer to <http://unlicense.org>
 #define __tiddb_h__ 1
 
 #include <sys/types.h>
+#include <inttypes.h>
+
 #include <string>
 #include <list>
 #include <vector>
