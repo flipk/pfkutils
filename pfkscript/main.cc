@@ -573,7 +573,7 @@ Screen :: sigwinch_handler(int sig)
                 do_logfile_maintenance();
             }
 
-            if (sel.rfds.is_set(master_fd));
+            if (sel.rfds.is_set(master_fd))
                 done = handle_master_sock();
             if (sel.rfds.is_set(0))
                 handle_fd0();
