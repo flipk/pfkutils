@@ -1,7 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
 # droid is a dual core xeon
-MAKEJOBS=-j2
+MAKEJOBS ?= -j2
 
 PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
