@@ -111,7 +111,6 @@ static int
 handle_admin( int argc, char ** argv )
 {
     string arg0(argc > 0 ? argv[0] : "");
-    struct stat sb;
 
     printf("version: %s %s\n", PACKAGE_STRING, BUILD_DATE);
     printf("commit: %s %s\n", PFKUTILS_BRANCH, PFKUTILS_COMMIT);

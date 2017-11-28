@@ -359,7 +359,6 @@ private:
         int linepos = 0;
         int pos;
         int startX = (whichPanel == MODE_DIRS) ? 2 : COLS/2+2;
-        int lastPosDisplayed = 0;
         for (pos = startPos; linepos < numFileWinLines; pos++)
         {
             mvprintw(fileWinLine+linepos,startX-1,"%s",spaces(COLS/2-2));
@@ -389,7 +388,6 @@ private:
                 printw("%s", di->filePart.substr(0,COLS/2-3).c_str());
                 if (di->selected)
                     attroff(A_REVERSE);
-                lastPosDisplayed = pos;
             }
             linepos++;
         }

@@ -174,13 +174,14 @@ LogFile :: openFile(void)
         printError(errno, string("open file: ") + currentLogFile);
         delete currentStream;
         currentStream = NULL;
+        return false;
     }
-    else
-    {
-        currentSize = 0;
-        (*currentStream) << "pfkscript log file opened "
-                         << currentDate() << "\n\n";
-    }
+    // else
+
+    currentSize = 0;
+    (*currentStream) << "pfkscript log file opened "
+                     << currentDate() << "\n\n";
+    return true;
 }
 
 bool

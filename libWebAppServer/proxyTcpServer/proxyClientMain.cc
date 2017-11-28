@@ -31,7 +31,7 @@ For more information, please refer to <http://unlicense.org>
 // UPDATE actually i think this bug got fixed, but i'll leave this todo
 //        here for a while just in case.
 
-// wsProxyClient proxyConn proxy=wwwgate0.mot.com:1080 \
+// wsProxyClient proxyConn proxy=wwwgate0.mot.com:1080
 //   url=ws://leviathan.phillipknaack.com/websocket/levproto listenPort=2222
 
 #include "proxyClientConn.h"

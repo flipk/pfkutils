@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
-// wsProxyServer destHost=blade.phillipknaack.com destPort=22 \
+// wsProxyServer destHost=blade.phillipknaack.com destPort=22
 //   wsPort=1081 wsPath=/websocket/levproto
 
 #include "WebAppServer.h"

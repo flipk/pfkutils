@@ -118,8 +118,8 @@ tidEntry :: update(void)
 
 // linux 2.6.18 format is not documented in Documentation/
 //  so here is the source that makes the output:
-//        res = sprintf(buffer,"%d (%s) %c %d %d %d %d %d %lu %lu \
-//%lu %lu %lu %lu %lu %ld %ld %ld %ld %d 0 %llu %lu %ld %lu %lu %lu %lu %lu \
+//        res = sprintf(buffer,"%d (%s) %c %d %d %d %d %d %lu %lu
+//%lu %lu %lu %lu %lu %ld %ld %ld %ld %d 0 %llu %lu %ld %lu %lu %lu %lu %lu
 //%lu %lu %lu %lu %lu %lu %lu %lu %d %d %lu %lu %llu\n",
 //   0            task->pid,
 //   1            tcomm,

@@ -252,4 +252,6 @@ worker( void * arg )
     lock();
     running_count--;
     unlock();
+
+    return NULL;
 }

@@ -58,7 +58,6 @@ main(int argc, char ** argv)
 {
     regex_t  reg;
     regmatch_t   matches[10];
-    int cnt;
 
     if (argc != 2)
         return 1;

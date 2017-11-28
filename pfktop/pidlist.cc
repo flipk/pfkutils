@@ -200,6 +200,8 @@ struct mySorterClass {
                 return false;
             return (a->tid < b->tid);
         }
+        // shouldn't be reached
+        return false;
     }
 };
 

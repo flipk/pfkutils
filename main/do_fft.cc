@@ -184,14 +184,15 @@ main(int argc, char ** argv)
         exit(1);
     }
 
-    enum { DIR_FORW, DIR_REV } direction = DIR_FORW;
+// direction is not currently used...
+//  enum { DIR_FORW, DIR_REV } direction = DIR_FORW;
     switch (argv[1][0])
     {
     case 'f':
-        direction = DIR_FORW;
+//      direction = DIR_FORW;
         break;
     case 'r':
-        direction = DIR_REV;
+//      direction = DIR_REV;
         break;
     default:
         usage("direction must be f or r");
