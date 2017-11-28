@@ -85,7 +85,7 @@ namespace pfktop {
         ~tidEntry(void);
         void update(void);
         bool any_nonzero_history(void) const {
-            for (int ind = 0; ind < history.size(); ind++)
+            for (uint32_t ind = 0; ind < history.size(); ind++)
                 if (history[ind] > 0)
                     return true;
             return false;

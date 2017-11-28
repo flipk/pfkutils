@@ -391,7 +391,7 @@ class Pfkscript_program {
     {
         LogFile::FilenameList_t  list;
         logfile.periodic(list);
-        int zipind;
+        uint32_t zipind;
         remotePending_t::iterator it = remoteResponsePending.end();
         for (zipind = 0; zipind < list.size(); zipind++)
         {

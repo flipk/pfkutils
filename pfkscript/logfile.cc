@@ -101,7 +101,7 @@ LogFile :: init(void)
         globLogFiles(list);
 
         cout << "glob matches:\n";
-        for (int ind = 0; ind < list.size(); ind++)
+        for (uint32_t ind = 0; ind < list.size(); ind++)
         {
             cout << "entry " << ind << ": "
                  << list[ind].timestamp << ": "
@@ -270,7 +270,7 @@ LogFile :: trimFiles(void)
 
     if (opts.maxFilesSpecified)
     {
-        while (list.size() > opts.maxFiles)
+        while (list.size() > (uint32_t) opts.maxFiles)
         {
             // list is sorted in reverse order by timestamp so
             // start peeling off the end and removing files.
@@ -283,7 +283,7 @@ LogFile :: trimFiles(void)
     bool ret = false;
     if (opts.zipSpecified)
     {
-        for (int ind = 0; ind < list.size(); ind++)
+        for (uint32_t ind = 0; ind < list.size(); ind++)
         {
             if (list[ind].isOriginal)
             {

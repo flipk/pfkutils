@@ -251,7 +251,7 @@ Options :: printOptions(void)
         cout << "listenPort = " << listenPort << endl;
     cout << "command = ";
     // command vector ends in NULL so stop 1 before end
-    for (int ind = 0; ind < (command.size()-1); ind++)
+    for (uint32_t ind = 0; ind < (command.size()-1); ind++)
         cout << command[ind] << " ";
     cout << endl;
 }

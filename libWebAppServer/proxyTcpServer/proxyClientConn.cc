@@ -214,7 +214,7 @@ proxyClientConn :: onMessage(const WebAppServer::WebAppMessage &m)
                     }
                 }
                 //else cc > 0
-                if (cc != bytes_left)
+                if (cc != (int) bytes_left)
                 {
                     printf("NOTE: write of %u != %d\n",
                            (unsigned int) bytes_left, cc);

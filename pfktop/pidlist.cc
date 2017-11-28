@@ -236,7 +236,7 @@ PidList :: print(void) const
     std::sort(printList.begin(), printList.end(), mySorter);
 
     bool more = false;
-    if (printList.size() > height)
+    if ((int) printList.size() > height)
     {
         printList.resize(height);
         more = true;
@@ -296,7 +296,7 @@ PidList :: print(void) const
             bool skip = false;
             int v = 0;
 
-            if (ind >= te->history.size())
+            if (ind >= (int) te->history.size())
                 skip = true;
             if (!skip)
             {

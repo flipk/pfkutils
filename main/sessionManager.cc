@@ -183,7 +183,7 @@ static void sighand(int s)
             pid = waitpid(/*wait for any child*/-1, &status, WNOHANG);
             if (pid > 0)
             {
-                for (int ind = 0; ind < commands.size(); ind++)
+                for (uint32_t ind = 0; ind < commands.size(); ind++)
                 {
                     Command * cmd = commands[ind];
                     if (cmd->pid == pid)
@@ -290,7 +290,7 @@ startProcesses(void)
     sigaction(PFK_SESS_MGR_RESTART_SIG, &sa, NULL);
     sigaction(SIGCHLD, &sa, NULL);
 
-    int ind;
+    uint32_t ind;
     while (doStop == false)
     {
         for (ind = 0; ind < commands.size(); ind++)

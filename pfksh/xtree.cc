@@ -585,7 +585,7 @@ private:
             {
                 // if current dir pattern doesn't match,
                 // keep moving down until we find one that does.
-                while (currentDir < (dirs.size()-1) &&
+                while (currentDir < (int)(dirs.size()-1) &&
                        doMatchPattern(dirs[currentDir]->filePart,
                                       true) == false)
                 {

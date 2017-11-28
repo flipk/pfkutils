@@ -145,7 +145,7 @@ diskloader_main(int argc, char ** argv)
     signal(SIGQUIT, signal_handler);
     signal(SIGTERM, signal_handler);
 
-    for (ind = 0; ind < MAX_NUM_FILES; ind++)
+    for (ind = 0; ind < (int) MAX_NUM_FILES; ind++)
         fils[ind].init(ind);
 
     pthread_mutexattr_t mattr;
@@ -160,7 +160,7 @@ diskloader_main(int argc, char ** argv)
     pthread_attr_t  pattr;
     pthread_attr_init( &pattr );
     pthread_t id;
-    for (ind = 0; ind < MAX_THREADS; ind++)
+    for (ind = 0; ind < (int) MAX_THREADS; ind++)
         pthread_create(&id, &pattr, worker,
                        (void*) &allstats[ind]);
     pthread_attr_destroy( &pattr );
@@ -171,7 +171,7 @@ diskloader_main(int argc, char ** argv)
     {
         sleep(1);
         now.init();
-        for (ind = 0; ind < MAX_THREADS; ind++)
+        for (ind = 0; ind < (int) MAX_THREADS; ind++)
             now += allstats[ind];
         threadstats diff = now;
         diff -= last;
@@ -199,7 +199,7 @@ worker( void * arg )
     running_count++;
     unlock();
 
-    for (iter = 0; iter < MAX_ITERATIONS; iter++)
+    for (iter = 0; iter < (int) MAX_ITERATIONS; iter++)
     {
         file_obj *f;
         bool try_again;

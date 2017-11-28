@@ -273,7 +273,7 @@ main(int argc, char ** argv)
     {
         // read sample_count samples
         int ind;
-        for (ind = 0; ind < sample_count; ind++)
+        for (ind = 0; ind < (int) sample_count; ind++)
         {
             if (format.get_sample(instream, in[ind]) == false)
             {
@@ -297,7 +297,7 @@ main(int argc, char ** argv)
         // the negative frequencies are stored in backwards order in
         // the second half of the output."
      
-        for (ind = 0; ind < (sample_count/2); ind++)
+        for (ind = 0; ind < (int) (sample_count/2); ind++)
         {
             if (repeat_count > 1)
                 printf("%d ", repeat_counter);
@@ -307,7 +307,7 @@ main(int argc, char ** argv)
                    out[(sample_count/2)+ind][1]);
         }
 
-        for (ind = 0; ind < (sample_count/2); ind++)
+        for (ind = 0; ind < (int) (sample_count/2); ind++)
         {
             if (repeat_count > 1)
                 printf("%d ", repeat_counter);
