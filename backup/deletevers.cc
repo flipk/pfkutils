@@ -64,6 +64,7 @@ bakFile::deletevers(void)
 
     bakDatum newdbinfo(bt);
     newdbinfo.key_dbinfo();
+    newdbinfo.data.dbinfo.dbinfo_version() = CURRENT_DBINFO_VERSION;
     newdbinfo.data.dbinfo.sourcedir() = dbi.sourcedir();
     newdbinfo.data.dbinfo.nextver() = dbi.nextver();
     newdbinfo.data.dbinfo.versions.resize(dbi.versions.length());
