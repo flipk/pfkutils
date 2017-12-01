@@ -27,6 +27,11 @@
 
 #include "sha256.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
 
 #ifndef POLARSSL_SELF_TEST
@@ -350,30 +355,39 @@ void sha256( const unsigned char *input, size_t ilen,
  */
 int sha256_file( const char *path, unsigned char output[32], int is224 )
 {
-    FILE *f;
+    int fd, e = 0;
     size_t n;
     sha256_context ctx;
-    unsigned char buf[1024];
+    unsigned char buf[65536];
 
-    if( ( f = fopen( path, "rb" ) ) == NULL )
+    if( ( fd = open( path, O_RDONLY ) ) < 0 )
         return( POLARSSL_ERR_SHA256_FILE_IO_ERROR );
 
     sha256_init( &ctx );
     sha256_starts( &ctx, is224 );
 
-    while( ( n = fread( buf, 1, sizeof( buf ), f ) ) > 0 )
+    while (1)
+    {
+        n = read(fd, buf, sizeof(buf));
+        if (n <= 0)
+        {
+            e = errno;
+            break;
+        }
         sha256_update( &ctx, buf, n );
+    }
+    close(fd);
 
     sha256_finish( &ctx, output );
     sha256_free( &ctx );
 
-    if( ferror( f ) != 0 )
+    if (n < 0)
     {
-        fclose( f );
+        fprintf(stderr, "sha256_file : read : %d (%s)\n",
+                e, strerror(e));
         return( POLARSSL_ERR_SHA256_FILE_IO_ERROR );
     }
 
-    fclose( f );
     return( 0 );
 }
 
