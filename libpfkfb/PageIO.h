@@ -106,6 +106,7 @@ class PageIOFileDescriptor : public PageIO {
     int fd;
 public:
     /** Constructor.
+     * \param _encryption_password password for encryption of the data file
      * \param _fd The file descriptor of the file to access */
     PageIOFileDescriptor(const std::string &_encryption_password, int _fd);
     /** Destructor.

@@ -108,6 +108,11 @@ LIB_TARGETS ?=
 # note this makefile builds all $(LIB_TARGETS) before all $(PROG_TARGETS).
 PROG_TARGETS ?=
 
+# you can autogenerate doxygen documentation. list all doxygen targets
+# you want to make with 'make doxygen' or installs with 'make doxygen-install'
+# with this variable.
+DOXYGEN_TARGETS ?=
+
 # if you have more recipes you want to run after the "all" rule in this
 # makefile as run (i.e. after all PREPROC, LIB, and PROG) then this is
 # your opportunity to name more recipe rules to invoke.
@@ -142,6 +147,9 @@ POSTALL ?=
 #   $(target)_LIBS=-lpthread        # only for -l arguments.
 #   $(target)_LDFLAGS=-rdynamic     # passed to linker
 #   $(target)_INSTALL=1   # only if you want this prog installed
+#
+# doxyen targets can define:
+#   $(target)_DOXYFILE = Doxyfile
 #
 ##############################################
 
@@ -488,6 +496,19 @@ $(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_RULES)))
 
 ##############################################
 
+define DOXYGEN_TARGET_RULES
+$(target)_doxygen:
+	doxygen $($(target)_DOXYFILE)
+
+$(target)_doxygen-install:
+	@echo making $(target)_doxygen-install is not yet supported
+
+endef
+
+$(eval $(foreach target,$(DOXYGEN_TARGETS),$(DOXYGEN_TARGET_RULES)))
+
+##############################################
+
 preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
 
 ##############################################
@@ -517,6 +538,9 @@ install: installdirs $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),\
 		$(PROG_TARGETS),$($(target)_POSTINSTALL)) \
 		$(POSTINSTALL)
 
-clean:
-	rm -rf $(OBJDIR)
+doxygen: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen)
 
+doxygen-install: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen-install)
+
+clean:
+	rm -rf $(OBJDIR) dox/*

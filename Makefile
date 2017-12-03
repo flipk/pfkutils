@@ -66,7 +66,7 @@ endef
 $(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
 
 clean:
-	rm -rf obj.*
+	rm -rf obj.* dox
 	make -C contrib clean
 
 ##############################################

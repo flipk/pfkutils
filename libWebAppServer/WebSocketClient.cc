@@ -102,14 +102,14 @@ static const char * urlRegexPattern =
 
 #define MAX_MATCHES 10
 
-WebSocketClient :: WebSocketClient(const string &url)
+WebSocketClient :: WebSocketClient(const std::string &url)
     : readbuf(MAX_READBUF), bProxyWsWithConnect(false)
 {
     init_common("",url);
 }
 
-WebSocketClient :: WebSocketClient(const string &proxy,
-                                   const string &url,
+WebSocketClient :: WebSocketClient(const std::string &proxy,
+                                   const std::string &url,
                                    bool _proxyWsWithConnect)
     : readbuf(MAX_READBUF), bProxyWsWithConnect(_proxyWsWithConnect)
 {

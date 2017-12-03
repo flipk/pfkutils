@@ -192,6 +192,11 @@ libpfkutil_HDRS = \
 	libpfkutil/regex.h libpfkutil/sha1.h libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
 
+DOXYGEN_TARGETS += dll3 shmempipe threadslinger
+dll3_DOXYFILE = libpfkutil/Doxyfile.dll3
+shmempipe_DOXYFILE = libpfkutil/Doxyfile.shmempipe
+threadslinger_DOXYFILE = libpfkutil/Doxyfile.threadslinger
+
 ###################
 
 LIBPFKUTIL_TEST_TARGETS = \
@@ -248,6 +253,8 @@ libpfkfb_HDRS = \
 	libpfkfb/Btree_internal.h libpfkfb/FileBlockLocal.h \
 	libpfkfb/FileBlock_iface.h libpfkfb/PageCache.h \
 	libpfkfb/PageCache_internal.h libpfkfb/PageIO.h
+DOXYGEN_TARGETS += libpfkfb
+libpfkfb_DOXYFILE = libpfkfb/Doxyfile
 
 ###################
 
@@ -489,6 +496,9 @@ libWebAppServer_HDRS = \
 	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
 	libWebAppServer/WebAppServerInternal.h \
 	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
+
+DOXYGEN_TARGETS += libwas
+libwas_DOXYFILE = libWebAppServer/Doxyfile
 
 ###################
 
