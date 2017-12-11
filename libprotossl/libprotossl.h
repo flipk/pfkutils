@@ -35,10 +35,20 @@ For more information, please refer to <http://unlicense.org>
 #include <unistd.h>
 
 #include <google/protobuf/message.h>
+
+#if POLARSSL
+#include <polarssl/entropy.h>
+#include <polarssl/ctr_drbg.h>
+#include <polarssl/ssl.h>
+#include <polarssl/net.h>
+#include <polarssl/error.h>
+#else
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/net.h>
+#include <mbedtls/error.h>
+#endif
 
 #include "LockWait.h"
 
@@ -66,12 +76,20 @@ class ProtoSSLMsgs; // forward
 class _ProtoSSLConn
 {
     friend class ProtoSSLMsgs;
+#if POLARSSL
+    int fd;
+#else
     mbedtls_net_context netctx;
     bool netctx_initialized;
+#endif
     WaitUtil::Lockable fdLock;
     std::string rcvbuf;
     std::string outbuf;
+#if POLARSSL
+    ssl_context  sslctx;
+#else
     mbedtls_ssl_context  sslctx;
+#endif
     MESSAGE &rcvdMessage;
     static void * threadMain(void *);
     void _threadMain(void);
@@ -79,8 +97,12 @@ class _ProtoSSLConn
     bool thread_running;
     int exitPipe[2];
     // used by ProtoSSLMsgs, our friend.
+#if POLARSSL
+    bool _startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd);
+#else
     bool _startThread(ProtoSSLMsgs * _msgs, bool isServer,
                       const mbedtls_net_context &_netctx);
+#endif
 protected:
     _ProtoSSLConn(MESSAGE &_rcvdMessage);
     virtual ~_ProtoSSLConn(void);
@@ -128,18 +150,29 @@ public:
 class ProtoSSLMsgs
 {
     friend class _ProtoSSLConn;
+#if POLARSSL
+    entropy_context entropy;
+    ctr_drbg_context ctr_drbg;
+    x509_crt cacert, mycert;
+    pk_context   mykey;
+#else
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     mbedtls_x509_crt cacert, mycert;
     mbedtls_pk_context   mykey;
     mbedtls_ssl_config   sslcfg;
+#endif
     std::string  otherCommonName;
     std::string  remoteHost;
     WaitUtil::Lockable connLock;
     typedef std::map<int/*fd*/,_ProtoSSLConn*> connMap;
     connMap conns;
     struct serverInfo {
+#if POLARSSL
+        int fd;
+#else
         mbedtls_net_context netctx;
+#endif
         pthread_t thread_id;
         ProtoSSLMsgs * msgs;
         int exitPipe[2];

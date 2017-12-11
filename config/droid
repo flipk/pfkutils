@@ -29,11 +29,14 @@ PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=1
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=1
+PFK_BUILD_protossl=0 # but worth a try
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = 
 PROTOBUF_INC =
 PROTOBUF_LIB = 
+MBEDTLS_INCS = # -I$(mbedtls_prefix)/include
+MBEDTLS_LIBS =  -lmbedtls -lmbedx509 -lmbedcrypto # -L$(mbedtls_prefix)/lib
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 0
 PFK_CONFIG_HAVE_NCURSES_H= 0

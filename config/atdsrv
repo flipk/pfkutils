@@ -29,11 +29,15 @@ PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=0
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=0
+PFK_BUILD_protossl=0 # although, worth a try
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = /shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/bin/protoc
 PROTOBUF_INC = -I/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/include
 PROTOBUF_LIB = -L/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/lib -lprotobuf
+mbedtls_prefix = $(HOME)/pfk/$(PFKARCH)/mbedtls-something
+MBEDTLS_INCS = # -I$(mbedtls_prefix)/include
+MBEDTLS_LIBS =  -lmbedtls -lmbedx509 -lmbedcrypto # -L$(mbedtls_prefix)/lib
 
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1

@@ -28,6 +28,7 @@ PFK_BUILD_pfktop=0
 PFK_BUILD_spinner=0
 PFK_BUILD_hilite=0
 PFK_BUILD_do_fft=0
+PFK_BUILD_protossl=0
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = 

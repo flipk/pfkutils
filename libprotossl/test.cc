@@ -26,7 +26,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 #include "libprotossl.h"
-#include "t-test_proto.pb.h"
+#include "protossl_test-libprotossl_test_proto.pb.h"
 #include "posix_fe.h"
 
 #include <unistd.h>

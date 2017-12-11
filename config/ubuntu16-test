@@ -28,11 +28,14 @@ PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=1
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=1
+PFK_BUILD_protossl=1
 
 KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /usr/bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
+MBEDTLS_INCS = # -I$(mbedtls_prefix)/include
+MBEDTLS_LIBS =  -lmbedtls -lmbedx509 -lmbedcrypto # -L$(mbedtls_prefix)/lib
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 0
 PFK_CONFIG_HAVE_NCURSES_H= 1

@@ -28,7 +28,43 @@ For more information, please refer to <http://unlicense.org>
 
 #include "libprotossl.h"
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <iostream>
+
+#define ssl_personality "ProtoSSLDRBG"
+#if POLARSSL
+
+#define MBEDTLS_ERR_SSL_WANT_READ POLARSSL_ERR_NET_WANT_READ
+#define MBEDTLS_ERR_SSL_WANT_WRITE POLARSSL_ERR_NET_WANT_WRITE
+#define MBEDTLS_X509_BADCERT_EXPIRED BADCERT_EXPIRED
+#define MBEDTLS_X509_BADCERT_REVOKED BADCERT_REVOKED
+#define MBEDTLS_X509_BADCERT_CN_MISMATCH BADCERT_CN_MISMATCH
+#define MBEDTLS_X509_BADCERT_NOT_TRUSTED BADCERT_NOT_TRUSTED
+#define MBEDTLS_SSL_MAX_CONTENT_LEN SSL_MAX_CONTENT_LEN
+#define MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY POLARSSL_ERR_SSL_PEER_CLOSE_NOTIFY
+#define MBEDTLS_ERR_SSL_WANT_READ POLARSSL_ERR_NET_WANT_READ
+#define MBEDTLS_ERR_SSL_WANT_WRITE POLARSSL_ERR_NET_WANT_WRITE
+#define MBEDTLS_ERR_NET_CONN_RESET POLARSSL_ERR_NET_CONN_RESET
+
+#define mbedtls_ssl_handshake ssl_handshake
+#define mbedtls_ssl_get_verify_result ssl_get_verify_result
+#define mbedtls_ssl_read ssl_read
+#define mbedtls_ssl_session_reset ssl_session_reset
+#define mbedtls_ssl_close_notify ssl_close_notify
+#define mbedtls_ssl_write ssl_write
+#define mbedtls_entropy_init entropy_init
+#define mbedtls_x509_crt x509_crt
+#define mbedtls_pk_init pk_init
+#define mbedtls_pk_free pk_free
+#define mbedtls_x509_crt_free x509_crt_free
+#define mbedtls_x509_crt_parse_file x509_crt_parse_file
+#define mbedtls_x509_crt_parse x509_crt_parse
+#define mbedtls_pk_parse_keyfile pk_parse_keyfile
+#define mbedtls_pk_parse_key pk_parse_key
+#define mbedtls_strerror polarssl_strerror
+
+#endif
 
 namespace ProtoSSL {
 
@@ -56,7 +92,12 @@ ProtoSSLCertParams::~ProtoSSLCertParams(void)
 //
 
 _ProtoSSLConn::_ProtoSSLConn(MESSAGE &_rcvdMessage)
-    : netctx_initialized(false), rcvdMessage(_rcvdMessage), msgs(NULL)
+#if POLARSSL
+    : fd(-1),
+#else
+    : netctx_initialized(false),
+#endif
+      rcvdMessage(_rcvdMessage), msgs(NULL)
 {
     thread_running = false;
     exitPipe[0] = exitPipe[1] = -1;
@@ -70,14 +111,69 @@ _ProtoSSLConn::~_ProtoSSLConn(void)
         close(exitPipe[0]);
         close(exitPipe[1]);
     }
+#if POLARSSL
+    if (fd > 0)
+    {
+        net_close(fd);
+        msgs->deregisterConn(fd,this);
+        ssl_free(&sslctx);
+    }
+#else
     if (netctx_initialized)
     {
         msgs->deregisterConn(netctx.fd,this);
         mbedtls_net_free(&netctx);
         mbedtls_ssl_free(&sslctx);
     }
+#endif
 }
 
+#if POLARSSL
+bool
+_ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
+{
+    int ret;
+    char strbuf[200];
+
+    fd = _fd;
+    msgs = _msgs;
+
+    if ((ret = ssl_init( &sslctx )) != 0)
+    {
+        mbedtls_strerror(ret, strbuf, sizeof(strbuf));
+        printf("ssl init returned 0x%x: %s\n", -ret, strbuf);
+        return false;
+    }
+
+    ssl_set_authmode( &sslctx, SSL_VERIFY_REQUIRED );
+    ssl_set_rng( &sslctx, ctr_drbg_random, &msgs->ctr_drbg );
+
+    if (isServer)
+        ssl_set_endpoint( &sslctx, SSL_IS_SERVER );
+    else
+        ssl_set_endpoint( &sslctx, SSL_IS_CLIENT );
+
+    // this string below is the srv.crt Common Name field
+    ssl_set_ca_chain( &sslctx, &msgs->cacert,
+                      NULL, msgs->otherCommonName.c_str());
+    ssl_set_own_cert( &sslctx, &msgs->mycert, &msgs->mykey );
+
+    ssl_set_bio( &sslctx, net_recv, &fd, net_send, &fd );
+
+    if (pipe(exitPipe) < 0)
+        printf("_ProtoSSLConn::_startThread: "
+               "pipe error %d: %s\n", errno, strerror(errno));
+
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    pthread_create(&thread_id, &attr,
+                   &_ProtoSSLConn::threadMain, (void*) this);
+    pthread_attr_destroy(&attr);
+
+    return true;
+}
+#else
 bool
 _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer,
                             const mbedtls_net_context &_netctx)
@@ -94,7 +190,9 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer,
                  &mbedtls_net_send, &mbedtls_net_recv,
                  &mbedtls_net_recv_timeout);
 
-    pipe(exitPipe);
+    if (pipe(exitPipe) < 0)
+        printf("_ProtoSSLConn::_startThread: "
+               "pipe error %d: %s\n", errno, strerror(errno));
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -105,6 +203,7 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer,
 
     return true;
 }
+#endif
 
 //static
 void *
@@ -127,12 +226,19 @@ _ProtoSSLConn::_threadMain(void)
     bool done = false;
     bool send_close_notify = false;
 
+#if !POLARSSL
+    int fd = netctx.fd;
+#endif
+
     while ((ret = mbedtls_ssl_handshake( &sslctx )) != 0)
     {
         if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
             ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
-            printf( " failed\n  ! ssl_handshake returned -0x%x\n\n", -ret );
+            char strbuf[200];
+            mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+            printf( " failed\n  ! ssl_handshake returned 0x%x: %s\n\n",
+                    -ret, strbuf );
             goto bail;
         }
     }
@@ -155,10 +261,10 @@ _ProtoSSLConn::_threadMain(void)
 
     handleConnect();
 
-    maxfd = netctx.fd;
     FD_ZERO(&rfds_proto);
-    FD_SET(netctx.fd, &rfds_proto);
-    if (netctx.fd < exitPipe[0])
+    maxfd = fd;
+    FD_SET(fd, &rfds_proto);
+    if (fd < exitPipe[0])
         maxfd = exitPipe[0];
     FD_SET(exitPipe[0], &rfds_proto);
 
@@ -166,7 +272,7 @@ _ProtoSSLConn::_threadMain(void)
     {
         rfds = rfds_proto;
         select(maxfd, &rfds, NULL, NULL, NULL);
-        if (FD_ISSET(netctx.fd, &rfds))
+        if (FD_ISSET(fd, &rfds))
         {
             rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
             ret = mbedtls_ssl_read( &sslctx,
@@ -191,13 +297,15 @@ _ProtoSSLConn::_threadMain(void)
                     done = true;
                 }
             }
-// if (ret == POLARSSL_ERR_NET_WANT_READ ||
-//     ret == POLARSSL_ERR_NET_WANT_WRITE) { }
-            if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY ||
-                ret == 0)
+            if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
             {
+#if POLARSSL
+                net_close(fd);
+                fd = -1;
+#else
                 mbedtls_net_free(&netctx);
                 netctx_initialized = false;
+#endif
                 if (ret == 0)
                     std::cout << "remote disconnect unclean\n";
                 mbedtls_ssl_session_reset( &sslctx );
@@ -229,8 +337,9 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
     }
 
     do {
-        ret = mbedtls_ssl_write( &sslctx, reinterpret_cast<const unsigned char *>(
-                             outbuf.c_str()), outbuf.length() );
+        ret = mbedtls_ssl_write( &sslctx,
+                                 reinterpret_cast<const unsigned char *>(
+                                     outbuf.c_str()), outbuf.length() );
     } while (ret == MBEDTLS_ERR_SSL_WANT_READ ||
              ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
@@ -238,7 +347,12 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
     outbuf.clear();
 
     if (ret < 0)
-        std::cout << "ssl_write returned " << std::hex << -ret << std::endl;
+    {
+        char strbuf[200];
+        mbedtls_strerror(ret,strbuf,sizeof(strbuf));
+        std::cout << "ssl_write returned " << std::hex << ret << ": "
+                  << strbuf << std::endl;
+    }
 
     if (ret == MBEDTLS_ERR_NET_CONN_RESET)
     {
@@ -246,14 +360,16 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
         return false;
     }
 
-    return false;
+    return true;
 }
 
 void
 _ProtoSSLConn::closeConnection(void)
 {
     char dummy = 1;
-    ::write(exitPipe[1], &dummy, 1);
+    if (::write(exitPipe[1], &dummy, 1) < 0)
+        printf("_ProtoSSLConn::closeConnection: "
+               "write to exit pipe: %d: %s\n", errno, strerror(errno));
 }
 
 void
@@ -268,13 +384,15 @@ _ProtoSSLConn::stopMsgs(void)
 
 ProtoSSLMsgs::ProtoSSLMsgs(void)
 {
-    static const char * pers = "ProtoSSLDRBG";
-
     mbedtls_entropy_init( &entropy );
     memset( &mycert, 0, sizeof( mbedtls_x509_crt ) );
     memset( &cacert, 0, sizeof( mbedtls_x509_crt ) );
     mbedtls_pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
-    pipe(exitPipe);
+
+    if (pipe(exitPipe) < 0)
+        printf("ProtoSSLMsgs::ProtoSSLMsgs: "
+               "pipe failed: %d: %s\n", errno, strerror(errno));
+#if !POLARSSL
     mbedtls_ssl_config_init( &sslcfg );
     mbedtls_ssl_config_defaults( &sslcfg, MBEDTLS_SSL_IS_SERVER,
                                  MBEDTLS_SSL_TRANSPORT_STREAM,
@@ -284,8 +402,8 @@ ProtoSSLMsgs::ProtoSSLMsgs(void)
 
     mbedtls_ctr_drbg_init( &ctr_drbg );
     mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
-                           (const unsigned char *) pers,
-                           strlen( pers ) );
+                           (const unsigned char *) ssl_personality,
+                           strlen( ssl_personality ) );
     mbedtls_ssl_conf_rng( &sslcfg, &mbedtls_ctr_drbg_random, &ctr_drbg );
 
     mbedtls_ssl_conf_authmode( &sslcfg,
@@ -293,6 +411,7 @@ ProtoSSLMsgs::ProtoSSLMsgs(void)
 
     // doesn't appear to be needed?
     //mbedtls_ssl_conf_verify( &sslcfg, f_vrfy, p_vrfy )
+#endif
 }
 
 ProtoSSLMsgs::~ProtoSSLMsgs(void)
@@ -312,7 +431,9 @@ ProtoSSLMsgs::~ProtoSSLMsgs(void)
         for (sit = servers.begin(); sit != servers.end(); sit++)
         {
             serverInfo &si = sit->second;
-            write(si.exitPipe[1], &dummy, 1);
+            if (::write(si.exitPipe[1], &dummy, 1) < 0)
+                printf("ProtoSSLMsgs::~ProtoSSLMsgs: "
+                       "write exit pipe: %d: %s\n", errno, strerror(errno));
         }
     } // unlock
 
@@ -322,12 +443,18 @@ ProtoSSLMsgs::~ProtoSSLMsgs(void)
     while ((conns.size() > 0) || (servers.size() > 0))
         usleep(1);
 
+    // TODO pop servers list and clean
+    // TODO pop connMap and clean
     mbedtls_pk_free(&mykey);
     mbedtls_x509_crt_free(&mycert);
     mbedtls_x509_crt_free(&cacert);
+
+#if !POLARSSL
     mbedtls_ssl_config_free(&sslcfg);
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
+#endif
+
     close(exitPipe[0]);
     close(exitPipe[1]);
 }
@@ -336,6 +463,18 @@ bool
 ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
 {
     int ret;
+    char strbuf[200];
+
+#if POLARSSL
+    if( ( ret = ctr_drbg_init( &ctr_drbg, entropy_func, &entropy,
+                               (const unsigned char *) ssl_personality,
+                               strlen( ssl_personality ) ) ) != 0 )
+    {
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf( " ctr_drbg_init returned 0x%x: %s\n", -ret, strbuf );
+        return false;
+    }
+#endif
 
     otherCommonName = params.otherCommonName;
 
@@ -348,7 +487,8 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
                               params.caCert.size());
     if (ret != 0)
     {
-        printf( " 1 x509parse_crt returned -0x%x\n\n", -ret );
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf( " 1 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 
@@ -361,7 +501,8 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
                               params.myCert.size());
     if (ret != 0)
     {
-        printf( " 2 x509parse_crt returned -0x%x\n\n", -ret );
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf( " 2 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 
@@ -385,12 +526,15 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
                             keyPasswordLen);
     if (ret != 0)
     {
-        printf( " 3 pk_parse_keyfile returned -0x%x\n\n", -ret );
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf( " 3 pk_parse_keyfile returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 
+#if !POLARSSL
     mbedtls_ssl_conf_ca_chain( &sslcfg, &cacert, NULL );
     mbedtls_ssl_conf_own_cert( &sslcfg, &mycert, &mykey );
+#endif
 
     return true;
 }
@@ -410,27 +554,41 @@ bool
 ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
                           int listeningPort)
 {
-    int ret;
+    int ret, fd = -1;
+    char strbuf[200];
+
+#if !POLARSSL
     mbedtls_net_context netctx;
-
     // note server flag already set in sslcfg
+#endif
 
+#if POLARSSL
+    ret = net_bind(&fd, NULL, listeningPort);
+#else
     mbedtls_net_init( &netctx );
     char portString[8];
     sprintf(portString,"%d",listeningPort);
     ret = mbedtls_net_bind(&netctx, NULL, portString, MBEDTLS_NET_PROTO_TCP);
+#endif
     if (ret != 0)
     {
-        printf("net bind returned -0x%x\n", -ret);
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf("net bind returned 0x%x: %s\n", -ret, strbuf);
         return false;
     }
 
     WaitUtil::Lock lck(&connLock);
-    serverInfo & si = servers[netctx.fd]; // note this creates new entry
+    serverInfo & si = servers[fd]; // note this creates new entry
 
+#if POLARSSL
+    si.fd = fd;
+#else
     si.netctx = netctx;
+#endif
     si.msgs = this;
-    pipe(si.exitPipe);
+    if (pipe(si.exitPipe) < 0)
+        printf("ProtoSSLMsgs::startServer: "
+               "pipe failed: %d: %s\n", errno, strerror(errno));
     si.factory = &factory;
 
     pthread_attr_t attr;
@@ -458,12 +616,17 @@ void
 ProtoSSLMsgs::_serverThread(serverInfo * si)
 {
     fd_set  rfds, rfds_proto;
-    int maxfd = si->netctx.fd;
-    int ret;
+    int ret, fd;
+#if POLARSSL
+    int listen_fd = si->fd;
+#else
+    int listen_fd = si->netctx.fd;
     mbedtls_net_context clientctx;
+#endif
+    int maxfd = listen_fd;
 
     FD_ZERO(&rfds_proto);
-    FD_SET(si->netctx.fd, &rfds_proto);
+    FD_SET(listen_fd, &rfds_proto);
     FD_SET(si->exitPipe[0], &rfds_proto);
     if (si->exitPipe[0] > maxfd)
         maxfd = si->exitPipe[0];
@@ -472,20 +635,35 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
     {
         rfds = rfds_proto;
         select(maxfd ,&rfds, NULL, NULL, NULL);
-        if (FD_ISSET(si->netctx.fd, &rfds))
+        if (FD_ISSET(listen_fd, &rfds))
         {
-            if ((ret = mbedtls_net_accept(&si->netctx, &clientctx,
-                                          NULL, 0, NULL)) == 0)
+#if POLARSSL
+            ret = net_accept(listen_fd, &fd, NULL);
+#else
+            ret = mbedtls_net_accept(&si->netctx, &clientctx,
+                                     NULL, 0, NULL);
+            fd = clientctx.fd;
+#endif
+
+            if (ret == 0)
             {
                 _ProtoSSLConn * c = si->factory->newConnection();
                 {
                     WaitUtil::Lock lck(&connLock);
-                    conns[clientctx.fd] = c;
+                    conns[fd] = c;
                 } // lock released here
+#if POLARSSL
+                if (c->_startThread(this, true, fd) == false)
+#else
                 if (c->_startThread(this, true, clientctx) == false)
+#endif
                 {
                     printf("start thread failed\n");
+#if POLARSSL
+                    net_close(fd);
+#else
                     mbedtls_net_free(&clientctx);
+#endif
                 }
             }
             else
@@ -498,10 +676,14 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
             break;
         }
     }
+#if POLARSSL
+    net_close(si->fd);
+#else
     mbedtls_net_free(&si->netctx);
+#endif
 
     WaitUtil::Lock lck(&connLock);
-    serverInfoMap::iterator it = servers.find(si->netctx.fd);
+    serverInfoMap::iterator it = servers.find(listen_fd);
     if (it != servers.end())
         servers.erase(it);
 }
@@ -510,29 +692,47 @@ bool
 ProtoSSLMsgs::startClient(ProtoSSLConnFactory &factory,
                           const std::string &remoteHost, int remotePort)
 {
-    int ret;
+    int ret, fd;
+    char strbuf[200];
+
+#if !POLARSSL
     mbedtls_net_context clientctx;
+#endif
 
+#if POLARSSL
+    ret = net_connect(&fd, remoteHost.c_str(), remotePort);
+#else
     mbedtls_ssl_conf_endpoint( &sslcfg, MBEDTLS_SSL_IS_CLIENT );
-
     char portString[8];
     sprintf(portString,"%d", remotePort);
-    if ((ret = mbedtls_net_connect(&clientctx,
-                                   remoteHost.c_str(), portString,
-                                   MBEDTLS_NET_PROTO_TCP)) != 0)
+    ret = mbedtls_net_connect(&clientctx,
+                              remoteHost.c_str(), portString,
+                              MBEDTLS_NET_PROTO_TCP);
+    fd = clientctx.fd;
+#endif
+    if (ret != 0)
     {
-        printf("net connect returns -0x%x\n", -ret);
+        mbedtls_strerror( ret, strbuf, sizeof(strbuf));
+        printf("net connect returns 0x%x: %s\n", -ret, strbuf);
         return false;
     }
 
     _ProtoSSLConn * c = factory.newConnection();
     {
         WaitUtil::Lock lck(&connLock);
-        conns[clientctx.fd] = c;
+        conns[fd] = c;
     } // lock released here
+#if POLARSSL
+    if (c->_startThread(this, false, fd) == false)
+#else
     if (c->_startThread(this, false, clientctx) == false)
+#endif
     {
+#if POLARSSL
+        close(fd);
+#else
         mbedtls_net_free(&clientctx);
+#endif
         printf("start thread failed\n");
         return false;
     }
@@ -581,7 +781,9 @@ void
 ProtoSSLMsgs::stop(void)
 {
     char dummy = 1;
-    ::write(exitPipe[1], &dummy, 1);
+    if (::write(exitPipe[1], &dummy, 1) < 0)
+        printf("ProtoSSLMsgs::stop: "
+               "write failed: %d: %s\n", errno, strerror(errno));
 }
 
 }; // namespace ProtoSSL

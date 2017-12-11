@@ -110,7 +110,7 @@ BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat deduplifier libwas \
-	libpfkthread xlock hilite do_fft
+	libpfkthread xlock hilite do_fft protossl
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
@@ -359,6 +359,37 @@ pfksh-install-man:
 	@cp -f $(OBJDIR)/pfksh.0 $(INSTALL_MAN_DIR)/cat1
 	@echo installing pfksh/pfksh.man
 	@cp -f pfksh/pfksh.man $(INSTALL_MAN_DIR)/man1/pfksh.1
+endif
+
+##############################################
+
+ifeq ($(PFK_BUILD_protossl),1)
+LIB_TARGETS += libprotossl
+libprotossl_TARGET = $(OBJDIR)/libprotossl.a
+libprotossl_DEFS = $(MBEDTLS_FLAGS)
+libprotossl_INCS = -Ilibprotossl -Ilibpfkutil $(PROTOBUF_INC) $(MBEDTLS_INCS)
+libprotossl_CXXSRCS = libprotossl/libprotossl.cc
+libprotossl_HDRS = libprotossl/libprotossl.h
+libprotossl_INSTALL_HDRS = libprotossl/libprotossl.h
+libprotossl_POSTINSTALL = install_protossl
+
+install_protossl:
+	@echo installing protossl
+	$(Q)cp libprotossl/keys/protossl_make_keys.sh $(HOME)/pfk/bin/
+	$(Q)chmod 755 $(HOME)/pfk/bin/protossl_make_keys.sh
+	$(Q)if [ ! -f $(HOME)/.pfkprotossl/Root-CA-plain.key ] ; then \
+		echo NOTE : YOU NEED KEYS in ~/.pfkprotossl/ ; \
+	fi
+
+PROG_TARGETS += protossl_test
+protossl_test_TARGET = $(OBJDIR)/protossl_test
+protossl_test_DEFS = $(MBEDTLS_FLAGS)
+protossl_test_INCS = -Ilibprotossl -Ilibpfkutil \
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
+protossl_test_PROTOSRCS = libprotossl/test_proto.proto
+protossl_test_CXXSRCS = libprotossl/test.cc
+protossl_test_DEPLIBS = $(libprotossl_TARGET)
+protossl_test_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 endif
 
 ##############################################
@@ -658,11 +689,12 @@ $(PCFGZ_FILES) : $(OBJDIR)/%.pcf.gz: %.bdf
 POSTINSTALL += install_fonts
 
 install_fonts:
-	mkdir -p $(FONTDIR)
-	cp $(PCFGZ_FILES) $(ALIAS) $(FONTDIR)
-	cd $(FONTDIR) && mkfontdir .
-	[ x$(DISPLAY) != x ] && xset +fp $(FONTDIR) || true
-	tar -C $(HOME) -jxvf fonts/dot-fonts.tar.bz2
+	@echo installing fonts
+	$(Q)mkdir -p $(FONTDIR)
+	$(Q)cp $(PCFGZ_FILES) $(ALIAS) $(FONTDIR)
+	$(Q)cd $(FONTDIR) && mkfontdir .
+	$(Q)[ x$(DISPLAY) != x ] && xset +fp $(FONTDIR) || true
+	$(Q)tar -C $(HOME) -jxf fonts/dot-fonts.tar.bz2
 
 endif
 
@@ -813,6 +845,8 @@ endif
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
 	$(Q)cp Makefile.inc $(prefix)
 
+POSTINSTALL += environ_install scripts_install
+
 ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
 # note cygwin doesn't support this, so it is disabled on cygwin.
 POSTALL += pfkutils-makelinks
@@ -826,8 +860,6 @@ endif
 ##############################################
 
 POSTALL += # TODO doxygen
-
-POSTINSTALL += environ_install scripts_install
 
 environ_install:
 	@echo installing environ
@@ -853,7 +885,7 @@ environ_install:
 		rm -rf $(ETCBAKDIR) && \
 		mkdir -p $(ETCBAKDIR) && \
 		cd $(ETCBAKDIR) && \
-		tar xvf ~/etc-backup.tar && \
+		tar xf ~/etc-backup.tar && \
 		rm -f ~/etc-backup.tar
 
 scripts_install:
