@@ -48,6 +48,7 @@ For more information, please refer to <http://unlicense.org>
 #include <mbedtls/ssl.h>
 #include <mbedtls/net.h>
 #include <mbedtls/error.h>
+#include <mbedtls/debug.h>
 #endif
 
 #include "LockWait.h"
@@ -113,6 +114,14 @@ protected:
     // connection is ready to pass encrypted protobuf messages.
     // TODO : connect could pass more information about the peer.
     virtual void handleConnect(void) = 0;
+
+#if POLARSSL
+    static void debug_print(void *ptr, int level, const char *string);
+#else
+    static void debug_print(void *ptr, int level,
+                            const char *file, int line, const char *str);
+#endif
+
 public:
     // the user may use this to stop all proto ssl messaging,
     // equivalent to calling ProtoSSLMsgs::stop.
@@ -184,8 +193,9 @@ class ProtoSSLMsgs
     static void * serverThread(void *);
     void _serverThread(serverInfo *);
     int exitPipe[2];
+    bool debugFlag;
 public:
-    ProtoSSLMsgs(void);
+    ProtoSSLMsgs(bool _debugFlag=false);
     ~ProtoSSLMsgs(void);
     bool loadCertificates(const ProtoSSLCertParams &params);
     bool startServer(ProtoSSLConnFactory &factory,

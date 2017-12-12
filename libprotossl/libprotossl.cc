@@ -128,6 +128,31 @@ _ProtoSSLConn::~_ProtoSSLConn(void)
 #endif
 }
 
+
+#if POLARSSL
+//static
+void
+_ProtoSSLConn::debug_print(void *ptr, int level, const char *s)
+{
+    //_ProtoSSLConn * x = (_ProtoSSLConn *) ptr;
+    printf("%s", s);
+}
+#else
+//static
+void
+_ProtoSSLConn::debug_print(void *ptr, int level,
+                           const char *file, int line,
+                           const char *s)
+{
+    const char * slashpos = strrchr(file, '/');
+    const char * filename = file;
+    if (slashpos != NULL)
+        filename = slashpos + 1;
+    //_ProtoSSLConn * x = (_ProtoSSLConn *) ptr;
+    printf("%s:%d: %s", filename, line, s);
+}
+#endif
+
 #if POLARSSL
 bool
 _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
@@ -159,6 +184,9 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
     ssl_set_own_cert( &sslctx, &msgs->mycert, &msgs->mykey );
 
     ssl_set_bio( &sslctx, net_recv, &fd, net_send, &fd );
+
+    if (msgs->debugFlag)
+        ssl_set_dbg( &sslctx, &_ProtoSSLConn::debug_print, (void*) this);
 
     if (pipe(exitPipe) < 0)
         printf("_ProtoSSLConn::_startThread: "
@@ -382,7 +410,8 @@ _ProtoSSLConn::stopMsgs(void)
 // ProtoSSLMsgs
 //
 
-ProtoSSLMsgs::ProtoSSLMsgs(void)
+ProtoSSLMsgs::ProtoSSLMsgs(bool _debugFlag /*=false*/)
+    : debugFlag(_debugFlag)
 {
     mbedtls_entropy_init( &entropy );
     memset( &mycert, 0, sizeof( mbedtls_x509_crt ) );
@@ -397,7 +426,7 @@ ProtoSSLMsgs::ProtoSSLMsgs(void)
     mbedtls_ssl_config_defaults( &sslcfg, MBEDTLS_SSL_IS_SERVER,
                                  MBEDTLS_SSL_TRANSPORT_STREAM,
                                  MBEDTLS_SSL_PRESET_DEFAULT );
-    //mbedtls_ssl_conf_dbg( &sslcfg, f_dbg, p_dbg );
+
     //mbedtls_ssl_conf_read_timeout( &sslcfg, 0 );
 
     mbedtls_ctr_drbg_init( &ctr_drbg );
@@ -408,6 +437,13 @@ ProtoSSLMsgs::ProtoSSLMsgs(void)
 
     mbedtls_ssl_conf_authmode( &sslcfg,
                                MBEDTLS_SSL_VERIFY_REQUIRED );
+
+    if (debugFlag)
+    {
+        mbedtls_ssl_conf_dbg( &sslcfg, &_ProtoSSLConn::debug_print,
+                              (void*) this);
+        mbedtls_debug_set_threshold(999);
+    }
 
     // doesn't appear to be needed?
     //mbedtls_ssl_conf_verify( &sslcfg, f_vrfy, p_vrfy )

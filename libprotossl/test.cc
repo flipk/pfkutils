@@ -210,7 +210,7 @@ main(int argc, char ** argv)
         return 1;
     }
     std::string argv1(argv[1]);
-    ProtoSSLMsgs  msgs;
+    ProtoSSLMsgs  msgs(/*debugFlag*/true);
     if (argv1 == "s")
     {
         ProtoSSLCertParams  certs(cert_ca,
