@@ -514,6 +514,8 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
 
     otherCommonName = params.otherCommonName;
 
+    if (debugFlag)
+        printf("loading caCert from %s\n", params.caCert.c_str());
     if (params.caCert.compare(0,5,"file:") == 0)
         ret = mbedtls_x509_crt_parse_file( &cacert,
                                    params.caCert.c_str() + 5);
@@ -528,6 +530,8 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
         return false;
     }
 
+    if (debugFlag)
+        printf("loading my cert from %s\n", params.myCert.c_str());
     if (params.myCert.compare(0,5,"file:") == 0)
         ret = mbedtls_x509_crt_parse_file( &mycert,
                                    params.myCert.c_str()+5);
@@ -550,6 +554,8 @@ ProtoSSLMsgs::loadCertificates(const ProtoSSLCertParams &params)
         keyPasswordLen = params.myKeyPassword.size();
     }
 
+    if (debugFlag)
+        printf("loading my cert key from %s\n", params.myKey.c_str());
     if (params.myKey.compare(0,5,"file:") == 0)
         ret = mbedtls_pk_parse_keyfile( &mykey, 
                                 params.myKey.c_str() + 5,
