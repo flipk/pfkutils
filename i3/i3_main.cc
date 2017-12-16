@@ -30,14 +30,20 @@ i3_main(int argc, char ** argv)
     }
 
 #if 0
-        myFactoryServer fact;
-        msgs.startServer(fact, 2005);
-        while (msgs.run())
-            ;
+    if (opts.outbound)
+    {
         myFactoryClient fact;
-        msgs.startClient(fact, argv[2], 2005);
+        msgs.startClient(fact, opts.hostname, opts.port_number);
         while (msgs.run())
             ;
+    }
+    else
+    {
+        myFactoryServer fact;
+        msgs.startServer(fact, opts.port_number);
+        while (msgs.run())
+            ;
+    }
 #endif
 
     return 0;

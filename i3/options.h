@@ -6,12 +6,14 @@
 #define I3_OPTIONS_DEFAULT_KEY_FILE  ".i3-certs/my-certificate.key"
 #define I3_OPTIONS_DEFAULT_CA_FILE   ".i3-certs/Root-CA.crt"
 #define I3_OPTIONS_OTHERCOMMONNAME   "i3commonname"
+#define I3_OPTIONS_DEFAULT_PORT      2005
 
 class i3_options {
     void print_help(void);
 public:
     bool ok;
     bool pingack;
+    int pingack_preload;
     bool verbose;
     bool debug_flag;
 
@@ -29,6 +31,11 @@ public:
     std::string my_key_path;
     std::string my_key_password;
     std::string ca_cert_path;
+
+    bool outbound;
+    std::string hostname;
+
+    int port_number;
 
     i3_options(int argc, char ** argv);
 };
