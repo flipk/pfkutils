@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 
-#include "options.h"
-#include "libprotossl.h"
+#include "i3_options.h"
+#include "i3_protossl_factory.h"
 
 extern "C" int
 i3_main(int argc, char ** argv)
@@ -29,22 +29,23 @@ i3_main(int argc, char ** argv)
         return 1;
     }
 
-#if 0
+    i3protoFact  fact(opts);
+
     if (opts.outbound)
     {
-        myFactoryClient fact;
+        if (opts.debug_flag)
+            printf("starting msgs.client\n");
         msgs.startClient(fact, opts.hostname, opts.port_number);
-        while (msgs.run())
-            ;
     }
     else
     {
-        myFactoryServer fact;
+        if (opts.debug_flag)
+            printf("starting msgs.server\n");
         msgs.startServer(fact, opts.port_number);
-        while (msgs.run())
-            ;
     }
-#endif
+
+    while (msgs.run())
+        ;
 
     return 0;
 }

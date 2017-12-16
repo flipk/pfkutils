@@ -1,5 +1,8 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+#ifndef __I3_OPTIONS_H__
+#define __I3_OPTIONS_H__
+
 #include <string>
 
 #define I3_OPTIONS_DEFAULT_CERT_FILE ".i3-certs/my-certificate.crt"
@@ -39,3 +42,5 @@ public:
 
     i3_options(int argc, char ** argv);
 };
+
+#endif /* __I3_OPTIONS_H__ */

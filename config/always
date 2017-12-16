@@ -412,7 +412,7 @@ endif
 LIB_TARGETS += libi3
 libi3_TARGET = $(OBJDIR)/libi3.a
 libi3_INCS = -Ilibprotossl -Ilibpfkutil
-libi3_CXXSRCS = i3/i3_main.cc i3/options.cc
+libi3_CXXSRCS = i3/i3_main.cc i3/i3_options.cc i3/i3_protossl_factory.cc
 libi3_PROTOSRCS = i3/i3.proto
 pfkutils_LIBMBEDTLS = $(MBEDTLS_LIBS)
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)

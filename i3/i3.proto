@@ -10,18 +10,16 @@ enum ProtocolVersion {
 
 message ProtoVersion {
   required string app_name = 1; // "PFK_i3"
-  required int32 version = 2; // PROTOCOL_VERSION_x
+  required int32 version = 2; // i3_VERSION_x
 }
 
-// server to client
-
-enum ServerToClientType {
-  STC_PROTO_VERSION = 1;
+enum i3MsgType {
+  i3_VERSION_1 = 1;
   //xxx
 }
 
-message ServerToClient {
-  required ServerToClientType type = 1;
+message i3Msg {
+  required i3MsgType type = 1;
   optional ProtoVersion proto_version = 2;
   //xxx
 }

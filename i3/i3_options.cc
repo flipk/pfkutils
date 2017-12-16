@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "options.h"
+#include "i3_options.h"
 
 using namespace std;
 
@@ -160,6 +160,7 @@ i3_options :: i3_options(int argc, char ** argv)
 
     if (argc == (optind + 1))
     {
+        outbound = true;
         hostname = argv[optind];
         cout << "hostname is " << hostname << endl;
     }
