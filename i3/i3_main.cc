@@ -44,8 +44,12 @@ i3_main(int argc, char ** argv)
         msgs.startServer(fact, opts.port_number);
     }
 
-    while (msgs.run())
-        ;
+    while (1)
+    {
+        bool ret = msgs.run();
+        if (ret == false)
+            break;
+    }
 
     return 0;
 }

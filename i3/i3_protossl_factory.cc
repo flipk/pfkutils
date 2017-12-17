@@ -31,6 +31,7 @@ i3protoConn :: ~i3protoConn(void)
 {
     if (opts.debug_flag)
         printf("i3protoConn :: ~i3protoConn\n");
+    msgs->stop();
 }
 
 bool

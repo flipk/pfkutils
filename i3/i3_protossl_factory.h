@@ -5,7 +5,7 @@
 
 #include "i3_options.h"
 #include "libprotossl.h"
-#include "libi3-i3_i3.pb.h"
+#include I3_PROTO_HDR
 
 class i3protoFact : public ProtoSSL::ProtoSSLConnFactory
 {

@@ -114,8 +114,8 @@ _ProtoSSLConn::~_ProtoSSLConn(void)
 #if POLARSSL
     if (fd > 0)
     {
-        net_close(fd);
         msgs->deregisterConn(fd,this);
+        net_close(fd);
         ssl_free(&sslctx);
     }
 #else
@@ -328,9 +328,11 @@ _ProtoSSLConn::_threadMain(void)
             if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
             {
 #if POLARSSL
+                msgs->deregisterConn(fd,this);
                 net_close(fd);
                 fd = -1;
 #else
+                msgs->deregisterConn(netctx.fd,this);
                 mbedtls_net_free(&netctx);
                 netctx_initialized = false;
 #endif
@@ -342,6 +344,8 @@ _ProtoSSLConn::_threadMain(void)
         }
         if (FD_ISSET(exitPipe[0], &rfds))
         {
+            char dummy;
+            ::read(exitPipe[0], &dummy, 1);
             done = true;
         }
     }
@@ -394,10 +398,13 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
 void
 _ProtoSSLConn::closeConnection(void)
 {
-    char dummy = 1;
-    if (::write(exitPipe[1], &dummy, 1) < 0)
-        printf("_ProtoSSLConn::closeConnection: "
-               "write to exit pipe: %d: %s\n", errno, strerror(errno));
+    if (thread_running)
+    {
+        char dummy = 1;
+        if (::write(exitPipe[1], &dummy, 1) < 0)
+            printf("_ProtoSSLConn::closeConnection: "
+                   "write to exit pipe: %d: %s\n", errno, strerror(errno));
+    }
 }
 
 void
@@ -611,6 +618,7 @@ ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
     char portString[8];
     sprintf(portString,"%d",listeningPort);
     ret = mbedtls_net_bind(&netctx, NULL, portString, MBEDTLS_NET_PROTO_TCP);
+    fd = netctx.fd;
 #endif
     if (ret != 0)
     {
@@ -650,7 +658,7 @@ ProtoSSLMsgs::serverThread(void * arg)
     serverInfo * si = (serverInfo *) arg;
     ProtoSSLMsgs * obj = si->msgs;
     obj->_serverThread(si);
-    delete si;
+    // if we're here, ProtoSSLMsgs object should be deleted.
     return NULL;
 }
 
@@ -676,7 +684,7 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
     while (1)
     {
         rfds = rfds_proto;
-        select(maxfd ,&rfds, NULL, NULL, NULL);
+        select(maxfd+1,&rfds, NULL, NULL, NULL);
         if (FD_ISSET(listen_fd, &rfds))
         {
 #if POLARSSL
@@ -718,16 +726,20 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
             break;
         }
     }
+
+    WaitUtil::Lock lck(&connLock);
+    serverInfoMap::iterator it = servers.find(listen_fd);
+    if (it != servers.end())
+    {
+        servers.erase(it);
+    }
+
 #if POLARSSL
     net_close(si->fd);
 #else
     mbedtls_net_free(&si->netctx);
 #endif
 
-    WaitUtil::Lock lck(&connLock);
-    serverInfoMap::iterator it = servers.find(listen_fd);
-    if (it != servers.end())
-        servers.erase(it);
 }
 
 bool
@@ -810,7 +822,11 @@ ProtoSSLMsgs::run(int timeout_ms /*= -1*/)
         if (cc > 0)
         {
             if (FD_ISSET(exitPipe[0], &rfds))
+            {
+                char dummy;
+                ::read(exitPipe[0], &dummy, 1);
                 return false;
+            }
         }
         if (cc == 0)
             break;
