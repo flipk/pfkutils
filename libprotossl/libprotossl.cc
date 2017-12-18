@@ -100,17 +100,11 @@ _ProtoSSLConn::_ProtoSSLConn(MESSAGE &_rcvdMessage)
       rcvdMessage(_rcvdMessage), msgs(NULL)
 {
     thread_running = false;
-    exitPipe[0] = exitPipe[1] = -1;
 }
 
 //virtual
 _ProtoSSLConn::~_ProtoSSLConn(void)
 {
-    if (exitPipe[0] != -1)
-    {
-        close(exitPipe[0]);
-        close(exitPipe[1]);
-    }
 #if POLARSSL
     if (fd > 0)
     {
@@ -188,10 +182,6 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
     if (msgs->debugFlag)
         ssl_set_dbg( &sslctx, &_ProtoSSLConn::debug_print, (void*) this);
 
-    if (pipe(exitPipe) < 0)
-        printf("_ProtoSSLConn::_startThread: "
-               "pipe error %d: %s\n", errno, strerror(errno));
-
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -217,10 +207,6 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer,
     mbedtls_ssl_set_bio( &sslctx, &netctx,
                  &mbedtls_net_send, &mbedtls_net_recv,
                  &mbedtls_net_recv_timeout);
-
-    if (pipe(exitPipe) < 0)
-        printf("_ProtoSSLConn::_startThread: "
-               "pipe error %d: %s\n", errno, strerror(errno));
 
     pthread_attr_t attr;
     pthread_attr_init(&attr);
@@ -250,7 +236,6 @@ _ProtoSSLConn::_threadMain(void)
 {
     int ret;
     int maxfd;
-    fd_set rfds, rfds_proto;
     bool done = false;
     bool send_close_notify = false;
 
@@ -289,18 +274,16 @@ _ProtoSSLConn::_threadMain(void)
 
     handleConnect();
 
-    FD_ZERO(&rfds_proto);
-    maxfd = fd;
-    FD_SET(fd, &rfds_proto);
-    if (fd < exitPipe[0])
-        maxfd = exitPipe[0];
-    FD_SET(exitPipe[0], &rfds_proto);
-
     while (!done)
     {
-        rfds = rfds_proto;
-        select(maxfd, &rfds, NULL, NULL, NULL);
-        if (FD_ISSET(fd, &rfds))
+        pxfe_select sel;
+
+        sel.rfds.set(fd);
+        sel.rfds.set(exitPipe.readEnd);
+        sel.tv.set(1,0);
+        sel.select();
+
+        if (sel.rfds.is_set(fd))
         {
             rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
             ret = mbedtls_ssl_read( &sslctx,
@@ -342,10 +325,10 @@ _ProtoSSLConn::_threadMain(void)
                 done = true;
             }
         }
-        if (FD_ISSET(exitPipe[0], &rfds))
+        if (sel.rfds.is_set(exitPipe.readEnd))
         {
             char dummy;
-            ::read(exitPipe[0], &dummy, 1);
+            exitPipe.read(&dummy, 1);
             done = true;
         }
     }
@@ -401,9 +384,7 @@ _ProtoSSLConn::closeConnection(void)
     if (thread_running)
     {
         char dummy = 1;
-        if (::write(exitPipe[1], &dummy, 1) < 0)
-            printf("_ProtoSSLConn::closeConnection: "
-                   "write to exit pipe: %d: %s\n", errno, strerror(errno));
+        exitPipe.write(&dummy, 1);
     }
 }
 
@@ -425,9 +406,6 @@ ProtoSSLMsgs::ProtoSSLMsgs(bool _debugFlag /*=false*/)
     memset( &cacert, 0, sizeof( mbedtls_x509_crt ) );
     mbedtls_pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
 
-    if (pipe(exitPipe) < 0)
-        printf("ProtoSSLMsgs::ProtoSSLMsgs: "
-               "pipe failed: %d: %s\n", errno, strerror(errno));
 #if !POLARSSL
     mbedtls_ssl_config_init( &sslcfg );
     mbedtls_ssl_config_defaults( &sslcfg, MBEDTLS_SSL_IS_SERVER,
@@ -474,9 +452,7 @@ ProtoSSLMsgs::~ProtoSSLMsgs(void)
         for (sit = servers.begin(); sit != servers.end(); sit++)
         {
             serverInfo &si = sit->second;
-            if (::write(si.exitPipe[1], &dummy, 1) < 0)
-                printf("ProtoSSLMsgs::~ProtoSSLMsgs: "
-                       "write exit pipe: %d: %s\n", errno, strerror(errno));
+            si.exitPipe.write(&dummy, 1);
         }
     } // unlock
 
@@ -497,9 +473,6 @@ ProtoSSLMsgs::~ProtoSSLMsgs(void)
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
 #endif
-
-    close(exitPipe[0]);
-    close(exitPipe[1]);
 }
 
 bool
@@ -636,9 +609,6 @@ ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
     si.netctx = netctx;
 #endif
     si.msgs = this;
-    if (pipe(si.exitPipe) < 0)
-        printf("ProtoSSLMsgs::startServer: "
-               "pipe failed: %d: %s\n", errno, strerror(errno));
     si.factory = &factory;
 
     pthread_attr_t attr;
@@ -665,7 +635,6 @@ ProtoSSLMsgs::serverThread(void * arg)
 void
 ProtoSSLMsgs::_serverThread(serverInfo * si)
 {
-    fd_set  rfds, rfds_proto;
     int ret, fd;
 #if POLARSSL
     int listen_fd = si->fd;
@@ -675,17 +644,16 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
 #endif
     int maxfd = listen_fd;
 
-    FD_ZERO(&rfds_proto);
-    FD_SET(listen_fd, &rfds_proto);
-    FD_SET(si->exitPipe[0], &rfds_proto);
-    if (si->exitPipe[0] > maxfd)
-        maxfd = si->exitPipe[0];
-
     while (1)
     {
-        rfds = rfds_proto;
-        select(maxfd+1,&rfds, NULL, NULL, NULL);
-        if (FD_ISSET(listen_fd, &rfds))
+        pxfe_select sel;
+
+        sel.rfds.set(listen_fd);
+        sel.rfds.set(si->exitPipe.readEnd);
+        sel.tv.set(1,0);
+        sel.select();
+
+        if (sel.rfds.is_set(listen_fd))
         {
 #if POLARSSL
             ret = net_accept(listen_fd, &fd, NULL);
@@ -721,8 +689,10 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
                 printf("accept returned shit\n");
             }
         }
-        if (FD_ISSET(si->exitPipe[0], &rfds))
+        if (sel.rfds.is_set(si->exitPipe.readEnd))
         {
+            char dummy;
+            si->exitPipe.read(&dummy, 1);
             break;
         }
     }
@@ -797,39 +767,32 @@ ProtoSSLMsgs::startClient(ProtoSSLConnFactory &factory,
 bool
 ProtoSSLMsgs::run(int timeout_ms /*= -1*/)
 {
-    fd_set  rfds, rfds_proto;
-    struct timeval tv, tv_proto, *tvp;
+    int timeout_s  =  timeout_ms / 1000;
+    int timeout_us = (timeout_ms % 1000) * 1000;
 
-    FD_ZERO(&rfds_proto);
-    FD_SET(exitPipe[0], &rfds_proto);
-
-    if (timeout_ms == -1)
-    {
-        tvp = NULL;
-    }
-    else
-    {
-        tvp = &tv;
-        tv_proto.tv_sec = timeout_ms / 1000;
-        tv_proto.tv_usec = (timeout_ms % 1000) * 1000;
-    }
-    
     while (1)
     {
-        rfds = rfds_proto;
-        tv = tv_proto;
-        int cc = select(exitPipe[0]+1, &rfds, NULL, NULL, tvp);
-        if (cc > 0)
+        pxfe_select sel;
+        int cc = 0;
+
+        sel.rfds.set(exitPipe.readEnd);
+        if (timeout_ms != -1)
         {
-            if (FD_ISSET(exitPipe[0], &rfds))
-            {
-                char dummy;
-                ::read(exitPipe[0], &dummy, 1);
-                return false;
-            }
+            sel.tv.set(timeout_s, timeout_us);
+            cc = sel.select();
         }
+        else
+            cc = sel.select_forever();
+
         if (cc == 0)
             break;
+
+        if (sel.rfds.is_set(exitPipe.readEnd))
+        {
+            char dummy;
+            exitPipe.read(&dummy, 1);
+            return false;
+        }
     }
 
     return true;
@@ -839,9 +802,7 @@ void
 ProtoSSLMsgs::stop(void)
 {
     char dummy = 1;
-    if (::write(exitPipe[1], &dummy, 1) < 0)
-        printf("ProtoSSLMsgs::stop: "
-               "write failed: %d: %s\n", errno, strerror(errno));
+    exitPipe.write(&dummy, 1);
 }
 
 }; // namespace ProtoSSL

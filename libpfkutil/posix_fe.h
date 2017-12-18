@@ -504,6 +504,14 @@ public:
         close(writeEnd);
         close(readEnd);
     }
+    int read(void *buf, size_t count)
+    {
+        return ::read(readEnd, buf, count);
+    }
+    int write(void *buf, size_t count)
+    {
+        return ::write(writeEnd, buf, count);
+    }
 };
 
 class pxfe_pthread {
@@ -605,11 +613,17 @@ struct pxfe_select {
     pxfe_timeval   tv;
     pxfe_select(void) { }
     ~pxfe_select(void) { }
+    int select_forever(void) {
+        return _select(NULL);
+    }
     int select(void) {
+        return _select(tv());
+    }
+    int _select(struct timeval *tvp) {
         int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
         if (n < n2) n = n2;
         if (n < n3) n = n3;
-        return ::select(n, rfds(), wfds(), efds(), tv());
+        return ::select(n, rfds(), wfds(), efds(), tvp);
     }
 };
 
