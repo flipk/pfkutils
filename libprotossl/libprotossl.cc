@@ -307,9 +307,11 @@ _ProtoSSLConn::_threadMain(void)
             if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
             {
 #if POLARSSL
+                msgs->deregisterConn(fd,this);
                 net_close(fd);
                 fd = -1;
 #else
+                msgs->deregisterConn(netctx.fd,this);
                 mbedtls_net_free(&netctx);
                 netctx_initialized = false;
 #endif
@@ -585,6 +587,7 @@ ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
     char portString[8];
     sprintf(portString,"%d",listeningPort);
     ret = mbedtls_net_bind(&netctx, NULL, portString, MBEDTLS_NET_PROTO_TCP);
+    fd = netctx.fd;
 #endif
     if (ret != 0)
     {
@@ -619,7 +622,7 @@ ProtoSSLMsgs::serverThread(void * arg)
     serverInfo * si = (serverInfo *) arg;
     ProtoSSLMsgs * obj = si->msgs;
     obj->_serverThread(si);
-    delete si;
+    // if we're here, ProtoSSLMsgs object should be deleted.
     return NULL;
 }
 
@@ -687,16 +690,20 @@ ProtoSSLMsgs::_serverThread(serverInfo * si)
             break;
         }
     }
+
+    WaitUtil::Lock lck(&connLock);
+    serverInfoMap::iterator it = servers.find(listen_fd);
+    if (it != servers.end())
+    {
+        servers.erase(it);
+    }
+
 #if POLARSSL
     net_close(si->fd);
 #else
     mbedtls_net_free(&si->netctx);
 #endif
 
-    WaitUtil::Lock lck(&connLock);
-    serverInfoMap::iterator it = servers.find(listen_fd);
-    if (it != servers.end())
-        servers.erase(it);
 }
 
 bool
