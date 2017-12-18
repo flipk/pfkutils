@@ -182,12 +182,10 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd)
     if (msgs->debugFlag)
         ssl_set_dbg( &sslctx, &_ProtoSSLConn::debug_print, (void*) this);
 
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&thread_id, &attr,
+    pxfe_pthread_attr  attr;
+    attr.set_detach();
+    pthread_create(&thread_id, attr(),
                    &_ProtoSSLConn::threadMain, (void*) this);
-    pthread_attr_destroy(&attr);
 
     return true;
 }
@@ -208,12 +206,10 @@ _ProtoSSLConn::_startThread(ProtoSSLMsgs * _msgs, bool isServer,
                  &mbedtls_net_send, &mbedtls_net_recv,
                  &mbedtls_net_recv_timeout);
 
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&thread_id, &attr,
+    pxfe_pthread_attr  attr;
+    attr.set_detach();
+    pthread_create(&thread_id, attr(),
                    &_ProtoSSLConn::threadMain, (void*) this);
-    pthread_attr_destroy(&attr);
 
     return true;
 }
@@ -611,12 +607,10 @@ ProtoSSLMsgs::startServer(ProtoSSLConnFactory &factory,
     si.msgs = this;
     si.factory = &factory;
 
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    pthread_create(&si.thread_id, &attr,
+    pxfe_pthread_attr  attr;
+    attr.set_detach();
+    pthread_create(&si.thread_id, attr(),
                    &ProtoSSLMsgs::serverThread, (void*) &si);
-    pthread_attr_destroy(&attr);
 
     return true;
 }
