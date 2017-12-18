@@ -52,6 +52,7 @@ For more information, please refer to <http://unlicense.org>
 #endif
 
 #include "LockWait.h"
+#include "posix_fe.h"
 
 namespace ProtoSSL {
 
@@ -96,7 +97,7 @@ class _ProtoSSLConn
     void _threadMain(void);
     pthread_t thread_id;
     bool thread_running;
-    int exitPipe[2];
+    pxfe_pipe exitPipe;
     // used by ProtoSSLMsgs, our friend.
 #if POLARSSL
     bool _startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd);
@@ -184,7 +185,7 @@ class ProtoSSLMsgs
 #endif
         pthread_t thread_id;
         ProtoSSLMsgs * msgs;
-        int exitPipe[2];
+        pxfe_pipe exitPipe;
         ProtoSSLConnFactory *factory;
     };
     typedef std::map<int,serverInfo> serverInfoMap;
@@ -192,7 +193,7 @@ class ProtoSSLMsgs
     void deregisterConn(int fd,_ProtoSSLConn *);
     static void * serverThread(void *);
     void _serverThread(serverInfo *);
-    int exitPipe[2];
+    pxfe_pipe exitPipe;
     bool debugFlag;
 public:
     ProtoSSLMsgs(bool _debugFlag=false);

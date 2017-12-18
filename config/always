@@ -377,9 +377,6 @@ install_protossl:
 	@echo installing protossl
 	$(Q)cp libprotossl/keys/protossl_make_keys.sh $(HOME)/pfk/bin/
 	$(Q)chmod 755 $(HOME)/pfk/bin/protossl_make_keys.sh
-	$(Q)if [ ! -f $(HOME)/.pfkprotossl/Root-CA-plain.key ] ; then \
-		echo NOTE : YOU NEED KEYS in ~/.pfkprotossl/ ; \
-	fi
 
 PROG_TARGETS += protossl_test
 protossl_test_TARGET = $(OBJDIR)/protossl_test

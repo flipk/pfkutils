@@ -36,7 +36,7 @@ PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
 MBEDTLS_INCS =
-MBEDTLS_LIBS =  -lmbedtls -lmbedx509 -lmbedcrypto
+MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 1
 PFK_CONFIG_HAVE_NCURSES_H= 0
