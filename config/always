@@ -413,7 +413,10 @@ LIB_TARGETS += libi3
 libi3_TARGET = $(OBJDIR)/libi3.a
 libi3_DEFS = -DI3_PROTO_HDR=\"libi3-i3_i3.pb.h\"
 libi3_INCS = -Ilibprotossl -Ilibpfkutil
-libi3_CXXSRCS = i3/i3_main.cc i3/i3_options.cc i3/i3_protossl_factory.cc
+libi3_CXXSRCS = \
+	i3/i3_reader.cc i3/i3_options.cc \
+	i3/i3_protossl_factory.cc i3/i3_protossl_conn.cc \
+	i3/i3_loop.cc i3/i3_main.cc
 libi3_PROTOSRCS = i3/i3.proto
 pfkutils_LIBMBEDTLS = $(MBEDTLS_LIBS)
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)
@@ -829,11 +832,11 @@ pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
 	$(pfktop_TARGET) $(libi2_TARGET) \
-	$(libampfk_TARGET) $(libpfkutil_TARGET) $(syslog_TARGET) \
+	$(libampfk_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
 	$(libxlock_TARGET) $(spinner_TARGET) $(libi3_TARGET) \
-	$(pfkutils_LIBPROTOSSL)
+	$(pfkutils_LIBPROTOSSL) $(libpfkutil_TARGET)
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
 	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \
