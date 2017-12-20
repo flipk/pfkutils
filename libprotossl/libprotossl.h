@@ -115,6 +115,7 @@ protected:
     // connection is ready to pass encrypted protobuf messages.
     // TODO : connect could pass more information about the peer.
     virtual void handleConnect(void) = 0;
+    virtual void handleDisconnect(void) = 0;
 
 #if POLARSSL
     static void debug_print(void *ptr, int level, const char *string);

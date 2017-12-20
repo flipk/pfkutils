@@ -4,6 +4,10 @@
 #include <sstream>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 
 #include "i3_options.h"
 
@@ -40,10 +44,10 @@ i3_options :: print_help(void)
 
 i3_options :: i3_options(int argc, char ** argv)
     : ok(false), pingack(false), pingack_preload(0), verbose(false),
-      debug_flag(false),
-      input_set(false), input_nul(false),
+      debug_flag(0),
+      input_set(false), input_fd(-1), input_nul(false),
       input_rand(false), input_zero(false),
-      output_set(false), output_discard(false),
+      output_set(false), output_fd(-1), output_discard(false),
       outbound(false), port_number(I3_OPTIONS_DEFAULT_PORT)
 {
     int ch;
@@ -74,6 +78,18 @@ i3_options :: i3_options(int argc, char ** argv)
             }
             input_set = true;
             input_file = optarg;
+
+            input_fd = open(input_file.c_str(), O_RDONLY);
+            if (input_fd < 0)
+            {
+                int e = errno;
+                char * err = strerror(e);
+                cerr << "open input file '" << input_file
+                     << "' failed with error " << e
+                     << "(" << err << ")\n";
+                return;
+            }
+
             break;
 
         case 'I':
@@ -105,6 +121,17 @@ i3_options :: i3_options(int argc, char ** argv)
             }
             output_set = true;
             output_file = optarg;
+            output_fd = open(output_file.c_str(),
+                             O_WRONLY | O_CREAT | O_TRUNC, 0600);
+            if (output_fd < 0)
+            {
+                int e = errno;
+                char * err = strerror(e);
+                cerr << "open output file '" << output_file
+                     << "' failed with error " << e
+                     << "(" << err << ")\n";
+                return;
+            }
             break;
 
         case 'O':
@@ -145,7 +172,7 @@ i3_options :: i3_options(int argc, char ** argv)
             break;
 
         case 'd':
-            debug_flag = true;
+            debug_flag ++;
             break;
 
         case 'P':
@@ -169,6 +196,19 @@ i3_options :: i3_options(int argc, char ** argv)
         cerr << "unknown arguments" << endl;
         print_help();
         return;
+    }
+
+    if (input_nul == false && input_rand == false &&
+        input_zero == false || input_set == false)
+    {
+        input_set = true;
+        input_fd = 0;
+    }
+
+    if (output_set == false && output_discard == false)
+    {
+        output_set = true;
+        output_fd = 1;
     }
 
     ok = true;

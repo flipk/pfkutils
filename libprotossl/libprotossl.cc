@@ -329,6 +329,8 @@ _ProtoSSLConn::_threadMain(void)
         }
     }
 
+    handleDisconnect();
+
 bail:
     if (send_close_notify)
         mbedtls_ssl_close_notify( &sslctx );

@@ -18,15 +18,17 @@ public:
     bool pingack;
     int pingack_preload;
     bool verbose;
-    bool debug_flag;
+    int debug_flag;
 
     bool input_set;
+    int  input_fd;
     bool input_nul;
     std::string input_file;
     bool input_rand;
     bool input_zero;
 
     bool output_set;
+    int  output_fd;
     std::string output_file;
     bool output_discard;
 

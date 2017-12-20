@@ -4,28 +4,19 @@
 #define __I3_PROTOSSL_FACTORY_H__
 
 #include "i3_options.h"
+#include "i3_loop.h"
 #include "libprotossl.h"
 #include I3_PROTO_HDR
 
 class i3protoFact : public ProtoSSL::ProtoSSLConnFactory
 {
     const i3_options &opts;
+    i3_loop &loop;
 public:
-    i3protoFact(const i3_options &_opts);
+    i3protoFact(const i3_options &_opts,
+                i3_loop &loop);
     virtual ~i3protoFact(void);
     /*virtual*/ ProtoSSL::_ProtoSSLConn * newConnection(void);
-};
-
-class i3protoConn : public ProtoSSL::ProtoSSLConn<PFK::i3::i3Msg,
-                                                  PFK::i3::i3Msg>
-{
-    const i3_options &opts;
-public:
-    i3protoConn(const i3_options &_opts);
-    virtual ~i3protoConn(void);
-    // the user's handler should return false to kill the connection.
-    /*virtual*/ bool messageHandler(const PFK::i3::i3Msg &);
-    /*virtual*/ void handleConnect(void);
 };
 
 #endif /* __I3_PROTOSSL_FACTORY_H__ */
