@@ -11,15 +11,24 @@
 
 class i3protoConn; // forward to avoid circular dependencies
 
+#define I3_EVT_TYPE_LIST                        \
+    I3_EVT_TYPE(CONNECT)    /*no arg*/          \
+    I3_EVT_TYPE(DISCONNECT) /*no arg*/          \
+    I3_EVT_TYPE(READ)       /*read_buffer*/     \
+    I3_EVT_TYPE(READ_DONE)  /*no arg*/          \
+    I3_EVT_TYPE(RCVMSG)     /*msg*/             \
+    I3_EVT_TYPE(DIE)        /*no arg*/
+
 struct i3_evt : ThreadSlinger::thread_slinger_message {
     enum type_e {
-        CONNECT,    // no arg
-        DISCONNECT, // no arg
-        READ,       // read_buffer
-        READ_DONE,  // no arg
-        RCVMSG,     // msg
-        DIE         // no arg
+#define I3_EVT_TYPE(x) x ,
+        I3_EVT_TYPE_LIST
+#undef  I3_EVT_TYPE
+        NUM_EVTS
     } type;
+    static const std::string evt_type_names[NUM_EVTS];
+    const std::string &type_name(void) { return evt_type_names[type]; }
+    static const std::string &type_name(type_e t) { return evt_type_names[t]; }
     std::string read_buffer;
     PFK::i3::i3Msg * msg;
     i3protoConn * conn;
@@ -44,7 +53,8 @@ class i3_loop : pxfe_pthread {
     i3_evt_q_t  q;
     i3_evt_pool_t  p;
     i3_reader * reader;
-    void handle_rcvmsg(const PFK::i3::i3Msg *msg);
+    // return true if 'done'
+    bool handle_rcvmsg(const PFK::i3::i3Msg *msg);
     i3protoConn * conn;
 public:
     i3_loop(const i3_options &_opts);

@@ -16,16 +16,28 @@ message ProtoVersion {
 enum i3MsgType {
   i3_VERSION  = 1; // use proto_version arg
   i3_FILEDATA = 2; // use file_body arg
+  i3_DONE = 3;     // use file_done arg
 }
 
 message FileData {
+  // the maximum size of file_data is chosen
+  // to keep the total size of an i3Msg less
+  // than the max size of an SSL frame (16384).
   required bytes    file_data = 1;
 }
 
+message FileDone {
+  // length?
+  // checksum?
+  // sha256?
+}
+
+// this must fit in an SSL frame, so less than 16384 bytes.
 message i3Msg {
   required i3MsgType    type          = 1;
   optional ProtoVersion proto_version = 2;
   optional FileData     file_data     = 3;
+  optional FileDone     file_done     = 4;
 }
 
 // client to server

@@ -75,6 +75,12 @@ struct ProtoSSLCertParams
 
 class ProtoSSLMsgs; // forward
 
+class readBuffer : public std::string {
+public:
+    void * vptr(void) { return (void*) c_str(); }
+    unsigned char * ucptr(void) { return (unsigned char *) c_str(); }
+};
+
 class _ProtoSSLConn
 {
     friend class ProtoSSLMsgs;
@@ -85,8 +91,8 @@ class _ProtoSSLConn
     bool netctx_initialized;
 #endif
     WaitUtil::Lockable fdLock;
-    std::string rcvbuf;
-    std::string outbuf;
+    readBuffer rcvbuf;
+    readBuffer outbuf;
 #if POLARSSL
     ssl_context  sslctx;
 #else

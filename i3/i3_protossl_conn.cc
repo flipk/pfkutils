@@ -51,6 +51,7 @@ i3protoConn :: messageHandler(const PFK::i3::i3Msg &msg)
         break;
 
     case PFK::i3::i3_FILEDATA:
+    case PFK::i3::i3_DONE:
         evt = loop.alloc_evt();
         newmsg = new PFK::i3::i3Msg;
         newmsg->CopyFrom(msg);
@@ -95,5 +96,14 @@ i3protoConn :: send_read_data(const std::string &data)
     outMessage().set_type(PFK::i3::i3_FILEDATA);
     PFK::i3::FileData * fd = outMessage().mutable_file_data();
     fd->set_file_data(data);
+    sendMessage();
+}
+
+void
+i3protoConn :: send_read_done(void)
+{
+    outMessage().set_type(PFK::i3::i3_DONE);
+    PFK::i3::FileDone * fd = outMessage().mutable_file_done();
+    // no fd contents
     sendMessage();
 }

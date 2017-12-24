@@ -3,6 +3,13 @@
 #include "i3_reader.h"
 #include "i3_protossl_conn.h"
 
+//static
+const std::string i3_evt::evt_type_names[i3_evt::NUM_EVTS] = {
+#define I3_EVT_TYPE(x) #x ,
+        I3_EVT_TYPE_LIST
+#undef  I3_EVT_TYPE
+};
+
 void i3_evt::init(type_e _type)
 {
     type = _type;
@@ -48,7 +55,7 @@ void i3_evt::set_die(void)
 i3_loop::i3_loop(const i3_options &_opts)
     : opts(_opts), conn(NULL)
 {
-    p.add(100);
+    p.add(10);
 }
 
 //virtual
@@ -72,6 +79,9 @@ i3_loop::entry(void *arg)
         i3_evt * evt = q.dequeue(-1);
         if (evt == NULL)
             continue;
+        if (opts.debug_flag)
+            printf("i3_loop: got event of type %d (%s)\n",
+                   evt->type, evt->type_name().c_str());
         switch (evt->type)
         {
         case i3_evt::CONNECT:
@@ -79,15 +89,20 @@ i3_loop::entry(void *arg)
             conn = evt->conn;
             break;
         case i3_evt::DISCONNECT:
+            if (conn == evt->conn)
+                conn = NULL;
+            done = true;
             break;
         case i3_evt::READ:
             if (conn)
                 conn->send_read_data(evt->read_buffer);
             break;
         case i3_evt::READ_DONE:
+            if (conn)
+                conn->send_read_done();
             break;
         case i3_evt::RCVMSG:
-            handle_rcvmsg(evt->msg);
+            done = handle_rcvmsg(evt->msg);
             delete evt->msg;
             break;
         case i3_evt::DIE:
@@ -98,7 +113,7 @@ i3_loop::entry(void *arg)
     }
 }
 
-void
+bool
 i3_loop::handle_rcvmsg(const PFK::i3::i3Msg *msg)
 {
     switch (msg->type())
@@ -107,12 +122,12 @@ i3_loop::handle_rcvmsg(const PFK::i3::i3Msg *msg)
         if (msg->has_file_data() == false)
         {
             printf("ERROR: i3_loop::handle_rcvmsg no file_data 1\n");
-            return;
+            return true;
         }
         if (msg->file_data().has_file_data() == false)
         {
             printf("ERROR: i3_loop::handle_rcvmsg no file_data 2\n");
-            return;
+            return true;
         }
         if (opts.output_set)
         {
@@ -122,9 +137,21 @@ i3_loop::handle_rcvmsg(const PFK::i3::i3Msg *msg)
         }
         break;
 
+    case PFK::i3::i3_DONE:
+        if (msg->has_file_done() == false)
+        {
+            printf("ERROR: i3_loop::handle_rcvmsg no file_done 1\n");
+        }
+        if (conn)
+            conn->closeConnection();
+        return true;
+
     default:
-        ;
+        printf("ERROR: i3_loop: unhandled proto msg type %d\n",
+               msg->type());
+        return true;
     }
+    return false;
 }
 
 /*virtual*/ void

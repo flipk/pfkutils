@@ -22,7 +22,9 @@ i3_reader::start(void)
 i3_reader::entry(void *arg)
 {
     std::string  buffer;
-    const int max_read = 16834;
+    // this max size is chosen to ensure the total
+    // size of an i3Msg is less than the SSL maximum (16384).
+    const int max_read = 16000;
     int cc = 0;
     bool done = false;
 

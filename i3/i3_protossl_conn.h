@@ -22,6 +22,7 @@ public:
                 i3_loop &_loop);
     virtual ~i3protoConn(void);
     void send_read_data(const std::string &data);
+    void send_read_done(void);
 };
 
 #endif /* __I3_PROTOSSL_CONN_H__ */

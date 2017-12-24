@@ -199,7 +199,7 @@ i3_options :: i3_options(int argc, char ** argv)
     }
 
     if (input_nul == false && input_rand == false &&
-        input_zero == false || input_set == false)
+        input_zero == false && input_set == false)
     {
         input_set = true;
         input_fd = 0;
