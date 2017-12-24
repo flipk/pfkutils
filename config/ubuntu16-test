@@ -29,6 +29,7 @@ PFK_BUILD_spinner=1
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=1
 PFK_BUILD_protossl=1
+PFK_BUILD_i3=1
 
 KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /usr/bin/protoc

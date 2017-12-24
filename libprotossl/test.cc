@@ -68,6 +68,9 @@ public:
         outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
         sendMessage();
     }
+    void handleDisconnect(void)  {
+        printf("myConnClient::handleDisconnect\n");
+    }
     bool messageHandler(const ClientToServer &inMsg) {
         switch (inMsg.type())
         {
@@ -124,6 +127,9 @@ public:
         outMessage().mutable_proto_version()->set_app_name("LIBPROTOSSL_TEST");
         outMessage().mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
         sendMessage();
+    }
+    void handleDisconnect(void)  {
+        printf("myConnClient::handleDisconnect\n");
     }
     bool messageHandler(const ServerToClient &inMsg) {
         bool done = false;
