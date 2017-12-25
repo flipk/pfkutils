@@ -30,6 +30,8 @@ For more information, please refer to <http://unlicense.org>
 #define __LIBPROTOSSL_H__
 
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <map>
 #include <pthread.h>
 #include <unistd.h>
@@ -85,8 +87,8 @@ class _ProtoSSLConn
     bool netctx_initialized;
 #endif
     WaitUtil::Lockable fdLock;
-    std::string rcvbuf;
-    std::string outbuf;
+    pxfe_string rcvbuf;
+    pxfe_string outbuf;
 #if POLARSSL
     ssl_context  sslctx;
 #else
@@ -115,6 +117,7 @@ protected:
     // connection is ready to pass encrypted protobuf messages.
     // TODO : connect could pass more information about the peer.
     virtual void handleConnect(void) = 0;
+    virtual void handleDisconnect(void) = 0;
 
 #if POLARSSL
     static void debug_print(void *ptr, int level, const char *string);

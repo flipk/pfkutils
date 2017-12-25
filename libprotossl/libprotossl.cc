@@ -282,9 +282,7 @@ _ProtoSSLConn::_threadMain(void)
         if (sel.rfds.is_set(fd))
         {
             rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
-            ret = mbedtls_ssl_read( &sslctx,
-                            (unsigned char*) rcvbuf.c_str(),
-                            MBEDTLS_SSL_MAX_CONTENT_LEN );
+            ret = mbedtls_ssl_read( &sslctx, rcvbuf.ucptr(), rcvbuf.length());
             if (ret > 0)
             {
                 rcvbuf.resize(ret);
@@ -329,6 +327,8 @@ _ProtoSSLConn::_threadMain(void)
         }
     }
 
+    handleDisconnect();
+
 bail:
     if (send_close_notify)
         mbedtls_ssl_close_notify( &sslctx );
@@ -348,9 +348,7 @@ _ProtoSSLConn::_sendMessage(MESSAGE &msg)
     }
 
     do {
-        ret = mbedtls_ssl_write( &sslctx,
-                                 reinterpret_cast<const unsigned char *>(
-                                     outbuf.c_str()), outbuf.length() );
+        ret = mbedtls_ssl_write( &sslctx, outbuf.ucptr(), outbuf.length() );
     } while (ret == MBEDTLS_ERR_SSL_WANT_READ ||
              ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
