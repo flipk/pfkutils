@@ -94,3 +94,7 @@ PROG(0,i2,"internet pipe fitting mark II")
 PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
 PROG(0,rmstar,"recursive rm -rf but verbosely")
 PROG(0,fmtsdiff,"format sdiff output")
+
+#if @PFK_BUILD_i3@
+PROG(0,i3,"internet pipe fitting mark III")
+#endif

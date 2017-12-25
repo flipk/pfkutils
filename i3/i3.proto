@@ -1,0 +1,43 @@
+
+package PFK.i3;
+
+// common stuff first
+
+enum ProtocolVersion {
+  PROTOCOL_VERSION_1 = 1;
+  // increment every time you modify this file
+};
+
+message ProtoVersion {
+  required string app_name = 1; // "PFK_i3"
+  required int32  version  = 2; // i3_VERSION_x
+}
+
+enum i3MsgType {
+  i3_VERSION  = 1; // use proto_version arg
+  i3_FILEDATA = 2; // use file_body arg
+  i3_DONE = 3;     // use file_done arg
+}
+
+message FileData {
+  // the maximum size of file_data is chosen
+  // to keep the total size of an i3Msg less
+  // than the max size of an SSL frame (16384).
+  required bytes    file_data = 1;
+}
+
+message FileDone {
+  required uint64   file_size = 1;
+  required bytes    sha256    = 2; // 32 bytes long
+}
+
+// this must fit in an SSL frame, so less than 16384 bytes.
+message i3Msg {
+  required i3MsgType    type          = 1;
+  optional ProtoVersion proto_version = 2;
+  optional FileData     file_data     = 3;
+  optional FileDone     file_done     = 4;
+}
+
+// client to server
+
