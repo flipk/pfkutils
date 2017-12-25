@@ -27,9 +27,8 @@ message FileData {
 }
 
 message FileDone {
-  // length?
-  // checksum?
-  // sha256?
+  required uint64   file_size = 1;
+  required bytes    sha256    = 2; // 32 bytes long
 }
 
 // this must fit in an SSL frame, so less than 16384 bytes.

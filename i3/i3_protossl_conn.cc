@@ -100,10 +100,12 @@ i3protoConn :: send_read_data(const std::string &data)
 }
 
 void
-i3protoConn :: send_read_done(void)
+i3protoConn :: send_read_done(uint64_t file_size,
+                              const std::string &sha256_hash)
 {
     outMessage().set_type(PFK::i3::i3_DONE);
     PFK::i3::FileDone * fd = outMessage().mutable_file_done();
-    // no fd contents
+    fd->set_file_size(file_size);
+    fd->set_sha256(sha256_hash);
     sendMessage();
 }

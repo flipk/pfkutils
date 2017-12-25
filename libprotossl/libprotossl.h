@@ -30,6 +30,8 @@ For more information, please refer to <http://unlicense.org>
 #define __LIBPROTOSSL_H__
 
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <map>
 #include <pthread.h>
 #include <unistd.h>
@@ -75,12 +77,6 @@ struct ProtoSSLCertParams
 
 class ProtoSSLMsgs; // forward
 
-class readBuffer : public std::string {
-public:
-    void * vptr(void) { return (void*) c_str(); }
-    unsigned char * ucptr(void) { return (unsigned char *) c_str(); }
-};
-
 class _ProtoSSLConn
 {
     friend class ProtoSSLMsgs;
@@ -91,8 +87,8 @@ class _ProtoSSLConn
     bool netctx_initialized;
 #endif
     WaitUtil::Lockable fdLock;
-    readBuffer rcvbuf;
-    readBuffer outbuf;
+    pxfe_string rcvbuf;
+    pxfe_string outbuf;
 #if POLARSSL
     ssl_context  sslctx;
 #else

@@ -7,6 +7,8 @@
 #include <string>
 #include "thread_slinger.h"
 #include "posix_fe.h"
+#include <mbedtls/sha256.h>
+#include "libprotossl.h"
 #include I3_PROTO_HDR
 
 class i3protoConn; // forward to avoid circular dependencies
@@ -29,7 +31,7 @@ struct i3_evt : ThreadSlinger::thread_slinger_message {
     static const std::string evt_type_names[NUM_EVTS];
     const std::string &type_name(void) { return evt_type_names[type]; }
     static const std::string &type_name(type_e t) { return evt_type_names[t]; }
-    std::string read_buffer;
+    pxfe_string read_buffer;
     PFK::i3::i3Msg * msg;
     i3protoConn * conn;
     void set_connect(i3protoConn * _conn);
@@ -56,6 +58,10 @@ class i3_loop : pxfe_pthread {
     // return true if 'done'
     bool handle_rcvmsg(const PFK::i3::i3Msg *msg);
     i3protoConn * conn;
+    uint64_t bytes_sent;
+    uint64_t bytes_received;
+    mbedtls_sha256_context recv_hash;
+    mbedtls_sha256_context send_hash;
 public:
     i3_loop(const i3_options &_opts);
     virtual ~i3_loop(void);

@@ -46,6 +46,7 @@ For more information, please refer to <http://unlicense.org>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <string>
 
 struct pxfe_timeval : public timeval
@@ -264,6 +265,35 @@ static inline bool operator<(const pxfe_timespec &lhs,
       return false;
    return lhs.tv_nsec < other.tv_nsec;
 }
+
+class pxfe_string : public std::string {
+public:
+    void * vptr(void) {
+        return (void*) c_str();
+    }
+    const void * vptr(void) const {
+        return (const void*) c_str();
+    }
+    unsigned char * ucptr(void) {
+        return (unsigned char *) c_str();
+    }
+    const unsigned char * ucptr(void) const {
+        return (const unsigned char *) c_str();
+    }
+    std::string format_hex(void) {
+        std::ostringstream out;
+        // at() returns a signed char, but the char and unsigned char
+        // overloads for ostream operator<< try to output the char.
+        // we want a binary to hex conversion that you get with the
+        // "int" operator<< overload.  but we can't cast directly from
+        // "char" to "int" because that will sign-extend, so cast to
+        // unsigned char first.
+        for (int i = 0; i < length(); i++)
+            out << std::hex << std::setw(2) << std::setfill('0') <<
+                (int)((unsigned char)at(i));
+        return out.str();
+    }
+};
 
 class pxfe_pthread_mutexattr {
     pthread_mutexattr_t  attr;
