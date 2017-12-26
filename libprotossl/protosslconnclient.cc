@@ -12,6 +12,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     send_close_notify = false;
     msgs->registerClient(this);
     netctx = new_netctx;
+    WaitUtil::Lock lock(&ssl_lock);
     _ok = init_common();
 }
 
@@ -24,6 +25,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     send_close_notify = false;
     msgs->registerClient(this);
 
+    WaitUtil::Lock lock(&ssl_lock);
     Bufprintf<20> portString;
     portString.print("%d", remotePort);
     mbedtls_net_init(&netctx);
@@ -41,6 +43,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     _ok = init_common();
 }
 
+// this function requires ssl_lock to be locked.
 bool
 ProtoSSLConnClient :: init_common(void)
 {
@@ -90,6 +93,7 @@ ProtoSSLConnClient :: init_common(void)
 
 ProtoSSLConnClient :: ~ProtoSSLConnClient(void)
 {
+    WaitUtil::Lock lock(&ssl_lock);
     mbedtls_net_set_block(&netctx);
     msgs->unregisterClient(this);
     if (send_close_notify)
@@ -102,6 +106,7 @@ ProtoSSLConnClient :: read_return_t
 ProtoSSLConnClient :: handle_read(MESSAGE &msg)
 {
     int ret;
+    WaitUtil::Lock lock(&ssl_lock);
 
     rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
     ret = mbedtls_ssl_read( &sslctx, rcvbuf.ucptr(), rcvbuf.length());
@@ -135,6 +140,7 @@ bool
 ProtoSSLConnClient :: send_message(const MESSAGE &msg)
 {
     int ret;
+    WaitUtil::Lock lock(&ssl_lock);
 
     if (msg.SerializeToString(&outbuf) == false)
     {

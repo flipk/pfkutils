@@ -62,6 +62,7 @@ class ProtoSSLConnClient : public ClientList_t::Links,
     ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
                        const std::string &remoteHost, int remotePort);
     bool init_common(void); // returns ok
+    WaitUtil::Lockable ssl_lock;
 public:
     virtual ~ProtoSSLConnClient(void);
     int get_fd(void) const { return netctx.fd; };
