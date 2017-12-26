@@ -90,6 +90,7 @@ ProtoSSLConnClient :: init_common(void)
 
 ProtoSSLConnClient :: ~ProtoSSLConnClient(void)
 {
+    mbedtls_net_set_block(&netctx);
     msgs->unregisterClient(this);
     if (send_close_notify)
         mbedtls_ssl_close_notify( &sslctx );
