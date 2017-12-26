@@ -54,6 +54,8 @@ class ProtoSSLConnClient : public ClientList_t::Links,
     bool send_close_notify;
     mbedtls_net_context netctx;
     mbedtls_ssl_context sslctx;
+    pxfe_string rcvbuf;
+    pxfe_string outbuf;
     ProtoSSLMsgs * msgs;
     // private so only ProtoSSLMsgs can make it.
     ProtoSSLConnClient(ProtoSSLMsgs * _msgs, mbedtls_net_context new_netctx);

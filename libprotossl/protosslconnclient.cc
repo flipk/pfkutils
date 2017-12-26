@@ -101,7 +101,6 @@ ProtoSSLConnClient :: read_return_t
 ProtoSSLConnClient :: handle_read(MESSAGE &msg)
 {
     int ret;
-    pxfe_string rcvbuf;
 
     rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
     ret = mbedtls_ssl_read( &sslctx, rcvbuf.ucptr(), rcvbuf.length());
@@ -135,7 +134,6 @@ bool
 ProtoSSLConnClient :: send_message(const MESSAGE &msg)
 {
     int ret;
-    pxfe_string outbuf;
 
     if (msg.SerializeToString(&outbuf) == false)
     {
