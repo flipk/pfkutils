@@ -55,13 +55,17 @@ ProtoSSLMsgs :: ~ProtoSSLMsgs(void)
 {
     while (serverList.get_cnt() > 0)
     {
+        WaitUtil::Lock lck(&serverList);
         ProtoSSLConnServer * svr = serverList.get_head();
+        lck.unlock();
         // server unregisters itself from the list
         delete svr;
     }
     while (clientList.get_cnt() > 0)
     {
+        WaitUtil::Lock lck(&clientList);
         ProtoSSLConnClient * client = clientList.get_head();
+        lck.unlock();
         // client unregisters itself from the list
         delete client;
     }
@@ -76,6 +80,8 @@ ProtoSSLMsgs :: ~ProtoSSLMsgs(void)
 void
 ProtoSSLMsgs :: registerServer(ProtoSSLConnServer * svr)
 {
+    WaitUtil::Lock lck1(&serverList);
+    WaitUtil::Lock lck2(&serverHash);
     serverList.add_tail(svr);
     serverHash.add(svr);
 }
@@ -83,6 +89,8 @@ ProtoSSLMsgs :: registerServer(ProtoSSLConnServer * svr)
 void
 ProtoSSLMsgs :: unregisterServer(ProtoSSLConnServer * svr)
 {
+    WaitUtil::Lock lck1(&serverList);
+    WaitUtil::Lock lck2(&serverHash);
     serverList.remove(svr);
     serverHash.remove(svr);
 }
@@ -90,6 +98,8 @@ ProtoSSLMsgs :: unregisterServer(ProtoSSLConnServer * svr)
 void
 ProtoSSLMsgs :: registerClient(ProtoSSLConnClient * clnt)
 {
+    WaitUtil::Lock lck1(&clientList);
+    WaitUtil::Lock lck2(&clientHash);
     clientList.add_tail(clnt);
     clientHash.add(clnt);
 }
@@ -97,6 +107,8 @@ ProtoSSLMsgs :: registerClient(ProtoSSLConnClient * clnt)
 void
 ProtoSSLMsgs :: unregisterClient(ProtoSSLConnClient * clnt)
 {
+    WaitUtil::Lock lck1(&clientList);
+    WaitUtil::Lock lck2(&clientHash);
     clientList.remove(clnt);
     clientHash.remove(clnt);
 }

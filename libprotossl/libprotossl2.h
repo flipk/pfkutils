@@ -39,10 +39,10 @@ struct ProtoSSLCertParams
 class ProtoSSLConnClient;
 class ProtoSSLConnClientHash;
 typedef DLL3::List<ProtoSSLConnClient, 1/*uniqueID*/,
-                   false/*lockWarn*/,true/*validate*/>  ClientList_t;
+                   true/*lockWarn*/,true/*validate*/>  ClientList_t;
 typedef DLL3::Hash<ProtoSSLConnClient, int/*fd*/,
                    ProtoSSLConnClientHash, 2/*uniqueID*/,
-                   false/*lockWarn*/,true/*validate*/>  ClientHash_t;
+                   true/*lockWarn*/,true/*validate*/>  ClientHash_t;
 
 class ProtoSSLConnClient : public ClientList_t::Links,
                            public ClientHash_t::Links
@@ -89,10 +89,10 @@ public:
 class ProtoSSLConnServer;
 class ProtoSSLConnServerHash;
 typedef DLL3::List<ProtoSSLConnServer,/*uniqueID*/3,
-                   false/*lockWarn*/,true/*validate*/>  ServerList_t;
+                   true/*lockWarn*/,true/*validate*/>  ServerList_t;
 typedef DLL3::Hash<ProtoSSLConnServer, int/*fd*/,
                    ProtoSSLConnServerHash, 4/*uniqueID*/,
-                   false/*lockWarn*/,true/*validate*/>  ServerHash_t;
+                   true/*lockWarn*/,true/*validate*/>  ServerHash_t;
 
 class ProtoSSLConnServer : public ServerList_t::Links,
                            public ServerHash_t::Links
