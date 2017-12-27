@@ -163,7 +163,7 @@ public:
                     break;
                 }
             }
-            if (connected && reading_input && sel.rfds.is_set(opts.input_fd))
+            if (connected && sel.rfds.is_set(opts.input_fd))
             {
                 readbuffer.resize(16000);
                 int cc = ::read(opts.input_fd,
