@@ -33,6 +33,10 @@ class i3_program
     mbedtls_sha256_context send_hash;
     time_t                 last_stats;
     pxfe_timeval           tv_start;
+    uint32_t               ping_seq;
+    uint32_t               preload_count;
+    pxfe_timeval           roundtrip;
+    bool                   roundtrip_set;
 public:
     i3_program(int argc, char ** argv)
         : opts(argc, argv)
@@ -49,6 +53,9 @@ public:
         mbedtls_sha256_init(&send_hash);
         time(&last_stats);
         tv_start.getNow();
+        ping_seq = 1;
+        preload_count = opts.pingack_preload;
+        roundtrip_set = false;
     }
     ~i3_program(void)
     {
@@ -192,6 +199,8 @@ public:
 private:
     void sendmsg(void)
     {
+        if (opts.debug_flag)
+            printf("sending message: %s\n", outMsg.DebugString().c_str());
         client->send_message(outMsg);
         outMsg.Clear();
     }
@@ -205,6 +214,8 @@ private:
     // return false for failure
     bool handle_message(void)
     {
+        if (opts.debug_flag)
+            printf("received message: %s\n", inMsg.DebugString().c_str());
         switch (inMsg.type())
         {
         case i3_VERSION:
@@ -246,6 +257,16 @@ private:
                 mbedtls_sha256_update(&recv_hash, data.ucptr(), data.length());
                 bytes_received += cc;
             }
+            if (inMsg.file_data().has_ping())
+            {
+                outMsg.set_type(i3_PINGACK);
+                Ping * p = outMsg.mutable_ping_ack();
+                p->CopyFrom(inMsg.file_data().ping());
+                sendmsg();
+            }
+            break;
+        case i3_PINGACK:
+            handle_pingack();
             break;
         case i3_DONE:
             handle_file_done();
@@ -256,7 +277,23 @@ private:
     void send_file_msg(void)
     {
         outMsg.set_type(i3_FILEDATA);
-        outMsg.mutable_file_data()->set_file_data(readbuffer);
+        FileData * fd = outMsg.mutable_file_data();
+        fd->set_file_data(readbuffer);
+        if (opts.pingack)
+        {
+            preload_count--;
+            if (preload_count <= 0)
+            {
+                Ping * p = fd->mutable_ping();
+                p->set_seq(ping_seq++);
+                pxfe_timeval tv;
+                tv.getNow();
+                p->set_time_sec(tv.tv_sec);
+                p->set_time_usec(tv.tv_usec);
+                reading_input = false;
+                preload_count = opts.pingack_preload;
+            }
+        }
         sendmsg();
         mbedtls_sha256_update(&send_hash,
                               readbuffer.ucptr(),
@@ -272,6 +309,19 @@ private:
         fd->set_file_size(bytes_sent);
         fd->set_sha256(sent_hash);
         sendmsg();
+    }
+    void handle_pingack(void)
+    {
+        pxfe_timeval ts, now;
+        now.getNow();
+        const Ping &p = inMsg.ping_ack();
+        ts.set(p.time_sec(), p.time_usec());
+        roundtrip = now - ts;
+        roundtrip_set = true;
+        reading_input = opts.input_set;
+        if (opts.debug_flag)
+            printf("round trip calculated : %u.%06u\n",
+                   roundtrip.tv_sec, roundtrip.tv_usec);
     }
     void handle_file_done(void)
     {
@@ -303,6 +353,9 @@ private:
         printf("\r%" PRIu64 " bytes received in %u.%06u seconds "
                "(%.0f bytes per second)",
                total, diff.tv_sec, diff.tv_usec, bytes_per_sec);
+        if (roundtrip_set)
+            printf(" (rt %u.%06u)",
+                   roundtrip.tv_sec, roundtrip.tv_usec);
         if (final)
             printf("\n");
         fflush(stdout);
