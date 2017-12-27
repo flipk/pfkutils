@@ -2,6 +2,7 @@
 #include "libprotossl2.h"
 #include "i3_options.h"
 #include I3_PROTO_HDR
+#include <mbedtls/sha256.h>
 
 using namespace ProtoSSL;
 using namespace std;
@@ -21,6 +22,10 @@ class i3_program
     i3Msg                inMsg;
     i3Msg                outMsg;
     pxfe_string          readbuffer;
+    uint64_t bytes_sent;
+    uint64_t bytes_received;
+    mbedtls_sha256_context recv_hash;
+    mbedtls_sha256_context send_hash;
 public:
     i3_program(int argc, char ** argv)
         : opts(argc, argv)
@@ -31,6 +36,10 @@ public:
         server = NULL;
         connected = false;
         reading_input = false;
+        bytes_sent = 0;
+        bytes_received = 0;
+        mbedtls_sha256_init(&recv_hash);
+        mbedtls_sha256_init(&send_hash);
     }
     ~i3_program(void)
     {
@@ -42,6 +51,8 @@ public:
             delete msgs;
         if (certs)
             delete certs;
+        mbedtls_sha256_free(&recv_hash);
+        mbedtls_sha256_free(&send_hash);
     }
     bool get_ok(void) const { return opts.ok; }
     int main(void)
@@ -79,6 +90,9 @@ public:
                 return 1;
             }
         }
+
+        mbedtls_sha256_starts(&recv_hash,0);
+        mbedtls_sha256_starts(&send_hash,0);
 
         bool done = false;
         while (!done)
@@ -139,9 +153,11 @@ public:
                 {
                     readbuffer.resize(cc);
                     send_file_msg();
+                    bytes_sent += cc;
                 }
                 else
                 {
+                    send_file_done();
                     done = true;
                 }
             }
@@ -203,9 +219,12 @@ private:
                          << len << ")\n";
                     return false;
                 }
+                mbedtls_sha256_update(&recv_hash, data.ucptr(), data.length());
+                bytes_received += cc;
             }
             break;
         case i3_DONE:
+            handle_file_done();
             break;
         }
         return true;
@@ -215,6 +234,37 @@ private:
         outMsg.set_type(i3_FILEDATA);
         outMsg.mutable_file_data()->set_file_data(readbuffer);
         sendmsg();
+        mbedtls_sha256_update(&send_hash,
+                              readbuffer.ucptr(),
+                              readbuffer.length());
+    }
+    void send_file_done(void)
+    {
+        pxfe_string  sent_hash;
+        sent_hash.resize(32);
+        mbedtls_sha256_finish(&send_hash, sent_hash.ucptr());
+        outMsg.set_type(i3_DONE);
+        FileDone * fd = outMsg.mutable_file_done();
+        fd->set_file_size(bytes_sent);
+        fd->set_sha256(sent_hash);
+        sendmsg();
+    }
+    void handle_file_done(void)
+    {
+        if (bytes_received != inMsg.file_done().file_size())
+            cerr << "FILE SIZE mismatch! ERROR in transfer:\n"
+                 << "calculated size " << bytes_received << "\n"
+                 << "received size   " << inMsg.file_done().file_size() << "\n";
+        pxfe_string rcvd_hash;
+        rcvd_hash.resize(32);
+        mbedtls_sha256_finish(&recv_hash, rcvd_hash.ucptr());
+        std::string one = rcvd_hash.format_hex();
+        std::string two = ((pxfe_string&)
+                           inMsg.file_done().sha256()).format_hex();
+        if (one != two)
+            cerr << "SHA256 sum mismatch! ERROR in transfer:\n"
+                 << "calculated hash '" << one << "'\n"
+                 << "received hash   '" << two << "'\n";
     }
 };
 
