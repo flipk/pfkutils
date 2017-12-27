@@ -10,6 +10,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
 {
     _ok = false;
     send_close_notify = false;
+    ssl_initialized = false;
     msgs->registerClient(this);
     netctx = new_netctx;
     WaitUtil::Lock lock(&ssl_lock);
@@ -23,6 +24,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
 {
     _ok = false;
     send_close_notify = false;
+    ssl_initialized = false;
     msgs->registerClient(this);
 
     WaitUtil::Lock lock(&ssl_lock);
@@ -50,6 +52,7 @@ ProtoSSLConnClient :: init_common(void)
     int ret;
 
     mbedtls_ssl_init( &sslctx );
+    ssl_initialized = true;
     mbedtls_ssl_setup( &sslctx, &msgs->sslcfg );
     mbedtls_ssl_set_hs_authmode( &sslctx, MBEDTLS_SSL_VERIFY_REQUIRED );
     mbedtls_ssl_set_bio( &sslctx, &netctx,
@@ -99,7 +102,8 @@ ProtoSSLConnClient :: ~ProtoSSLConnClient(void)
     if (send_close_notify)
         mbedtls_ssl_close_notify( &sslctx );
     mbedtls_net_free(&netctx);
-    mbedtls_ssl_free(&sslctx);
+    if (ssl_initialized)
+        mbedtls_ssl_free(&sslctx);
 }
 
 ProtoSSLConnClient :: read_return_t

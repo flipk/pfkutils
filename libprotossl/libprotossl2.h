@@ -52,6 +52,7 @@ class ProtoSSLConnClient : public ClientList_t::Links,
     friend class ProtoSSLConnServer;
     bool _ok;
     bool send_close_notify;
+    bool ssl_initialized;
     mbedtls_net_context netctx;
     mbedtls_ssl_context sslctx;
     pxfe_string rcvbuf;
