@@ -2,7 +2,6 @@
 // todo:
 //    -Ir : generate random data as input
 //    -Iz : generate zero data as input
-//    -p  : ping/ack to reduce network queuing, specify #pkts to preload
 
 #include "libprotossl2.h"
 #include "i3_options.h"
@@ -321,20 +320,21 @@ private:
         reading_input = opts.input_set;
         if (opts.debug_flag)
             printf("round trip calculated : %u.%06u\n",
-                   roundtrip.tv_sec, roundtrip.tv_usec);
+                   (unsigned int) roundtrip.tv_sec,
+                   (unsigned int) roundtrip.tv_usec);
     }
     void handle_file_done(void)
     {
-        if (bytes_received != inMsg.file_done().file_size())
+        const FileDone &fd = inMsg.file_done();
+        if (bytes_received != fd.file_size())
             cerr << "FILE SIZE mismatch! ERROR in transfer:\n"
                  << "calculated size " << bytes_received << "\n"
-                 << "received size   " << inMsg.file_done().file_size() << "\n";
+                 << "received size   " << fd.file_size() << "\n";
         pxfe_string rcvd_hash;
         rcvd_hash.resize(32);
         mbedtls_sha256_finish(&recv_hash, rcvd_hash.ucptr());
         std::string one = rcvd_hash.format_hex();
-        std::string two = ((pxfe_string&)
-                           inMsg.file_done().sha256()).format_hex();
+        std::string two = ((pxfe_string&) fd.sha256()).format_hex();
         if (one != two)
             cerr << "SHA256 sum mismatch! ERROR in transfer:\n"
                  << "calculated hash '" << one << "'\n"
@@ -350,12 +350,16 @@ private:
         if (t == 0.0)
             t = 99999.0;
         float bytes_per_sec = (float) total / t;
-        printf("\r%" PRIu64 " bytes received in %u.%06u seconds "
-               "(%.0f bytes per second)",
-               total, diff.tv_sec, diff.tv_usec, bytes_per_sec);
+        printf("\r%" PRIu64 " in %u.%06u s "
+               "(%.0f bps)",
+               total,
+               (unsigned int) diff.tv_sec,
+               (unsigned int) diff.tv_usec,
+               bytes_per_sec);
         if (roundtrip_set)
             printf(" (rt %u.%06u)",
-                   roundtrip.tv_sec, roundtrip.tv_usec);
+                   (unsigned int) roundtrip.tv_sec,
+                   (unsigned int) roundtrip.tv_usec);
         if (final)
             printf("\n");
         fflush(stdout);
