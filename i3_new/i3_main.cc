@@ -1,4 +1,10 @@
 
+// todo:
+//    -Ir : generate random data as input
+//    -Iz : generate zero data as input
+//    -p  : ping/ack to reduce network queuing, specify #pkts to preload
+//    -v  : verbose reporting of stats
+
 #include "libprotossl2.h"
 #include "i3_options.h"
 #include I3_PROTO_HDR
