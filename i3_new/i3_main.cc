@@ -3,7 +3,6 @@
 //    -Ir : generate random data as input
 //    -Iz : generate zero data as input
 //    -p  : ping/ack to reduce network queuing, specify #pkts to preload
-//    -v  : verbose reporting of stats
 
 #include "libprotossl2.h"
 #include "i3_options.h"
@@ -18,20 +17,22 @@ using namespace PFK::i3;
 
 class i3_program
 {
-    i3_options           opts;
-    ProtoSSLCertParams * certs;
-    ProtoSSLMsgs       * msgs;
-    bool                 connected;
-    bool                 reading_input;
-    ProtoSSLConnClient * client;
-    ProtoSSLConnServer * server;
-    i3Msg                inMsg;
-    i3Msg                outMsg;
-    pxfe_string          readbuffer;
-    uint64_t bytes_sent;
-    uint64_t bytes_received;
+    i3_options             opts;
+    ProtoSSLCertParams  *  certs;
+    ProtoSSLMsgs        *  msgs;
+    bool                   connected;
+    bool                   reading_input;
+    ProtoSSLConnClient  *  client;
+    ProtoSSLConnServer  *  server;
+    i3Msg                  inMsg;
+    i3Msg                  outMsg;
+    pxfe_string            readbuffer;
+    uint64_t               bytes_sent;
+    uint64_t               bytes_received;
     mbedtls_sha256_context recv_hash;
     mbedtls_sha256_context send_hash;
+    time_t                 last_stats;
+    pxfe_timeval           tv_start;
 public:
     i3_program(int argc, char ** argv)
         : opts(argc, argv)
@@ -46,6 +47,8 @@ public:
         bytes_received = 0;
         mbedtls_sha256_init(&recv_hash);
         mbedtls_sha256_init(&send_hash);
+        time(&last_stats);
+        tv_start.getNow();
     }
     ~i3_program(void)
     {
@@ -132,6 +135,9 @@ public:
                         client = newclient;
                         connected = true;
                         send_proto_version();
+                        tv_start.getNow();
+                        if (opts.verbose)
+                            print_stats(/*final*/ false);
                     }
                 }
             }
@@ -167,7 +173,19 @@ public:
                     done = true;
                 }
             }
+            if (opts.verbose)
+            {
+                time_t now = time(NULL);
+                if (now != last_stats)
+                {
+                    print_stats(/*final*/ false);
+                    last_stats = now;
+                }
+            }
         }
+
+        if (opts.verbose)
+            print_stats(/*final*/ true);
 
         return 0;
     }
@@ -271,6 +289,23 @@ private:
             cerr << "SHA256 sum mismatch! ERROR in transfer:\n"
                  << "calculated hash '" << one << "'\n"
                  << "received hash   '" << two << "'\n";
+    }
+    void print_stats(bool final)
+    {
+        pxfe_timeval now, diff;
+        uint64_t total = bytes_sent + bytes_received;
+        now.getNow();
+        diff = now - tv_start;
+        float t = diff.usecs() / 1000000.0;
+        if (t == 0.0)
+            t = 99999.0;
+        float bytes_per_sec = (float) total / t;
+        printf("\r%" PRIu64 " bytes received in %u.%06u seconds "
+               "(%.0f bytes per second)",
+               total, diff.tv_sec, diff.tv_usec, bytes_per_sec);
+        if (final)
+            printf("\n");
+        fflush(stdout);
     }
 };
 

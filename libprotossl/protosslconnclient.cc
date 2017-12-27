@@ -131,7 +131,7 @@ ProtoSSLConnClient :: handle_read(MESSAGE &msg)
         send_close_notify = false;
         mbedtls_net_free(&netctx);
         if (ret == 0)
-            std::cout << "remote disconnect unclean\n";
+            std::cout << "NOTE: Remote Disconnect Unclean\n";
         mbedtls_ssl_session_reset( &sslctx );
         return GOT_DISCONNECT;
     }
