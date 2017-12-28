@@ -368,7 +368,11 @@ LIB_TARGETS += libprotossl
 libprotossl_TARGET = $(OBJDIR)/libprotossl.a
 libprotossl_DEFS = $(MBEDTLS_FLAGS)
 libprotossl_INCS = -Ilibprotossl -Ilibpfkutil $(PROTOBUF_INC) $(MBEDTLS_INCS)
-libprotossl_CXXSRCS = libprotossl/libprotossl.cc
+libprotossl_CXXSRCS = \
+	libprotossl/protosslcertparams.cc \
+	libprotossl/protosslconnclient.cc \
+	libprotossl/protosslconnserver.cc \
+	libprotossl/protosslmsgs.cc
 libprotossl_HDRS = libprotossl/libprotossl.h
 libprotossl_INSTALL_HDRS = libprotossl/libprotossl.h
 libprotossl_POSTINSTALL = install_protossl
@@ -380,12 +384,13 @@ install_protossl:
 
 PROG_TARGETS += protossl_test
 protossl_test_TARGET = $(OBJDIR)/protossl_test
-protossl_test_DEFS = $(MBEDTLS_FLAGS)
+protossl_test_DEFS = $(MBEDTLS_FLAGS) \
+-DTEST_PROTO_HDR=\"protossl_test-libprotossl_test_proto.pb.h\"
 protossl_test_INCS = -Ilibprotossl -Ilibpfkutil \
 	$(PROTOBUF_INC) $(MBEDTLS_INCS)
 protossl_test_PROTOSRCS = libprotossl/test_proto.proto
 protossl_test_CXXSRCS = libprotossl/test.cc
-protossl_test_DEPLIBS = $(libprotossl_TARGET)
+protossl_test_DEPLIBS = $(libprotossl_TARGET) $(libpfkutil_TARGET)
 protossl_test_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 endif
 
@@ -413,10 +418,7 @@ LIB_TARGETS += libi3
 libi3_TARGET = $(OBJDIR)/libi3.a
 libi3_DEFS = -DI3_PROTO_HDR=\"libi3-i3_i3.pb.h\"
 libi3_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
-libi3_CXXSRCS = \
-	i3/i3_reader.cc i3/i3_options.cc \
-	i3/i3_protossl_factory.cc i3/i3_protossl_conn.cc \
-	i3/i3_loop.cc i3/i3_main.cc
+libi3_CXXSRCS = i3/i3_options.cc i3/i3_main.cc
 libi3_PROTOSRCS = i3/i3.proto
 pfkutils_LIBMBEDTLS = $(MBEDTLS_LIBS)
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)

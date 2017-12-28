@@ -190,6 +190,7 @@ i3_options :: i3_options(int argc, char ** argv)
     {
         outbound = true;
         hostname = argv[optind];
+        cout << "hostname is " << hostname << endl;
     }
     else if (argc != optind)
     {

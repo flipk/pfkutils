@@ -27,23 +27,17 @@ message PingInfo {
   required uint32 time_useconds = 10;
 }
 
-message Data {
-  required bytes data = 11;
-}
-
 // server to client
 
 enum ServerToClientType {
   STC_PROTO_VERSION = 1;
   STC_PING_ACK = 2;
-  STC_DATA = 5;
 }
 
 message ServerToClient {
   required ServerToClientType type = 3;
   optional ProtoVersion  proto_version = 4;
   optional PingInfo  ping = 5;
-  optional Data      data = 13;
 }
 
 // client to server
@@ -51,12 +45,10 @@ message ServerToClient {
 enum ClientToServerType {
   CTS_PROTO_VERSION = 3;
   CTS_PING = 4;
-  CTS_DATA = 6;
 }
 
 message ClientToServer {
   required ClientToServerType type = 6;
   optional ProtoVersion  proto_version = 7;
   optional PingInfo  ping = 8;
-  optional Data      data = 12;
 }

@@ -4,7 +4,7 @@ package PFK.i3;
 // common stuff first
 
 enum ProtocolVersion {
-  i3_VERSION_1 = 1;
+  PROTOCOL_VERSION_1 = 1;
   // increment every time you modify this file
 };
 
@@ -17,13 +17,6 @@ enum i3MsgType {
   i3_VERSION  = 1; // use proto_version arg
   i3_FILEDATA = 2; // use file_body arg
   i3_DONE = 3;     // use file_done arg
-  i3_PINGACK = 4;
-}
-
-message Ping {
-  required uint32  seq       = 1;
-  required uint32  time_sec  = 2;
-  required uint32  time_usec = 3;
 }
 
 message FileData {
@@ -31,12 +24,6 @@ message FileData {
   // to keep the total size of an i3Msg less
   // than the max size of an SSL frame (16384).
   required bytes    file_data = 1;
-  // this is only populated if the sender has enabled
-  // ping/ack mode. in this mde, every time the recipient
-  // gets a ping, he must reply with an i3_PINGACK.
-  // the sender stops and waits for the ping ack before
-  // continuing, thus reducing tx queuing at the sender side.
-  optional Ping     ping = 2;
 }
 
 message FileDone {
@@ -50,7 +37,6 @@ message i3Msg {
   optional ProtoVersion proto_version = 2;
   optional FileData     file_data     = 3;
   optional FileDone     file_done     = 4;
-  optional Ping         ping_ack      = 5;
 }
 
 // client to server

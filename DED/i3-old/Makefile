@@ -6,6 +6,9 @@ CONFIG := $(shell cat $(CONFIG_FILE))
 endif
 endif
 
+
+OBJDIR = obj
+
 ifeq ($(CONFIG),blade)
 PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
@@ -24,31 +27,24 @@ else
 endif
 endif
 
-OBJDIR = obj
-
-LIB_TARGETS += libprotossl libutil
+LIB_TARGETS += libprotossl libthreadslinger
 
 libprotossl_TARGET = $(OBJDIR)/libprotossl.a
-libprotossl_CXXSRCS = \
-	../libprotossl/protosslcertparams.cc \
-	../libprotossl/protosslconnclient.cc \
-	../libprotossl/protosslconnserver.cc \
-	../libprotossl/protosslmsgs.cc
-libprotossl_INCS = -I../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libprotossl_CXXSRCS = libprotossl.cc
+libprotossl_INCS = -I../../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 
-libutil_TARGET = $(OBJDIR)/libutil.a
-libutil_CXXSRCS = ../libpfkutil/thread_slinger.cc ../libpfkutil/dll3.cc
-libutil_INCS = -I../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libthreadslinger_TARGET = $(OBJDIR)/libthreadslinger.a
+libthreadslinger_CXXSRCS = ../../libpfkutil/thread_slinger.cc
+libthreadslinger_INCS = -I../../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 
 PROG_TARGETS += i3
 
 i3_TARGET = $(OBJDIR)/i3
 i3_PROTOSRCS = i3.proto
-i3_CXXSRCS = i3_options.cc i3_main.cc
-i3_INCS = -I../libprotossl -I../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+i3_CXXSRCS = i3_reader.cc i3_options.cc i3_protossl_factory.cc i3_protossl_conn.cc i3_loop.cc i3_main.cc
+i3_INCS = -I../../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 i3_DEFS = -Di3_main=main -DI3_PROTO_HDR=\"i3-i3.pb.h\"
-i3_DEPLIBS = $(libi3_TARGET) $(libprotossl_TARGET) $(libutil_TARGET)
+i3_DEPLIBS = $(libi3_TARGET) $(libprotossl_TARGET) $(libthreadslinger_TARGET)
 i3_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
-i3_LDFLAGS = -rdynamic
 
-include ../Makefile.inc
+include ../../Makefile.inc

@@ -1,64 +1,25 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
-/*
-This is free and unencumbered software released into the public domain.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+#ifndef __LIBPROTOSSL2_H__
+#define __LIBPROTOSSL2_H__
 
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
-
-For more information, please refer to <http://unlicense.org>
-*/
-
-#ifndef __LIBPROTOSSL_H__
-#define __LIBPROTOSSL_H__
-
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <map>
-#include <pthread.h>
-#include <unistd.h>
-
-#include <google/protobuf/message.h>
-
-#if POLARSSL
-#include <polarssl/entropy.h>
-#include <polarssl/ctr_drbg.h>
-#include <polarssl/ssl.h>
-#include <polarssl/net.h>
-#include <polarssl/error.h>
-#else
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/net.h>
 #include <mbedtls/error.h>
 #include <mbedtls/debug.h>
-#endif
+#include <google/protobuf/message.h>
 
-#include "LockWait.h"
 #include "posix_fe.h"
+#include "dll3.h"
 
 namespace ProtoSSL {
 
 typedef google::protobuf::Message MESSAGE;
+class ProtoSSLMsgs;
+
+/*************************** ProtoSSLCertParams ***************************/
 
 struct ProtoSSLCertParams
 {
@@ -66,152 +27,132 @@ struct ProtoSSLCertParams
     const std::string &myCert;
     const std::string &myKey;
     const std::string &myKeyPassword;
-    const std::string &otherCommonName;
     ProtoSSLCertParams(const std::string &_caCert, // file:/...
                        const std::string &_myCert, // file:/...
                        const std::string &_myKey,  // file:/...
-                       const std::string &_myKeyPassword,
-                       const std::string &_otherCommonName);
+                       const std::string &_myKeyPassword);
     ~ProtoSSLCertParams(void);
 };
 
-class ProtoSSLMsgs; // forward
+/*************************** ProtoSSLConnClient ***************************/
 
-class _ProtoSSLConn
+class ProtoSSLConnClient;
+class ProtoSSLConnClientHash;
+typedef DLL3::List<ProtoSSLConnClient, 1/*uniqueID*/,
+                   true/*lockWarn*/,true/*validate*/>  ClientList_t;
+typedef DLL3::Hash<ProtoSSLConnClient, int/*fd*/,
+                   ProtoSSLConnClientHash, 2/*uniqueID*/,
+                   true/*lockWarn*/,true/*validate*/>  ClientHash_t;
+
+class ProtoSSLConnClient : public ClientList_t::Links,
+                           public ClientHash_t::Links
 {
     friend class ProtoSSLMsgs;
-#if POLARSSL
-    int fd;
-#else
+    friend class ProtoSSLConnClientHash;
+    friend class ProtoSSLConnServer;
+    bool _ok;
+    bool send_close_notify;
+    bool ssl_initialized;
     mbedtls_net_context netctx;
-    bool netctx_initialized;
-#endif
-    WaitUtil::Lockable fdLock;
+    mbedtls_ssl_context sslctx;
     pxfe_string rcvbuf;
     pxfe_string outbuf;
-#if POLARSSL
-    ssl_context  sslctx;
-#else
-    mbedtls_ssl_context  sslctx;
-#endif
-    MESSAGE &rcvdMessage;
-    static void * threadMain(void *);
-    void _threadMain(void);
-    pthread_t thread_id;
-    bool thread_running;
-    pxfe_pipe exitPipe;
-    // used by ProtoSSLMsgs, our friend.
-#if POLARSSL
-    bool _startThread(ProtoSSLMsgs * _msgs, bool isServer, int _fd);
-#else
-    bool _startThread(ProtoSSLMsgs * _msgs, bool isServer,
-                      const mbedtls_net_context &_netctx);
-#endif
-protected:
-    _ProtoSSLConn(MESSAGE &_rcvdMessage);
-    virtual ~_ProtoSSLConn(void);
-    virtual bool _messageHandler(void) = 0;
-    bool _sendMessage(MESSAGE &);
     ProtoSSLMsgs * msgs;
-    // this tells the user the authentication is complete and the
-    // connection is ready to pass encrypted protobuf messages.
-    // TODO : connect could pass more information about the peer.
-    virtual void handleConnect(void) = 0;
-    virtual void handleDisconnect(void) = 0;
-
-#if POLARSSL
-    static void debug_print(void *ptr, int level, const char *string);
-#else
-    static void debug_print(void *ptr, int level,
-                            const char *file, int line, const char *str);
-#endif
-
+    // private so only ProtoSSLMsgs can make it.
+    ProtoSSLConnClient(ProtoSSLMsgs * _msgs, mbedtls_net_context new_netctx);
+    ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
+                       const std::string &remoteHost, int remotePort);
+    bool init_common(void); // returns ok
+    WaitUtil::Lockable ssl_lock;
 public:
-    // the user may use this to stop all proto ssl messaging,
-    // equivalent to calling ProtoSSLMsgs::stop.
-    void stopMsgs(void);
-    // the user may call this to cleanly close this connection.
-    void closeConnection(void);
+    virtual ~ProtoSSLConnClient(void);
+    int get_fd(void) const { return netctx.fd; };
+    enum read_return_t {
+        GOT_DISCONNECT,
+        READ_MORE,
+        GOT_MESSAGE
+    };
+    read_return_t handle_read(MESSAGE &msg);
+    // returns true if ok, false if not
+    bool send_message(const MESSAGE &msg);
+    bool ok(void) const { return _ok; }
 };
-
-template <class IncomingMessageType, class OutgoingMessageType>
-class ProtoSSLConn : public _ProtoSSLConn
-{
-    IncomingMessageType  _rcvdMessage;
-    OutgoingMessageType  _outMessage;
-    bool _messageHandler(void) { return messageHandler(_rcvdMessage); }
-protected:
-    // constructor indicates a new tcp connection but does NOT
-    // indicate authentication.
-    ProtoSSLConn(void) : _ProtoSSLConn(_rcvdMessage) { }
-    // the user's handler should return false to kill the connection.
-    virtual bool messageHandler(const IncomingMessageType &) = 0;
-    // this indicates the connection is closed and thread is exiting.
-    virtual ~ProtoSSLConn(void) { }
-    OutgoingMessageType &outMessage(void) { return _outMessage; }
-    // note after sending, this calls outMessage.Clear()
-    bool sendMessage(void) { return _sendMessage(_outMessage); }
-};
-
-class ProtoSSLConnFactory
-{
+class ProtoSSLConnClientHash {
 public:
-    virtual ~ProtoSSLConnFactory(void) { }
-    virtual _ProtoSSLConn * newConnection(void) = 0;
+    static uint32_t obj2hash  (const ProtoSSLConnClient &obj)
+    { return obj.get_fd(); }
+    static uint32_t key2hash  (const int fd) { return fd; }
+    static bool     hashMatch (const int fd, const ProtoSSLConnClient &obj)
+    { return fd == obj.get_fd(); }
 };
+
+/*************************** ProtoSSLConnServer ***************************/
+
+class ProtoSSLConnServer;
+class ProtoSSLConnServerHash;
+typedef DLL3::List<ProtoSSLConnServer,/*uniqueID*/3,
+                   true/*lockWarn*/,true/*validate*/>  ServerList_t;
+typedef DLL3::Hash<ProtoSSLConnServer, int/*fd*/,
+                   ProtoSSLConnServerHash, 4/*uniqueID*/,
+                   true/*lockWarn*/,true/*validate*/>  ServerHash_t;
+
+class ProtoSSLConnServer : public ServerList_t::Links,
+                           public ServerHash_t::Links
+{
+    friend class ProtoSSLMsgs;
+    friend class ProtoSSLConnServerHash;
+    bool _ok;
+    mbedtls_net_context netctx;
+    ProtoSSLMsgs * msgs;
+    // private so only ProtoSSLMsgs can make it.
+    ProtoSSLConnServer(ProtoSSLMsgs * _msgs, int listeningPort);
+public:
+    virtual ~ProtoSSLConnServer(void);
+    int get_fd(void) const { return netctx.fd; };
+    // returns NULL if accept failed for some reason
+    ProtoSSLConnClient * handle_accept(void);
+    bool ok(void) const { return _ok; }
+};
+class ProtoSSLConnServerHash {
+public:
+    static uint32_t obj2hash  (const ProtoSSLConnServer &obj)
+    { return obj.get_fd(); }
+    static uint32_t key2hash  (const int fd) { return fd; }
+    static bool     hashMatch (const int fd, const ProtoSSLConnServer &obj)
+    { return fd == obj.get_fd(); }
+};
+
+/*************************** ProtoSSLMsgs ***************************/
 
 class ProtoSSLMsgs
 {
-    friend class _ProtoSSLConn;
-#if POLARSSL
-    entropy_context entropy;
-    ctr_drbg_context ctr_drbg;
-    x509_crt cacert, mycert;
-    pk_context   mykey;
-#else
-    mbedtls_entropy_context entropy;
+    friend class ProtoSSLConnServer;
+    friend class ProtoSSLConnClient;
+    mbedtls_entropy_context  entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
-    mbedtls_x509_crt cacert, mycert;
-    mbedtls_pk_context   mykey;
-    mbedtls_ssl_config   sslcfg;
-#endif
-    std::string  otherCommonName;
-    std::string  remoteHost;
-    WaitUtil::Lockable connLock;
-    typedef std::map<int/*fd*/,_ProtoSSLConn*> connMap;
-    connMap conns;
-    struct serverInfo {
-#if POLARSSL
-        int fd;
-#else
-        mbedtls_net_context netctx;
-#endif
-        pthread_t thread_id;
-        ProtoSSLMsgs * msgs;
-        pxfe_pipe exitPipe;
-        ProtoSSLConnFactory *factory;
-    };
-    typedef std::map<int,serverInfo> serverInfoMap;
-    serverInfoMap servers; // lock this with connMap too
-    void deregisterConn(int fd,_ProtoSSLConn *);
-    static void * serverThread(void *);
-    void _serverThread(serverInfo *);
-    pxfe_pipe exitPipe;
-    bool debugFlag;
+    mbedtls_x509_crt         cacert, mycert;
+    mbedtls_pk_context       mykey;
+    mbedtls_ssl_config       sslcfg;
+    bool                     nonBlockingMode;
+    bool                     debugFlag;
+    ClientList_t             clientList;
+    ClientHash_t             clientHash;
+    ServerList_t             serverList;
+    ServerHash_t             serverHash;
+    void   registerServer(ProtoSSLConnServer * svr);
+    void unregisterServer(ProtoSSLConnServer * svr);
+    void   registerClient(ProtoSSLConnClient * clnt);
+    void unregisterClient(ProtoSSLConnClient * clnt);
 public:
-    ProtoSSLMsgs(bool _debugFlag=false);
+    ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag = false );
     ~ProtoSSLMsgs(void);
+    // returns true if it could load, false if error
     bool loadCertificates(const ProtoSSLCertParams &params);
-    bool startServer(ProtoSSLConnFactory &factory,
-                     int listeningPort);
-    bool startClient(ProtoSSLConnFactory &factory,
-                     const std::string &remoteHost, int remotePort);
-    // returns false if someone called 'stop',
-    // returns true if timeout reached.
-    bool run(int timeout_ms = -1);
-    void stop(void);
+    ProtoSSLConnServer * startServer(int listeningPort);
+    ProtoSSLConnClient * startClient(const std::string &remoteHost,
+                                     int remotePort);
 };
 
 }; // namespace ProtoSSL
 
-#endif /* __LIBPROTOSSL_H__ */
+#endif /* __LIBPROTOSSL2_H__ */
