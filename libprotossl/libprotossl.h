@@ -44,6 +44,14 @@ typedef DLL3::Hash<ProtoSSLConnClient, int/*fd*/,
                    ProtoSSLConnClientHash, 2/*uniqueID*/,
                    true/*lockWarn*/,true/*validate*/>  ClientHash_t;
 
+struct ProtoSSLPeerInfo
+{
+    std::string ipaddr;
+    std::string common_name;
+    std::string pkcs9_email;
+    std::string org_unit;
+};
+
 class ProtoSSLConnClient : public ClientList_t::Links,
                            public ClientHash_t::Links
 {
@@ -76,6 +84,7 @@ public:
     // returns true if ok, false if not
     bool send_message(const MESSAGE &msg);
     bool ok(void) const { return _ok; }
+    bool get_peer_info(ProtoSSLPeerInfo &info);
 };
 class ProtoSSLConnClientHash {
 public:

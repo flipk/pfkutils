@@ -95,6 +95,7 @@ public:
             }
             connected = true;
             send_proto_version();
+            check_peer();
         }
         else
         {
@@ -141,6 +142,7 @@ public:
                         client = newclient;
                         connected = true;
                         send_proto_version();
+                        check_peer();
                         tv_start.getNow();
                         if (opts.verbose)
                             print_stats(/*final*/ false);
@@ -196,6 +198,25 @@ public:
         return 0;
     }
 private:
+    void check_peer(void)
+    {
+        ProtoSSLPeerInfo  info;
+        if (client->get_peer_info(info) == false)
+        {
+            cerr << "ERROR: unable to fetch peer certificate info!\n";
+            return;
+        }
+        if (opts.verbose || opts.debug_flag)
+        {
+            if (opts.verbose)
+                cerr << endl;
+            cerr << "connection: " << info.ipaddr
+                 << " " << info.common_name
+                 << " " << info.pkcs9_email
+                 << " " << info.org_unit
+                 << endl;
+        }
+    }
     void sendmsg(void)
     {
         if (opts.debug_flag)

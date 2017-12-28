@@ -1,6 +1,8 @@
 
 #include "libprotossl.h"
 #include "bufprintf.h"
+#include <sstream>
+#include <mbedtls/oid.h>
 
 using namespace ProtoSSL;
 
@@ -104,6 +106,100 @@ ProtoSSLConnClient :: ~ProtoSSLConnClient(void)
     mbedtls_net_free(&netctx);
     if (ssl_initialized)
         mbedtls_ssl_free(&sslctx);
+}
+
+#if 0
+static std::string
+print_asn1buf(const mbedtls_asn1_buf &b, bool is_str)
+{
+    std::ostringstream o;
+
+    pxfe_string  p((const char*) b.p, b.len);
+
+    o << "tag " << b.tag << " "
+      << "len " << b.len << " "
+      << "p ";
+    if (is_str)
+        o << p;
+    else
+        o << p.format_hex();
+
+    return o.str();
+}
+/*
+oid : tag 6 len 3 p 550403
+     tag = MBEDTLS_ASN1_OID
+     p = MBEDTLS_OID_ISO_CCITT_DS
+         MBEDTLS_OID_AT
+         MBEDTLS_OID_AT_CN
+
+val : tag 12 len 14 p "ubuntu test i3"
+     tag = MBEDTLS_ASN1_UTF8_STRING
+
+oid : tag 6 len 9 p 2a864886f70d010901
+     tag = MBEDTLS_ASN1_OID
+     p = MBEDTLS_OID_ISO_MEMBER_BODIES
+         MBEDTLS_OID_COUNTRY_US
+         MBEDTLS_OID_ORG_RSA_DATA_SECURITY
+         MBEDTLS_OID_PKCS
+         MBEDTLS_OID_PKCS9
+         MBEDTLS_OID_PKCS9_EMAIL
+
+val : tag 22 len 14 p "client@pfk.org"
+     tag = MBEDTLS_ASN1_IA5_STRING
+
+ */
+#endif
+
+bool
+ProtoSSLConnClient :: get_peer_info(ProtoSSLPeerInfo &info)
+{
+    const mbedtls_x509_crt *crt = mbedtls_ssl_get_peer_cert( &sslctx );
+
+    if (crt == NULL)
+        return false;
+
+    const std::string  cn(MBEDTLS_OID_AT_CN);
+    const std::string  em(MBEDTLS_OID_PKCS9_EMAIL);
+    const std::string  ou(MBEDTLS_OID_AT_ORG_UNIT);
+
+    struct sockaddr_in sa;
+    socklen_t  salen = sizeof(sa);
+
+    if (getpeername(get_fd(), (struct sockaddr *)&sa, &salen) < 0)
+    {
+        int e = errno;
+        char * err = strerror(errno);
+        std::cerr << "getpeername failed: " << e << ": " << err << std::endl;
+    }
+    else
+    {
+        uint32_t addr = ntohl(sa.sin_addr.s_addr);
+        std::ostringstream s;
+        s << (int) ((addr >> 24) & 0xFF) << "."
+          << (int) ((addr >> 16) & 0xFF) << "."
+          << (int) ((addr >>  8) & 0xFF) << "."
+          << (int) ((addr >>  0) & 0xFF);
+        info.ipaddr = s.str();
+    }
+
+    const mbedtls_asn1_named_data * d = &crt->subject;
+    while (d)
+    {
+        std::string oid((const char *)d->oid.p, d->oid.len);
+        std::string val((const char *)d->val.p, d->val.len);
+
+        if (oid == cn)
+            info.common_name = val;
+        else if (oid == em)
+            info.pkcs9_email = val;
+        else if (oid == ou)
+            info.org_unit = val;
+
+        d = d->next;
+    }
+
+    return true;
 }
 
 ProtoSSLConnClient :: read_return_t
