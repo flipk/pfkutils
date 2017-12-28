@@ -87,6 +87,9 @@ public:
 
         if (opts.outbound)
         {
+            // in outbound mode, we're forming a client object immediately
+            // connecting out to the destination IP that was specified,
+            // and going straight to connected state.
             client = msgs->startClient(opts.hostname, opts.port_number);
             if (client == NULL)
             {
@@ -99,6 +102,9 @@ public:
         }
         else
         {
+            // in inbound mode, we're creating a listening tcp socket
+            // (server) and waiting for a new connection to appear.
+            // thus we are not in a connected state right away.
             server = msgs->startServer(opts.port_number);
             if (server == NULL)
             {
@@ -119,8 +125,14 @@ public:
                 sel.rfds.set(server->get_fd());
             if (client)
                 sel.rfds.set(client->get_fd());
+            // do not select for read on our local input
+            // if we're no connected or if we sent a ping and
+            // are waiting for a ping-ack to restart us.
             if (connected && reading_input)
                 sel.rfds.set(opts.input_fd);
+            // a timeout of 1s guarantees the stats get
+            // printed on a regular basis, even if the transfer
+            // goes completely idle (or stalled due to network issue).
             sel.tv.set(1,0);
 
             sel.select();
@@ -130,10 +142,18 @@ public:
                 ProtoSSLConnClient * newclient =
                     server->handle_accept();
 
+                // handle_accept may return null for several reasons,
+                // for instance if the certificate valiation failed.
                 if (newclient)
                 {
                     if (client)
                     {
+                        // we only handle one client. if a new one
+                        // comes in we should drop it. actually,
+                        // we should delete the server object when
+                        // we get a connection (closing the listening
+                        // TCP socket) but that is not tested in
+                        // libprotossl.
                         cerr << "rejecting new connection\n";
                         delete newclient;
                     }
@@ -143,8 +163,13 @@ public:
                         connected = true;
                         send_proto_version();
                         check_peer();
+                        // reset the start time to "now" because
+                        // we just accepted a connection and the
+                        // time waiting for connection shouldn't
+                        // count in the stats.
                         tv_start.getNow();
                         if (opts.verbose)
+                            // print the first stats immediately.
                             print_stats(/*final*/ false);
                     }
                 }
@@ -166,6 +191,9 @@ public:
             }
             if (connected && sel.rfds.is_set(opts.input_fd))
             {
+                // the max size of an SSL frame is 16384, and the
+                // protobuf has some overhead. so max read size is
+                // enough to guarantee an i3Msg never exceeds 16384.
                 readbuffer.resize(16000);
                 int cc = ::read(opts.input_fd,
                                 readbuffer.vptr(), readbuffer.length());
@@ -192,6 +220,9 @@ public:
             }
         }
 
+        // print one more stats before we exit with the latest
+        // information so the last stats printed represents the full
+        // file size transferred in the proper total time.
         if (opts.verbose)
             print_stats(/*final*/ true);
 
@@ -203,11 +234,17 @@ private:
         ProtoSSLPeerInfo  info;
         if (client->get_peer_info(info) == false)
         {
+            // we always print this information regardless of verbose
+            // or debug settings, because this might represent a peer
+            // trying to fool us into connecting, and the user should
+            // be told that.
             cerr << "ERROR: unable to fetch peer certificate info!\n";
             return;
         }
         if (opts.verbose || opts.debug_flag)
         {
+            // we always collect this info but don't display it
+            // unless the user has indicated they want verbose or debug.
             if (opts.verbose)
                 cerr << endl;
             cerr << "connection: " << info.ipaddr
@@ -219,6 +256,10 @@ private:
     }
     void sendmsg(void)
     {
+        // a wrapper for client->send_message because you want debug
+        // prints every place that sends messages, and you want to never
+        // forget to Clear the message (so the optional contents of this
+        // message don't leak into the next message and so on).
         if (opts.debug_flag)
             fprintf(stderr, "sending message: %s\n",
                     outMsg.DebugString().c_str());
@@ -255,6 +296,9 @@ private:
                 return false;
             }
             if (opts.input_set)
+                // receipt of a valid version message is what tells
+                // us it's okay to start reading from our local data
+                // source and sending data to the other side.
                 reading_input = true;
             break;
         case i3_FILEDATA:
@@ -265,6 +309,8 @@ private:
             }
             if (opts.output_set)
             {
+                // cast the string in the protobuf to a pxfe_string
+                // so we get those nice vptr and ucptr casts.
                 const pxfe_string &data =
                     static_cast<const pxfe_string &>(
                         inMsg.file_data().file_data());
@@ -281,6 +327,11 @@ private:
             }
             if (inMsg.file_data().has_ping())
             {
+                // if the sender piggybacked a ping request in this
+                // data, it means they're stopping their input and waiting
+                // for us to ping-ack before they'll start again.
+                // echo back the timestamp so they can also calculate
+                // round trip delay.
                 outMsg.set_type(i3_PINGACK);
                 Ping * p = outMsg.mutable_ping_ack();
                 p->CopyFrom(inMsg.file_data().ping());
@@ -303,6 +354,9 @@ private:
         fd->set_file_data(readbuffer);
         if (opts.pingack)
         {
+            // every preload_count packets, piggyback a ping
+            // and stop. we assume a ping-ack will come back
+            // as a result.
             preload_count--;
             if (preload_count <= 0)
             {
@@ -323,6 +377,9 @@ private:
     }
     void send_file_done(void)
     {
+        // send our sha256 hash to the peer so he can
+        // validate that what he wrote to his output file
+        // matches what we read from ours.
         pxfe_string  sent_hash;
         sent_hash.resize(32);
         mbedtls_sha256_finish(&send_hash, sent_hash.ucptr());
@@ -334,6 +391,10 @@ private:
     }
     void handle_pingack(void)
     {
+        // when we sent a ping, we included our own clock
+        // at the time of the ping. the peer echoed that value back.
+        // if we read our local clock and subtract that value,
+        // we can calculate round trip delay.
         pxfe_timeval ts, now;
         now.getNow();
         const Ping &p = inMsg.ping_ack();
@@ -348,6 +409,9 @@ private:
     }
     void handle_file_done(void)
     {
+        // peer says they're done sending data. they've sent their
+        // sha256.  compare it to ours to make sure we've got the same
+        // data.
         const FileDone &fd = inMsg.file_done();
         if (bytes_received != fd.file_size())
             cerr << "FILE SIZE mismatch! ERROR in transfer:\n"
