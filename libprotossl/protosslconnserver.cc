@@ -25,7 +25,7 @@ ProtoSSLConnServer :: ProtoSSLConnServer(ProtoSSLMsgs * _msgs,
     {
         char strbuf[200];
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-        printf("net bind returned 0x%x: %s\n", -ret, strbuf);
+        fprintf(stderr,"net bind returned 0x%x: %s\n", -ret, strbuf);
     }
 }
 
@@ -57,7 +57,7 @@ ProtoSSLConnServer :: handle_accept(void)
     }
     else
     {
-        printf("accept returned shit\n");
+        fprintf(stderr,"accept returned shit\n");
         mbedtls_net_free(&new_netctx);
     }
 

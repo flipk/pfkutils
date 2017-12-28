@@ -220,7 +220,8 @@ private:
     void sendmsg(void)
     {
         if (opts.debug_flag)
-            printf("sending message: %s\n", outMsg.DebugString().c_str());
+            fprintf(stderr, "sending message: %s\n",
+                    outMsg.DebugString().c_str());
         client->send_message(outMsg);
         outMsg.Clear();
     }
@@ -235,7 +236,8 @@ private:
     bool handle_message(void)
     {
         if (opts.debug_flag)
-            printf("received message: %s\n", inMsg.DebugString().c_str());
+            fprintf(stderr, "received message: %s\n",
+                    inMsg.DebugString().c_str());
         switch (inMsg.type())
         {
         case i3_VERSION:
@@ -340,7 +342,7 @@ private:
         roundtrip_set = true;
         reading_input = opts.input_set;
         if (opts.debug_flag)
-            printf("round trip calculated : %u.%06u\n",
+            fprintf(stderr, "round trip calculated : %u.%06u\n",
                    (unsigned int) roundtrip.tv_sec,
                    (unsigned int) roundtrip.tv_usec);
     }
@@ -371,19 +373,18 @@ private:
         if (t == 0.0)
             t = 99999.0;
         float bytes_per_sec = (float) total / t;
-        printf("\r%" PRIu64 " in %u.%06u s "
+        fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
                "(%.0f bps)",
                total,
                (unsigned int) diff.tv_sec,
                (unsigned int) diff.tv_usec,
                bytes_per_sec);
         if (roundtrip_set)
-            printf(" (rt %u.%06u)",
+            fprintf(stderr, " (rt %u.%06u)",
                    (unsigned int) roundtrip.tv_sec,
                    (unsigned int) roundtrip.tv_usec);
         if (final)
-            printf("\n");
-        fflush(stdout);
+            fprintf(stderr, "\n");
     }
 };
 

@@ -15,7 +15,7 @@ debug_print(void *ptr, int level,
     if (slashpos != NULL)
         filename = slashpos + 1;
     //_ProtoSSLConn * x = (_ProtoSSLConn *) ptr;
-    printf("%s:%d: %s", filename, line, s);
+    fprintf(stderr, "%s:%d: %s", filename, line, s);
 }
 
 ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag/* = false*/)
@@ -121,7 +121,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     char strbuf[200];
 
     if (debugFlag)
-        printf("loading caCert from %s\n", params.caCert.c_str());
+        fprintf(stderr,"loading caCert from %s\n", params.caCert.c_str());
     if (params.caCert.compare(0,5,"file:") == 0)
         ret = mbedtls_x509_crt_parse_file( &cacert,
                                    params.caCert.c_str() + 5);
@@ -132,12 +132,12 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-        printf( " 1 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
+        fprintf(stderr, " 1 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 
     if (debugFlag)
-        printf("loading my cert from %s\n", params.myCert.c_str());
+        fprintf(stderr,"loading my cert from %s\n", params.myCert.c_str());
     if (params.myCert.compare(0,5,"file:") == 0)
         ret = mbedtls_x509_crt_parse_file( &mycert,
                                    params.myCert.c_str()+5);
@@ -148,7 +148,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-        printf( " 2 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
+        fprintf(stderr, " 2 x509parse_crt returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 
@@ -161,7 +161,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     }
 
     if (debugFlag)
-        printf("loading my cert key from %s\n", params.myKey.c_str());
+        fprintf(stderr,"loading my cert key from %s\n", params.myKey.c_str());
     if (params.myKey.compare(0,5,"file:") == 0)
         ret = mbedtls_pk_parse_keyfile( &mykey,
                                 params.myKey.c_str() + 5,
@@ -175,7 +175,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-        printf( " 3 pk_parse_keyfile returned 0x%x: %s\n\n", -ret, strbuf );
+        fprintf(stderr, " 3 pk_parse_keyfile returned 0x%x: %s\n\n", -ret, strbuf );
         return false;
     }
 

@@ -40,7 +40,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     {
         char strbuf[200];
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-        printf("net bind returned 0x%x: %s\n", -ret, strbuf);
+        fprintf(stderr, "net bind returned 0x%x: %s\n", -ret, strbuf);
         return;
     }
 
@@ -68,7 +68,7 @@ ProtoSSLConnClient :: init_common(void)
         {
             char strbuf[200];
             mbedtls_strerror( ret, strbuf, sizeof(strbuf));
-            printf( " failed\n  ! ssl_handshake returned 0x%x: %s\n\n",
+            fprintf(stderr, " failed\n  ! ssl_handshake returned 0x%x: %s\n\n",
                     -ret, strbuf );
             return false;
         }
@@ -76,17 +76,17 @@ ProtoSSLConnClient :: init_common(void)
 
     if( ( ret = mbedtls_ssl_get_verify_result( &sslctx ) ) != 0 )
     {
-        printf( "ssl_get_verify_result failed (ret = 0x%x)\n", ret );
+        fprintf(stderr, "ssl_get_verify_result failed (ret = 0x%x)\n", ret );
         if( ( ret & MBEDTLS_X509_BADCERT_EXPIRED ) != 0 )
-            printf( "  ! server certificate has expired\n" );
+            fprintf(stderr,  "  ! server certificate has expired\n" );
         if( ( ret & MBEDTLS_X509_BADCERT_REVOKED ) != 0 )
-            printf( "  ! server certificate has been revoked\n" );
+            fprintf(stderr, "  ! server certificate has been revoked\n" );
         if( ( ret & MBEDTLS_X509_BADCERT_CN_MISMATCH ) != 0 )
-            printf( "  ! CN mismatch (expected CN=%s)\n",
+            fprintf(stderr, "  ! CN mismatch (expected CN=%s)\n",
                     "PolarSSL Server 1" );
         if( ( ret & MBEDTLS_X509_BADCERT_NOT_TRUSTED ) != 0 )
-            printf( "  ! self-signed or not signed by a trusted CA\n" );
-        printf( "\n" );
+            fprintf(stderr, "  ! self-signed or not signed by trusted CA\n" );
+        fprintf(stderr, "\n" );
         return false;
     }
 
@@ -218,7 +218,7 @@ ProtoSSLConnClient :: handle_read(MESSAGE &msg)
             return GOT_MESSAGE;
         else
         {
-            std::cout << "message parsing failed\n";
+            std::cerr << "message parsing failed\n";
         }
     }
     if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
@@ -227,11 +227,11 @@ ProtoSSLConnClient :: handle_read(MESSAGE &msg)
         send_close_notify = false;
         mbedtls_net_free(&netctx);
         if (ret == 0)
-            std::cout << "NOTE: Remote Disconnect Unclean\n";
+            std::cerr << "NOTE: Remote Disconnect Unclean\n";
         mbedtls_ssl_session_reset( &sslctx );
         return GOT_DISCONNECT;
     }
-    printf("mbedtls_ssl_read returned %d\n", ret);
+    fprintf(stderr, "mbedtls_ssl_read returned %d\n", ret);
     return READ_MORE;
 }
 
@@ -244,7 +244,7 @@ ProtoSSLConnClient :: send_message(const MESSAGE &msg)
 
     if (msg.SerializeToString(&outbuf) == false)
     {
-        std::cout << "_sendMessage failed to serialize\n";
+        std::cerr << "_sendMessage failed to serialize\n";
         // error?
         return false;
     }
@@ -258,13 +258,13 @@ ProtoSSLConnClient :: send_message(const MESSAGE &msg)
     {
         char strbuf[200];
         mbedtls_strerror(ret,strbuf,sizeof(strbuf));
-        std::cout << "ssl_write returned " << std::hex << ret << ": "
+        std::cerr << "ssl_write returned " << std::hex << ret << ": "
                   << strbuf << std::endl;
     }
 
     if (ret == MBEDTLS_ERR_NET_CONN_RESET)
     {
-        std::cout << "ssl_write peer closed connection" << std::endl;
+        std::cerr << "ssl_write peer closed connection" << std::endl;
         return false;
     }
 

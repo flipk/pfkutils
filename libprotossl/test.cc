@@ -49,7 +49,7 @@ public:
             server = msgs.startServer(2005);
             if (server == NULL)
             {
-                printf("failure to chooch making server\n");
+                fprintf(stderr,"failure to chooch making server\n");
                 return 1;
             }
         }
@@ -57,7 +57,7 @@ public:
         {
             if (argc != 3)
             {
-                printf("specify ip address of server\n");
+                fprintf(stderr,"specify ip address of server\n");
                 return 2;
             }
 
@@ -72,7 +72,7 @@ public:
             client = msgs.startClient(argv[2], 2005);
             if (client == NULL)
             {
-                printf("failure to chooch making client\n");
+                fprintf(stderr,"failure to chooch making client\n");
                 return 1;
             }
             connected = true;
@@ -107,12 +107,12 @@ public:
                 {
                     if (client)
                     {
-                        printf("rejecting new connection\n");
+                        fprintf(stderr,"rejecting new connection\n");
                         delete newclient;
                     }
                     else
                     {
-                        printf("got connection!\n");
+                        fprintf(stderr,"got connection!\n");
                         client = newclient;
                         connected = true;
                         send_client_protoversion();
@@ -127,7 +127,7 @@ public:
                     switch (client->handle_read(cts))
                     {
                     case ProtoSSL::ProtoSSLConnClient::GOT_DISCONNECT:
-                        printf("got disconnect\n");
+                        fprintf(stderr,"got disconnect\n");
                         done = true;
                         break;
                     case ProtoSSL::ProtoSSLConnClient::READ_MORE:
@@ -143,7 +143,7 @@ public:
                     switch (client->handle_read(stc))
                     {
                     case ProtoSSL::ProtoSSLConnClient::GOT_DISCONNECT:
-                        printf("got disconnect\n");
+                        fprintf(stderr,"got disconnect\n");
                         done = true;
                         break;
                     case ProtoSSL::ProtoSSLConnClient::READ_MORE:
@@ -223,7 +223,7 @@ private:
 
     bool handle_server_msg(void)
     {
-        printf("got msg from server: %s\n", stc.DebugString().c_str());
+        fprintf(stderr,"got msg from server: %s\n", stc.DebugString().c_str());
         switch (stc.type())
         {
         case STC_PROTO_VERSION:
@@ -238,7 +238,7 @@ private:
 
     bool handle_client_msg(void)
     {
-        printf("got msg from client: %s\n", cts.DebugString().c_str());
+        fprintf(stderr,"got msg from client: %s\n", cts.DebugString().c_str());
         switch (cts.type())
         {
         case CTS_PING:
@@ -274,7 +274,7 @@ private:
         now.getNow();
         PingInfo_to_timeval(ts, *stc.mutable_ping());
         diff = now - ts;
-        printf("client got PING_ACK seq %d delay %u.%06u\n",
+        fprintf(stderr,"client got PING_ACK seq %d delay %u.%06u\n",
                seq,
                (unsigned int) diff.tv_sec,
                (unsigned int) diff.tv_usec);
