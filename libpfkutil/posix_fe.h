@@ -268,6 +268,8 @@ static inline bool operator<(const pxfe_timespec &lhs,
 
 class pxfe_string : public std::string {
 public:
+    pxfe_string(void) { }
+    pxfe_string(const char *s, size_t len) : std::string(s,len) { }
     void * vptr(void) {
         return (void*) c_str();
     }
