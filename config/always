@@ -399,14 +399,8 @@ endif
 LIB_TARGETS += libi2
 libi2_TARGET = $(OBJDIR)/libi2.a
 libi2_INCS = -Ilibpfkutil
-libi2_CXXSRCS = \
-	i2/ipipe_acceptor.cc i2/ipipe_connector.cc i2/ipipe_factories.cc \
-	i2/ipipe_forwarder.cc i2/ipipe_main.cc i2/ipipe_rollover.cc \
-	i2/ipipe_stats.cc
-libi2_HDRS = \
-	i2/ipipe_acceptor.h i2/ipipe_connector.h i2/ipipe_factories.h \
-	i2/ipipe_forwarder.h i2/ipipe_main.h i2/ipipe_rollover.h \
-	i2/ipipe_stats.h
+libi2_CXXSRCS = i2/i2_options.cc i2/i2_main.cc
+libi2_HDRS = i2/i2_options.h
 
 ##############################################
 

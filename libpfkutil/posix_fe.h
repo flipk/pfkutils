@@ -295,6 +295,16 @@ public:
                 (int)((unsigned char)at(i));
         return out.str();
     }
+    ssize_t read(int fd, size_t max) {
+        resize(max);
+        ssize_t cc = ::read(fd, vptr(), max);
+        resize(cc > 0 ? cc : 0);
+        return cc;
+    }
+    ssize_t write(int fd) {
+        ssize_t cc = ::write(fd, vptr(), length());
+        return cc;
+    }
 };
 
 class pxfe_pthread_mutexattr {
@@ -1080,12 +1090,16 @@ public:
         return true;
     }
     // next 4 methods are for listening socket (waiting for call in)
-    bool init(uint32_t addr, short port) {
+    bool init(uint32_t addr, short port, bool reuse=false) {
         if (init() == false)
             return false;
         sa.sin_family = AF_INET;
         sa.sin_port = htons(port);
         sa.sin_addr.s_addr = htonl(addr);
+        if (reuse) {
+            int v = 1;
+            setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*) &v, sizeof( v ));
+        }
         if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
         {
             int e = errno;
@@ -1095,8 +1109,8 @@ public:
         }
         return true;
     }
-    bool init(short port) {
-        return init(INADDR_ANY,port);
+    bool init(short port, bool reuse=false) {
+        return init(INADDR_ANY,port,reuse);
     }
     void listen(void) {
         (void) ::listen(fd, 1);
@@ -1139,7 +1153,7 @@ public:
         msg.resize(MAX_MSG_LEN);
         ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
                                 MAX_MSG_LEN, /*flags*/0);
-        if (msglen <= 0)
+        if (msglen < 0)
         {
             int e = errno;
             std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;

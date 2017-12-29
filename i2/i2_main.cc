@@ -1,0 +1,206 @@
+
+// todo:
+//   -Ir
+//   -Iz
+//   -zr
+//   -zt
+//   -f
+
+#include "i2_options.h"
+#include "posix_fe.h"
+#include <netdb.h>
+
+class i2_program
+{
+    i2_options  opts;
+    bool _ok;
+    pxfe_tcp_stream_socket * net_fd;
+    uint64_t bytes_sent;
+    uint64_t bytes_received;
+    pxfe_timeval  start_time;
+    pxfe_string  buffer;
+    pxfe_ticker  ticker;
+public:
+    i2_program(int argc, char ** argv)
+        : opts(argc, argv), _ok(false)
+    {
+        _ok = opts.ok;
+        net_fd = NULL;
+        bytes_received = 0;
+        bytes_sent = 0;
+    }
+    ~i2_program(void)
+    {
+        // opts destructor will close the input & output fds.
+        if (net_fd)
+            delete net_fd;
+    }
+    bool ok(void) const { return _ok; }
+    int main(void)
+    {
+        uint32_t addr;
+        if (opts.outbound && hostname_to_ipaddr(opts.hostname.c_str(),
+                                                &addr) == false)
+            return 1;
+        if (opts.outbound)
+        {
+            net_fd = new pxfe_tcp_stream_socket;
+            if (net_fd->init() == false)
+                return 1;
+            if (opts.verbose)
+                fprintf(stderr, "connecting...");
+            if (net_fd->connect(addr, opts.port_number) == false)
+                return 1;
+            if (opts.verbose)
+                fprintf(stderr, "success\n");
+        }
+        else
+        {
+            pxfe_tcp_stream_socket listen;
+            if (listen.init(opts.port_number,true) == false)
+                return 1;
+            listen.listen();
+            if (opts.verbose)
+                fprintf(stderr, "listening...");
+            do {
+                net_fd = listen.accept();
+            } while (net_fd == NULL);
+            if (opts.verbose)
+                fprintf(stderr, "accepted\n");
+            // listen socket closed here, because we
+            // no longer need it.
+        }
+        start_time.getNow();
+        ticker.start(0, 500000);
+        bool done = false;
+        while (!done)
+        {
+            pxfe_select sel;
+            sel.rfds.set(net_fd->getFd());
+            if (opts.input_set)
+                sel.rfds.set(opts.input_fd);
+            sel.rfds.set(ticker.fd());
+            sel.tv.set(10,0);
+            sel.select();
+            if (sel.rfds.is_set(net_fd->getFd()))
+                done = !handle_net_fd();
+            if (opts.input_set && sel.rfds.is_set(opts.input_fd))
+                done = !handle_input_fd();
+            if (sel.rfds.is_set(ticker.fd()))
+                handle_tick();
+        }
+        ticker.pause();
+        if (opts.verbose || opts.stats_at_end)
+            print_stats(true);
+        return 0;
+    }
+private:
+    bool hostname_to_ipaddr( const char * host, uint32_t * _addr )
+    {
+        uint32_t addr;
+        if ( ! (inet_aton( host, (in_addr*) &addr )))
+        {
+            struct hostent * he;
+            if (( he = gethostbyname( host )) == NULL )
+            {
+                fprintf( stderr, "host lookup of %s: %s\n",
+                         host, strerror( errno ));
+                return false;
+            }
+            memcpy( &addr, he->h_addr, he->h_length );
+        }
+        addr = ntohl(addr);
+        *_addr = addr;
+        return true;
+    }
+    bool handle_net_fd(void)
+    {
+        if (net_fd->recv(buffer) == false)
+            return false;
+        if (buffer.length() == 0)
+            return false;
+        bytes_received += buffer.length();
+        if (opts.output_set)
+        {
+            int cc = -1;
+            do  {
+                cc = buffer.write(opts.output_fd);
+                if (cc == buffer.length())
+                    break;
+                if (cc < 0)
+                {
+                    int e = errno;
+                    char * err = strerror(e);
+                    fprintf(stderr, "write failed: %d: %s\n", e, err);
+                    return false;
+                }
+                else if (cc == 0)
+                {
+                    fprintf(stderr, "write returned zero\n");
+                    return false;
+                }
+                else
+                    // remove the bytes already written
+                    // and go around again to get the rest.
+                    buffer.erase(0,cc);
+            } while (true);
+        }
+        return true;
+    }
+    bool handle_input_fd(void)
+    {
+        int cc = buffer.read(opts.input_fd,
+                             pxfe_tcp_stream_socket::MAX_MSG_LEN);
+        if (cc < 0)
+        {
+            int e = errno;
+            char * err = strerror(e);
+            fprintf(stderr, "read failed: %d: %s\n", e, err);
+            return false;
+        }
+        else if (cc == 0)
+            return false;
+        else
+        {
+            if (net_fd->send(buffer) == false)
+                return false;
+            bytes_sent += buffer.length();
+        }
+        return true;
+    }
+    void handle_tick(void)
+    {
+        buffer.read(ticker.fd(), 100);
+        if (opts.verbose)
+            print_stats(/*final*/false);
+    }
+    void print_stats(bool final)
+    {
+        pxfe_timeval now, diff;
+        uint64_t total = bytes_sent + bytes_received;
+        now.getNow();
+        diff = now - start_time;
+        float t = diff.usecs() / 1000000.0;
+        if (t == 0.0)
+            t = 99999.0;
+        float bytes_per_sec = (float) total / t;
+        float bits_per_sec = bytes_per_sec * 8.0;
+        fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
+               "(%.0f Bps/ %.0f bps)",
+               total,
+               (unsigned int) diff.tv_sec,
+               (unsigned int) diff.tv_usec,
+               bytes_per_sec, bits_per_sec);
+        if (final)
+            fprintf(stderr, "\n");
+    }
+};
+
+extern "C" int
+i2_main(int argc, char ** argv)
+{
+    i2_program  i2(argc, argv);
+    if (i2.ok() == false)
+        return 1;
+    return i2.main();
+}
