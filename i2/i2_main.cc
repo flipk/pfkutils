@@ -66,7 +66,15 @@ public:
                 net_fd = listen.accept();
             } while (net_fd == NULL);
             if (opts.verbose)
-                fprintf(stderr, "accepted\n");
+            {
+                uint32_t addr = net_fd->get_peer_addr();
+                std::cerr << "accepted from "
+                          << (int) ((addr >> 24) & 0xFF) << "."
+                          << (int) ((addr >> 16) & 0xFF) << "."
+                          << (int) ((addr >>  8) & 0xFF) << "."
+                          << (int) ((addr >>  0) & 0xFF)
+                          << std::endl;
+            }
             // listen socket closed here, because we
             // no longer need it.
         }
@@ -186,7 +194,7 @@ private:
         float bytes_per_sec = (float) total / t;
         float bits_per_sec = bytes_per_sec * 8.0;
         fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
-               "(%.0f Bps/ %.0f bps)",
+               "(%.0f Bps %.0f bps)",
                total,
                (unsigned int) diff.tv_sec,
                (unsigned int) diff.tv_usec,

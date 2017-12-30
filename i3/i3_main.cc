@@ -194,9 +194,7 @@ public:
                 // the max size of an SSL frame is 16384, and the
                 // protobuf has some overhead. so max read size is
                 // enough to guarantee an i3Msg never exceeds 16384.
-                readbuffer.resize(16000);
-                int cc = ::read(opts.input_fd,
-                                readbuffer.vptr(), readbuffer.length());
+                int cc = readbuffer.read(opts.input_fd, 16000);
                 if (cc > 0)
                 {
                     readbuffer.resize(cc);
@@ -315,14 +313,14 @@ private:
                     static_cast<const pxfe_string &>(
                         inMsg.file_data().file_data());
                 int len = data.length();
-                int cc = ::write(opts.output_fd, data.vptr(), len);
+                int cc = data.write(opts.output_fd);
                 if (cc != len)
                 {
                     cerr << "failure to write (" << cc << " != "
                          << len << ")\n";
                     return false;
                 }
-                mbedtls_sha256_update(&recv_hash, data.ucptr(), data.length());
+                mbedtls_sha256_update(&recv_hash, data.ucptr(), len);
                 bytes_received += cc;
             }
             if (inMsg.file_data().has_ping())
@@ -438,11 +436,11 @@ private:
             t = 99999.0;
         float bytes_per_sec = (float) total / t;
         fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
-               "(%.0f bps)",
+               "(%.0f Bps %.0f bps)",
                total,
                (unsigned int) diff.tv_sec,
                (unsigned int) diff.tv_usec,
-               bytes_per_sec);
+                bytes_per_sec, bytes_per_sec * 8.0);
         if (roundtrip_set)
             fprintf(stderr, " (rt %u.%06u)",
                    (unsigned int) roundtrip.tv_sec,

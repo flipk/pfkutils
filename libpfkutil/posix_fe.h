@@ -301,7 +301,7 @@ public:
         resize(cc > 0 ? cc : 0);
         return cc;
     }
-    ssize_t write(int fd) {
+    ssize_t write(int fd) const {
         ssize_t cc = ::write(fd, vptr(), length());
         return cc;
     }
@@ -1132,6 +1132,7 @@ public:
         ::close(fdnew);
         return NULL;
     }
+    uint32_t get_peer_addr(void) const { return ntohl(sa.sin_addr.s_addr); }
     // next 2 methods are for connected sockets
     bool send(const std::string &msg) {
         if (msg.size() > MAX_MSG_LEN)
