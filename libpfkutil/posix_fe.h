@@ -43,6 +43,7 @@ For more information, please refer to <http://unlicense.org>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <stdlib.h>
 #include <iostream>
 #include <sstream>
@@ -763,6 +764,67 @@ public:
     void rewind(void) {
         if (d)
             ::rewinddir(d);
+    }
+};
+
+class pxfe_iputils {
+public:
+    static bool hostname_to_ipaddr( const std::string &host,
+                                    uint32_t * _addr )
+    {
+        return hostname_to_ipaddr(host.c_str(), _addr);
+    }
+    static bool hostname_to_ipaddr( const char * host, uint32_t * _addr )
+    {
+        uint32_t addr;
+        if ( ! (inet_aton( host, (in_addr*) &addr )))
+        {
+            struct hostent * he;
+            if (( he = gethostbyname( host )) == NULL )
+            {
+                const char * reason = "UNKNOWN";
+                switch (h_errno)
+                {
+                case HOST_NOT_FOUND: reason = "host not found"; break;
+                case NO_DATA: reason = "no data returned"; break;
+                case NO_RECOVERY: reason = "name server error"; break;
+                case TRY_AGAIN: reason = "try again"; break;
+                }
+                fprintf( stderr, "host lookup of %s: %s\n", host, reason );
+                return false;
+            }
+            memcpy( &addr, he->h_addr, he->h_length );
+        }
+        addr = ntohl(addr);
+        *_addr = addr;
+        return true;
+    }
+    static bool parse_port_number( const std::string &portstr,
+                                   uint16_t *_port )
+    {
+        return parse_port_number(portstr.c_str(), _port);
+    }
+    static bool parse_port_number( const char * portstr,
+                                   uint16_t *_port )
+    {
+        char * endptr = NULL;
+        unsigned long val = strtoul(portstr, &endptr, 0);
+        if (endptr != NULL && *endptr == 0)
+        {
+            // consumed the whole input string, thus good integer.
+            if (val > 65535)
+            {
+                fprintf(stderr, "value %u is outside valid range for "
+                        "a port number\n", val);
+                return false;
+            }
+            *_port = (uint16_t) val;
+            return true;
+        }
+        fprintf(stderr, "parse error: expecting a port number, not '%s'\n",
+                portstr);
+        // string was not an integer
+        return false;
     }
 };
 
