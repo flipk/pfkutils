@@ -814,7 +814,7 @@ public:
             // consumed the whole input string, thus good integer.
             if (val > 65535)
             {
-                fprintf(stderr, "value %u is outside valid range for "
+                fprintf(stderr, "value %lu is outside valid range for "
                         "a port number\n", val);
                 return false;
             }
