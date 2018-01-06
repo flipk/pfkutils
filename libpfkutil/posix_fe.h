@@ -283,6 +283,12 @@ public:
     const unsigned char * ucptr(void) const {
         return (const unsigned char *) c_str();
     }
+    uint8_t * u8ptr(void) {
+        return (uint8_t *) c_str();
+    }
+    const uint8_t * u8ptr(void) const {
+        return (const uint8_t *) c_str();
+    }
     std::string format_hex(void) {
         std::ostringstream out;
         // at() returns a signed char, but the char and unsigned char
@@ -767,6 +773,18 @@ public:
     }
 };
 
+struct pxfe_sockaddr_in : public sockaddr_in {
+    void init(void) { sin_family = AF_INET; }
+    void init_any(uint16_t p) { init(); set_addr(INADDR_ANY); set_port(p); }
+    void init(uint32_t a, uint16_t p) { init(); set_addr(a); set_port(p); }
+    uint32_t get_addr(void) const { return ntohl(sin_addr.s_addr); }
+    void set_addr(uint32_t a) { sin_addr.s_addr = htonl(a); }
+    uint16_t get_port(void) const { return ntohs(sin_port); }
+    void set_port(uint16_t p) { sin_port = htons(p); }
+    sockaddr *operator()() { return (sockaddr *)this; }
+    const sockaddr *operator()() const { return (sockaddr *)this; }
+};
+
 class pxfe_iputils {
 public:
     static bool hostname_to_ipaddr( const std::string &host,
@@ -785,10 +803,10 @@ public:
                 const char * reason = "UNKNOWN";
                 switch (h_errno)
                 {
-                case HOST_NOT_FOUND: reason = "host not found"; break;
-                case NO_DATA: reason = "no data returned"; break;
-                case NO_RECOVERY: reason = "name server error"; break;
-                case TRY_AGAIN: reason = "try again"; break;
+                case HOST_NOT_FOUND: reason = "host not found";    break;
+                case NO_DATA:        reason = "no data returned";  break;
+                case NO_RECOVERY:    reason = "name server error"; break;
+                case TRY_AGAIN:      reason = "try again";         break;
                 }
                 fprintf( stderr, "host lookup of %s: %s\n", host, reason );
                 return false;
@@ -799,13 +817,11 @@ public:
         *_addr = addr;
         return true;
     }
-    static bool parse_port_number( const std::string &portstr,
-                                   uint16_t *_port )
+    static bool parse_port_number( const std::string &s, uint16_t *_port )
     {
-        return parse_port_number(portstr.c_str(), _port);
+        return parse_port_number(s.c_str(), _port);
     }
-    static bool parse_port_number( const char * portstr,
-                                   uint16_t *_port )
+    static bool parse_port_number( const char * portstr, uint16_t *_port )
     {
         char * endptr = NULL;
         unsigned long val = strtoul(portstr, &endptr, 0);
@@ -995,6 +1011,11 @@ public:
     }
     static const int MAX_MSG_LEN = 16384;
     int getFd(void) const { return fd; }
+    void setFd(int _fd) {
+        if (fd > 0)
+            ::close(fd);
+        fd = _fd;
+    }
     bool init(void) {
         return init(-1);
     }
@@ -1009,11 +1030,9 @@ public:
         if (port == -1)
             // no bind needed
             return true;
-        sockaddr_in sa;
-        sa.sin_family = AF_INET;
-        sa.sin_port = htons((short)port);
-        sa.sin_addr.s_addr = INADDR_ANY;
-        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        pxfe_sockaddr_in sa;
+        sa.init_any(port);
+        if (::bind(fd, sa(), sizeof(sa)) < 0)
         {
             int e = errno;
             fprintf(stderr, "bind: %d: %s\n", e, strerror(e));
@@ -1023,10 +1042,8 @@ public:
     }
     // next 4 are for connected-mode sockets
     bool connect(uint32_t addr, short port) {
-        sockaddr_in sa;
-        sa.sin_family = AF_INET;
-        sa.sin_port = htons(port);
-        sa.sin_addr.s_addr = htonl(addr);
+        pxfe_sockaddr_in sa;
+        sa.init(addr, port);
         return connect(sa);
     }
     bool connect(const sockaddr_in &sa) {
@@ -1106,10 +1123,10 @@ public:
 template <int protocolNumber>
 class _pxfe_stream_socket {
     int fd;
-    sockaddr_in sa;
+    pxfe_sockaddr_in sa;
     _pxfe_stream_socket(int _fd, const sockaddr_in &_sa) {
         fd = _fd;
-        sa = _sa;
+        sa = (pxfe_sockaddr_in&)_sa;
     }
 public:
     _pxfe_stream_socket(void) {
@@ -1120,6 +1137,11 @@ public:
             ::close(fd);
     }
     int getFd(void) const { return fd; }
+    void setFd(int _fd) {
+        if (fd > 0)
+            ::close(fd);
+        fd = _fd;
+    }
     void close(void) {
         if (fd > 0)
             ::close(fd);
@@ -1139,10 +1161,8 @@ public:
         return true;
     }
     bool connect(uint32_t addr, short port) {
-        sa.sin_family = AF_INET;
-        sa.sin_port = htons(port);
-        sa.sin_addr.s_addr = htonl(addr);
-        if (::connect(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        sa.init(addr, port);
+        if (::connect(fd, sa(), sizeof(sa)) < 0)
         {
             int e = errno;
             fprintf(stderr, "pxfe_sctp_stream_socket: connect: %d: %s\n",
@@ -1155,14 +1175,12 @@ public:
     bool init(uint32_t addr, short port, bool reuse=false) {
         if (init() == false)
             return false;
-        sa.sin_family = AF_INET;
-        sa.sin_port = htons(port);
-        sa.sin_addr.s_addr = htonl(addr);
+        sa.init(addr, port);
         if (reuse) {
             int v = 1;
             setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*) &v, sizeof( v ));
         }
-        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        if (::bind(fd, sa(), sizeof(sa)) < 0)
         {
             int e = errno;
             fprintf(stderr, "pxfe_sctp_stream_socket: bind: %d: %s\n",
@@ -1180,7 +1198,7 @@ public:
     // this one returns a connected socket
     _pxfe_stream_socket *accept(void) {
         socklen_t sz = sizeof(sa);
-        int fdnew = ::accept(fd, (sockaddr *)&sa, &sz);
+        int fdnew = ::accept(fd, sa(), &sz);
         if (fdnew < 0)
         {
             int e = errno;
@@ -1194,7 +1212,7 @@ public:
         ::close(fdnew);
         return NULL;
     }
-    uint32_t get_peer_addr(void) const { return ntohl(sa.sin_addr.s_addr); }
+    uint32_t get_peer_addr(void) const { return sa.get_addr(); }
     // next 2 methods are for connected sockets
     bool send(const std::string &msg) {
         if (msg.size() > MAX_MSG_LEN)
