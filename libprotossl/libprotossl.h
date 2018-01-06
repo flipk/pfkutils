@@ -23,10 +23,10 @@ class ProtoSSLMsgs;
 
 struct ProtoSSLCertParams
 {
-    const std::string &caCert;
-    const std::string &myCert;
-    const std::string &myKey;
-    const std::string &myKeyPassword;
+    const std::string caCert;
+    const std::string myCert;
+    const std::string myKey;
+    const std::string myKeyPassword;
     ProtoSSLCertParams(const std::string &_caCert, // file:/...
                        const std::string &_myCert, // file:/...
                        const std::string &_myKey,  // file:/...
