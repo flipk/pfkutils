@@ -161,9 +161,7 @@ endif
 export VERBOSE
 
 all:
-	$(Q)+make echoconfig
-	$(Q)+make objdirs
-	$(Q)+make preprocs
+	$(Q)+make echoconfig objdirs preprocs protobufs
 	$(Q)+make $(MAKEJOBS) deps
 	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
 
@@ -489,6 +487,9 @@ $(target)_install: $($(target)_TARGET)
 
 endef
 
+PROTOGENSRCS := $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS), \
+	$($(target)_PROTOGENSRCS))
+
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_OBJ_LIST)))
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_RULES)))
 $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
@@ -510,6 +511,10 @@ $(eval $(foreach target,$(DOXYGEN_TARGETS),$(DOXYGEN_TARGET_RULES)))
 ##############################################
 
 preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
+
+##############################################
+
+protobufs: $(PROTOGENSRCS)
 
 ##############################################
 
