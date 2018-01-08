@@ -312,6 +312,9 @@ public:
         ssize_t cc = ::write(fd, vptr(), length());
         return cc;
     }
+    void operator=(const std::string &other) {
+        assign(other.c_str(), other.length());
+    }
 };
 
 class pxfe_pthread_mutexattr {
@@ -1036,6 +1039,16 @@ public:
         {
             int e = errno;
             fprintf(stderr, "bind: %d: %s\n", e, strerror(e));
+            return false;
+        }
+        return true;
+    }
+    bool init_proto(int type, int protocol) {
+        fd = ::socket(AF_INET, type, protocol);
+        if (fd < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "socket: %d: %s\n", e, strerror(e));
             return false;
         }
         return true;
