@@ -29,6 +29,9 @@ For more information, please refer to <http://unlicense.org>
 #ifndef __posix_fe_h__
 #define __posix_fe_h__
 
+// stupid redhat
+#define __STDC_FORMAT_MACROS 1
+
 #include <pthread.h>
 #include <sys/select.h>
 #include <sys/time.h>

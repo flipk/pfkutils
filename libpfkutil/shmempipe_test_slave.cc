@@ -25,7 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
-#define __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
 
 #include <stdio.h>
 #include <unistd.h>
