@@ -128,7 +128,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     else
         ret = mbedtls_x509_crt_parse( &cacert,
                               (const unsigned char *) params.caCert.c_str(),
-                              params.caCert.size());
+                              params.caCert.size()+1);
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
@@ -144,7 +144,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     else
         ret = mbedtls_x509_crt_parse( &mycert,
                               (const unsigned char *) params.myCert.c_str(),
-                              params.myCert.size());
+                              params.myCert.size()+1);
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
@@ -169,7 +169,7 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     else
         ret = mbedtls_pk_parse_key( &mykey,
                             (const unsigned char *) params.myKey.c_str(),
-                            params.myKey.size(),
+                            params.myKey.size()+1,
                             (const unsigned char *) keyPassword,
                             keyPasswordLen);
     if (ret != 0)
