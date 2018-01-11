@@ -4,7 +4,7 @@ last_modified="2017-12-27.21:08:47"
 
 whoami=$1
 
-if [ "x$whoami" == "x" ] ; then
+if [ "x$whoami" = "x" ] ; then
     echo usage: please provide whoami
     exit 1
 fi

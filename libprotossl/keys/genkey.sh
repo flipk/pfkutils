@@ -42,7 +42,7 @@ EOF
 
     openssl req -sha512 -utf8 -new -key $plain_key_file -out $request_file < $params_file
 
-    if [ x$7 == x ] ; then
+    if [ x$7 = x ] ; then
         openssl x509 -in $request_file -out $cert_file \
             -req -sha512 -signkey $plain_key_file -days 3650
     else
