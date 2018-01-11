@@ -6,3 +6,9 @@ plot "filename" using 1:2 with lines, "filename" using 1:4 with lines
 plot "somefile" using 1:2 with lines axes x1y1 title "blah", "somefile" using 1:3 with lines axes x1y2 title "foo"
 pause -1
 
+
+set xdata time
+set format x "%H%M"
+set timefmt "%Y-%m-%d %H:%M:%S"
+plot "ping_pkt_rtd.log" using 1:($3/1000) with lines
+
