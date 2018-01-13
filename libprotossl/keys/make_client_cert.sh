@@ -1,8 +1,9 @@
 #!/bin/sh
 
-last_modified="2017-12-27.21:08:47"
+last_modified="2018-01-13.01:07:35"
 
-whoami=$1
+whoami="$1"
+client_pass="$2"
 
 if [ "x$whoami" = "x" ] ; then
     echo usage: please provide whoami
@@ -11,7 +12,9 @@ fi
 
 . ./genkey.sh
 
-client_pass=`random_text 40`
+if [ "x$client_pass" = "x" ] ; then
+    client_pass=`random_text 40`
+fi
 
 genkey my-certificate PFK-Org PFK-Client \
        "$whoami" client@pfk.org $client_pass Root-CA
