@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 // stupid redhat
 #define __STDC_FORMAT_MACROS 1
 
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -269,6 +271,21 @@ static inline bool operator<(const pxfe_timespec &lhs,
       return false;
    return lhs.tv_nsec < other.tv_nsec;
 }
+
+class pxfe_errno {
+public:
+    int e;
+    char * err;
+    pxfe_errno(void) {
+        e = errno;
+        err = strerror(errno);
+    }
+    std::string Format(void) {
+        std::ostringstream  ostr;
+        ostr << "error " << e << " (" << err << ")";
+        return ostr.str();
+    }
+};
 
 class pxfe_string : public std::string {
 public:
@@ -569,6 +586,49 @@ public:
     }
 };
 
+class pxfe_fd {
+protected:
+    int fd;
+public:
+    pxfe_fd(void) {
+        fd = -1;
+    }
+    ~pxfe_fd(void) {
+        close();
+    }
+    int  getFd(void) const { return fd; }
+    void setFd(int nfd) { close(); fd = nfd; }
+    bool open(const std::string &path, int flags, mode_t mode = 0600) {
+        return open(path.c_str(), flags, mode);
+    }
+    bool open(const char *path, int flags, mode_t mode = 0600) {
+        fd = ::open(path, flags, mode);
+        return (fd >= 0);
+    }
+    void close(void) {
+        if (fd >= 0)
+            ::close(fd);
+        fd = -1;
+    }
+    int read (void *buf, size_t count) { return ::read (fd, buf, count); }
+    int write(void *buf, size_t count) { return ::write(fd, buf, count); }
+    bool read(std::string &buf, int max = 16384) {
+        pxfe_string &_buf = (pxfe_string &)buf;
+        _buf.resize(max);
+        int cc = ::read(fd, _buf.vptr(), max);
+        if (cc >= 0) {
+            _buf.resize(cc);
+            return cc;
+        }
+        _buf.resize(0);
+        return cc;
+    }
+    bool write(const std::string &buf) {
+        pxfe_string &_buf = (pxfe_string &)buf;
+        return ::write(fd, _buf.vptr(), _buf.length());
+    }
+};
+
 class pxfe_pthread {
     pxfe_pthread_mutex mut;
     pxfe_pthread_cond cond;
@@ -645,101 +705,6 @@ public:
     }
     void * stopjoin(void) { stop(); return join(); }
     const bool running(void) const { return (state != INIT); }
-};
-
-class pxfe_fd_set {
-    fd_set  fds;
-    int     max_fd;
-public:
-    pxfe_fd_set(void) { zero(); }
-    ~pxfe_fd_set(void) { /*nothing for now*/ }
-    void zero(void) { FD_ZERO(&fds); max_fd=-1; }
-    void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
-    void clr(int fd) { FD_CLR(fd, &fds); }
-    bool is_set(int fd) { return FD_ISSET(fd, &fds) != 0; }
-    fd_set *operator()(void) { return max_fd==-1 ? NULL : &fds; }
-    int nfds(void) { return max_fd + 1; }
-};
-
-struct pxfe_select {
-    pxfe_fd_set  rfds;
-    pxfe_fd_set  wfds;
-    pxfe_fd_set  efds;
-    pxfe_timeval   tv;
-    pxfe_select(void) { }
-    ~pxfe_select(void) { }
-    int select_forever(void) {
-        return _select(NULL);
-    }
-    int select(void) {
-        return _select(tv());
-    }
-    int _select(struct timeval *tvp) {
-        int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
-        if (n < n2) n = n2;
-        if (n < n3) n = n3;
-        return ::select(n, rfds(), wfds(), efds(), tvp);
-    }
-};
-
-class pxfe_ticker : public pxfe_pthread {
-    bool paused;
-    int closer_pipe_fds[2];
-    int pipe_fds[2];
-    pxfe_timeval interval;
-    /*virtual*/ void * entry(void *arg) {
-        char c = 1;
-        int clfd = closer_pipe_fds[0];
-        pxfe_select   sel;
-        while (1) {
-            sel.tv = interval;
-            sel.rfds.zero();
-            sel.rfds.set(clfd);
-            if (sel.select() <= 0) {
-                if (paused == false)
-                    if (write(pipe_fds[1], &c, 1) < 0)
-                        fprintf(stderr, "pxfe_ticker: write failed\n");
-                continue;
-            }
-            if (sel.rfds.is_set(clfd)) {
-                if (read(clfd, &c, 1) < 0)
-                    fprintf(stderr, "pxfe_ticker: read failed\n");
-                break;
-            }
-        }
-        return NULL;
-    }
-    /*virtual*/ void send_stop(void) {
-        char c = 1;
-        if (write(closer_pipe_fds[1], &c, 1) < 0)
-            fprintf(stderr, "pxfe_ticker: write failed\n");
-    }
-public:
-    pxfe_ticker(void) {
-        if (pipe(pipe_fds) < 0)
-            fprintf(stderr, "pxfe_ticker: pipe 1 failed\n");
-        if (pipe(closer_pipe_fds) < 0)
-            fprintf(stderr, "pxfe_ticker: pipe 2 failed\n");
-        interval.set(1,0);
-        paused = false;
-    }
-    ~pxfe_ticker(void) {
-        paused = true;
-        stopjoin();
-        close(closer_pipe_fds[0]);
-        close(closer_pipe_fds[1]);
-        close(pipe_fds[0]);
-        close(pipe_fds[1]);
-    }
-    void start(time_t s, long us) {
-        interval.set(s,us);
-        if (!running())
-            create();
-        paused = false;
-    }
-    void pause(void) { paused = true; }
-    void resume(void) { paused = false; }
-    int fd(void) { return pipe_fds[0]; }
 };
 
 class pxfe_readdir {
@@ -850,10 +815,9 @@ public:
     }
 };
 
-class pxfe_unix_dgram_socket {
+class pxfe_unix_dgram_socket : public pxfe_fd {
     static int counter;
     std::string path;
-    int fd;
     bool init_common(bool new_path) {
         static int counter = 1;
         if (new_path)
@@ -895,14 +859,10 @@ class pxfe_unix_dgram_socket {
 public:
     pxfe_unix_dgram_socket(void) {
         path.clear();
-        fd = -1;
     }
     ~pxfe_unix_dgram_socket(void) {
         if (fd > 0)
-        {
-            ::close(fd);
             (void) unlink( path.c_str() );
-        }
     }
     bool init(void) { return init_common(true); }
     bool init(const std::string &_path) { 
@@ -919,7 +879,6 @@ public:
     }
     static const int MAX_MSG_LEN = 16384;
     const std::string &getPath(void) const { return path; }
-    int getFd(void) const { return fd; }
     // next 3 are for connected-mode sockets
     void connect(const std::string &remote_path) {
         sockaddr_un addr;
@@ -1005,23 +964,11 @@ public:
     }
 };
 
-class pxfe_udp_socket {
-    int fd;
+class pxfe_udp_socket : public pxfe_fd {
 public:
-    pxfe_udp_socket(void) {
-        fd = -1;
-    }
-    ~pxfe_udp_socket(void) {
-        if (fd > 0)
-            ::close(fd);
-    }
+    pxfe_udp_socket(void) { }
+    ~pxfe_udp_socket(void) { }
     static const int MAX_MSG_LEN = 16384;
-    int getFd(void) const { return fd; }
-    void setFd(int _fd) {
-        if (fd > 0)
-            ::close(fd);
-        fd = _fd;
-    }
     bool init(void) {
         return init(-1);
     }
@@ -1137,32 +1084,15 @@ public:
 };
 
 template <int protocolNumber>
-class _pxfe_stream_socket {
-    int fd;
+class _pxfe_stream_socket : public pxfe_fd {
     pxfe_sockaddr_in sa;
     _pxfe_stream_socket(int _fd, const sockaddr_in &_sa) {
         fd = _fd;
         sa = (pxfe_sockaddr_in&)_sa;
     }
 public:
-    _pxfe_stream_socket(void) {
-        fd = -1;
-    }
-    ~_pxfe_stream_socket(void) {
-        if (fd > 0)
-            ::close(fd);
-    }
-    int getFd(void) const { return fd; }
-    void setFd(int _fd) {
-        if (fd > 0)
-            ::close(fd);
-        fd = _fd;
-    }
-    void close(void) {
-        if (fd > 0)
-            ::close(fd);
-        fd = -1;
-    }
+    _pxfe_stream_socket(void) { }
+    ~_pxfe_stream_socket(void) { }
     static const int MAX_MSG_LEN = 16384;
     // next 2 methods for connecting socket (calling out)
     bool init(void) {
@@ -1264,5 +1194,94 @@ public:
 
 typedef _pxfe_stream_socket<IPPROTO_SCTP> pxfe_sctp_stream_socket;
 typedef _pxfe_stream_socket<0> pxfe_tcp_stream_socket;
+
+class pxfe_fd_set {
+    fd_set  fds;
+    int     max_fd;
+public:
+    pxfe_fd_set(void) { zero(); }
+    ~pxfe_fd_set(void) { /*nothing for now*/ }
+    void zero(void) { FD_ZERO(&fds); max_fd=-1; }
+    void set(const pxfe_fd &fd) { set(fd.getFd()); }
+    void clr(const pxfe_fd &fd) { clr(fd.getFd()); }
+    bool is_set(const pxfe_fd &fd) { return is_set(fd.getFd()); }
+    void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
+    void clr(int fd) { FD_CLR(fd, &fds); }
+    bool is_set(int fd) { return FD_ISSET(fd, &fds) != 0; }
+    fd_set *operator()(void) { return max_fd==-1 ? NULL : &fds; }
+    int nfds(void) { return max_fd + 1; }
+};
+
+struct pxfe_select {
+    pxfe_fd_set  rfds;
+    pxfe_fd_set  wfds;
+    pxfe_fd_set  efds;
+    pxfe_timeval   tv;
+    pxfe_select(void) { }
+    ~pxfe_select(void) { }
+    int select_forever(void) {
+        return _select(NULL);
+    }
+    int select(void) {
+        return _select(tv());
+    }
+    int _select(struct timeval *tvp) {
+        int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
+        if (n < n2) n = n2;
+        if (n < n3) n = n3;
+        return ::select(n, rfds(), wfds(), efds(), tvp);
+    }
+};
+
+class pxfe_ticker : public pxfe_pthread {
+    bool paused;
+    pxfe_pipe closer_pipe;
+    pxfe_pipe pipe;
+    pxfe_timeval interval;
+    /*virtual*/ void * entry(void *arg) {
+        char c = 1;
+        pxfe_select   sel;
+        while (1) {
+            sel.tv = interval;
+            sel.rfds.zero();
+            sel.rfds.set(closer_pipe.readEnd);
+            if (sel.select() <= 0) {
+                if (paused == false)
+                    if (pipe.write(&c, 1) == false)
+                        fprintf(stderr, "pxfe_ticker: write failed\n");
+                continue;
+            }
+            if (sel.rfds.is_set(closer_pipe.readEnd)) {
+                if (closer_pipe.read(&c, 1) == false)
+                    fprintf(stderr, "pxfe_ticker: read failed\n");
+                break;
+            }
+        }
+        return NULL;
+    }
+    /*virtual*/ void send_stop(void) {
+        char c = 1;
+        if (closer_pipe.write(&c, 1) == false)
+            fprintf(stderr, "pxfe_ticker: write failed\n");
+    }
+public:
+    pxfe_ticker(void) {
+        interval.set(1,0);
+        paused = false;
+    }
+    ~pxfe_ticker(void) {
+        paused = true;
+        stopjoin();
+    }
+    void start(time_t s, long us) {
+        interval.set(s,us);
+        if (!running())
+            create();
+        paused = false;
+    }
+    void pause(void) { paused = true; }
+    void resume(void) { paused = false; }
+    int fd(void) { return pipe.readEnd; }
+};
 
 #endif /* __posix_fe_h__ */
