@@ -76,7 +76,7 @@ else # $CONFIG
 ##############################################
 
 PFKARCH := $(shell ./scripts/architecture)
-OBJDIR := obj.$(PFKARCH).$(CONFIG)
+OBJDIR := obj.$(CONFIG)
 
 ifeq ($(DISABLE_RDYNAMIC),)
 LDFLAGS += -rdynamic # for backtrace

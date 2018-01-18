@@ -39,31 +39,44 @@ public:
     int main(void)
     {
         uint32_t addr;
-        if (opts.outbound && hostname_to_ipaddr(opts.hostname.c_str(),
-                                                &addr) == false)
+        pxfe_errno e;
+        if (opts.outbound &&
+            pxfe_iputils::hostname_to_ipaddr(opts.hostname.c_str(),
+                                             &addr) == false)
             return 1;
         if (opts.outbound)
         {
             net_fd = new pxfe_tcp_stream_socket;
-            if (net_fd->init() == false)
+            if (net_fd->init(&e) == false)
+            {
+                std::cerr << e.Format() << std::endl;
                 return 1;
+            }
             if (opts.verbose)
                 fprintf(stderr, "connecting...");
-            if (net_fd->connect(addr, opts.port_number) == false)
+            if (net_fd->connect(addr, opts.port_number, &e) == false)
+            {
+                std::cerr << e.Format() << std::endl;
                 return 1;
+            }
             if (opts.verbose)
                 fprintf(stderr, "success\n");
         }
         else
         {
             pxfe_tcp_stream_socket listen;
-            if (listen.init(opts.port_number,true) == false)
+            if (listen.init(opts.port_number,true,&e) == false)
+            {
+                std::cerr << e.Format() << std::endl;
                 return 1;
+            }
             listen.listen();
             if (opts.verbose)
                 fprintf(stderr, "listening...");
             do {
-                net_fd = listen.accept();
+                net_fd = listen.accept(&e);
+                if (e.e != 0)
+                    std::cerr << e.Format() << std::endl;
             } while (net_fd == NULL);
             if (opts.verbose)
             {
@@ -103,28 +116,14 @@ public:
         return 0;
     }
 private:
-    bool hostname_to_ipaddr( const char * host, uint32_t * _addr )
-    {
-        uint32_t addr;
-        if ( ! (inet_aton( host, (in_addr*) &addr )))
-        {
-            struct hostent * he;
-            if (( he = gethostbyname( host )) == NULL )
-            {
-                fprintf( stderr, "host lookup of %s: %s\n",
-                         host, strerror( errno ));
-                return false;
-            }
-            memcpy( &addr, he->h_addr, he->h_length );
-        }
-        addr = ntohl(addr);
-        *_addr = addr;
-        return true;
-    }
     bool handle_net_fd(void)
     {
-        if (net_fd->recv(buffer) == false)
+        pxfe_errno e;
+        if (net_fd->recv(buffer, &e) == false)
+        {
+            std::cerr << e.Format() << std::endl;
             return false;
+        }
         if (buffer.length() == 0)
             return false;
         bytes_received += buffer.length();
@@ -157,21 +156,23 @@ private:
     }
     bool handle_input_fd(void)
     {
+        pxfe_errno e;
         int cc = buffer.read(opts.input_fd,
-                             pxfe_tcp_stream_socket::MAX_MSG_LEN);
+                             pxfe_tcp_stream_socket::MAX_MSG_LEN, &e);
         if (cc < 0)
         {
-            int e = errno;
-            char * err = strerror(e);
-            fprintf(stderr, "read failed: %d: %s\n", e, err);
+            std::cerr << e.Format() << std::endl;
             return false;
         }
         else if (cc == 0)
             return false;
         else
         {
-            if (net_fd->send(buffer) == false)
+            if (net_fd->send(buffer, &e) == false)
+            {
+                std::cerr << e.Format() << std::endl;
                 return false;
+            }
             bytes_sent += buffer.length();
         }
         return true;

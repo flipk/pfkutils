@@ -159,11 +159,15 @@ public:
             if (sel.rfds.is_set(0))
             {
                 pxfe_string  buffer;
-                buffer.resize(100);
-                int cc = ::read(0, buffer.vptr(), buffer.length());
-                if (cc > 0)
+                pxfe_errno   e;
+                int cc = buffer.read(0, 1000, &e);
+                if (cc < 0)
                 {
-                    buffer.resize(cc);
+                    std::cerr << e.Format() << std::endl;
+                    done = true;
+                }
+                else if (cc > 0)
+                {
                     if (server)
                     {
                         ServerToClient stc;

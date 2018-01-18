@@ -64,3 +64,7 @@ CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j9
+
+# turn off color compile output so emacs compile buffer can work;
+# need a more generic solution for compiling in emacs compile buffer.
+# CXXFLAGS = -fno-diagnostics-color

@@ -45,8 +45,11 @@ pfkscript_ctrl::pfkscript_ctrl(void)
     }
     if (sock.init() == true)
     {
-        sock.connect(ctrl_path);
-        isOk = true;
+        pxfe_errno e;
+        if (sock.connect(ctrl_path, &e) == false)
+            cerr << e.Format() << endl;
+        else
+            isOk = true;
     }
 }
 
@@ -59,9 +62,14 @@ bool
 pfkscript_ctrl::getFile(std::string &path)
 {
     PfkscriptMsg   m;
+    pxfe_errno e;
     m.m().type = PFKSCRIPT_CMD_GET_FILE_PATH;
-    sock.send(m.buf);
-    if (sock.recv(m.buf))
+    if (sock.send(m.buf, &e) == false)
+    {
+        cerr << e.Format() << endl;
+        return false;
+    }
+    if (sock.recv(m.buf, &e))
     {
         if (m.m().type == PFKSCRIPT_RESP_GET_FILE_PATH)
         {
@@ -69,6 +77,10 @@ pfkscript_ctrl::getFile(std::string &path)
             path.assign(resp->path);
             return true;
         }
+    }
+    else
+    {
+        cerr << e.Format() << endl;
     }
     return false;
 }
@@ -79,9 +91,14 @@ pfkscript_ctrl::rolloverNow(std::string &oldpath,
                             std::string &newpath)
 {
     PfkscriptMsg  m;
+    pxfe_errno e;
     m.m().type = PFKSCRIPT_CMD_ROLLOVER_NOW;
-    sock.send(m.buf);
-    if (sock.recv(m.buf))
+    if (sock.send(m.buf, &e) == false)
+    {
+        cerr << e.Format() << endl;
+        return false;
+    }
+    if (sock.recv(m.buf, &e))
     {
         if (m.m().type == PFKSCRIPT_RESP_ROLLOVER_NOW)
         {
@@ -92,6 +109,10 @@ pfkscript_ctrl::rolloverNow(std::string &oldpath,
             return true;
         }
     }
+    else
+    {
+        cerr << e.Format() << endl;
+    }
     return false;
 }
 
@@ -99,9 +120,14 @@ bool
 pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipped)
 {
     PfkscriptMsg m;
+    pxfe_errno e;
     m.m().type = PFKSCRIPT_CMD_CLOSE_NOW;
-    sock.send(m.buf);
-    if (sock.recv(m.buf))
+    if (sock.send(m.buf, &e) == false)
+    {
+        cerr << e.Format() << endl;
+        return false;
+    }
+    if (sock.recv(m.buf, &e))
     {
         if (m.m().type == PFKSCRIPT_RESP_CLOSE_NOW)
         {
@@ -111,6 +137,10 @@ pfkscript_ctrl::closeNow(std::string &oldpath, bool &zipped)
             return true;
         }
     }
+    else
+    {
+        cerr << e.Format() << endl;
+    }
     return false;
 }
 
@@ -118,9 +148,14 @@ bool
 pfkscript_ctrl::openNow(std::string &newpath)
 {
     PfkscriptMsg m;
+    pxfe_errno e;
     m.m().type = PFKSCRIPT_CMD_OPEN_NOW;
-    sock.send(m.buf);
-    if (sock.recv(m.buf))
+    if (sock.send(m.buf, &e) == false)
+    {
+        cerr << e.Format() << endl;
+        return false;
+    }
+    if (sock.recv(m.buf, &e))
     {
         if (m.m().type == PFKSCRIPT_RESP_OPEN_NOW)
         {
@@ -128,6 +163,10 @@ pfkscript_ctrl::openNow(std::string &newpath)
             newpath.assign(resp->path);
             return true;
         }
+    }
+    else
+    {
+        cerr << e.Format() << endl;
     }
     return false;
 }

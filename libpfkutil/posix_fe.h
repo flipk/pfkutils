@@ -276,12 +276,22 @@ class pxfe_errno {
 public:
     int e;
     char * err;
-    pxfe_errno(void) {
-        e = errno;
-        err = strerror(errno);
+    const char * what;
+    pxfe_errno(int _e = 0, const char *_what = "") { init(_e, _what); }
+    void init(int _e, const char *_what = "") {
+        e = _e;
+        what = _what;
+        if (e > 0)
+            err = strerror(e);
+        else
+            err = NULL;
     }
     std::string Format(void) {
+        if (err == NULL)
+            return "";
         std::ostringstream  ostr;
+        if (what)
+            ostr << what << ": ";
         ostr << "error " << e << " (" << err << ")";
         return ostr.str();
     }
@@ -322,14 +332,18 @@ public:
                 (int)((unsigned char)at(i));
         return out.str();
     }
-    ssize_t read(int fd, size_t max) {
+    ssize_t read(int fd, size_t max, pxfe_errno *e = NULL) {
         resize(max);
         ssize_t cc = ::read(fd, vptr(), max);
+        if (cc < 0)
+            if (e) e->init(errno, "read");
         resize(cc > 0 ? cc : 0);
         return cc;
     }
-    ssize_t write(int fd) const {
+    ssize_t write(int fd, pxfe_errno *e = NULL) const {
         ssize_t cc = ::write(fd, vptr(), length());
+        if (cc < 0)
+            if (e) e->init(errno, "write");
         return cc;
     }
     void operator=(const std::string &other) {
@@ -576,13 +590,47 @@ public:
         close(writeEnd);
         close(readEnd);
     }
-    int read(void *buf, size_t count)
+    bool read(std::string &buf, int max, pxfe_errno *e = NULL)
     {
-        return ::read(readEnd, buf, count);
+        pxfe_string &_buf = (pxfe_string &)buf;
+        buf.resize(max);
+        int cc = ::read(readEnd, _buf.vptr(), _buf.length());
+        if (cc < 0) {
+            if (e) e->init(errno, "read");
+            buf.resize(0);
+            return false;
+        }
+        buf.resize(cc);
+        return true;
     }
-    int write(void *buf, size_t count)
+    bool write(const std::string &buf, pxfe_errno *e = NULL)
     {
-        return ::write(writeEnd, buf, count);
+        pxfe_string &_buf = (pxfe_string &)buf;
+        int cc = ::write(writeEnd, _buf.vptr(), _buf.length());
+        if (cc < 0) {
+            if (e) e->init(errno, "write");
+            return false;
+        }
+        if (cc != _buf.length()) {
+            // i don't yet know if this is a case i have to handle.
+            fprintf(stderr, "pxfe_pipe: short write %d != %d!\n",
+                    cc, _buf.length());
+        }
+        return true;
+    }
+    int read(void *buf, size_t count, pxfe_errno *e = NULL)
+    {
+        int cc = ::read(readEnd, buf, count);
+        if (cc < 0)
+            if (e) e->init(errno, "read");
+        return cc;
+    }
+    int write(void *buf, size_t count, pxfe_errno *e = NULL)
+    {
+        int cc = ::write(writeEnd, buf, count);
+        if (cc < 0)
+            if (e) e->init(errno, "write");
+        return cc;
     }
 };
 
@@ -598,11 +646,15 @@ public:
     }
     int  getFd(void) const { return fd; }
     void setFd(int nfd) { close(); fd = nfd; }
-    bool open(const std::string &path, int flags, mode_t mode = 0600) {
-        return open(path.c_str(), flags, mode);
+    bool open(const std::string &path, int flags, mode_t mode = 0600,
+              pxfe_errno *e = NULL) {
+        return open(path.c_str(), flags, mode, e);
     }
-    bool open(const char *path, int flags, mode_t mode = 0600) {
+    bool open(const char *path, int flags, mode_t mode = 0600,
+              pxfe_errno *e = NULL) {
         fd = ::open(path, flags, mode);
+        if (fd < 0)
+            if (e) e->init(errno, "open");
         return (fd >= 0);
     }
     void close(void) {
@@ -610,22 +662,42 @@ public:
             ::close(fd);
         fd = -1;
     }
-    int read (void *buf, size_t count) { return ::read (fd, buf, count); }
-    int write(void *buf, size_t count) { return ::write(fd, buf, count); }
-    bool read(std::string &buf, int max = 16384) {
+    int read (void *buf, size_t count, pxfe_errno *e = NULL) {
+        int cc = ::read (fd, buf, count);
+        if (cc < 0 && e) e->init(errno, "read");
+        return cc;
+    }
+    int write(void *buf, size_t count, pxfe_errno *e = NULL) {
+        int cc = ::write(fd, buf, count);
+        if (cc < 0 && e) e->init(errno, "write");
+        return cc;
+    }
+    bool read(std::string &buf, int max = 16384, pxfe_errno *e = NULL) {
         pxfe_string &_buf = (pxfe_string &)buf;
         _buf.resize(max);
         int cc = ::read(fd, _buf.vptr(), max);
-        if (cc >= 0) {
-            _buf.resize(cc);
-            return cc;
+        if (cc < 0) {
+            if (e) e->init(errno, "read");
+            _buf.resize(0);
+            return false;
         }
-        _buf.resize(0);
-        return cc;
+        _buf.resize(cc);
+        return true;
     }
-    bool write(const std::string &buf) {
+    bool write(const std::string &buf, pxfe_errno *e = NULL) {
         pxfe_string &_buf = (pxfe_string &)buf;
-        return ::write(fd, _buf.vptr(), _buf.length());
+        int cc = ::write(fd, _buf.vptr(), _buf.length());
+        if (cc < 0) {
+            if (e) e->init(errno, "write");
+            return false;
+        }
+        if (cc != _buf.length())
+        {
+            // xxxx haven't figured out if i need to handle this yet.
+            fprintf(stderr, " **** SHORT WRITE %d != %d\n",
+                    cc, _buf.length());
+        }
+        return true;
     }
 };
 
@@ -721,12 +793,16 @@ public:
             ::closedir(d);
         d = NULL;
     }
-    bool open(const std::string &dirstr) { return open(dirstr.c_str()); }
-    bool open(const char *dirname) {
+    bool open(const std::string &dirstr, pxfe_errno *e = NULL) {
+        return open(dirstr.c_str(), e);
+    }
+    bool open(const char *dirname, pxfe_errno *e = NULL) {
         close();
         d = ::opendir(dirname);
-        if (d == NULL)
+        if (d == NULL) {
+            if (e) e->init(errno, "opendir");
             return false;
+        }
         return true;
     }
     bool read(dirent &de) {
@@ -752,6 +828,26 @@ struct pxfe_sockaddr_in : public sockaddr_in {
     void set_addr(uint32_t a) { sin_addr.s_addr = htonl(a); }
     uint16_t get_port(void) const { return ntohs(sin_port); }
     void set_port(uint16_t p) { sin_port = htons(p); }
+    sockaddr *operator()() { return (sockaddr *)this; }
+    const sockaddr *operator()() const { return (sockaddr *)this; }
+};
+
+struct pxfe_sockaddr_un : public sockaddr_un {
+    void init(void) { sun_family = AF_UNIX; }
+    void init(const std::string &str) { init(); set_path(str); }
+    void init(const char *p) { init(); set_path(p); }
+    void set_path(const std::string &str) { set_path(str.c_str()); }
+    void set_path(const char *p) {
+        int len = sizeof(sun_path)-1;
+        strncpy(sun_path, p, len);
+        sun_path[len] = 0;
+    }
+    void get_path(std::string &str) {
+        pxfe_string &_str = (pxfe_string &)str;
+        int len = strnlen(sun_path, sizeof(sun_path)-1);
+        _str.resize(len);
+        memcpy(_str.vptr(), sun_path, len);
+    }
     sockaddr *operator()() { return (sockaddr *)this; }
     const sockaddr *operator()() const { return (sockaddr *)this; }
 };
@@ -818,7 +914,7 @@ public:
 class pxfe_unix_dgram_socket : public pxfe_fd {
     static int counter;
     std::string path;
-    bool init_common(bool new_path) {
+    bool init_common(bool new_path, pxfe_errno *e) {
         static int counter = 1;
         if (new_path)
         {
@@ -837,8 +933,7 @@ class pxfe_unix_dgram_socket : public pxfe_fd {
         fd = ::socket(AF_UNIX, SOCK_DGRAM, 0);
         if (fd < 0)
         {
-            int e = errno;
-            std::cerr << "socket: " << strerror(e) << std::endl;
+            if (e) e->init(errno, "socket");
             return false;
         }
         sockaddr_un sa;
@@ -848,8 +943,7 @@ class pxfe_unix_dgram_socket : public pxfe_fd {
         sa.sun_path[len] = 0;
         if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
         {
-            int e = errno;
-            std::cerr << "bind dgram: " << strerror(e) << std::endl;
+            if (e) e->init(errno, "bind");
             ::close(fd);
             fd = -1;
             return false;
@@ -864,58 +958,47 @@ public:
         if (fd > 0)
             (void) unlink( path.c_str() );
     }
-    bool init(void) { return init_common(true); }
-    bool init(const std::string &_path) { 
+    bool init(pxfe_errno *e = NULL) { return init_common(true,e); }
+    bool init(const std::string &_path, pxfe_errno *e = NULL) {
         path = _path;
-        return init_common(false);
-    }
-    void close(void) {
-        if (fd > 0)
-        {
-            ::close(fd);
-            (void) unlink( path.c_str() );
-        }
-        fd = -1;
+        return init_common(false,e);
     }
     static const int MAX_MSG_LEN = 16384;
     const std::string &getPath(void) const { return path; }
-    // next 3 are for connected-mode sockets
-    void connect(const std::string &remote_path) {
-        sockaddr_un addr;
-        addr.sun_family = AF_UNIX;
-        int len = sizeof(addr.sun_path)-1;
-        strncpy(addr.sun_path, remote_path.c_str(), len);
-        addr.sun_path[len] = 0;
-        if (::connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
-        {
-            int e = errno;
-            std::cerr << "connect: " << e << ": " << strerror(e) << std::endl;
-        }
+    // next 4 are for connected-mode sockets
+    bool connect(const std::string &remote_path, pxfe_errno *e = NULL) {
+        pxfe_sockaddr_un  sa;
+        sa.init(remote_path);
+        return connect(sa, e);
     }
-    bool send(const std::string &msg) {
-        if (msg.size() > MAX_MSG_LEN)
-        {
-            std::cerr << "ERROR unix_dgram_socket send msg size of "
-                 << msg.size() << " is greater than max "
-                 << MAX_MSG_LEN << std::endl;
-            return false;
-        }
-        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
-        {
-            int e = errno;
-            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+    bool connect(const sockaddr_un &sa, pxfe_errno *e = NULL) {
+        pxfe_sockaddr_un &_sa = (pxfe_sockaddr_un &)sa;
+        if (::connect(fd, _sa(), sizeof(sa)) < 0) {
+            if (e) e->init(errno, "connect");
             return false;
         }
         return true;
     }
-    bool recv(std::string &msg) {
+    bool send(const std::string &msg, pxfe_errno *e = NULL) {
+        if (msg.size() > MAX_MSG_LEN)
+        {
+            if (e) e->init(EMSGSIZE, "msg.size");
+            return false;
+        }
+        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        {
+            if (e) e->init(errno, "send");
+            return false;
+        }
+        return true;
+    }
+    bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
         ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
                                 MAX_MSG_LEN, /*flags*/0);
-        if (msglen <= 0)
+        if (msglen < 0)
         {
-            int e = errno;
-            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "recv");
             msg.resize(0);
             return false;
         }
@@ -923,43 +1006,52 @@ public:
         return true;
     }
     // next 2 are for promiscuous datagram sockets
-    bool send(const std::string &msg, const std::string &remote_path) {
+    bool send(const std::string &msg, const std::string &remote_path,
+              pxfe_errno *e = NULL) {
+        pxfe_sockaddr_un  sa;
+        sa.init(remote_path);
+        return send(msg, sa, e);
+    }
+    bool send(const std::string &msg, const sockaddr_un &sa,
+              pxfe_errno *e = NULL) {
+        pxfe_string &_msg = (pxfe_string &)msg;
+        pxfe_sockaddr_un &_sa = (pxfe_sockaddr_un &)sa;
         if (msg.size() > MAX_MSG_LEN)
         {
-            std::cerr << "ERROR unix_dgram_socket send msg size of "
-                 << msg.size() << " is greater than max "
-                 << MAX_MSG_LEN << std::endl;
+            if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        sockaddr_un sa;
-        sa.sun_family = AF_UNIX;
-        int len = sizeof(sa.sun_path)-1;
-        strncpy(sa.sun_path, remote_path.c_str(), len);
-        sa.sun_path[len] = 0;
-        if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
-                     (sockaddr *)&sa, sizeof(sa)) < 0)
-        {
-            int e = errno;
-            std::cerr << "sendto: " << e << ": " << strerror(e) << std::endl;
+        if (::sendto(fd, _msg.vptr(), _msg.size(), /*flags*/0,
+                     _sa(), sizeof(sa)) < 0) {
+            if (e) e->init(errno, "sendto");
             return false;
         }
         return true;
     }
-    bool recv(      std::string &msg,       std::string &remote_path) {
-        msg.resize(MAX_MSG_LEN);
-        sockaddr_un sa;
+    bool recv(std::string &msg, std::string &remote_path,
+              pxfe_errno *e = NULL) {
+        pxfe_sockaddr_un  sa;
+        bool ret = recv(msg, sa, e);
+        if (ret == false)
+            return false;
+        sa.get_path(remote_path);
+        return true;
+    }
+    bool recv(std::string &msg, sockaddr_un &sa,
+              pxfe_errno *e = NULL) {
+        pxfe_string &_msg = (pxfe_string &)msg;
+        pxfe_sockaddr_un &_sa = (pxfe_sockaddr_un &)sa;
+        _msg.resize(MAX_MSG_LEN);
         socklen_t salen = sizeof(sa);
-        ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
-                                    /*flags*/0, (sockaddr *)&sa, &salen);
-        if (msglen <= 0)
+        ssize_t msglen = ::recvfrom(fd, _msg.vptr(), _msg.size(),
+                                    /*flags*/0, _sa(), &salen);
+        if (msglen < 0)
         {
-            int e = errno;
-            std::cerr << "recvfrom: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "recvfrom");
             msg.resize(0);
             return false;
         }
         msg.resize(msglen);
-        remote_path.assign(sa.sun_path);
         return true;
     }
 };
@@ -969,15 +1061,14 @@ public:
     pxfe_udp_socket(void) { }
     ~pxfe_udp_socket(void) { }
     static const int MAX_MSG_LEN = 16384;
-    bool init(void) {
-        return init(-1);
+    bool init(pxfe_errno *e = NULL) {
+        return init(-1,e);
     }
-    bool init(int port) {
+    bool init(int port, pxfe_errno *e = NULL) {
         fd = ::socket(AF_INET, SOCK_DGRAM, 0);
         if (fd < 0)
         {
-            int e = errno;
-            fprintf(stderr, "socket: %d: %s\n", e, strerror(e));
+            if (e) e->init(errno, "socket");
             return false;
         }
         if (port == -1)
@@ -987,61 +1078,55 @@ public:
         sa.init_any(port);
         if (::bind(fd, sa(), sizeof(sa)) < 0)
         {
-            int e = errno;
-            fprintf(stderr, "bind: %d: %s\n", e, strerror(e));
+            if (e) e->init(errno, "bind");
             return false;
         }
         return true;
     }
-    bool init_proto(int type, int protocol) {
+    bool init_proto(int type, int protocol, pxfe_errno *e = NULL) {
         fd = ::socket(AF_INET, type, protocol);
         if (fd < 0)
         {
-            int e = errno;
-            fprintf(stderr, "socket: %d: %s\n", e, strerror(e));
+            if (e) e->init(errno, "socket");
             return false;
         }
         return true;
     }
     // next 4 are for connected-mode sockets
-    bool connect(uint32_t addr, short port) {
+    bool connect(uint32_t addr, short port, pxfe_errno *e = NULL) {
         pxfe_sockaddr_in sa;
         sa.init(addr, port);
-        return connect(sa);
+        return connect(sa,e);
     }
-    bool connect(const sockaddr_in &sa) {
-        if (::connect(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+    bool connect(const sockaddr_in &sa, pxfe_errno *e = NULL) {
+        pxfe_sockaddr_in &_sa = (pxfe_sockaddr_in &) sa;
+        if (::connect(fd, _sa(), sizeof(sa)) < 0)
         {
-            int e = errno;
-            fprintf(stderr, "connect: %d: %s\n", e, strerror(e));
+            if (e) e->init(errno, "connect");
             return false;
         }
         return true;
     }
-    bool send(const std::string &msg) {
+    bool send(const std::string &msg, pxfe_errno *e = NULL) {
         if (msg.size() > MAX_MSG_LEN)
         {
-            std::cerr << "ERROR unix_dgram_socket send msg size of "
-                 << msg.size() << " is greater than max "
-                 << MAX_MSG_LEN << std::endl;
+            if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
         if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
         {
-            int e = errno;
-            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "send");
             return false;
         }
         return true;
     }
-    bool recv(std::string &msg) {
+    bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
         ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
                                 MAX_MSG_LEN, /*flags*/0);
-        if (msglen <= 0)
+        if (msglen < 0)
         {
-            int e = errno;
-            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "recv");
             msg.resize(0);
             return false;
         }
@@ -1049,32 +1134,32 @@ public:
         return true;
     }
     // next 2 are for promiscuous datagram sockets
-    bool send(const std::string &msg, const sockaddr_in &sa) {
+    bool send(const std::string &msg, const sockaddr_in &sa,
+              pxfe_errno *e = NULL) {
+        pxfe_sockaddr_in &_sa = (pxfe_sockaddr_in &) sa;
         if (msg.size() > MAX_MSG_LEN)
         {
-            std::cerr << "ERROR unix_dgram_socket send msg size of "
-                 << msg.size() << " is greater than max "
-                 << MAX_MSG_LEN << std::endl;
+            if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
         if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
-                     (sockaddr *)&sa, sizeof(sa)) < 0)
+                     _sa(), sizeof(sa)) < 0)
         {
-            int e = errno;
-            std::cerr << "sendto: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "sendto");
             return false;
         }
         return true;
     }
-    bool recv(std::string &msg, sockaddr_in &sa) {
+    bool recv(std::string &msg, sockaddr_in &sa,
+              pxfe_errno *e = NULL) {
+        pxfe_sockaddr_in &_sa = (pxfe_sockaddr_in &) sa;
         msg.resize(MAX_MSG_LEN);
         socklen_t salen = sizeof(sa);
         ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
-                                    /*flags*/0, (sockaddr *)&sa, &salen);
-        if (msglen <= 0)
+                                    /*flags*/0, _sa(), &salen);
+        if (msglen < 0)
         {
-            int e = errno;
-            std::cerr << "recvfrom: " << e << ": " << strerror(e) << std::endl;
+            if (e) e->init(errno, "recvfrom");
             msg.resize(0);
             return false;
         }
@@ -1095,95 +1180,79 @@ public:
     ~_pxfe_stream_socket(void) { }
     static const int MAX_MSG_LEN = 16384;
     // next 2 methods for connecting socket (calling out)
-    bool init(void) {
+    bool init(pxfe_errno *e = NULL) {
         fd = ::socket(PF_INET, SOCK_STREAM, protocolNumber);
-        if (fd < 0)
-        {
-            int e = errno;
-            fprintf(stderr, "pxfe_sctp_stream_socket: init: %d: %s\n",
-                    e, strerror(e));
+        if (fd < 0) {
+            if (e) e->init(errno, "socket");
             return false;
         }
         return true;
     }
-    bool connect(uint32_t addr, short port) {
+    bool connect(uint32_t addr, short port, pxfe_errno *e = NULL) {
         sa.init(addr, port);
-        if (::connect(fd, sa(), sizeof(sa)) < 0)
-        {
-            int e = errno;
-            fprintf(stderr, "pxfe_sctp_stream_socket: connect: %d: %s\n",
-                    e, strerror(e));
+        if (::connect(fd, sa(), sizeof(sa)) < 0) {
+            if (e) e->init(errno, "connect");
             return false;
         }
         return true;
     }
     // next 4 methods are for listening socket (waiting for call in)
-    bool init(uint32_t addr, short port, bool reuse=false) {
-        if (init() == false)
+    bool init(uint32_t addr, short port, bool reuse=false,
+              pxfe_errno *e = NULL) {
+        if (init(e) == false)
             return false;
         sa.init(addr, port);
         if (reuse) {
             int v = 1;
             setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*) &v, sizeof( v ));
         }
-        if (::bind(fd, sa(), sizeof(sa)) < 0)
-        {
-            int e = errno;
-            fprintf(stderr, "pxfe_sctp_stream_socket: bind: %d: %s\n",
-                    e, strerror(e));
+        if (::bind(fd, sa(), sizeof(sa)) < 0) {
+            if (e) e->init(errno, "bind");
             return false;
         }
         return true;
     }
-    bool init(short port, bool reuse=false) {
-        return init(INADDR_ANY,port,reuse);
+    bool init(short port, bool reuse=false, pxfe_errno *e = NULL) {
+        return init(INADDR_ANY,port,reuse,e);
     }
     void listen(void) {
         (void) ::listen(fd, 1);
     }
-    // this one returns a connected socket
-    _pxfe_stream_socket *accept(void) {
+    // this one returns a connected socket, or NULL.
+    // if SSL validation failed, e->e will be 0.
+    _pxfe_stream_socket *accept(pxfe_errno *e = NULL) {
         socklen_t sz = sizeof(sa);
         int fdnew = ::accept(fd, sa(), &sz);
-        if (fdnew < 0)
-        {
-            int e = errno;
-            fprintf(stderr, "pxfe_sctp_stream_socket: accept: %d: %s\n",
-                    e, strerror(e));
+        if (fdnew < 0) {
+            if (e) e->init(errno, "accept");
             return NULL;
         }
         _pxfe_stream_socket *s = new _pxfe_stream_socket(fdnew,sa);
         if (s)
             return s;
+        e->init(0,"");
         ::close(fdnew);
         return NULL;
     }
     uint32_t get_peer_addr(void) const { return sa.get_addr(); }
     // next 2 methods are for connected sockets
-    bool send(const std::string &msg) {
-        if (msg.size() > MAX_MSG_LEN)
-        {
-            std::cerr << "ERROR send msg size of "
-                      << msg.size() << " is greater than max "
-                      << MAX_MSG_LEN << std::endl;
+    bool send(const std::string &msg, pxfe_errno *e = NULL) {
+        if (msg.size() > MAX_MSG_LEN) {
+            if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
-        {
-            int e = errno;
-            std::cerr << "send: " << e << ": " << strerror(e) << std::endl;
+        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0) {
+            if (e) e->init(errno, "send");
             return false;
         }
         return true;
     }
-    bool recv(std::string &msg) {
+    bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
         ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
                                 MAX_MSG_LEN, /*flags*/0);
-        if (msglen < 0)
-        {
-            int e = errno;
-            std::cerr << "recv: " << e << ": " << strerror(e) << std::endl;
+        if (msglen < 0) {
+            if (e) e->init(errno, "recv");
             msg.resize(0);
             return false;
         }
@@ -1219,17 +1288,20 @@ struct pxfe_select {
     pxfe_timeval   tv;
     pxfe_select(void) { }
     ~pxfe_select(void) { }
-    int select_forever(void) {
-        return _select(NULL);
+    int select_forever(pxfe_errno *e = NULL) {
+        return _select(NULL, e);
     }
-    int select(void) {
-        return _select(tv());
+    int select(pxfe_errno *e = NULL) {
+        return _select(tv(), e);
     }
-    int _select(struct timeval *tvp) {
+    int _select(struct timeval *tvp, pxfe_errno *e = NULL) {
         int n = rfds.nfds(), n2 = wfds.nfds(), n3 = efds.nfds();
         if (n < n2) n = n2;
         if (n < n3) n = n3;
-        return ::select(n, rfds(), wfds(), efds(), tvp);
+        int cc = ::select(n, rfds(), wfds(), efds(), tvp);
+        if (cc < 0)
+            if (e) e->init(errno, "select");
+        return cc;
     }
 };
 
@@ -1247,12 +1319,12 @@ class pxfe_ticker : public pxfe_pthread {
             sel.rfds.set(closer_pipe.readEnd);
             if (sel.select() <= 0) {
                 if (paused == false)
-                    if (pipe.write(&c, 1) == false)
+                    if (pipe.write(&c, 1) != 1)
                         fprintf(stderr, "pxfe_ticker: write failed\n");
                 continue;
             }
             if (sel.rfds.is_set(closer_pipe.readEnd)) {
-                if (closer_pipe.read(&c, 1) == false)
+                if (closer_pipe.read(&c, 1) != 1)
                     fprintf(stderr, "pxfe_ticker: read failed\n");
                 break;
             }
@@ -1261,7 +1333,7 @@ class pxfe_ticker : public pxfe_pthread {
     }
     /*virtual*/ void send_stop(void) {
         char c = 1;
-        if (closer_pipe.write(&c, 1) == false)
+        if (closer_pipe.write(&c, 1) != 1)
             fprintf(stderr, "pxfe_ticker: write failed\n");
     }
 public:

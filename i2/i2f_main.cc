@@ -41,15 +41,13 @@ public:
         }
 
         ports_iter_t  it;
+        pxfe_errno e;
         for (it = opts.ports.begin(); it != opts.ports.end(); it++)
         {
             forw_port * p = *it;
-            if (p->listen_socket.init(p->port,true) == false)
+            if (p->listen_socket.init(p->port,true,&e) == false)
             {
-                int e = errno;
-                char * err = strerror(e);
-                fprintf(stderr, "unable to bind port %d: %d (%s)\n",
-                        p->port, e, err);
+                std::cerr << e.Format() << std::endl;
                 return;
             }
             p->listen_socket.listen();
@@ -149,43 +147,51 @@ public:
 private:
     void handle_accept(forw_port * p)
     {
-        pxfe_tcp_stream_socket * s = p->listen_socket.accept();
-        if (s)
+        pxfe_errno e;
+        pxfe_tcp_stream_socket * s = p->listen_socket.accept(&e);
+        if (!s)
         {
-            if (opts.verbose)
-            {
-                uint32_t addr = s->get_peer_addr();
-                fprintf(stderr, "\nnew connection from %d.%d.%d.%d\n",
-                        (addr >> 24) & 0xFF, (addr >> 16) & 0xFF,
-                        (addr >>  8) & 0xFF, (addr >>  0) & 0xFF);
-            }
-            conn * c = new conn;
-            c->port = p;
-            c->client_socket = s;
-            c->server_socket.init();
-            bool good =
-                c->server_socket.connect(p->remote_addr, p->remote_port);
+            cerr << e.Format() << endl;
+            return;
+        }
+        if (opts.verbose)
+        {
+            uint32_t addr = s->get_peer_addr();
+            fprintf(stderr, "\nnew connection from %d.%d.%d.%d\n",
+                    (addr >> 24) & 0xFF, (addr >> 16) & 0xFF,
+                    (addr >>  8) & 0xFF, (addr >>  0) & 0xFF);
+        }
+        conn * c = new conn;
+        c->port = p;
+        c->client_socket = s;
+        if (c->server_socket.init(&e) == false)
+            cerr << e.Format() << endl;
+        bool good = 
+            c->server_socket.connect(p->remote_addr, p->remote_port, &e);
 
-            if (good)
-                conns.push_back(c);
-            else
-                delete c;
+        if (good)
+            conns.push_back(c);
+        else
+        {
+            cerr << e.Format() << endl;
+            delete c;
         }
     }
     pxfe_string  buffer;
     ostringstream  dbg;
     bool handle_client(conn * c)
     {
+        pxfe_errno e;
         if (opts.debug_flag)
         {
             dbg.str().clear();
             dbg << "reading from client: ";
         }
-        if (c->client_socket->recv(buffer) == false)
+        if (c->client_socket->recv(buffer, &e) == false)
         {
             if (opts.debug_flag)
             {
-                dbg << "failed\n";
+                dbg << e.Format();
                 cerr << dbg.str();
             }
             return false;
@@ -205,20 +211,24 @@ private:
             cerr << dbg.str();
         }
         bytes += buffer.length();
-        return c->server_socket.send(buffer);
+        bool sendret = c->server_socket.send(buffer, &e);
+        if (!sendret)
+            cerr << e.Format() << endl;
+        return sendret;
     }
     bool handle_server(conn * c)
     {
+        pxfe_errno e;
         if (opts.debug_flag)
         {
             dbg.str().clear();
             dbg << "reading from server: ";
         }
-        if (c->server_socket.recv(buffer) == false)
+        if (c->server_socket.recv(buffer, &e) == false)
         {
             if (opts.debug_flag)
             {
-                dbg << "failed\n";
+                dbg << e.Format();
                 cerr << dbg.str();
             }
             return false;
@@ -238,7 +248,10 @@ private:
             cerr << dbg.str();
         }
         bytes += buffer.length();
-        return c->client_socket->send(buffer);
+        bool sendret = c->client_socket->send(buffer, &e);
+        if (!sendret)
+            cerr << e.Format() << endl;
+        return sendret;
     }
     void handle_tick(void)
     {
