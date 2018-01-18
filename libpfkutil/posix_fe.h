@@ -614,7 +614,7 @@ public:
         if (cc != _buf.length()) {
             // i don't yet know if this is a case i have to handle.
             fprintf(stderr, "pxfe_pipe: short write %d != %d!\n",
-                    cc, _buf.length());
+                    cc, (int) _buf.length());
         }
         return true;
     }
@@ -695,7 +695,7 @@ public:
         {
             // xxxx haven't figured out if i need to handle this yet.
             fprintf(stderr, " **** SHORT WRITE %d != %d\n",
-                    cc, _buf.length());
+                    cc, (int) _buf.length());
         }
         return true;
     }
