@@ -179,7 +179,7 @@ private:
     }
     void handle_tick(void)
     {
-        buffer.read(ticker.fd(), 100);
+        ticker.doread();
         if (opts.verbose)
             print_stats(/*final*/false);
     }

@@ -255,7 +255,7 @@ private:
     }
     void handle_tick(void)
     {
-        buffer.read(ticker.fd(), 100);
+        ticker.doread();
         print_stats(/*final*/false);
     }
     void print_stats(bool final)

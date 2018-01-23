@@ -71,9 +71,7 @@ pfktop_main(int argc, char ** argv)
         {
             if (sel.rfds.is_set(ticker.fd()))
             {
-                int cc = read(ticker.fd(), &c, 1);
-                if (cc <= 0)
-                    done = true;
+                ticker.doread();
                 list.fetch();
             }
             if (sel.rfds.is_set(0))

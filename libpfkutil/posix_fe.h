@@ -300,6 +300,7 @@ public:
 class pxfe_string : public std::string {
 public:
     pxfe_string(void) { }
+    pxfe_string(const char *s) : std::string(s) { }
     pxfe_string(const char *s, size_t len) : std::string(s,len) { }
     void * vptr(void) {
         return (void*) c_str();
@@ -646,6 +647,36 @@ public:
     }
     int  getFd(void) const { return fd; }
     void setFd(int nfd) { close(); fd = nfd; }
+    bool set_blocking(pxfe_errno *e = NULL) {
+        int flags = fcntl(fd, F_GETFL, 0);
+        if (flags == -1)
+        {
+            if (e) e->init(errno, "fcntl:F_GETFL");
+            return false;
+        }
+        flags &= ~O_NONBLOCK;
+        if (fcntl(fd, F_SETFL, flags) == -1)
+        {
+            if (e) e->init(errno, "fcntl:F_SETFL");
+            return false;
+        }
+        return true;
+    }
+    bool set_nonblocking(pxfe_errno *e = NULL) {
+        int flags = fcntl(fd, F_GETFL, 0);
+        if (flags == -1)
+        {
+            if (e) e->init(errno, "fcntl:F_GETFL");
+            return false;
+        }
+        flags |= O_NONBLOCK;
+        if (fcntl(fd, F_SETFL, flags) == -1)
+        {
+            if (e) e->init(errno, "fcntl:F_SETFL");
+            return false;
+        }
+        return true;
+    }
     bool open(const std::string &path, int flags, mode_t mode = 0600,
               pxfe_errno *e = NULL) {
         return open(path.c_str(), flags, mode, e);
@@ -1354,6 +1385,13 @@ public:
     void pause(void) { paused = true; }
     void resume(void) { paused = false; }
     int fd(void) { return pipe.readEnd; }
+    bool doread(void) {
+        char c;
+        int cc = ::read(pipe.readEnd, &c, 1);
+        if (cc > 0)
+            return true;
+        return false;
+    }
 };
 
 #endif /* __posix_fe_h__ */

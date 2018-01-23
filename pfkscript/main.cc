@@ -567,9 +567,7 @@ Screen :: sigwinch_handler(int sig)
 
             if (sel.rfds.is_set(ticker.fd()))
             {
-                char c;
-                if (read(ticker.fd(), &c, 1) < 0)
-                    fprintf(stderr, "ticker:main: read failed\n");
+                ticker.doread();
                 do_logfile_maintenance();
             }
 
