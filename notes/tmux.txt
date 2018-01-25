@@ -1,29 +1,44 @@
+this file is mirrored in Drive/misc/tmux-help
 
-TERM=xterm SHELL=/bin/sh tmux
+TERM=rxvt tmux
 
 tmux list-sessions
 tmux attach [-t <sessionid>]
 or 'tmux a'
 to attach multiple to different windows:
-tmux new-session -t 0
+tmux new-session -t sessionid
 
+GENERAL
 ? : help (enter to exit)
-c : new window
-n : next window
-p : prev window
-digit : switch to window n
-w : show menu of windows
-d : detach
-t : show time (enter to exit)
-" : split horiz (new pane)
-up /down : switch panes
-% : split vert (new pane)
-left/right : switch panes
-esc-arrow [repeated] : resize pane by 5 cells
-! : current pane becomes its own window
+d : detach (current client)
+D : choose a client to detach
+t : show time in current pane (enter to exit)
 [ : copy mode (space to toggle selection, enter to copy and exit)
 ] : paste
 f : find (in all windows)
-q : display pane indexes
 r : redraw
+: : prompt for command
 
+SESSIONS
+$ : rename current session (arg to ?-t?)
+( ) : switch between sessions
+s : show menu of sessions
+:kill-session : end the current session
+
+WINDOWS
+c : new window
+n : next window
+p : prev window
+, : (comma) rename current window
+w : show menu of windows
+digit : switch to window n
+
+PANES
+" : split horiz (new pane)
+% : split vert (new pane)
+arrow : switch panes
+esc-arrow : resize current pane
+o : next pane
+z : toggle ?zoom? on current pane (shows a Z in the status bar to remind you)
+q : display pane indexes
+! : current pane becomes its own window
