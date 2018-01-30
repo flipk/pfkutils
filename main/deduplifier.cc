@@ -1,8 +1,3 @@
-#if 0
-set -e -x
-g++ -I../libpfkutil ../libpfkutil/md5.c deduplifier.cc -o d
-exit 0
-#endif
 
 /*
 This is free and unencumbered software released into the public domain.
@@ -43,13 +38,41 @@ For more information, please refer to <http://unlicense.org>
 #include <string>
 #include <map>
 #include <list>
+#include <fcntl.h>
 
-#include "md5.h"
+#include "mbedtls/md5.h"
 
 using namespace std;
 
 typedef map<string,string> digestFileMap_t;
 typedef list<string> pendingDirs_t;
+
+static bool
+MD5File(const std::string &path, char digest[16])
+{
+    int cc, fd = open(path.c_str(), O_RDONLY);
+    if (fd < 0)
+        return false;
+    mbedtls_md5_context  ctx;
+    std::string buffer;
+
+    mbedtls_md5_init( &ctx );
+    mbedtls_md5_starts( &ctx );
+
+    buffer.resize(16384);
+    while (1)
+    {
+        cc = read(fd, (void*) buffer.c_str(), 16384);
+        if (cc <= 0)
+            break;
+        mbedtls_md5_update( &ctx, (unsigned char*) buffer.c_str(), cc );
+    }
+
+    mbedtls_md5_finish( &ctx, (unsigned char *) digest );
+    mbedtls_md5_free( &ctx );
+    return true;
+}
+
 
 extern "C" int
 deduplifier_main(int argc, char ** argv)
@@ -97,10 +120,10 @@ deduplifier_main(int argc, char ** argv)
                         pendingDirs.push_back(fullPath);
                     else if (S_ISREG(sb.st_mode))
                     {
-                        char buffer[48];
-                        if (MD5File(fullPath.c_str(), buffer) != NULL)
+                        char buffer[16];
+                        if (MD5File(fullPath, buffer))
                         {
-                            string digest = (string)((char*)buffer);
+                            string digest(buffer, 16);
                             pair<digestFileMap_t::iterator,bool> rv;
                             rv = digestFileMap.insert(
                                 digestFileMap_t::value_type(

@@ -156,40 +156,39 @@ $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
 LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
 libpfkutil_CSRCS = \
-	libpfkutil/base64.c libpfkutil/d3des.c libpfkutil/d3des_orig.c \
-	libpfkutil/inet_aton.c libpfkutil/m.c libpfkutil/md5.c \
-	libpfkutil/printbuf.c libpfkutil/regex.c \
-	libpfkutil/sha256.c libpfkutil/aes.c
+	libpfkutil/base64.c \
+	libpfkutil/inet_aton.c libpfkutil/m.c \
+	libpfkutil/printbuf.c libpfkutil/regex.c
 libpfkutil_CXXSRCS = \
 	libpfkutil/HSM.cc \
 	libpfkutil/childprocessmanager.cc libpfkutil/dll3.cc \
 	libpfkutil/dll3_btree.cc libpfkutil/fdThreadLauncher.cc \
 	libpfkutil/fd_mgr.cc libpfkutil/hsmthread.cc \
 	libpfkutil/msgr.cc libpfkutil/prioWorkQ.cc \
-	libpfkutil/sha1.cc libpfkutil/shmempipe.cc \
+	libpfkutil/shmempipe.cc \
 	libpfkutil/thread_slinger.cc 
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
 	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
-	libpfkutil/d3des.h libpfkutil/d3des_orig.h libpfkutil/dll3.h \
+	libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
-	libpfkutil/msgr.h libpfkutil/posix_fe.h libpfkutil/md5.h \
-	libpfkutil/prioWorkQ.h libpfkutil/regex.h libpfkutil/sha1.h \
+	libpfkutil/msgr.h libpfkutil/posix_fe.h \
+	libpfkutil/prioWorkQ.h libpfkutil/regex.h \
 	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
-	libpfkutil/sha256.h libpfkutil/aes.h libpfkutil/dll3.tcc \
+	libpfkutil/dll3.tcc \
 	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
 	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
-	libpfkutil/d3des.h libpfkutil/d3des_orig.h libpfkutil/dll3.h \
+	libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
 	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/inet_aton.h \
 	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
-	libpfkutil/posix_fe.h libpfkutil/md5.h libpfkutil/prioWorkQ.h \
-	libpfkutil/regex.h libpfkutil/sha1.h libpfkutil/shmempipe.h \
+	libpfkutil/posix_fe.h libpfkutil/prioWorkQ.h \
+	libpfkutil/regex.h libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
 
 DOXYGEN_TARGETS += dll3 shmempipe threadslinger
@@ -216,22 +215,12 @@ endef
 
 $(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
 
-#PROG_TARGETS += sha256_test
-#sha256_test_TARGET = $(OBJDIR)/libpfkutil/sha256test
-#sha256_test_CSRCS = libpfkutil/sha256.c
-#sha256_test_DEFS = -DPOLARSSL_SELF_TEST=1
-
-#PROG_TARGETS += aes256_test
-#aes256_test_TARGET = $(OBJDIR)/libpfkutil/aes256test
-#aes256_test_CSRCS = libpfkutil/aes.c
-#aes256_test_DEFS = -DPOLARSSL_SELF_TEST=1
-
 ##############################################
 
 ifeq ($(PFK_BUILD_libpfkfb),1)
 LIB_TARGETS += libpfkfb
 libpfkfb_TARGET = $(OBJDIR)/libpfkfb.a
-libpfkfb_INCS = -Ilibpfkutil -Ilibpfkdll2
+libpfkfb_INCS = -Ilibpfkutil -Ilibpfkdll2 $(MBEDTLS_INCS)
 libpfkfb_CXXSRCS = \
 	libpfkfb/BlockCache.cc libpfkfb/Btree.cc libpfkfb/BtreeNode.cc \
 	libpfkfb/FileBlockLocal.cc libpfkfb/FileBlockLocalAllocFree.cc \
@@ -260,19 +249,19 @@ libpfkfb_DOXYFILE = libpfkfb/Doxyfile
 
 PROG_TARGETS += fb_testBtree
 fb_testBtree_TARGET = $(OBJDIR)/libpfkfb-testBtree
-fb_testBtree_INCS = $(libpfkfb_INCS)
+fb_testBtree_INCS = $(libpfkfb_INCS) $(MBEDTLS_INCS)
 fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
 fb_testBtree_DEPLIBS = \
 	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
-fb_testBtree_LIBS += -lpthread
+fb_testBtree_LIBS += -lpthread $(MBEDTLS_LIBS)
 
 PROG_TARGETS += fb_testFileBlock
 fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb-testFileBlock
-fb_testFileBlock_INCS = $(libpfkfb_INCS)
+fb_testFileBlock_INCS = $(libpfkfb_INCS) $(MBEDTLS_INCS)
 fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
 fb_testFileBlock_DEPLIBS = \
 	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
-fb_testFileBlock_LIBS += -lpthread
+fb_testFileBlock_LIBS += -lpthread $(MBEDTLS_LIBS)
 endif
 
 ##############################################
@@ -283,7 +272,7 @@ $(error PFK_BUILD_libpfkfb is required for PFK_BUILD_pfkbak)
 endif
 LIB_TARGETS += libpfkbak
 libpfkbak_TARGET = $(OBJDIR)/libpfkbak.a
-libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb
+libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb $(MBEDTLS_INCS)
 libpfkbak_CXXSRCS = \
 	backup/bakfile.cc backup/create.cc backup/deletevers.cc \
 	backup/export.cc backup/extract.cc backup/list.cc \
@@ -522,7 +511,7 @@ endif
 ifeq ($(PFK_BUILD_libwas),1)
 LIB_TARGETS += libWebAppServer
 libWebAppServer_TARGET = $(OBJDIR)/libWebAppServer.a
-libWebAppServer_INCS = -Ilibpfkutil
+libWebAppServer_INCS = -Ilibpfkutil $(MBEDTLS_INCS)
 libWebAppServer_CXXSRCS = \
 	libWebAppServer/WebAppConnection.cc \
 	libWebAppServer/WebAppServer.cc \
@@ -554,9 +543,9 @@ LIBWAS_TEST_TARGETS= \
 define BUILD_LIBWAS_TEST_TARGET
 PROG_TARGETS += libwas_$(t)
 libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer-$(t)
-libwas_$(t)_INCS = $(libWebAppServer_INCS)
+libwas_$(t)_INCS = $(libWebAppServer_INCS) $(MBEDTLS_INCS)
 libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
-libwas_$(t)_LIBS += -lpthread
+libwas_$(t)_LIBS += -lpthread $(MBEDTLS_LIBS)
 libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 
 endef
@@ -583,7 +572,7 @@ wsProxyClient_TARGET = $(OBJDIR)/wsProxyClient
 wsProxyClient_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
 	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
-	$(PROTOBUF_INC)
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
 wsProxyClient_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyClientConn.cc \
 	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.cc \
@@ -591,20 +580,20 @@ wsProxyClient_CXXSRCS = \
 wsProxyClient_HDRS = \
 	libWebAppServer/proxyTcpServer/proxyClientConn.h \
 	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.h
-wsProxyClient_LIBS = $(PROTOBUF_LIB) -lpthread
+wsProxyClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 wsProxyClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
 wsProxyClient_INSTALL = 1
 
 wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
 wsProxyServer_INCS = \
 	-IlibWebAppServer -Ilibpfkutil \
-	$(PROTOBUF_INC)
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
 wsProxyServer_CXXSRCS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
 	libWebAppServer/proxyTcpServer/proxyServerMain.cc
 wsProxyServer_HDRS = \
 	libWebAppServer/proxyTcpServer/proxyServerConn.h
-wsProxyServer_LIBS = $(PROTOBUF_LIB) -lpthread
+wsProxyServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
 wsProxyServer_INSTALL = 1
 endif
@@ -779,7 +768,8 @@ PFKUTILS_COMMIT = $(shell git rev-parse HEAD)
 
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
-pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main -Ilibpfkfb -Ilibpfkdll2
+pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
+	-Ilibpfkfb -Ilibpfkdll2 $(MBEDTLS_INCS)
 pfkutils_CSRCS = \
 	main/crnl.c main/random-hex.c main/fmtsdiff.c \
 	main/genpw.c main/xtermbar.c main/waitpid.c 

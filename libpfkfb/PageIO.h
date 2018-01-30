@@ -39,8 +39,9 @@ For more information, please refer to <http://unlicense.org>
 #include <string>
 
 #include "dll3.h"
-#include "aes.h"
-#include "sha256.h"
+#include "mbedtls/aes.h"
+#include "mbedtls/sha256.h"
+#include "mbedtls/md.h"
 
 class PageCachePage;
 
@@ -57,9 +58,9 @@ class PageIO {
     //    the 16 byte IV is the XOR of the two 16 byte halves of the
     //       sha256 hash of password plus page_number.
     std::string encryption_password;
-    aes_context  aesenc_ctx;
-    aes_context  aesdec_ctx;
-    sha256_context hmac_sha256_ctx;
+    mbedtls_aes_context  aesenc_ctx;
+    mbedtls_aes_context  aesdec_ctx;
+    mbedtls_md_context_t hmac_md_ctx;
 public:
     // some OS's define a macro called PAGE_SIZE, and that would conflict
     // so this has to be unique.

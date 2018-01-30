@@ -29,7 +29,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "bakfile.h"
 #include "database_items.h"
-#include "sha256.h"
+#include "mbedtls/sha256.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -54,12 +54,38 @@ bakFile::update(void)
     _update();
 }
 
+static bool
+sha256_file(const string &path, string &hash)
+{
+    int cc, fd = open(path.c_str(), O_RDONLY);
+    if ( fd < 0 )
+        return false;
+
+    mbedtls_sha256_context  ctx;
+    string buffer;
+    mbedtls_sha256_init( &ctx );
+    mbedtls_sha256_starts( &ctx, /*is224*/ 0 );
+
+    buffer.resize(16384);
+    while (1)
+    {
+        cc = read(fd, (void*) buffer.c_str(), 16384);
+        if (cc <= 0)
+            break;
+        mbedtls_sha256_update( &ctx, (unsigned char *)buffer.c_str(), cc );
+    }
+
+    hash.resize(32);
+    mbedtls_sha256_finish( &ctx, (unsigned char *) hash.c_str());
+    mbedtls_sha256_free( &ctx );
+    close(fd);
+    return true;
+}
+
 bool
 bakFile::calc_file_hash(string &hash, const string &path)
 {
-    hash.resize(32);
-    unsigned char * hash_buffer = (unsigned char *) hash.c_str();
-    if (sha256_file(path.c_str(), hash_buffer, /*is224*/0) != 0)
+    if (sha256_file(path, hash) == false)
     {
         cerr << "unable to sha256 file: " << path << endl;
         hash.resize(0);

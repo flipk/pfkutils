@@ -28,7 +28,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
-#include "sha1.h"
+#include "mbedtls/sha1.h"
 #include "base64.h"
 //#include "md5.h"  // if i ever fix hixie-76
 
@@ -253,15 +253,12 @@ WebSocketConnection :: send_handshake_response(void)
     ostringstream tempbuf;
     tempbuf << key << websocket_guid;
 
-    SHA1Context  ctx;
+#define SHA1HashSize 20
     uint8_t digest[SHA1HashSize];
     uint8_t digest_b64[128];
 
-    SHA1Reset( &ctx );
-    SHA1Input( &ctx,
-               (const uint8_t*) tempbuf.str().c_str(),
-               tempbuf.str().size() );
-    SHA1Result( &ctx, digest );
+    mbedtls_sha1( (const unsigned char *) tempbuf.str().c_str(),
+                  tempbuf.str().size(), digest );
 
     memset(digest_b64,  0, sizeof(digest_b64));
     int i, o;

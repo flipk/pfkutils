@@ -36,7 +36,7 @@ For more information, please refer to <http://unlicense.org>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <iostream>
-#include "sha1.h"
+#include "mbedtls/sha1.h"
 #include "base64.h"
 
 #define VERBOSE 0
@@ -339,14 +339,12 @@ WebSocketClient :: generateWsHeaders(ostringstream &hdrs)
 
     secWebsocketKey += websocket_guid;
 
-    SHA1Context  ctx;
+#define SHA1HashSize 20
     uint8_t digest[SHA1HashSize];
 
-    SHA1Reset( &ctx );
-    SHA1Input( &ctx,
-               (const uint8_t*) secWebsocketKey.c_str(),
-               secWebsocketKey.size() );
-    SHA1Result( &ctx, digest );
+    mbedtls_sha1( (const unsigned char *) secWebsocketKey.c_str(),
+                  secWebsocketKey.size(),
+                  digest );
 
     uint8_t digest_b64[128];
 

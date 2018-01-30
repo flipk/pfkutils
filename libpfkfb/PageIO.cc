@@ -296,17 +296,19 @@ PageIO :: PageIO(const std::string &_encryption_password)
     {
         ciphering_enabled = true;
         // init cipher shit
-        aes_init( &aesenc_ctx );
-        aes_init( &aesdec_ctx );
+        mbedtls_aes_init( &aesenc_ctx );
+        mbedtls_aes_init( &aesdec_ctx );
         unsigned char file_key[32];
-        sha256( (const unsigned char *) encryption_password.c_str(),
+        mbedtls_sha256( (const unsigned char *) encryption_password.c_str(),
                 encryption_password.length(),
                 file_key, 0/*use SHA256*/);
-        aes_setkey_enc( &aesenc_ctx, file_key, 256 );
-        aes_setkey_dec( &aesdec_ctx, file_key, 256 );
-        sha256_init( &hmac_sha256_ctx );
-        sha256_hmac_starts( &hmac_sha256_ctx,
-                            file_key, 32, /*is224*/0 );
+        mbedtls_aes_setkey_enc( &aesenc_ctx, file_key, 256 );
+        mbedtls_aes_setkey_dec( &aesdec_ctx, file_key, 256 );
+        mbedtls_md_init( &hmac_md_ctx );
+        mbedtls_md_setup( &hmac_md_ctx,
+                          mbedtls_md_info_from_type( MBEDTLS_MD_SHA256 ),
+                          /*use hmac*/ 1);
+        mbedtls_md_hmac_starts( &hmac_md_ctx, file_key, 32 );
     }
     else
         ciphering_enabled = false;
@@ -316,9 +318,9 @@ PageIO :: ~PageIO(void)
 {
     if (ciphering_enabled)
     {
-        aes_free( &aesenc_ctx );
-        aes_free( &aesdec_ctx );
-        sha256_free( &hmac_sha256_ctx );
+        mbedtls_aes_free( &aesenc_ctx );
+        mbedtls_aes_free( &aesdec_ctx );
+        mbedtls_md_free( &hmac_md_ctx );
     }
 }
 
@@ -328,8 +330,9 @@ make_iv(unsigned char IV_plus_sha256[32],
 {
     std::ostringstream  ostr;
     ostr << pass << ":" << page;
-    sha256( (const unsigned char*) ostr.str().c_str(), ostr.str().length(),
-            IV_plus_sha256, 0/*use SHA256*/);
+    mbedtls_sha256( (const unsigned char*) ostr.str().c_str(),
+                    ostr.str().length(),
+                    IV_plus_sha256, 0/*use SHA256*/);
     for (int ind = 0; ind < 16; ind++)
         IV_plus_sha256[ind] ^= IV_plus_sha256[ind+16];
 }
@@ -339,11 +342,11 @@ PageIO :: encrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
 {
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
-    aes_crypt_cbc( &aesenc_ctx, AES_ENCRYPT,
+    mbedtls_aes_crypt_cbc( &aesenc_ctx, MBEDTLS_AES_ENCRYPT,
                    PCP_PAGE_SIZE, IV, in, out);
-    sha256_hmac_reset( &hmac_sha256_ctx );
-    sha256_hmac_update( &hmac_sha256_ctx, out, PCP_PAGE_SIZE);
-    sha256_hmac_finish( &hmac_sha256_ctx, out + PCP_PAGE_SIZE );
+    mbedtls_md_hmac_reset( &hmac_md_ctx );
+    mbedtls_md_hmac_update( &hmac_md_ctx, out, PCP_PAGE_SIZE);
+    mbedtls_md_hmac_finish( &hmac_md_ctx, out + PCP_PAGE_SIZE );
 }
 
 void
@@ -352,14 +355,14 @@ PageIO :: decrypt_page(uint64_t page_number, uint8_t * out, const uint8_t * in)
     unsigned char IV[32];
     make_iv(IV, encryption_password, page_number);
     uint8_t  hmac_buf[32];
-    sha256_hmac_reset( &hmac_sha256_ctx );
-    sha256_hmac_update( &hmac_sha256_ctx, in, PCP_PAGE_SIZE);
-    sha256_hmac_finish( &hmac_sha256_ctx, hmac_buf );
+    mbedtls_md_hmac_reset( &hmac_md_ctx );
+    mbedtls_md_hmac_update( &hmac_md_ctx, in, PCP_PAGE_SIZE);
+    mbedtls_md_hmac_finish( &hmac_md_ctx, hmac_buf );
 
     if (memcmp(hmac_buf, in + PCP_PAGE_SIZE, 32) != 0)
     {
         printf("PageIO :: decrypt_page : HMAC FAILURE!\n");
     }
-    aes_crypt_cbc( &aesdec_ctx, AES_DECRYPT,
+    mbedtls_aes_crypt_cbc( &aesdec_ctx, MBEDTLS_AES_DECRYPT,
                    PCP_PAGE_SIZE, IV, in, out);
 }

@@ -50,7 +50,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "Btree.h"
 #include "posix_fe.h"
-#include "sha1.h"
+#include "mbedtls/sha1.h"
 
 #define TSDB_FILENAME ".tsdb"
 
@@ -171,6 +171,7 @@ private:
         tskey key;
         tsdata data;
     };
+#define SHA1HashSize 20 // no define in mbedtls!
     struct Sha1Hash {
         static const int size = SHA1HashSize;
         unsigned char hash[size];
@@ -288,8 +289,9 @@ private:
     static void calc_sha1_hash(const string &fname, string &hash) {
         uint8_t buffer[65536];
         int  len, fd;
-        SHA1Context  ctx;
-        SHA1Reset(&ctx);
+        mbedtls_sha1_context ctx;
+        mbedtls_sha1_init( &ctx );
+        mbedtls_sha1_starts( &ctx );
         fd = ::open(fname.c_str(), O_RDONLY);
         if (fd < 0)
             goto out;
@@ -298,12 +300,13 @@ private:
             len = read(fd, buffer, sizeof(buffer));
             if (len <= 0)
                 break;
-            SHA1Input(&ctx, buffer, len);
+            mbedtls_sha1_update(&ctx, buffer, len);
         }
         close(fd);
     out:
         hash.resize(SHA1HashSize);
-        SHA1Result(&ctx, (uint8_t*) hash.c_str());
+        mbedtls_sha1_finish(&ctx, (uint8_t*) hash.c_str());
+        mbedtls_sha1_free( &ctx );
     }
     static std::string format_hash(const std::string &str) {
         char buf[SHA1HashSize*2+1];
