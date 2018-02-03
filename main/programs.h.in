@@ -39,6 +39,7 @@ PROG(0,pfkscript,"my script replacement that does more stuff")
 
 #if @PFK_BUILD_pfktop@
 PROG(0,pfktop,"my top replacement")
+PROG(0,pfkrenice,"my renice replacement")
 #endif
 
 #if @PFK_BUILD_sessionmgr@
