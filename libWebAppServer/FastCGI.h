@@ -164,7 +164,7 @@ struct FastCGIParams {
     //    SERVER_ADDR
     //    SERVER_PORT
     //    SERVER_NAME (i.e. localhost from nginx.conf)
-    //    HTTP_HOST (www.phillipknaack.com, from browser)
+    //    HTTP_HOST (www.testserver.com, from browser)
     //    HTTP_USER_AGENT (i.e. mozilla)
     // 
     //    you have to parse the name=value&name=value stuff yourself

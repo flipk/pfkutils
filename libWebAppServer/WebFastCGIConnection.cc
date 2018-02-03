@@ -823,8 +823,9 @@ WebAppServerFastCGIConfigRecord :: WebAppServerFastCGIConfigRecord(
     int _port,
     const std::string _route,
     WebAppConnectionCallback *_cb,
-    int _pollInterval )
-    : WebAppServerConfigRecord(_type,_port,_route,_cb,_pollInterval)
+    int _pollInterval,
+    int _msgTimeout )
+    : WebAppServerConfigRecord(_type,_port,_route,_cb,_pollInterval, _msgTimeout)
 {
     if (pollInterval > 0)
     {

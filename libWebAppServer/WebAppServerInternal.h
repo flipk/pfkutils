@@ -47,13 +47,27 @@ struct WebAppServerConfigRecord {
     std::string route;
     WebAppConnectionCallback *cb;
     int pollInterval;
+    int msgTimeout;
+    std::string ipaddr;
     WebAppServerConfigRecord(WebAppType _type, 
                              int _port,
                              const std::string _route,
                              WebAppConnectionCallback *_cb,
-                             int _pollInterval)
+                             int _pollInterval,
+                             int _msgTimeout)
         : type(_type), port(_port), route(_route), cb(_cb),
-          pollInterval(_pollInterval) { };
+          pollInterval(_pollInterval),
+          msgTimeout(_msgTimeout), ipaddr("") { };
+    WebAppServerConfigRecord(WebAppType _type,
+                             int _port,
+                             const std::string _route,
+                             WebAppConnectionCallback *_cb,
+                             const std::string _ipaddr,
+                             int _pollInterval,
+                             int _msgTimeout)
+        : type(_type), port(_port), route(_route), cb(_cb),
+          pollInterval(_pollInterval),
+          msgTimeout(_msgTimeout), ipaddr(_ipaddr) { };
     virtual ~WebAppServerConfigRecord(void) { }
 };
 std::ostream &operator<<(std::ostream &ostr,
@@ -65,7 +79,8 @@ struct WebAppServerFastCGIConfigRecord : public WebAppServerConfigRecord,
                                     int _port,
                                     const std::string _route,
                                     WebAppConnectionCallback *_cb,
-                                    int _pollInterval);
+                                    int _pollInterval,
+                                    int _msgTimeout);
     /*virtual*/ ~WebAppServerFastCGIConfigRecord(void);
     // ConnList key : visitorId cookie
     typedef std::map<std::string,WebAppConnection*> ConnList_t;
@@ -125,7 +140,7 @@ inline WebAppConnectionDataFastCGI * WebAppConnectionData::fcgi(void)
 
 class WebServerConnectionBase : public fdThreadLauncher {
 public:
-    static const int MAX_READBUF = 65536;
+    static const int MAX_READBUF = 65536 + 0x1000; // 65K
     friend class serverPort;
 protected:
     int tempFd;

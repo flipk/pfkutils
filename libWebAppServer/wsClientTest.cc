@@ -44,6 +44,8 @@ For more information, please refer to <http://unlicense.org>
 
 using namespace std;
 
+bool connected = false;
+
 class myClient : public WebAppClient::WebSocketClient
 {
 public:
@@ -57,10 +59,12 @@ public:
     /*virtual*/ void onConnect(void)
     {
         cout << "onConnect called!" << endl;
+        connected = true;
     }
     /*virtual*/ void onDisconnect(void)
     {
         cout << "onDisconnect called!" << endl;
+        connected = false;
     }
     /*virtual*/ bool onMessage(const WebAppServer::WebAppMessage &m)
     {
@@ -79,17 +83,26 @@ main()
     myClient   wsClient(MY_URL);
 #endif
 
+    wsClient.startClient();
+
     while (1)
     {
         sleep(1);
         if (wsClient.checkFinished())
             break;
-        ostringstream  ostr;
-        ostr << random();
-        cout << "sending " << ostr.str() << endl;
-        wsClient.sendMessage(
-            WebAppServer::WebAppMessage(
-                WebAppServer::WS_TYPE_BINARY, ostr.str()));
+        if (connected)
+        {
+            ostringstream  ostr;
+            ostr << random();
+            cout << "sending " << ostr.str() << endl;
+            wsClient.sendMessage(
+                WebAppServer::WebAppMessage(
+                    WebAppServer::WS_TYPE_BINARY, ostr.str()));
+        }
+        else
+        {
+            cout << "not yet connected, waiting\n";
+        }
     }
 
     return 0;

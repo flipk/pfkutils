@@ -124,7 +124,7 @@ class WebAppServerConfig {
 public:
     WebAppServerConfig(void);
     ~WebAppServerConfig(void);
-    /** add a websocket application.  
+    /** add a websocket application bound to IP address INADDR_ANY.
      * \param port the TCP port to listen for websocket connections. 
      *         this may be connected directly by a browser, or via 
      *         a proxy connection from the web server process.
@@ -140,6 +140,9 @@ public:
      *       the user's WebAppConnection::doPoll method.  a value of -1
      *       means do not call doPoll at all.  this is the default value
      *       if this parameter is not specified.
+     * \param msgTimeout  a number of seconds for the read/write methods
+     *       on the socket to attempt to read/write before failing.
+     *       Default is 30seconds, 0 means infinite wait (socket default)
      * \note the same TCP port cannot host both websocket and fastcgi 
      *       connections. once a port has been specified as websocket,
      *       then all future services added with that port must also be
@@ -151,7 +154,46 @@ public:
      */
     void addWebsocket(int port, const std::string route,
                       WebAppConnectionCallback *cb,
-                      int pollInterval = -1);
+                      int pollInterval = -1,
+                      int msgTimeout = 0);
+
+    /** add a websocket application bound to a specific IP address.
+     * \param port the TCP port to listen for websocket connections.
+     *         this may be connected directly by a browser, or via
+     *         a proxy connection from the web server process.
+     * \param route the URI path to this application, e.g.
+     *        "/websocket/MYPROGRAM".  multiple websocket applications
+     *        may be registered on the same TCP port as long as they
+     *        have different routes.  this translates into a URL such
+     *        as  "ws://ip_or_host:port/websocket/MYPROGRAM".
+     * \param cb  a pointer to a user's WebAppConnectionCallback -derived
+     *       object, which will be used to construct new user
+     *       WebAppConnection -derived objects on new connections.
+     * \param ipaddr  A numbers and dots representation of the IP address
+     *       of the interface to bind to. Putting in an empty string will
+     *       bind to INADDR_ANY.
+     * \param pollInterval  a number of milliseconds between calls to
+     *       the user's WebAppConnection::doPoll method.  a value of -1
+     *       means do not call doPoll at all.  this is the default value
+     *       if this parameter is not specified.
+     * \param msgTimeout  a number of seconds for the read/write methods
+     *       on the socket to attempt to read/write before failing.
+     *       Default is 30seconds, 0 means infinite wait (socket default)
+     * \note the same TCP port cannot host both websocket and fastcgi
+     *       connections. once a port has been specified as websocket,
+     *       then all future services added with that port must also be
+     *       websocket.
+     * \note this service does not support "wss://" protocol (SSL). if
+     *       you wish to use SSL, you will need to proxy to this service
+     *       using a web browser that supports secure websocket proxying
+     *       (such as NGINX).
+     */
+    void addWebsocket(int port, const std::string route,
+                      WebAppConnectionCallback *cb,
+                      const std::string ipaddr,
+                      int pollInterval = -1,
+                      int msgTimeout = 0);
+
     /** add a FastCGI application.
      * \param port the TCP port to listen for AJAX-style connections. 
      *         this is ONLY supported using a web server proxy which
@@ -168,6 +210,9 @@ public:
      *       the user's WebAppConnection::doPoll method.  a value of -1
      *       means do not call doPoll at all.  this is the default value
      *       if this parameter is not specified.
+     * \param msgTimeout  a number of seconds for the read/write methods
+     *       on the socket to attempt to read/write before failing.
+     *       Default is 30seconds, 0 means infinite wait (socket default)
      * \note the same TCP port cannot host both websocket and FastCGI 
      *       connections. once a port has been specified as FastCGI,
      *       then all future services added with that port must also be
@@ -179,7 +224,9 @@ public:
      */
     void addFastCGI(int port, const std::string route,
                     WebAppConnectionCallback *cb,
-                    int pollInterval = -1);
+                    int pollInterval = -1,
+                    int msgTimeout = 0);
+
     std::list<WebAppServerConfigRecord*>::const_iterator getBeginC(void) const {
         return records.begin();
     }
@@ -676,7 +723,7 @@ var wsurl = "wss://host:port/websocket/test";
 var cgiurl = "http://host:port/cgi/test.cgi";
 
 var socket = new WebAppClient(wsurl, cgiurl,
-			      PFK.TestMsgs.Response_m,
+			      MYAPP.TestMsgs.Response_m,
 			      myMsgHandler, myOpenHandler, myCloseHandler);
 
 function myOpenHandler() {
@@ -690,7 +737,7 @@ function myCloseHandler() {
 function myMsgHandler(responseMsg) {
     console.log("decoded reponse: ", responseMsg);
     if (responseMsg.type ==
-	PFK.TestMsgs.ResponseType.RESPONSE_ADD)
+	MYAPP.TestMsgs.ResponseType.RESPONSE_ADD)
     {
 	var str = "the sum is " + responseMsg.add.sum + "<br>";
 	testDiv.innerHTML += str;
@@ -698,9 +745,9 @@ function myMsgHandler(responseMsg) {
 }
 
 $("#do_add").click( function() {
-    var cmdMsg = new PFK.TestMsgs.Command_m;
-    cmdMsg.type = PFK.TestMsgs.CommandType.COMMAND_ADD;
-    cmdMsg.add = new PFK.TestMsgs.CommandAdd_m;
+    var cmdMsg = new MYAPP.TestMsgs.Command_m;
+    cmdMsg.type = MYAPP.TestMsgs.CommandType.COMMAND_ADD;
+    cmdMsg.add = new MYAPP.TestMsgs.CommandAdd_m;
     cmdMsg.add.a = parseInt($("#value_a").val());
     cmdMsg.add.b = parseInt($("#value_b").val());
     socket.send(cmdMsg);

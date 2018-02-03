@@ -56,23 +56,39 @@ WebAppServerConfig::clear(void)
 void
 WebAppServerConfig::addWebsocket(int port, const std::string route,
                                  WebAppConnectionCallback *cb,
-                                 int pollInterval /* = -1 */)
+                                 int pollInterval /* = -1 */,
+                                 int msgTimeout /* = 0 */)
 {
     records.push_back(
         new WebAppServerConfigRecord(
             APP_TYPE_WEBSOCKET,
-            port, route, cb, pollInterval));
+            port, route, cb, pollInterval, msgTimeout));
 }
+
+void
+WebAppServerConfig::addWebsocket(int port, const std::string route,
+                                 WebAppConnectionCallback *cb,
+                                 const std::string ipaddr,
+                                 int pollInterval /* = -1 */,
+                                 int msgTimeout /* = 0 */)
+{
+    records.push_back(
+        new WebAppServerConfigRecord(
+            APP_TYPE_WEBSOCKET,
+            port, route, cb, ipaddr, pollInterval, msgTimeout));
+}
+
 
 void
 WebAppServerConfig::addFastCGI(int port, const string route,
                                WebAppConnectionCallback *cb,
-                               int pollInterval /* = -1 */)
+                               int pollInterval /* = -1 */,
+                               int msgTimeout /* = 0 */)
 {
     records.push_back(
         new WebAppServerFastCGIConfigRecord(
             APP_TYPE_FASTCGI,
-            port, route, cb, pollInterval));
+            port, route, cb, pollInterval, msgTimeout));
 }
 
 } // namespace WebAppServer

@@ -47,11 +47,12 @@ class serverPort : public fdThreadLauncher {
 public:
     WebAppType type;
     int port;
+    std::string ipaddr;
     typedef std::list<WebAppServerConfigRecord*> ConfigRecList_t;
     typedef std::list<WebAppServerConfigRecord*>::iterator ConfigRecListIter_t;
     typedef std::list<WebAppServerConfigRecord*>::const_iterator ConfigRecListIterC_t;
     ConfigRecList_t configs;
-    serverPort(int _port, WebAppType _type);
+    serverPort(int _port, std::string _ipaddr, WebAppType _type);
     ~serverPort(void);
     void addConfigRec(WebAppServerConfigRecord *nr);
     void startThread(void);

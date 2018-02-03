@@ -64,7 +64,7 @@ class WebSocketClient : fdThreadLauncher,
                         public WaitUtil::Lockable
 {
     bool finished;
-    static const int MAX_READBUF = 65536;
+    static const int MAX_READBUF = 65536 + 0x1000; // 65K
     WebAppServer::CircularReader  readbuf;
     bool handle_data(void);
     enum {

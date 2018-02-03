@@ -70,16 +70,20 @@ fdThreadLauncher :: startFdThread(int _fd, int _pollInterval)
              << "pthread_create failed, error = "
              << strerror(cc) << endl;
         state = DEAD;
+        // must close the fd now
+        // because nothing else is going to.
+        close(fd);
     }
     else
     {
         char dummy;
         // wait for thread to start up
-        if (read(startSyncFds[0], &dummy, 1) < 0)
-            cerr << "startFdThread read failed\n";
-        close(startSyncFds[0]);
-        close(startSyncFds[1]);
+        if (::read(startSyncFds[0], &dummy, 1) < 0)
+            cerr << "fdThreadLauncher :: startFdThread: read failed\n";
     }
+    // close these regardless of success or fail
+    close(startSyncFds[0]);
+    close(startSyncFds[1]);
 }
 
 fdThreadLauncher :: ~fdThreadLauncher(void)
@@ -100,24 +104,56 @@ fdThreadLauncher :: setPollInterval(int _pollInterval)
 }
 
 void
+fdThreadLauncher :: setSocketOpts(int _fd, int _msgTimeout)
+{
+    if (_fd > 2 && _msgTimeout > 0)
+    {
+        struct timeval t;
+        t.tv_sec = _msgTimeout;
+        t.tv_usec = 0;
+
+        if (setsockopt(_fd, SOL_SOCKET, SO_SNDTIMEO,
+                       (void*) &t, sizeof(t)) < 0)
+        {
+            fprintf(stderr, "setsockopt : %s\n", strerror(errno));
+        }
+
+        if (setsockopt(_fd, SOL_SOCKET, SO_RCVTIMEO,
+                       (void*) &t, sizeof(t)) < 0)
+        {
+            fprintf(stderr, "setsockopt : %s\n", strerror(errno));
+        }
+    }
+}
+
+void
 fdThreadLauncher :: stopFdThread(void)
 {
-    void * dummy;
-    char c;
+    void * dummy = NULL;
+    char c = CMD_CLOSE;
     switch (state)
     {
     case INIT:     // not started
     case DEAD:     // already dead
-    case STARTING: // race? two threads calling start or stop?
-    case STOPPING: // two threads calling stop in parallel?
         // nothing to do
         break;
+    case STARTING:
+        // this would only be observed in a race
+        // with startFdThread and _threadEntry actually
+        // starting. in this state there's not much we
+        // can do.
+        break;
+    case STOPPING:
+        // not possible unless two threads are calling
+        // stopFdThread in parallel! bad user!
+        break;
     case RUNNING:
+        // tell the thread to stop and wait for it to die
         state = STOPPING;
         c = CMD_CLOSE;
         if (::write(cmdFds[1], &c, 1) < 0)
             cerr << "fdThreadLauncher :: stopFdTHread: write failed\n";
-        // FALLTHRU INTENTIONAL
+        // FALLTHRU intentional
     case DEAD_NEED_JOIN:
         dummy = NULL;
         pthread_join(threadId, &dummy);
@@ -254,6 +290,13 @@ fdThreadLauncher :: acceptConnection(void)
 int
 fdThreadLauncher :: makeListeningSocket(int port)
 {
+    return makeListeningSocket(INADDR_ANY, port);
+}
+
+// static
+int
+fdThreadLauncher :: makeListeningSocket(uint32_t ip, int port)
+{
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
     {
@@ -266,7 +309,7 @@ fdThreadLauncher :: makeListeningSocket(int port)
     struct sockaddr_in sa;
     sa.sin_family = AF_INET;
     sa.sin_port = htons((short)port);
-    sa.sin_addr.s_addr = htonl(INADDR_ANY);
+    sa.sin_addr.s_addr = htonl(ip);
     if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
     {
         fprintf(stderr, "bind : %s\n", strerror(errno));

@@ -30,6 +30,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <stdlib.h>
 #include <errno.h>
+#include <arpa/inet.h>
 
 using namespace std;
 
@@ -57,7 +58,7 @@ serverPorts::addConfigRec(WebAppServerConfigRecord *nr)
     pit = portMap.find(nr->port);
     if (pit == portMap.end())
     {
-        pc = new serverPort(nr->port, nr->type);
+        pc = new serverPort(nr->port, nr->ipaddr, nr->type);
         portMap[nr->port] = pc;
     }
     else
@@ -73,10 +74,11 @@ serverPorts::addConfigRec(WebAppServerConfigRecord *nr)
     pc->addConfigRec(nr);
 }
 
-serverPort::serverPort(int _port, WebAppType _type)
+serverPort::serverPort(int _port, std::string _ipaddr, WebAppType _type)
 {
     port = _port;
     type = _type;
+    ipaddr = _ipaddr;
 }
 
 serverPort::~serverPort(void)
@@ -98,6 +100,7 @@ serverPort::addConfigRec(WebAppServerConfigRecord *nr)
 
 void serverPort::startThread(void)
 {
+    uint32_t ip;
     cout << "configs on port " << port << ":" << endl;
 
     serverPort::ConfigRecListIter_t it;
@@ -107,7 +110,19 @@ void serverPort::startThread(void)
         cout << "   " << *cr << endl;
     }
 
-    startFdThread(makeListeningSocket(port), 1000);
+    if(0 >= inet_pton(AF_INET, ipaddr.c_str(), &ip))
+    {
+       // fail, just bind to everything
+       ip = INADDR_ANY;
+    }
+    else
+    {
+       // inet_pton does the endian swap for you, and makeListeningSocket
+       // wants it in host form, so let's just put it back for now.
+       ip = ntohl(ip);
+    }
+
+    startFdThread(makeListeningSocket(ip, port), 1000);
 }
 
 void
@@ -142,6 +157,16 @@ serverPort :: handleReadSelect(int fd)
         return true;
     }
     //else
+
+    // Set socket options on the new connection
+    serverPort::ConfigRecListIter_t it;
+    for (it = configs.begin(); it != configs.end(); it++)
+    {
+        if (port == (*it)->port)
+        {
+            setSocketOpts(clientFd, (*it)->msgTimeout);
+        }
+    }
 
     if (type == APP_TYPE_WEBSOCKET)
     {

@@ -44,7 +44,6 @@ public:
         INIT, STARTING, RUNNING, STOPPING, DEAD_NEED_JOIN, DEAD
     } state;
 private:
-    bool threadRunning;
     pthread_t threadId;
     enum { CMD_CLOSE, CMD_CHANGEPOLL };
     int startSyncFds[2];
@@ -131,6 +130,13 @@ protected:
      */
     virtual void done(void) = 0;
 
+    /** this method is called after a connection has been accepted to
+     * set any optional socket options on the new connection.
+     * \note should only be called after the initial accept and before
+     * server is started.  That is why it is protected and not public.
+     */
+    void setSocketOpts(int _fd, int _msgTimeout);
+
 public:
 
     /** constructor initializes internal state. */
@@ -180,7 +186,7 @@ public:
      *    accept(2)). */
     int acceptConnection(void);
 
-    /** a helper function to make a listening tcp socket.
+    /** a helper function to make a listening tcp socket bound to INADDR_ANY.
      * \note this is a static method that does not depend on
      *    any data in this class.
      * \param port the tcp port number to listen on.
@@ -188,6 +194,17 @@ public:
      *     returns -1, errno is set to any of the possible error codes
      *     for socket(2) or bind(2). */
     static int makeListeningSocket(int port);
+
+    /** a helper function to make a listening tcp socket bound to a specific IP.
+     * \note this is a static method that does not depend on
+     *    any data in this class.
+     * \param ip  the ip address in native byte order form, i.e.
+     *    address 192.168.1.1 would be 0xC0A80101.
+     * \param port the tcp port number to listen on.
+     * \return a descriptor, or -1 if there was a failure. if this
+     *     returns -1, errno is set to any of the possible error codes
+     *     for socket(2) or bind(2). */
+    static int makeListeningSocket(uint32_t ip, int port);
 
     /** a helper function for trying to connect to a listening tcp port.
      * \note this is a static method that does not depend on
