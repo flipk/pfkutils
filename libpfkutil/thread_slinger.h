@@ -109,7 +109,7 @@ protected:
     ~_thread_slinger_queue(void);
     void _enqueue(thread_slinger_message *);
     thread_slinger_message * _dequeue(int uSecs);
-    int _get_count(void) { return count; }
+    int _get_count(void) const { return count; }
     static thread_slinger_message * _dequeue(
         _thread_slinger_queue ** queues,
         int num_queues, int uSecs,
@@ -135,7 +135,7 @@ public:
      * \return NULL if timeout, or a message pointer */
     T * dequeue(int uSecs=0);
     /** find out how many messages are currently queued */
-    int get_count(void);
+    int get_count(void) const;
     /** dequeue from a set of queues in priority order.
      * \param queues  the list of queues to check, the priority is
      *      specified by the order in this list (first queue in this
@@ -152,6 +152,7 @@ public:
                        int num_queues,
                        int uSecs, int *which_queue=NULL);
     T * get_head(void) { return (T*) _get_head(); }
+    bool empty(void) const { return _get_count() == 0; }
 };
 
 /** data for a pool, retrieved from thread_slinger_pools::report_pools */
@@ -205,6 +206,9 @@ public:
     void release(T * buf);
     /** fetch number of buffers currently in the pool */
     void getCounts(int &used, int &free, std::string &name);
+    /** return true if no items in pool */
+    bool empty(void) const;
+    int get_count(void) const { return freeCount; }
 };
 
 #include "thread_slinger.tcc"

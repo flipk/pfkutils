@@ -773,6 +773,7 @@ pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
 pfkutils_CSRCS = \
 	main/crnl.c main/random-hex.c main/fmtsdiff.c \
 	main/genpw.c main/xtermbar.c main/waitpid.c 
+pfkutils_CXXSRCS += main/slowlink.cc
 ifeq ($(PFK_BUILD_pfkstat),1)
 pfkutils_CSRCS += main/pfkstat.c
 endif

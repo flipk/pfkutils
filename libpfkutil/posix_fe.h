@@ -883,6 +883,40 @@ struct pxfe_sockaddr_un : public sockaddr_un {
     const sockaddr *operator()() const { return (sockaddr *)this; }
 };
 
+class pxfe_utils {
+public:
+    static bool parse_number( const std::string &s, uint32_t *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    static bool parse_number( const char *s, uint32_t *_val )
+    {
+        char * endptr = NULL;
+        unsigned long val = strtoul(s, &endptr, 0);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = (uint32_t) val;
+            return true;
+        }
+        return false;
+    }
+    static bool parse_number( const std::string &s, int32_t *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    static bool parse_number( const char *s, int32_t *_val )
+    {
+        char * endptr = NULL;
+        long val = strtol(s, &endptr, 0);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = (int32_t) val;
+            return true;
+        }
+        return false;
+    }
+};
+
 class pxfe_iputils {
 public:
     static bool hostname_to_ipaddr( const std::string &host,
@@ -939,6 +973,14 @@ public:
                 portstr);
         // string was not an integer
         return false;
+    }
+    static std::string format_ip(uint32_t ip) {
+        std::ostringstream ostr;
+        ostr << ((ip >> 24) & 0xFF) << "."
+             << ((ip >> 16) & 0xFF) << "."
+             << ((ip >>  8) & 0xFF) << "."
+             << ((ip >>  0) & 0xFF);
+        return ostr.str();
     }
 };
 

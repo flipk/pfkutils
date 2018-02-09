@@ -78,7 +78,7 @@ T * thread_slinger_queue<T>::dequeue(int uSecs /*=0*/)
 }
 
 template <class T>
-int thread_slinger_queue<T>::get_count(void)
+int thread_slinger_queue<T>::get_count(void) const
 {
     return _get_count();
 }
@@ -179,4 +179,10 @@ void thread_slinger_pool<T>::getCounts(int &used, int &free,
     used = usedCount;
     free = freeCount;
     name = msgName;
+}
+
+template <class T>
+bool thread_slinger_pool<T>::empty(void) const
+{
+    return freeCount == 0;
 }
