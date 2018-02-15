@@ -859,8 +859,13 @@ struct pxfe_sockaddr_in : public sockaddr_in {
     void set_addr(uint32_t a) { sin_addr.s_addr = htonl(a); }
     uint16_t get_port(void) const { return ntohs(sin_port); }
     void set_port(uint16_t p) { sin_port = htons(p); }
-    sockaddr *operator()() { return (sockaddr *)this; }
-    const sockaddr *operator()() const { return (sockaddr *)this; }
+    sockaddr *operator()() {
+        return (sockaddr *)static_cast<sockaddr_in*>(this);
+    }
+    const sockaddr *operator()() const {
+        return (const sockaddr *)static_cast<const sockaddr_in*>(this);
+    }
+    socklen_t sasize(void) const { return sizeof(sockaddr_in); }
 };
 
 struct pxfe_sockaddr_un : public sockaddr_un {
@@ -879,8 +884,13 @@ struct pxfe_sockaddr_un : public sockaddr_un {
         _str.resize(len);
         memcpy(_str.vptr(), sun_path, len);
     }
-    sockaddr *operator()() { return (sockaddr *)this; }
-    const sockaddr *operator()() const { return (sockaddr *)this; }
+    sockaddr *operator()() {
+        return (sockaddr *)static_cast<sockaddr_un*>(this);
+    }
+    const sockaddr *operator()() const {
+        return (const sockaddr *)static_cast<const sockaddr_un*>(this);
+    }
+    socklen_t sasize(void) const { return sizeof(sockaddr_un); }
 };
 
 class pxfe_utils {
@@ -1009,12 +1019,9 @@ class pxfe_unix_dgram_socket : public pxfe_fd {
             if (e) e->init(errno, "socket");
             return false;
         }
-        sockaddr_un sa;
-        sa.sun_family = AF_UNIX;
-        int len = sizeof(sa.sun_path)-1;
-        strncpy(sa.sun_path, path.c_str(), len);
-        sa.sun_path[len] = 0;
-        if (::bind(fd, (sockaddr *)&sa, sizeof(sa)) < 0)
+        pxfe_sockaddr_un sa;
+        sa.init(path);
+        if (::bind(fd, sa(), sa.sasize()) < 0)
         {
             if (e) e->init(errno, "bind");
             ::close(fd);
@@ -1149,7 +1156,7 @@ public:
             return true;
         pxfe_sockaddr_in sa;
         sa.init_any(port);
-        if (::bind(fd, sa(), sizeof(sa)) < 0)
+        if (::bind(fd, sa(), sa.sasize()) < 0)
         {
             if (e) e->init(errno, "bind");
             return false;
@@ -1279,7 +1286,7 @@ public:
             int v = 1;
             setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, (void*) &v, sizeof( v ));
         }
-        if (::bind(fd, sa(), sizeof(sa)) < 0) {
+        if (::bind(fd, sa(), sa.sasize()) < 0) {
             if (e) e->init(errno, "bind");
             return false;
         }
