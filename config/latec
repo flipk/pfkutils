@@ -62,7 +62,9 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 
 # why TF doesnt ub14 just DO this by fing default?
-pfkutils_CXXFLAGS += -std=c++1y
+# note, c++1y does not work here because bst uses "typeof".
+# (which is a gnu extension)
+CXXFLAGS += -std=gnu++1y
 
 pfkutils_LIBS += -lrt
 HSM_test_LIBS += -lrt
