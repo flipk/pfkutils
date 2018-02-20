@@ -50,10 +50,13 @@ For more information, please refer to <http://unlicense.org>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <vector>
+#include <algorithm>
 
 struct pxfe_timeval : public timeval
 {
@@ -1382,6 +1385,119 @@ struct pxfe_select {
         if (cc < 0)
             if (e) e->init(errno, "select");
         return cc;
+    }
+};
+
+class pxfe_poll {
+    struct fdindex {
+        fdindex(void) { ind = -1; }
+        int ind;
+    };
+    std::vector<int> freestack; // value : index into fds
+    std::vector<fdindex> by_fd; // index : fd#, value : index into fds
+    std::vector<pollfd> fds;
+public:
+    pxfe_poll(void) { }
+    // events = POLLIN | POLLOUT | POLLERR, etc
+    // if events == 0, fd is removed from fd set.
+    void set(int fd, short events) {
+        if (fd >= by_fd.size())
+            by_fd.resize(fd+1);
+        if (events == 0)
+        {
+            fdindex &ind = by_fd[fd];
+            pollfd *pfd = NULL;
+            if (ind.ind == -1)
+                // nothing to do
+                return;
+            pfd = &fds[ind.ind];
+            pfd->events = 0;
+            pfd->fd = -1;
+            freestack.push_back(ind.ind);
+            ind.ind = -1;
+        }
+        else
+        {
+            fdindex &ind = by_fd[fd];
+            pollfd *pfd = NULL;
+            if (ind.ind == -1)
+            {
+                if (freestack.size() == 0)
+                {
+                    ind.ind = fds.size();
+                    fds.resize(fds.size() + 1);
+                }
+                else
+                {
+                    ind.ind = freestack.back();
+                    freestack.pop_back();
+                }
+                pfd = &fds[ind.ind];
+                pfd->fd = fd;
+            }
+            else
+            {
+                pfd = &fds[ind.ind];
+            }
+            pfd->events = events;
+        }
+    }
+    int poll(int timeout) {
+        return ::poll(fds.data(), fds.size(), timeout);
+    }
+    short eget(int fd) {
+        if (fd >= by_fd.size())
+            return 0;
+        fdindex &ind = by_fd[fd];
+        if (ind.ind == -1)
+            return 0;
+        return fds[ind.ind].events;
+    }
+    short rget(int fd) {
+        if (fd >= by_fd.size())
+            return 0;
+        fdindex &ind = by_fd[fd];
+        if (ind.ind == -1)
+            return 0;
+        return fds[ind.ind].revents;
+    }
+    void compact(void) {
+        int ind;
+        // the compaction works only if the fds vector
+        // is processed in reverse; so sort the freestack
+        // in ascending order and process it backwards.
+        std::sort(freestack.begin(), freestack.end());
+        while (freestack.size() > 0)
+        {
+            ind = freestack.back();
+            freestack.pop_back();
+            auto it = fds.begin() + ind;
+            it = fds.erase(it);
+            while (it != fds.end())
+            {
+                if (it->fd != -1)
+                    by_fd[it->fd].ind --;
+                it++;
+            }
+        }
+        for (ind = by_fd.size()-1;
+             ind >= 0 && by_fd[ind].ind == -1;
+             ind--)
+            ;
+        by_fd.resize(ind+1);
+    }
+    void print(void) {
+        int ind;
+        printf("by_fd.size = %d : ", (int) by_fd.size());
+        for (ind = 0; ind < by_fd.size(); ind++)
+            printf(" %d", by_fd[ind].ind);
+        printf("\nfreestack.size = %d : ", (int) freestack.size());
+        for (ind = 0; ind < freestack.size(); ind++)
+            printf(" %d", freestack[ind]);
+        printf("\nfds.size = %d : ", (int) fds.size());
+        for (ind = 0; ind < fds.size(); ind++)
+            printf(" [%d %04x]", fds[ind].fd, fds[ind].events);
+        printf("\n");
     }
 };
 

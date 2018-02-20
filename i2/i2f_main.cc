@@ -82,32 +82,31 @@ public:
 
         ticker.start(0,500000);
 
+        pxfe_poll  poll;
+        poll.set(ticker.fd(), POLLIN);
+        for (pit = opts.ports.begin(); pit != opts.ports.end(); pit++)
+        {
+            forw_port * p = *pit;
+            poll.set(p->listen_socket.getFd(), POLLIN);
+        }
+
         bool done = false;
         while (!done)
         {
-            pxfe_select sel;
+            poll.poll(1000);
 
             for (pit = opts.ports.begin(); pit != opts.ports.end(); pit++)
             {
                 forw_port * p = *pit;
-                sel.rfds.set(p->listen_socket.getFd());
-            }
-            for (cit = conns.begin(); cit != conns.end(); cit++)
-            {
-                conn * c = *cit;
-                sel.rfds.set(c->client_socket->getFd());
-                sel.rfds.set(c->server_socket.getFd());
-            }
-            sel.rfds.set(ticker.fd());
-
-            sel.tv.set(10,0);
-            sel.select();
-
-            for (pit = opts.ports.begin(); pit != opts.ports.end(); pit++)
-            {
-                forw_port * p = *pit;
-                if (sel.rfds.is_set(p->listen_socket.getFd()))
-                    handle_accept(p);
+                if (poll.rget(p->listen_socket.getFd()) & POLLIN)
+                {
+                    conn * c = handle_accept(p);
+                    if (c)
+                    {
+                        poll.set(c->client_socket->getFd(), POLLIN);
+                        poll.set(c->server_socket.getFd(), POLLIN);
+                    }
+                }
             }
             if (done)
                 break;
@@ -115,16 +114,18 @@ public:
             {
                 conn * c = *cit;
                 bool del = false;
-                if (sel.rfds.is_set(c->client_socket->getFd()))
+                if (poll.rget(c->client_socket->getFd()) & POLLIN)
                     if (handle_client(c) == false)
                         del = true;
-                if (sel.rfds.is_set(c->server_socket.getFd()))
+                if (poll.rget(c->server_socket.getFd()) & POLLIN)
                     if (handle_server(c) == false)
                         del = true;
                 if (del == false)
                     cit++;
                 else
                 {
+                    poll.set(c->client_socket->getFd(), 0);
+                    poll.set(c->server_socket.getFd(), 0);
                     cit = conns.erase(cit);
                     if (opts.verbose)
                     {
@@ -137,7 +138,7 @@ public:
                     delete c;
                 }
             }
-            if (sel.rfds.is_set(ticker.fd()))
+            if (poll.rget(ticker.fd()) & POLLIN)
                 handle_tick();
         }
         ticker.pause();
@@ -145,14 +146,14 @@ public:
         return 0;
     }
 private:
-    void handle_accept(forw_port * p)
+    conn * handle_accept(forw_port * p)
     {
         pxfe_errno e;
         pxfe_tcp_stream_socket * s = p->listen_socket.accept(&e);
         if (!s)
         {
             cerr << e.Format() << endl;
-            return;
+            return NULL;
         }
         if (opts.verbose)
         {
@@ -175,7 +176,9 @@ private:
         {
             cerr << e.Format() << endl;
             delete c;
+            c = NULL;
         }
+        return c;
     }
     pxfe_string  buffer;
     ostringstream  dbg;

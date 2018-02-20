@@ -94,20 +94,24 @@ public:
         start_time.getNow();
         ticker.start(0, 500000);
         bool done = false;
+
+        pxfe_poll p;
+
+        p.set(net_fd->getFd(), POLLIN);
+        p.set(ticker.fd(), POLLIN);
+
         while (!done)
         {
-            pxfe_select sel;
-            sel.rfds.set(net_fd->getFd());
             if (opts.input_set)
-                sel.rfds.set(opts.input_fd);
-            sel.rfds.set(ticker.fd());
-            sel.tv.set(10,0);
-            sel.select();
-            if (sel.rfds.is_set(net_fd->getFd()))
+                p.set(opts.input_fd, POLLIN);
+            else
+                p.set(opts.input_fd, 0);
+            p.poll(1000);
+            if (p.rget(net_fd->getFd()) & POLLIN)
                 done = !handle_net_fd();
-            if (opts.input_set && sel.rfds.is_set(opts.input_fd))
+            if (opts.input_set && p.rget(opts.input_fd) & POLLIN)
                 done = !handle_input_fd();
-            if (sel.rfds.is_set(ticker.fd()))
+            if (p.rget(ticker.fd()) & POLLIN)
                 handle_tick();
         }
         ticker.pause();
