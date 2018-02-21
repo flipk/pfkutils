@@ -1403,10 +1403,10 @@ public:
     void set(int fd, short events) {
         if (fd >= by_fd.size())
             by_fd.resize(fd+1);
+        fdindex &ind = by_fd[fd];
+        pollfd *pfd = NULL;
         if (events == 0)
         {
-            fdindex &ind = by_fd[fd];
-            pollfd *pfd = NULL;
             if (ind.ind == -1)
                 // nothing to do
                 return;
@@ -1418,8 +1418,6 @@ public:
         }
         else
         {
-            fdindex &ind = by_fd[fd];
-            pollfd *pfd = NULL;
             if (ind.ind == -1)
             {
                 if (freestack.size() == 0)
@@ -1472,14 +1470,12 @@ public:
             ind = freestack.back();
             freestack.pop_back();
             auto it = fds.begin() + ind;
-            it = fds.erase(it);
-            while (it != fds.end())
-            {
+            for (it = fds.erase(it); it != fds.end(); it++)
+                // adjust indexes which have now moved down by 1
                 if (it->fd != -1)
                     by_fd[it->fd].ind --;
-                it++;
-            }
         }
+        // trim by_fd of trailing -1's
         for (ind = by_fd.size()-1;
              ind >= 0 && by_fd[ind].ind == -1;
              ind--)
