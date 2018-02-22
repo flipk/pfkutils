@@ -1,12 +1,16 @@
 #!/bin/bash
 
 if [ $# -eq 0 ] ; then
-   dirs="."
+    if [ -f cscope.dirs ] ; then
+	dirs=$(cat cscope.dirs)
+    else
+	dirs="."
+    fi
 else
-   dirs="$*"
+    dirs="$*"
 fi
 
-find $dirs -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) | grep -v rrc.h > cscope.files
+find $dirs -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) -a -size -1000000c | sort > cscope.files
 cscope -bk
 
 exit 0
