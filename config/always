@@ -405,7 +405,6 @@ libi3_DEFS = -DI3_PROTO_HDR=\"libi3-i3_i3.pb.h\"
 libi3_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 libi3_CXXSRCS = i3/i3_options.cc i3/i3_main.cc
 libi3_PROTOSRCS = i3/i3.proto
-pfkutils_LIBMBEDTLS = $(MBEDTLS_LIBS)
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)
 pfkutils_LIBPROTOSSL = $(libprotossl_TARGET)
 endif
@@ -816,7 +815,7 @@ pfkutils_LIBS += \
 	$(pfkutils_LIBNCURSES) $(pfkutils_LIBZ) \
 	$(pfkutils_LIBXRANDR) $(pfkutils_LIBX11) \
 	$(pfkutils_LIBHILITE) $(pfkutils_LIBUTILS) $(pfkutils_LIBFFTW) \
-	$(pfkutils_LIBMBEDTLS) $(pfkutils_LIBPROTOBUF) -lpthread
+	$(pfkutils_LIBPROTOBUF) $(MBEDTLS_LIBS) -lpthread
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \

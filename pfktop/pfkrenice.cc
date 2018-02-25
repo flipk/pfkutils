@@ -99,7 +99,9 @@ pfkrenice_main(int argc, char ** argv)
         const char * sched_type = "";
         switch (sched) {
         case SCHED_OTHER: sched_type = "OTHER";                  break;
+#ifdef SCHED_IDLE
         case SCHED_IDLE:  sched_type = "IDLE" ;                  break;
+#endif
         case SCHED_BATCH: sched_type = "BATCH";                  break;
         case SCHED_FIFO:  sched_type = "FIFO" ; getparam = true; break;
         case SCHED_RR:    sched_type = "RR"   ; getparam = true; break;
