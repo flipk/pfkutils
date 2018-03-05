@@ -474,6 +474,8 @@ public:
         pthread_condattr_destroy(&attr);
     }
     const pthread_condattr_t *operator()(void) { return &attr; }
+    // args : CLOCK_REALTIME, CLOCK_MONOTONIC, CLOCK_BOOTTIME,
+    // but not: CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID
     void setclock(clockid_t id) {
         pthread_condattr_setclock(&attr,id);
     }
