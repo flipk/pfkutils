@@ -109,7 +109,7 @@ OBJDIRS_TOMAKE= \
 BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
-	libpfkfb diskloader pfkstat deduplifier libwas \
+	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
 	libpfkthread xlock hilite do_fft protossl i3
 
 SUBST_VARS = \
@@ -772,7 +772,9 @@ pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
 pfkutils_CSRCS = \
 	main/crnl.c main/random-hex.c main/fmtsdiff.c \
 	main/genpw.c main/xtermbar.c main/waitpid.c 
+ifeq ($(PFK_BUILD_slowlink),1)
 pfkutils_CXXSRCS += main/slowlink.cc
+endif
 ifeq ($(PFK_BUILD_pfkstat),1)
 pfkutils_CSRCS += main/pfkstat.c
 endif

@@ -31,6 +31,7 @@ PFK_BUILD_hilite=0
 PFK_BUILD_do_fft=0
 PFK_BUILD_protossl=0
 PFK_BUILD_i3=0
+PFK_BUILD_slowlink=0
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = PROTOBUF_VERS=2.5.0 /projects/atd_src/tools/bin/protoc.sh

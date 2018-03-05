@@ -96,7 +96,9 @@ PROG(0,i2f,"internet pipe fitting forwarder")
 PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
 PROG(0,rmstar,"recursive rm -rf but verbosely")
 PROG(0,fmtsdiff,"format sdiff output")
+#if @PFK_BUILD_slowlink@
 PROG(0,slowlink,"slow link simulator")
+#endif
 
 #if @PFK_BUILD_i3@
 PROG(0,i3,"internet pipe fitting mark III")

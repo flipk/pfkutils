@@ -31,6 +31,7 @@ PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=0
 PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
+PFK_BUILD_slowlink=0  # doesnt build on RHEL
 
 KSHRC_LOCAL = kshrc.local.mot
 PROTOC_PATH = /shared/mh_tools/tools/protobuf/2.5.0/rhel_5_4/bin/protoc
@@ -60,6 +61,8 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEX_CONSISTENT_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETPSHARED = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
+
+CXXFLAGS += -std=gnu++0x
 
 pfkutils_LIBS += -lrt
 HSM_test_LIBS += -lrt
