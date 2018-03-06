@@ -221,6 +221,10 @@ ProtoSSLConnClient :: handle_read(MESSAGE &msg)
             std::cerr << "message parsing failed\n";
         }
     }
+    if (ret == MBEDTLS_ERR_SSL_TIMEOUT)
+    {
+        return GOT_TIMEOUT;
+    }
     if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
     {
         mbedtls_ssl_close_notify( &sslctx );

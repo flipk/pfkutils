@@ -18,7 +18,9 @@ debug_print(void *ptr, int level,
     fprintf(stderr, "%s:%d: %s", filename, line, s);
 }
 
-ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag/* = false*/)
+ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
+                             bool _debugFlag/* = false*/,
+                             uint32_t read_timeout /*= 0*/)
     : nonBlockingMode(_nonBlockingMode), debugFlag(_debugFlag)
 {
     mbedtls_entropy_init( &entropy );
@@ -45,6 +47,11 @@ ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag/* = false*/)
     {
         mbedtls_ssl_conf_dbg( &sslcfg, &debug_print, (void*) this);
         mbedtls_debug_set_threshold(999);
+    }
+
+    if (read_timeout != 0)
+    {
+        mbedtls_ssl_conf_read_timeout( &sslcfg, read_timeout );
     }
 
     // doesn't appear to be needed?

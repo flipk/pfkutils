@@ -78,6 +78,7 @@ public:
     enum read_return_t {
         GOT_DISCONNECT,
         READ_MORE,
+        GOT_TIMEOUT,
         GOT_MESSAGE
     };
     read_return_t handle_read(MESSAGE &msg);
@@ -153,7 +154,9 @@ class ProtoSSLMsgs
     void   registerClient(ProtoSSLConnClient * clnt);
     void unregisterClient(ProtoSSLConnClient * clnt);
 public:
-    ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag = false );
+    // read_timeout is in milliseconds
+    ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag = false,
+                 uint32_t read_timeout = 0 );
     ~ProtoSSLMsgs(void);
     // returns true if it could load, false if error
     bool loadCertificates(const ProtoSSLCertParams &params);
