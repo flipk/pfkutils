@@ -2,7 +2,7 @@
 
 # latdc is cre's green box, be nice, dont set MAKEJOBS
 
-PFK_BUILD_pfkbak=0
+PFK_BUILD_pfkbak=1
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
@@ -10,32 +10,35 @@ PFK_BUILD_treescan=0
 PFK_BUILD_sudo=0
 PFK_BUILD_ampfk=1
 PFK_BUILD_pfkscript=1
-PFK_BUILD_sessionmgr=0
-PFK_BUILD_xrandr=0
+PFK_BUILD_sessionmgr=1
+PFK_BUILD_xrandr=0 # missing Xrandr-dev library
 PFK_BUILD_states=0
-PFK_BUILD_bglog=0
+PFK_BUILD_bglog=1
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=0
+PFK_BUILD_libpfkfb=1
 PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
 PFK_BUILD_deduplifier=0
-PFK_BUILD_libwas=0
-PFK_BUILD_libpfkthread=0
-PFK_BUILD_wsproxy=0
+PFK_BUILD_libwas=1
+PFK_BUILD_libpfkthread=1
+PFK_BUILD_wsproxy=1
 PFK_BUILD_xlock=0
-PFK_BUILD_fonts=0
-PFK_BUILD_pfktop=0
+PFK_BUILD_fonts=1
+PFK_BUILD_pfktop=1
 PFK_BUILD_spinner=0
-PFK_BUILD_hilite=0
+PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=0
-PFK_BUILD_protossl=0
-PFK_BUILD_i3=0
-PFK_BUILD_slowlink=0
+PFK_BUILD_protossl=1
+PFK_BUILD_i3=1
+PFK_BUILD_slowlink=0 # ub10 compiler can't do "auto p : list"
 
 KSHRC_LOCAL = kshrc.local.mot
-PROTOC_PATH = 
-PROTOBUF_INC =
-PROTOBUF_LIB = 
+PROTOC_PATH = /shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/bin/protoc
+PROTOBUF_INC = -I/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/include
+PROTOBUF_LIB = -L/shared/mh_tools/tools/protobuf/2.5.0/ubuntu_10_04_4/lib -lprotobuf
+mbedtls_prefix = $(HOME)/pfk/$(PFKARCH)/mbedtls-2.6.1
+MBEDTLS_INCS = -I$(mbedtls_prefix)/include
+MBEDTLS_LIBS = -L$(mbedtls_prefix)/lib -lmbedtls -lmbedx509 -lmbedcrypto
 
 PFK_CONFIG_HAVE_NCURSES_CURSES_H= 0
 PFK_CONFIG_HAVE_NCURSES_H= 0
@@ -57,6 +60,8 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEX_CONSISTENT_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETPSHARED = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
+
+CXXFLAGS += -std=gnu++0x
 
 pfkutils_LIBS += -lrt
 HSM_test_LIBS += -lrt
