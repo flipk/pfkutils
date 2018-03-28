@@ -1,0 +1,18 @@
+
+nautilus --no-desktop &
+
+screen -S nautilus -d -m nautilus
+
+gsettings set org.gnome.desktop.background show-desktop-icons false
+
+dconf-editor
+
+also, org.gnome.desktop.screensaver.?
+also, org.gnome.desktop.session.idle-delay
+
+gnome-screensaver
+
+unity-control-center
+or
+gnome-control-center
+
