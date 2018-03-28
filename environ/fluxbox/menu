@@ -12,6 +12,7 @@
     [exec] (MSWIN-2) {$HOME/bin/mswin -2}
     [exec] (MSWIN-3) {$HOME/bin/mswin -3}
     [exec] (MSWIN-4) {$HOME/bin/mswin -4}
+    [exec] (nautilus) {nautilus --no-desktop}
     [exec] (Reload resources) {xrdb -remove; xrdb -load $HOME/.Xresources}
     [separator]
     [config] (Configure)
