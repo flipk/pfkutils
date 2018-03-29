@@ -38,8 +38,6 @@ For more information, please refer to <http://unlicense.org>
 #include <string>
 #include <iostream>
 
-namespace WebAppServer {
-
 class CircularReaderError {
 public:
     CircularReaderError(const char * desc);
@@ -466,7 +464,5 @@ inline std::ostream& operator<<(std::ostream &ostr,
         ostr << str[pos];
     return ostr;
 }
-
-} // namespace WebAppServer
 
 #endif /* __CIRCULAR_READER_H__ */

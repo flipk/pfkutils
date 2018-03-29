@@ -6,3 +6,4 @@ build
 t
 wsClientTest
 wsServerTest
+obj
