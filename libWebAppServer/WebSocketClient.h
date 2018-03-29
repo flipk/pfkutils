@@ -65,15 +65,15 @@ class WebSocketClient : fdThreadLauncher,
 {
     bool finished;
     static const int MAX_READBUF = 65536 + 0x1000; // 65K
-    WebAppServer::CircularReader  readbuf;
+    CircularReader  readbuf;
     bool handle_data(void);
     enum {
         STATE_PROXYRESP, // waitfor proxy CONNECT response
         STATE_HEADERS,   // waiting for ws mime headers
         STATE_CONNECTED // mime headers done, exchanging messages
     } state;
-    bool handle_proxyresp(const WebAppServer::CircularReaderSubstr &hdr);
-    bool handle_wsheader(const WebAppServer::CircularReaderSubstr &hdr);
+    bool handle_proxyresp(const CircularReaderSubstr &hdr);
+    bool handle_wsheader(const CircularReaderSubstr &hdr);
     bool handle_message(void);
     // fdThreadLauncher methods below
     /*virtual*/ bool doSelect(bool *forRead, bool *forWrite);

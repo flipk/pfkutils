@@ -70,6 +70,7 @@ public:
     int find(const char *patt, int pos=0) const;
     int icaseFind(const char *patt, int pos=0) const;
     bool operator==(const char *patt) const;
+    bool icaseMatch(const char *patt) const;
     void operator=(const CircularReaderSubstr &other);
     bool operator<(const CircularReaderSubstr &other) const;
     bool compare(int comparePos, const char *patt) const;
@@ -261,6 +262,18 @@ CircularReaderSubstr :: operator==(const char *_patt) const
         return false;
     for (int pos = 0; pos < len; pos++)
         if (_patt[pos] != buf[realPos(pos,false)])
+            return false;
+    return true;
+}
+
+inline bool
+CircularReaderSubstr :: icaseMatch(const char *_patt) const
+{
+    int pattLen = ::strlen(_patt);
+    if (pattLen != len)
+        return false;
+    for (int pos = 0; pos < len; pos++)
+        if (_patt[pos] != tolower(buf[realPos(pos,false)]))
             return false;
     return true;
 }

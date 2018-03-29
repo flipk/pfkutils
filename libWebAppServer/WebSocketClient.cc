@@ -514,21 +514,21 @@ WebSocketClient :: handle_wsheader(const CircularReaderSubstr &hdr)
             const CircularReaderSubstr &headerName  = hdr.substr(0,colonPos);
             const CircularReaderSubstr &headerValue = hdr.substr(colonPos+2);
 
-            if (headerName == "Connection")
+            if (headerName.icaseMatch("connection"))
             {
                 if (headerValue.icaseFind("upgrade") != CircularReader::npos)
                 {
                     got_flags |= GOT_CONNECTION_UPGRADE;
                 }
             }
-            else if (headerName == "Upgrade")
+            else if (headerName.icaseMatch("upgrade"))
             {
                 if (headerValue.icaseFind("websocket") != CircularReader::npos)
                 {
                     got_flags |= GOT_UPGRADE_WEBSOCKET;
                 }
             }
-            else if (headerName == "Sec-WebSocket-Accept")
+            else if (headerName.icaseMatch("sec-websocket-accept"))
             {
                 if (headerValue.toString() == secWebsocketKeyResponse)
                 {

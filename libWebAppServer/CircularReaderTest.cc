@@ -17,7 +17,7 @@ main()
 {
     uint8_t buf[4] = { 0xa0, 0xb0, 0xb1, 0xb2 };
 
-    WebAppServer::CircularReader x;
+    CircularReader x;
 
     x.assign(buf, 4);
 

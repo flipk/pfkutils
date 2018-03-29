@@ -194,14 +194,14 @@ WebSocketConnection :: handle_header_line(
             cout << "checking header '" << headerName
                  << "' with value '" << headerValue << "'" << endl;
 
-        if (headerName == "Host")
+        if (headerName.icaseMatch("host"))
         {
             got_flags |= GOT_HOST;
             host = headerValue.toString();
             if (VERBOSE)
                 cout << "HOST is : '" << host << "'" << endl;
         }
-        else if (headerName == "Connection")
+        else if (headerName.icaseMatch("connection"))
         {
             // Connection can be a comma separated list.
             if (headerValue.icaseFind("upgrade") != CircularReader::npos)
@@ -209,36 +209,40 @@ WebSocketConnection :: handle_header_line(
                 got_flags |= GOT_CONNECTION_FLAG;
             }
         }
-        else if (headerName == "Upgrade")
+        else if (headerName.icaseMatch("upgrade"))
         {
             if (headerValue.icaseFind("websocket") != CircularReader::npos)
             {
                 got_flags |= GOT_UPGRADE_FLAG;
             }
         }
-        else if (headerName == "Origin")
+        else if (headerName.icaseMatch("origin"))
         {
+// refer to:
+//  https://bugzilla.mozilla.org/show_bug.cgi?id=1301156
+//  https://bugzilla.mozilla.org/show_bug.cgi?id=1277496
+// firefox sometimes sends "Origin" in lower case. inorite?
             got_flags |= GOT_ORIGIN;
             origin = headerValue.toString();
             if (VERBOSE)
                 cout << "got origin '" << origin << "'" << endl;
         }
-        else if (headerName == "Sec-WebSocket-Version")
+        else if (headerName.icaseMatch("sec-websocket-version"))
         {
             got_flags |= GOT_VERSION;
             version = headerValue.toString();
             if (VERBOSE)
                 cout << "got version '" << version << "'" << endl;
         }
-        else if (headerName == "Sec-WebSocket-Key")
+        else if (headerName.icaseMatch("sec-websocket-key"))
         {
             got_flags |= GOT_KEY;
             key = headerValue.toString();
             if (VERBOSE)
                 cout << "got key '" << key << "'" << endl;
         }
-        else if (headerName == "Sec-WebSocket-Key1" ||
-                 headerName == "Sec-WebSocket-Key2")
+        else if (headerName.icaseMatch("sec-websocket-key1") ||
+                 headerName.icaseMatch("sec-websocket-key2"))
         {
             cerr << "ERROR don't support hixie-76" << endl;
             return false;
