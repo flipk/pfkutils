@@ -4,8 +4,8 @@
 #FUNCTIONS: xvt lsv lsvg lsco lscol lspr lsprl lsprf lsprfl sv ssv zeroversion makeorig makepred predversion myscript ccdiff ccdiff2
 
 export GIT_SSL_NO_VERIFY=true
-export http_proxy=http://wwwgate0.mot.com:1080 
-export https_proxy=http://wwwgate0.mot.com:1080 
+#export http_proxy=http://wwwgate0.mot.com:1080 
+#export https_proxy=http://wwwgate0.mot.com:1080 
 
 xvt() {
     grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
