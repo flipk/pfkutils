@@ -6,6 +6,7 @@
 #include <mbedtls/sha1.h>
 #include <iostream>
 #include <sstream>
+#include <errno.h>
 
 #define VERBOSE 1
 

@@ -42,7 +42,7 @@ public:
         PORTNUM  = 7,
         PATH     = 8
     };
-    UrlRegex(void) : regex(patt) { }
+    UrlRegex(void) : regex<>(patt) { }
     ~UrlRegex(void) { }
 };
 

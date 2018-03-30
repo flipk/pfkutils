@@ -1,7 +1,7 @@
 
 #include "simpleWebSocket.h"
 #include "../libpfkutil/posix_fe.h"
-#include "obj/wstest-proxyTcpServer_proxyMsgs.pb.h"
+#include PROXYMSGS_PB_H
 
 #include <list>
 
@@ -93,9 +93,14 @@ int server(void)
                         break;
                     case SimpleWebSocket::WEBSOCKET_MESSAGE:
                         printf("got msg: %s\n", msg.DebugString().c_str());
-                        for (auto co : conns)
+                        for (auto cot = conns.begin();
+                             cot != conns.end();
+                             cot++)
+                        {
+                            auto co = *cot;
                             if (co != c)
                                 co->sendMessage(msg);
+                        }
                         break;
                     case SimpleWebSocket::WEBSOCKET_CLOSED:
                         printf("CLOSED!\n");
