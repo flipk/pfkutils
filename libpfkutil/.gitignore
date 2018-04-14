@@ -5,3 +5,7 @@ nlt
 tts
 doc
 debug/xmakefile
+downsampler_test
+input.txt
+output.txt
+fir_filter_test

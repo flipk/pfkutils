@@ -1,15 +1,26 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-#include <inttypes.h>
+#ifndef __FIR_FILTER_H__
+#define __FIR_FILTER_H__
 
-template <typename SampleType>
+#include <inttypes.h>
+#include <complex>
+
+typedef std::complex<double> cplx_double;
+typedef std::complex<float>  cplx_float;
+
+template <typename _SampleType>
 class fir_filter {
+public:
+    typedef _SampleType SampleType;
+private:
     int order_p_1; // order plus one
     const float * coeff; // dimension order+1
     SampleType * shift_register; // dimension order+1
     int sr_pos; // next position to be written
 public:
-    fir_filter(int _order, const float * _coeff) {
+    fir_filter(int _order, const float * _coeff)
+    {
         order_p_1 = _order + 1;
         coeff = _coeff;
         shift_register = new SampleType[order_p_1];
@@ -17,22 +28,21 @@ public:
             shift_register[ind] = 0;
         sr_pos = 0;
     }
-    virtual ~fir_filter(void) {
+    virtual ~fir_filter(void)
+    {
         delete[] shift_register;
     }
-    void one_sample_nocalc(SampleType v) {
+    void add_sample(SampleType v)
+    {
         // overwrite oldest sample with newest
         shift_register[sr_pos] = v;
         if (++sr_pos >= order_p_1)
             sr_pos = 0;
     }
-    SampleType one_sample(SampleType v) {
-        // overwrite oldest sample with newest
-        shift_register[sr_pos] = v;
+    SampleType calc(void)
+    {
         float sum = 0;
         int sr_ind = sr_pos;
-        if (++sr_pos >= order_p_1)
-            sr_pos = 0;
         for (int ind = 0; ind < order_p_1; ind++)
         {
             sum += (float)(shift_register[sr_ind]) * coeff[ind];
@@ -56,14 +66,34 @@ public:
 #define FILTERCLASS_COEFF(sampleType,pass,order) \
     const float fir_filter_##sampleType##_lp##pass##_##order::coeff[order+1]
 
-// order-40 low pass (0.5) filter
-FILTERCLASS(int16_t,05,40);
+template <class firclass>
+class cplx_fir_filter {
+    firclass fir_i;
+    firclass fir_q;
+public:
+    typedef std::complex<typename firclass::SampleType> SampleType;
+    cplx_fir_filter(void) { }
+    virtual ~cplx_fir_filter(void) { }
+    void add_sample(SampleType v)
+    {
+        fir_i.add_sample(v.real());
+        fir_q.add_sample(v.imag());
+    }
+    void calc(SampleType &out)
+    {
+        out.real(fir_i.calc());
+        out.imag(fir_q.calc());
+    }
+};
 
-// order-40 low pass (60/325=0.18462)
-FILTERCLASS(int16_t,018,40);
+// sample instantiation:
+// FILTERCLASS(double,05,40);
+// FILTERCLASS_COEFF(double,05,40) = {
+//  -7.82233e-05,-0.00143531,0.000100237,0.00243755,  [etc]
+// };
+// cplx_fir_filter<fir_filter_double_lp05_40>  filt05;
+// cplx_double sample(1,0);
+// filt05.add_sample(sample);
+// filt05.calc(sample);
 
-// order-40 low pass (541667/1000000=0.5416)
-FILTERCLASS(int16_t,05416,40);
-
-// order-40 low pass (541667/2000000=0.270833)
-FILTERCLASS(int16_t,02708,40);
+#endif /* __FIR_FILTER_H__ */
