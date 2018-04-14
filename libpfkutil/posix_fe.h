@@ -1109,6 +1109,74 @@ public:
         }
         return false;
     }
+    /** parse a std::string into a uint64_t number, return false for error */
+    static bool parse_number( const std::string &s, uint64_t *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    /** parse a char* into a uint64_t number, return false for error */
+    static bool parse_number( const char *s, uint64_t *_val )
+    {
+        char * endptr = NULL;
+        unsigned long long val = strtoull(s, &endptr, 0);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = (uint64_t) val;
+            return true;
+        }
+        return false;
+    }
+    /** parse a std::string into an int64_t number, return false for error */
+    static bool parse_number( const std::string &s, int64_t *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    /** parse a char* into an int64_t number, return false for error */
+    static bool parse_number( const char *s, int64_t *_val )
+    {
+        char * endptr = NULL;
+        long long val = strtoll(s, &endptr, 0);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = (int64_t) val;
+            return true;
+        }
+        return false;
+    }
+    /** parse a std::string into a double, return false for error */
+    static bool parse_number( const std::string &s, double *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    /** parse a char* into a double, return false for error */
+    static bool parse_number( const char *s, double *_val )
+    {
+        char * endptr = NULL;
+        double val = strtod(s, &endptr);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = val;
+            return true;
+        }
+        return false;
+    }
+    /** parse a std::string into a float, return false for error */
+    static bool parse_number( const std::string &s, float *val )
+    {
+        return parse_number(s.c_str(), val);
+    }
+    /** parse a char* into a float, return false for error */
+    static bool parse_number( const char *s, float *_val )
+    {
+        char * endptr = NULL;
+        float val = strtof(s, &endptr);
+        if (endptr != NULL && *endptr == 0)
+        {
+            *_val = val;
+            return true;
+        }
+        return false;
+    }
 };
 
 /** container for several useful IP-related utility methods */
