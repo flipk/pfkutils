@@ -4,3 +4,5 @@ libWebAppServer
 libpfkfb
 shmempipe
 threadslinger
+posix_fe.tag
+posix_fe
