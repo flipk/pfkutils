@@ -404,7 +404,11 @@ $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_T
 # but also note protoc spits out the .pb.cc file with a #include looking for file.pb.h,
 # so we use a sed-expression to replace that with $(target)-dir_dir_file_pb.h
 
-$(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_CC, $(src)): $(src)
+$(foreach src,$($(target)_PROTOSRCS),
+
+$(target)_$(src)_HDR := $(call FROM_PROTO_TO_H, $(src))
+
+$(call FROM_PROTO_TO_CC, $(src)): $(src)
 	@echo making $$@
 	$(Q)cd $$(dir $$<) && $(PROTOC_PATH) \
 		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
