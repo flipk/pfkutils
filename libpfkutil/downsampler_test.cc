@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <vector>
+#include <stdio.h>
 
 FILTERCLASS(double,01,40);
 FILTERCLASS_COEFF(double,01,40) = {
