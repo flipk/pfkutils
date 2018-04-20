@@ -6,9 +6,34 @@ plot "filename" using 1:2 with lines, "filename" using 1:4 with lines
 plot "somefile" using 1:2 with lines axes x1y1 title "blah", "somefile" using 1:3 with lines axes x1y2 title "foo"
 pause -1
 
-
 set xdata time
 set format x "%H%M"
 set timefmt "%Y-%m-%d %H:%M:%S"
 plot "ping_pkt_rtd.log" using 1:($3/1000) with lines
+
+splot "somefile.txt" using 1:2:3 with lines notitle
+
+splot 'file_with_radians.txt' using 1:(cos($2)):(sin($2)) with lines
+
+set border 0
+unset tics
+
+stats 'somefile.txt' using 1 nooutput
+set arrow 1 from STATS_min,0,0 to STATS_max,0,0 nohead
+
+set for [i=0:int((Frame_xmax-Frame_xmin)/Frame_dx)] \
+    label sprintf("%3.1f",Frame_xmin+i*Frame_dx) at \
+    Frame_xmin+i*Frame_dx,Frame_oy center offset 0,-0.75
+
+
+(minimum gnuplot v4.6 required for this:)
+
+set term gif animate delay 5
+set output "animate.gif"
+do for [i=0:71] {
+   set view 70,i*5,1,1
+   replot
+}
+set output
+set terminal wxt
 
