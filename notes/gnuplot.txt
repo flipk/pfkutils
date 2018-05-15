@@ -28,7 +28,7 @@ set for [i=0:int((Frame_xmax-Frame_xmin)/Frame_dx)] \
 
 (minimum gnuplot v4.6 required for this:)
 
-set term gif animate delay 5
+set term gif animate delay 5 size 800,600
 set output "animate.gif"
 do for [i=0:71] {
    set view 70,i*5,1,1

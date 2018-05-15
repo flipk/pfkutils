@@ -6,6 +6,9 @@ openssl aes-256-cfb8 -d -in motlap-bak.tar.bz2.aes-256-cfb8 | tar jtf -
 openssl aes-256-cbc -e -a -salt -in plain -out cipher.txt
 openssl aes-256-cbc -d -a -in cipher.txt -out plain
 
+NOTE default message digest algorithm changed in openssl 1.1.0 from 
+md5 to sha256.  add "-md md5" to newer openssl to decrypt older files.
+
 **** simple certificate signing
 
 # generate an RSA key, extract public part
