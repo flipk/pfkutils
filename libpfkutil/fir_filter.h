@@ -9,6 +9,33 @@
 typedef std::complex<double> cplx_double;
 typedef std::complex<float>  cplx_float;
 
+// possible optimization: if you know the filter coefficients
+// are symmetric (which they are if the filter is linear) then
+// you can speed up a FIR by saving a history of products.
+
+// make a history array [order/2] [order+1].
+
+// break the calc into three parts:
+//   the first order/2, in which products are saved in the history
+//   the middle sample
+//   the second order/2, in which old products are taken from history.
+
+// fill it diagonally, like a forward slash /.
+// consume it reverse diagonally, like a reverse slash \.
+// both slashes move one column to the right (circularly) as
+// samples are added.
+
+// note this is incompatible with sparse consumption (i.e. in the
+// downsampler case where there are many add_samples but few calcs).
+// this could be mitigated with a cache status bit, where a box
+// is calculated if never calculated before but reused if already
+// populated. this could get difficult to manage.
+
+// todo: change all float to double
+
+// todo: move order into the template defn and remove all the runtime
+//       memory references as well as shift_register pointer refs.
+
 template <typename _SampleType>
 class fir_filter {
 public:

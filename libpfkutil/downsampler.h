@@ -14,6 +14,11 @@
 //  by the integer upsampling rate to account for the lower average
 //  due to the zeros).)
 
+// todo: a multi-stage downsampler.
+//   in this technique, a first stage downsampler uses a cheap
+//   FIR filter which lets a little more through, which the
+//   second stage will filter out better.
+
 template <class firclass>
 class downsampler {
 public:
