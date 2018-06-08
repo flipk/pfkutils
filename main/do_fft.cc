@@ -164,7 +164,15 @@ public:
             if (complexity == REAL) {
                 // xxx TEXT real ws,comma
             } else {
-                // xxx TEXT quadrature ws,comma
+                if (textsep == WHITESPACE)
+                {
+                    // TEXT QUAD SPACE
+                    istr >> val[0] >> val[1];
+                }
+                else
+                {
+                    // xxx TEXT quadrature comma
+                }
             }
         }
         val[0] -= ioffset;
