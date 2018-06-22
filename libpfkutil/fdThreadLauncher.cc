@@ -279,11 +279,14 @@ fdThreadLauncher :: threadEntry(void)
 }
 
 int
-fdThreadLauncher :: acceptConnection(void)
+fdThreadLauncher :: acceptConnection(struct sockaddr_in *addr)
 {
     struct sockaddr_in sa;
+    struct sockaddr_in *psa = &sa;
+    if (addr != NULL)
+        psa = addr;
     socklen_t  salen = sizeof(sa);
-    return accept(fd, (struct sockaddr *)&sa, &salen);
+    return accept(fd, (struct sockaddr *)psa, &salen);
 }
 
 // static

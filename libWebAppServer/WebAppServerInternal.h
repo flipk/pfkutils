@@ -30,6 +30,7 @@ For more information, please refer to <http://unlicense.org>
 #define __WEBAPPSERVERINTERNAL_H__
 
 #include <map>
+#include <netinet/in.h>
 
 #include "FastCGI.h"
 #include "CircularReader.h"
@@ -150,6 +151,7 @@ protected:
     CircularReader readbuf;
     std::string resource;
     bool deleteMe;
+    struct sockaddr_in remote_addr;
     bool findResource(void);
     /*virtual*/ bool doSelect(bool *forRead, bool *forWrite);
     /*virtual*/ bool handleWriteSelect(int serverFd);
@@ -162,6 +164,9 @@ public:
     virtual ~WebServerConnectionBase(void);
     virtual void startServer(void) = 0;
     virtual void sendMessage(const WebAppMessage &m) = 0;
+    const struct sockaddr_in *get_remote_addr(void) {
+        return &remote_addr;
+    }
 };
 
 class WebSocketConnection : public WebServerConnectionBase {
@@ -200,7 +205,8 @@ class WebSocketConnection : public WebServerConnectionBase {
     void send_handshake_response(void);
 
 public:
-    WebSocketConnection(serverPort::ConfigRecList_t &_configs, int _fd);
+    WebSocketConnection(serverPort::ConfigRecList_t &_configs, int _fd,
+                        const struct sockaddr_in *sa);
     /*virtual*/ void sendMessage(const WebAppMessage &m);
 };
 

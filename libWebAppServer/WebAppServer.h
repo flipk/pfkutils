@@ -37,6 +37,7 @@ For more information, please refer to <http://unlicense.org>
 #include <unistd.h>
 #include <list>
 #include <string>
+#include <netinet/in.h>
 
 #include "WebAppMessage.h"
 
@@ -93,6 +94,7 @@ public:
      * with onMessage or doPoll.
      * \param  m  the message to send. */
     void sendMessage(const WebAppMessage &m);
+    const struct sockaddr_in *get_remote_addr(void);
     WebAppConnectionData * connData;
 };
 

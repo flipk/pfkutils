@@ -50,4 +50,16 @@ WebAppConnection::sendMessage(const WebAppMessage &m)
     connData->sendMessage(m);
 }
 
+// this is not presently supported for FastCGI -- only for websocket.
+const struct sockaddr_in *
+WebAppConnection::get_remote_addr(void)
+{
+    if (connData == NULL)
+        return NULL;
+    WebAppConnectionDataWebsocket * wacdw = connData->ws();
+    if (wacdw == NULL)
+        return NULL;
+    return wacdw->connBase->get_remote_addr();
+}
+
 } // namespace WebAppServer

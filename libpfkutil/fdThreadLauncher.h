@@ -181,10 +181,12 @@ public:
     /** a shortcut helper that calls accept(2). only useful if the
      * managed fd is a tcp listener, and this should be called from
      * handleReadSelect.
+     * \param addr pointer to a sockaddr_in; if accept is succesfull,
+     *    this will be filled out with the peer's address.
      * \return a new descriptor for the accepted connection, or -1 
      *    if there was an error (errno is set to the error codes for
      *    accept(2)). */
-    int acceptConnection(void);
+    int acceptConnection(struct sockaddr_in *addr = NULL);
 
     /** a helper function to make a listening tcp socket bound to INADDR_ANY.
      * \note this is a static method that does not depend on

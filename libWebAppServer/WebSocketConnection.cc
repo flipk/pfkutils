@@ -42,11 +42,13 @@ using namespace std;
 namespace WebAppServer {
 
 WebSocketConnection :: WebSocketConnection(
-    serverPort::ConfigRecList_t &_configs, int _fd)
+    serverPort::ConfigRecList_t &_configs, int _fd,
+    const struct sockaddr_in *sa)
     : WebServerConnectionBase(_configs, _fd)
 {
     state = STATE_HEADER;
-     got_flags = GOT_NONE;
+    got_flags = GOT_NONE;
+    memcpy(&remote_addr, sa, sizeof(struct sockaddr_in));
 }
 
 WebSocketConnection :: ~WebSocketConnection(void)

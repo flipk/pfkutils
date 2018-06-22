@@ -150,7 +150,8 @@ serverPort :: doSelect(bool *forRead, bool *forWrite)
 bool
 serverPort :: handleReadSelect(int fd)
 {
-    int clientFd = acceptConnection();
+    struct sockaddr_in sa;
+    int clientFd = acceptConnection(&sa);
     if (clientFd < 0)
     {
         fprintf(stderr, "accept: %s\n", strerror(errno));
@@ -171,13 +172,15 @@ serverPort :: handleReadSelect(int fd)
     if (type == APP_TYPE_WEBSOCKET)
     {
         WebServerConnectionBase * wscb = 
-            new WebSocketConnection(configs, clientFd);
+            new WebSocketConnection(configs, clientFd, &sa);
         connections.push_back(wscb);
         wscb->startServer();
     }
     else if (type == APP_TYPE_FASTCGI)
     {
         WebServerConnectionBase * wscb = 
+// todo, someday
+//          new WebFastCGIConnection(configs, clientFd, &sa);
             new WebFastCGIConnection(configs, clientFd);
         connections.push_back(wscb);
         wscb->startServer();
