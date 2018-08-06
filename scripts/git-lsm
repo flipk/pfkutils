@@ -10,13 +10,20 @@ cd $gr
 
 # NOTE this does not support nested submodules.
 
-git ls-files -m
+if [[ "x$1" != "x-s" ]] ; then
+    gitargs="ls-files -m"
+else
+    gitargs="diff --cached --name-only"
+fi
+
+# pipe output to 'cat' to prevent invocation of $PAGER
+git $gitargs | cat
 
 git submodule status | while read line ; do
     IFS=" "
     set -- $line
     cd $gr/$2
-    git ls-files -m | sed -e s,^,$2/,
+    git $gitargs | sed -e s,^,$2/,
 done
 
 exit 0
