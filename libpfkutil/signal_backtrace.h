@@ -54,7 +54,7 @@ class SignalBacktrace
     char process_name[64];
     SignalBacktraceHandler handler;
     SignalBacktraceInfo  info;
-    void do_backtrace(void);
+    void do_backtrace(const char *reason = NULL);
     static void default_user_handler(const struct SignalBacktraceInfo *info);
     static void signal_handler(int sig, siginfo_t *info, void *uc);
     static SignalBacktrace * instance;

@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <pthread.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 SignalBacktrace* SignalBacktrace::instance = NULL;
 
@@ -208,21 +209,35 @@ SignalBacktrace :: backtrace_now( const char *reason )
 {
     info.clear();
     info.fatal = false;
-    info.desc_print("[bt] %s %u ---backtrace requested, reason: %s\n",
-                    process_name, pid, reason);
-    do_backtrace();
+    do_backtrace(reason);
 }
 
 void
-SignalBacktrace :: do_backtrace( void )
+SignalBacktrace :: do_backtrace( const char *reason /* = NULL */ )
 {
     int i;
+    struct timeval tv;
+    struct tm tm;
+    char timebuf[64];
 
     // first we'll try a good old honest backtrace try
     // and see what we get.
     info.trace_size = backtrace( info.trace,
                                  SignalBacktrace_MAX_TRACE_ENTRIES );
     info.messages = backtrace_symbols( info.trace, info.trace_size );
+
+    gettimeofday(&tv, NULL);
+    localtime_r(&tv.tv_sec, &tm);
+    memset(timebuf,0,sizeof(timebuf));
+    strftime(timebuf,sizeof(timebuf)-1, "%Y/%m/%d-%H:%M:%S", &tm);
+
+    info.desc_print("[bt] %s %u ---BACKTRACE AT %s.%06d",
+                    process_name, pid, timebuf, tv.tv_usec);
+
+    if (reason != NULL)
+        info.desc_print(": %s\n", reason);
+    else
+        info.desc_print("\n");
 
     if (info.sig != 0)
     {
@@ -283,7 +298,7 @@ SignalBacktrace :: do_backtrace( void )
     for ( i = 0; i < info.trace_size; i++ )
         info.desc_print( "[bt] %s %u %s\n",
                          process_name, pid, info.messages[ i ] );
-    info.desc_print( "[bt] %s %u ---end\n", process_name, pid);
+    info.desc_print( "[bt] %s %u ---end of backtrace\n", process_name, pid);
 
 #ifdef __arm__
     do { // extra sauce to deal with arm's terrible backtraces
@@ -322,7 +337,8 @@ SignalBacktrace :: do_backtrace( void )
         for ( i = 0; i < info.trace_size2; i++ )
             info.desc_print( "[bt] %s %u %s\n",
                              process_name, pid, info.messages2[ i ] );
-        info.desc_print( "[bt] %s %u ---end\n", process_name, pid);
+        info.desc_print( "[bt] %s %u ---end of backtrace\n",
+                         process_name, pid);
     } while(0);
 #endif
 
@@ -350,6 +366,8 @@ SignalBacktrace :: do_backtrace( void )
         info.desc_print("  dar %08x  ", regs->gregs[41]);
         info.desc_print("  dir %08x  ", regs->gregs[42]);
         info.desc_print("  res %08x\n", regs->gregs[43]);
+        info.desc_print( "[bt] %s %u ---end of register dump\n",
+                         process_name, pid);
 #endif
 #if __arm__
         mcontext_t *regs = &info.uc->uc_mcontext;
@@ -371,6 +389,8 @@ SignalBacktrace :: do_backtrace( void )
         info.desc_print("  lr  %08x  ", regs->arm_lr);
         info.desc_print(" cpsr %08x\n", regs->arm_cpsr);
 // in si_addr already // info.desc_print("  FA  %08x\n", regs->fault_address);
+        info.desc_print( "[bt] %s %u ---end of register dump\n",
+                         process_name, pid);
 #endif
 #ifdef __x86_64__
         mcontext_t *regs = &info.uc->uc_mcontext;
@@ -398,6 +418,8 @@ SignalBacktrace :: do_backtrace( void )
         info.desc_print("trap %016" PRIx64 "  ", regs->gregs[REG_TRAPNO ]);
         info.desc_print("oldm %016" PRIx64 "  ", regs->gregs[REG_OLDMASK]);
         info.desc_print(" cr2 %016" PRIx64 "\n", regs->gregs[REG_CR2    ]);
+        info.desc_print( "[bt] %s %u ---end of register dump\n",
+                         process_name, pid);
 #endif
 #ifdef __i386__
         info.desc_print(" NOTE __i386__ linux mcontext_t register dump "
