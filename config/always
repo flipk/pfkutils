@@ -166,7 +166,8 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/fd_mgr.cc libpfkutil/hsmthread.cc \
 	libpfkutil/msgr.cc libpfkutil/prioWorkQ.cc \
 	libpfkutil/shmempipe.cc \
-	libpfkutil/thread_slinger.cc 
+	libpfkutil/thread_slinger.cc \
+	libpfkutil/signal_backtrace.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -178,7 +179,8 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/prioWorkQ.h libpfkutil/regex.h \
 	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
 	libpfkutil/dll3.tcc \
-	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h
+	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h \
+	libpfkutil/signal_backtrace.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -189,7 +191,8 @@ libpfkutil_HDRS = \
 	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
 	libpfkutil/posix_fe.h libpfkutil/prioWorkQ.h \
 	libpfkutil/regex.h libpfkutil/shmempipe.h \
-	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h
+	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h \
+	libpfkutil/signal_backtrace.h
 
 DOXYGEN_TARGETS += dll3 shmempipe threadslinger
 dll3_DOXYFILE = libpfkutil/Doxyfile.dll3
@@ -202,7 +205,7 @@ LIBPFKUTIL_TEST_TARGETS = \
 	HSM_test hsmthread_test dll3_test dll3_btree_test \
 	msgr-test-clnt msgr-test-msg msgr-test-svr \
 	shmempipe_test_master shmempipe_test_slave testpipe \
-	childprocessmanager_test
+	childprocessmanager_test signal_backtrace_test
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
