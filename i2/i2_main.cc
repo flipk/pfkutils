@@ -93,14 +93,12 @@ public:
         }
         start_time.getNow();
         ticker.start(0, 500000);
-        bool done = false;
-
         pxfe_poll p;
 
         p.set(net_fd->getFd(), POLLIN);
         p.set(ticker.fd(), POLLIN);
 
-        while (!done)
+        while (1)
         {
             if (opts.input_set)
                 p.set(opts.input_fd, POLLIN);
@@ -108,9 +106,11 @@ public:
                 p.set(opts.input_fd, 0);
             p.poll(1000);
             if (p.rget(net_fd->getFd()) & POLLIN)
-                done = !handle_net_fd();
+                if (!handle_net_fd())
+                    break;
             if (opts.input_set && p.rget(opts.input_fd) & POLLIN)
-                done = !handle_input_fd();
+                if (!handle_input_fd())
+                    break;
             if (p.rget(ticker.fd()) & POLLIN)
                 handle_tick();
         }
