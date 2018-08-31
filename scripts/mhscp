@@ -1,0 +1,62 @@
+#!/usr/bin/env expect
+
+if { [llength $argv] < 2 } {
+    send_user "usage:  mhscp local \[local...\] X.Y:/remote\n"
+    send_user "   or:  mhscp X.Y:/remote local\n"
+    send_user "    where ip address is 11.1.X.Y\n"
+    send_user " NOTE: this tool does NOT properly handle filenames with\n"
+    send_user "       SPACES in them.... but then, people who do that\n"
+    send_user "       are ugly and stupid anyway\n"
+    exit 1
+}
+
+set arg_out ""
+
+for { set ind 0 } { $ind < [llength $argv] } { incr ind } {
+
+    set arg [lindex $argv $ind]
+    set split1 [split $arg ":"]
+
+    if { [llength $split1] == 2 } {
+
+	set ip   [lindex $split1 0]
+	set path [lindex $split1 1]
+
+	set split2 [split $ip "."]
+
+	if { [llength $split2] == 2 } {
+	    set ip "11.1.$ip"
+	}
+	set arg "root@$ip:$path"
+    }
+
+    lappend arg_out $arg
+}
+
+set good 0
+
+spawn ping -i 1 -c 1 $ip
+expect {
+    "1 received" { set good 1 }
+    "0 received" { set good 0 }
+    -timeout 1 abort
+}
+
+if { $good == 0 } {
+    send_user "cannot ping host! giving up\n"
+    exit 1
+}
+
+spawn ssh-keygen -R $ip
+expect eof
+
+# useful for debug
+# exp_internal 1
+
+spawn sh -c "scp -o \"StrictHostKeyChecking no\" $arg_out"
+expect {
+    "password:"  { send "root\r" ; exp_continue }
+    eof   exit
+}
+
+exit 0

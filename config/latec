@@ -62,6 +62,8 @@ PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETPSHARED = 1
 PFK_CONFIG_HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP = 1
 PFK_CONFIG_HAVE_PTHREAD_CONDATTR_SETPSHARED = 1
 
+SCRIPT_FILES_EXTRA = mhssh mhscp
+
 # why TF doesnt ub14 just DO this by fing default?
 # note, c++1y does not work here because bst uses "typeof".
 # (which is a gnu extension)

@@ -1,0 +1,50 @@
+#!/usr/bin/env expect
+
+if { [llength $argv] != 1 } {
+    send_user "usage:  mhssh X.Y\n"
+    send_user "    where ip address is 11.1.X.Y\n"
+    exit 1
+}
+
+set arg0 [lindex $argv 0]
+set octets [split $arg0 "."]
+set ip ""
+
+if { [llength $octets] == 2 } {
+    set ip "11.1.$arg0"
+} {
+    set ip $arg0
+}
+
+set good 0
+
+spawn ping -i 1 -c 1 $ip
+expect {
+    "1 received" { set good 1 }
+    "0 received" { set good 0 }
+    -timeout 1 abort
+}
+
+if { $good == 0 } {
+    send_user "cannot ping host! giving up\n"
+    exit 1
+}
+
+spawn ssh-keygen -R $ip
+expect eof
+
+# useful for debug
+# exp_internal 1
+
+spawn sh -c "ssh -o \"StrictHostKeyChecking no\" -l root $ip"
+expect {
+    "password:"  { send "root\r" }
+    "# " { }
+    "$ " { }
+    "% " { }
+    -timeout 2 abort
+}
+
+interact
+
+exit

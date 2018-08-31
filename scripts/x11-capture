@@ -4,7 +4,7 @@
 
 file=$HOME/capture-$( date +%Y-%m%d-%H%M%S ).png
 
-xwd | convert - png:$file
+xwd | convert xwd:- png:$file
 
 echo created $file
 
