@@ -221,7 +221,8 @@ static  struct x_defbindings const x_defbindings[] = {
     { XFUNC_search_char_back   , 1 ,  CTRL(']') },
     { XFUNC_newline            , 0 ,  CTRL('M') },
     { XFUNC_newline            , 0 ,  CTRL('J') },
-    { XFUNC_end_of_text        , 0 ,  CTRL('_') },
+// what is this useful for? for me it just kills the shell. poo.
+//    { XFUNC_end_of_text        , 0 ,  CTRL('_') },
     { XFUNC_abort              , 0 ,  CTRL('G') },
     { XFUNC_prev_com           , 0 ,  CTRL('P') },
     { XFUNC_next_com           , 0 ,  CTRL('N') },
