@@ -261,6 +261,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 ;(add-hook 'compilation-mode-hook 'my-compile-mode-hook)
 
 (add-to-list 'auto-mode-alist '("\\.scss\\'" . css-mode))
+(add-to-list 'auto-mode-alist '("\\.h\\'" . c++-mode))
 
 (defun fix-verilog-buffer-my-way ()
   ""
