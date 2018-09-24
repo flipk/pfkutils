@@ -6,6 +6,7 @@ PFK_GROUP_ID := $(shell id -g)
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
 BUILD_DATE := $(shell date '+%Y-%m%d-%H%M%S')
+GIT_SRC_URL := https://github.com/flipk/pfkutils
 DOT_FILES = \
 	Xresources ctwmrc twmrc hexdump_format \
 	screenrc xinitrc vnc-xstartup
@@ -834,7 +835,8 @@ pfkutils_DEPLIBS = \
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
 	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \
-	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\"
+	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\" \
+	-DGIT_SRC_URL=\"$(GIT_SRC_URL)\"
 pfkutils_INSTALL = 1
 pfkutils_POSTINSTALL += pfkutils-post-install
 

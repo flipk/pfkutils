@@ -112,6 +112,7 @@ handle_admin( int argc, char ** argv )
 {
     string arg0(argc > 0 ? argv[0] : "");
 
+    printf("URL: %s\n", GIT_SRC_URL);
     printf("version: %s %s\n", PACKAGE_STRING, BUILD_DATE);
     printf("commit: %s %s\n", PFKUTILS_BRANCH, PFKUTILS_COMMIT);
     if ( argc == 0 || arg0 == "-help" )

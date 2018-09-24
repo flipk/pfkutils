@@ -36,7 +36,7 @@ ifeq ($(CONFIG),)
 
 ##############################################
 
-KNOWN_CONFIGS= adler bilskirnir blade cygwin droid motlap atdsrv
+KNOWN_CONFIGS= adler atdsrv blade cygwin droid droplet
 
 all:
 	@echo please specify CONFIG= from config/ subdir
