@@ -36,7 +36,7 @@ For more information, please refer to <http://unlicense.org>
 #include <iostream>
 
 #include "LockWait.h"
-#include "BackTrace.h"
+#include "signal_backtrace.h"
 
 /** all dynamic linked list version 3 templates under this namespace */
 namespace DLL3 {

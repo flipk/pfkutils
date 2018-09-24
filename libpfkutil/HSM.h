@@ -42,7 +42,7 @@ For more information, please refer to <http://unlicense.org>
 #include <iostream>
 
 #include "dll3.h"
-#include "BackTrace.h"
+#include "signal_backtrace.h"
 #include "hsmthread.h"
 #include "thread_slinger.h"
 

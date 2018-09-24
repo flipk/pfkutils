@@ -1,10 +1,34 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
+#ifndef __SIGNAL_BACKTRACE_H__
+#define __SIGNAL_BACKTRACE_H__
+
 #include <signal.h>
 #include <inttypes.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 #include <ucontext.h>
+#include <string>
+
+// NOTE NOTE NOTE
+//
+// proper use of the backtrace functionality requires use
+// of the "-rdynamic" flag to gcc.
+//
+// NOTE NOTE NOTE
+
+#ifdef __arm__
+// work around arm's backy craptraces
+#define STACK_SYMBOL_SEARCH 1
+#endif
+
+/** handy utilities for throwing exceptions and getting
+ * function backtraces of them */
+#ifdef __cplusplus
+namespace BackTraceUtil {
+#endif
 
 struct SignalBacktraceInfo
 {
@@ -13,10 +37,19 @@ public:
     SignalBacktraceInfo(void);
     ~SignalBacktraceInfo(void);
     void clear(void);
+    void init(bool fatal, int sig = 0,
+              const siginfo_t *new_si = NULL,
+              const ucontext_t *new_uc = NULL);
     void desc_print(const char *format...);
+    void do_backtrace( const char *process_name,
+                       const char *reason = NULL );
 #endif
 
-    int fatal; // actually "bool"
+    int fatal; // actually "bool", but this has to compile in C world, so..
+
+    struct timeval tv;
+    struct tm tm;
+    char timebuf[64];
 
 #define SignalBacktrace_MAX_DESCRIPTION 8192
     char description[SignalBacktrace_MAX_DESCRIPTION];
@@ -24,14 +57,14 @@ public:
 
     int sig; // 0 means no sig (backtrace_now was called)
     siginfo_t siginfo_data;
-    ucontext_t *uc;
+    const ucontext_t *uc;
 
 #define SignalBacktrace_MAX_TRACE_ENTRIES 40
     int trace_size;
     void *trace[SignalBacktrace_MAX_TRACE_ENTRIES];
     char **messages;
 
-#ifdef __arm__
+#if STACK_SYMBOL_SEARCH
     int trace_size2;
     void *trace2[SignalBacktrace_MAX_TRACE_ENTRIES];
     char **messages2;
@@ -50,11 +83,9 @@ typedef void (*SignalBacktraceHandler)(
 
 class SignalBacktrace
 {
-    pid_t pid;
     char process_name[64];
     SignalBacktraceHandler handler;
     SignalBacktraceInfo  info;
-    void do_backtrace(const char *reason = NULL);
     static void default_user_handler(const struct SignalBacktraceInfo *info);
     static void signal_handler(int sig, siginfo_t *info, void *uc);
     static SignalBacktrace * instance;
@@ -65,12 +96,42 @@ public:
     static void cleanup(void);
     void register_handler(const char *process_name,
                           SignalBacktraceHandler new_handler);
-    void backtrace_now(const char *reason);
+    static void backtrace_now(const char *reason);
 };
 
 #endif
 
 #ifdef __cplusplus
+
+/** base class for errors you can throw. constructor
+ * takes a snapshot of the stack and the Format method
+ * prints out the symbol names. derive all your throwable
+ * errors from this base class. */
+struct BackTrace {
+    SignalBacktraceInfo  info;
+    /** constructor takes a stack snapshot */
+    BackTrace(void)
+    {
+        info.do_backtrace("");
+    }
+    /** look up the symbols associated with the stack trace
+     * and return a multi-line string listing them.
+     * \return multi-line string containing the stack backtrace. */
+    const std::string Format(void) const
+    {
+        std::string ret = _Format();
+        ret += info.description;
+        return ret;
+    }
+protected:
+    virtual const std::string _Format(void) const
+    {
+        // a derived class may override this if it wishes
+        // to provide more information appended to the backtrace.
+        return "";
+    }
+};
+
 extern "C" {
 #endif
 
@@ -82,4 +143,7 @@ void signal_backtrace_now(const char *reason);
 
 #ifdef __cplusplus
 }
+}; // namespace BackTraceUtil
 #endif
+
+#endif /* __SIGNAL_BACKTRACE_H__ */

@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
+using namespace BackTraceUtil;
+
 void my_handler(const SignalBacktraceInfo *info)
 {
     ssize_t s = write(2, info->description, info->desc_len);
@@ -12,20 +14,51 @@ void my_handler(const SignalBacktraceInfo *info)
 }
 
 int
-main()
+main(int argc, char ** argv)
 {
-    SignalBacktrace::get_instance()->register_handler("signal_test",
-                                                      &my_handler);
+    if (argc != 2)
+    {
+        printf("usage: %s test_number\n", argv[0]);
+        return 1;
+    }
 
-    SignalBacktrace::get_instance()->backtrace_now( "testing" );
+    int test = atoi(argv[1]);
 
-    printf("pid %d is sleeping now, send signal now\n", getpid());
-    sleep(10);
+    if (test == 1)
+    {
+        try {
+            throw BackTrace();
+        }
+        catch (BackTrace bt) {
+            printf("%s\n", bt.Format().c_str());
+            exit (1);
+        }
+    }
+    else if (test == 2)
+    {
+        SignalBacktrace::get_instance()->register_handler(
+            "signal_test", &my_handler);
 
-    char * ptr = (char*) 1;
-    *ptr = 0;
+        SignalBacktrace::backtrace_now( "testing" );
 
-    SignalBacktrace::cleanup();
+        SignalBacktrace::cleanup();
+    }
+    else if (test == 3)
+    {
+        SignalBacktrace::get_instance()->register_handler(
+            "signal_test", &my_handler);
+        char * ptr = (char*) 1;
+        *ptr = 0;
+        SignalBacktrace::cleanup();
+    }
+    else if (test == 4)
+    {
+        SignalBacktrace::get_instance()->register_handler(
+            "signal_test", &my_handler);
+        printf("pid %d is sleeping now, send signal now\n", getpid());
+        sleep(10);
+        SignalBacktrace::cleanup();
+    }
 
     return 0;
 }

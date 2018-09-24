@@ -33,7 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #include <time.h>
 #include <iostream>
 
-#include "BackTrace.h"
+#include "signal_backtrace.h"
 
 /** a collection of mutex locks and waiter/semaphore abstractions */
 namespace WaitUtil {

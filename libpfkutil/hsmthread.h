@@ -32,8 +32,8 @@ For more information, please refer to <http://unlicense.org>
 #include <pthread.h>
 #include <string>
 
-#include "BackTrace.h"
-#include  "dll3.h"
+#include "signal_backtrace.h"
+#include "dll3.h"
 
 namespace HSMThread {
 

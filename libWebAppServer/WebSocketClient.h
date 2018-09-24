@@ -32,7 +32,7 @@ For more information, please refer to <http://unlicense.org>
 #include "CircularReader.h"
 #include "WebAppMessage.h"
 #include "LockWait.h"
-#include "BackTrace.h"
+#include "signal_backtrace.h"
 #include "fdThreadLauncher.h"
 
 #include <sstream>
