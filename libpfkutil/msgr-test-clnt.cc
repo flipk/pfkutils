@@ -85,7 +85,7 @@ main()
         PfkMsg m;
         m.init(0x0104, buf, sizeof(buf));
         m.add_val((uint16_t) 1234);
-        m.add_field(16, (void*)"this is a test");
+        m.add_field(16, (void*)"this is a test!");
         m.finish();
         if (client.send_msg(m))
             cerr << "s ";

@@ -1804,7 +1804,8 @@ public:
         {
             ind = freestack.back();
             freestack.pop_back();
-            auto it = fds.begin() + ind;
+            // stupid ubuntu 10, i wanted to use "auto" here, grr.
+            std::vector<pollfd>::iterator it = fds.begin() + ind;
             for (it = fds.erase(it); it != fds.end(); it++)
                 // adjust indexes which have now moved down by 1
                 if (it->fd != -1)

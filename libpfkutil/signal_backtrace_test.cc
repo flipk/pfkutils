@@ -2,6 +2,7 @@
 #include "signal_backtrace.h"
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace BackTraceUtil;
 
