@@ -98,19 +98,40 @@ public:
         p.set(net_fd->getFd(), POLLIN);
         p.set(ticker.fd(), POLLIN);
 
+#define POLLERRS (POLLERR | POLLHUP | POLLNVAL)
+
         while (1)
         {
+            int evt;
+
             if (opts.input_set)
                 p.set(opts.input_fd, POLLIN);
             else
                 p.set(opts.input_fd, 0);
+
             p.poll(1000);
-            if (p.rget(net_fd->getFd()) & POLLIN)
+            evt = p.rget(net_fd->getFd());
+
+            if (evt & POLLIN)
+            {
                 if (!handle_net_fd())
                     break;
-            if (opts.input_set && p.rget(opts.input_fd) & POLLIN)
-                if (!handle_input_fd())
+            }
+            else if (evt & POLLERRS)
+                break;
+
+            if (opts.input_set)
+            {
+                evt = p.rget(opts.input_fd);
+                if (evt & POLLIN)
+                {
+                    if (!handle_input_fd())
+                        break;
+                }
+                else if (evt & POLLERRS)
                     break;
+            }
+
             if (p.rget(ticker.fd()) & POLLIN)
                 handle_tick();
         }
