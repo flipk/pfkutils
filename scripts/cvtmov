@@ -1,0 +1,22 @@
+#!/bin/sh
+
+crf=28
+
+infile="$1"
+outfile="${infile%.mov}.mp4"
+
+rm -f $outfile
+
+ffmpeg \
+-i "$infile" \
+-strict experimental \
+-c:v libx264 \
+-preset fast \
+-crf $crf \
+-c:a aac \
+-copyts \
+"$outfile"
+
+ls -l "$infile" "$outfile"
+
+exit 0

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+crf=28
+
+infile="$1"
+outfile="${infile%.flv}.mp4"
+
+rm -f $outfile
+
+#if the flv has vp6f and mp3:
+# note crf is 18 (perfect) to 28 (not so perfect)
+ffmpeg \
+-i "$infile" \
+-strict experimental \
+-c:v libx264 \
+-preset slow \
+-crf $crf \
+-c:a copy -copyts \
+"$outfile"
+
+ls -l "$infile" "$outfile"
+
+#if the flv has h264 and aac: 
+#ffmpeg \
+#-i "$1" \
+#-c copy -copyts \
+#"$2"
+
+exit 0

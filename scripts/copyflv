@@ -1,0 +1,16 @@
+#!/bin/sh
+
+infile="$1"
+outfile="${infile%.flv}.mp4"
+
+rm -f $outfile
+
+#if the flv has h264 and aac: 
+ffmpeg \
+-i "$infile" \
+-c copy -copyts \
+"$outfile"
+
+ls -l "$infile" "$outfile"
+
+exit 0
