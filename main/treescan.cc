@@ -196,9 +196,11 @@ private:
                 mtime.tv_sec = sb.st_mtim.tv_sec;
                 mtime.tv_usec = sb.st_mtim.tv_nsec / 1000;
                 err = false;
+                //printf("mode of %s is %x\n", name.c_str(), sb.st_mode);
             }
         }
         const bool isdir(void) const { return S_ISDIR(sb.st_mode); }
+        const bool islnk(void) const { return S_ISLNK(sb.st_mode); }
         string name;
         struct stat sb;
         bool err;
@@ -369,7 +371,11 @@ public:
         while (todo.size() > 0)
         {
             const fileInfo &item = todo.front();
-            if (item.isdir())
+            if (item.islnk())
+            {
+                // cout << "skipping link\n";
+            }
+            else if (item.isdir())
             {
                 DIR * d = opendir(item.name.c_str());
                 struct dirent * de;
