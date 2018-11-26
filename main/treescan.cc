@@ -56,6 +56,8 @@ For more information, please refer to <http://unlicense.org>
 
 using namespace std;
 
+typedef std::list<std::string> ignoreList;
+
 class treescan_tree {
 private:
     struct tskey : public BST_UNION {
@@ -207,8 +209,28 @@ private:
         pxfe_timeval mtime;
     };
     pxfe_timeval lastScan;
+    const ignoreList &ignore_list;
+    bool ignore_file(const string &fname) const {
+        size_t slashpos = fname.find_last_of('/');
+        if (slashpos == string::npos)
+            slashpos = 0;
+        else
+            slashpos++;
+
+// for (auto it : ignore_list) if we had good compiler on all archs
+        for (ignoreList::const_iterator it = ignore_list.begin();
+             it != ignore_list.end();
+             it++)
+        {
+            if (fname.compare(slashpos, string::npos, *it) == 0)
+                return true;
+        }
+        return false;
+    }
 public:
-    treescan_tree(string dir) {
+    treescan_tree(string dir, const ignoreList &_ignore_list)
+        : ignore_list(_ignore_list)
+    {
         tsDbDir = dir;
         string tsDb = dir + "/" + TSDB_FILENAME;
         char * key_var = getenv("TREESCAN_DBKEY");
@@ -384,10 +406,14 @@ public:
                     string dename(de->d_name);
                     if (dename == "." || dename == "..")
                         continue; // skip
-                    todo.push_back(fileInfo(item.name + "/" + dename));
-                    if (todo.back().err)
-                        // take it off again
-                        todo.pop_back();
+                    string newname = item.name + "/" + dename;
+                    if (!ignore_file(newname))
+                    {
+                        todo.push_back(fileInfo(newname));
+                        if (todo.back().err)
+                            // take it off again
+                            todo.pop_back();
+                    }
                 }
                 closedir(d);
             }
@@ -525,6 +551,7 @@ treescan_usage(void)
 {
     cout << 
 "treescan args:\n"
+"     -I <name> : ignore anything named <name>\n"
 "     -p : dont scan any files, just print what's in the database\n";
     exit(1);
 }
@@ -537,6 +564,7 @@ treescan_main(int argc, char ** argv)
 
     string rootdir("NOTSET");
     bool print = false;
+    ignoreList  ignore_list;
 
     for (int ind = 1; ind < argc; ind++)
     {
@@ -550,6 +578,11 @@ treescan_main(int argc, char ** argv)
         }
         if (arg == "-p")
             print = true;
+        else if (arg == "-I")
+        {
+            ind++;
+            ignore_list.push_back(argv[ind]);
+        }
         else
             treescan_usage();
     }
@@ -557,7 +590,7 @@ treescan_main(int argc, char ** argv)
     if (rootdir == "NOTSET")
         treescan_usage();
 
-    treescan_tree  tst(rootdir);
+    treescan_tree  tst(rootdir, ignore_list);
 
     if (print)
         tst.print();
