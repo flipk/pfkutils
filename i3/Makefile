@@ -46,7 +46,7 @@ i3_TARGET = $(OBJDIR)/i3
 i3_PROTOSRCS = i3.proto
 i3_CXXSRCS = i3_options.cc i3_main.cc
 i3_INCS = -I../libprotossl -I../libpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
-i3_DEFS = -Di3_main=main -DI3_PROTO_HDR=\"i3-i3.pb.h\"
+i3_DEFS = -Di3_main=main -DI3_PROTO_HDR=\"$(i3_i3.proto_HDR)\"
 i3_DEPLIBS = $(libi3_TARGET) $(libprotossl_TARGET) $(libutil_TARGET)
 i3_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 i3_LDFLAGS = -rdynamic

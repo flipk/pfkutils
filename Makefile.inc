@@ -206,9 +206,11 @@ FROM_C_TO_D      = $(call FROM_X_TO_Y,c,c.d,$(1))
 FROM_CC_TO_O     = $(call FROM_X_TO_Y,cc,o,$(1))
 FROM_CC_TO_D     = $(call FROM_X_TO_Y,cc,cc.d,$(1))
 FROM_Y_TO_C      = $(call FROM_X_TO_Y,y,c,$(1))
+FROM_Y_TO_H      = $(call FROM_X_TO_Y,y,h,$(1))
 FROM_Y_TO_D      = $(call FROM_X_TO_Y,y,c.d,$(1))
 FROM_Y_TO_O      = $(call FROM_X_TO_Y,y,o,$(1))
 FROM_YY_TO_CC    = $(call FROM_X_TO_Y,yy,cc,$(1))
+FROM_YY_TO_HH    = $(call FROM_X_TO_Y,yy,hh,$(1))
 FROM_YY_TO_D     = $(call FROM_X_TO_Y,yy,cc.d,$(1))
 FROM_YY_TO_O     = $(call FROM_X_TO_Y,yy,o,$(1))
 FROM_L_TO_C      = $(call FROM_X_TO_Y,l,c,$(1))
@@ -244,6 +246,17 @@ $(target)_PROTOGENSRCS = $(call FROM_PROTO_TO_CC,$($(target)_PROTOSRCS))
 $(target)_PROTOGENHDRS = $(call FROM_PROTO_TO_H,$($(target)_PROTOSRCS))
 $(target)_PROTOGENDEPS = $(call FROM_PROTO_TO_D,$($(target)_PROTOSRCS))
 $(target)_PROTOGENOBJS = $(call FROM_PROTO_TO_O,$($(target)_PROTOSRCS))
+
+$(foreach src,$($(target)_YSRCS),
+$(target)_$(src)_HDR := $(notdir $(call FROM_Y_TO_H, $(src)))
+)
+
+$(foreach src,$($(target)_YYSRCS),
+$(target)_$(src)_HDR := $(notdir $(call FROM_YY_TO_HH, $(src)))
+)
+
+$(foreach src,$($(target)_PROTOSRCS),
+$(target)_$(src)_HDR := $(notdir $(call FROM_PROTO_TO_H, $(src))))
 
 endef
 
@@ -405,8 +418,6 @@ $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_T
 # so we use a sed-expression to replace that with $(target)-dir_dir_file_pb.h
 
 $(foreach src,$($(target)_PROTOSRCS),
-
-$(target)_$(src)_HDR := $(call FROM_PROTO_TO_H, $(src))
 
 $(call FROM_PROTO_TO_CC, $(src)): $(src)
 	@echo making $$@

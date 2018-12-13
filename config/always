@@ -379,7 +379,7 @@ install_protossl:
 PROG_TARGETS += protossl_test
 protossl_test_TARGET = $(OBJDIR)/protossl_test
 protossl_test_DEFS = $(MBEDTLS_FLAGS) \
--DTEST_PROTO_HDR=\"protossl_test-libprotossl_test_proto.pb.h\"
+-DTEST_PROTO_HDR=\"$(protossl_test_libprotossl/test_proto.proto_HDR)\"
 protossl_test_INCS = -Ilibprotossl -Ilibpfkutil \
 	$(PROTOBUF_INC) $(MBEDTLS_INCS)
 protossl_test_PROTOSRCS = libprotossl/test_proto.proto
@@ -406,7 +406,7 @@ $(error PFK_BUILD_libprotossl is required for PFK_BUILD_i3)
 endif
 LIB_TARGETS += libi3
 libi3_TARGET = $(OBJDIR)/libi3.a
-libi3_DEFS = -DI3_PROTO_HDR=\"libi3-i3_i3.pb.h\"
+libi3_DEFS = -DI3_PROTO_HDR=\"$(libi3_i3/i3.proto_HDR)\"
 libi3_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 libi3_CXXSRCS = i3/i3_options.cc i3/i3_main.cc
 libi3_PROTOSRCS = i3/i3.proto
