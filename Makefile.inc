@@ -304,8 +304,8 @@ $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_O, $(src)): $(src)
 $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_C_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 # handle CC files
@@ -322,8 +322,8 @@ $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_O, $(src)): $(src)
 $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_D, $(src)): $(src)
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_CC_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 # handle Y files
@@ -344,8 +344,8 @@ $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)): $(src)
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C, $(src))
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_Y_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 # handle YY files
@@ -358,8 +358,8 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_CC, $(src)): $(src)
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_TO_CC, $(src))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_YY_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src))
@@ -379,8 +379,8 @@ $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_C, $(src)): $(src)
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C, $(src))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_L_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C, $(src))
@@ -408,8 +408,8 @@ $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_O, $(src)): $(call FROM_LL_T
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_TO_CC, $(src))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_LL_TO_O,$(src)) -MF $$@
+		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 # handle PROTO files
@@ -442,8 +442,8 @@ $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_O, $(src)): $(call FRO
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo depending $$<
 	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
-		$(INCS) $(DEFS) $($(target)_DEFS) \
 		-M $$< -MT $(call FROM_PROTO_TO_O,$(src)) -MF $$@
+		$(INCS) $(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 )
 
 # here for reference
