@@ -138,7 +138,9 @@ POSTALL ?=
 #   $(target)_POSTINSTALL = some_recipe # only if you have additional rules
 #                                         you want triggered during a
 #                                         'make install'
-#
+#   $(target)_PREMAKE = recipe  # rules run before making $(target)
+#   $(target)_POSTMAKE = recipe # rules run after making $(target)
+
 # lib targets can also have:
 #   $(target)_INSTALL_HDRS = file.h # (only if library is to be installed)
 #
@@ -541,8 +543,7 @@ endif
 
 ##############################################
 
-_all: $(foreach target,$(LIB_TARGETS) \
-	$(PROG_TARGETS),$($(target)_TARGET)) $(POSTALL)
+_all: $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$($(target)_PREMAKE) $($(target)_TARGET) $($(target)_POSTMAKE)) $(POSTALL)
 
 cscope.files: Makefile $(INCLUDE_MAKEFILES)
 	@echo making cscope.files
