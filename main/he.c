@@ -26,6 +26,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 #define _LARGEFILE64_SOURCE
+#define __STDC_FORMAT_MACROS
 
 #include "pfkutils_config.h"
 #ifndef _GNU_SOURCE 
@@ -33,6 +34,7 @@ For more information, please refer to <http://unlicense.org>
 #endif
 #define _FILE_OFFSET_BITS 64
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -178,6 +180,7 @@ he_main( int argc, char ** argv )
 
         update_screen();
         c = getch();
+        DEBUG((debug_fd, "got key %d\n", c));
         handle_character( c );
 
     } while ( c != 'q' );
@@ -299,7 +302,8 @@ update_screen( void )
             else if ( i == -buffstart )
                 newls[n--] = i-1;
 
-        DEBUG(( debug_fd, "bailing out with i %d n %d bs %d mid %d\n",
+        DEBUG(( debug_fd, "bailing out with i %d n %d "
+                "bs %" PRIu64 " mid %d\n",
                 i, n, buffstart, middle ));
         if ( i == -1 && buffstart == -middle && n >= 0 )
         {
@@ -351,7 +355,7 @@ update_screen( void )
     }
     else
     {
-        off_t start_file_pos, end_file_pos, pos;
+        off_t start_file_pos, pos;
         unsigned char * file_buf;
         int readlen, readpos;
 
@@ -381,8 +385,6 @@ update_screen( void )
         start_file_pos =
             (file_position - (file_position % charsperline)) -
             (cursor_line * charsperline);
-
-        end_file_pos = start_file_pos + readlen;
 
         file_buf = (unsigned char *)malloc( readlen );
 
