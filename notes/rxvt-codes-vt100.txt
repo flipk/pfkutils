@@ -39,30 +39,6 @@ ESC [ Pm m = set char attributes
           Pm = 97 / 107  fg/bg Bright White
           Pm = 99 / 109  fg/bg Bright Default
 
-some useful UTF-8 encodings
-
-e28690   ←
-e28692   →
-e28691   ↑
-e28693   ↓
-
-e28792   ⇒
-e28790   ⇐
-
-e29480   ─
-e29482   │
-e2948c   ┌
-e29490   ┐
-e29494   └
-e29498   ┘
-
-example usage:
-
- ┌──────────┐
- │  thing1  │
- │ →thing2← │
- └──────────┘
-
 key inputs
            up = ESC [ A     = history previous
          down = ESC [ B     = history next

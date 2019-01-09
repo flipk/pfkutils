@@ -1,0 +1,60 @@
+
+https://unicode.org/charts/
+http://www.ltg.ed.ac.uk/~richard/utf-8.cgi
+
+U+<hex number> is the unicode "code point"
+
+to encode, see
+  http://www.unicode.org/versions/Unicode11.0.0/
+  section 3.9
+
+to encode a code point to UTF-8:
+
+1 byte format: 0 <7 bits>
+2 byte format: 110 <5 bits>   10 <6 bits>
+3 byte format: 1110 <4 bits>  10 <6 bits> 10 <6 bits>
+4 byte format: 11110 <3 bits> 10 <6 bits> 10 <6 bits> 10 <6 bits>
+
+to encode a code point to UTF-16:
+
+1 word:  xxxx xxxx xxxx xxxx
+2 word:  1101 10uu uuyy yyyy 1101 11zz zzzz zzzz
+
+if U+0000 thru U+FFFF : 0 0000 xxxx xxxx xxxx xxxx
+otherwise:              w wwww yyyy yyzz zzzz zzzz
+and: uuuu = wwwww - 1  (which you can do since max is U+10FFFF)
+
+          UTF-8    UTF-16
+         -------- ---------
+U+1F600  F09F9880 D83D DE00  😀    grinning
+U+1F4A9  F09F92A9 D83D DCA9  💩    PILE OF POO
+
+         UTF-8
+         ------
+U+2190   e28690   ←   LEFTWARDS ARROW
+U+2191   e28691   ↑   UPWARDS ARROW
+U+2192   e28692   →   RIGHTWARDS ARROW
+U+2193   e28693   ↓   DOWNWARDS ARROW
+
+U+21D0   e28790   ⇐   LEFTWARDS DOUBLE ARROW
+U+21D2   e28792   ⇒   RIGHTWARDS DOUBLE ARROW
+
+         e29480   ─
+         e29482   │
+         e2948c   ┌
+         e29490   ┐
+         e29494   └
+         e29498   ┘
+
+example usage:
+
+ ┌──────────┐
+ │  thing1  │
+ │ →thing2← │
+ └──────────┘
+
+you can encode unicode in html in UTF-8 format,
+as long as you use <meta charset="utf-8"> in <head>.
+you can also encode unicode into html using "&#xXXXX;"
+for instance  &#x1f4a9;  .
+
