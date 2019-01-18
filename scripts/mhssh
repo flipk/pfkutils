@@ -1,4 +1,6 @@
-#!/usr/bin/env expect
+#!/usr/bin/env tclsh
+
+package require Expect
 
 if { [llength $argv] != 1 } {
     send_user "usage:  mhssh X.Y\n"
@@ -36,7 +38,20 @@ expect eof
 # useful for debug
 # exp_internal 1
 
-spawn sh -c "ssh -o \"StrictHostKeyChecking no\" -l root $ip"
+trap {
+    set rows [stty rows]
+    set cols [stty columns]
+    stty rows $rows columns $cols < $spawn_out(slave,name)
+} SIGWINCH
+
+set sshpid [spawn sh -c "ssh -o \"StrictHostKeyChecking no\" -l root $ip"]
+
+# here's a neat bug. if you have "-timeout 1 abort", and you run
+# this command a hundred times, 3 or 4 times the timeout will fire
+# in milliseconds. EXPECT seems to internally have a timer that fires
+# peridically, and if you invoke this a microsecond before that timer,
+# the supposedly-one-second timer fires in a microsecond.
+
 expect {
     "password:"  { send "root\r" }
     "# " { }
