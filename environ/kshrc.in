@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2017-05-18.22:46:52
+#      Last update: 2019-01-24.00:12:04
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -89,14 +89,15 @@ case $- in
         ;;
 esac
 
-COLOR_INVERT="[7m"
-COLOR_FG_RED="[31;1m"
-COLOR_FG_YEL="[33;1m"
-COLOR_FG_BLU="[34;1m"
-COLOR_BG_RED="[41m"
-COLOR_BG_YEL="[43m"
-COLOR_BG_BLU="[44m"
-COLOR_NORMAL="[m"
+COLOR_INVERT="\e[7m"
+COLOR_FG_RED="\e[31;1m"
+COLOR_FG_YEL="\e[33;1m"
+COLOR_FG_LT_YEL="\e[33m"
+COLOR_FG_BLU="\e[34;1m"
+COLOR_BG_RED="\e[41m"
+COLOR_BG_YEL="\e[43m"
+COLOR_BG_BLU="\e[44m"
+COLOR_NORMAL="\e[m"
 
 # if ksh   : __isksh returns true,  __isbash returns false
 # if bash  : __isksh returns true,  __isbash returns true
@@ -249,8 +250,7 @@ if __isksh ; then
         typeset _ps
         _ps=''
         if [[ "x$1" != x ]] ; then
-            _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL
-"
+            _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL\n"
         fi
         if [[ $REALUSER == "root" ]] ; then
             _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL"
@@ -260,18 +260,21 @@ if __isksh ; then
         if [[ x$CLEARCASE_ROOT != x ]] ; then
             _ps="${_ps} in CC"
         fi
-        _ps="${_ps} pid $$ on $TTY"
-        _ps="${_ps} $PFKSH_BUILD"
+        _ps="${_ps} ${COLOR_FG_RED}e\x$COLOR_NORMAL"
+        _ps="${_ps} $COLOR_FG_LT_YEL\t$COLOR_NORMAL"
+        _ps="${_ps} $$ $TTY"
         if [[ x$WINDOW != x ]] ; then
-            _ps="${_ps}, scr $STY-$WINDOW"
+            _ps="${_ps} scr $STY-$WINDOW"
+        elif [[ "x$TMUX_PANE" != x ]] ; then
+            _ps="${_ps} tmux $TMUX_PANE"
+        else
+            _ps="${_ps} $PFKSH_BUILD"
         fi
         if [[ $_set_prompt_first_time -eq 1 ]] ; then
-            _ps="${_ps}
- % "
+            _ps="${_ps}\n % "
             _set_prompt_first_time=0
         else
-            _ps="${_ps}
- $COLOR_INVERT%$COLOR_NORMAL "
+            _ps="${_ps}\n $COLOR_INVERT%$COLOR_NORMAL "
         fi
         export PS1="$_ps"
     }

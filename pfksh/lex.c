@@ -4,7 +4,8 @@
 
 #include "sh.h"
 #include <ctype.h>
-
+#include <time.h>
+#include <sys/time.h>
 
 /* Structure to keep track of the lexing state and the various pieces of info
  * needed for each particular state.
@@ -1062,6 +1063,75 @@ getsc_line(s)
 		set_prompt(PS2, (Source *) 0);
 }
 
+int
+output_ps1_backslash(struct shf *shf, char *ps1, Source *s)
+{
+    switch (ps1[1])
+    {
+    case 'a':
+        shf_fprintf(shf, "%c", 7);
+        return 2;
+    case 'e':
+        shf_fprintf(shf, "%c", 27);
+        return 2;
+    case 'n': // newline
+        shf_fprintf(shf, "\n");
+        return 2;
+    case 'r': // carriage return
+        shf_fprintf(shf, "\r");
+        return 2;
+
+// NOTE this is proprietary to pfksh! bash doesn't have this.
+    case 'x': // exit status!
+        shf_fprintf(shf, "%d", exstat);
+        return 2;
+
+    case 't': // 24 HH MM SS
+    {
+        char date[64];
+        struct tm now_tm;
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        time_t now_sec = (time_t) tv.tv_sec;
+        localtime_r(&now_sec, &now_tm);
+        int msecs = tv.tv_usec / 1000;
+        strftime(date, sizeof(date), "%H:%M:%S", &now_tm);
+        shf_fprintf(shf, "%s.%03d", date, msecs);
+        return 2;
+    }
+    case '!': // history number
+        shf_fprintf(shf, "%d", s ? s->line + 1 : 0);
+        return 2;
+
+// all the unsupported codes from bash
+    case 'd': // Tue May 26");
+    case 'D':  // \D{format}
+    case 'h': // hostname
+    case 'H': // hostname.domainname
+    case 'j': // number of jobs
+    case 'l': // terminal device
+    case 's': // name of shell
+    case 'T': // 12 HH MM SS
+    case '@': // 12 HH MM AM/PM
+    case 'A': // 24 HH:MM
+    case 'u': // username
+    case 'v': // pfksh version
+    case 'V': // pfksh release?
+    case 'w': // working dir, $HOME -> "~"
+    case '$': // root -> #, else $
+    case '\\': // backslash
+    case '[': // dunno
+    case ']': // dunno
+        // unsupported
+        return 2;
+    }
+
+// xxx three digits octal
+
+    return 2;
+}
+
+
 void
 set_prompt(to, s)
 	int to;
@@ -1085,11 +1155,10 @@ set_prompt(to, s)
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
 				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
 			while (*ps1) {
-				if (*ps1 != '!' || *++ps1 == '!')
-					shf_putchar(*ps1++, shf);
-				else
-					shf_fprintf(shf, "%d",
-						s ? s->line + 1 : 0);
+                            if (*ps1 == '\\')
+                                ps1 += output_ps1_backslash(shf, ps1, s);
+                            else
+                                shf_putchar(*ps1++, shf);
 			}
 			ps1 = shf_sclose(shf);
 			saved_atemp = ATEMP;
