@@ -1,0 +1,22 @@
+
+program that runs all the time holding keys : gnome-keyring-daemon
+
+useful program : seahorse
+
+chromium at work : same password as xlock
+
+gnome-sound-applet &
+
+gsettings list-keys $top
+gsettings set $top $key $value
+gsettings set $top $key 'uint32 $value'
+
+tops:
+org.gnome.desktop.screensaver : picture-uri lock-delay
+org.gnome.desktop.session : idle-delay
+org.gnome.settings-daemon.plugins.power : ?
+
+xprintidle
+
+gnome-screensaver-command -a
+gnome-screensaver-command -l
