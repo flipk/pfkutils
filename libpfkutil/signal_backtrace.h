@@ -77,6 +77,7 @@ public:
 // have to exit immediately, it could trigger a safe shutdown sequence
 // in the application.
 typedef void (*SignalBacktraceHandler)(
+    void * arg,
     const struct SignalBacktraceInfo *info);
 
 #ifdef __cplusplus
@@ -85,8 +86,10 @@ class SignalBacktrace
 {
     char process_name[64];
     SignalBacktraceHandler handler;
+    void * handler_arg;
     SignalBacktraceInfo  info;
-    static void default_user_handler(const struct SignalBacktraceInfo *info);
+    static void default_user_handler(void * arg,
+                                     const struct SignalBacktraceInfo *info);
     static void signal_handler(int sig, siginfo_t *info, void *uc);
     static SignalBacktrace * instance;
     SignalBacktrace(void);
@@ -95,6 +98,7 @@ public:
     static SignalBacktrace * get_instance(void);
     static void cleanup(void);
     void register_handler(const char *process_name,
+                          void * arg,
                           SignalBacktraceHandler new_handler);
     static void backtrace_now(const char *reason);
 };
@@ -112,7 +116,8 @@ struct BackTrace {
     /** constructor takes a stack snapshot */
     BackTrace(void)
     {
-        info.do_backtrace("");
+        info.init(false);
+        info.do_backtrace("BT");
     }
     /** look up the symbols associated with the stack trace
      * and return a multi-line string listing them.
@@ -135,7 +140,7 @@ protected:
 extern "C" {
 #endif
 
-void signal_backtrace_init(const char *process_name,
+void signal_backtrace_init(const char *process_name, void *arg,
                            SignalBacktraceHandler new_handler);
 void signal_backtrace_cleanup(void);
 void signal_backtrace_now(const char *reason);

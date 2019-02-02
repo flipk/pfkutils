@@ -44,6 +44,7 @@ SignalBacktrace :: SignalBacktrace(void)
     sigaction(SIGQUIT, &sa, NULL);
 
     handler = &default_user_handler;
+    handler_arg = NULL;
     instance = this;
 }
 
@@ -166,6 +167,7 @@ SignalBacktraceInfo :: desc_print(const char *format...)
 
 void
 SignalBacktrace :: register_handler( const char *new_process_name,
+                                     void * arg,
                                      SignalBacktraceHandler new_handler )
 {
     if (new_process_name != NULL)
@@ -176,14 +178,21 @@ SignalBacktrace :: register_handler( const char *new_process_name,
     else
         process_name[0] = 0;
     if (new_handler != NULL)
+    {
         handler = new_handler;
+        handler_arg = arg;
+    }
     else
+    {
         handler = &default_user_handler;
+        handler_arg = NULL;
+    }
 }
 
 //static
 void
 SignalBacktrace :: default_user_handler(
+    void *arg,
     const struct SignalBacktraceInfo *info )
 {
     ssize_t s = write(2, info->description, info->desc_len);
@@ -222,7 +231,7 @@ SignalBacktrace :: signal_handler(int sig, siginfo_t *info, void *uc)
     }
     instance->info.init(fatal, sig, info, (ucontext_t *) uc);
     instance->info.do_backtrace(instance->process_name);
-    instance->handler(&instance->info);
+    instance->handler(instance->handler_arg, &instance->info);
 }
 
 //static
@@ -236,7 +245,7 @@ SignalBacktrace :: backtrace_now( const char *reason )
         pn = instance->process_name;
     info2.do_backtrace(pn, reason);
     if (instance != NULL)
-        instance->handler(&info2);
+        instance->handler(instance->handler_arg, &info2);
 }
 
 static void demangle(char *input,
@@ -532,10 +541,10 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
 //// -------------- C interface --------------
 
 void
-signal_backtrace_init(const char *process_name,
+signal_backtrace_init(const char *process_name, void *arg,
                       SignalBacktraceHandler new_handler)
 {
-    SignalBacktrace::get_instance()->register_handler(process_name,
+    SignalBacktrace::get_instance()->register_handler(process_name, arg,
                                                       new_handler);
 }
 

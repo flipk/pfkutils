@@ -6,7 +6,7 @@
 
 using namespace BackTraceUtil;
 
-void my_handler(const SignalBacktraceInfo *info)
+void my_handler(void * arg, const SignalBacktraceInfo *info)
 {
     ssize_t s = write(2, info->description, info->desc_len);
     if (s) { } // remove unused warning
@@ -38,7 +38,7 @@ main(int argc, char ** argv)
     else if (test == 2)
     {
         SignalBacktrace::get_instance()->register_handler(
-            "signal_test", &my_handler);
+            "signal_test", NULL, &my_handler);
 
         SignalBacktrace::backtrace_now( "testing" );
 
@@ -47,7 +47,7 @@ main(int argc, char ** argv)
     else if (test == 3)
     {
         SignalBacktrace::get_instance()->register_handler(
-            "signal_test", &my_handler);
+            "signal_test", NULL, &my_handler);
         char * ptr = (char*) 1;
         *ptr = 0;
         SignalBacktrace::cleanup();
@@ -55,7 +55,7 @@ main(int argc, char ** argv)
     else if (test == 4)
     {
         SignalBacktrace::get_instance()->register_handler(
-            "signal_test", &my_handler);
+            "signal_test", NULL, &my_handler);
         printf("pid %d is sleeping now, send signal now\n", getpid());
         sleep(10);
         SignalBacktrace::cleanup();
