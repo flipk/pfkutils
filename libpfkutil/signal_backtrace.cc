@@ -53,6 +53,7 @@ SignalBacktrace :: ~SignalBacktrace(void)
     struct sigaction sa;
     sa.sa_handler = SIG_DFL;
     sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask); // makes valgrind happy
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGINT,  &sa, NULL);
     sigaction(SIGQUIT, &sa, NULL);
