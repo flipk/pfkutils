@@ -296,9 +296,9 @@ CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
 $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_O, $(src)): $(src)
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
+	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) $(CFLAGS) $$< -o $$@
+		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
@@ -313,10 +313,10 @@ $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
 
 $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_O, $(src)): $(src)
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
-		$(CXXFLAGS) $$< -o $$@
+		$$< -o $$@
 )
 
 
@@ -332,10 +332,10 @@ $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_D, $(src)): $(src)
 
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_O, $(src)): $(call FROM_Y_TO_C, $(src))
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
+	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
-		$(CFLAGS) $$< -o $$@
+		$$< -o $$@
 )
 
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)): $(src)
@@ -368,9 +368,9 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_T
 
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 # handle L files
@@ -390,10 +390,10 @@ $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C, $(src))
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $($(target)_CFLAGS) \
+	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
-		$(CFLAGS) $$< -o $$@
+		$$< -o $$@
 )
 
 # handle LL files
@@ -405,9 +405,9 @@ $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_CC, $(src)): $(src)
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_O, $(src)): $(call FROM_LL_TO_CC, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
-		$(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_TO_CC, $(src))
@@ -440,9 +440,9 @@ $(call FROM_PROTO_TO_CC, $(src)): $(src)
 
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_O, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $($(target)_CXXFLAGS) \
+	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(PROTOBUF_INC) \
-		$(INCS) $(DEFS) $($(target)_DEFS) $(CXXFLAGS) $$< -o $$@
+		$(INCS) $(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FROM_PROTO_TO_CC, $(src))
