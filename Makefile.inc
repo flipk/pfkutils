@@ -164,7 +164,7 @@ export VERBOSE
 
 all:
 	$(Q)+make echoconfig objdirs preprocs protobufs
-	$(Q)+make $(MAKEJOBS) deps
+	$(Q)make deps
 	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
 
 include $(INCLUDE_MAKEFILES)
@@ -338,12 +338,12 @@ $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_O, $(src)): $(call FROM_Y_TO_C
 		$$< -o $$@
 )
 
-$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)): $(src)
+$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)) $(call FROM_Y_TO_H, $(src)): $(src)
 	@echo making $$@
 	$(Q)$(BISON) -d $$< -o $$@
 )
 
-$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C, $(src))
+$(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C, $(src)) $(call FROM_Y_TO_H, $(src))
 	@echo depending $$<
 	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
@@ -353,7 +353,7 @@ $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C
 
 # handle YY files
 
-$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_CC, $(src)): $(src)
+$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_CC, $(src)) $(call FROM_YY_TO_HH, $(src)): $(src)
 	@echo making $$@
 	$(Q)$(BISON) -d $$< -o $$@
 )
@@ -366,7 +366,7 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_T
 	$(Q)mv $$@.tmp $$@
 )
 
-$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src))
+$(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src)) $(call FROM_YY_TO_HH, $(src))
 	@echo compiling $$<
 	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
