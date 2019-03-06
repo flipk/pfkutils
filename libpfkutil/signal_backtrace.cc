@@ -11,6 +11,10 @@
 #include <inttypes.h>
 #include <cxxabi.h>
 
+extern char _start;
+extern char _etext;
+extern char _fini;
+
 namespace BackTraceUtil {
 
 SignalBacktrace* SignalBacktrace::instance = NULL;
@@ -201,10 +205,6 @@ SignalBacktrace :: default_user_handler(
     if (info->fatal)
         exit(1);
 }
-
-extern char _start;
-extern char _etext;
-extern char _fini;
 
 //static
 void
