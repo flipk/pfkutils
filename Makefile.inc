@@ -1,5 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
+# see below the licence for usage instructions.
+
 # This is free and unencumbered software released into the public domain.
 # 
 # Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -25,6 +27,81 @@
 # 
 # For more information, please refer to <http://unlicense.org>
 
+##############################################
+#
+#    first, set some variables before including Makefile.inc.
+#
+# OBJDIR= <subdir, such as "obj">
+#    this specifies where all build products will go. it is assumed
+#    to be the name of a subdirectory relative to the current directory.
+#
+#    you can set CC, CXX, AR, RANLIB, BISON, FLEX, PROTOC_PATH
+#    CFLAGS, CXXFLAGS, LDFLAGS, INCS, DEFS.
+#    these variables affect every build target of this makefile.
+#    Makefile.inc supplies reasonable defaults for these but you
+#    can override them if you need to.
+#
+#    you MUST tell Makefile.inc what you want to build. you can build
+#    libraries, or programs. make a list of target names. put those
+#    target names into a variable LIB_TARGETS or PROG_TARGETS (depending
+#    on whether each target is a library or program). don't worry about
+#    the actual filenames produced yet, these target names are just used
+#    for specifying other makefile variable names specific to that target.
+#
+# LIB_TARGETS = example somelib someotherlib
+# PROG_TARGETS = prog1 phils_prog testprog
+#
+#    each target name is used as the prefix for another set of
+#    variables, e.g.  if you have a library target named "thingy",
+#    Makefile.inc will looking for a variable called "thingy_CXXSRCS"
+#    to see if that library includes C++ sources.  the list of
+#    $(target)_xxx variables you can set is listed below. for this
+#    example, we're specifying variables for the "somelib" and "prog1"
+#    target examples we specified above.
+#
+# somelib_TARGET = $(OBJDIR)/libSOMELIB.a    # required
+# somelib_CXXSRCS = one_file.cc  another_file.cc
+# prog1_TARGET = $(OBJDIR)/program_one       # required
+# prog1_CSRCS = a_c_file.c
+#
+#    the full list variables you can set (replace "$(target)" with
+#    the name of the target you want to build):
+#
+# $(target)_TARGET = <library or executable filename to build, required>
+# $(target)_CSRCS = <a list of "c" files to pas to $(CC)>
+# $(target)_CXXSRCS = <a list of "cc" files to pass to $(CXX)>
+# $(target)_YSRCS = <a list of "y" files to pass to $(BISON)>
+# $(target)_LSRCS = <a list of "l" files to pass to $(FLEX)>
+# $(target)_YYSRCS = <a list of "yy" files to pass to $(BISON) (C++)>
+# $(target)_LLSRCS = <a list of "ll" files to pass to $(FLEX) (C++)>
+# $(target)_PROTOSRCS = <a list of "proto" files to pass to $(PROTOC_PATH)>
+# $(target)_CFLAGS = <compiler options to $(CC)>
+# $(target)_CXXFLAGS = <compiler options to $(CXX)>
+# $(target)_INCS = -I/path <a list of include dir directives>
+# $(target)_DEFS = -DVAR=VALUE <a list of macro defines>
+# $(target)_EXTRAOBJS = <a list of ".o" files built by other recipes>
+# $(target)_POSTINSTALL = <a recipe name to run after installing>
+# $(target)_PREMAKE = <a recipe name to run before making _TARGET>
+# $(target)_POSTMAKE = <a recipe name to run after making _TARGET>
+#
+#    PROG_TARGETS can also have:
+#
+# $(targt)_DEPLIBS = $(somelib_TARGET) <a list of _TARGET dependencies>
+# $(targt)_LIBS = -L/path -lpthread <a list of libraries to link against>
+# $(targt)_LDFLAGS = -rdynamic <a list of options passed to linker>
+#
+#    now that you have set all these variables, you can include
+#    this file.
+#
+# include /path/to/Makefile.inc
+#
+#    now, you can specify any additional make recipes you need.
+#    NOTE you can't put any make recipes before the include, because
+#    you want the "all" target in Makefile.inc to be the first one,
+#    the default one run if you type "make" with no args.
+#
+#    happy hacking!
+#
 ##############################################
 
 # all artifacts produced by this makefile go under
