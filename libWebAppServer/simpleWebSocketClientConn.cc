@@ -1,7 +1,7 @@
 
 #include "simpleWebSocket.h"
 
-#include "../libpfkutil/base64.h"
+#include "base64.h"
 
 #include <mbedtls/sha1.h>
 #include <iostream>
