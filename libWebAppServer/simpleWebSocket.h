@@ -48,7 +48,9 @@ protected:
     WebSocketConn( int fd, bool server, bool _verbose );
     static const int MAX_READBUF = 65536 + 0x1000; // 65K
     CircularReader  readbuf;
-    virtual WebSocketRet handle_data(::google::protobuf::Message &msg) = 0;
+    virtual WebSocketRet handle_header(void) = 0;
+    WebSocketRet handle_data(::google::protobuf::Message &msg);
+    WebSocketRet handle_message(::google::protobuf::Message &msg);
 public:
     virtual ~WebSocketConn(void);
     // returns the file descriptor used by this conn
@@ -89,10 +91,8 @@ class WebSocketServerConn : public WebSocketConn {
     std::string origin;
     std::string version;
     std::string key;
-    /*virtual*/ WebSocketRet handle_data(::google::protobuf::Message &msg);
-    WebSocketRet handle_header(void);
+    /*virtual*/ WebSocketRet handle_header(void);
     bool handle_header_line(const CircularReaderSubstr &headerLine);
-    WebSocketRet handle_message(::google::protobuf::Message &msg);
     void send_handshake_response(void);
 public:
     // this constructor invoked by WebSocketServer upon new connection.
@@ -122,9 +122,8 @@ class WebSocketClientConn : public WebSocketConn {
     void generateWsHeaders(std::ostringstream &hdrs);
     const std::string hostForConn(void) const;
     void init_common(void);
-    /*virtual*/ WebSocketRet handle_data(::google::protobuf::Message &msg);
-    WebSocketRet handle_wsheader(const CircularReaderSubstr &hdr);
-    WebSocketRet handle_message(::google::protobuf::Message &msg);
+    /*virtual*/ WebSocketRet handle_header(void);
+    WebSocketRet handle_header_line(const CircularReaderSubstr &hdr);
 public:
     // check _ok to see if construction succeeded; check errno if not.
     // use this version for address, port, and path explicitely specified.

@@ -157,9 +157,9 @@ WebSocketClientConn :: generateWsHeaders(ostringstream &hdrs)
 }
 
 WebSocketRet
-WebSocketClientConn :: handle_data(::google::protobuf::Message &msg)
+WebSocketClientConn :: handle_header(void)
 {
-    while (state == STATE_HEADER)
+    while (1)
     {
         int newline_pos = readbuf.find("\r\n");
         if (newline_pos == CircularReader::npos)
@@ -171,18 +171,16 @@ WebSocketClientConn :: handle_data(::google::protobuf::Message &msg)
         if (verbose)
             cout << "got : " << hdr << endl;
 
-        WebSocketRet r = handle_wsheader(hdr);
+        WebSocketRet r = handle_header_line(hdr);
         readbuf.erase0(newline_pos+2);
         if (r == WEBSOCKET_CLOSED || r == WEBSOCKET_CONNECTED)
             return r;
     }
-    if (state == STATE_CONNECTED)
-        return handle_message(msg);
     return WEBSOCKET_NO_MESSAGE;
 }
 
 WebSocketRet
-WebSocketClientConn :: handle_wsheader(const CircularReaderSubstr &hdr)
+WebSocketClientConn :: handle_header_line(const CircularReaderSubstr &hdr)
 {
     if (hdr.size() > 0)
     {
@@ -249,119 +247,8 @@ WebSocketClientConn :: handle_wsheader(const CircularReaderSubstr &hdr)
         {
             state = STATE_CONNECTED;
             return WEBSOCKET_CONNECTED;
-
         }
     }
-    return WEBSOCKET_NO_MESSAGE;
-}
-
-WebSocketRet
-WebSocketClientConn :: handle_message(::google::protobuf::Message &msg)
-{
-    uint32_t decoded_length;
-    uint32_t pos;
-
-    while (1)
-    {
-        uint32_t readbuf_len = readbuf.size();
-        uint32_t header_len = 2;
-
-        if (verbose)
-            cout << "handle_message readbuflen " << readbuf_len << endl;
-
-        if (readbuf_len < header_len)
-            // not enough yet.
-            return WEBSOCKET_NO_MESSAGE;
-
-        if (verbose)
-        {
-            int sz = readbuf.size();
-            uint8_t printbuf[sz];
-            readbuf.copyOut(printbuf,0,sz);
-            printf("got msg : ");
-            for (uint32_t c = 0; (int)c < sz; c++)
-                printf("%02x ", printbuf[c]);
-            printf("\n");
-        }
-
-        if ((readbuf[0] & 0x80) == 0)
-        {
-            cerr << "FIN=0 found, segmentation not supported" << endl;
-            return WEBSOCKET_CLOSED;
-        }
-
-        if ((readbuf[1] & 0x80) != 0)
-        {
-            cerr << "MASK=1 found, illegal for server->client" << endl;
-            return WEBSOCKET_CLOSED;
-        }
-
-        decoded_length = readbuf[1] & 0x7F;
-        pos=2;
-
-        // check if there's enough for a full message
-        // given what we know so far.
-        if (readbuf_len < (decoded_length+header_len))
-        {
-            if (verbose)
-                cout << "bail out case 1" << endl;
-            // not enough yet.
-            return WEBSOCKET_NO_MESSAGE;
-        }
-
-        if (decoded_length == 126)
-        {
-            decoded_length = (readbuf[pos] << 8) + readbuf[pos+1];
-            pos += 2;
-            header_len += 2;
-        }
-        else if (decoded_length == 127)
-        {
-            if (readbuf[pos+0] != 0 || readbuf[pos+1] != 0 ||
-                readbuf[pos+2] != 0 || readbuf[pos+3] != 0)
-            {
-                // we do not support ws packets over 4GB, so
-                // assume these four bytes are always zero.
-                // dump the conn if not.
-                fprintf(stderr, "ws packet over 4GB detected, "
-                        "dropping connection\n");
-                return WEBSOCKET_CLOSED;
-            }
-            pos += 4; // skip the first 4 bytes of the size
-            decoded_length =
-                (readbuf[pos+0] << 24) + (readbuf[pos+1] << 16) +
-                (readbuf[pos+2] <<  8) +  readbuf[pos+3];
-            pos += 4;
-            header_len += 8;
-        }
-
-        if (readbuf_len < (decoded_length+header_len))
-        {
-            if (verbose)
-                cout << "bail out case 2" << endl;
-            // still not enough
-            return WEBSOCKET_NO_MESSAGE;
-        }
-
-        if ((readbuf[0] & 0xf) != 2) // WS_TYPE_BINARY
-        {
-            fprintf(stderr, "unhandled websocket opcode %d received\n",
-                    readbuf[0] & 0xf);
-            return WEBSOCKET_CLOSED;
-        }
-
-        msg.Clear();
-        bool parseOk =
-            msg.ParseFromString(readbuf.toString(pos,decoded_length));
-        pos += decoded_length;
-        readbuf.erase0(pos);
-        if (parseOk == false)
-            return WEBSOCKET_CLOSED;
-        //else
-        return WEBSOCKET_MESSAGE;
-    }
-    if (verbose)
-        cout << "return case 3" << endl;
     return WEBSOCKET_NO_MESSAGE;
 }
 
