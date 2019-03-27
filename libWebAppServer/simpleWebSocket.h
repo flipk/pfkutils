@@ -43,12 +43,11 @@ protected:
         STATE_CONNECTED // mime headers done, exchanging messages
     } state;
     int got_flags;
+    bool verbose;
     std::string send_buffer;
-    WebSocketConn( int fd, bool server );
+    WebSocketConn( int fd, bool server, bool _verbose );
     static const int MAX_READBUF = 65536 + 0x1000; // 65K
     CircularReader  readbuf;
-    void set_nonblock(void);
-    void set_block(void);
     virtual WebSocketRet handle_data(::google::protobuf::Message &msg) = 0;
 public:
     virtual ~WebSocketConn(void);
@@ -97,7 +96,8 @@ class WebSocketServerConn : public WebSocketConn {
     void send_handshake_response(void);
 public:
     // this constructor invoked by WebSocketServer upon new connection.
-    WebSocketServerConn(int _fd, const struct sockaddr_in &_sa);
+    WebSocketServerConn(int _fd, const struct sockaddr_in &_sa,
+                        bool _verbose = false);
     /*virtual*/ ~WebSocketServerConn(void);
     bool get_path(std::string &_path) const {
         if (_ok)
@@ -128,20 +128,23 @@ class WebSocketClientConn : public WebSocketConn {
 public:
     // check _ok to see if construction succeeded; check errno if not.
     // use this version for address, port, and path explicitely specified.
-    WebSocketClientConn(uint32_t addr, uint16_t port, const std::string &path);
+    WebSocketClientConn(uint32_t addr, uint16_t port,
+                        const std::string &path, bool _verbose = false);
     // use this version for a URL "ws://host:port/path"
     // note this version does not support web proxies, although WebAppServer
     // version does, so if it was needed, it could be easily ported.
-    WebSocketClientConn(const std::string &url);
+    WebSocketClientConn(const std::string &url, bool _verbose = false);
     /*virtual*/ ~WebSocketClientConn(void);
 };
 
 class WebSocketServer {
     bool _ok;
     int fd;
+    bool verbose;
 public:
     // check _ok to see if port setup succeeded; check errno if not.
-    WebSocketServer(uint16_t bind_port, uint32_t bind_addr = INADDR_ANY);
+    WebSocketServer(uint16_t bind_port, uint32_t bind_addr = INADDR_ANY,
+                    bool _verbose = false);
     ~WebSocketServer(void);
     int get_fd(void) const { return fd; }
     // returns NULL if accept failed for some reason; check errno.

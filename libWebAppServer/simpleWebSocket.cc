@@ -15,8 +15,6 @@
 #include <iostream>
 #include <iomanip>
 
-#define VERBOSE 1
-
 //
 //   websocket message format:   (see RFC 6455)
 //
@@ -51,10 +49,12 @@ const std::string websocket_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 ////////   WebSocketConn  ////////
 
-WebSocketConn :: WebSocketConn(int _fd, bool _server)
-    : _ok(false), fd(_fd), server(_server), readbuf(MAX_READBUF)
+WebSocketConn :: WebSocketConn(int _fd, bool _server, bool _verbose)
+    : _ok(false), fd(_fd), server(_server),
+      verbose(_verbose), readbuf(MAX_READBUF)
 {
     got_flags = 0;
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 }
 
 WebSocketConn :: ~WebSocketConn(void)
@@ -63,43 +63,37 @@ WebSocketConn :: ~WebSocketConn(void)
         close(fd);
 }
 
-void
-WebSocketConn :: set_nonblock(void)
-{
-    fcntl(fd, F_SETFL,
-          fcntl(fd, F_GETFL) | O_NONBLOCK);
-}
-
-void
-WebSocketConn :: set_block(void)
-{
-    fcntl(fd, F_SETFL,
-          fcntl(fd, F_GETFL) & ~O_NONBLOCK);
-}
-
 /*virtual*/ WebSocketRet
 WebSocketConn :: handle_read(::google::protobuf::Message &msg)
 {
+    msg.Clear();
     if (readbuf.remaining() == 0)
     {
         cerr << "readbuffer is full!\n";
         return WEBSOCKET_NO_MESSAGE;
     }
-
-    set_nonblock();
-    int cc = readbuf.readFd(fd);
-    set_block();
-    if (cc < 0)
+    WebSocketRet r = handle_data(msg);
+    if (r == WEBSOCKET_NO_MESSAGE)
     {
-        if (errno != EWOULDBLOCK)
+        int cc = readbuf.readFd(fd);
+        if (cc < 0)
         {
-            cerr << "read : " << strerror(errno) << endl;
+            if (errno != EWOULDBLOCK)
+            {
+                cerr << "read : " << strerror(errno) << endl;
+                return WEBSOCKET_CLOSED;
+            }
+        }
+        if (cc == 0)
+        {
+            // if we're out of data on the socket,
+            // and there wasn't enough in the buffer
+            // for a message, before, we're done.
             return WEBSOCKET_CLOSED;
         }
+        r = handle_data(msg);
     }
-    if (cc == 0 && readbuf.size() == 0)
-        return WEBSOCKET_CLOSED;
-    return handle_data(msg);
+    return r;
 }
 
 bool
@@ -170,7 +164,7 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
     // repurpose len
     len = send_buffer.size();
 
-    if (VERBOSE)
+    if (verbose)
     {
         printf("** write buffer : ");
         for (int ctr = 0; ctr < len; ctr++)
@@ -192,8 +186,9 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
 
 ////////    WebSocketServer   ////////
 
-WebSocketServer :: WebSocketServer( uint16_t port, uint32_t addr )
-    : _ok(false), fd(-1)
+WebSocketServer :: WebSocketServer( uint16_t port, uint32_t addr,
+                                    bool _verbose )
+    : _ok(false), fd(-1), verbose(_verbose)
 {
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
@@ -224,7 +219,7 @@ WebSocketServer::handle_accept(void)
     int new_fd = accept(fd, (struct sockaddr *)&sa, &salen);
     if (new_fd < 0)
         return NULL;
-    return new WebSocketServerConn(new_fd, sa);
+    return new WebSocketServerConn(new_fd, sa, verbose);
 }
 
 };

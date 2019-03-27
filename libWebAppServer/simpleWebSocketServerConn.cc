@@ -6,15 +6,14 @@
 #include <mbedtls/sha1.h>
 #include <errno.h>
 
-#define VERBOSE 1
-
 using namespace std;
 
 namespace SimpleWebSocket {
 
 WebSocketServerConn :: WebSocketServerConn(int _fd,
-                                         const struct sockaddr_in &_sa)
-    : WebSocketConn(_fd, true)
+                                           const struct sockaddr_in &_sa,
+                                           bool _verbose)
+    : WebSocketConn(_fd, true, _verbose)
 {
     state = STATE_HEADER;
     got_flags = 0;
@@ -88,7 +87,7 @@ bool
 WebSocketServerConn :: handle_header_line(
     const CircularReaderSubstr &headerLine)
 {
-    if (VERBOSE)
+    if (verbose)
         cout << "got header: " << headerLine << endl;
 
     if (headerLine.compare(0,"GET "))
@@ -117,7 +116,7 @@ WebSocketServerConn :: handle_header_line(
         const CircularReaderSubstr &headerValue =
             headerLine.substr(colonPos+2);
 
-        if (VERBOSE)
+        if (verbose)
             cout << "checking header '" << headerName
                  << "' with value '" << headerValue << "'" << endl;
 
@@ -125,7 +124,7 @@ WebSocketServerConn :: handle_header_line(
         {
             got_flags |= GOT_HOST;
             host = headerValue.toString();
-            if (VERBOSE)
+            if (verbose)
                 cout << "HOST is : '" << host << "'" << endl;
         }
         else if (headerName.icaseMatch("connection"))
@@ -151,21 +150,21 @@ WebSocketServerConn :: handle_header_line(
 // firefox sometimes sends "Origin" in lower case. inorite?
             got_flags |= GOT_ORIGIN;
             origin = headerValue.toString();
-            if (VERBOSE)
+            if (verbose)
                 cout << "got origin '" << origin << "'" << endl;
         }
         else if (headerName.icaseMatch("sec-websocket-version"))
         {
             got_flags |= GOT_VERSION;
             version = headerValue.toString();
-            if (VERBOSE)
+            if (verbose)
                 cout << "got version '" << version << "'" << endl;
         }
         else if (headerName.icaseMatch("sec-websocket-key"))
         {
             got_flags |= GOT_KEY;
             key = headerValue.toString();
-            if (VERBOSE)
+            if (verbose)
                 cout << "got key '" << key << "'" << endl;
         }
         else if (headerName.icaseMatch("sec-websocket-key1") ||
@@ -208,7 +207,7 @@ WebSocketServerConn :: send_handshake_response(void)
         "Sec-WebSocket-Accept: " + ((char*) digest_b64) + "\r\n" +
         "\r\n";
 
-    if (VERBOSE)
+    if (verbose)
         cout << "writing headers: " << out_frame << endl;
 
     if (::write(fd, out_frame.c_str(), out_frame.size()) < 0)
@@ -233,7 +232,7 @@ WebSocketServerConn :: handle_message(::google::protobuf::Message &msg)
             // not enough yet.
             return WEBSOCKET_NO_MESSAGE;
 
-        if (VERBOSE)
+        if (verbose)
         {
             int sz = readbuf.size();
             uint8_t printbuf[sz];

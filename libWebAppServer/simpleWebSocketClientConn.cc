@@ -8,15 +8,14 @@
 #include <sstream>
 #include <errno.h>
 
-#define VERBOSE 1
-
 using namespace std;
 
 namespace SimpleWebSocket {
 
 WebSocketClientConn :: WebSocketClientConn(uint32_t addr, uint16_t port,
-                                           const std::string &path)
-    : WebSocketConn(-1, false)
+                                           const std::string &path,
+                                           bool _verbose)
+    : WebSocketConn(-1, false, _verbose)
 {
     urlPort = port;
     urlIp = addr;
@@ -24,8 +23,9 @@ WebSocketClientConn :: WebSocketClientConn(uint32_t addr, uint16_t port,
     init_common();
 }
 
-WebSocketClientConn :: WebSocketClientConn(const std::string &_url)
-    : WebSocketConn(-1, false)
+WebSocketClientConn :: WebSocketClientConn(const std::string &_url,
+                                           bool _verbose)
+    : WebSocketConn(-1, false, _verbose)
 {
     Url  url(_url);
     if (url.ok() == false)
@@ -127,7 +127,7 @@ WebSocketClientConn :: generateWsHeaders(ostringstream &hdrs)
          << "Sec-WebSocket-Version: 13\r\n"
          << "User-Agent: CrapolaFuxors/0.1\r\n\r\n";
 
-    if (VERBOSE)
+    if (verbose)
         cout << hdrs.str();
 
     // calc secWebsocketKeyResponse
@@ -168,7 +168,7 @@ WebSocketClientConn :: handle_data(::google::protobuf::Message &msg)
 
         const CircularReaderSubstr &hdr = readbuf.substr(0,newline_pos);
 
-        if (VERBOSE)
+        if (verbose)
             cout << "got : " << hdr << endl;
 
         WebSocketRet r = handle_wsheader(hdr);
@@ -266,14 +266,14 @@ WebSocketClientConn :: handle_message(::google::protobuf::Message &msg)
         uint32_t readbuf_len = readbuf.size();
         uint32_t header_len = 2;
 
-        if (VERBOSE)
+        if (verbose)
             cout << "handle_message readbuflen " << readbuf_len << endl;
 
         if (readbuf_len < header_len)
             // not enough yet.
             return WEBSOCKET_NO_MESSAGE;
 
-        if (VERBOSE)
+        if (verbose)
         {
             int sz = readbuf.size();
             uint8_t printbuf[sz];
@@ -303,7 +303,7 @@ WebSocketClientConn :: handle_message(::google::protobuf::Message &msg)
         // given what we know so far.
         if (readbuf_len < (decoded_length+header_len))
         {
-            if (VERBOSE)
+            if (verbose)
                 cout << "bail out case 1" << endl;
             // not enough yet.
             return WEBSOCKET_NO_MESSAGE;
@@ -337,7 +337,7 @@ WebSocketClientConn :: handle_message(::google::protobuf::Message &msg)
 
         if (readbuf_len < (decoded_length+header_len))
         {
-            if (VERBOSE)
+            if (verbose)
                 cout << "bail out case 2" << endl;
             // still not enough
             return WEBSOCKET_NO_MESSAGE;
@@ -360,7 +360,7 @@ WebSocketClientConn :: handle_message(::google::protobuf::Message &msg)
         //else
         return WEBSOCKET_MESSAGE;
     }
-    if (VERBOSE)
+    if (verbose)
         cout << "return case 3" << endl;
     return WEBSOCKET_NO_MESSAGE;
 }
