@@ -54,7 +54,7 @@ WebSocketConn :: WebSocketConn(int _fd, bool _server, bool _verbose)
       verbose(_verbose), readbuf(MAX_READBUF)
 {
     got_flags = 0;
-    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+//    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 }
 
 WebSocketConn :: ~WebSocketConn(void)
