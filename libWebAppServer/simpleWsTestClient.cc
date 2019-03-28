@@ -12,8 +12,8 @@ int main()
 {
     ::proxyTcp::ProxyMsg  msg;
     SimpleWebSocket::WebSocketClientConn clnt(
-//        0x7f000001,1081,"/fuckit"
-        "ws://127.0.0.1:1081/fuckit",
+//        0x7f000001,1081,"/websocket/some_application"
+        "ws://127.0.0.1:1081/websocket/some_application",
         DEBUG
         );
 

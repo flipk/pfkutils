@@ -59,7 +59,7 @@ const char * UrlRegex::patt =
     "([0-9]+)" /*PORTNUM=7*/
   ")?"
 ")"
-"(/[a-zA-Z0-9/]+)$"; /*PATH=8*/
+"(/[a-zA-Z0-9/_-]+)$"; /*PATH=8*/
 
 bool
 Url :: parse(const std::string &_url)

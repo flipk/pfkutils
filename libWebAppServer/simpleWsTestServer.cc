@@ -56,14 +56,18 @@ void *connection_thread(void*arg)
         switch (ret)
         {
         case SimpleWebSocket::WEBSOCKET_CONNECTED:
-            printf("WebSocket connected!\n");
+        {
+            std::string path;
+            nc->get_path(path);
+            printf("WebSocket connected! path = '%s'\n",
+                   path.c_str());
             msg.Clear();
             msg.set_type(proxyTcp::PMT_PROTOVERSION);
             msg.set_sequence(0);
             msg.mutable_protover()->set_version(1);
             nc->sendMessage(msg);
             break;
-
+        }
         case SimpleWebSocket::WEBSOCKET_NO_MESSAGE:
             // go round again
             break;
