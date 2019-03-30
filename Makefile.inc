@@ -195,6 +195,11 @@ DOXYGEN_TARGETS ?=
 # your opportunity to name more recipe rules to invoke.
 POSTALL ?= 
 
+# 'make clean' will blow away the $(OBJDIR) and dox directories, but
+# if you have more you'd like to clean, make another recipe and add
+# the recipe name(s) to $(EXTRA_CLEAN).
+EXTRA_CLEAN ?=
+
 ##############################################
 #
 # all targets can define:
@@ -647,5 +652,5 @@ doxygen: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen)
 
 doxygen-install: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen-install)
 
-clean:
+clean: $(EXTRA_CLEAN)
 	rm -rf $(OBJDIR) dox/*
