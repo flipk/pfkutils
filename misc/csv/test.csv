@@ -1,0 +1,16 @@
+Column 1,col2,“COLUMN 3”,"""COL 4"""
+
+this field has spaces,“this has a quote”,"this field
+Has multiple
+Lines","“this field 
+Has lines
+And quotes”"
+
+"this field 
+Has ""straight
+Quotes"" """" and
+Lines",1.999,9,9
+
+four special characters ╦╨☻♬ in a cell.,,,
+
+a,b,"a,b","""a,b""","""special"" guy here"
