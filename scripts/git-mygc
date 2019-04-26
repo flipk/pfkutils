@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+if [[ -d .git ]] ; then
+    beforefiles=`find .git -type f | wc -l`
+    beforespace=( $( du -ks .git ) )
+    git reflog expire --expire=now --all
+    git gc --prune=now --aggressive
+    git fsck
+    afterfiles=`find .git -type f | wc -l`
+    afterspace=( $( du -ks .git ) )
+
+    echo file count before and after : ${beforefiles} ${afterfiles}
+    echo kb size before and after : ${beforespace[0]} ${afterspace[0]}
+else
+    echo please be in the git root dir
+    exit 1
+fi
+
+exit 0
