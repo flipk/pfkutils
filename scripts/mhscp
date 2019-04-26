@@ -1,4 +1,6 @@
-#!/usr/bin/env expect
+#!/usr/bin/env tclsh
+
+package require Expect
 
 if { [llength $argv] < 2 } {
     send_user "usage:  mhscp local \[local...\] X.Y:/remote\n"
