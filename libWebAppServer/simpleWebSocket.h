@@ -8,24 +8,6 @@
 
 namespace SimpleWebSocket {
 
-class Url {
-    bool _ok;
-public:
-    std::string url;
-    std::string protocol; // http, https, ws, wss
-    std::string hostname; // or ip addr
-    uint32_t addr; // if hostname could be resolved, or -1 if not
-    uint16_t port;
-    std::string path;
-    Url(void);
-    Url(const std::string &url);
-    ~Url(void);
-    bool ok(void) const { return _ok; }
-    bool parse(const std::string &url);
-};
-
-extern std::ostream &operator<<(std::ostream &str, const Url &u);
-
 enum WebSocketRet {
     WEBSOCKET_CONNECTED,   // should call get_path now
     WEBSOCKET_NO_MESSAGE,  // incomplete msg; go back to select, check later

@@ -1,6 +1,8 @@
 
 #include "simpleWebSocket.h"
+#ifndef DEPENDING
 #include PROXYMSGS_PB_H
+#endif
 #include <map>
 #include <pthread.h>
 

@@ -1,4 +1,5 @@
 
+#include "simpleUrl.h"
 #include "simpleWebSocket.h"
 
 #include "base64.h"
@@ -27,7 +28,7 @@ WebSocketClientConn :: WebSocketClientConn(const std::string &_url,
                                            bool _verbose)
     : WebSocketConn(-1, false, _verbose)
 {
-    Url  url(_url);
+    SimpleUrl  url(_url);
     if (url.ok() == false)
     {
         cerr << "WebSocketClientConn: url parse error\n";

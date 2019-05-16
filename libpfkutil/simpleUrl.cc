@@ -3,32 +3,31 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include <iostream>
 #include <iomanip>
 
-#include "simpleWebSocket.h"
+#include "simpleUrl.h"
 #include "simpleRegex.h"
 
 using namespace std;
 
-namespace SimpleWebSocket {
-
-Url :: Url(void)
+SimpleUrl :: SimpleUrl(void)
 {
     _ok = false;
     addr = (uint32_t) -1;
     port = (uint16_t) -1;
 }
 
-Url :: Url(const std::string &url)
+SimpleUrl :: SimpleUrl(const std::string &url)
 {
     parse(url);
 }
 
-Url :: ~Url(void)
+SimpleUrl :: ~SimpleUrl(void)
 {
 }
 
@@ -36,11 +35,15 @@ class UrlRegex : public regex<> {
     static const char * patt;
 public:
     enum groups {
-        PROTO    = 1, 
-        HOSTNAME = 3,
-        IPADDR   = 4,
-        PORTNUM  = 7,
-        PATH     = 8
+        PROTO    = 1,
+        USERNAME = 3,
+        PASSWORD = 5,
+        HOSTNAME = 7,
+        IPADDR   = 8,
+        PORTNUM  = 11,
+        PATH     = 12,
+        ANCHOR   = 14,
+        QUERY    = 16
     };
     UrlRegex(void) : regex<>(patt) { }
     ~UrlRegex(void) { }
@@ -50,19 +53,33 @@ const char * UrlRegex::patt =
 "^(ws|wss|http|https)" /*PROTO=1*/
 "://"
 "(" /*2*/
-  "([a-zA-Z][a-zA-Z0-9\\.-]*)" /*HOSTNAME=3*/
+  "([a-zA-Z][a-zA-Z0-9_-]*)" /*USERNAME=3*/
+  "(:" /*4*/
+    "([a-zA-Z][a-zA-Z0-9_-]*)" /*PASSWORD=5*/
+  ")?"
+  "@"
+")?"
+"(" /*6*/
+  "([a-zA-Z][a-zA-Z0-9\\.-]*)" /*HOSTNAME=7*/
 "|"
-  "([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)" /*IPADDR=4*/
+  "([0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+)" /*IPADDR=8*/
 ")"
-"(" /*5*/
-  "(:" /*6*/
-    "([0-9]+)" /*PORTNUM=7*/
+"(" /*9*/
+  "(:" /*10*/
+    "([0-9]+)" /*PORTNUM=11*/
   ")?"
 ")"
-"(/[a-zA-Z0-9/_-]+)$"; /*PATH=8*/
+"(/[a-zA-Z0-9/_-]+)" /*PATH=12*/
+"(#" /*13*/
+    "(.*)" /*ANCHOR=14*/
+")?"
+"(\\?" /*15*/
+    "(.*)" /*QUERY=16*/
+")?"
+"$";
 
 bool
-Url :: parse(const std::string &_url)
+SimpleUrl :: parse(const std::string &_url)
 {
     UrlRegex r;
 
@@ -80,9 +97,21 @@ Url :: parse(const std::string &_url)
     else if (protocol == "wss" || protocol == "https")
         port = 443;
 
+    if (r.match(UrlRegex::USERNAME))
+        username = r.match(url, UrlRegex::USERNAME);
+    else
+        username = "";
+
+    if (r.match(UrlRegex::PASSWORD))
+        password = r.match(url, UrlRegex::PASSWORD);
+    else
+        password = "";
+
     if (r.match(UrlRegex::HOSTNAME))
     {
         hostname = r.match(url,UrlRegex::HOSTNAME);
+
+// TODO convert to using getaddrinfo
 
         struct hostent * he = gethostbyname( hostname.c_str() );
         if (he == NULL)
@@ -120,22 +149,66 @@ Url :: parse(const std::string &_url)
 
     path = r.match(url,UrlRegex::PATH);
 
+    if (r.match(UrlRegex::ANCHOR))
+        anchor = r.match(url,UrlRegex::ANCHOR);
+    else
+        anchor = "";
+
+    if (r.match(UrlRegex::QUERY))
+        query = r.match(url,UrlRegex::QUERY);
+    else
+        query = "";
+
     return _ok = true;
 }
 
-ostream &operator<<(ostream &str, const Url &u)
+ostream &operator<<(ostream &str, const SimpleUrl &u)
 {
     if (u.ok() == true)
         str << "Url:" << endl
             << " url: " << u.url << endl
             << " protocol: " << u.protocol << endl
+            << " username: " << u.username << endl
+            << " password: " << u.password << endl
             << " host: " << u.hostname << endl
             << " addr: 0x" << hex << setfill('0') << setw(8) << u.addr << endl
             << " port: " << dec << u.port << endl
-            << " path: " << u.path << endl;
+            << " path: " << u.path << endl
+            << " anchor: " << u.anchor << endl
+            << " query: " << u.query << endl;
     else
         str << "Url: (not set)" << endl;
     return str;
 }
 
+#ifdef INCLUDE_SIMPLE_URL_TEST
+
+std::string testUrls[] = {
+    "https://flipk@pfk.org/one/two",
+    "wss://pfk.org/three/four",
+    "http://127.0.0.1:1080/five#link",
+    "http://username1:password2@hostname3.crap.com/path/path",
+    "http://user:pass@127.0.0.1:1080/six?var=val&var=val",
+    ""
 };
+
+int
+main()
+{
+    SimpleUrl  url;
+
+    int ind = 0;
+    while (1)
+    {
+        const std::string &u = testUrls[ind];
+        if (u == "")
+            break;
+        url.parse(u);
+        cout << url;
+        ind ++;
+    }
+
+    return 0;
+}
+
+#endif

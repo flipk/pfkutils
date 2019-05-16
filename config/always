@@ -169,7 +169,8 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/msgr.cc libpfkutil/prioWorkQ.cc \
 	libpfkutil/shmempipe.cc \
 	libpfkutil/thread_slinger.cc \
-	libpfkutil/signal_backtrace.cc
+	libpfkutil/signal_backtrace.cc \
+	libpfkutil/simpleUrl.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -182,7 +183,8 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
 	libpfkutil/dll3.tcc \
 	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h \
-	libpfkutil/signal_backtrace.h
+	libpfkutil/signal_backtrace.h \
+	libpfkutil/simpleUrl.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -194,7 +196,8 @@ libpfkutil_HDRS = \
 	libpfkutil/posix_fe.h libpfkutil/prioWorkQ.h \
 	libpfkutil/regex.h libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h \
-	libpfkutil/signal_backtrace.h
+	libpfkutil/signal_backtrace.h \
+	libpfkutil/simpleUrl.h
 
 DOXYGEN_TARGETS += dll3 shmempipe threadslinger
 dll3_DOXYFILE = libpfkutil/Doxyfile.dll3
@@ -524,17 +527,22 @@ libWebAppServer_CXXSRCS = \
 	libWebAppServer/WebServerConnectionBase.cc \
 	libWebAppServer/WebSocketClient.cc \
 	libWebAppServer/WebSocketConnection.cc \
-	libWebAppServer/serverPorts.cc
+	libWebAppServer/serverPorts.cc \
+	libWebAppServer/simpleWebSocket.cc \
+	libWebAppServer/simpleWebSocketClientConn.cc \
+	libWebAppServer/simpleWebSocketServerConn.cc
 libWebAppServer_INSTALL_HDRS = \
 	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
 	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
 	libWebAppServer/WebAppServerInternal.h \
-	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h \
+	libWebAppServer/simpleWebSocket.h
 libWebAppServer_HDRS = \
 	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
 	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
 	libWebAppServer/WebAppServerInternal.h \
-	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h \
+	libWebAppServer/simpleWebSocket.h
 
 DOXYGEN_TARGETS += libwas
 libwas_DOXYFILE = libWebAppServer/Doxyfile
@@ -555,6 +563,24 @@ libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
 endef
 
 $(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
+PROG_TARGETS += simpleWsTestClient simpleWsTestServer
+
+simpleWsTestClient_TARGET = $(OBJDIR)/simpleWsTestClient
+simpleWsTestClient_CXXSRCS = libWebAppServer/simpleWsTestClient.cc
+simpleWsTestClient_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
+simpleWsTestClient_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
+simpleWsTestClient_LIBS = \
+	$(libWebAppServer_TARGET) $(libpfkutil_TARGET) \
+	$(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+
+simpleWsTestServer_TARGET = $(OBJDIR)/simpleWsTestServer
+simpleWsTestServer_CXXSRCS = libWebAppServer/simpleWsTestServer.cc
+simpleWsTestServer_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
+simpleWsTestServer_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
+simpleWsTestServer_LIBS = \
+	$(libWebAppServer_TARGET) $(libpfkutil_TARGET) \
+	$(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 endif
 
