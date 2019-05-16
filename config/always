@@ -518,7 +518,7 @@ endif
 ifeq ($(PFK_BUILD_libwas),1)
 LIB_TARGETS += libWebAppServer
 libWebAppServer_TARGET = $(OBJDIR)/libWebAppServer.a
-libWebAppServer_INCS = -Ilibpfkutil $(MBEDTLS_INCS)
+libWebAppServer_INCS = -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
 libWebAppServer_CXXSRCS = \
 	libWebAppServer/WebAppConnection.cc \
 	libWebAppServer/WebAppServer.cc \
@@ -567,6 +567,7 @@ $(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
 PROG_TARGETS += simpleWsTestClient simpleWsTestServer
 
 simpleWsTestClient_TARGET = $(OBJDIR)/simpleWsTestClient
+simpleWsTestClient_INCS = $(PROTOBUF_INC)
 simpleWsTestClient_CXXSRCS = libWebAppServer/simpleWsTestClient.cc
 simpleWsTestClient_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
 simpleWsTestClient_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
@@ -575,6 +576,7 @@ simpleWsTestClient_LIBS = \
 	$(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 simpleWsTestServer_TARGET = $(OBJDIR)/simpleWsTestServer
+simpleWsTestServer_INCS = $(PROTOBUF_INC)
 simpleWsTestServer_CXXSRCS = libWebAppServer/simpleWsTestServer.cc
 simpleWsTestServer_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
 simpleWsTestServer_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
