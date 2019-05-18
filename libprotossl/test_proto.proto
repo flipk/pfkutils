@@ -1,3 +1,4 @@
+syntax = "proto2";
 
 // note i made all the field numbers different
 // to catch protocol errors, i.e. if you're
