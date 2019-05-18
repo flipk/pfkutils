@@ -392,7 +392,7 @@ public:
         // "int" operator<< overload.  but we can't cast directly from
         // "char" to "int" because that will sign-extend, so cast to
         // unsigned char first.
-        for (int i = 0; i < length(); i++)
+        for (size_t i = 0; i < length(); i++)
             out << std::hex << std::setw(2) << std::setfill('0') <<
                 (int)((unsigned char)at(i));
         return out.str();
@@ -743,7 +743,7 @@ public:
             if (e) e->init(errno, "write");
             return false;
         }
-        if (cc != _buf.length()) {
+        if (cc != (int)_buf.length()) {
             // i don't yet know if this is a case i have to handle.
             fprintf(stderr, "pxfe_pipe: short write %d != %d!\n",
                     cc, (int) _buf.length());
@@ -871,7 +871,7 @@ public:
             if (e) e->init(errno, "write");
             return false;
         }
-        if (cc != _buf.length())
+        if (cc != (int)_buf.length())
         {
             // haven't figured out if i need to handle this yet.
             fprintf(stderr, " **** SHORT WRITE %d != %d\n",
@@ -1728,7 +1728,7 @@ public:
     /** add or remove a descriptor to/from the poll set, if setting,
      * use POLLIN | POLLOUT | POLLERR, or zero to remove a descriptor */
     void set(int fd, short events) {
-        if (fd >= by_fd.size())
+        if (fd >= (int)by_fd.size())
             by_fd.resize(fd+1);
         fdindex &ind = by_fd[fd];
         pollfd *pfd = NULL;
@@ -1774,7 +1774,7 @@ public:
     }
     /** retrieve events set for a descriptor, returns 0 if none */
     short eget(int fd) {
-        if (fd >= by_fd.size())
+        if (fd >= (int)by_fd.size())
             return 0;
         fdindex &ind = by_fd[fd];
         if (ind.ind == -1)
@@ -1784,7 +1784,7 @@ public:
     /** retrieve events that actually occurred on a descriptor,
      * or 0 if none */
     short rget(int fd) {
-        if (fd >= by_fd.size())
+        if (fd >= (int)by_fd.size())
             return 0;
         fdindex &ind = by_fd[fd];
         if (ind.ind == -1)
@@ -1820,7 +1820,7 @@ public:
     }
     /** debugging, print out contents of this object */
     void print(void) {
-        int ind;
+        size_t ind;
         printf("by_fd.size = %d : ", (int) by_fd.size());
         for (ind = 0; ind < by_fd.size(); ind++)
             printf(" %d", by_fd[ind].ind);
