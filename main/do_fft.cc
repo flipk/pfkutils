@@ -8,6 +8,7 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
 
 void
 usage(const std::string &errstr)
