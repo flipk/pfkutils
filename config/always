@@ -170,7 +170,8 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/shmempipe.cc \
 	libpfkutil/thread_slinger.cc \
 	libpfkutil/signal_backtrace.cc \
-	libpfkutil/simpleUrl.cc
+	libpfkutil/simpleUrl.cc \
+	libpfkutil/asm_parser.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
@@ -184,7 +185,8 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/dll3.tcc \
 	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h \
 	libpfkutil/signal_backtrace.h \
-	libpfkutil/simpleUrl.h
+	libpfkutil/simpleUrl.h \
+	libpfkutil/asm_parser.h
 libpfkutil_HDRS = \
 	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
