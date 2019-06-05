@@ -59,6 +59,7 @@ spawn sh -c "scp -o \"StrictHostKeyChecking no\" $arg_out"
 expect {
     "password:"  { send "root\r" ; exp_continue }
     eof   exit
+    -timeout 3600 abort
 }
 
 exit 0
