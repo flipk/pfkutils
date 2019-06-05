@@ -1,0 +1,9 @@
+
+# ulimit -a
+
+# ulimit -c unlimited
+
+export ALLOW_CORE_DUMPS=1
+
+echo 'core.%e.%p' > /proc/sys/kernel/core_pattern
+
