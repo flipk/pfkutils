@@ -2,20 +2,36 @@
 
 set -e
 
-if [[ -d .git ]] ; then
-    beforefiles=`find .git -type f | wc -l`
-    beforespace=( $( du -ks .git ) )
-    git reflog expire --expire=now --all
-    git gc --prune=now --aggressive
-    git fsck
-    afterfiles=`find .git -type f | wc -l`
-    afterspace=( $( du -ks .git ) )
+gitroot_tool=$HOME/pfk/bin/git-root
 
-    echo file count before and after : ${beforefiles} ${afterfiles}
-    echo kb size before and after : ${beforespace[0]} ${afterspace[0]}
-else
-    echo please be in the git root dir
+if [[ ! -f $gitroot_tool ]] ; then
+   echo dont know where to find git-root tool
+   exit 1
+fi
+
+eval `$gitroot_tool -v`
+
+if [[ $gitnummods = 0 ]] ; then
+    echo no git repo here
     exit 1
 fi
+
+index=$(( gitnummods - 1 ))
+repodir=${gitdir}/${gitsubdir[$index]}
+
+echo gc repo at : $repodir
+
+beforefiles=`find $repodir -type f | wc -l`
+beforespace=( $( du -ks $repodir ) )
+
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+git fsck
+
+afterfiles=`find $repodir -type f | wc -l`
+afterspace=( $( du -ks $repodir ) )
+
+echo file count before and after : ${beforefiles} ${afterfiles}
+echo kb size before and after : ${beforespace[0]} ${afterspace[0]}
 
 exit 0
