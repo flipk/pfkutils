@@ -358,6 +358,8 @@ public:
     pxfe_string(const char *s) : std::string(s) { }
     /** construct with a pointer/length (can contain nuls) */
     pxfe_string(const char *s, size_t len) : std::string(s,len) { }
+    /** construct with a string */
+    pxfe_string(const std::string &other) : std::string(other) { }
     /** cast c_str to a void* ptr */
     void * vptr(void) {
         return (void*) c_str();
