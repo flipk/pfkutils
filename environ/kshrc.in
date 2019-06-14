@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2019-01-24.00:12:04
+#      Last update: 2019-06-13.21:24:09
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -358,7 +358,9 @@ emacsn() {
         echo usage: emacsn NUMBER files
         return
     fi
+    echo export EMACS_NUMBER=$1
     export EMACS_NUMBER=$1
+    echo export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
     export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
     shift
     emacs $* &
