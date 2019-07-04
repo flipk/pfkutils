@@ -1,9 +1,12 @@
 
+NOTE:  fedora 29 you must edit
+    /etc/security/pwquality.conf.d/10-authconfig-pwquality.conf
+to fix stupid vars set to null strings. (dafuq?)
+
 requires 
    CONFIG_DM or CONFIG_BLK_DEV_DM (depends on linux version)
    CONFIG_DM_CRYPT (probably should include others)
    CONFIG_CRYPTO_AES (probably should include others, block modes etc)
-
 
  $ sudo dmsetup table 
 fedora00-home: 0 376594432 linear 253:0 16558080
@@ -244,3 +247,15 @@ use:
 cryptsetup open --type luks /....../box.img box-crypt
 cd /auto/box_crypt
 cryptsetup close box-crypt
+
+======================== alt (/dev/sda1)
+
+NOTE:  fedora 29 you must edit
+    /etc/security/pwquality.conf.d/10-authconfig-pwquality.conf
+to fix stupid vars set to null strings. (dafuq?)
+
+cryptsetup -v --cipher aes-xts-plain64 --key-size 256 --hash sha256 \
+  --iter-time 2000 --use-urandom --verify-passphrase luksFormat /dev/sda1
+cryptsetup open --type luks /dev/sda1 luks-alt
+mkfs.ext4 -L ALT /dev/mapper/luks-alt
+cryptsetup close luks-alt

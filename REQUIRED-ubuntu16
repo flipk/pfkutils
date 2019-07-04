@@ -1,3 +1,4 @@
+g++
 git
 git-gui
 gitk
@@ -23,3 +24,4 @@ libxinerama-dev
 libxaw7-dev
 libgtk2.0-dev
 libgtk-3-dev
+fftw3-dev
