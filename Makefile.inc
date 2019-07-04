@@ -605,7 +605,7 @@ $(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_RULES)))
 
 define DOXYGEN_TARGET_RULES
 $(target)_doxygen:
-	doxygen $($(target)_DOXYFILE)
+	$(foreach dox,$($(target)_DOXYFILE),doxygen $(dox) &&) true
 
 $(target)_doxygen-install:
 	@echo making $(target)_doxygen-install is not yet supported
