@@ -90,7 +90,7 @@ void *connection_thread(void*arg)
             case proxyTcp::PMT_DATA:
             {
                 printf("got data length %d\n",
-                       msg.data().data().size());
+                       (int) msg.data().data().size());
                 pthread_mutex_lock(&mutex);
                 for (int ind = 0; ind < conns_pos; ind++)
                     if (ind != pos && conns[ind] != NULL)

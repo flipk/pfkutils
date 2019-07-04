@@ -63,8 +63,12 @@ int main()
                 break;
 
             case proxyTcp::PMT_DATA:
-                write(1, msg.data().data().c_str(),
-                      msg.data().data().size());
+                if (::write(1, msg.data().data().c_str(),
+                            msg.data().data().size()) < 0)
+                {
+                    // quiet an obnoxious UB14 compiler.
+                    printf("write stdout failed\n");
+                }
                 break;
 
             case proxyTcp::PMT_PING:
