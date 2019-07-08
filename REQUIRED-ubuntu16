@@ -25,3 +25,4 @@ libxaw7-dev
 libgtk2.0-dev
 libgtk-3-dev
 fftw3-dev
+libmbedtls-dev
