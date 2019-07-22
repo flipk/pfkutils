@@ -20,11 +20,26 @@ if { [llength $octets] == 2 } {
 
 set good 0
 
+# here's a neat bug. if you have "-timeout 1 abort", and you run
+# this command a hundred times, 3 or 4 times the timeout will fire
+# in milliseconds.
+
+# you would think if you entered expect with a timeout, that it would
+# start a timer at that instant. that does not appear to be the case.
+
+# expect appears to have an internal clock that's ticking all the time,
+# and so 'timeout' is not relative to when you entered 'expect', but
+# rather a count of clock ticks that must pass. so if you enter 'expect'
+# three microseconds before a tick, a "timeout 1" expires
+# three microseconds later.
+
+# that is... undesirable. work around it by using "timeout 2".
+
 spawn ping -i 1 -c 1 $ip
 expect {
     "1 received" { set good 1 }
     "0 received" { set good 0 }
-    -timeout 1 abort
+    -timeout 2 abort
 }
 
 if { $good == 0 } {
@@ -46,11 +61,11 @@ trap {
 
 set sshpid [spawn sh -c "ssh -o \"StrictHostKeyChecking no\" -l root $ip"]
 
-# here's a neat bug. if you have "-timeout 1 abort", and you run
-# this command a hundred times, 3 or 4 times the timeout will fire
-# in milliseconds. EXPECT seems to internally have a timer that fires
-# peridically, and if you invoke this a microsecond before that timer,
-# the supposedly-one-second timer fires in a microsecond.
+# TODO add custom prompts here....
+# $env(HOME)
+# file exists $filename
+# source $mhssh_customization_file
+# QUESTION: how to add custom expect strings to an expect {clause}.
 
 expect {
     "password:"  { send "root\r" }
