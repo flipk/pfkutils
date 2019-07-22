@@ -58,8 +58,14 @@ expect eof
 spawn sh -c "scp -o \"StrictHostKeyChecking no\" $arg_out"
 expect {
     "password:"  { send "root\r" ; exp_continue }
-    eof   exit
+    eof   { }
     -timeout 3600 abort
 }
 
-exit 0
+set wait_return [wait]
+set exit_code [lindex $wait_return 3]
+
+# if the scp returns a failure, we want this script to
+# also return a failure.
+
+exit $exit_code
