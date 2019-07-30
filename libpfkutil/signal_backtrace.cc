@@ -5,7 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef __CYGWIN__
 #include <execinfo.h>
+#endif
 #include <stdarg.h>
 #include <pthread.h>
 #include <inttypes.h>
@@ -322,8 +324,16 @@ void
 SignalBacktraceInfo :: do_backtrace( const char *process_name,
                                      const char *reason /* = NULL */ )
 {
-    int i;
     pid_t pid = getpid();
+
+#ifdef __CYGWIN__
+
+    trace_size = 0;
+    desc_print("[bt] backtrace not present because CYGWIN sucks\n");
+
+#else
+
+    int i;
 
     // first we'll try a good old honest backtrace try
     // and see what we get.
@@ -338,6 +348,8 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
         desc_print(": %s\n", reason);
     else
         desc_print("\n");
+
+#endif /* CYGWIN */
 
     if (sig != 0)
     {
@@ -392,6 +404,8 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
 
         desc_print("\n");
     }
+
+#ifndef __CYGWIN__
 
 # if __WORDSIZE == 64
 #define __PRIPTR_LEADING_ZEROS "016"
@@ -536,6 +550,7 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
                         "not implemented\n");
 #endif
     }
+#endif /* CYGWIN */
 }
 
 

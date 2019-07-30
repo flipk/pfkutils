@@ -826,8 +826,11 @@ endif
 ifeq ($(PFK_BUILD_checksize),1)
 pfkutils_CSRCS += main/checksize.c
 endif
+ifeq ($(PFK_BUILD_deduplifier),1)
+pfkutils_CSRCS += main/deduplifier.cc
+endif
 pfkutils_CXXSRCS += \
-	main/rmstar_new.cc main/deduplifier.cc main/main.cc
+	main/rmstar_new.cc main/main.cc
 ifeq ($(PFK_BUILD_libpfkfb),1)
 pfkutils_CXXSRCS += main/fbcompact.cc main/fbdump.cc main/btdump.cc
 endif

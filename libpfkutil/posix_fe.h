@@ -1640,8 +1640,10 @@ public:
     }
 };
 
+#ifdef IPPROTO_SCTP
 /** an SCTP specialization of a _pxfe_stream_socket template */
 typedef _pxfe_stream_socket<IPPROTO_SCTP> pxfe_sctp_stream_socket;
+#endif
 
 /** a TCP specialization of a _pxfe_stream_socket template */
 typedef _pxfe_stream_socket<0> pxfe_tcp_stream_socket;
