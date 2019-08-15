@@ -148,7 +148,7 @@ printHEAD() {
     IFS=" "
     headinfo=
     if [[ "x$1" == "xref: refs" ]] ; then
-	headinfo="$3"
+	headinfo="${head#ref: refs/heads/}"
     else
 	headinfo="${head:0:7}"
     fi
