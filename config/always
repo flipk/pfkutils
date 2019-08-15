@@ -827,7 +827,7 @@ ifeq ($(PFK_BUILD_checksize),1)
 pfkutils_CSRCS += main/checksize.c
 endif
 ifeq ($(PFK_BUILD_deduplifier),1)
-pfkutils_CSRCS += main/deduplifier.cc
+pfkutils_CXXSRCS += main/deduplifier.cc
 endif
 pfkutils_CXXSRCS += \
 	main/rmstar_new.cc main/main.cc
