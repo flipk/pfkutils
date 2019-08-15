@@ -1078,15 +1078,17 @@ struct pxfe_sockaddr_un : public sockaddr_un {
 class pxfe_utils {
 public:
     /** parse a std::string into a uint32_t number, return false for error */
-    static bool parse_number( const std::string &s, uint32_t *val )
+    static bool parse_number( const std::string &s, uint32_t *val,
+                              int base = 0 )
     {
-        return parse_number(s.c_str(), val);
+        return parse_number(s.c_str(), val, base);
     }
     /** parse a char* into a uint32_t number, return false for error */
-    static bool parse_number( const char *s, uint32_t *_val )
+    static bool parse_number( const char *s, uint32_t *_val,
+                              int base = 0 )
     {
         char * endptr = NULL;
-        unsigned long val = strtoul(s, &endptr, 0);
+        unsigned long val = strtoul(s, &endptr, base);
         if (endptr != NULL && *endptr == 0)
         {
             *_val = (uint32_t) val;
@@ -1095,15 +1097,17 @@ public:
         return false;
     }
     /** parse a std::string into an int32_t number, return false for error */
-    static bool parse_number( const std::string &s, int32_t *val )
+    static bool parse_number( const std::string &s, int32_t *val,
+                              int base = 0 )
     {
-        return parse_number(s.c_str(), val);
+        return parse_number(s.c_str(), val, base);
     }
     /** parse a char* into an int32_t number, return false for error */
-    static bool parse_number( const char *s, int32_t *_val )
+    static bool parse_number( const char *s, int32_t *_val,
+                              int base = 0 )
     {
         char * endptr = NULL;
-        long val = strtol(s, &endptr, 0);
+        long val = strtol(s, &endptr, base);
         if (endptr != NULL && *endptr == 0)
         {
             *_val = (int32_t) val;
@@ -1112,15 +1116,17 @@ public:
         return false;
     }
     /** parse a std::string into a uint64_t number, return false for error */
-    static bool parse_number( const std::string &s, uint64_t *val )
+    static bool parse_number( const std::string &s, uint64_t *val,
+                              int base = 0 )
     {
-        return parse_number(s.c_str(), val);
+        return parse_number(s.c_str(), val, base);
     }
     /** parse a char* into a uint64_t number, return false for error */
-    static bool parse_number( const char *s, uint64_t *_val )
+    static bool parse_number( const char *s, uint64_t *_val,
+                              int base = 0 )
     {
         char * endptr = NULL;
-        unsigned long long val = strtoull(s, &endptr, 0);
+        unsigned long long val = strtoull(s, &endptr, base);
         if (endptr != NULL && *endptr == 0)
         {
             *_val = (uint64_t) val;
@@ -1129,15 +1135,17 @@ public:
         return false;
     }
     /** parse a std::string into an int64_t number, return false for error */
-    static bool parse_number( const std::string &s, int64_t *val )
+    static bool parse_number( const std::string &s, int64_t *val,
+                              int base = 0 )
     {
-        return parse_number(s.c_str(), val);
+        return parse_number(s.c_str(), val, base);
     }
     /** parse a char* into an int64_t number, return false for error */
-    static bool parse_number( const char *s, int64_t *_val )
+    static bool parse_number( const char *s, int64_t *_val,
+                              int base = 0 )
     {
         char * endptr = NULL;
-        long long val = strtoll(s, &endptr, 0);
+        long long val = strtoll(s, &endptr, base);
         if (endptr != NULL && *endptr == 0)
         {
             *_val = (int64_t) val;
