@@ -776,6 +776,8 @@ class pxfe_fd {
 protected:
     int fd;
 public:
+    /** max size of a message this API supports */
+    static const std::string::size_type MAX_MSG_LEN = 16384;
     /** constructor initializes fd to -1 */
     pxfe_fd(void) {
         fd = -1;
@@ -1316,8 +1318,6 @@ public:
         path = _path;
         return init_common(false,e);
     }
-    /** max size of a message this API supports */
-    static const int MAX_MSG_LEN = 16384;
     /** retrieve the path */
     const std::string &getPath(void) const { return path; }
     /** connect to a remote path (makes a sockaddr_un) */
@@ -1424,8 +1424,6 @@ public:
     pxfe_udp_socket(void) { }
     /** destructor closes the descriptor if it is open */
     ~pxfe_udp_socket(void) { }
-    /** max length of msg passed thru this type of socket */
-    static const int MAX_MSG_LEN = 16384;
     /** init the socket, does not bind it, return false if failure */
     bool init(pxfe_errno *e = NULL) {
         return init(-1,e);
@@ -1555,8 +1553,6 @@ public:
     _pxfe_stream_socket(void) { }
     /** destructor closes the descriptor if it is open */
     ~_pxfe_stream_socket(void) { }
-    /** max length of msg passed thru this type of socket */
-    static const int MAX_MSG_LEN = 16384;
     /** init the socket, does not bind it, return false if failure */
     bool init(pxfe_errno *e = NULL) {
         fd = ::socket(PF_INET, SOCK_STREAM, protocolNumber);
