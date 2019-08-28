@@ -122,6 +122,9 @@ git show-ref --verify refs/tags/$thestring
 git show-ref --verify refs/heads/$thestring
 git rev-parse --verify refs/heads/$thestring
 
+stage a particular submodule hash to the index:
+
+   git update-index --cacheinfo 160000 <SHA-ID> <submod>
 
 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
 git://git.denx.de/u-boot.git
