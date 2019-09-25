@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2019-06-13.21:24:09
+#      Last update: 2019-09-24.20:43:30
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -644,7 +644,9 @@ __aesenc() {
         pass=$1
         infile=$2
         outfile=$2.enc
-        openssl aes-256-cbc -e -salt -in $infile -out $outfile -pass pass:$pass
+        openssl aes-256-cbc -e -salt \
+                -in $infile -out $outfile \
+                -md sha256 -pass pass:$pass
         ls -l $infile $outfile
     fi
 }
@@ -664,7 +666,9 @@ __aesdec() {
         pass=$1
         infile=$2
         outfile=${2%.enc}
-        openssl aes-256-cbc -d -in $infile -out $outfile -pass pass:$pass
+        openssl aes-256-cbc -d \
+                -in $infile -out $outfile \
+                -md sha256 -pass pass:$pass
         ls -l $infile $outfile
     fi
 }
