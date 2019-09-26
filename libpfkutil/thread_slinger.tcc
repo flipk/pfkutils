@@ -97,7 +97,10 @@ T * thread_slinger_queue<T>::dequeue(
 //
 
 template <class T>
-thread_slinger_pool<T>::thread_slinger_pool(void)
+thread_slinger_pool<T>::thread_slinger_pool(
+    pthread_mutexattr_t *mattr /*= NULL*/,
+    pthread_condattr_t  *cattr /*= NULL*/)
+    : q(mattr, cattr), statsLockable(mattr)
 {
     usedCount = freeCount = 0;
     thread_slinger_pools::register_pool(this);

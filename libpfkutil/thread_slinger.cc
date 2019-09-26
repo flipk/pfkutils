@@ -68,20 +68,39 @@ setup_abstime(int uSecs, struct timespec *abstime)
     return abstime;
 }
 
-_thread_slinger_queue :: _thread_slinger_queue(void)
+_thread_slinger_queue :: _thread_slinger_queue(
+    pthread_mutexattr_t *mattr /*= NULL*/,
+    pthread_condattr_t  *cattr /*= NULL*/)
+    : _waiter_sem(mattr, cattr)
 {
-    pthread_mutexattr_t  mattr;
-    pthread_condattr_t   cattr;
+    pthread_mutexattr_t  _mattr;
+    pthread_mutexattr_t *pmattr;
+    pthread_condattr_t   _cattr;
+    pthread_condattr_t  *pcattr;
     head = tail = NULL;
     count = 0;
     waiter = NULL;
     waiter_sem = NULL;
-    pthread_mutexattr_init( &mattr );
-    pthread_mutex_init( &mutex, &mattr );
-    pthread_mutexattr_destroy( &mattr );
-    pthread_condattr_init( &cattr );
-    pthread_cond_init( &_waiter, &cattr );
-    pthread_condattr_destroy( &cattr );
+    if (mattr == NULL)
+    {
+        pmattr = &_mattr;
+        pthread_mutexattr_init( pmattr );
+    }
+    else
+        pmattr = mattr;
+    pthread_mutex_init( &mutex, pmattr );
+    if (mattr == NULL)
+        pthread_mutexattr_destroy( pmattr );
+    if (cattr == NULL)
+    {
+        pcattr = &_cattr;
+        pthread_condattr_init( pcattr );
+    }
+    else
+        pcattr = cattr;
+    pthread_cond_init( &_waiter, pcattr );
+    if (cattr == NULL)
+        pthread_condattr_destroy( pcattr );
 }
 
 _thread_slinger_queue :: ~_thread_slinger_queue(void)

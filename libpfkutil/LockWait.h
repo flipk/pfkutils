@@ -49,7 +49,7 @@ class Lockable {
     void unlock(void);
 public:
     /** constructor initializes the mutex to an unlocked state */
-    Lockable(void);
+    Lockable(pthread_mutexattr_t *mattr = NULL);
     /** destructor checks that the mutex is not locked. */
     ~Lockable(void);
     /** indicates if the lock is held or not. 
@@ -92,7 +92,8 @@ class Waitable : public Lockable {
     friend class Waiter;
     pthread_cond_t  waitableCond;
 public:
-    Waitable(void);
+    Waitable(pthread_mutexattr_t *mattr = NULL,
+             pthread_condattr_t  *cattr = NULL);
     ~Waitable(void);
     /** if anyone is waiting on this object, signal one of them to wake up.
      * \note there's no control over which one wakes up; it is up to the
@@ -131,7 +132,8 @@ class Semaphore {
     Waitable semawait;
 public:
     /** constructor initializes semaphore value to 0 */
-    Semaphore(void);
+    Semaphore(pthread_mutexattr_t *mattr = NULL,
+              pthread_condattr_t  *cattr = NULL);
     ~Semaphore(void);
     /** the value can be reinitialized at any time; note the 
      * behavior of anyone blocked in take is undefined.
@@ -158,13 +160,21 @@ public:
 
 // inline impl below this line
 
-inline Lockable::Lockable(void)
+inline Lockable::Lockable(pthread_mutexattr_t *mattr /* = NULL*/)
 {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&lockableMutex, &attr);
-    pthread_mutexattr_destroy(&attr);
+    pthread_mutexattr_t  _mattr;
+    pthread_mutexattr_t *pmattr;
+    if (mattr == NULL)
+    {
+        pmattr = &_mattr;
+        pthread_mutexattr_init(pmattr);
+    }
+    else
+        pmattr = mattr;
+    pthread_mutexattr_settype(pmattr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&lockableMutex, pmattr);
+    if (mattr == NULL)
+        pthread_mutexattr_destroy(pmattr);
     locked = false;
 }
 
@@ -231,12 +241,22 @@ Lock::unlock(void)
             lobj->unlock();
 }
 
-inline Waitable::Waitable(void)
+inline Waitable::Waitable(pthread_mutexattr_t *mattr /* = NULL*/,
+                          pthread_condattr_t  *cattr /* = NULL*/)
+    : Lockable(mattr)
 {
-    pthread_condattr_t   cattr;
-    pthread_condattr_init( &cattr );
-    pthread_cond_init( &waitableCond, &cattr );
-    pthread_condattr_destroy( &cattr );
+    pthread_condattr_t   _cattr;
+    pthread_condattr_t  *pcattr;
+    if (cattr == NULL)
+    {
+        pcattr = &_cattr;
+        pthread_condattr_init(pcattr);
+    }
+    else
+        pcattr = cattr;
+    pthread_cond_init(&waitableCond, pcattr);
+    if (cattr == NULL)
+        pthread_condattr_destroy(pcattr);
 }
 
 inline Waitable::~Waitable(void)
@@ -303,7 +323,9 @@ Waiter::wait(int sec, int nsec)
     return wait(&expire);
 }
 
-inline Semaphore::Semaphore(void)
+inline Semaphore::Semaphore(pthread_mutexattr_t *mattr /*= NULL*/,
+                            pthread_condattr_t  *cattr /*= NULL*/)
+    : semawait(mattr, cattr)
 {
     value = 0;
 }

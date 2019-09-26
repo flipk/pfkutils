@@ -105,7 +105,8 @@ class _thread_slinger_queue
     void unlock( void ) { pthread_mutex_unlock( &mutex ); }
     thread_slinger_message * __dequeue(void);
 protected:
-    _thread_slinger_queue(void);
+    _thread_slinger_queue(pthread_mutexattr_t *mattr = NULL,
+                          pthread_condattr_t  *cattr = NULL);
     ~_thread_slinger_queue(void);
     void _enqueue(thread_slinger_message *);
     thread_slinger_message * _dequeue(int uSecs);
@@ -125,6 +126,9 @@ template <class T>
 class thread_slinger_queue : public _thread_slinger_queue
 {
 public:
+    thread_slinger_queue(pthread_mutexattr_t *mattr = NULL,
+                         pthread_condattr_t  *cattr = NULL)
+        : _thread_slinger_queue(mattr,cattr) { }
     /** send a message to the receiver.
      * \param msg a user's message derived from thread_slinger_message */
     void enqueue(T * msg);
@@ -190,7 +194,8 @@ class thread_slinger_pool : public thread_slinger_pool_base
     bool nameSet;
     std::string msgName;
 public:
-    thread_slinger_pool(void);
+    thread_slinger_pool(pthread_mutexattr_t *mattr = NULL,
+                        pthread_condattr_t  *cattr = NULL);
     virtual ~thread_slinger_pool(void);
     /** add more items to this pool. */
     void add(int items);
