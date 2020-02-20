@@ -1,0 +1,39 @@
+
+ffmpeg \
+-i "$infile" \
+-strict experimental \
+-c:v libx264 \
+-preset fast \
+-crf $crf \
+-c:a aac \
+-copyts \
+"$outfile"
+
+crf is 18 (perfect) to 28 (not so perfect)
+if flv has vp6f and mp3, -c:v libx264 -preset slow -crf $crf -c:a aac
+if flv has h264 and aac, use -c copy
+
+ffprobe raw.mov
+duration=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$input"`
+
+---extract video, delete audio
+
+ffmpeg -i raw.mov -strict experimental -c:v copy -an raw-video.mov
+
+---extract video, convert to h264, delete audio
+
+ffmpeg -i raw.mov -strict experimental -c:v libx264 -preset fast -crf 28 -an raw-video.mp4
+
+---extract audio, delete video (keep audio in original aac format)
+
+ffmpeg -i raw.mov -strict experimental -vn -c:a copy raw-audio.aac
+
+---extract audio, delete video (convert to signed 32bit LE WAV)
+
+ffmpeg -i iphone-raw.mov -strict experimental -vn -c:a pcm_s32le iphone-audio.wav
+
+---extract a jpg from a position in the video
+
+output=file.jpg
+ffmpeg -y -i "$input" -ss $half_duration -vframes 1 -q:v 2 -s 256x160 $output
+
