@@ -87,7 +87,7 @@ endef
 
 $(CONFIG_H): Makefile config/always config/$(CONFIG)
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
-	$(Q)echo \#define PACKAGE_STRING \"pfkutils 3.31\" >> $(CONFIG_H).tmp
+	$(Q)echo \#define PACKAGE_STRING \"pfkutils 3.32\" >> $(CONFIG_H).tmp
 	$(Q)$(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))
 	$(Q)set -e ; if [ -f $(CONFIG_H) ] ; then \
 		if ! cmp -s $(CONFIG_H).tmp $(CONFIG_H) ; then \
