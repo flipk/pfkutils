@@ -30,7 +30,7 @@
      ("pfk" "muletibetan-2" "muletibetan-0"))))
  '(file-precious-flag t)
  '(frame-title-format (list "emacs" (getenv "EMACS_NUMBER") "%*%b %m") t)
- '(global-semantic-stickyfunc-mode t)
+; problems '(global-semantic-stickyfunc-mode t)
  '(ibuffer-formats
    (quote
     ((mark modified read-only " "
@@ -427,7 +427,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key (kbd "C-x g") 'magit-status)
 ;we'll see (global-set-key (kbd "C-x M-g") 'magit-dispatch-popup)
 
-(semantic-mode)
+; problems (semantic-mode)
 (ivy-mode 1)
 (global-git-gutter-mode +1)
 
