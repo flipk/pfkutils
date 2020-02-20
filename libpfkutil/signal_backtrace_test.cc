@@ -1,3 +1,7 @@
+#if 0
+g++ -Wall -Werror -rdynamic -pthread signal_backtrace_test.cc signal_backtrace.cc -o sbt
+exit 0;
+#endif
 
 #include "signal_backtrace.h"
 #include <unistd.h>
@@ -30,7 +34,7 @@ main(int argc, char ** argv)
         try {
             throw BackTrace();
         }
-        catch (BackTrace bt) {
+        catch (const BackTrace &bt) {
             printf("%s\n", bt.Format().c_str());
             exit (1);
         }
@@ -39,9 +43,8 @@ main(int argc, char ** argv)
     {
         SignalBacktrace::get_instance()->register_handler(
             "signal_test", NULL, &my_handler);
-
+        SignalBacktrace::clean_stack();
         SignalBacktrace::backtrace_now( "testing" );
-
         SignalBacktrace::cleanup();
     }
     else if (test == 3)

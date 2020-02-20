@@ -251,6 +251,16 @@ SignalBacktrace :: backtrace_now( const char *reason )
         instance->handler(instance->handler_arg, &info2);
 }
 
+#if STACK_SYMBOL_SEARCH
+// static
+void
+SignalBacktrace :: clean_stack(void)
+{
+    char buf[30000];
+    memset(buf, 0, sizeof(buf));
+}
+#endif
+
 static void demangle(char *input,
                      char *output, int out_len)
 {
@@ -425,7 +435,7 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
     desc_print( "[bt] %u ---end of backtrace\n", pid);
 
 #if STACK_SYMBOL_SEARCH
-    do { // extra sauce to deal with arm's terrible backtraces
+    do { // extra sauce to deal with arm's backy craptraces
         trace_size2 = 0; // start over
         pthread_attr_t   attr;
         if (pthread_getattr_np(pthread_self(), &attr) != 0)
@@ -551,29 +561,6 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
 #endif
     }
 #endif /* CYGWIN */
-}
-
-
-//// -------------- C interface --------------
-
-void
-signal_backtrace_init(const char *process_name, void *arg,
-                      SignalBacktraceHandler new_handler)
-{
-    SignalBacktrace::get_instance()->register_handler(process_name, arg,
-                                                      new_handler);
-}
-
-void
-signal_backtrace_cleanup(void)
-{
-    SignalBacktrace::cleanup();
-}
-
-void
-signal_backtrace_now(const char *reason)
-{
-    SignalBacktrace::backtrace_now(reason);
 }
 
 }; // namespace BackTraceUtil

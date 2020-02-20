@@ -26,13 +26,10 @@
 
 /** handy utilities for throwing exceptions and getting
  * function backtraces of them */
-#ifdef __cplusplus
 namespace BackTraceUtil {
-#endif
 
 struct SignalBacktraceInfo
 {
-#ifdef __cplusplus
 public:
     SignalBacktraceInfo(void);
     ~SignalBacktraceInfo(void);
@@ -43,9 +40,7 @@ public:
     void desc_print(const char *format...);
     void do_backtrace( const char *process_name,
                        const char *reason = NULL );
-#endif
-
-    int fatal; // actually "bool", but this has to compile in C world, so..
+    bool fatal;
 
     struct timeval tv;
     struct tm tm;
@@ -80,8 +75,6 @@ typedef void (*SignalBacktraceHandler)(
     void * arg,
     const struct SignalBacktraceInfo *info);
 
-#ifdef __cplusplus
-
 class SignalBacktrace
 {
     char process_name[64];
@@ -101,11 +94,16 @@ public:
                           void * arg,
                           SignalBacktraceHandler new_handler);
     static void backtrace_now(const char *reason);
-};
-
+#if STACK_SYMBOL_SEARCH
+    // if using STACK_SYMBOL_SEARCH, call this periodically
+    // to zero out a reasonable amount of memory below the current
+    // stack frame to make the eventual backtrace cleaner and have
+    // less "strays".
+    static void clean_stack(void);
+#else
+    static void clean_stack(void) { }
 #endif
-
-#ifdef __cplusplus
+};
 
 /** base class for errors you can throw. constructor
  * takes a snapshot of the stack and the Format method
@@ -137,18 +135,6 @@ protected:
     }
 };
 
-extern "C" {
-#endif
-
-void signal_backtrace_init(const char *process_name, void *arg,
-                           SignalBacktraceHandler new_handler);
-void signal_backtrace_cleanup(void);
-void signal_backtrace_now(const char *reason);
-
-
-#ifdef __cplusplus
-}
 }; // namespace BackTraceUtil
-#endif
 
 #endif /* __SIGNAL_BACKTRACE_H__ */

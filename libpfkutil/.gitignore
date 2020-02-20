@@ -4,6 +4,7 @@ tst
 nlt
 tts
 doc
+sbt
 debug/xmakefile
 downsampler_test
 input.txt
