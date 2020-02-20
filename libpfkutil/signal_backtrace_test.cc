@@ -1,12 +1,10 @@
-#if 0
-g++ -Wall -Werror -rdynamic -pthread signal_backtrace_test.cc signal_backtrace.cc -o sbt
-exit 0;
-#endif
 
 #include "signal_backtrace.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <signal.h>
 
 using namespace BackTraceUtil;
 
@@ -16,6 +14,14 @@ void my_handler(void * arg, const SignalBacktraceInfo *info)
     if (s) { } // remove unused warning
     if (info->fatal)
         _exit(1);
+}
+
+static void *
+signal_self(void *dummy)
+{
+    usleep(100000);
+    kill(0, SIGTERM);
+    return dummy;
 }
 
 int
@@ -57,11 +63,15 @@ main(int argc, char ** argv)
     }
     else if (test == 4)
     {
+        pthread_t id;
         SignalBacktrace::get_instance()->register_handler(
             "signal_test", NULL, &my_handler);
-        printf("pid %d is sleeping now, send signal now\n", getpid());
+        printf("sending SIGTERM to self\n", getpid());
+        pthread_create(&id, NULL, &signal_self, NULL);
         sleep(10);
         SignalBacktrace::cleanup();
+        void *dummy = NULL;
+        pthread_join(id, &dummy);
     }
 
     return 0;

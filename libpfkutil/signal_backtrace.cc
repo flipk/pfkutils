@@ -361,9 +361,12 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
 
 #endif /* CYGWIN */
 
+    // indicates whether to print si_addr but ALSO
+    // indicates that a register dump is useful.
+    bool si_addr_valid = false;
+
     if (sig != 0)
     {
-        bool si_addr_valid = false;
         desc_print("[bt] %u %s ---got signal %d ",
                         pid, process_name, sig);
 
@@ -479,7 +482,7 @@ SignalBacktraceInfo :: do_backtrace( const char *process_name,
     } while(0);
 #endif
 
-    if (uc != NULL)
+    if (si_addr_valid && uc != NULL)
     {
 #if __powerpc__
         // register dump
