@@ -66,7 +66,7 @@ main(int argc, char ** argv)
         pthread_t id;
         SignalBacktrace::get_instance()->register_handler(
             "signal_test", NULL, &my_handler);
-        printf("sending SIGTERM to self\n", getpid());
+        printf("sending SIGTERM to self\n");
         pthread_create(&id, NULL, &signal_self, NULL);
         sleep(10);
         SignalBacktrace::cleanup();
