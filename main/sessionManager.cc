@@ -43,6 +43,7 @@ For more information, please refer to <http://unlicense.org>
 #include <errno.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <X11/Xlib.h>
 
 #include "sessionManager.h"
 
@@ -70,7 +71,8 @@ struct Command {
 
 typedef vector<Command*> CommandList;
 
-static void startProcesses(void);
+static bool startProcesses(void);
+static bool openDisplay(void);
 
 static CommandList commands;
 
@@ -148,7 +150,8 @@ pfkSessionMgr_main(int argc, char ** argv)
     switch (op)
     {
     case OP_START:
-        startProcesses();
+        if (startProcesses() == false)
+            return 1;
         break;
     case OP_STOP:
         kill(pid, PFK_SESS_MGR_STOP_SIG);
@@ -279,7 +282,7 @@ Command :: kill(void)
     cout << "pid " << startedPid << " wait status " << status << endl;
 }
 
-static void
+static bool
 startProcesses(void)
 {
     struct sigaction sa;
@@ -290,6 +293,9 @@ startProcesses(void)
     sigaction(PFK_SESS_MGR_STOP_SIG,    &sa, NULL);
     sigaction(PFK_SESS_MGR_RESTART_SIG, &sa, NULL);
     sigaction(SIGCHLD, &sa, NULL);
+
+    if (openDisplay() == false)
+        return false;
 
     uint32_t ind;
     while (doStop == false)
@@ -321,4 +327,69 @@ startProcesses(void)
         for (ind = 0; ind < commands.size(); ind++)
             commands[ind]->kill();
     }
+
+    return true;
+}
+
+static pthread_t  displayMonitorThread;
+
+static void * displayMonitorThreadMain( void * arg );
+
+static bool
+openDisplay(void)
+{
+    char * displayVar = getenv("DISPLAY");
+
+    if (displayVar == NULL)
+    {
+        printf("DISPLAY variable not set\n");
+        return false;
+    }
+
+    Display * d = XOpenDisplay(displayVar);
+    if (d == NULL)
+    {
+        printf("unable to open DISPLAY\n");
+        return false;
+    }
+
+    pthread_create(&displayMonitorThread, /*attr*/NULL,
+                   &displayMonitorThreadMain, (void*) d);
+
+    return true;
+}
+
+static int xerrorhandler(Display *d, XErrorEvent *evt)
+{
+    // this will probably never fire because we didn't
+    // register for any events and we created no windows.
+    printf("got error handler type %d\n", evt->type);
+    return 0;
+}
+
+static int xioerrorhandler(Display *d)
+{
+    // this will fire if the server dies.
+    printf("pfkSessionMgr : got IO error, killing all children\n");
+    doStop = true;
+    sleep(10); // give pids time to die
+    exit(1);
+}
+
+static void *
+displayMonitorThreadMain( void * arg )
+{
+    Display * d = (Display *) arg;
+
+    XSetErrorHandler(&xerrorhandler);
+    XSetIOErrorHandler(&xioerrorhandler);
+
+    while (1)
+    {
+        XEvent  evt;
+        XNextEvent(d, &evt);
+        printf("got X event type %d\n", evt.type);
+    }
+
+    return NULL;
 }
