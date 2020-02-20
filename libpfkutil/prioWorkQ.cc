@@ -1,6 +1,6 @@
 #if 0
 set -e -x
-g++ prioWorkQ.cc -D__TEST__ -o pwqtst -lpthread
+g++ prioWorkQ.cc signal_backtrace.cc -D__TEST__ -o pwqtst -lpthread
 ./pwqtst
 exit 0
 #endif
@@ -136,15 +136,15 @@ main()
                    run_work_queue, &workq);
     pthread_attr_destroy(&attr);
 
-    workq.push(new myWorkJob(15,1));
-    workq.push(new myWorkJob(15,2));
+    workq.push(new myWorkJob( 8,4));
+    workq.push(new myWorkJob( 9,5));
     workq.push(new myWorkJob(25,8));
-    workq.push(new myWorkJob(15,3));
-    workq.push(new myWorkJob(15,4));
-    workq.push(new myWorkJob(5,5));
-    workq.push(new myWorkJob(25,9));
-    workq.push(new myWorkJob(5,6));
-    workq.push(new myWorkJob(5,7));
+    workq.push(new myWorkJob(10,6));
+    workq.push(new myWorkJob(11,7));
+    workq.push(new myWorkJob(5,1));
+    workq.push(new myWorkJob(26,9));
+    workq.push(new myWorkJob(6,2));
+    workq.push(new myWorkJob(7,3));
 
     sleep(1);
 
