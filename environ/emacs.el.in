@@ -277,6 +277,11 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 (add-hook 'verilog-mode-hook 'set-verilog-mode-thingies)
 
+(add-hook 'sh-set-shell-hook 'set-sh-mode-thingies)
+(defun set-sh-mode-thingies () "setup for sh mode"
+  (setq indent-tabs-mode nil)
+  (message "setting sh mode thingies"))
+
 (defun fix-c-buffer-my-way ()
   ""
   (interactive)
