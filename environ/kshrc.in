@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2019-09-24.20:43:30
+#      Last update: 2020-02-17.22:45:39
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -211,7 +211,6 @@ case x$ENV_SET in
         __extend_path /usr/ccs/bin
         __extend_path /bin
         __extend_path /usr/bin
-        __extend_path /usr/lib
         __extend_path /sbin
         __extend_path /usr/sbin
         __extend_path /share/scripts

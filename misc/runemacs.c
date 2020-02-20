@@ -8,7 +8,7 @@ exit 0
 #include <string.h>
 #include <malloc.h>
 
-#define PATH "/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Program Files/QuickTime/QTSystem/:/usr/lib/lapack"
+#define PATH "/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin:/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32"
 
 #define      PROGRAM  "c:\\cygwin\\util\\emacs-22.1\\bin\\emacs.exe"
 #define PROGRAM_ARGS  "-fg yellow -bg black"
