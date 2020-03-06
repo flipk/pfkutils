@@ -6,9 +6,10 @@ output="$2"
 ffmpeg -i "${input}" \
 -strict experimental \
 -c:v libx264 \
+-vf yadif=parity=auto \
 -preset fast \
 -crf 28 \
--c:a aac \
+-c:a copy \
 -copyts \
 "${output}"
 
