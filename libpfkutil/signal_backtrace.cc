@@ -326,7 +326,7 @@ static void demangle(char *input,
 
     return;
 bad:
-    strncpy(output, input, out_len);
+    strncpy(output, input, out_len-1);
     output[out_len-1] = 0;
 }
 
