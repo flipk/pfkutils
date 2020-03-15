@@ -6,3 +6,4 @@ cscope.out
 .tsdb
 /[0-9]*
 /pfkutils*.bundle
+*.o
