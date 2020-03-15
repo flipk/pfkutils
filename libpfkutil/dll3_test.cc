@@ -2,7 +2,8 @@
 set -e -x
 g++ -Wall -Werror -g3 -c dll3.cc
 g++ -Wall -Werror -g3 -c dll3_test.cc
-g++ dll3_test.o dll3.o -o nlt -rdynamic -lpthread
+g++ -Wall -Werror -g3 -c signal_backtrace.cc
+g++ dll3_test.o dll3.o signal_backtrace.o -o nlt -rdynamic -lpthread
 ./nlt
 exit 0
 #endif

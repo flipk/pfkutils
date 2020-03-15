@@ -36,7 +36,7 @@ do {                                                    \
 template <__DLL3_LIST_TEMPL>
 __DLL3_LIST::Links::Links(void)
 {
-    next = prev = NULL;
+    next = prev = this;
     lst = NULL;
     magic = MAGIC;
 }
@@ -63,16 +63,25 @@ void __DLL3_LIST::Links::checkvalid(__DLL3_LIST * _lst)
 }
 
 template <__DLL3_LIST_TEMPL>
+bool __DLL3_LIST::Links::onlist(void) const
+{
+    if (validate && magic != MAGIC)
+        __DLL3_LISTERR(ITEM_NOT_VALID);
+    else if (lst != NULL)
+        return true;
+    return false;
+}
+
+template <__DLL3_LIST_TEMPL>
 __DLL3_LIST::List(void)
 {
-    head = tail = NULL;
     cnt = 0;
 }
 
 template <__DLL3_LIST_TEMPL>
 __DLL3_LIST::~List(void)
 {
-    if (validate && head != NULL)
+    if (validate && head.next != &head)
         __DLL3_LISTERR(LIST_NOT_EMPTY);
 }
 
@@ -86,13 +95,11 @@ void __DLL3_LIST::lockwarn(void) const
 template <__DLL3_LIST_TEMPL>
 void __DLL3_LIST::_add_head(Links * item)
 {
-    item->next = head;
-    item->prev = NULL;
-    if (head)
-        head->prev = item;
-    else
-        tail = item;
-    head = item;
+    Links * first = head.next;
+    item->next = first;
+    item->prev = &head;
+    head.next = item;
+    first->prev = item;
     cnt++;
     item->lst = this;
 }
@@ -110,13 +117,11 @@ void __DLL3_LIST::add_tail(Links * item)
 {
     lockwarn();
     item->checkvalid(NULL);
-    item->next = NULL;
-    item->prev = tail;
-    if (tail)
-        tail->next = item;
-    else
-        head = item;
-    tail = item;
+    Links * last = head.prev;
+    item->next = &head;
+    item->prev = last;
+    head.prev = item;
+    last->next = item;
     cnt++;
     item->lst = this;
 }
@@ -127,13 +132,27 @@ void __DLL3_LIST::add_before(Links * item, Links * existing)
     lockwarn();
     item->checkvalid(NULL);
     existing->checkvalid(this);
-    item->prev = existing->prev;
+    Links * b4exist = existing->prev;
+    item->prev = b4exist;
     item->next = existing;
     existing->prev = item;
-    if (item->prev)
-        item->prev->next = item;
-    else
-        head = item;
+    b4exist->next = item;
+    cnt++;
+    item->lst = this;
+}
+
+
+template <__DLL3_LIST_TEMPL>
+void __DLL3_LIST::add_after(Links * item, Links * existing)
+{
+    lockwarn();
+    item->checkvalid(NULL);
+    existing->checkvalid(this);
+    Links * afexist = existing->next;
+    item->next = afexist;
+    item->prev = existing;
+    existing->next = item;
+    afexist->prev = item;
     cnt++;
     item->lst = this;
 }
@@ -142,14 +161,18 @@ template <__DLL3_LIST_TEMPL>
 T * __DLL3_LIST::get_head(void)
 {
     lockwarn();
-    return static_cast<T*>(head);
+    if (head.next != &head)
+        return static_cast<T*>(head.next);
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>
 T * __DLL3_LIST::get_tail(void)
 {
     lockwarn();
-    return static_cast<T*>(tail);
+    if (head.prev != &head)
+        return static_cast<T*>(head.prev);
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>
@@ -157,7 +180,9 @@ T * __DLL3_LIST::get_next(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
-    return static_cast<T*>(item->next);
+    if (item->next != &head)
+        return static_cast<T*>(item->next);
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>
@@ -165,20 +190,18 @@ T * __DLL3_LIST::get_prev(Links * item)
 {
     lockwarn();
     item->checkvalid(this);
-    return static_cast<T*>(item->prev);
+    if (item->prev != &head)
+        return static_cast<T*>(item->prev);
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>
 void __DLL3_LIST::_remove(Links * item)
 {
-    if (item->next)
-        item->next->prev = item->prev;
-    else
-        tail = item->prev;
-    if (item->prev)
-        item->prev->next = item->next;
-    else
-        head = item->next;
+    Links * p = item->prev;
+    Links * n = item->next;
+    p->next = n;
+    n->prev = p;
     item->next = item->prev = NULL;
     cnt--;
     item->lst = NULL;
@@ -190,17 +213,6 @@ void __DLL3_LIST::remove(Links * item)
     lockwarn();
     item->checkvalid(this);
     _remove(item);
-}
-
-template <__DLL3_LIST_TEMPL>
-const bool __DLL3_LIST::onlist(Links * item) const
-{
-    lockwarn();
-    if (validate && item->magic != Links::MAGIC)
-        __DLL3_LISTERR(ITEM_NOT_VALID);
-    else if (item->lst != NULL)
-        return true;
-    return false;
 }
 
 template <__DLL3_LIST_TEMPL>
@@ -218,20 +230,26 @@ template <__DLL3_LIST_TEMPL>
 T * __DLL3_LIST::dequeue_head(void)
 {
     lockwarn();
-    Links * item = head;
-    if (item)
+    Links * item = head.next;
+    if (item != &head)
+    {
         _remove(item);
-    return static_cast<T*>(item);
+        return static_cast<T*>(item);
+    }
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>
 T * __DLL3_LIST::dequeue_tail(void)
 {
     lockwarn();
-    Links * item = head;
-    if (item)
+    Links * item = head.prev;
+    if (item != &head)
+    {
         _remove(item);
-    return static_cast<T*>(item);
+        return static_cast<T*>(item);
+    }
+    return NULL;
 }
 
 template <__DLL3_LIST_TEMPL>

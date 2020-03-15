@@ -71,10 +71,10 @@ public:
         Links(void);
         ~Links(void);
         void checkvalid(__DLL3_LIST * _lst);
+        bool onlist(void) const;
     };
 private:
-    Links * head;
-    Links * tail;
+    Links head;
     int cnt;
     void lockwarn(void) const;
     void _remove(Links * item);
@@ -87,7 +87,7 @@ public:
     void add_head(Links * item);
     void add_tail(Links * item);
     void add_before(Links * item, Links * existing);
-// add_after ?
+    void add_after(Links * item, Links * existing);
     T * get_head(void);
     T * get_tail(void);
     T * get_next(Links * item);
@@ -101,7 +101,6 @@ public:
     void promote(T * item);
     T * get_oldest(void) { return get_tail(); }
     void remove(Links * item);
-    const bool onlist(Links * item) const;
     const bool onthislist(Links * item) const;
     const int get_cnt(void) const { return cnt; }
 };

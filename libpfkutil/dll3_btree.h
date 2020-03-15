@@ -299,7 +299,7 @@ public:
     }
     void add( T * nt )
     {
-        if ( items.onlist(nt))
+        if ( nt->onlist())
         {
             __DLL3_BTREEERR(ALREADY_ON_LIST);
             return;
