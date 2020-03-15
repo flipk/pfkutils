@@ -38,18 +38,23 @@ For more information, please refer to <http://unlicense.org>
 
 namespace ThreadSlinger {
 
-/** exception object for errors from this library */
+/** errors from this library */
 struct ThreadSlingerError : BackTraceUtil::BackTrace {
     /** errors that this library may throw */
     enum errValue {
         MessageOnListDestructor, //!< message still on a list during destructor
         MessageNotFromThisPool,  //!< message freed to wrong pool
         DerefNoPool,             //!< refcount down to zero but poolptr is null
+        PoolInitBeforePoolsInit, //!< pool init before pools init
         __NUMERRS
     } err;
-    static const std::string errStrings[__NUMERRS];
+    // this can't be a std::string because it may get invoked
+    // by very early global constructors prior to main() starting,
+    // which means any std::strings present are not guaranteed to
+    // be fully constructed yet.
+    static const char * errStrings[__NUMERRS];
     ThreadSlingerError(errValue _e) : err(_e) {
-        std::cerr << "Throwing ThreadSlingerError:\n" << Format();
+        std::cerr << "ThreadSlingerError:\n" << Format();
     }
     /** handy utility function for printing error and stack backtrace */
     /*virtual*/ const std::string _Format(void) const;
@@ -67,18 +72,22 @@ public:
     virtual void getCounts(int &used, int &free, std::string &name) = 0;
 };
 
+class thread_slinger_message;
+typedef DLL3::List<thread_slinger_message,1,false,false> messageList_t;
+
 /** base class for all user messages to go through thread_slinger */
-class thread_slinger_message
+class thread_slinger_message : public messageList_t::Links
 {
     int refcount;
     WaitUtil::Lockable refcountlock;
 public:
-    thread_slinger_message * _slinger_next;
     thread_slinger_pool_base * _slinger_pool;
     thread_slinger_message(void);
     virtual ~thread_slinger_message(void);
     /** return the message's name, user of this class may override this */
-    virtual const std::string msgName(void) { return "thread_slinger_message"; }
+    virtual const std::string msgName(void) {
+        return "thread_slinger_message";
+    }
     /** increase reference count */
     void ref(void);
     /** decrease reference count; if it hits zero, this buffer will be
@@ -98,24 +107,28 @@ class _thread_slinger_queue
     // every time you enter and leave _dequeue(), which is the alternative.
     WaitUtil::Semaphore   _waiter_sem;
     WaitUtil::Semaphore *  waiter_sem;
-    thread_slinger_message * head;
-    thread_slinger_message * tail;
-    int count;
+    messageList_t  msgs;
     void   lock( void ) { pthread_mutex_lock  ( &mutex ); }
     void unlock( void ) { pthread_mutex_unlock( &mutex ); }
-    thread_slinger_message * __dequeue(void);
+    inline thread_slinger_message * __dequeue(void);
+    inline thread_slinger_message * __dequeue_tail(void);
+    inline thread_slinger_message * _dequeue_int(int uSecs, bool dotail);
+    static inline struct timespec * setup_abstime(int uSecs,
+                                                  struct timespec *abstime);
 protected:
     _thread_slinger_queue(pthread_mutexattr_t *mattr = NULL,
                           pthread_condattr_t  *cattr = NULL);
     ~_thread_slinger_queue(void);
     void _enqueue(thread_slinger_message *);
+    void _enqueue_head(thread_slinger_message *);
     thread_slinger_message * _dequeue(int uSecs);
-    int _get_count(void) const { return count; }
+    thread_slinger_message * _dequeue_tail(int uSecs);
+    int _get_count(void) const { return msgs.get_cnt(); }
     static thread_slinger_message * _dequeue(
         _thread_slinger_queue ** queues,
         int num_queues, int uSecs,
         int *which_queue=NULL);
-    void * _get_head(void) { return head; }
+    void * _get_head(void) { return msgs.get_head(); }
 };
 
 /** a message queue of user objects, declare a derived type from
@@ -132,12 +145,14 @@ public:
     /** send a message to the receiver.
      * \param msg a user's message derived from thread_slinger_message */
     void enqueue(T * msg);
+    void enqueue_head(T * msg);
     /** fetch a message from the sender.
      * \param uSecs  if >0, wait for that time and return NULL if no
      *         message; if <0, wait forever for a message; if 0,
      *         return NULL immediately if no message.
      * \return NULL if timeout, or a message pointer */
     T * dequeue(int uSecs=0);
+    T * dequeue_tail(int uSecs=0);
     /** find out how many messages are currently queued */
     int get_count(void) const;
     /** dequeue from a set of queues in priority order.
@@ -172,8 +187,10 @@ typedef std::vector<poolReport> poolReportList_t;
 /** a static class which manages list of all known pools */
 class thread_slinger_pools
 {
-    static poolList_t  lst;
+    static thread_slinger_pools * instance;
+    poolList_t  lst;
 public:
+    thread_slinger_pools(void);
     static void register_pool(thread_slinger_pool_base * p);
     static void unregister_pool(thread_slinger_pool_base * p);
     /** retrieve stats about all pools */

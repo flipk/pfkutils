@@ -28,14 +28,12 @@ For more information, please refer to <http://unlicense.org>
 
 inline thread_slinger_message::thread_slinger_message(void)
 {
-    _slinger_next = NULL;
-    _slinger_pool = NULL;
     refcount = 0;
 }
 
 inline thread_slinger_message::~thread_slinger_message(void)
 {
-    if (_slinger_next != NULL)
+    if (onlist())
     {
         ThreadSlingerError tse(ThreadSlingerError::MessageOnListDestructor);
     }
@@ -72,9 +70,21 @@ void thread_slinger_queue<T>::enqueue(T * msg)
 }
 
 template <class T>
+void thread_slinger_queue<T>::enqueue_head(T * msg)
+{
+    _enqueue_head(msg);
+}
+
+template <class T>
 T * thread_slinger_queue<T>::dequeue(int uSecs /*=0*/)
 {
     return (T *) _dequeue(uSecs);
+}
+
+template <class T>
+T * thread_slinger_queue<T>::dequeue_tail(int uSecs /*=0*/)
+{
+    return (T *) _dequeue_tail(uSecs);
 }
 
 template <class T>
@@ -168,7 +178,7 @@ void thread_slinger_pool<T>::release(T * buf)
         ThreadSlingerError tse(ThreadSlingerError::MessageNotFromThisPool);
         return;
     }
-    q.enqueue(buf);
+    q.enqueue_head(buf);
     WaitUtil::Lock  lock(&statsLockable);
     usedCount--;
     freeCount++;
@@ -188,4 +198,89 @@ template <class T>
 bool thread_slinger_pool<T>::empty(void) const
 {
     return freeCount == 0;
+}
+
+// the mutex must be locked before calling this.
+inline thread_slinger_message *
+_thread_slinger_queue :: __dequeue(void)
+{
+    return msgs.dequeue_head();
+}
+
+// the mutex must be locked before calling this.
+inline thread_slinger_message *
+_thread_slinger_queue :: __dequeue_tail(void)
+{
+    return msgs.dequeue_tail();
+}
+
+//static
+inline struct timespec *
+_thread_slinger_queue :: setup_abstime(int uSecs, struct timespec *abstime)
+{
+    if (uSecs < 0)
+        return NULL;
+    clock_gettime( CLOCK_REALTIME, abstime );
+    abstime->tv_sec  +=  uSecs / 1000000;
+    abstime->tv_nsec += (uSecs % 1000000) * 1000;
+    if ( abstime->tv_nsec > 1000000000 )
+    {
+        abstime->tv_nsec -= 1000000000;
+        abstime->tv_sec ++;
+    }
+    return abstime;
+}
+
+inline thread_slinger_message *
+_thread_slinger_queue :: _dequeue_int(int uSecs, bool dotail)
+{
+    thread_slinger_message * pMsg = NULL;
+    struct timespec abstime;
+    abstime.tv_sec = 0;
+    lock();
+    if (msgs.get_head() == NULL)
+    {
+        if (uSecs == 0)
+        {
+            unlock();
+            return NULL;
+        }
+        while (msgs.get_head() == NULL)
+        {
+            if (uSecs == -1)
+            {
+                waiter = &_waiter;
+                pthread_cond_wait( waiter, &mutex );
+                waiter = NULL;
+            }
+            else
+            {
+                if (abstime.tv_sec == 0)
+                    setup_abstime(uSecs, &abstime);
+                waiter = &_waiter;
+                int ret = pthread_cond_timedwait( waiter, &mutex, &abstime );
+                waiter = NULL;
+                if ( ret != 0 )
+                    break;
+            }
+        }
+    }
+    if (dotail)
+        pMsg = __dequeue_tail();
+    else
+        pMsg = __dequeue();
+    unlock();
+    return pMsg;
+}
+
+inline thread_slinger_message *
+_thread_slinger_queue :: _dequeue(int uSecs)
+{
+    return _dequeue_int(uSecs, false);
+}
+
+inline thread_slinger_message *
+_thread_slinger_queue :: _dequeue_tail(int uSecs)
+{
+    return _dequeue_int(uSecs, true);
 }

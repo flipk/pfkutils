@@ -1,8 +1,9 @@
 #if 0
 set -e -x
-g++ -Wall -O6 -c thread_slinger.cc
-g++ -Wall -O6 -c thread_slinger_test.cc
-g++ thread_slinger_test.o thread_slinger.o -o tts -lpthread -lrt
+g++ -Wall -g3 -c thread_slinger.cc
+g++ -Wall -g3 -c thread_slinger_test.cc
+g++ -Wall -g3 -c signal_backtrace.cc
+g++ -g3 thread_slinger_test.o thread_slinger.o signal_backtrace.o -o tts -lpthread -lrt
 exit 0
 #endif
 /*
@@ -49,27 +50,23 @@ struct myMessage : public ThreadSlinger::thread_slinger_message
     int b; // some other field
 };
 
-#if TEST==1
-ThreadSlinger::thread_slinger_pool<myMessage>  p;
-#elif TEST==2
-ThreadSlinger::thread_slinger_pool<myMessage>  p;
-#endif
-
 typedef ThreadSlinger::thread_slinger_queue<myMessage> myMsgQ;
+typedef ThreadSlinger::thread_slinger_pool <myMessage> myMsgPool;
 
-myMsgQ q;
-myMsgQ q2;
+myMsgPool *p  = NULL;
+myMsgQ    *q  = NULL;
+myMsgQ    *q2 = NULL;
 
 void * t1( void * dummy )
 {
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-        myMessage * m = p.alloc(random()%5000);
+        myMessage * m = p->alloc(random()%5000);
         if (m)
         {
             m->ref();
-            q.enqueue(m);
+            q->enqueue(m);
             if (val == 0)
                 printf("+");
             else
@@ -93,7 +90,7 @@ void * t2( void * dummy )
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-        myMessage * m = q.dequeue(random()%10000);
+        myMessage * m = q->dequeue(random()%10000);
         if (m)
         {
             if (val == 0)
@@ -120,14 +117,14 @@ void * t3( void * dummy )
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-        myMessage * m = p.alloc(random()%5000);
+        myMessage * m = p->alloc(random()%5000);
         if (m)
         {
             m->ref();
             if (val == 0)
-                q.enqueue(m);
+                q->enqueue(m);
             else
-                q2.enqueue(m);
+                q2->enqueue(m);
             if (val == 0)
                 printf("+");
             else
@@ -150,8 +147,8 @@ void * t4(void * dummy)
 {
     myMsgQ * qs[2];
 
-    qs[0] = &q;
-    qs[1] = &q2;
+    qs[0] = q;
+    qs[1] = q2;
 
     while (1)
     {
@@ -180,19 +177,29 @@ int
 main()
 {
     pthread_t id;
+
+    p = new myMsgPool;
+
 #if TEST==1
-    p.add(2);
+    q = new myMsgQ;
+    p->add(2);
     pthread_create( &id, NULL, t1, (void*) 0 );
     pthread_create( &id, NULL, t1, (void*) 1 );
     pthread_create( &id, NULL, t2, (void*) 0 );
     pthread_create( &id, NULL, t2, (void*) 1 );
     pthread_join(id,NULL);
+    delete q;
 #elif TEST==2
-    p.add(1);
+    q  = new myMsgQ;
+    q2 = new myMsgQ;
+    p->add(1);
     pthread_create( &id, NULL, t3, (void*) 0 );
     pthread_create( &id, NULL, t3, (void*) 1 );
     pthread_create( &id, NULL, t4, (void*) 0 );
     pthread_join(id,NULL);
+    delete q;
+    delete q2;
 #endif
+    delete p;
     return 0;
 }

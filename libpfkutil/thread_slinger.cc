@@ -33,11 +33,13 @@ For more information, please refer to <http://unlicense.org>
 
 using namespace ThreadSlinger;
 
-const std::string
+const char *
 ThreadSlingerError::errStrings[__NUMERRS] = {
     "message still on list in destructor",
     "message not from this pool",
-    "dereference hit 0 but pool is null"
+    "dereference hit 0 but pool is null",
+    "initializing pool before Pools object initialized (are "
+    "you declaring a pool as a global variable?)"
 };
 
 //virtual
@@ -52,22 +54,6 @@ ThreadSlingerError::_Format(void) const
 
 //
 
-static inline struct timespec *
-setup_abstime(int uSecs, struct timespec *abstime)
-{
-    if (uSecs < 0)
-        return NULL;
-    clock_gettime( CLOCK_REALTIME, abstime );
-    abstime->tv_sec  +=  uSecs / 1000000;
-    abstime->tv_nsec += (uSecs % 1000000) * 1000;
-    if ( abstime->tv_nsec > 1000000000 )
-    {
-        abstime->tv_nsec -= 1000000000;
-        abstime->tv_sec ++;
-    }
-    return abstime;
-}
-
 _thread_slinger_queue :: _thread_slinger_queue(
     pthread_mutexattr_t *mattr /*= NULL*/,
     pthread_condattr_t  *cattr /*= NULL*/)
@@ -77,8 +63,6 @@ _thread_slinger_queue :: _thread_slinger_queue(
     pthread_mutexattr_t *pmattr;
     pthread_condattr_t   _cattr;
     pthread_condattr_t  *pcattr;
-    head = tail = NULL;
-    count = 0;
     waiter = NULL;
     waiter_sem = NULL;
     if (mattr == NULL)
@@ -110,36 +94,11 @@ _thread_slinger_queue :: ~_thread_slinger_queue(void)
     pthread_cond_destroy( &_waiter );
 }
 
-// the mutex must be locked before calling this.
-thread_slinger_message *
-_thread_slinger_queue :: __dequeue(void)
-{
-    thread_slinger_message * pMsg = NULL;
-    if (head != NULL)
-    {
-        pMsg = head;
-        head = head->_slinger_next;
-        if (head == NULL)
-            tail = NULL;
-        pMsg->_slinger_next = NULL;
-        count--;
-    }
-    return pMsg;
-}
-
 void 
 _thread_slinger_queue :: _enqueue(thread_slinger_message * pMsg)
 {
-    pMsg->_slinger_next = NULL;
     lock();
-    if (tail)
-    {
-        tail->_slinger_next = pMsg;
-        tail = pMsg;
-    }
-    else
-        head = tail = pMsg;
-    count++;
+    msgs.add_tail(pMsg);
     pthread_cond_t * w = waiter;
     WaitUtil::Semaphore * sem = waiter_sem;
     unlock();
@@ -154,43 +113,23 @@ _thread_slinger_queue :: _enqueue(thread_slinger_message * pMsg)
         sem->give();
 }
 
-thread_slinger_message *
-_thread_slinger_queue :: _dequeue(int uSecs)
+void 
+_thread_slinger_queue :: _enqueue_head(thread_slinger_message * pMsg)
 {
-    thread_slinger_message * pMsg = NULL;
-    struct timespec abstime;
-    abstime.tv_sec = 0;
     lock();
-    if (head == NULL)
-    {
-        if (uSecs == 0)
-        {
-            unlock();
-            return NULL;
-        }
-        while (head == NULL)
-        {
-            if (uSecs == -1)
-            {
-                waiter = &_waiter;
-                pthread_cond_wait( waiter, &mutex );
-                waiter = NULL;
-            }
-            else
-            {
-                if (abstime.tv_sec == 0)
-                    setup_abstime(uSecs, &abstime);
-                waiter = &_waiter;
-                int ret = pthread_cond_timedwait( waiter, &mutex, &abstime );
-                waiter = NULL;
-                if ( ret != 0 )
-                    break;
-            }
-        }
-    }
-    pMsg = __dequeue();
+    msgs.add_head(pMsg);
+    pthread_cond_t * w = waiter;
+    WaitUtil::Semaphore * sem = waiter_sem;
     unlock();
-    return pMsg;
+    // a given queue will have a non-null waiter 
+    // iff the receiver thread is blocked in the single-queue
+    // _dequeue.  it will have a non-null sem
+    // iff the receiver thread is blocked in the multi-queue
+    // _dequeue.
+    if (w)
+        pthread_cond_signal(w);
+    if (sem)
+        sem->give();
 }
 
 //static
@@ -232,33 +171,45 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
     return pMsg;
 }
 
-poolList_t thread_slinger_pools::lst;
+static thread_slinger_pools pools;
+thread_slinger_pools * thread_slinger_pools::instance = NULL;
+
+thread_slinger_pools::thread_slinger_pools(void)
+{
+    instance = this;
+}
 
 //static
 void
 thread_slinger_pools::register_pool(thread_slinger_pool_base * p)
 {
-    WaitUtil::Lock  lock(&lst);
-    lst.add_tail(p);
+    if (thread_slinger_pools::instance == NULL)
+        ThreadSlingerError tse(ThreadSlingerError::PoolInitBeforePoolsInit);
+    else
+    {
+        WaitUtil::Lock  lock(&thread_slinger_pools::instance->lst);
+        thread_slinger_pools::instance->lst.add_tail(p);
+    }
 }
 
 //static
 void
 thread_slinger_pools::unregister_pool(thread_slinger_pool_base * p)
 {
-    WaitUtil::Lock  lock(&lst);
-    lst.remove(p);
+    WaitUtil::Lock  lock(&instance->lst);
+    instance->lst.remove(p);
 }
 
 //static
 void
 thread_slinger_pools::report_pools(poolReportList_t &report)
 {
+    thread_slinger_pool_base * p;
     report.clear();
-    WaitUtil::Lock  lock(&lst);
-    for (thread_slinger_pool_base * p = lst.get_head();
+    WaitUtil::Lock  lock(&thread_slinger_pools::instance->lst);
+    for (p = thread_slinger_pools::instance->lst.get_head();
          p != NULL;
-         p = lst.get_next(p))
+         p = thread_slinger_pools::instance->lst.get_next(p))
     {
         poolReport  r;
         p->getCounts(r.usedCount,
