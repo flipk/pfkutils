@@ -68,6 +68,40 @@ ffmpeg -i input.mkv -filter_complex "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]" 
 
 
 
+change video bitrate
+
+input=output0001-76102.mp4
+output=final.mp4
+rate=1000k
+ffmpeg -i $input -strict experimental -c:v libx264 -x264-params keyint=15 -b:v $rate -c:a copy $output
+
+
+
+
+
 You can see private options like this: ffmpeg -h encoder=mjpeg.
 
 
+sometimes you may have to hexedit a WAV
+to change 48000 (80 bb) to 44100 (44 ac)'
+
+change audio bitrate
+
+input=
+output=
+outrate=48000
+
+ffmpeg -i $input -ar $outrate -y $output
+
+
+
+make list.txt:
+
+file 'b01.mp4'
+file 'b02.mp4'
+file 'b03.mp4'
+file 'b04.mp4'
+file 'b05.mp4'
+file 'b06.mp4'
+
+ffmpeg -f concat -i list.txt -c copy -y c.mp4
