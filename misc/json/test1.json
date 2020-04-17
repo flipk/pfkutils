@@ -1,0 +1,11 @@
+
+{
+    "int" : 12345,
+    "float" : 12345.4,
+    "string" : "12345",
+    "array" : [ "12345", "67890" ],
+    "list" : { "one" : "1", "two" : 2, "three" : 3.1, "four" : "4" },
+    "escape1" : "testing \"quote",
+    "escape2" : "one \b two",
+    "escape3" : "unicode \uABCD"
+}
