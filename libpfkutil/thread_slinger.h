@@ -72,7 +72,6 @@ public:
     virtual void getCounts(int &used, int &free, std::string &name) = 0;
 };
 
-class thread_slinger_message;
 typedef DLL3::List<thread_slinger_message,1,false,false> messageList_t;
 
 /** base class for all user messages to go through thread_slinger */

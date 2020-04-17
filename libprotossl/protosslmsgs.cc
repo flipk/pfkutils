@@ -20,8 +20,12 @@ debug_print(void *ptr, int level,
 
 ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
                              bool _debugFlag/* = false*/,
-                             uint32_t read_timeout /*= 0*/)
-    : nonBlockingMode(_nonBlockingMode), debugFlag(_debugFlag)
+                             uint32_t read_timeout /*= 0*/,
+                             bool _use_tcp /*= true*/,
+                             uint32_t dtls_timeout_min /*= 500*/,
+                             uint32_t dtls_timeout_max /*= 10000*/)
+    : nonBlockingMode(_nonBlockingMode), debugFlag(_debugFlag),
+      use_tcp(_use_tcp)
 {
     mbedtls_entropy_init( &entropy );
     memset( &mycert, 0, sizeof( mbedtls_x509_crt ) );
@@ -29,10 +33,16 @@ ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
     mbedtls_pk_init( &mykey ); // rsa_init( &mykey, RSA_PKCS_V15, 0 );
     mbedtls_ssl_config_init( &sslcfg );
     mbedtls_ssl_config_defaults( &sslcfg, MBEDTLS_SSL_IS_SERVER,
-                                 MBEDTLS_SSL_TRANSPORT_STREAM,
+                                 use_tcp ?
+                                 MBEDTLS_SSL_TRANSPORT_STREAM :
+                                 MBEDTLS_SSL_TRANSPORT_DATAGRAM,
                                  MBEDTLS_SSL_PRESET_DEFAULT );
+    mbedtls_ssl_cookie_init( &cookie_ctx );
 
     //mbedtls_ssl_conf_read_timeout( &sslcfg, 0 );
+
+    mbedtls_ssl_conf_handshake_timeout( &sslcfg,
+                                        dtls_timeout_min, dtls_timeout_max );
 
     mbedtls_ctr_drbg_init( &ctr_drbg );
     mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
@@ -53,6 +63,18 @@ ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
     {
         mbedtls_ssl_conf_read_timeout( &sslcfg, read_timeout );
     }
+
+    int ret;
+    ret = mbedtls_ssl_cookie_setup( &cookie_ctx,
+                                    mbedtls_ctr_drbg_random, &ctr_drbg );
+
+    if (ret != 0 )
+        printf( "mbedtls_ssl_cookie_setup returned %d\n\n", ret );
+
+    mbedtls_ssl_conf_dtls_cookies( &sslcfg,
+                                   mbedtls_ssl_cookie_write,
+                                   mbedtls_ssl_cookie_check,
+                                   &cookie_ctx );
 
     // doesn't appear to be needed?
     //mbedtls_ssl_conf_verify( &sslcfg, f_vrfy, p_vrfy )
@@ -80,6 +102,7 @@ ProtoSSLMsgs :: ~ProtoSSLMsgs(void)
     mbedtls_x509_crt_free(&mycert);
     mbedtls_x509_crt_free(&cacert);
     mbedtls_ssl_config_free(&sslcfg);
+    mbedtls_ssl_cookie_free( &cookie_ctx );
     mbedtls_entropy_free(&entropy);
     mbedtls_ctr_drbg_free(&ctr_drbg);
 }
@@ -192,10 +215,142 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     return true;
 }
 
+
+static time_t x509_time_to_linux_time(const mbedtls_x509_time &xt)
+{
+    struct tm   t;
+
+    memset(&t, 0, sizeof(t));
+
+    t.tm_year = xt.year - 1900;  // tm_year is 1900-based, x509.year is 0-based
+    t.tm_mon = xt.mon - 1; // tm_mon is 0-based, x509.mon is 1-based
+    t.tm_mday = xt.day;
+    t.tm_hour = xt.hour;
+    t.tm_min = xt.min;
+    t.tm_sec = xt.sec;
+
+    return mktime(&t);
+}
+
+bool
+ProtoSSLMsgs :: validateCertificates(void)
+{
+    // validate that mycert is signed by cacert chain; then, validate that mycert
+    // and mykey match.
+
+    std::string  pubkey, myCertPubkey;
+
+    pubkey.resize(5000);
+    int parseRet =
+        mbedtls_pk_write_pubkey_pem( &mykey, (unsigned char *)pubkey.c_str(),
+                                     pubkey.size());
+    if (parseRet == 0)
+        pubkey.resize(strlen(pubkey.c_str()));
+    else
+        pubkey.resize(0);
+
+    myCertPubkey.resize(5000);
+    parseRet =
+        mbedtls_pk_write_pubkey_pem( &mycert.pk,
+                                     (unsigned char *)myCertPubkey.c_str(),
+                                     myCertPubkey.size());
+    if (parseRet == 0)
+        myCertPubkey.resize(strlen(myCertPubkey.c_str()));
+    else
+        myCertPubkey.resize(0);
+
+    if (pubkey.size() == 0 || pubkey != myCertPubkey)
+    {
+        printf( "ProtoSSLMsgs::validateCertificates : ERROR : "
+                "MY CERT and PRIVATE KEY MISMATCH\n");
+        return false;
+    }
+
+    // next validate that the signature chain actually works.
+
+    time_t t, now = time(NULL);
+    time_t latest_start_date = now;
+    struct tm broken; // broken-down time
+    char broken_string[100];
+
+    t = x509_time_to_linux_time( mycert.valid_from );
+#if 0 // debug prints
+    gmtime_r(&t, &broken);
+    strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
+    printf( "ProtoSSLMsgs::validateCertificates : "
+            "devCert time %u (%s)\n", (uint32_t) t, broken_string);
+#endif
+
+    if (t > latest_start_date)
+        latest_start_date = t;
+
+    for (mbedtls_x509_crt *crt = &cacert; crt; crt = crt->next)
+    {
+        t = x509_time_to_linux_time( crt->valid_from );
+#if 0 // debug prints
+        gmtime_r(&t, &broken);
+        strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
+        printf( "ProtoSSLMsgs::validateCertificates : "
+                "caCert time %u (%s)\n", (uint32_t) t, broken_string);
+#endif
+        if (t > latest_start_date)
+            latest_start_date = t;
+
+#if 0   // actually, don't have a need for the root cert just now. leaving
+        // this code here for documentation purposes.
+        // look for the root cert: you know by whether
+        // issuer and subject are the same.
+        if (crt->issuer_raw.len == crt->subject_raw.len &&
+            memcmp(crt->issuer_raw.p, crt->subject_raw.p,
+                   crt->issuer_raw.len) == 0)
+        {
+            rootCert = crt;
+        }
+#endif
+    }
+
+    if (latest_start_date > now)
+    {
+        gmtime_r(&now, &broken);
+        strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
+        printf( "ProtoSSLMsgs::validateCertificates: ERROR: "
+                "time now (%u %s) is outside certificate valid times\n",
+                (uint32_t) now, broken_string);
+        return false;
+    }
+
+    uint32_t flags = 0;
+    parseRet =
+        mbedtls_x509_crt_verify(
+            &mycert, &cacert, /*ca_crl*/ NULL,
+            /*cn*/ NULL, &flags,
+            /*f_vrfy*/ NULL, /*p_vrfy*/ NULL );
+
+    if (parseRet != 0)
+    {
+        std::string info;
+        info.resize(200);
+        parseRet = mbedtls_x509_crt_verify_info(
+            (char*) info.c_str(), info.size(),
+            /*prefix*/ "", flags);
+
+        if (parseRet >= 0)
+        {
+            info.resize(parseRet);
+            printf( "ProtoSSLMsgs::validateCertificates : ERROR: "
+                    "CERTIFICATE VALIDATION FAILED: %s\n", info.c_str());
+        }
+
+        return false;
+    }
+    printf("ProtoSSLMsgs::validateCertificates : certificates validated\n");
+    return true;
+}
+
 ProtoSSLConnServer *
 ProtoSSLMsgs :: startServer(int listeningPort)
 {
-    ProtoSSLConnServer * svr = new ProtoSSLConnServer(this, listeningPort);
+    ProtoSSLConnServer * svr = new ProtoSSLConnServer(this, listeningPort, use_tcp);
     if (svr->ok() == false)
     {
         delete svr;
@@ -210,7 +365,7 @@ ProtoSSLMsgs :: startClient(const std::string &remoteHost,
 {
     mbedtls_ssl_conf_endpoint( &sslcfg, MBEDTLS_SSL_IS_CLIENT );
     ProtoSSLConnClient * client =
-        new ProtoSSLConnClient(this, remoteHost, remotePort);
+        new ProtoSSLConnClient(this, remoteHost, remotePort, use_tcp);
     if (client->ok() == false)
     {
         delete client;

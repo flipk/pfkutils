@@ -365,12 +365,16 @@ endif
 ifeq ($(PFK_BUILD_protossl),1)
 LIB_TARGETS += libprotossl
 libprotossl_TARGET = $(OBJDIR)/libprotossl.a
-libprotossl_DEFS = $(MBEDTLS_FLAGS)
+libprotossl_PROTOSRCS = libprotossl/protossldtlsqueuing.proto
+libprotossl_DEFS = $(MBEDTLS_FLAGS) \
+	-DPROTODTLSQUEUING_HDR=\"$(libprotossl_libprotossl/protossldtlsqueuing.proto_HDR)\"
+	-DTEST_PROTO_HDR=\"$(protossl_test_libprotossl/test_proto.proto_HDR)\"
 libprotossl_INCS = -Ilibprotossl -Ilibpfkutil $(PROTOBUF_INC) $(MBEDTLS_INCS)
 libprotossl_CXXSRCS = \
 	libprotossl/protosslcertparams.cc \
 	libprotossl/protosslconnclient.cc \
 	libprotossl/protosslconnserver.cc \
+	libprotossl/protossldtlsqueuing.cc \
 	libprotossl/protosslmsgs.cc
 libprotossl_HDRS = libprotossl/libprotossl.h
 libprotossl_INSTALL_HDRS = libprotossl/libprotossl.h

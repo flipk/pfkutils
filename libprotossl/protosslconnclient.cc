@@ -7,8 +7,11 @@
 using namespace ProtoSSL;
 
 ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
-                                         mbedtls_net_context new_netctx)
-    : msgs(_msgs)
+                                         mbedtls_net_context new_netctx,
+                                         bool _use_tcp,
+                                         unsigned char *client_ip,
+                                         size_t cliip_len)
+    : msgs(_msgs), use_tcp(_use_tcp)
 {
     _ok = false;
     send_close_notify = false;
@@ -16,13 +19,14 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     msgs->registerClient(this);
     netctx = new_netctx;
     WaitUtil::Lock lock(&ssl_lock);
-    _ok = init_common();
+    _ok = init_common(client_ip, cliip_len);
 }
 
 ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
                                          const std::string &remoteHost,
-                                         int remotePort)
-    : msgs(_msgs)
+                                         int remotePort,
+                                         bool _use_tcp)
+    : msgs(_msgs), use_tcp(_use_tcp)
 {
     _ok = false;
     send_close_notify = false;
@@ -35,7 +39,9 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     mbedtls_net_init(&netctx);
     int ret = mbedtls_net_connect(&netctx, remoteHost.c_str(),
                                   portString.getBuf(),
-                                  MBEDTLS_NET_PROTO_TCP);
+                                  use_tcp ?
+                                  MBEDTLS_NET_PROTO_TCP :
+                                  MBEDTLS_NET_PROTO_UDP );
     if (ret != 0)
     {
         char strbuf[200];
@@ -44,12 +50,12 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
         return;
     }
 
-    _ok = init_common();
+    _ok = init_common(NULL, 0);
 }
 
 // this function requires ssl_lock to be locked.
 bool
-ProtoSSLConnClient :: init_common(void)
+ProtoSSLConnClient :: init_common(unsigned char *client_ip, size_t cliip_len)
 {
     int ret;
 
@@ -61,8 +67,35 @@ ProtoSSLConnClient :: init_common(void)
                  &mbedtls_net_send, &mbedtls_net_recv,
                  &mbedtls_net_recv_timeout);
 
+    if (use_tcp == false && client_ip != NULL)
+    {
+        int ret;
+        /* For HelloVerifyRequest cookies */
+        if( ( ret = mbedtls_ssl_set_client_transport_id( &sslctx,
+                                                         client_ip, cliip_len ) ) != 0 )
+        {
+            fprintf(stderr, "ProtoSSLConnClient :: init_common : ERROR: "
+                    "mbedtls_ssl_set_client_transport_id() returned -0x%x\n\n", -ret );
+        }
+    }
+
+    mbedtls_ssl_set_timer_cb( &sslctx, &timer,
+                              mbedtls_timing_set_delay,
+                              mbedtls_timing_get_delay );
+
     while ((ret = mbedtls_ssl_handshake( &sslctx )) != 0)
     {
+        // note in DTLS, MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED is a common
+        // response; the documentation says it is "normal for this to fail
+        // half the time." what ever that means. the client silently retries,
+        // and we get into a new client object just fine, so this is ok.
+        if (ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED)
+        {
+            fprintf(stderr, "ProtoSSLConnClient: HELLO_VERIFY_REQUIRED (normal), retrying\n");
+            mbedtls_ssl_session_reset( &sslctx );
+            return false;
+        }
+
         if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
             ret != MBEDTLS_ERR_SSL_WANT_WRITE )
         {
@@ -77,16 +110,10 @@ ProtoSSLConnClient :: init_common(void)
     if( ( ret = mbedtls_ssl_get_verify_result( &sslctx ) ) != 0 )
     {
         fprintf(stderr, "ssl_get_verify_result failed (ret = 0x%x)\n", ret );
-        if( ( ret & MBEDTLS_X509_BADCERT_EXPIRED ) != 0 )
-            fprintf(stderr,  "  ! server certificate has expired\n" );
-        if( ( ret & MBEDTLS_X509_BADCERT_REVOKED ) != 0 )
-            fprintf(stderr, "  ! server certificate has been revoked\n" );
-        if( ( ret & MBEDTLS_X509_BADCERT_CN_MISMATCH ) != 0 )
-            fprintf(stderr, "  ! CN mismatch (expected CN=%s)\n",
-                    "PolarSSL Server 1" );
-        if( ( ret & MBEDTLS_X509_BADCERT_NOT_TRUSTED ) != 0 )
-            fprintf(stderr, "  ! self-signed or not signed by trusted CA\n" );
-        fprintf(stderr, "\n" );
+
+        char vrfy_buf[512];
+        mbedtls_x509_crt_verify_info( vrfy_buf, sizeof( vrfy_buf ), "  ! ", ret );
+        fprintf(stderr, "%s\n", vrfy_buf);
         return false;
     }
 
@@ -203,23 +230,19 @@ ProtoSSLConnClient :: get_peer_info(ProtoSSLPeerInfo &info)
 }
 
 ProtoSSLConnClient :: read_return_t
-ProtoSSLConnClient :: handle_read(MESSAGE &msg)
+ProtoSSLConnClient :: handle_read_raw(std::string &buffer)
 {
     int ret;
     WaitUtil::Lock lock(&ssl_lock);
 
-    rcvbuf.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
-    ret = mbedtls_ssl_read( &sslctx, rcvbuf.ucptr(), rcvbuf.length());
+    buffer.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
+    ret = mbedtls_ssl_read( &sslctx,
+                            (unsigned char*) buffer.c_str(),
+                            buffer.length());
     if (ret > 0)
     {
-        rcvbuf.resize(ret);
-        msg.Clear();
-        if (msg.ParseFromString(rcvbuf) == true)
-            return GOT_MESSAGE;
-        else
-        {
-            std::cerr << "message parsing failed\n";
-        }
+        buffer.resize(ret);
+        return GOT_MESSAGE;
     }
     if (ret == MBEDTLS_ERR_SSL_TIMEOUT)
     {
@@ -239,22 +262,35 @@ ProtoSSLConnClient :: handle_read(MESSAGE &msg)
     return READ_MORE;
 }
 
+ProtoSSLConnClient :: read_return_t
+ProtoSSLConnClient :: handle_read(MESSAGE &msg)
+{
+    read_return_t rr = handle_read_raw(rcvbuf);
+
+    if (rr == GOT_MESSAGE)
+    {
+        msg.Clear();
+        if (msg.ParseFromString(rcvbuf) == true)
+            return GOT_MESSAGE;
+        // else
+        std::cerr << "message parsing failed\n";
+        return GOT_DISCONNECT;
+    }
+
+    return rr;
+}
+
 // returns true if ok, false if not
 bool
-ProtoSSLConnClient :: send_message(const MESSAGE &msg)
+ProtoSSLConnClient :: send_raw(const std::string &buffer)
 {
     int ret;
     WaitUtil::Lock lock(&ssl_lock);
 
-    if (msg.SerializeToString(&outbuf) == false)
-    {
-        std::cerr << "_sendMessage failed to serialize\n";
-        // error?
-        return false;
-    }
-
     do {
-        ret = mbedtls_ssl_write( &sslctx, outbuf.ucptr(), outbuf.length() );
+        ret = mbedtls_ssl_write( &sslctx,
+                                 (unsigned char *)buffer.c_str(),
+                                 buffer.length() );
     } while (ret == MBEDTLS_ERR_SSL_WANT_READ ||
              ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
@@ -273,4 +309,17 @@ ProtoSSLConnClient :: send_message(const MESSAGE &msg)
     }
 
     return true;
+}
+
+bool
+ProtoSSLConnClient :: send_message(const MESSAGE &msg)
+{
+    if (msg.SerializeToString(&outbuf) == false)
+    {
+        std::cerr << "_sendMessage failed to serialize\n";
+        // error?
+        return false;
+    }
+
+    return send_raw(outbuf);
 }

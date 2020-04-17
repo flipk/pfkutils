@@ -1,0 +1,32 @@
+
+syntax = "proto2";
+
+package ProtoSSL.DTLS;
+
+// this should be preceeded by a varint32 length.
+message DTLS_PacketHeader_m
+{
+  // present in all DtlsQ messages. the sender populates it with the
+  // size of the send-window on that size; the recipient sizes it's
+  // receive window to match.
+  optional uint32 window_size = 1; // set by send_frag
+  // present in all non-heartbeat messages, for reassembly.
+  // unreliable queues will have message_body_size but no sequence_no.
+  optional uint32 sequence_no = 2; // set before calling send_frag!
+  // counts 0 to N-1 for a fragmented message, not present if N=1
+  optional uint32 frag_no = 3; // set before calling send_frag!
+  // this is N for a fragmented message, not present if N=1
+  optional uint32 num_frags = 4; // set before calling send_frag!
+  // not present if this is not piggybacking an ack.
+  repeated uint32 ack_seq_no = 5; // set by send_frag
+  // only present if receiver detects a gap for a missing msg.
+  repeated uint32 nack_seq_no = 6; // set by send_frag
+  // not present if this is an ack or heartbeat only.
+  optional uint32 message_body_size = 7; // set by send_frag
+  // only when a heartbeat wants to measure rtd.
+  // one side does gettimeofday, sends req_timestamp.
+  // the other side immmediately responds by copying back rsp_timestamp.
+  // first side does gettimeofday and subtracts. that's rtd.
+  optional uint64 rtd_req_timestamp = 8;
+  optional uint64 rtd_rsp_timestamp = 9;
+}

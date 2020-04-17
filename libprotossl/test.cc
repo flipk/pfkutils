@@ -9,53 +9,141 @@ class test_program
     ServerToClient stc;
     ClientToServer cts;
     bool connected;
-    ProtoSSL::ProtoSSLMsgs  msgs;
+    ProtoSSL::ProtoSSLMsgs  *msgs;
     ProtoSSL::ProtoSSLConnClient * client;
     ProtoSSL::ProtoSSLConnServer * server;
+    ProtoSSL::ProtoSslDtlsQueueConfig dtlsq_config;
+    ProtoSSL::ProtoSslDtlsQueue * dtlsq;
+    uint32_t queue_number;
+    pthread_t dtlsq_reader_id;
+    bool dtlsq_reader_running;
+    bool dtlsq_done;
+    void usage(void)
+    {
+        printf("usage:\n"
+               " be a server:\n"
+               "   %s sP port\n"
+               " be a client:\n"
+               "   %s cP ipaddr port\n"
+               " (where P is one of:\n"
+               "   t : tcp TLS\n"
+               "   u : udp DTLS\n"
+               "   U : DTLSQUEUE\n");
+        exit(1);
+    }
 public:
-    test_program(void) : msgs(/*nonblock*/true, /*debugFlag*/false)
+    test_program(void)
     {
         connected = false;
         client = NULL;
         server = NULL;
+        msgs = NULL;
+        dtlsq = NULL;
+        queue_number = 0;
+        dtlsq_reader_running = false;
+        dtlsq_done = false;
+    }
+    ~test_program(void)
+    {
+        if (dtlsq)
+        {
+            delete dtlsq;
+            if (dtlsq_reader_running)
+            {
+                void * dummy = NULL;
+                // the delete should cause ProtoSslDtlsQueue::handle_read
+                // to return and the thread should exit on its own.
+                pthread_join(dtlsq_reader_id, &dummy);
+            }
+        }
+        if (server)
+            delete server;
+        if (client)
+            delete client;
+        if (msgs)
+            delete msgs;
     }
     int main(int argc, char ** argv)
     {
         std::string cert_ca        = "file:keys/Root-CA.crt";
-
         std::string cert_server    = "file:keys/Server-Cert.crt";
-        std::string key_server     = "file:keys/Server-Cert-encrypted.key";
-        std::string key_pwd_server = "0KZ7QMalU75s0IXoWnhm3BXEtswirfwrXwwNiF6c";
-
+        std::string key_server     = "file:keys/Server-Cert-plain.key";
         std::string cert_client    = "file:keys/Client-Cert.crt";
-        std::string key_client     = "file:keys/Client-Cert-encrypted.key";
-        std::string key_pwd_client = "IgiLNFWx3fTMioJycI8qXCep8j091yfHOwsBbo6f";
+        std::string key_client     = "file:keys/Client-Cert-plain.key";
 
         if (argc < 2)
         {
-            return 1;
+            usage();
+            //NOTREACHED
         }
         std::string argv1(argv[1]);
-        if (argv1 == "s")
+        if (argv1.size() != 2)
+        {
+            usage();
+            //NOTREACHED
+        }
+        bool use_tcp = true;
+        bool use_dtlsq = false;
+        switch (argv1[1]) // the 'P' in the help msg
+        {
+        case 't':
+            break;
+        case 'u':
+            use_tcp = false;
+            break;
+        case 'U':
+            use_tcp = false;
+            use_dtlsq = true;
+            break;
+        default:
+            usage();
+            //NOTREACHED
+        }
+
+        if (use_dtlsq)
+        {
+            // make the fragment size really small so we
+            // exercise the fragmentation and reassembly code.
+            dtlsq_config.fragment_size = 32;
+            dtlsq_config.add_queue(
+                queue_number,
+                /*reliable*/ true,
+                ProtoSSL::ProtoSslDtlsQueueConfig::Queue_Type_t::FIFO,
+                ProtoSSL::ProtoSslDtlsQueueConfig::Limit_Type_t::NONE,
+                /*limit*/ 0);
+        }
+
+        msgs = new ProtoSSL::ProtoSSLMsgs(
+            /*nonblock*/true,
+            /*debug*/false,
+            /*read_timeout*/ 0,
+            use_tcp,
+            /*dtls_timeout_min*/ 1000,
+            /*dtls_timeout_max*/ 2000 );
+
+        if (argv1[0] == 's')
         {
             ProtoSSL::ProtoSSLCertParams  certs(cert_ca,
                                                 cert_server,
                                                 key_server,
-                                                key_pwd_server);
+                                                /*no password*/ "");
 
-            if (msgs.loadCertificates(certs) == false)
+            if (msgs->loadCertificates(certs) == false)
                 return 1;
 
-            server = msgs.startServer(2005);
+            if (msgs->validateCertificates() == false)
+                return 1;
+
+            server = msgs->startServer(2005);
             if (server == NULL)
             {
                 fprintf(stderr,"failure to chooch making server\n");
                 return 1;
             }
         }
-        else if (argv1 == "c")
+        else if (argv1[0] == 'c')
         {
-            if (argc != 3)
+            if (argc != 4)
             {
                 fprintf(stderr,"specify ip address of server\n");
                 return 2;
@@ -64,18 +152,39 @@ public:
             ProtoSSL::ProtoSSLCertParams  certs(cert_ca,
                                                 cert_client,
                                                 key_client,
-                                                key_pwd_client);
+                                                /*no password*/ "");
 
-            if (msgs.loadCertificates(certs) == false)
+            if (msgs->loadCertificates(certs) == false)
                 return 1;
 
-            client = msgs.startClient(argv[2], 2005);
+            if (msgs->validateCertificates() == false)
+                return 1;
+
+            client = msgs->startClient(argv[2], 2005);
             if (client == NULL)
             {
                 fprintf(stderr,"failure to chooch making client\n");
                 return 1;
             }
             connected = true;
+            if (use_dtlsq)
+            {
+                dtlsq = new ProtoSSL::ProtoSslDtlsQueue(dtlsq_config,
+                                                        client);
+                if (dtlsq->ok())
+                {
+                    // lose the client pointer. dtlsq owns it now.
+                    client = NULL;
+                }
+                else
+                {
+                    delete dtlsq;
+                    dtlsq = NULL;
+                    fprintf(stderr,"failure to chooch making dtlsq\n");
+                    return 1;
+                }
+                start_dtlsq_reader();
+            }
             send_server_protoversion();
         }
         else
@@ -88,6 +197,8 @@ public:
         {
             pxfe_select sel;
 
+            if (use_dtlsq && dtlsq_done)
+                break;
             if (server)
                 sel.rfds.set(server->get_fd());
             if (client)
@@ -105,7 +216,7 @@ public:
 
                 if (newclient)
                 {
-                    if (client)
+                    if (client || dtlsq)
                     {
                         fprintf(stderr,"rejecting new connection\n");
                         delete newclient;
@@ -113,9 +224,31 @@ public:
                     else
                     {
                         fprintf(stderr,"got connection!\n");
-                        client = newclient;
-                        connected = true;
-                        send_client_protoversion();
+                        if (use_dtlsq)
+                        {
+                            dtlsq = new ProtoSSL::ProtoSslDtlsQueue(
+                                dtlsq_config, newclient);
+                            if (dtlsq->ok())
+                            {
+                                start_dtlsq_reader();
+                            }
+                            else
+                            {
+                                delete dtlsq;
+                                dtlsq = NULL;
+                                fprintf(stderr,
+                                        "failure to chooch making dtlsq\n");
+                            }
+                        }
+                        else
+                        {
+                            client = newclient;
+                        }
+                        if (client || dtlsq)
+                        {
+                            connected = true;
+                            send_client_protoversion();
+                        }
                     }
                 }
             }
@@ -173,16 +306,14 @@ public:
                         ServerToClient stc;
                         stc.set_type(STC_DATA);
                         stc.mutable_data()->set_data(buffer);
-                        client->send_message(stc);
-                        stc.Clear();
+                        send_client_message(stc);
                     }
                     else
                     {
                         ClientToServer cts;
                         cts.set_type(CTS_DATA);
                         cts.mutable_data()->set_data(buffer);
-                        client->send_message(cts);
-                        cts.Clear();
+                        send_client_message(cts);
                     }
                 }
                 else
@@ -193,14 +324,70 @@ public:
         return 0;
     }
 private:
+    void start_dtlsq_reader(void)
+    {
+        pthread_create(&dtlsq_reader_id,
+                       /*attr*/ NULL, &_dtlsq_reader_thread,
+                       (void*) this);
+    }
+
+    static void * _dtlsq_reader_thread(void*arg)
+    {
+        test_program * tp = (test_program *) arg;
+        tp->dtlsq_reader_thread();
+        return NULL;
+    }
+
+    void dtlsq_reader_thread(void)
+    {
+        dtlsq_reader_running = true;
+        bool done = false;
+        while (!done)
+        {
+            ProtoSSL::ProtoSslDtlsQueue::read_return_t ret;
+            if (server)
+                ret = dtlsq->handle_read(cts);
+            else
+                ret = dtlsq->handle_read(stc);
+            switch (ret)
+            {
+            case ProtoSSL::ProtoSslDtlsQueue::GOT_DISCONNECT:
+                fprintf(stderr, "dtlsq read DISCONNECT\n");
+                done = true;
+                break;
+            case ProtoSSL::ProtoSslDtlsQueue::READ_MORE:
+                /* nothing to do, go round again */
+                break;
+            case ProtoSSL::ProtoSslDtlsQueue::GOT_TIMEOUT:
+                /* wtf to do here ? elect nothing for now. */
+                fprintf(stderr, "dtlsq read TIMEOUT?\n");
+                break;
+            case ProtoSSL::ProtoSslDtlsQueue::GOT_MESSAGE:
+                if (server)
+                    done = handle_client_msg();
+                else
+                    done = handle_server_msg();
+                break;
+            case ProtoSSL::ProtoSslDtlsQueue::LINK_DOWN:
+                fprintf(stderr, "dtlsq LINK-DOWN!\n");
+                break;
+            case ProtoSSL::ProtoSslDtlsQueue::LINK_UP:
+                fprintf(stderr, "dtlsq LINK-UP!\n");
+                break;
+            }
+        }
+        dtlsq_reader_running = false;
+        connected = false;
+        dtlsq_done = true;
+    }
+
     void send_server_protoversion(void)
     {
         cts.Clear();
         cts.set_type(CTS_PROTO_VERSION);
         cts.mutable_proto_version()->set_app_name("LIBPROTOSSL_TEST2");
         cts.mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
-        client->send_message(cts);
-        cts.Clear();
+        send_client_message(cts);
     }
 
     void send_client_protoversion(void)
@@ -209,8 +396,7 @@ private:
         stc.set_type(STC_PROTO_VERSION);
         stc.mutable_proto_version()->set_app_name("LIBPROTOSSL_TEST2");
         stc.mutable_proto_version()->set_version(PROTOCOL_VERSION_3);
-        client->send_message(stc);
-        stc.Clear();
+        send_client_message(stc);
     }
 
     void timeval_to_PingInfo(PingInfo &pi, const pxfe_timeval &tv)
@@ -259,16 +445,23 @@ private:
         cts.mutable_ping()->set_seq(seq);
         now.getNow();
         timeval_to_PingInfo(*cts.mutable_ping(), now);
-        client->send_message(cts);
-        cts.Clear();
+        send_client_message(cts);
+    }
+
+    void send_client_message(ProtoSSL::MESSAGE &msg)
+    {
+        if (client)
+            client->send_message(msg);
+        if (dtlsq)
+            dtlsq->send_message(queue_number, msg);
+        msg.Clear();
     }
 
     void send_client_ping_ack(void)
     {
         stc.set_type(STC_PING_ACK);
         stc.mutable_ping()->CopyFrom(*cts.mutable_ping());
-        client->send_message(stc);
-        stc.Clear();
+        send_client_message(stc);
     }
 
     void handle_ping_ack(void)
