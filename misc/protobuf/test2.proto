@@ -1,0 +1,16 @@
+
+syntax = "proto2";
+
+package pkg.test2;
+
+enum Enum3
+{
+   VALUE5 = 5;
+   VALUE6 = 6;
+}
+
+message Msg3_m
+{
+   repeated uint64 values = 1;
+}
+

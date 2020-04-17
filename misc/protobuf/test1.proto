@@ -1,0 +1,48 @@
+
+// this is a comment.
+
+syntax = "proto2";
+
+/* this is a single line comment */
+
+/* this is
+   a two-line comment */
+
+/* this is
+  a three-line
+  comment */
+
+import "test2.proto"; // this is a comment
+
+package /* this is a comment */ pkg.test1;
+
+enum Enum1
+{
+   VALUE1 = 1; // this is a comment
+   VALUE2 = /* this is a comment */ 2;
+}
+
+enum Enum2
+{
+   VALUE3 = 3;
+   VALUE4 = 4;
+}
+
+message Msg1_m
+{
+   required Enum1  type = 4;
+   repeated bool stuff = 1;
+   repeated string astr = 2;
+   optional pkg.test2.Msg3_m  msg3 = 5; // this is a comment
+   optional uint32 unsignedint = 3;
+   optional Msg2_m  msg2 = 6;
+   optional pkt.test2.Enum3  en3 = 7;
+}
+
+message Msg2_m
+{
+   required Enum2 type = 1;
+   optional int32 signedint = 2;
+   optional uint64 unsigned64 = 3;
+   repeated Msg1_m msg1s = 4;
+}
