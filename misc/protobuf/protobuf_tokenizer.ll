@@ -15,21 +15,22 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 %option noyywrap
 %option yylineno
 %option reentrant
-%option prefix="protobuf_json_tokenizer_"
-%option outfile="protobuf_json_tokenizer.cc"
-%option header-file="protobuf_json_tokenizer.h"
+%option prefix="protobuf_tokenizer_"
+%option outfile="protobuf_tokenizer.cc"
+%option header-file="protobuf_tokenizer.h"
 
 %{
 
 #define __STDC_FORMAT_MACROS 1
 #include <inttypes.h>
 #include <string>
-#include "tokenize_and_parse.h"
-#include "protobuf_json_parser.hh"
+#define __SIMPLE_PROTOBUF_INTERNAL__ 1
+#include "protobuf_tokenize_and_parse.h"
+#include "protobuf_parser.hh"
 
 using namespace std;
 
-string  collect_string;
+static string  collect_string;
 static void denewline(std::string &str);
 
 %}
@@ -165,16 +166,16 @@ const char *token_names[] = {
 
 
 void
-protobuf_json_parser_debug_tokenize(FILE *f)
+protobuf_parser_debug_tokenize(FILE *f)
 {
     yyscan_t scanner;
-    protobuf_json_tokenizer_lex_init ( &scanner );
-    protobuf_json_tokenizer_restart(f, scanner);
+    protobuf_tokenizer_lex_init ( &scanner );
+    protobuf_tokenizer_restart(f, scanner);
 
     int c;
     do {
         YYSTYPE  yylval;
-        c = protobuf_json_tokenizer_lex(&yylval, scanner);
+        c = protobuf_tokenizer_lex(&yylval, scanner);
         if (c < 255)
             printf("%d ", c);
         else

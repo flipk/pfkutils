@@ -27,7 +27,8 @@ REFERENCE: https://www.json.org/json-en.html
 #include <inttypes.h>
 #include <string>
 #include "simple_json.h"
-#include "tokenize_and_parse.h"
+#define __JSON_PARSER_INTERNAL__ 1
+#include "json_tokenize_and_parse.h"
 #include "json_parser.hh"
 
 using namespace std;
@@ -74,8 +75,8 @@ ws              [\t \r\n]+
 <INITIAL>[+-]?[0-9]+         {
     std::string s(yytext, yyleng);
     char * endptr = NULL;
-    long val = strtol(s.c_str(), &endptr, /*base*/0);
-    yylval->int_value = (int) val;
+    long long val = strtoll(s.c_str(), &endptr, /*base*/0);
+    yylval->int64_value = (int64_t) val;
     return TOK_INT;
 }
 

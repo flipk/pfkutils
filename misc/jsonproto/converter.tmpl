@@ -1,0 +1,468 @@
+/* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
+
+----------------------------------- HEADER -----------------------;
+
+________ HEADER_top
+#ifndef __INCLUDE_@@headerfilenamenodot@@_HDR__
+#define __INCLUDE_@@headerfilenamenodot@@_HDR__ 1
+
+@@pbincludes@@
+#include "simple_json.h"
+
+#include <iostream>
+
+@@opennamespaces@@
+
+________ END
+
+________ HEADER_enum
+
+bool JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+    @@package@@::@@fieldtype@@ &,
+    const SimpleJson::StringProperty *jsonprop
+    );
+
+SimpleJson::StringProperty *
+JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+    const @@package@@::@@fieldtype@@
+    );
+
+________ END
+
+________ HEADER_message
+
+bool JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+    @@package@@::@@msgtype@@ &protovalue,
+    SimpleJson::ObjectProperty *jsonprop
+    );
+
+SimpleJson::ObjectProperty *
+JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+    const @@package@@::@@msgtype@@ &protovalue
+    );
+
+________ END
+
+________ HEADER_bottom
+
+@@closenamespaces@@
+
+#endif /* __INCLUDE_@@headerfilenamenodot@@_HDR__*/
+
+________ END
+
+----------------------------------- SOURCE -----------------------;
+
+________ SOURCE_top
+#include "@@headerfilename@@"
+
+@@opennamespaces@@
+
+________ END
+
+________ SOURCE_enum
+
+bool JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+    @@package@@::@@fieldtype@@ &protovalue,
+    const SimpleJson::StringProperty *jsonprop
+    )
+{
+@@json2proto_enumsrcbody@@
+    //else
+    return false;
+}
+
+SimpleJson::StringProperty *
+JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+    const @@package@@::@@fieldtype@@ protovalue
+    )
+{
+    switch (protovalue)
+    {
+@@proto2json_enumsrcbody@@
+    }
+    return NULL;
+}
+
+________ END
+
+________ SOURCE_enum_json2proto
+    @@else@@if (jsonprop->value == "@@valuestring@@")
+    {
+        protovalue = @@package@@::@@valuestring@@;
+        return true;
+    }
+________ END
+
+________ SOURCE_enum_proto2json
+    case @@package@@::@@valuestring@@:
+        return new SimpleJson::StringProperty("@@valuestring@@");
+________ END
+
+________ SOURCE_message
+
+bool JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+    @@package@@::@@msgtype@@ &protovalue,
+    SimpleJson::ObjectProperty *jsonprop
+    )
+{
+@@json2proto_msgsrcbody@@
+    return true;
+}
+
+SimpleJson::ObjectProperty *
+JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+    const @@package@@::@@msgtype@@ &protovalue
+    )
+{
+    SimpleJson::ObjectProperty *jsonprop = new SimpleJson::ObjectProperty;
+@@proto2json_msgsrcbody@@
+    if (0) {
+fail:
+        delete jsonprop;
+        jsonprop = NULL;
+    }
+    return jsonprop;
+}
+
+________ END
+
+----------------------------------- proto2jsons -----------------------;
+
+________ SOURCE_msg_proto2json_start
+    if (protovalue.has_@@fieldnamelower@@())
+    {
+________ END
+________ SOURCE_msg_proto2json_end
+    }
+________ END
+
+________ SOURCE_msg_proto2json_enum
+        SimpleJson::StringProperty * prop =
+            JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                protovalue.@@fieldnamelower@@());
+        prop->name = "@@fieldname@@";
+        if (prop == NULL)
+            goto fail;
+        jsonprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_string
+        SimpleJson::StringProperty * prop =
+            new SimpleJson::StringProperty(protovalue.@@fieldnamelower@@());
+        prop->name = "@@fieldname@@";
+        jsonprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_msg
+        SimpleJson::ObjectProperty * prop =
+            JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                protovalue.@@fieldnamelower@@());
+        if (prop == NULL)
+            goto fail;
+        prop->name = "@@fieldname@@";
+        jsonprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_bool
+        SimpleJson::TrinaryProperty * prop =
+            new SimpleJson::TrinaryProperty(
+                protovalue.@@fieldnamelower@@() ?
+                SimpleJson::TrinaryProperty::TP_TRUE :
+                SimpleJson::TrinaryProperty::TP_FALSE);
+        prop->name = "@@fieldname@@";
+        jsonprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_unary
+        SimpleJson::IntProperty * prop =
+            new SimpleJson::IntProperty(
+                (int64_t) protovalue.@@fieldnamelower@@());
+        prop->name = "@@fieldname@@";
+        jsonprop->push_back(prop);
+________ END
+
+----------------------------------- json2protos -----------------------;
+
+________ SOURCE_msg_json2proto_start
+    {
+        SimpleJson::Property * prop = jsonprop->getName("@@fieldname@@");
+        if (prop)
+        {
+________ END
+________ SOURCE_msg_json2proto_end
+        }
+    }
+________ END
+
+________ SOURCE_msg_json2proto_enum
+            SimpleJson::StringProperty * sprop =
+                prop->cast<SimpleJson::StringProperty>();
+            if (sprop)
+            {
+                @@fieldpkg@@@@fieldtype@@ val;
+                if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        val,  sprop) == false)
+                    return false;
+                protovalue.set_@@fieldnamelower@@(val);
+            }
+            else
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+________ END
+
+________ SOURCE_msg_json2proto_string
+            SimpleJson::StringProperty * sprop =
+                prop->cast<SimpleJson::StringProperty>();
+            if (sprop)
+            {
+                protovalue.set_@@fieldnamelower@@(sprop->value);
+            }
+            else
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+________ END
+
+________ SOURCE_msg_json2proto_msg
+            SimpleJson::ObjectProperty * oprop =
+                prop->cast<SimpleJson::ObjectProperty>();
+            if (oprop)
+            {
+                if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        *protovalue.mutable_@@fieldnamelower@@(),
+                        oprop) == false)
+                {
+                    std::cerr << "FAIL : can't convert @@fieldname@@\n";
+                    return false;
+                }
+            }
+            else
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+________ END
+
+________ SOURCE_msg_json2proto_bool
+            SimpleJson::TrinaryProperty * tprop =
+                prop->cast<SimpleJson::TrinaryProperty>();
+            if (tprop)
+            {
+                switch (tprop->value)
+                {
+                case SimpleJson::TrinaryProperty::TP_TRUE:
+                    protovalue.set_@@fieldnamelower@@(true);
+                    return true;
+                case SimpleJson::TrinaryProperty::TP_FALSE:
+                    protovalue.set_@@fieldnamelower@@(false);
+                    return true;
+                default:
+                    std::cerr << "FAIL : json 'null' not supported "
+                              << "in @@fieldpkg@@.@@msgtype@@.@@fieldname@@\n";
+                    return false;
+                }
+            }
+            else
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+________ END
+
+________ SOURCE_msg_json2proto_unary
+            SimpleJson::IntProperty * iprop =
+                prop->cast<SimpleJson::IntProperty>();
+            if (iprop)
+            {
+                protovalue.set_@@fieldnamelower@@(iprop->value);
+            }
+            else
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+________ END
+
+
+
+
+------------------------ proto2jsons repeated -----------------------;
+
+________ SOURCE_msg_proto2json_repeated_start
+    {
+        if (protovalue.@@fieldnamelower@@_size() > 0)
+        {
+            SimpleJson::ArrayProperty *aprop = new SimpleJson::ArrayProperty;
+            aprop->name = "@@fieldname@@";
+            for (int ind = 0;
+                 ind < protovalue.@@fieldnamelower@@_size();
+                 ind++)
+            {
+________ END
+________ SOURCE_msg_proto2json_repeated_end
+            }
+            jsonprop->push_back(aprop);
+        }
+    }
+________ END
+
+________ SOURCE_msg_proto2json_enum_repeated
+                SimpleJson::StringProperty * prop =
+                    JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        protovalue.@@fieldnamelower@@(ind));
+                if (prop == NULL)
+                    goto fail;
+                aprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_string_repeated
+                SimpleJson::StringProperty * prop =
+                    new SimpleJson::StringProperty(
+                        protovalue.@@fieldnamelower@@(ind));
+                aprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_msg_repeated
+                SimpleJson::ObjectProperty * prop =
+                    JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        protovalue.@@fieldnamelower@@(ind));
+                if (prop == NULL)
+                    goto fail;
+                aprop->push_back(prop);
+________ END
+
+________ SOURCE_msg_proto2json_bool_repeated
+                aprop->push_back(
+                    new SimpleJson::TrinaryProperty(
+                        protovalue.@@fieldnamelower@@(ind) ?
+                        SimpleJson::TrinaryProperty::TP_TRUE :
+                        SimpleJson::TrinaryProperty::TP_FALSE));
+________ END
+
+________ SOURCE_msg_proto2json_unary_repeated
+                aprop->push_back(
+                    new SimpleJson::IntProperty(
+                        (int64_t) protovalue.@@fieldnamelower@@(ind)));
+________ END
+
+------------------------ json2protos repeated -----------------------;
+
+________ SOURCE_msg_json2proto_repeated_start
+    {
+        SimpleJson::Property * prop = jsonprop->getName("@@fieldname@@");
+        if (prop)
+        {
+            bool wrongtype = false;
+            SimpleJson::ArrayProperty * aprop =
+                prop->cast<SimpleJson::ArrayProperty>();
+            if (aprop)
+            {
+                for (size_t ind = 0; ind < aprop->size(); ind++)
+                {
+                    prop = aprop->get(ind);
+                    if (prop)
+                    {
+________ END
+________ SOURCE_msg_json2proto_repeated_end
+                    }
+                }
+            }
+            else
+                wrongtype = true;
+            if (wrongtype)
+            {
+                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
+                return false;
+            }
+        }
+    }
+________ END
+
+________ SOURCE_msg_json2proto_enum_repeated
+                        SimpleJson::StringProperty * sprop =
+                            prop->cast<SimpleJson::StringProperty>();
+                        if (sprop)
+                        {
+                            @@fieldpkg@@@@fieldtype@@ val;
+                        if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                                    val,  sprop) == false)
+                                return false;
+                            protovalue.add_@@fieldnamelower@@(val);
+                        }
+                        else
+                            wrongtype = true;
+________ END
+
+________ SOURCE_msg_json2proto_string_repeated
+                        SimpleJson::StringProperty * sprop =
+                            prop->cast<SimpleJson::StringProperty>();
+                        if (sprop)
+                        {
+                            protovalue.add_@@fieldnamelower@@(sprop->value);
+                        }
+                        else
+                            wrongtype = true;
+________ END
+
+________ SOURCE_msg_json2proto_msg_repeated
+                        SimpleJson::ObjectProperty * oprop =
+                            prop->cast<SimpleJson::ObjectProperty>();
+                        if (oprop)
+                        {
+                        if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                                    *protovalue.add_@@fieldnamelower@@(),
+                                    oprop) == false)
+                            {
+                                wrongtype = true;
+                            }
+                        }
+                        else
+                            wrongtype = true;
+________ END
+
+________ SOURCE_msg_json2proto_bool_repeated
+                        SimpleJson::TrinaryProperty * tprop =
+                            prop->cast<SimpleJson::TrinaryProperty>();
+                        if (tprop)
+                        {
+                            switch (tprop->value)
+                            {
+                            case SimpleJson::TrinaryProperty::TP_TRUE:
+                                protovalue.add_@@fieldnamelower@@(true);
+                                break;
+                            case SimpleJson::TrinaryProperty::TP_FALSE:
+                                protovalue.add_@@fieldnamelower@@(false);
+                                break;
+                            default:
+                                std::cerr << "FAIL : json 'null' not "
+                                          << "supported in "
+                                          << "@@fieldpkg@@."
+                                          << "@@msgtype@@.@@fieldname@@\n";
+                                return false;
+                            }
+                        }
+                        else
+                            wrongtype = true;
+________ END
+
+________ SOURCE_msg_json2proto_unary_repeated
+                        SimpleJson::IntProperty * iprop =
+                            prop->cast<SimpleJson::IntProperty>();
+                        if (iprop)
+                        {
+                            protovalue.add_@@fieldnamelower@@(iprop->value);
+                        }
+                        else
+                            wrongtype = true;
+________ END
+
+
+
+________ SOURCE_bottom
+
+@@closenamespaces@@
+________ END

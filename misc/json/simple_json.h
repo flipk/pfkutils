@@ -1,8 +1,13 @@
 #ifndef __SIMPLE_JSON_H__
 #define __SIMPLE_JSON_H__
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS 1
+#endif
+
 #include <vector>
 #include <string>
+#include <inttypes.h>
 
 namespace SimpleJson {
 
@@ -30,12 +35,7 @@ public:
     }
 };
 
-struct IntProperty;
-struct FloatProperty;
-struct StringProperty;
-struct TrinaryProperty;
-struct ArrayProperty;
-struct ObjectProperty;
+struct ObjectProperty; // forward
 
 ObjectProperty *parseJson(const std::string &input);
 // to output a JSON message, just use "operator<<"
@@ -55,8 +55,8 @@ struct Property
 struct IntProperty : public Property
 {
     static const propertyType TYPE = INT;
-    int value;
-    IntProperty(int _value = 0) : Property(TYPE), value(_value) { }
+    int64_t value;
+    IntProperty(int64_t _value = 0) : Property(TYPE), value(_value) { }
 };
 
 struct FloatProperty : public Property
@@ -104,6 +104,7 @@ public:
     static const propertyType TYPE = OBJECT;
 // override array's setting but inherit everything else
     ObjectProperty(void) : ArrayProperty(TYPE) { }
+    Property *getName(const std::string &n);
 };
 
 std::ostream &operator<<(std::ostream &, IntProperty *);

@@ -1,18 +1,22 @@
 
 OBJDIR= obj
 
-PROG_TARGETS = test
+LIB_TARGETS = simplejson
 
-test_TARGET = $(OBJDIR)/test
-test_CXXSRCS = main.cc simple_json.cc json_tokenizer.cc json_parser.cc
+simplejson_TARGET = $(OBJDIR)/libsimplejson.a
+simplejson_CXXSRCS = simple_json.cc json_tokenizer.cc json_parser.cc
 
 # pfkutils/Makefile.inc can actually do these for you, but i'm not doing
 # that here to show you how to use flexbison.sh
-#test_LLSRCS = tokenizer.ll
-#test_YYSRCS = parser.yy
-#test_DEFS = -DPARSER_YY_HDR=\"test-parser.hh\"
+#simplejson_LLSRCS = tokenizer.ll
+#simplejson_YYSRCS = parser.yy
+#simplejson_DEFS = -DPARSER_YY_HDR=\"simplejson-parser.hh\"
 
-test_INCS = -I.
+PROG_TARGETS = test
+
+test_TARGET = $(OBJDIR)/test
+test_CXXSRCS = main.cc
+test_DEPLIBS = $(simplejson_TARGET)
 
 EXTRA_CLEAN = my_clean
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "simple_json.h"
-#include "tokenize_and_parse.h"
+#include "json_tokenize_and_parse.h"
 
 namespace SimpleJson {
 
@@ -115,6 +115,20 @@ ArrayProperty :: set(size_t ind, Property *value)
     if (values[ind])
         delete values[ind];
     values[ind] = value;
+}
+
+// ------------------------ ObjectProperty methods ------------------------
+
+Property *
+ObjectProperty :: getName(const std::string &n)
+{
+    for (size_t ind = 0; ind < values.size(); ind++)
+    {
+        Property * ret = values[ind];
+        if (ret && ret->name == n)
+            return ret;
+    }
+    return NULL;
 }
 
 // ------------------------ operator<< methods ------------------------

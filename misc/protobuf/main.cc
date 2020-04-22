@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-#include "tokenize_and_parse.h"
+#include "protobuf_tokenize_and_parse.h"
 
 int
 main(int argc, char ** argv)
@@ -16,11 +16,11 @@ main(int argc, char ** argv)
     char * dbg = getenv("DBG");
     if (dbg != NULL)
     {
-        protobuf_json_parser_debug_tokenize(argv[1]);
+        protobuf_parser_debug_tokenize(argv[1]);
     }
     else
     {
-        ProtoFile * pf = protobuf_parser(argv[1]);
+        ProtoFile * pf = protobuf_parser(argv[1], NULL);
         if (pf)
         {
             std::cout << pf;

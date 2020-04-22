@@ -10,14 +10,11 @@ NOTE to regenerate the cc and hh files.
 NOTE 
 NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE 
 
-
-REFERENCE: https://www.json.org/json-en.html
-
 */
 
 %parse-param {yyscan_t yyscanner}
 %define api.pure
-%name-prefix "protobuf_json_parser_"
+%name-prefix "protobuf_parser_"
 
 %{
 
@@ -27,10 +24,11 @@ REFERENCE: https://www.json.org/json-en.html
 #include <iostream>
 #include <pthread.h>
 #ifndef DEPENDING
-#include "protobuf_json_tokenizer.h"
+#include "protobuf_tokenizer.h"
 #endif
-#include "tokenize_and_parse.h"
-#include "protobuf_json_parser.hh"
+#define __SIMPLE_PROTOBUF_INTERNAL__ 1
+#include "protobuf_tokenize_and_parse.h"
+#include "protobuf_parser.hh"
 
 using namespace std;
 
@@ -38,7 +36,7 @@ static void yyerror( yyscan_t yyscanner, const std::string e );
 
 extern YY_DECL;
 #undef  yylex
-#define yylex(yylval) protobuf_json_tokenizer_lex(yylval, yyscanner)
+#define yylex(yylval) protobuf_tokenizer_lex(yylval, yyscanner)
 
 static ProtoFile * protoFile;
 static void set_package_type(
@@ -204,11 +202,11 @@ ANYWORD
 
 %%
 
-void
+static void
 yyerror( yyscan_t yyscanner, const string e )
 {
     fprintf(stderr, "error: %d: %s\n",
-            protobuf_json_tokenizer_get_lineno(yyscanner), e.c_str());
+            protobuf_tokenizer_get_lineno(yyscanner), e.c_str());
     exit( 1 );
 }
 
@@ -218,22 +216,22 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // this has to be in this file to get access to yytname[]
 void
-protobuf_json_parser_debug_tokenize(const std::string &fname)
+protobuf_parser_debug_tokenize(const std::string &fname)
 {
     FILE *f = fopen(fname.c_str(), "r");
     if (f == NULL)
         return;
 
     yyscan_t scanner;
-    protobuf_json_tokenizer_lex_init ( &scanner );
-    protobuf_json_tokenizer_restart(f, scanner);
+    protobuf_tokenizer_lex_init ( &scanner );
+    protobuf_tokenizer_restart(f, scanner);
 
     pthread_mutex_lock(&mutex);
 
     int c;
     do {
         YYSTYPE  yylval;
-        c = protobuf_json_tokenizer_lex(&yylval, scanner);
+        c = protobuf_tokenizer_lex(&yylval, scanner);
         if (c < 256)
             printf("%d ", c);
         else
@@ -257,7 +255,7 @@ protobuf_json_parser_debug_tokenize(const std::string &fname)
     } while (c > 0);
     printf("\n");
 
-    protobuf_json_tokenizer_lex_destroy ( scanner );
+    protobuf_tokenizer_lex_destroy ( scanner );
     pthread_mutex_unlock(&mutex);
 
     fclose(f);
@@ -303,39 +301,52 @@ find_enum(ProtoFileEnum * enums, const std::string &en)
 }
 
 static ProtoFileMessage *
-find_message(ProtoFile * pf, const std::string &tn)
+find_message(ProtoFile * pf, const std::string &pkg, const std::string &tn)
 {
     ProtoFileMessage * ret;
-    ret = find_message(pf->messages, tn);
-    if (ret)
-        return ret;
-    for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+    if (pkg == pf->package)
     {
-        ret = find_message(pf2->messages, tn);
-        if (ret)
-            return ret;
+        ret = find_message(pf->messages, tn);
+    }
+    else
+    {
+        for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+        {
+            if (pf2->package == pkg)
+            {
+                ret = find_message(pf2->messages, tn);
+                break;
+            }
+        }
     }
     return ret;
 }
 
 static ProtoFileEnum *
-find_enum(ProtoFile * pf, const std::string &en)
+find_enum(ProtoFile * pf, const std::string &pkg, const std::string &en)
 {
     ProtoFileEnum * ret;
-    ret = find_enum(pf->enums, en);
-    if (ret)
-        return ret;
-    for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+    if (pkg == pf->package)
     {
-        ret = find_enum(pf2->enums, en);
-        if (ret)
-            return ret;
+        ret = find_enum(pf->enums, en);
+    }
+    else
+    {
+        for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+        {
+            if (pf2->package == pkg)
+            {
+                ret = find_enum(pf2->enums, en);
+                break;
+            }
+        }
     }
     return ret;
 }
 
 ProtoFile *
-protobuf_parser(const std::string &fname)
+protobuf_parser(const std::string &fname,
+                const std::vector<std::string> *searchPath)
 {
     FILE * f = fopen(fname.c_str(), "r");
     if (f == NULL)
@@ -345,19 +356,53 @@ protobuf_parser(const std::string &fname)
     ProtoFile * pf;
     pthread_mutex_lock(&mutex);
     pf = protoFile = new ProtoFile;
-    protobuf_json_tokenizer_lex_init ( &scanner );
-    protobuf_json_tokenizer_restart(f, scanner);
-    protobuf_json_parser_parse(scanner);
-    protobuf_json_tokenizer_lex_destroy ( scanner );
+    pf->filename = fname;
+    size_t slashpos = pf->filename.find_last_of('/');
+    if (slashpos != std::string::npos)
+        pf->filename.erase(0,slashpos+1);
+    protobuf_tokenizer_lex_init ( &scanner );
+    protobuf_tokenizer_restart(f, scanner);
+    protobuf_parser_parse(scanner);
+    protobuf_tokenizer_lex_destroy ( scanner );
     pthread_mutex_unlock(&mutex);
 
     fclose(f);
 
     for (size_t ind = 0; ind < pf->import_filenames.size(); ind++)
     {
-        ProtoFile * pf2 = protobuf_parser(pf->import_filenames[ind]);
-        if (pf2)
-            pf->addImport(pf2);
+        const std::string orig_filename = pf->import_filenames[ind];
+        std::string fname = orig_filename;
+
+        size_t pathind = 0;
+        bool found = false;
+        do {
+
+            if (access(fname.c_str(), R_OK) == 0)
+            {
+                found = true;
+                break;
+            }
+
+            if ((searchPath == NULL)  ||
+                (pathind >= searchPath->size()))
+                break;
+
+            fname = (*searchPath)[pathind++] + "/" + orig_filename;
+
+        }  while (found == false);
+
+        if (found)
+        {
+            ProtoFile * pf2 = protobuf_parser(fname, searchPath);
+            if (pf2)
+                pf->addImport(pf2);
+            else
+                printf("FAIL: failure parsing import '%s'\n",
+                       orig_filename.c_str());
+        }
+        else
+            printf("FAIL: cannot find import '%s'\n",
+                   orig_filename.c_str());
     }
 
 
@@ -370,7 +415,7 @@ protobuf_parser(const std::string &fname)
             if (mf->external_package)
             {
                 const std::string &pkg = mf->type_package;
-                ProtoFileMessage * cm = find_message(pf,tn);
+                ProtoFileMessage * cm = find_message(pf,pkg,tn);
                 if (cm)
                 {
                     mf->typetype = ProtoFileMessageField::MSG;
@@ -378,11 +423,17 @@ protobuf_parser(const std::string &fname)
                 }
                 else
                 {
-                    ProtoFileEnum * e = find_enum(pf,tn);
+                    ProtoFileEnum * e = find_enum(pf,pkg,tn);
                     if (e)
                     {
                         mf->typetype = ProtoFileMessageField::ENUM;
                         mf->type_enum = e;
+                    }
+                    else
+                    {
+                        printf("FAIL : type '%s' not found in pkg '%s'\n",
+                               tn.c_str(), pkg.c_str());
+                        goto fail;
                     }
                 }
             }
@@ -414,10 +465,29 @@ protobuf_parser(const std::string &fname)
                             mf->typetype = ProtoFileMessageField::ENUM;
                             mf->type_enum = e;
                         }
+#if 0
+// we're being lazy here; we're not attempting to recognize the
+// UNARY types (uint32, etc), we're just passing them through
+// under the assumption that it's valid (you're running 'protoc'
+// on these proto files too, right?)
+                        else
+                        {
+                            printf("FAIL : type '%s' not found\n",
+                                   tn.c_str());
+                            goto fail;
+                        }
+#endif
                     }
                 }
             }
         }
+    }
+
+    if (0)
+    {
+    fail:
+        delete pf;
+        pf = NULL;
     }
 
     return pf;
@@ -427,6 +497,7 @@ protobuf_parser(const std::string &fname)
 
 std::ostream &operator<<(std::ostream &strm, const ProtoFile *pf)
 {
+    strm << "filename: " << pf->filename << "\n";
     strm << "imports: \n";
     for (size_t ind = 0; ind < pf->import_filenames.size(); ind++)
         strm << "   " << pf->import_filenames[ind] << "\n";

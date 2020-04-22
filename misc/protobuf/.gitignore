@@ -1,5 +1,5 @@
-protobuf_json_parser.cc
-protobuf_json_parser.hh
-protobuf_json_tokenizer.cc
-protobuf_json_tokenizer.h
+protobuf_parser.cc
+protobuf_parser.hh
+protobuf_tokenizer.cc
+protobuf_tokenizer.h
 obj

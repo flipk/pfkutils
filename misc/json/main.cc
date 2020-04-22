@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <iostream>
 #include "simple_json.h"
-#include "tokenize_and_parse.h"
+
+// for debug_tokenize only; not needed for SimpleJson
+#include "json_tokenize_and_parse.h"
 
 static void callback(void *arg, const std::string &buf)
 {

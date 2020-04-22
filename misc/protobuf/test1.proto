@@ -30,19 +30,23 @@ enum Enum2
 
 message Msg1_m
 {
-   required Enum1  type = 4;
-   repeated bool stuff = 1;
-   repeated string astr = 2;
-   optional pkg.test2.Msg3_m  msg3 = 5; // this is a comment
-   optional uint32 unsignedint = 3;
-   optional Msg2_m  msg2 = 6;
-   optional pkt.test2.Enum3  en3 = 7;
+   required Enum1  Type = 4;
+   repeated bool Stuff = 1;
+   repeated string Astr = 2;
+   optional pkg.test2.Msg3_m  Msg3 = 5; // this is a comment
+   optional uint32 UnsignedInt = 3;
+   optional Msg2_m  Msg2 = 6;
+   optional pkg.test2.Enum3  En3 = 7;
+   optional string Astr2 = 8;
+   optional bool Thingy = 9;
 }
 
 message Msg2_m
 {
-   required Enum2 type = 1;
-   optional int32 signedint = 2;
-   optional uint64 unsigned64 = 3;
-   repeated Msg1_m msg1s = 4;
+   required Enum2 TYPE = 1;
+   optional int32 SignedInt = 2;
+   optional uint64 Unsigned64 = 3;
+   repeated Msg1_m Msg1s = 4;
+   repeated Enum1 Ones = 5;
+   repeated uint32 ManyUnsigneds = 6;
 }
