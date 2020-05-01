@@ -5,7 +5,7 @@
 struct ProtoFileEnum; // forward
 struct ProtoFileEnumValue
 {
-    struct ProtoFileEnumValue * next;
+    ProtoFileEnumValue * next;
     ProtoFileEnum * parent;
     std::string name;
     int value;
@@ -16,7 +16,7 @@ struct ProtoFileEnumValue
 struct ProtoFile; // forward
 struct ProtoFileEnum
 {
-    struct ProtoFileEnum * next;
+    ProtoFileEnum * next;
     ProtoFile * parent;
     std::string name;
     ProtoFileEnumValue * values;
@@ -35,7 +35,7 @@ public:
 struct ProtoFileMessage; // forward
 struct ProtoFileMessageField
 {
-    struct ProtoFileMessageField * next;
+    ProtoFileMessageField * next;
     ProtoFileMessage * parent;
     typedef enum { OPTIONAL, REQUIRED, REPEATED } occur_t;
     occur_t occur;
@@ -57,35 +57,54 @@ struct ProtoFileMessageField
 
 struct ProtoFileMessage
 {
-    struct ProtoFileMessage * next;
+    ProtoFileMessage * next;
     ProtoFile * parent;
+    ProtoFileMessage * parent_msg;
     ProtoFileMessageField * fields;
+    ProtoFileMessage * sub_messages;
 private:
     ProtoFileMessageField ** fields_next;
+    ProtoFileMessage ** sub_messages_next;
 public:
     std::string name;
     ProtoFileMessage(void) {
-        next = NULL; parent = NULL;
-        fields = NULL; fields_next = &fields; }
+        next = NULL; parent = NULL; parent_msg = NULL;
+        fields = NULL; fields_next = &fields;
+        sub_messages = NULL; sub_messages_next = &sub_messages; }
     ~ProtoFileMessage(void) {
         if (next) delete next;
         if (fields) delete fields; }
     void addField(ProtoFileMessageField *f) {
         f->parent = this; *fields_next = f; fields_next = &f->next; }
+    void addSubMessage(ProtoFileMessage *m) {
+        m->parent_msg = this; *sub_messages_next = m;
+        sub_messages_next = &m->next; }
+    void setParent(ProtoFile *f) {
+        parent = f;
+        for (ProtoFileMessage *m = sub_messages; m; m = m->next)
+            m->parent = f;
+    }
+    std::string fullname(void) {
+        std::string ret;
+        if (parent_msg)
+            ret = parent_msg->fullname() + "_";
+        ret += name;
+        return ret;
+    }
 };
 
 struct ProtoFile
 {
-    struct ProtoFile * next;
-    struct ProtoFile * parent; // if import
+    ProtoFile * next;
+    ProtoFile * parent; // if import
     std::string package;
     std::string filename;
     std::vector<std::string> import_filenames;
-    struct ProtoFile * imports;
+    ProtoFile * imports;
     ProtoFileEnum * enums;
     ProtoFileMessage * messages;
 private:
-    struct ProtoFile ** imports_next;
+    ProtoFile ** imports_next;
     ProtoFileEnum ** enums_next;
     ProtoFileMessage ** messages_next;
 public:
@@ -104,12 +123,12 @@ public:
         if (enums) delete enums;
         if (messages) delete messages;
     }
-    void addImport(struct ProtoFile *pf) {
+    void addImport(ProtoFile *pf) {
         pf->parent = this; *imports_next = pf; imports_next = &pf->next; }
     void addEnum(ProtoFileEnum *e) {
         e->parent = this; *enums_next = e; enums_next = &e->next; }
     void addMessage(ProtoFileMessage *m) {
-        m->parent = this; *messages_next = m; messages_next = &m->next; }
+        m->setParent(this); *messages_next = m; messages_next = &m->next; }
 };
 
 void protobuf_parser_debug_tokenize(const std::string &fname);

@@ -13,7 +13,8 @@ public:
     ~JsonProtoConverter(void);
     bool parseProto(const std::string &fname,
                     const std::vector<std::string> *searchPath);
-    bool emitJsonProtoConverter(void);
+    bool emitJsonProtoConverter(std::string &out_h_fname,
+                                std::string &out_cc_fname);
 };
 
 #endif /* __JSONPROTO_H__ */

@@ -49,4 +49,11 @@ message Msg2_m
    repeated Msg1_m Msg1s = 4;
    repeated Enum1 Ones = 5;
    repeated uint32 ManyUnsigneds = 6;
+
+   // must support a message inside a message.
+   message Msg2Sub_m
+   {
+     repeated int32 subValues = 9;
+   }
+   repeated Msg2Sub_m TwoSubs = 11;
 }

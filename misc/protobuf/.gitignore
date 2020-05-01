@@ -1,5 +1,2 @@
-protobuf_parser.cc
-protobuf_parser.hh
-protobuf_tokenizer.cc
-protobuf_tokenizer.h
 obj
+*~

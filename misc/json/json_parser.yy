@@ -36,7 +36,7 @@ REFERENCE: https://www.json.org/json-en.html
 #include "simple_json.h"
 #define __JSON_PARSER_INTERNAL__ 1
 #include "json_tokenize_and_parse.h"
-#include "json_parser.hh"
+#include PARSER_YY_HDR
 
 static void yyerror( yyscan_t yyscanner, const std::string e );
 

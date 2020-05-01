@@ -19,7 +19,7 @@ REFERENCE: https://www.json.org/json-en.html
 %option reentrant
 %option prefix="json_tokenizer_"
 %option outfile="json_tokenizer.cc"
-%option header-file="json_tokenizer.h"
+%option header-file="obj/json_tokenizer.h"
 
 %{
 
@@ -29,7 +29,7 @@ REFERENCE: https://www.json.org/json-en.html
 #include "simple_json.h"
 #define __JSON_PARSER_INTERNAL__ 1
 #include "json_tokenize_and_parse.h"
-#include "json_parser.hh"
+#include PARSER_YY_HDR
 
 using namespace std;
 
@@ -93,3 +93,7 @@ ws              [\t \r\n]+
 <INITIAL>.                {  }
 
 %%
+
+// this exists only to remove a "defined but not used" warning
+void __unused_function_protobuf_tokenizer(int c, char*d, yyscan_t s)
+{ yyunput(c,d,s); }

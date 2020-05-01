@@ -17,7 +17,7 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 %option reentrant
 %option prefix="protobuf_tokenizer_"
 %option outfile="protobuf_tokenizer.cc"
-%option header-file="protobuf_tokenizer.h"
+%option header-file="obj/protobuf_tokenizer.h"
 
 %{
 
@@ -26,12 +26,14 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 #include <string>
 #define __SIMPLE_PROTOBUF_INTERNAL__ 1
 #include "protobuf_tokenize_and_parse.h"
-#include "protobuf_parser.hh"
+#include PARSER_YY_HDR
 
 using namespace std;
 
 static string  collect_string;
+#ifdef TOKENIZE_COMMENTS
 static void denewline(std::string &str);
+#endif
 
 %}
 
@@ -82,6 +84,16 @@ ws              [\t \r\n]+
     yylval->word_value = new std::string("repeated"); return KW_REPEATED; };
 <INITIAL>optional    {
     yylval->word_value = new std::string("optional"); return KW_OPTIONAL; };
+<INITIAL>option      {
+    yylval->word_value = new std::string("option");   return KW_OPTION;   };
+
+<INITIAL>0x[0-9a-fA-F]+         {
+    std::string s(yytext, yyleng);
+    char * endptr = NULL;
+    long val = strtol(s.c_str(), &endptr, /*base*/0);
+    yylval->int_value = (int) val;
+    return TOK_INT;
+}
 
 <INITIAL>[a-zA-Z][a-zA-Z0-9_\.]* {
     yylval->word_value = new std::string(yytext, yyleng);
@@ -117,7 +129,7 @@ ws              [\t \r\n]+
         collect_string += (char) c;
         if (last_c == '*' && c == '/')
         {
-#if 0 // discard comments; this was useful for testing.
+#ifdef TOKENIZE_COMMENTS // discard comments; this was useful for testing.
             denewline(collect_string);
             yylval->word_value = new string(collect_string);
             return TOK_COMMENT;
@@ -130,7 +142,7 @@ ws              [\t \r\n]+
 }
 
 <INITIAL>\/\/.*           {
-#if 0 // discard comments; this was useful for testing.
+#ifdef TOKENIZE_COMMENTS // discard comments; this was useful for testing.
     collect_string.assign(yytext,yyleng);
     denewline(collect_string);
     yylval->word_value = new std::string(collect_string);
@@ -142,6 +154,7 @@ ws              [\t \r\n]+
 
 %%
 
+#ifdef TOKENIZE_COMMENTS
 static void
 denewline(std::string &str)
 {
@@ -153,9 +166,7 @@ denewline(std::string &str)
             ind++;
     }
 }
-
-
-
+#endif
 
 #if 0 // useful for testing lexer standalone
 const char *token_names[] = {
@@ -199,3 +210,7 @@ protobuf_parser_debug_tokenize(FILE *f)
     printf("\n");
 }
 #endif
+
+// this exists only to remove a "defined but not used" warning
+void __unused_function_protobuf_tokenizer(int c, char*d, yyscan_t s)
+{ yyunput(c,d,s); }

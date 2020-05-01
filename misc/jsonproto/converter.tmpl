@@ -17,13 +17,13 @@ ________ END
 
 ________ HEADER_enum
 
-bool JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+bool JsonProtoConvert_@@fieldtype@@(
     @@package@@::@@fieldtype@@ &,
     const SimpleJson::StringProperty *jsonprop
     );
 
 SimpleJson::StringProperty *
-JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+JsonProtoConvert_@@fieldtype@@(
     const @@package@@::@@fieldtype@@
     );
 
@@ -31,13 +31,13 @@ ________ END
 
 ________ HEADER_message
 
-bool JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+bool JsonProtoConvert_@@msgtype@@(
     @@package@@::@@msgtype@@ &protovalue,
     SimpleJson::ObjectProperty *jsonprop
     );
 
 SimpleJson::ObjectProperty *
-JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+JsonProtoConvert_@@msgtype@@(
     const @@package@@::@@msgtype@@ &protovalue
     );
 
@@ -62,7 +62,7 @@ ________ END
 
 ________ SOURCE_enum
 
-bool JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+bool JsonProtoConvert_@@fieldtype@@(
     @@package@@::@@fieldtype@@ &protovalue,
     const SimpleJson::StringProperty *jsonprop
     )
@@ -73,7 +73,7 @@ bool JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
 }
 
 SimpleJson::StringProperty *
-JsonProtoConvert_@@package_no_dot@@_@@fieldtype@@(
+JsonProtoConvert_@@fieldtype@@(
     const @@package@@::@@fieldtype@@ protovalue
     )
 {
@@ -101,7 +101,7 @@ ________ END
 
 ________ SOURCE_message
 
-bool JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+bool JsonProtoConvert_@@msgtype@@(
     @@package@@::@@msgtype@@ &protovalue,
     SimpleJson::ObjectProperty *jsonprop
     )
@@ -111,20 +111,25 @@ bool JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
 }
 
 SimpleJson::ObjectProperty *
-JsonProtoConvert_@@package_no_dot@@_@@msgtype@@(
+JsonProtoConvert_@@msgtype@@(
     const @@package@@::@@msgtype@@ &protovalue
     )
 {
     SimpleJson::ObjectProperty *jsonprop = new SimpleJson::ObjectProperty;
 @@proto2json_msgsrcbody@@
+    return jsonprop;
+}
+
+________ END
+
+// this should be appended to the end of proto2json_msgsrcbody
+// if enum or msg field is present, because they "goto fail".
+________ SOURCE_message_failbody
     if (0) {
 fail:
         delete jsonprop;
         jsonprop = NULL;
     }
-    return jsonprop;
-}
-
 ________ END
 
 ----------------------------------- proto2jsons -----------------------;
@@ -139,7 +144,7 @@ ________ END
 
 ________ SOURCE_msg_proto2json_enum
         SimpleJson::StringProperty * prop =
-            JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+            @@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                 protovalue.@@fieldnamelower@@());
         prop->name = "@@fieldname@@";
         if (prop == NULL)
@@ -156,7 +161,7 @@ ________ END
 
 ________ SOURCE_msg_proto2json_msg
         SimpleJson::ObjectProperty * prop =
-            JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+            @@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                 protovalue.@@fieldnamelower@@());
         if (prop == NULL)
             goto fail;
@@ -201,7 +206,7 @@ ________ SOURCE_msg_json2proto_enum
             if (sprop)
             {
                 @@fieldpkg@@@@fieldtype@@ val;
-                if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                if (@@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                         val,  sprop) == false)
                     return false;
                 protovalue.set_@@fieldnamelower@@(val);
@@ -232,7 +237,7 @@ ________ SOURCE_msg_json2proto_msg
                 prop->cast<SimpleJson::ObjectProperty>();
             if (oprop)
             {
-                if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                if (@@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                         *protovalue.mutable_@@fieldnamelower@@(),
                         oprop) == false)
                 {
@@ -312,7 +317,7 @@ ________ END
 
 ________ SOURCE_msg_proto2json_enum_repeated
                 SimpleJson::StringProperty * prop =
-                    JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                    @@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                         protovalue.@@fieldnamelower@@(ind));
                 if (prop == NULL)
                     goto fail;
@@ -328,7 +333,7 @@ ________ END
 
 ________ SOURCE_msg_proto2json_msg_repeated
                 SimpleJson::ObjectProperty * prop =
-                    JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                    @@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                         protovalue.@@fieldnamelower@@(ind));
                 if (prop == NULL)
                     goto fail;
@@ -388,7 +393,7 @@ ________ SOURCE_msg_json2proto_enum_repeated
                         if (sprop)
                         {
                             @@fieldpkg@@@@fieldtype@@ val;
-                        if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        if (@@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                                     val,  sprop) == false)
                                 return false;
                             protovalue.add_@@fieldnamelower@@(val);
@@ -413,7 +418,7 @@ ________ SOURCE_msg_json2proto_msg_repeated
                             prop->cast<SimpleJson::ObjectProperty>();
                         if (oprop)
                         {
-                        if (JsonProtoConvert_@@fieldpkg_no_dot@@_@@fieldtype@@(
+                        if (@@fieldpkg@@JsonProtoConvert_@@fieldtype@@(
                                     *protovalue.add_@@fieldnamelower@@(),
                                     oprop) == false)
                             {

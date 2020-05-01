@@ -21,6 +21,8 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 #define YYDEBUG 1
 
 #include <string>
+#include <map>
+#include <deque>
 #include <iostream>
 #include <pthread.h>
 #ifndef DEPENDING
@@ -28,7 +30,7 @@ NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 #endif
 #define __SIMPLE_PROTOBUF_INTERNAL__ 1
 #include "protobuf_tokenize_and_parse.h"
-#include "protobuf_parser.hh"
+#include PARSER_YY_HDR
 
 using namespace std;
 
@@ -39,6 +41,7 @@ extern YY_DECL;
 #define yylex(yylval) protobuf_tokenizer_lex(yylval, yyscanner)
 
 static ProtoFile * protoFile;
+static std::deque<std::string> import_filenames;
 static void set_package_type(
     std::string &out_package,
     std::string &out_name,
@@ -63,14 +66,14 @@ static void set_package_type(
 %token TOK_STRING TOK_WORD TOK_OPENBRACE TOK_CLOSEBRACE
 %token TOK_SEMICOLON TOK_EQUAL TOK_INT
 
-%token KW_SYNTAX KW_IMPORT KW_PACKAGE KW_ENUM KW_MESSAGE
+%token KW_OPTION KW_SYNTAX KW_IMPORT KW_PACKAGE KW_ENUM KW_MESSAGE
 %token KW_REQUIRED KW_REPEATED KW_OPTIONAL
 
 %type <word_value>  TOK_STRING  TOK_WORD  ANYWORD
 %type <int_value>  TOK_INT
 
 %type <word_value>  KW_SYNTAX KW_IMPORT KW_PACKAGE KW_ENUM KW_MESSAGE
-%type <word_value>  KW_REQUIRED KW_REPEATED KW_OPTIONAL
+%type <word_value>  KW_REQUIRED KW_REPEATED KW_OPTIONAL KW_OPTION
 
 %type <pfenum>  ENUM_DEFINITION ENUM_ENTRIES
 %type <pfenumv> ENUM_ENTRY
@@ -96,7 +99,9 @@ RULE
 	: KW_SYNTAX TOK_EQUAL TOK_STRING TOK_SEMICOLON
         { /* ignored */ }
 	| KW_IMPORT TOK_STRING TOK_SEMICOLON
-        { protoFile->import_filenames.push_back(*$2); delete $2; }
+        { import_filenames.push_back(*$2); delete $2; }
+	| KW_OPTION ANYWORD TOK_EQUAL TOK_STRING TOK_SEMICOLON
+        { /* ignored */ }
 	| KW_PACKAGE ANYWORD  TOK_SEMICOLON
         { protoFile->package = *$2; delete $2; }
 	| ENUM_DEFINITION
@@ -142,6 +147,11 @@ MESSAGE_DEFINITION
             $$ = $4;
             $$->name = *$2; delete $2;
         }
+	| KW_MESSAGE ANYWORD TOK_OPENBRACE                TOK_CLOSEBRACE
+        {
+            $$ = new ProtoFileMessage;
+            $$->name = *$2; delete $2;
+        }
 	;
 
 MESSAGE_FIELDS
@@ -149,6 +159,16 @@ MESSAGE_FIELDS
         {
             $$ = new ProtoFileMessage;
             $$->addField($1);
+        }
+	| MESSAGE_DEFINITION
+        {
+            $$ = new ProtoFileMessage;
+            $$->addSubMessage($1);
+        }
+	| MESSAGE_FIELDS MESSAGE_DEFINITION
+        {
+            $$ = $1;
+            $$->addSubMessage($2);
         }
 	| MESSAGE_FIELDS MESSAGE_FIELD
         {
@@ -198,6 +218,7 @@ ANYWORD
 	| KW_REQUIRED       { $$ = $1; }
 	| KW_REPEATED       { $$ = $1; }
 	| KW_OPTIONAL       { $$ = $1; }
+	| KW_OPTION         { $$ = $1; }
 	;
 
 %%
@@ -286,8 +307,16 @@ static ProtoFileMessage *
 find_message(ProtoFileMessage * msgs, const std::string &tn)
 {
     for (ProtoFileMessage * m = msgs; m; m = m->next)
+    {
         if (m->name == tn)
             return m;
+        if (m->sub_messages)
+        {
+            ProtoFileMessage * n = find_message(m->sub_messages, tn);
+            if (n)
+                return n;
+        }
+    }
     return NULL;
 }
 
@@ -303,74 +332,152 @@ find_enum(ProtoFileEnum * enums, const std::string &en)
 static ProtoFileMessage *
 find_message(ProtoFile * pf, const std::string &pkg, const std::string &tn)
 {
-    ProtoFileMessage * ret;
-    if (pkg == pf->package)
+    ProtoFileMessage * ret = NULL;
+    ret = find_message(pf->messages, tn);
+    if (ret)
+        return ret;
+    for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
     {
-        ret = find_message(pf->messages, tn);
-    }
-    else
-    {
-        for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+        if (pf2->package == pkg)
         {
-            if (pf2->package == pkg)
-            {
-                ret = find_message(pf2->messages, tn);
-                break;
-            }
+            ret = find_message(pf2->messages, tn);
+            if (ret)
+                return ret;
         }
     }
-    return ret;
+    return NULL;
 }
 
 static ProtoFileEnum *
 find_enum(ProtoFile * pf, const std::string &pkg, const std::string &en)
 {
-    ProtoFileEnum * ret;
-    if (pkg == pf->package)
+    ProtoFileEnum * ret = NULL;
+    ret = find_enum(pf->enums, en);
+    if (ret)
+        return ret;
+    for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
     {
-        ret = find_enum(pf->enums, en);
-    }
-    else
-    {
-        for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+        if (pf2->package == pkg)
         {
-            if (pf2->package == pkg)
+            ret = find_enum(pf2->enums, en);
+            if (ret)
+                return ret;
+        }
+    }
+    return NULL;
+}
+
+static bool
+resolve_message(ProtoFile * pf, ProtoFile * top_pf, ProtoFileMessage *m)
+{
+    for (ProtoFileMessage * m2 = m->sub_messages; m2; m2 = m2->next)
+        if (resolve_message(pf, top_pf, m2) == false)
+            return false;
+
+    for (ProtoFileMessageField * mf = m->fields; mf; mf = mf->next)
+    {
+        const std::string &tn = mf->type_name;
+        const std::string &pkg =
+            mf->external_package ? mf->type_package : pf->package;
+
+        // default is UNARY if we don't find it.
+        mf->typetype = ProtoFileMessageField::UNARY;
+        if (tn == "bool")
+        {
+            mf->typetype = ProtoFileMessageField::BOOL;
+        }
+        else if (tn == "string" || tn == "bytes")
+        {
+            mf->typetype = ProtoFileMessageField::STRING;
+        }
+        else if (tn == "uint32" || tn == "int32" || tn == "double" ||
+                 tn == "uint64" || tn == "int64" || tn == "float")
+        {
+            mf->typetype = ProtoFileMessageField::UNARY;
+        }
+        else
+        {
+            ProtoFileMessage * cm = find_message(top_pf,pkg,tn);
+            if (cm)
             {
-                ret = find_enum(pf2->enums, en);
-                break;
+                mf->typetype = ProtoFileMessageField::MSG;
+                mf->type_msg = cm;
+            }
+            else
+            {
+                ProtoFileEnum * e = find_enum(top_pf,pkg,tn);
+                if (e)
+                {
+                    mf->typetype = ProtoFileMessageField::ENUM;
+                    mf->type_enum = e;
+                }
+                else
+                {
+                    printf("FAIL : package '%s' type '%s' not found\n",
+                           pkg.c_str(), tn.c_str());
+                    return false;
+                }
             }
         }
     }
-    return ret;
+    return true;
+}
+
+static bool
+parse_one_file(ProtoFile * pf, const std::string &fname)
+{
+    FILE * f = fopen(fname.c_str(), "r");
+    if (f == NULL)
+        return false;
+
+    printf("processing '%s'\n", fname.c_str());
+
+    pf->filename = fname;
+    size_t slashpos = pf->filename.find_last_of('/');
+    if (slashpos != std::string::npos)
+        pf->filename.erase(0,slashpos+1);
+
+    yyscan_t scanner;
+    protobuf_tokenizer_lex_init ( &scanner );
+    protobuf_tokenizer_restart(f, scanner);
+
+    pthread_mutex_lock(&mutex);
+    protoFile = pf;
+    int parse_ret = protobuf_parser_parse(scanner);
+    protoFile = NULL;
+    pthread_mutex_unlock(&mutex);
+
+    protobuf_tokenizer_lex_destroy ( scanner );
+    fclose(f);
+    return (parse_ret == 0);
 }
 
 ProtoFile *
 protobuf_parser(const std::string &fname,
                 const std::vector<std::string> *searchPath)
 {
-    FILE * f = fopen(fname.c_str(), "r");
-    if (f == NULL)
-        return NULL;
+    ProtoFile * pf = new ProtoFile;
 
-    yyscan_t scanner;
-    ProtoFile * pf;
-    pthread_mutex_lock(&mutex);
-    pf = protoFile = new ProtoFile;
-    pf->filename = fname;
-    size_t slashpos = pf->filename.find_last_of('/');
-    if (slashpos != std::string::npos)
-        pf->filename.erase(0,slashpos+1);
-    protobuf_tokenizer_lex_init ( &scanner );
-    protobuf_tokenizer_restart(f, scanner);
-    protobuf_parser_parse(scanner);
-    protobuf_tokenizer_lex_destroy ( scanner );
-    pthread_mutex_unlock(&mutex);
-
-    fclose(f);
-
-    for (size_t ind = 0; ind < pf->import_filenames.size(); ind++)
+    std::map<std::string,bool> imports_done;
+    import_filenames.clear();
+    if (parse_one_file(pf, fname) == false)
     {
-        const std::string orig_filename = pf->import_filenames[ind];
+        delete pf;
+        return NULL;
+    }
+
+    while (import_filenames.size() > 0)
+    {
+        std::string orig_filename = import_filenames.front();
+        import_filenames.pop_front();
+
+        if (imports_done.find(orig_filename) != imports_done.end())
+        {
+            // this filename is already done, skip it.
+            continue;
+        }
+        imports_done[orig_filename] = true;
+
         std::string fname = orig_filename;
 
         size_t pathind = 0;
@@ -393,95 +500,40 @@ protobuf_parser(const std::string &fname,
 
         if (found)
         {
-            ProtoFile * pf2 = protobuf_parser(fname, searchPath);
-            if (pf2)
+            ProtoFile * pf2 = new ProtoFile;
+            if (parse_one_file(pf2, fname))
                 pf->addImport(pf2);
             else
+            {
                 printf("FAIL: failure parsing import '%s'\n",
                        orig_filename.c_str());
+                delete pf2;
+                goto fail;
+            }
         }
         else
+        {
             printf("FAIL: cannot find import '%s'\n",
                    orig_filename.c_str());
-    }
-
-
-    // now resolve all typetype and type_msg/type_enum
-    for (ProtoFileMessage * m = pf->messages; m; m = m->next)
-    {
-        for (ProtoFileMessageField * mf = m->fields; mf; mf = mf->next)
-        {
-            const std::string &tn = mf->type_name;
-            if (mf->external_package)
-            {
-                const std::string &pkg = mf->type_package;
-                ProtoFileMessage * cm = find_message(pf,pkg,tn);
-                if (cm)
-                {
-                    mf->typetype = ProtoFileMessageField::MSG;
-                    mf->type_msg = cm;
-                }
-                else
-                {
-                    ProtoFileEnum * e = find_enum(pf,pkg,tn);
-                    if (e)
-                    {
-                        mf->typetype = ProtoFileMessageField::ENUM;
-                        mf->type_enum = e;
-                    }
-                    else
-                    {
-                        printf("FAIL : type '%s' not found in pkg '%s'\n",
-                               tn.c_str(), pkg.c_str());
-                        goto fail;
-                    }
-                }
-            }
-            else
-            {
-                // default is UNARY if we don't find it.
-                mf->typetype = ProtoFileMessageField::UNARY;
-                if (tn == "bool")
-                {
-                    mf->typetype = ProtoFileMessageField::BOOL;
-                }
-                else if (tn == "string" || tn == "bytes")
-                {
-                    mf->typetype = ProtoFileMessageField::STRING;
-                }
-                else
-                {
-                    ProtoFileMessage * cm = find_message(pf->messages,tn);
-                    if (cm)
-                    {
-                        mf->typetype = ProtoFileMessageField::MSG;
-                        mf->type_msg = cm;
-                    }
-                    else
-                    {
-                        ProtoFileEnum * e = find_enum(pf->enums,tn);
-                        if (e)
-                        {
-                            mf->typetype = ProtoFileMessageField::ENUM;
-                            mf->type_enum = e;
-                        }
-#if 0
-// we're being lazy here; we're not attempting to recognize the
-// UNARY types (uint32, etc), we're just passing them through
-// under the assumption that it's valid (you're running 'protoc'
-// on these proto files too, right?)
-                        else
-                        {
-                            printf("FAIL : type '%s' not found\n",
-                                   tn.c_str());
-                            goto fail;
-                        }
-#endif
-                    }
-                }
-            }
+            goto fail;
         }
     }
+
+    for (std::map<std::string,bool>::iterator it = imports_done.begin();
+         it != imports_done.end(); it++)
+    {
+        pf->import_filenames.push_back(it->first);
+    }
+
+    // now resolve all typetype and type_msg/type_enum
+    for (ProtoFile * pf2 = pf->imports; pf2; pf2 = pf2->next)
+        for (ProtoFileMessage * m = pf2->messages; m; m = m->next)
+            if (resolve_message(pf2, pf, m) == false)
+                goto fail;
+
+    for (ProtoFileMessage * m = pf->messages; m; m = m->next)
+        if (resolve_message(pf, pf, m) == false)
+            goto fail;
 
     if (0)
     {
@@ -499,8 +551,8 @@ std::ostream &operator<<(std::ostream &strm, const ProtoFile *pf)
 {
     strm << "filename: " << pf->filename << "\n";
     strm << "imports: \n";
-    for (size_t ind = 0; ind < pf->import_filenames.size(); ind++)
-        strm << "   " << pf->import_filenames[ind] << "\n";
+    for (size_t ind = 0; ind < import_filenames.size(); ind++)
+        strm << "   " << import_filenames[ind] << "\n";
     if (pf->imports)
         strm << pf->imports;
     strm << "package " << pf->package << "\n";
@@ -513,6 +565,8 @@ std::ostream &operator<<(std::ostream &strm, const ProtoFile *pf)
 
 std::ostream &operator<<(std::ostream &strm, const ProtoFileMessage *m)
 {
+    if (m->sub_messages)
+        strm << m->sub_messages;
     strm << "message " << m->name << " {\n";
     if (m->fields)
         strm << m->fields;
@@ -557,7 +611,7 @@ std::ostream &operator<<(std::ostream &strm, const ProtoFileMessageField *mf)
             strm << "MSG ";
             if (mf->external_package)
                 strm << mf->type_package << ".";
-            strm << mf->type_msg->name;
+            strm << mf->type_msg->fullname();
         }
         break;
     case ProtoFileMessageField::STRING:

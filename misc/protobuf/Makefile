@@ -3,14 +3,16 @@ OBJDIR= obj
 
 LIB_TARGETS = protoparser
 
-protoparser_TARGET = $(OBJDIR)/libprotoparser.a
-protoparser_CXXSRCS = protobuf_tokenizer.cc protobuf_parser.cc
+# if you don't have a Makefile.inc that can do this for you,
+# you can do these by hand:
+# bison -d json_parser.yy -o json_parser.cc
+# flex json_tokenizer.ll
 
-# pfkutils/Makefile.inc can actually do these for you, but i'm not doing
-# that here to show you how to use flexbison.sh
-#protoparser_LLSRCS = tokenizer.ll
-#protoparser_YYSRCS = parser.yy
-#protoparser_DEFS = -DPARSER_YY_HDR=\"protoparser-parser.hh\"
+protoparser_TARGET = $(OBJDIR)/libprotoparser.a
+protoparser_LLSRCS = protobuf_tokenizer.ll
+protoparser_YYSRCS = protobuf_parser.yy
+protoparser_INCS = -I.
+protoparser_DEFS = -DPARSER_YY_HDR=\"protoparser-protobuf_parser.hh\"
 
 PROG_TARGETS = test
 
@@ -23,6 +25,3 @@ test_DEPLIBS = $(protoparser_TARGET)
 EXTRA_CLEAN = my_clean
 
 include $(HOME)/proj/pfkutils/Makefile.inc
-
-my_clean:
-	rm -f protobuf_parser.cc protobuf_parser.hh protobuf_tokenizer.cc protobuf_tokenizer.h

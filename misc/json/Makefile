@@ -3,14 +3,17 @@ OBJDIR= obj
 
 LIB_TARGETS = simplejson
 
-simplejson_TARGET = $(OBJDIR)/libsimplejson.a
-simplejson_CXXSRCS = simple_json.cc json_tokenizer.cc json_parser.cc
+# if you don't have a Makefile.inc that can do this for you,
+# you can do these by hand:
+# bison -d json_parser.yy -o json_parser.cc
+# flex json_tokenizer.ll
 
-# pfkutils/Makefile.inc can actually do these for you, but i'm not doing
-# that here to show you how to use flexbison.sh
-#simplejson_LLSRCS = tokenizer.ll
-#simplejson_YYSRCS = parser.yy
-#simplejson_DEFS = -DPARSER_YY_HDR=\"simplejson-parser.hh\"
+simplejson_TARGET = $(OBJDIR)/libsimplejson.a
+simplejson_CXXSRCS = simple_json.cc
+simplejson_LLSRCS = json_tokenizer.ll
+simplejson_YYSRCS = json_parser.yy
+simplejson_INCS = -I.
+simplejson_DEFS = -DPARSER_YY_HDR=\"simplejson-json_parser.hh\"
 
 PROG_TARGETS = test
 

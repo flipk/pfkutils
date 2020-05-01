@@ -12,6 +12,7 @@ int
 main()
 {
     pkg::test1::Msg1_m    m;
+    pkg::test1::Msg2_m_Msg2Sub_m * m2sub = NULL;
 
     m.set_type(pkg::test1::VALUE2);
     m.add_stuff(true);
@@ -32,23 +33,30 @@ main()
     m.mutable_msg2()->add_manyunsigneds(9);
     m.mutable_msg2()->add_manyunsigneds(10);
     m.mutable_msg2()->add_manyunsigneds(11);
+    m2sub = m.mutable_msg2()->add_twosubs();
+    m2sub->add_subvalues(14);
+    m2sub->add_subvalues(18);
+    m2sub = m.mutable_msg2()->add_twosubs();
+    m2sub->add_subvalues(19);
+    m2sub->add_subvalues(26);
     m.set_en3(pkg::test2::VALUE6);
     m.set_astr2("stuff");
     m.set_thingy(false);
 
     std::cout << "made a Msg1_m:\n"
-              << m.DebugString();
+              << m.DebugString()
+              << "\n";
 
     SimpleJson::ObjectProperty * o =
-        JsonProtoConvert_pkg_test1_Msg1_m(m);
+        pkg::test1::JsonProtoConvert_Msg1_m(m);
 
     std::cout << "made a json:\n"
               << o
-              << std::endl;
+              << "\n\n";
 
     pkg::test1::Msg1_m    n;
 
-    if (JsonProtoConvert_pkg_test1_Msg1_m(n, o) == false)
+    if (pkg::test1::JsonProtoConvert_Msg1_m(n, o) == false)
     {
         std::cout << "failure converting back to protobuf\n";
     }
