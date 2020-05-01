@@ -782,6 +782,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
             {
                 dtls_send_event * dte =
                     queues[queue_number]->dequeue_tail(0);
+                queue_sizes[queue_number] -= dte->encoded_msg.size();
                 send_event_release(dte);
             }
             break;
@@ -792,6 +793,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
             {
                 dtls_send_event * dte =
                     queues[queue_number]->dequeue_tail(0);
+                queue_sizes[queue_number] -= dte->encoded_msg.size();
                 send_event_release(dte);
             }
             lock.unlock();
