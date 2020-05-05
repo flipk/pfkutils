@@ -8,6 +8,8 @@
 #include "test2_converter.h"
 #endif
 
+#include <sstream>
+
 int
 main()
 {
@@ -49,16 +51,35 @@ main()
 
     SimpleJson::ObjectProperty * o =
         pkg::test1::JsonProtoConvert_Msg1_m(m);
+    if (o == NULL)
+    {
+        std::cout << "failure making json\n";
+        return 1;
+    }
+
+    std::ostringstream  str;
+
+    str << o;
+    delete o;
+    o = NULL;
 
     std::cout << "made a json:\n"
-              << o
+              << str.str()
               << "\n\n";
+
+    o = SimpleJson::parseJson(str.str());
+    if (o == NULL)
+    {
+        std::cout << "failure parsing my own json output\n";
+        return 1;
+    }
 
     pkg::test1::Msg1_m    n;
 
     if (pkg::test1::JsonProtoConvert_Msg1_m(n, o) == false)
     {
         std::cout << "failure converting back to protobuf\n";
+        return 1;
     }
     else
     {
@@ -68,6 +89,6 @@ main()
 
     delete o;
 
-    return 1;
+    return 0;
 }
 
