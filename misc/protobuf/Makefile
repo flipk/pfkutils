@@ -20,8 +20,4 @@ test_TARGET = $(OBJDIR)/test
 test_CXXSRCS = main.cc
 test_DEPLIBS = $(protoparser_TARGET)
 
-#test_INCS = -I.
-
-EXTRA_CLEAN = my_clean
-
 include $(HOME)/proj/pfkutils/Makefile.inc

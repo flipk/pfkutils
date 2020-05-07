@@ -35,9 +35,10 @@ public:
     }
 };
 
-struct ObjectProperty; // forward
+struct Property; // forward
 
-ObjectProperty *parseJson(const std::string &input);
+// this can return either an ObjectProperty, or an ArrayProperty.
+Property *parseJson(const std::string &input);
 // to output a JSON message, just use "operator<<"
 
 struct Property
@@ -107,6 +108,7 @@ public:
     Property *getName(const std::string &n);
 };
 
+std::ostream &operator<<(std::ostream &, Property *);
 std::ostream &operator<<(std::ostream &, IntProperty *);
 std::ostream &operator<<(std::ostream &, FloatProperty *);
 std::ostream &operator<<(std::ostream &, StringProperty *);

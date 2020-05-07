@@ -49,9 +49,9 @@ main()
               << m.DebugString()
               << "\n";
 
-    SimpleJson::ObjectProperty * o =
+    SimpleJson::Property * p =
         pkg::test1::JsonProtoConvert_Msg1_m(m);
-    if (o == NULL)
+    if (p == NULL)
     {
         std::cout << "failure making json\n";
         return 1;
@@ -59,18 +59,26 @@ main()
 
     std::ostringstream  str;
 
-    str << o;
-    delete o;
-    o = NULL;
+    str << p;
+    delete p;
+
+    SimpleJson::ObjectProperty * o = NULL;
 
     std::cout << "made a json:\n"
               << str.str()
               << "\n\n";
 
-    o = SimpleJson::parseJson(str.str());
-    if (o == NULL)
+    p = SimpleJson::parseJson(str.str());
+    if (p == NULL)
     {
         std::cout << "failure parsing my own json output\n";
+        return 1;
+    }
+
+    o = p->cast<SimpleJson::ObjectProperty>();
+    if (o == NULL)
+    {
+        std::cout << "parsing my own json output was not an Object\n";
         return 1;
     }
 
@@ -87,7 +95,7 @@ main()
                   << n.DebugString();
     }
 
-    delete o;
+    delete p;
 
     return 0;
 }

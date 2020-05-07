@@ -46,9 +46,9 @@ SimpleJsonCollector :: add_char(char c)
     {
         if (c == '"')
             in_string = true;
-        else if (c == '{')
+        else if ((c == '{') || (c == '['))
             brace_level ++;
-        else if (c == '}')
+        else if ((c == '}') || (c == ']'))
         {
             if (--brace_level == 0)
             {
@@ -80,10 +80,10 @@ SimpleJsonCollector :: add_data(const char *buffer, int len)
 
 // ------------------------ parseJson method ------------------------
 
-ObjectProperty * parseJson(const std::string &input)
+Property * parseJson(const std::string &input)
 {
     FILE *f = fmemopen((void*)input.c_str(), input.size(), "r");
-    ObjectProperty * ret = json_parser(f);
+    Property * ret = json_parser(f);
     fclose(f);
     return ret;
 }
@@ -145,6 +145,15 @@ output(std::ostream &str, Property *p)
     case Property::ARRAY:    str << p->cast<  ArrayProperty>();   break;
     case Property::OBJECT:   str << p->cast< ObjectProperty>();   break;
     }
+}
+
+std::ostream &operator<<(std::ostream &str, Property *p)
+{
+    if (p)
+    {
+        output(str,p);
+    }
+    return str;
 }
 
 std::ostream &operator<<(std::ostream &str, IntProperty *p)

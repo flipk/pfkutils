@@ -10,7 +10,7 @@
 static void callback(void *arg, const std::string &buf)
 {
     printf("callback : '%s'\n", buf.c_str());
-    SimpleJson::ObjectProperty * obj = SimpleJson::parseJson(buf);
+    SimpleJson::Property * obj = SimpleJson::parseJson(buf);
     std::cout << obj << std::endl;
     delete obj;
 }

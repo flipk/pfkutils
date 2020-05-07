@@ -48,7 +48,7 @@ using namespace SimpleJson;
 #undef  yylex
 #define yylex(yylval) json_tokenizer_lex(yylval, yyscanner)
 
-static ObjectProperty *returnObjectProperty;
+static Property *returnProperty;
 
 %}
 
@@ -82,8 +82,12 @@ static ObjectProperty *returnObjectProperty;
 TOPLEVEL_OBJECT
 	: OBJECT
 	{
-            returnObjectProperty = $1;
-        }
+            returnProperty = $1;
+	}
+	| ARRAY
+	{
+            returnProperty = $1;
+	}
 	;
 
 OBJECT
@@ -230,17 +234,17 @@ json_parser_debug_tokenize(FILE *f)
     pthread_mutex_unlock(&mutex);
 }
 
-ObjectProperty *
+Property *
 json_parser(FILE *f)
 {
     yyscan_t scanner;
     pthread_mutex_lock(&mutex);
 //    yydebug = 1;
-    returnObjectProperty = NULL;
+    returnProperty = NULL;
     json_tokenizer_lex_init ( &scanner );
     json_tokenizer_restart(f, scanner);
     json_parser_parse(scanner);
     json_tokenizer_lex_destroy ( scanner );
     pthread_mutex_unlock(&mutex);
-    return returnObjectProperty;
+    return returnProperty;
 }
