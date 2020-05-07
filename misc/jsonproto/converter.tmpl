@@ -261,10 +261,10 @@ ________ SOURCE_msg_json2proto_bool
                 {
                 case SimpleJson::TrinaryProperty::TP_TRUE:
                     protovalue.set_@@fieldnamelower@@(true);
-                    return true;
+                    break;
                 case SimpleJson::TrinaryProperty::TP_FALSE:
                     protovalue.set_@@fieldnamelower@@(false);
-                    return true;
+                    break;
                 default:
                     std::cerr << "FAIL : json 'null' not supported "
                               << "in @@fieldpkg@@.@@msgtype@@.@@fieldname@@\n";
