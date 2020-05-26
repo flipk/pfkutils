@@ -95,6 +95,10 @@ OBJECT
 	{
             $$ = $2;
         }
+	| TOK_OPENBRACE TOK_CLOSEBRACE
+	{
+            $$ = new ObjectProperty;
+        }
 	;
 
 // FLEX/BISON RULE : ALWAYS USE LEFT-RECURSION, not RIGHT
@@ -160,6 +164,10 @@ ARRAY
 	: TOK_OPENSQUARE VALUELIST TOK_CLOSESQUARE
         {
             $$ = $2;
+        }
+	| TOK_OPENSQUARE TOK_CLOSESQUARE
+        {
+            $$ = new ArrayProperty;
         }
         ;
 
