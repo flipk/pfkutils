@@ -55,7 +55,10 @@ ffmpeg -i input.mp4 -ss $startpos -t $duration -vcodec copy -acodec copy -y outp
 ffmpeg -f lavfi -i testsrc=duration=10:size=854x480:rate=60 \
 -vf "drawtext=text=%{n}:fontsize=72:r=60:x=(w-tw)/2: y=h-(2*lh):fontcolor=white:box=1:boxcolor=0x00000099" test.mp4
 
-This 10 second, 60 fps video called test.mp4 will show the frame count at the bottom, and a second counter in the middle of the frame. By playing the output in a player that allows seeking frame-by-frame, you can inspect which frames have been dropped or duplicated.
+This 10 second, 60 fps video called test.mp4 will show the frame count
+at the bottom, and a second counter in the middle of the frame. By
+playing the output in a player that allows seeking frame-by-frame, you
+can inspect which frames have been dropped or duplicated.
 
 
 motion interpolation
@@ -75,9 +78,16 @@ output=final.mp4
 rate=1000k
 ffmpeg -i $input -strict experimental -c:v libx264 -x264-params keyint=15 -b:v $rate -c:a copy $output
 
-
-
-
+# args : infile outfile rate
+rerate() {
+    infile="$1"
+    outfile="$2"
+    rate="$3"
+    keying="-x264-params keyint=15"
+    video="-strict experimental -c:v libx264 $keying -b:v $rate"
+    audio="-c:a copy"
+    ffmpeg -i $infile $video $audio $outfile
+}
 
 You can see private options like this: ffmpeg -h encoder=mjpeg.
 
