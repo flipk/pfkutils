@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-02-17.22:45:39
+#      Last update: 2020-05-28.21:32:51
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -727,11 +727,21 @@ fi
 
 unset __MYSHELL_LAUNCHER
 
+# disable the whole "shell switching" mechanism
+# if we're inside a docker container, because
+# "pfksh" probably won't execute properly due
+# to libraries not being present / etc.
+
+if [ -f /.dockerenv ] ; then
+    echo inside docker, skipping shell switch
+    GOOD_SHELL=yes
+    export GOOD_SHELL
+fi
+
 #
 # now try to ensure that we're running pfksh.
-# if we can find a pfksh, copy it to $TMPDIR
-# and then exec. otherwise continue running
-# what we have.
+# if we can find a pfksh, execute it. otherwise
+# continue running what we have.
 #
 
 ksh_new=@prefix@/$PFKARCH/bin/pfksh

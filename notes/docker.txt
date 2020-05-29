@@ -1,0 +1,85 @@
+
+docker images
+docker ps -a
+
+docker rm <container>
+docker rmi <image>:<version>
+
+docker image load -i FILE.tar
+
+docker run --rm -it -u $USER:$GROUP -w / $IMAGE:$VERSION /bin/bash
+<make changes>
+docker commit <container name> $IMAGE:$VERSION2
+
+docker image save -o FILE.tar
+
+docker run --rm -it -v /dir:/dir:ro -v /dir:/dir $IMAGE:$VERSION /bin/bash
+
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+su - $USER
+
+
+Avoid disk space limitations of /var.
+# systemctl docker stop
+# mv /var/lib/docker /docker
+# ln -s /docker /var/lib/docker
+# systemctl docker start
+Add your own username to “docker” group.
+# usermod -a -G docker $USER
+
+blade:
+ % docker run --rm -it -w / -v $HOME:$HOME docker.io/ubuntu:18.04 /bin/bash
+groupadd flipk
+useradd -g flipk --shell /bin/bash flipk
+ % docker exec -it -u flipk 0a2a28d45a5a /bin/bash
+
+
+msic:
+ deb http://srvvpackage.msic.net/ubuntu/ trusty main restricted
+ Whenever updating /etc/apt/sources.list, must run:
+   dpkg --add-architecture i386
+   apt update -y
+
+apt install -y flex bison libc6:i386
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+
+
+
+advice on the internet
+----------------------
+
+Don’t use a single layer image – To make effective use of the layered
+filesystem, always create your own base image layer for your OS,
+another layer for the username definition, another layer for the
+runtime installation, another layer for the configuration, and finally
+another layer for your application. It will be easier to recreate,
+manage, and distribute your image.
+
+Don’t create images from running containers – In other terms, don’t
+use “docker commit” to create an image. This method to create an image
+is not reproducible and should be completely avoided. Always use a
+Dockerfile or any other S2I (source-to-image) approach that is totally
+reproducible, and you can track changes to the Dockerfile if you store
+it in a source control repository (git).
+
+Don’t store credentials in the image. Use environment variables – You
+don’t want to hardcode any username/password in your image. Use the
+environment variables to retrieve that information from outside the
+container. A great example of this principle is the Postgres image.
+
+Don’t run processes as a root user – “By default docker containers run
+as root. (…) As docker matures, more secure default options may become
+available. For now, requiring root is dangerous for others and may not
+be available in all environments. Your image should use the USER
+instruction to specify a non-root user for containers to run
+as”. (From Guidance for Docker Image Authors)
+
+Don’t rely on IP addresses – Each container have their own internal IP
+address and it could change if you start and stop the container. If
+your application or microservice needs to communicate to another
+container, use environment variables to pass the proper hostname and
+port from one container to another.
