@@ -18,7 +18,7 @@ class test_program
     pthread_t dtlsq_reader_id;
     bool dtlsq_reader_running;
     bool dtlsq_done;
-    void usage(void)
+    void usage(const char *progname)
     {
         printf("usage:\n"
                " be a server:\n"
@@ -28,7 +28,7 @@ class test_program
                " (where P is one of:\n"
                "   t : tcp TLS\n"
                "   u : udp DTLS\n"
-               "   U : DTLSQUEUE\n");
+               "   U : DTLSQUEUE\n", progname, progname);
         exit(1);
     }
 public:
@@ -73,13 +73,13 @@ public:
 
         if (argc < 2)
         {
-            usage();
+            usage(argv[0]);
             //NOTREACHED
         }
         std::string argv1(argv[1]);
         if (argv1.size() != 2)
         {
-            usage();
+            usage(argv[0]);
             //NOTREACHED
         }
         bool use_tcp = true;
@@ -96,7 +96,7 @@ public:
             use_dtlsq = true;
             break;
         default:
-            usage();
+            usage(argv[0]);
             //NOTREACHED
         }
 
@@ -108,8 +108,8 @@ public:
             dtlsq_config.add_queue(
                 queue_number,
                 /*reliable*/ true,
-                ProtoSSL::ProtoSslDtlsQueueConfig::Queue_Type_t::FIFO,
-                ProtoSSL::ProtoSslDtlsQueueConfig::Limit_Type_t::NONE,
+                ProtoSSL::ProtoSslDtlsQueueConfig::FIFO,
+                ProtoSSL::ProtoSslDtlsQueueConfig::NONE,
                 /*limit*/ 0);
         }
 

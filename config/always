@@ -580,18 +580,16 @@ simpleWsTestClient_INCS = $(PROTOBUF_INC)
 simpleWsTestClient_CXXSRCS = libWebAppServer/simpleWsTestClient.cc
 simpleWsTestClient_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
 simpleWsTestClient_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
-simpleWsTestClient_LIBS = \
-	$(libWebAppServer_TARGET) $(libpfkutil_TARGET) \
-	$(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+simpleWsTestClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+simpleWsTestClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 simpleWsTestServer_TARGET = $(OBJDIR)/simpleWsTestServer
 simpleWsTestServer_INCS = $(PROTOBUF_INC)
 simpleWsTestServer_CXXSRCS = libWebAppServer/simpleWsTestServer.cc
 simpleWsTestServer_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
 simpleWsTestServer_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
-simpleWsTestServer_LIBS = \
-	$(libWebAppServer_TARGET) $(libpfkutil_TARGET) \
-	$(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+simpleWsTestServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+simpleWsTestServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 endif
 

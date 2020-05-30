@@ -20,6 +20,7 @@
 #include "thread_slinger.h"
 #include "posix_fe.h"
 #include "dll3.h"
+#include <map>
 #include <deque>
 
 namespace ProtoSSL {

@@ -29,23 +29,55 @@ Avoid disk space limitations of /var.
 Add your own username to “docker” group.
 # usermod -a -G docker $USER
 
-blade:
- % docker run --rm -it -w / -v $HOME:$HOME docker.io/ubuntu:18.04 /bin/bash
-groupadd flipk
-useradd -g flipk --shell /bin/bash flipk
- % docker exec -it -u flipk 0a2a28d45a5a /bin/bash
+uid=1000
+gid=1000
+group=flipk
+HOME=/home/flipk
+SHELL=/bin/bash
+USER=flipk
 
+blade ub18.04:
+--------------
+ % docker run --rm -it -w / -v $HOME:$HOME docker.io/ubuntu:18.04 /bin/bash
+dpkg --add-architecture i386
+apt update -y
+apt install -y flex bison libc6:i386 gcc g++ make git
+  git-gui gitk ssh-askpass keychain monkeysphere ed diffutils-doc \
+  apt-file libprotobuf-dev protobuf-compiler libx11-dev \
+  libncurses5-dev libxrandr-dev libfftw3-dev groff-base libmbedtls-dev
+apt-file update
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+ % docker exec -it -u flipk 08163e9a23c6 /bin/bash
+ % docker commit 08163e9a23c6 pfk_ubuntu:18.04
+ % docker run --rm -it -w / -v $HOME:$HOME -u flipk pfk_ubuntu:18.04 /bin/bash
+
+blade ub14.04.4:
+----------------
+ % docker run --rm -it -w / -v $HOME:$HOME docker.io/ubuntu:14.04.4 /bin/bash
+dpkg --add-architecture i386
+apt update -y
+apt install -y flex bison libc6:i386 gcc g++ make git \
+  gettext-base git-doc git-el git-email \
+  git-gui gitk gitweb git-arch git-bzr git-cvs git-mediawiki \
+  ssh-askpass keychain monkeysphere ed diffutils-doc \
+  apt-file libprotobuf-dev protobuf-compiler libx11-dev \
+  libncurses5-dev libxrandr-dev libfftw3-dev groff-base
+apt-file update
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+-BUILD MBEDTLS and install it somewhere pfkutils/config/blade-ub14 can get to
+ % docker exec -it -u flipk ad482fd4e0fd /bin/bash
+ % docker commit ad482fd4e0fd pfk_ubuntu:14.04.4
+ % docker run --rm -it -w / -v $HOME:$HOME -u flipk pfk_ubuntu:14.04.4 /bin/bash
 
 msic:
  deb http://srvvpackage.msic.net/ubuntu/ trusty main restricted
  Whenever updating /etc/apt/sources.list, must run:
-   dpkg --add-architecture i386
    apt update -y
-
-apt install -y flex bison libc6:i386
-groupadd --gid $gid $group
-useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
-echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+ dpkg --add-architecture i386
 
 
 
