@@ -34,6 +34,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+#include "pfkutils_config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdarg.h>
@@ -315,7 +316,7 @@ private:
         int  len, fd;
         mbedtls_sha1_context ctx;
         mbedtls_sha1_init( &ctx );
-        mbedtls_sha1_starts( &ctx );
+        MBEDTLS_SHA1_STARTS( &ctx );
         fd = ::open(fname.c_str(), O_RDONLY);
         if (fd < 0)
             goto out;
@@ -324,12 +325,12 @@ private:
             len = read(fd, buffer, sizeof(buffer));
             if (len <= 0)
                 break;
-            mbedtls_sha1_update(&ctx, buffer, len);
+            MBEDTLS_SHA1_UPDATE(&ctx, buffer, len);
         }
         close(fd);
     out:
         hash.resize(SHA1HashSize);
-        mbedtls_sha1_finish(&ctx, (uint8_t*) hash.c_str());
+        MBEDTLS_SHA1_FINISH(&ctx, (uint8_t*) hash.c_str());
         mbedtls_sha1_free( &ctx );
     }
     static std::string format_hash(const std::string &str) {

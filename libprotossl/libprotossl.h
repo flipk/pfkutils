@@ -3,12 +3,18 @@
 #ifndef __LIBPROTOSSL2_H__
 #define __LIBPROTOSSL2_H__
 
+#include "pfkutils_config.h"
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/ssl_cookie.h>
 #include <mbedtls/timing.h>
+#if HAVE_MBEDTLS_NET_H
 #include <mbedtls/net.h>
+#endif
+#if HAVE_MBEDTLS_NET_SOCKETS_H
+#include <mbedtls/net_sockets.h>
+#endif
 #include <mbedtls/error.h>
 #include <mbedtls/debug.h>
 #include <google/protobuf/message.h>

@@ -27,6 +27,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
  */
 
+#include "pfkutils_config.h"
 #include "bakfile.h"
 #include "database_items.h"
 #include "mbedtls/sha256.h"
@@ -64,7 +65,7 @@ sha256_file(const string &path, string &hash)
     mbedtls_sha256_context  ctx;
     string buffer;
     mbedtls_sha256_init( &ctx );
-    mbedtls_sha256_starts( &ctx, /*is224*/ 0 );
+    MBEDTLS_SHA256_STARTS( &ctx, /*is224*/ 0 );
 
     buffer.resize(16384);
     while (1)
@@ -72,11 +73,11 @@ sha256_file(const string &path, string &hash)
         cc = read(fd, (void*) buffer.c_str(), 16384);
         if (cc <= 0)
             break;
-        mbedtls_sha256_update( &ctx, (unsigned char *)buffer.c_str(), cc );
+        MBEDTLS_SHA256_UPDATE( &ctx, (unsigned char *)buffer.c_str(), cc );
     }
 
     hash.resize(32);
-    mbedtls_sha256_finish( &ctx, (unsigned char *) hash.c_str());
+    MBEDTLS_SHA256_FINISH( &ctx, (unsigned char *) hash.c_str());
     mbedtls_sha256_free( &ctx );
     close(fd);
     return true;

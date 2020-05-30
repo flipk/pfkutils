@@ -48,6 +48,7 @@ Next: \ref PageCache
 
 */
 
+#include "pfkutils_config.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -299,7 +300,7 @@ PageIO :: PageIO(const std::string &_encryption_password)
         mbedtls_aes_init( &aesenc_ctx );
         mbedtls_aes_init( &aesdec_ctx );
         unsigned char file_key[32];
-        mbedtls_sha256( (const unsigned char *) encryption_password.c_str(),
+        MBEDTLS_SHA256( (const unsigned char *) encryption_password.c_str(),
                 encryption_password.length(),
                 file_key, 0/*use SHA256*/);
         mbedtls_aes_setkey_enc( &aesenc_ctx, file_key, 256 );
@@ -330,7 +331,7 @@ make_iv(unsigned char IV_plus_sha256[32],
 {
     std::ostringstream  ostr;
     ostr << pass << ":" << page;
-    mbedtls_sha256( (const unsigned char*) ostr.str().c_str(),
+    MBEDTLS_SHA256( (const unsigned char*) ostr.str().c_str(),
                     ostr.str().length(),
                     IV_plus_sha256, 0/*use SHA256*/);
     for (int ind = 0; ind < 16; ind++)

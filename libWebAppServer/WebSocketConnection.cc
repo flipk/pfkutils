@@ -26,6 +26,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+#include "pfkutils_config.h"
 #include "WebAppServer.h"
 #include "WebAppServerInternal.h"
 #include "mbedtls/sha1.h"
@@ -263,7 +264,7 @@ WebSocketConnection :: send_handshake_response(void)
     uint8_t digest[SHA1HashSize];
     uint8_t digest_b64[128];
 
-    mbedtls_sha1( (const unsigned char *) tempbuf.str().c_str(),
+    MBEDTLS_SHA1( (const unsigned char *) tempbuf.str().c_str(),
                   tempbuf.str().size(), digest );
 
     memset(digest_b64,  0, sizeof(digest_b64));

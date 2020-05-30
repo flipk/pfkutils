@@ -27,6 +27,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 
+#include "pfkutils_config.h"
 #include <dirent.h>
 #include <string.h>
 #include <sys/types.h>
@@ -57,7 +58,7 @@ MD5File(const std::string &path, char digest[16])
     std::string buffer;
 
     mbedtls_md5_init( &ctx );
-    mbedtls_md5_starts( &ctx );
+    MBEDTLS_MD5_STARTS( &ctx );
 
     buffer.resize(16384);
     while (1)
@@ -65,10 +66,10 @@ MD5File(const std::string &path, char digest[16])
         cc = read(fd, (void*) buffer.c_str(), 16384);
         if (cc <= 0)
             break;
-        mbedtls_md5_update( &ctx, (unsigned char*) buffer.c_str(), cc );
+        MBEDTLS_MD5_UPDATE( &ctx, (unsigned char*) buffer.c_str(), cc );
     }
 
-    mbedtls_md5_finish( &ctx, (unsigned char *) digest );
+    MBEDTLS_MD5_FINISH( &ctx, (unsigned char *) digest );
     mbedtls_md5_free( &ctx );
     return true;
 }

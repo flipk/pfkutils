@@ -1,0 +1,51 @@
+#if HAVE_MBEDTLS_RET_APIS
+
+#define MBEDTLS_SHA256(ctx,buf,len,is224) \
+    mbedtls_sha256_ret(ctx,buf,len, is224)
+#define MBEDTLS_SHA256_STARTS(ctx,is224) \
+    mbedtls_sha256_starts_ret(ctx,is224)
+#define MBEDTLS_SHA256_UPDATE(ctx,buf,len) \
+    mbedtls_sha256_update_ret(ctx,buf,len)
+#define MBEDTLS_SHA256_FINISH(ctx,hash) \
+    mbedtls_sha256_finish_ret(ctx,hash)
+#define MBEDTLS_SHA1(buf,len,digest) \
+    mbedtls_sha1_ret(buf,len,digest)
+#define MBEDTLS_SHA1_STARTS(ctx) \
+    mbedtls_sha1_starts_ret(ctx)
+#define MBEDTLS_SHA1_UPDATE(ctx,buf,len) \
+    mbedtls_sha1_update_ret(ctx,buf,len)
+#define MBEDTLS_SHA1_FINISH(ctx,hash) \
+    mbedtls_sha1_finish_ret(ctx,hash)
+#define MBEDTLS_MD5_STARTS(ctx) \
+    mbedtls_md5_starts_ret(ctx)
+#define MBEDTLS_MD5_UPDATE(ctx,buf,len) \
+    mbedtls_md5_update_ret(ctx,buf,len)
+#define MBEDTLS_MD5_FINISH(ctx,hash) \
+    mbedtls_md5_finish_ret(ctx,hash)
+
+#else
+
+#define MBEDTLS_SHA256(ctx,buf,len,is224) \
+    mbedtls_sha256(ctx,buf,len,is224)
+#define MBEDTLS_SHA256_STARTS(ctx,is224) \
+    mbedtls_sha256_starts(ctx,is224)
+#define MBEDTLS_SHA256_UPDATE(ctx,buf,len) \
+    mbedtls_sha256_update(ctx,buf,len)
+#define MBEDTLS_SHA256_FINISH(ctx,hash) \
+    mbedtls_sha256_finish(ctx,hash)
+#define MBEDTLS_SHA1(buf,len,digest) \
+    mbedtls_sha1(buf,len,digest)
+#define MBEDTLS_SHA1_STARTS(ctx) \
+    mbedtls_sha1_starts(ctx)
+#define MBEDTLS_SHA1_UPDATE(ctx,buf,len) \
+    mbedtls_sha1_update(ctx,buf,len)
+#define MBEDTLS_SHA1_FINISH(ctx,hash) \
+    mbedtls_sha1_finish(ctx,hash)
+#define MBEDTLS_MD5_STARTS(ctx) \
+    mbedtls_md5_starts(ctx)
+#define MBEDTLS_MD5_UPDATE(ctx,buf,len) \
+    mbedtls_md5_update(ctx,buf,len)
+#define MBEDTLS_MD5_FINISH(ctx,hash) \
+    mbedtls_md5_finish(ctx,hash)
+
+#endif

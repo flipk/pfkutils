@@ -25,6 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+#include "pfkutils_config.h"
 #include "WebSocketClient.h"
 #include <errno.h>
 #include <sys/types.h>
@@ -342,7 +343,7 @@ WebSocketClient :: generateWsHeaders(ostringstream &hdrs)
 #define SHA1HashSize 20
     uint8_t digest[SHA1HashSize];
 
-    mbedtls_sha1( (const unsigned char *) secWebsocketKey.c_str(),
+    MBEDTLS_SHA1( (const unsigned char *) secWebsocketKey.c_str(),
                   secWebsocketKey.size(),
                   digest );
 

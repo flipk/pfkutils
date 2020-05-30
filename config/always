@@ -72,7 +72,8 @@ CONFIG_VALUES= \
 	HAVE_STRUCT_STAT_ST_GEN HAVE_INET_ATON HAVE_INTTYPES_H \
 	HAVE_PTHREAD_MUTEX_CONSISTENT_NP HAVE_PTHREAD_MUTEXATTR_SETPSHARED \
 	HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP \
-	HAVE_PTHREAD_CONDATTR_SETPSHARED
+	HAVE_PTHREAD_CONDATTR_SETPSHARED \
+	HAVE_MBEDTLS_NET_H HAVE_MBEDTLS_NET_SOCKETS_H HAVE_MBEDTLS_RET_APIS
 
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
 
@@ -85,10 +86,11 @@ define PFK_CONFIG_LINE
 	fi ; 
 endef
 
-$(CONFIG_H): Makefile config/always config/$(CONFIG)
+$(CONFIG_H): Makefile config/always config/$(CONFIG) main/config.h.template
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils 3.32\" >> $(CONFIG_H).tmp
 	$(Q)$(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))
+	$(Q)cat main/config.h.template >> $(CONFIG_H).tmp
 	$(Q)set -e ; if [ -f $(CONFIG_H) ] ; then \
 		if ! cmp -s $(CONFIG_H).tmp $(CONFIG_H) ; then \
 			echo making $(CONFIG_H) ; \

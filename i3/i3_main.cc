@@ -3,6 +3,7 @@
 //    -Ir : generate random data as input
 //    -Iz : generate zero data as input
 
+#include "pfkutils_config.h"
 #include "libprotossl.h"
 #include "i3_options.h"
 #include I3_PROTO_HDR
@@ -113,8 +114,8 @@ public:
             }
         }
 
-        mbedtls_sha256_starts(&recv_hash,0);
-        mbedtls_sha256_starts(&send_hash,0);
+        MBEDTLS_SHA256_STARTS(&recv_hash,0);
+        MBEDTLS_SHA256_STARTS(&send_hash,0);
 
         bool done = false;
         while (!done)
@@ -320,7 +321,7 @@ private:
                          << len << ")\n";
                     return false;
                 }
-                mbedtls_sha256_update(&recv_hash, data.ucptr(), len);
+                MBEDTLS_SHA256_UPDATE(&recv_hash, data.ucptr(), len);
                 bytes_received += cc;
             }
             if (inMsg.file_data().has_ping())
@@ -369,7 +370,7 @@ private:
             }
         }
         sendmsg();
-        mbedtls_sha256_update(&send_hash,
+        MBEDTLS_SHA256_UPDATE(&send_hash,
                               readbuffer.ucptr(),
                               readbuffer.length());
     }
@@ -380,7 +381,7 @@ private:
         // matches what we read from ours.
         pxfe_string  sent_hash;
         sent_hash.resize(32);
-        mbedtls_sha256_finish(&send_hash, sent_hash.ucptr());
+        MBEDTLS_SHA256_FINISH(&send_hash, sent_hash.ucptr());
         outMsg.set_type(i3_DONE);
         FileDone * fd = outMsg.mutable_file_done();
         fd->set_file_size(bytes_sent);
@@ -417,7 +418,7 @@ private:
                  << "received size   " << fd.file_size() << "\n";
         pxfe_string rcvd_hash;
         rcvd_hash.resize(32);
-        mbedtls_sha256_finish(&recv_hash, rcvd_hash.ucptr());
+        MBEDTLS_SHA256_FINISH(&recv_hash, rcvd_hash.ucptr());
         std::string one = rcvd_hash.format_hex();
         std::string two = ((pxfe_string&) fd.sha256()).format_hex();
         if (one != two)

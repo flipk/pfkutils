@@ -1,4 +1,5 @@
 
+#include "pfkutils_config.h"
 #include "simpleWebSocket.h"
 #include "base64.h"
 
@@ -211,7 +212,7 @@ WebSocketServerConn :: send_handshake_response(void)
     uint8_t digest[SHA1HashSize];
     uint8_t digest_b64[128];
 
-    mbedtls_sha1( (const unsigned char *) tempbuf.str().c_str(),
+    MBEDTLS_SHA1( (const unsigned char *) tempbuf.str().c_str(),
                   tempbuf.str().size(), digest );
 
     memset(digest_b64,  0, sizeof(digest_b64));
