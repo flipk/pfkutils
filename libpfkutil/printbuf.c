@@ -38,7 +38,7 @@ For more information, please refer to <http://unlicense.org>
 int
 main()
 {
-    char buf[4];
+    char buf[20];
     int len = 0;
 
     BUFPRINTF(buf, len, "this ");

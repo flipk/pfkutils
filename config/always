@@ -160,7 +160,7 @@ libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
 libpfkutil_CSRCS = \
 	libpfkutil/base64.c \
 	libpfkutil/inet_aton.c libpfkutil/m.c \
-	libpfkutil/printbuf.c libpfkutil/regex.c
+	libpfkutil/regex.c
 libpfkutil_CXXSRCS = \
 	libpfkutil/HSM.cc \
 	libpfkutil/childprocessmanager.cc libpfkutil/dll3.cc \
@@ -224,6 +224,10 @@ $(t)_DEPLIBS = $(libpfkutil_TARGET)
 endef
 
 $(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
+
+PROG_TARGETS += printbuf_test
+printbuf_test_TARGET = $(OBJDIR)/libpfkutil-printbuf_test
+printbuf_test_CSRCS = libpfkutil/printbuf.c
 
 ##############################################
 
