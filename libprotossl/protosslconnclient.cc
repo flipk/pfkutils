@@ -18,6 +18,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     ssl_initialized = false;
     msgs->registerClient(this);
     netctx = new_netctx;
+    net_initialized = true;
     WaitUtil::Lock lock(&ssl_lock);
     _ok = init_common(client_ip, cliip_len);
 }
@@ -32,6 +33,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     send_close_notify = false;
     ssl_initialized = false;
     msgs->registerClient(this);
+    net_initialized = false;
 
     WaitUtil::Lock lock(&ssl_lock);
     Bufprintf<20> portString;
@@ -50,6 +52,11 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
         return;
     }
 
+    // net_connect has a bug -- if connection fails, it closes
+    // netctx.fd but does not set it to -1. then if you net_free,
+    // you end up double-closing the fd (leading to a possible race
+    // with other threads reusing that fd#).
+    net_initialized = true;
     _ok = init_common(NULL, 0);
 }
 
@@ -130,7 +137,8 @@ ProtoSSLConnClient :: ~ProtoSSLConnClient(void)
     msgs->unregisterClient(this);
     if (send_close_notify)
         mbedtls_ssl_close_notify( &sslctx );
-    mbedtls_net_free(&netctx);
+    if (net_initialized)
+        mbedtls_net_free(&netctx);
     if (ssl_initialized)
         mbedtls_ssl_free(&sslctx);
 }

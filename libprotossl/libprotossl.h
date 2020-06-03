@@ -82,6 +82,7 @@ class ProtoSSLConnClient : public ClientList_t::Links,
     bool _ok;
     bool send_close_notify;
     bool ssl_initialized;
+    bool net_initialized;
     mbedtls_net_context netctx;
     mbedtls_ssl_context sslctx;
     mbedtls_timing_delay_context timer;
