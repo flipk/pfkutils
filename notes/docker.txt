@@ -51,7 +51,7 @@ useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
 echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
  % docker exec -it -u flipk 08163e9a23c6 /bin/bash
  % docker commit 08163e9a23c6 pfk_ubuntu:18.04
- % docker run --rm -it -w / -v $HOME:$HOME -u flipk pfk_ubuntu:18.04 /bin/bash
+ % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_ub18 -u flipk pfk_ubuntu:18.04 /bin/bash
 
 blade ub14.04.4:
 ----------------
@@ -71,7 +71,22 @@ echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
 -BUILD MBEDTLS and install it somewhere pfkutils/config/blade-ub14 can get to
  % docker exec -it -u flipk ad482fd4e0fd /bin/bash
  % docker commit ad482fd4e0fd pfk_ubuntu:14.04.4
- % docker run --rm -it -w / -v $HOME:$HOME -u flipk pfk_ubuntu:14.04.4 /bin/bash
+ % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_ub14 -u flipk pfk_ubuntu:14.04.4 /bin/bash
+
+blade rhel6_git
+---------------
+ % docker run --rm -it -v $HOME:$HOME -w / rhel6_git:4 /bin/bash
+(yum install some stuff)
+gid=
+group=
+uid=
+USER=
+HOME=
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+su - $USER
+ % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_rhel6 rhel6_git:4 /bin/bash
 
 msic:
  deb http://srvvpackage.msic.net/ubuntu/ trusty main restricted

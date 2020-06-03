@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-05-28.21:32:51
+#      Last update: 2020-06-02.21:07:08
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -736,6 +736,10 @@ if [ -f /.dockerenv ] ; then
     echo inside docker, skipping shell switch
     GOOD_SHELL=yes
     export GOOD_SHELL
+    # use docker --env DOCKER=imagename to trigger this.
+    if [ "x$DOCKER" != x ] ; then
+        HOST="$DOCKER"
+    fi
 fi
 
 #
