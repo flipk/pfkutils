@@ -4,5 +4,5 @@
 #endif /* __JSON_PARSER_INTERNAL__ */
 
 void json_parser_debug_tokenize(FILE *f);
-// this could return an ObjectProperty OR an ArrayProperty, check.
+// this could return any Property::propertyType, check.
 SimpleJson::Property * json_parser(FILE *f);

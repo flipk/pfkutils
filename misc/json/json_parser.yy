@@ -73,6 +73,10 @@ TOPLEVEL_OBJECT
 	{
             returnProperty = $1;
 	}
+	| VALUE
+	{
+            returnProperty = $1;
+	}
 	;
 
 OBJECT
