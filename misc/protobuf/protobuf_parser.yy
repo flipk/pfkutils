@@ -1,17 +1,5 @@
 /* -*- Mode:c++; eval:(c-set-style "BSD"); c-basic-offset:4; indent-tabs-mode:nil; tab-width:8 -*- */
 
-/*
-
-NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE 
-NOTE 
-NOTE if you edit this file, you must run
-NOTE    ./flexbison.sh
-NOTE to regenerate the cc and hh files.
-NOTE 
-NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE 
-
-*/
-
 %parse-param {yyscan_t yyscanner}
 %define api.pure
 %name-prefix "protobuf_parser_"
