@@ -1,5 +1,5 @@
 
-# Last update: 2020-02-17.22:47:45
+# Last update: 2020-06-03.22:15:46
 
 #FUNCTIONS: xvt lsv lsvg lsco lscol lspr lsprl lsprf lsprfl sv ssv zeroversion makeorig makepred predversion myscript ccdiff ccdiff2
 
@@ -20,8 +20,8 @@ EOF
     xlsvtree $*
 }
 
-export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 4 -R'
-export XLESS='-j5 -c -d -h 5 -i -M -q -x 4 -R'
+export LESS='-S -n -e -j 5 -c -d -h 5 -i -M -q -x 8 -R'
+export XLESS='-j5 -c -d -h 5 -i -M -q -x 8 -R'
 
 uname_s=`uname -s`
 
