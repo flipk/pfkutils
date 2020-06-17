@@ -32,6 +32,18 @@ ffmpeg -i raw.mov -strict experimental -vn -c:a copy raw-audio.aac
 
 ffmpeg -i iphone-raw.mov -strict experimental -vn -c:a pcm_s32le iphone-audio.wav
 
+---combining video from one file and audio from another, this assumes
+   input video has no audio track at all.
+
+ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac output.mp4
+
+---If your input video already contains audio, and you want to
+replace it, you need to tell ffmpeg which audio stream to take:
+
+ffmpeg -i video.mp4 -i audio.wav -c:v copy -c:a aac -map 0:v:0 -map 1:a:0 output.mp4
+
+You can also use "-shortest" to cut the end.
+
 ---extract a jpg from a position in the video
 
 output=file.jpg
