@@ -866,7 +866,7 @@ pfkutils_LIBS += \
 	$(pfkutils_LIBNCURSES) $(pfkutils_LIBZ) \
 	$(pfkutils_LIBXRANDR) $(pfkutils_LIBX11) \
 	$(pfkutils_LIBHILITE) $(pfkutils_LIBUTILS) $(pfkutils_LIBFFTW) \
-	$(pfkutils_LIBPROTOBUF) $(MBEDTLS_LIBS) -lpthread
+	$(pfkutils_LIBPROTOBUF) $(MBEDTLS_LIBS) -lpthread -lrt
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
