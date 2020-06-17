@@ -25,45 +25,23 @@
 # 
 # For more information, please refer to <http://unlicense.org>
 
-ifeq ($(CONFIG),)
-CONFIG_FILE := $(wildcard $(HOME)/.pfkutils_config)
-ifneq ($(CONFIG_FILE),)
-CONFIG := $(shell cat $(CONFIG_FILE))
-endif
+ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
+
+CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
+
+else ifneq ($(wildcard $(HOME)/.pfkutils_config),)
+
+CONFIG_FILE := $(HOME)/.pfkutils_config
+
 endif
 
-ifeq ($(CONFIG),)
+ifeq ($(CONFIG_FILE),)
 
 ##############################################
 
-KNOWN_CONFIGS= adler atdsrv blade cygwin droid droplet
-
 all:
-	@echo please specify CONFIG= from config/ subdir
-	@echo or do 'make known_config' where known_config is
-	@echo one of: $(KNOWN_CONFIGS)
-	@echo or create $(HOME)/.pfkutils_config
-	@echo containing one of those values.
-
-define PER_CONFIG_RULES
-$(config):
-	$(Q)+make CONFIG=$(config)
-
-$(config)-cscope:
-	$(Q)make CONFIG=$(config) cscope
-
-$(config)-install:
-	$(Q)make CONFIG=$(config) install
-
-$(config)-clean:
-	$(Q)make CONFIG=$(config) clean
-
-$(config)-diffdotfiles:
-	$(Q)make CONFIG=$(config) diffdotfiles
-
-endef
-
-$(eval $(foreach config,$(KNOWN_CONFIGS),$(PER_CONFIG_RULES)))
+	@echo please create $(HOME)/.pfkutils_config using
+	@echo templates found in config/
 
 clean:
 	rm -rf obj.* dox
@@ -71,9 +49,11 @@ clean:
 
 ##############################################
 
-else # $CONFIG
+else
 
 ##############################################
+
+include $(CONFIG_FILE)
 
 PFKARCH := $(shell ./scripts/architecture)
 OBJDIR := obj.$(CONFIG)
@@ -82,7 +62,7 @@ ifeq ($(DISABLE_RDYNAMIC),)
 LDFLAGS += -rdynamic # for backtrace
 endif
 
-INCLUDE_MAKEFILES= config/$(CONFIG) config/always
+INCLUDE_MAKEFILES= config/os/$(PFKUTILS_OS) config/always
 
 include Makefile.inc
 

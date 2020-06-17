@@ -79,14 +79,14 @@ CONFIG_H= $(OBJDIR)/pfkutils_config.h
 
 define PFK_CONFIG_LINE
 	if [ "x$(PFK_CONFIG_$(value))" = "x" ] ; then \
-	   echo 'plz define PFK_CONFIG_$(value) in config/$(CONFIG)' ; \
+	   echo 'plz define PFK_CONFIG_$(value) in $(CONFIG_FILE)' ; \
 	   exit 1 ; \
 	elif [ "$(PFK_CONFIG_$(value))" != "0" ] ; then \
 	   echo \#define $(value) $(PFK_CONFIG_$(value)) >> $(CONFIG_H).tmp ; \
 	fi ; 
 endef
 
-$(CONFIG_H): Makefile config/always config/$(CONFIG) main/config.h.template
+$(CONFIG_H): Makefile config/always $(CONFIG_FILE) main/config.h.template
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils 3.32\" >> $(CONFIG_H).tmp
 	$(Q)$(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))
@@ -130,10 +130,10 @@ PREPROC_SOURCES = \
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
 define PREPROC_SUBST
-$(OBJDIR)/$(file): $(file).in config/always config/$(CONFIG)
+$(OBJDIR)/$(file): $(file).in config/always $(CONFIG_FILE)
 	@$(foreach sw,$(BUILD_SWITCHES),\
 		if [ "x$(PFK_BUILD_$(sw))" = "x" ] ; then \
-			echo 'plz set PFK_BUILD_$(sw) in config/$(CONFIG)' ; \
+			echo 'plz set PFK_BUILD_$(sw) in $(CONFIG_FILE)' ; \
 			exit 1 ; \
 		fi ; ) true
 	$(Q)sed $(foreach v,$(SUBST_VARS),-e 's,@$(v)@,$($(v)),') \
