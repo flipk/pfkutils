@@ -1,0 +1,57 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+CONFIG = centos7
+
+# blade is a hyperthreaded quad-core-- use it.
+MAKEJOBS ?= -j8
+
+PFK_BUILD_pfkbak=1
+PFK_BUILD_pfksh=1
+PFK_BUILD_syslog=1
+PFK_BUILD_checksize=1
+PFK_BUILD_treescan=1
+PFK_BUILD_sudo=1
+PFK_BUILD_ampfk=1
+PFK_BUILD_pfkscript=1
+PFK_BUILD_sessionmgr=1
+PFK_BUILD_xrandr=1
+PFK_BUILD_states=1
+PFK_BUILD_bglog=1
+PFK_BUILD_he=1
+PFK_BUILD_libpfkfb=1
+PFK_BUILD_diskloader=1
+PFK_BUILD_pfkstat=1
+PFK_BUILD_deduplifier=1
+PFK_BUILD_libwas=1
+PFK_BUILD_libpfkthread=1
+PFK_BUILD_wsproxy=1
+PFK_BUILD_xlock=1
+PFK_BUILD_fonts=1
+PFK_BUILD_pfktop=1
+PFK_BUILD_spinner=1
+PFK_BUILD_hilite=1
+PFK_BUILD_do_fft=1
+PFK_BUILD_protossl=1
+PFK_BUILD_i3=1
+PFK_BUILD_slowlink=0 # no g++ support for 'auto'
+
+KSHRC_LOCAL = kshrc.local.blade
+PROTOC_PATH = /bin/protoc
+PROTOBUF_INC =
+PROTOBUF_LIB = -lprotobuf
+mbedtls_path = $(HOME)/proj/pfkutils/contrib/mbedtls/obj.blade-centos7
+MBEDTLS_INCS = -I$(mbedtls_path)/include
+MBEDTLS_LIBS = -L$(mbedtls_path)/lib -lmbedtls -lmbedx509 -lmbedcrypto
+
+PFKUTILS_OS = centos7
+
+# SCRIPT_FILES_EXTRA = mhssh mhscp
+
+CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
+
+export PFK_CONFIG_flubox_xinerama=enable
+export PFK_CONFIG_contrib_makejobs=-j9
+
+# turn off color compile output so emacs compile buffer can work;
+# need a more generic solution for compiling in emacs compile buffer.
+# CXXFLAGS = -fno-diagnostics-color

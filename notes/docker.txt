@@ -73,6 +73,20 @@ echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
  % docker commit ad482fd4e0fd pfk_ubuntu:14.04.4
  % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_ub14 -u flipk pfk_ubuntu:14.04.4 /bin/bash
 
+blade centos7
+----------------
+ % docker run --rm -it -w / -v $HOME:$HOME docker.io/centos:7 /bin/bash
+yum update -y
+yum install -y gcc gcc-c++ flex bison make git git-gui protobuf-devel \
+   libX11-devel ncurses-devel mbedtls-devel libXrandr-devel fftw3-devel
+groupadd --gid $gid $group
+useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
+echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
+-BUILD MBEDTLS and install it somewhere pfkutils/config/blade-centos7 can get to
+ % docker exec -it -u flipk --env DOCKER=pfk_docker_centos7 735dba0db42c /bin/bash
+ % docker commit 735dba0db42c pfk_centos7:1
+ % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_centos7 -u flipk pfk_centos7:1 /bin/bash
+
 blade rhel6_git
 ---------------
  % docker run --rm -it -v $HOME:$HOME -w / rhel6_git:4 /bin/bash
