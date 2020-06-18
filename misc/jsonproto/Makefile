@@ -40,8 +40,8 @@ testConverter_CXXSRCS = \
 	obj/test2_converter.cc \
 	obj/test1.pb.cc \
 	obj/test2.pb.cc
-testConverter_INCS = -I../json $(PROTO_INCS) -I.
-testConverter_LIBS = $(PROTO_LIBS) ../json/obj/libsimplejson.a
+testConverter_INCS = -I../json $(PROTOBUF_INC) -I.
+testConverter_LIBS = $(PROTOBUF_LIB) ../json/obj/libsimplejson.a
 
 include $(HOME)/proj/pfkutils/Makefile.inc
 
