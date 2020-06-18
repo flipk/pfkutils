@@ -1,4 +1,14 @@
 
+ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
+CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
+else ifneq ($(wildcard $(HOME)/.pfkutils_config),)
+CONFIG_FILE := $(HOME)/.pfkutils_config
+endif
+
+ifneq ($(CONFIG_FILE),)
+include $(CONFIG_FILE)
+endif
+
 OBJDIR = obj
 
 PROTO_LIBS += -lprotobuf
