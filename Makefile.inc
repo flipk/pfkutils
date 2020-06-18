@@ -131,7 +131,11 @@ AR ?= ar
 RANLIB ?= ranlib
 BISON ?= bison
 FLEX ?= flex
-PROTOC_PATH ?= protoc
+
+# on platforms that have protoc as a managed package,
+# it is in one of three places.
+POSSIBLE_PROTOC_PATHS = /bin/protoc /usr/bin/protoc /usr/local/bin/protoc
+PROTOC_PATH ?= $(firstword $(wildcard $(POSSIBLE_PROTOC_PATHS)))
 
 # cflags and cxxflags should not include defines or includes;
 # this should be options to the compiler like optimization, debug,
