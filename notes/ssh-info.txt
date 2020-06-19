@@ -1,0 +1,13 @@
+
+sudo vi /etc/ssh/sshd_config
+	ClientAliveInterval set to 0
+
+vi ~/.ssh/config
+	Host <hostname or ip>
+		ServerAliveInterval 60
+
+PuTTY configuration
+	Connection
+	Sending of null packets
+	Seconds between keepalives: 60
+
