@@ -1,0 +1,56 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+CONFIG = atdsrv
+
+MAKEJOBS ?= -j2
+
+PFK_BUILD_pfkbak=1
+PFK_BUILD_pfksh=1
+PFK_BUILD_syslog=0
+PFK_BUILD_checksize=0
+PFK_BUILD_treescan=1
+PFK_BUILD_sudo=0
+PFK_BUILD_ampfk=1
+PFK_BUILD_pfkscript=1
+PFK_BUILD_sessionmgr=1
+PFK_BUILD_xrandr=1
+PFK_BUILD_states=0
+PFK_BUILD_bglog=0
+PFK_BUILD_he=1
+PFK_BUILD_libpfkfb=1
+PFK_BUILD_diskloader=0
+PFK_BUILD_pfkstat=0
+PFK_BUILD_deduplifier=0
+PFK_BUILD_libwas=1
+PFK_BUILD_libpfkthread=0
+PFK_BUILD_wsproxy=0
+PFK_BUILD_xlock=0
+PFK_BUILD_fonts=1
+PFK_BUILD_pfktop=1
+PFK_BUILD_spinner=0
+PFK_BUILD_hilite=1
+PFK_BUILD_do_fft=0
+PFK_BUILD_protossl=1
+PFK_BUILD_i3=0
+PFK_BUILD_slowlink=0  # doesnt build on RHEL
+
+KSHRC_LOCAL = kshrc.local.mot
+
+protobuf_prefix = $(HOME)/pfk/$(PFKARCH)/protobuf-2.5.0
+PROTOC_PATH = $(protobuf_prefix)/bin/protoc
+PROTOBUF_INC = -I$(protobuf_prefix)/include
+PROTOBUF_LIB = \
+	-L$(protobuf_prefix)/lib \
+	-Wl,-rpath,$(protobuf_prefix)/lib \
+	-lprotobuf
+mbedtls_prefix = $(HOME)/pfk/$(PFKARCH)/mbedtls-2.6.1
+MBEDTLS_INCS = -I$(mbedtls_prefix)/include
+MBEDTLS_LIBS = -L$(mbedtls_prefix)/lib -lmbedtls -lmbedx509 -lmbedcrypto
+
+PFKUTILS_OS = rhel6
+
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
+# fish-pfk does not compile on atdsrv - no C++11 support
+
+export PFK_CONFIG_flubox_xinerama=disable
+export PFK_CONFIG_contrib_makejobs=-j4
