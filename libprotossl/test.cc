@@ -134,7 +134,7 @@ public:
             if (msgs->validateCertificates() == false)
                 return 1;
 
-            server = msgs->startServer(2005);
+            server = msgs->startServer(atoi(argv[2]));
             if (server == NULL)
             {
                 fprintf(stderr,"failure to chooch making server\n");
@@ -160,7 +160,7 @@ public:
             if (msgs->validateCertificates() == false)
                 return 1;
 
-            client = msgs->startClient(argv[2], 2005);
+            client = msgs->startClient(argv[2], atoi(argv[3]));
             if (client == NULL)
             {
                 fprintf(stderr,"failure to chooch making client\n");
