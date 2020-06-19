@@ -256,7 +256,9 @@ ProtoSSLConnClient :: handle_read_raw(std::string &buffer)
     {
         return GOT_TIMEOUT;
     }
-    if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY || ret == 0)
+    if (ret == MBEDTLS_ERR_SSL_PEER_CLOSE_NOTIFY ||
+        ret == MBEDTLS_ERR_NET_RECV_FAILED       ||
+        ret == 0)
     {
         mbedtls_ssl_close_notify( &sslctx );
         send_close_notify = false;
