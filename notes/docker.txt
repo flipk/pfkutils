@@ -86,6 +86,9 @@ echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
  % docker exec -it -u flipk --env DOCKER=pfk_docker_centos7 735dba0db42c /bin/bash
  % docker commit 735dba0db42c pfk_centos7:1
  % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_centos7 -u flipk pfk_centos7:1 /bin/bash
+ % yum install -y `cat Dropbox/notes/fedora/centos7-package-list.txt`
+ % docker commit 735dba0db42c pfk_centos7:2
+ % docker run --rm -it -w / -v $HOME:$HOME --env DOCKER=pfk_docker_centos7 -u flipk pfk_centos7:2 /bin/bash
 
 blade rhel6_git
 ---------------
