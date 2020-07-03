@@ -213,8 +213,20 @@ ________ SOURCE_msg_json2proto_enum
             }
             else
             {
-                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
-                return false;
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    std::cerr
+                        << "FAIL : json field @@fieldname@@ is wrong type\n";
+                    return false;
+                }
             }
 ________ END
 
@@ -227,8 +239,20 @@ ________ SOURCE_msg_json2proto_string
             }
             else
             {
-                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
-                return false;
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    std::cerr
+                        << "FAIL : json field @@fieldname@@ is wrong type\n";
+                    return false;
+                }
             }
 ________ END
 
@@ -247,8 +271,20 @@ ________ SOURCE_msg_json2proto_msg
             }
             else
             {
-                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
-                return false;
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    std::cerr
+                        << "FAIL : json field @@fieldname@@ is wrong type\n";
+                    return false;
+                }
             }
 ________ END
 
@@ -273,8 +309,20 @@ ________ SOURCE_msg_json2proto_bool
             }
             else
             {
-                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
-                return false;
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    std::cerr
+                        << "FAIL : json field @@fieldname@@ is wrong type\n";
+                    return false;
+                }
             }
 ________ END
 
@@ -287,8 +335,20 @@ ________ SOURCE_msg_json2proto_unary
             }
             else
             {
-                std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
-                return false;
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    std::cerr
+                        << "FAIL : json field @@fieldname@@ is wrong type\n";
+                    return false;
+                }
             }
 ________ END
 
@@ -377,7 +437,20 @@ ________ SOURCE_msg_json2proto_repeated_end
                 }
             }
             else
-                wrongtype = true;
+            {
+                if (prop->type == SimpleJson::Property::TRINARY  &&
+                    prop->cast<SimpleJson::TrinaryProperty>()->value ==
+                    SimpleJson::TrinaryProperty::TP_NULL)
+                {
+                    // "field":null is the same as "not present"
+                    // in protobuf. so just don't set or add it.
+                    delete prop;
+                }
+                else
+                {
+                    wrongtype = true;
+                }
+            }
             if (wrongtype)
             {
                 std::cerr << "FAIL : json field @@fieldname@@ is wrong type\n";
