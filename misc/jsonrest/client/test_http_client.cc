@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
+
+#define SERVER_PORT "8080"
 
 void usage(void)
 {
@@ -16,36 +19,22 @@ void usage(void)
 
 class curlWriteStorage
 {
-    size_t total_size;
-    std::vector<std::string> store;
+    std::string &store;
 public:
-    curlWriteStorage(void)
+    curlWriteStorage(std::string &_store) : store(_store)
     {
-        total_size = 0;
+        store.resize(0);
     }
     static size_t writer(const void *ptr, size_t size,
                        size_t nmemb, void *userptr)
     {
         size = size * nmemb;
         struct curlWriteStorage *cws = (struct curlWriteStorage *)userptr;
-        size_t ind = cws->store.size();
-        cws->store.resize(ind + 1);
-        std::string &last = cws->store[ind];
-        last.resize(size);
-        memcpy((void*)last.c_str(), ptr, size);
-        cws->total_size += size;
+        size_t oldsize = cws->store.size();
+        cws->store.resize(oldsize + size);
+        char * dest = (char*) cws->store.c_str() + oldsize;
+        memcpy(dest, ptr, size);
         return size;
-    }
-    void copyout(std::string &out)
-    {
-        out.resize(total_size);
-        char * ptr = (char*) out.c_str();
-        for (size_t ind = 0; ind < store.size(); ind++)
-        {
-            const std::string &item = store[ind];
-            memcpy(ptr, item.c_str(), item.size());
-            ptr += item.size();
-        }
     }
 };
 
@@ -60,7 +49,7 @@ do_rest_get (const std::string &url, std::string &data)
     curl_easy_setopt(easy, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(easy, CURLOPT_URL, url.c_str());
 
-    curlWriteStorage  writeStore;
+    curlWriteStorage  writeStore(data);
 
     curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, &curlWriteStorage::writer);
     curl_easy_setopt(easy, CURLOPT_WRITEDATA, (void*) &writeStore);
@@ -73,7 +62,8 @@ do_rest_get (const std::string &url, std::string &data)
     }
     else
     {
-        writeStore.copyout(data);
+        // writeStore leaves the data it collected in the
+        // "data" arg that was passed at construction.
         ret = true;
     }
 
