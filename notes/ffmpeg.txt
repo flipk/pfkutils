@@ -32,6 +32,11 @@ ffmpeg -i raw.mov -strict experimental -vn -c:a copy raw-audio.aac
 
 ffmpeg -i iphone-raw.mov -strict experimental -vn -c:a pcm_s32le iphone-audio.wav
 
+---stupid MTS files from canon camera requires a special filter to make
+   good video:
+
+ffmpeg -i $input -strict experimental -c:v libx264 -vf yadif=parity=auto -preset fast -crf 28 -c:a copy -copyts $output
+
 ---combining video from one file and audio from another, this assumes
    input video has no audio track at all.
 
