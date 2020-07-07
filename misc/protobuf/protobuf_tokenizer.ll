@@ -83,7 +83,7 @@ ws              [\t \r\n]+
     return TOK_INT;
 }
 
-<INITIAL>[a-zA-Z][a-zA-Z0-9_\.]* {
+<INITIAL>[a-zA-Z_][a-zA-Z0-9_\.]* {
     yylval->word_value = new std::string(yytext, yyleng);
     return TOK_WORD;
 }
