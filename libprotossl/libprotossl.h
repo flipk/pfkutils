@@ -388,7 +388,7 @@ private:
     // false ret means send window is full, couldn't send.
     bool handle_send_msg(dtls_send_event *dte, int queue_number = -1);
     void handle_nack(dtls_send_event *dte);
-    void send_heartbeat(void) { send_frag(NULL); }
+    void send_heartbeat(void) { WaitUtil::Lock l(&dtls_lock); send_frag(NULL); }
 
     struct dtls_fragment : public ThreadSlinger::thread_slinger_message
     {
