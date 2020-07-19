@@ -2,33 +2,34 @@
 
 CONFIG = droplet
 
-# this is a single core machine.  don't set MAKEJOBS
+# droplet is a single core
+MAKEJOBS ?= -j1
 
-PFK_BUILD_pfkbak=1
+PFK_BUILD_pfkbak=0
 PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
-PFK_BUILD_treescan=1
-PFK_BUILD_sudo=1
-PFK_BUILD_ampfk=1
-PFK_BUILD_pfkscript=0
+PFK_BUILD_treescan=0
+PFK_BUILD_sudo=0
+PFK_BUILD_ampfk=0
+PFK_BUILD_pfkscript=1
 PFK_BUILD_sessionmgr=0
 PFK_BUILD_xrandr=0
 PFK_BUILD_states=0
 PFK_BUILD_bglog=0
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=1
+PFK_BUILD_libpfkfb=0
 PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
 PFK_BUILD_deduplifier=0
 PFK_BUILD_libwas=1
-PFK_BUILD_libpfkthread=0
-PFK_BUILD_wsproxy=1
+PFK_BUILD_libpfkthread=1
+PFK_BUILD_wsproxy=0
 PFK_BUILD_xlock=0
 PFK_BUILD_fonts=0
-PFK_BUILD_pfktop=1
+PFK_BUILD_pfktop=0
 PFK_BUILD_spinner=0
-PFK_BUILD_hilite=1
+PFK_BUILD_hilite=0
 PFK_BUILD_do_fft=0
 PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
@@ -38,10 +39,10 @@ KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
-MBEDTLS_INCS = # -I$(mbedtls_prefix)/include
-MBEDTLS_LIBS =  -lmbedtls -lmbedx509 -lmbedcrypto # -L$(mbedtls_prefix)/lib
+MBEDTLS_INCS =
+MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 
-PFKUTILS_OS = fedora30
+PFKUTILS_OS = fedora32
 
-CONTRIB_PROGS= 
+# CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
