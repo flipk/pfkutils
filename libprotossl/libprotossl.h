@@ -315,9 +315,10 @@ public:
                            // or just fragment_size on unreliable queue.
         BOGUS_QUEUE_NUMBER, // queue number is bogusly bogus.
         MSG_NOT_INITIALIZED, // msg.IsInitialized() returned false.
-        QOS_DROP  // configured queue has exceeded set limits; note this
+        QOS_DROP, // configured queue has exceeded set limits; note this
                   // is returned for FIFO queues, but not STACK queues,
                   // because stacks drop from the other end.
+        CONN_SHUTDOWN // you have called shutdown(), don't call send_message
     };
 
 private:
@@ -458,10 +459,18 @@ private:
     uint32_t ticks_without_send; // trigger for hearbeat
 
 public:
+    // provide a connected SSLConnClient object, and this object
+    // takes over ownership of it. when this class is deleted,
+    // the SSL client will be deleted (connection closed) too.
     ProtoSslDtlsQueue (const ProtoSslDtlsQueueConfig &_config,
                        ProtoSSLConnClient *);
-    ~ProtoSslDtlsQueue(void);
+
+    // call this after construction to see if construction was okay.
     bool ok(void) const { return _ok; }
+
+    // if you didn't call shutdown, this will do it for you. it will
+    // also delete the SSLConnClient for you.
+    ~ProtoSslDtlsQueue(void);
 
     send_return_t send_message(uint32_t queue_number, const MESSAGE &);
 
@@ -474,6 +483,17 @@ public:
     // expose the recv_q to the caller so the caller could do a
     // multi_dequeue on all of them.
     read_return_t handle_read(MESSAGE &msg);
+
+    // shut down the dtlsq connection. if you've got a thread blocked
+    // in handle_read, it will wake up immediately with GOT_DISCONNECT.
+    // it will also close the SSLConnClient. at this point the DtlsQ
+    // is dead and there is nothing left for it but to be deleted.
+    // NOTE you don't have to call shutdown, as the destructor will
+    // do the shutdown; but having a separate shutdown method is useful
+    // if you want to control when the object gets deleted, or your
+    // thread calling handle_read can't be guaranteed to not access
+    // the pointer after deletion.
+    void shutdown(void);
 };
 
 }; // namespace ProtoSSL

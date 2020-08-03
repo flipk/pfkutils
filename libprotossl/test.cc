@@ -47,6 +47,7 @@ public:
     {
         if (dtlsq)
         {
+            dtlsq->shutdown();
             delete dtlsq;
             if (dtlsq_reader_running)
             {
@@ -178,6 +179,7 @@ public:
                 }
                 else
                 {
+                    dtlsq->shutdown();
                     delete dtlsq;
                     dtlsq = NULL;
                     fprintf(stderr,"failure to chooch making dtlsq\n");
@@ -234,6 +236,7 @@ public:
                             }
                             else
                             {
+                                dtlsq->shutdown();
                                 delete dtlsq;
                                 dtlsq = NULL;
                                 fprintf(stderr,

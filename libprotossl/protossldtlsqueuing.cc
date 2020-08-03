@@ -97,38 +97,22 @@ ProtoSslDtlsQueue :: ProtoSslDtlsQueue(const ProtoSslDtlsQueueConfig &_config,
 
 ProtoSslDtlsQueue :: ~ProtoSslDtlsQueue(void)
 {
-    char dummy = 0;
-    void * ptr = NULL;
+    // internally, shutdown() protects itself from being
+    // called twice.
+    shutdown();
 
-    // both recv thread and tick thread select
-    // on closer_pipe, but neither read from it,
-    // so both should wake up.
-    if (::write(closer_pipe.writeEnd, &dummy, 1) < 0)
-    { /* keep compiler happy by pretending to care */ }
-
-    // also close sender thread. sender thread is smart
-    // enough to know a DIE packet didn't come from the pool.
-    // we don't want to alloc from the pool in case it's empty
-    // and we don't want to deadlock here.
-    dtls_send_event die_evt;
-    die_evt.type = dtls_send_event::DIE;
-    send_q.enqueue(&die_evt);
-
-    for (uint32_t which = 0; which < num_threads; which++)
-        if (thread_started[which])
-            pthread_join(thread_ids[which], &ptr);
-
-    delete client;
-
+    // clean out the handle_read queue()
     dtls_read_event * dre;
     while ((dre = recv_q.dequeue(0)) != NULL)
         read_pool.release(dre);
 
+    // clean out all inbound queues.
     dtls_send_event * dte;
     for (uint32_t ind = 0; ind < num_queues; ind++)
     {
         while ((dte = queues[ind]->dequeue(0)) != NULL)
             send_event_release(dte);
+        // don't delete queues[0], since that is &send_q
         if (ind != 0)
             delete queues[ind];
     }
@@ -157,6 +141,38 @@ ProtoSslDtlsQueue :: fragpool_t :: deref(dtls_fragment *frag)
         frag->init();
         fragpool.release(frag);
     }
+}
+
+void
+ProtoSslDtlsQueue :: shutdown(void)
+{
+    if (client == NULL)
+        // already been shutdown()
+        return;
+
+    char dummy = 0;
+    void * ptr = NULL;
+
+    // both recv thread and tick thread select
+    // on closer_pipe, but neither read from it,
+    // so both should wake up.
+    if (::write(closer_pipe.writeEnd, &dummy, 1) < 0)
+    { /* keep compiler happy by pretending to care */ }
+
+    // also close sender thread. sender thread is smart
+    // enough to know a DIE packet didn't come from the pool.
+    // we don't want to alloc from the pool in case it's empty
+    // and we don't want to deadlock here.
+    dtls_send_event die_evt;
+    die_evt.type = dtls_send_event::DIE;
+    send_q.enqueue(&die_evt);
+
+    for (uint32_t which = 0; which < num_threads; which++)
+        if (thread_started[which])
+            pthread_join(thread_ids[which], &ptr);
+
+    delete client;
+    client = NULL; // don't allow calling shutdown twice
 }
 
 bool
@@ -236,6 +252,10 @@ ProtoSslDtlsQueue :: tick_thread(void)
 ProtoSslDtlsQueue::read_return_t
 ProtoSslDtlsQueue :: handle_read(MESSAGE &msg)
 {
+    // this object has been shutdown()
+    if (client == NULL)
+        return GOT_DISCONNECT;
+
     // no lock required here because recv_q and read_pool internally safe.
     dtls_read_event *dre = recv_q.dequeue(-1);
     read_return_t ret = dre->retcode;
@@ -722,6 +742,9 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
                                   const MESSAGE &msg)
 {
     PRINTF("SENDING message :\n%s\n", msg.DebugString().c_str());
+
+    if (client == NULL)
+        return CONN_SHUTDOWN;
 
     // locked only when needed. queues are internally safe.
     WaitUtil::Lock   lock(&dtls_lock, false);
