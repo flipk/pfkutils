@@ -26,3 +26,10 @@ libgtk2.0-dev
 libgtk-3-dev
 fftw3-dev
 libmbedtls-dev
+emacs
+docker
+docker.io
+docker-containerd
+chromium-browser
+gnome-screensaver
+dconf-editor

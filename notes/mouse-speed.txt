@@ -1,0 +1,13 @@
+
+on older versions, "xset m 0 0" does what you want. on later versions
+it does not, definitely not.
+
+ubuntu 18:
+  dconf-editor
+  go to org/gnome/desktop/peripherals/mouse
+    and set the profile to 'flat' and speed to -1
+
+or:
+  gsettings set org.gnome.desktop.peripherals.mouse accel-profile flat
+  gsettings set org.gnome.desktop.peripherals.mouse speed -1
+
