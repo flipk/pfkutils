@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-03.23:53:37
+#      Last update: 2020-09-15.16:00:47
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -863,7 +863,7 @@ if __isksh ; then
         if [[ -f .pfk_environ ]] ; then
             echo signing $PWD/.pfk_environ ...
             grep -v '#pfk_sign' .pfk_environ > .pfk_environ.1
-            set -- `cat ${HOME}/.pfk_environ_key .pfk_environ.1 | sha256sum -`
+            set -- `( cat ${HOME}/.pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
             echo '#pfk_sign' $1 >> .pfk_environ.1
             mv .pfk_environ.1 .pfk_environ
         else
@@ -872,7 +872,8 @@ if __isksh ; then
     }
 
     verify_pfk_environ() {
-        envfile="$1"
+        envdir="$1"
+        envfile="${envdir}/.pfk_environ"
         if [[ ! -f "$envfile" ]] ; then
             return 1
         fi
@@ -880,7 +881,7 @@ if __isksh ; then
             echo no ${HOME}/.pfk_environ_key
             return 1
         fi
-        set -- `( cat ${HOME}/.pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ) | sha256sum -`
+        set -- `( cat ${HOME}/.pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ; echo "$envdir" ) | sha256sum -`
         calculated=$1
         infile=$( awk '/#pfk_sign/ { print $2} ' "$envfile" )
         if [[ "x$infile" = "x$calculated" ]] ; then
@@ -903,7 +904,7 @@ if __isksh ; then
                     d="${d}/${f}"
                 fi
                 if [[ -f "${d}/.pfk_environ" ]] ; then
-                    if verify_pfk_environ "${d}/.pfk_environ" ; then
+                    if verify_pfk_environ "${d}" ; then
                         echo "${d}/.pfk_environ"
                         return 0
                     else

@@ -7,3 +7,4 @@ cscope.out
 /[0-9]*
 /pfkutils*.bundle
 *.o
+.pfk_environ
