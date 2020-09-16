@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-15.16:00:47
+#      Last update: 2020-09-15.21:07:37
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -857,7 +857,7 @@ if __isksh ; then
 
     sign_pfk_environ() {
         if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
-            echo no ${HOME}/.pfk_environ_key
+            echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
             return 1
         fi
         if [[ -f .pfk_environ ]] ; then
@@ -867,7 +867,7 @@ if __isksh ; then
             echo '#pfk_sign' $1 >> .pfk_environ.1
             mv .pfk_environ.1 .pfk_environ
         else
-            echo no .pfk_environ in this directory
+            echo ERROR: no .pfk_environ in this directory 1>&2
         fi
     }
 
@@ -878,7 +878,7 @@ if __isksh ; then
             return 1
         fi
         if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
-            echo no ${HOME}/.pfk_environ_key
+            echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
             return 1
         fi
         set -- `( cat ${HOME}/.pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ; echo "$envdir" ) | sha256sum -`
@@ -891,27 +891,17 @@ if __isksh ; then
     }
 
     find_pfk_environ() {
-        OIFS="$IFS"
-        IFS="/"
-        set -- $PWD
-        IFS="$OIFS"
-        d=
-        for f in "$@" ; do
-            if [[ "x$f" != "x" ]] ; then
-                if [[ "x$d" = "x" ]] ; then
-                    d="/${f}"
+        d="$PWD"
+        while [[ "x${d}" != x ]] ; do
+            if [[ -f "${d}/.pfk_environ" ]] ; then
+                if verify_pfk_environ "${d}" ; then
+                    echo "${d}/.pfk_environ"
+                    return 0
                 else
-                    d="${d}/${f}"
-                fi
-                if [[ -f "${d}/.pfk_environ" ]] ; then
-                    if verify_pfk_environ "${d}" ; then
-                        echo "${d}/.pfk_environ"
-                        return 0
-                    else
-                        echo "${d}/.pfk_environ" failed signature check 1>&2
-                    fi
+                    echo "${d}/.pfk_environ" failed signature check 1>&2
                 fi
             fi
+            d="${d%/*}"
         done
         return 1
     }
@@ -929,7 +919,13 @@ if __isksh ; then
         new_pfk_environ_file=$(find_pfk_environ)
         if [[ "x$new_pfk_environ_file" != "x$current_pfk_environ_file" ]] ; then
             if [[ "x$current_pfk_environ_file" != "x" ]] ; then
-                . "$current_pfk_environ_file" leave
+                # if the environ file was removed in between
+                # entering and leaving, dont crash this function.
+                if [[ -f "$current_pfk_environ_file" ]] ; then
+                    . "$current_pfk_environ_file" leave
+                else
+                    echo NOTE: "$current_pfk_environ_file" was removed 1>&2
+                fi
             fi
             if [[ "x$new_pfk_environ_file" != "x" ]] ; then
                 . "$new_pfk_environ_file" enter
