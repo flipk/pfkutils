@@ -16,6 +16,19 @@ org.gnome.desktop.screensaver : picture-uri lock-delay
 org.gnome.desktop.session : idle-delay
 org.gnome.settings-daemon.plugins.power : ?
 
+List input devices:
+% xinput
+
+List all settable properties for the mouse:
+% xinput --list-props 13
+% xinput --list-props 'Logitech Anywhere MX'
+
+Set accel speed to 0.0 (range -1 to +1):
+% xinput --set-prop 'Logitech Anywhere MX' 'libinput Accel Speed' 0.0
+
+Set accel profiles enabled to { <not adaptive> <flat> }:
+% xinput --set-prop 'Logitech Anywhere MX' 'libinput Accel Profile Enabled' 0 1
+
 xprintidle
 
 gnome-screensaver-command -a
