@@ -1,9 +1,11 @@
 
-# Last update: 2017-01-11.22:10:04
+# Last update: 2020-09-17.19:35:07
 
 xconsole_hook() {
     # disable that disgusting mouse acceleration
     xset m 0
+    xinput --set-prop 'Logitech Anywhere MX' 'libinput Accel Speed' -0.5
+    xinput --set-prop 'Logitech Anywhere MX' 'libinput Accel Profile Enabled' 0 1
 #    xsri --tile=/home/flipk/Dropbox/Public/pics/grid3.png
     feh --bg-tile /home/flipk/Dropbox/Public/pics/grid3.png
 }

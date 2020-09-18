@@ -9,21 +9,29 @@ mydir=@prefix@
 prog=`basename $0`
 
 if [ ! -d $mydir/$pf ] ; then
-	echo platform $pf is not supported by this tool
-	if [ $prog = "pdksh" ] ; then
-	    echo here, have a temporary shell
-	    /bin/sh
-	fi
-	exit 1
+    echo platform $pf is not supported by $prog
+    if [ $prog = "pdksh" ] ; then
+        echo here, have a temporary shell
+        if [[ -x /bin/bash ]] ; then
+            /bin/bash
+        else
+            /bin/sh
+        fi
+    fi
+    exit 1
 fi
 
 if [ ! -f $mydir/$pf/bin/$prog ] ; then
-	echo a version of program $prog for $os-$rev does not exist
-	if [ $prog = "pdksh" ] ; then
-	    echo here, have a temporary shell
-	    /bin/sh
-	fi
-	exit 1
+    echo a version of program $prog for $os-$rev does not exist
+    if [ $prog = "pdksh" ] ; then
+        echo here, have a temporary shell
+        if [[ -x /bin/bash ]] ; then
+            /bin/bash
+        else
+            /bin/sh
+        fi
+    fi
+    exit 1
 fi
 
 exec $mydir/$pf/bin/$prog "$@"

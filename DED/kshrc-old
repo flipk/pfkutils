@@ -1,0 +1,331 @@
+
+        __extend_path /usr/local/wmplayer
+        __extend_path /usr/ucb
+        __extend_path /usr/etc
+        __extend_path /share/pd/bin
+        __extend_path /motorola/bin
+        __extend_path /opt/SUNWspro/bin
+        __extend_path /usr/vendor/hst/1.0/bin
+        __extend_path /usr/vendor/lb/3.3/bin.sol4
+        __extend_path /usr/public/sphinx/ITS/IDE
+
+z() {
+    typeset logfile tempfile count
+    typeset CLASS INSTANCE RECIPIENTS OPCODE
+
+    logfile=$HOME/.messages
+    tempfile=$TMP/zwrite.$USER.$$
+
+    CLASS=
+    INSTANCE=
+    RECIPIENTS=
+    OPCODE=
+
+    count=0
+
+    while [[ $# -gt 0 ]] ; do
+        case "$1" in
+        -c)
+            CLASS=$2
+            shift
+            ;;
+        -i)
+            INSTANCE=$2
+            shift
+            ;;
+        -O)
+            OPCODE=$2
+            shift
+            ;;
+        -*)
+            break
+            ;;
+        *)
+            RECIPIENTS="$RECIPIENTS $1"
+            count=$(( count + 1 ))
+            ;;
+        esac
+        shift
+    done
+
+    test -t 0 && print Enter your message, followed by control-D.
+
+    cat > $tempfile
+
+    print -n 'Message '
+
+    [[ "x$RECIPIENTS" = "x" ]] || {
+        print -- ------------------------------------------------------------
+        print -n MESSAGE SENT TO
+        [[ "x$CLASS"      = "x" ]] || print -n " class"     $CLASS
+        [[ "x$INSTANCE"   = "x" ]] || print -n " instance"  $INSTANCE
+        [[ "x$OPCODE"     = "x" ]] || print -n " opcode"    $OPCODE
+        if [[ $count = "1" ]] ; then 
+            print -n " recipient" $RECIPIENTS
+        else
+            print -n " recipients" $RECIPIENTS
+        fi
+        print -n " -- " ; date
+        cat $tempfile
+    } >> $logfile
+
+    [[ "x$CLASS"      = "x" ]] || CLASS="-c $CLASS"
+    [[ "x$INSTANCE"   = "x" ]] || INSTANCE="-i $INSTANCE"
+    [[ "x$OPCODE"     = "x" ]] || OPCODE="-O $OPCODE"
+
+    [[ $count = "0" || $count = "1" ]] || {
+        print ""
+        print "@center(CC: $RECIPIENTS)"
+    } >> $tempfile
+
+    zwrite -n -q $OPCODE $CLASS $INSTANCE $RECIPIENTS < $tempfile
+
+    test -t 0 && print sent.
+
+    rm -f $tempfile
+}
+
+sendtree() {
+    if [[ $# -lt 3 ]] ; then
+        echo 'usage: sendtree host port dir [dir..]'
+        return 1
+    fi
+    typeset host port
+    host=$1
+    port=$2
+    shift 2
+    tar cf - $* | i2 -v $host $port
+}
+
+gettree() {
+    if [[ $# -ne 1 ]] ; then
+        echo 'usage: gettree port'
+        return 1
+    fi
+    i2 -v $1 | tar xf -
+}
+
+echodate() {
+    while true ; do
+        date
+        random_hex 70
+        sleep 60
+    done
+}
+
+
+myscript() {
+    logfile=$1
+    shift
+    MY_INSCRIPT=$HOME/$HOST.myscript.$$
+    export MY_INSCRIPT
+    echo rm -f $MY_INSCRIPT > $MY_INSCRIPT
+    echo echo myscript started at `date` >> $MY_INSCRIPT
+    echo "$@" >> $MY_INSCRIPT
+    echo echo myscript done at `date` >> $MY_INSCRIPT
+    script $logfile
+    unset MY_INSCRIPT
+}
+
+##### mot
+
+xvt() {
+    grep -v ^Vtree ~/.xclearcase > ~/zzz.xclearcase
+    cat > ~/.xclearcase << EOF
+Vtree.width: 1169
+Vtree.height: 970
+Vtree.x: 25
+Vtree.y: 25
+EOF
+    cat ~/zzz.xclearcase >>  ~/.xclearcase
+    rm -f ~/zzz.xclearcase
+    xlsvtree $*
+}
+
+lsv() {
+    typeset prefix
+    if [[ $# -eq 0 ]] ; then
+        prefix=${USER}_
+    else
+        prefix=$1
+    fi
+    ct lsview ${prefix}\* | cut -c3- | awk '{print $1}'
+}
+
+lsvg() {
+    if [[ -z "$1" ]] ; then
+        pattern=${USER}
+    else
+        pattern="$1"
+    fi
+    ct lsview | cut -c3- | grep "$pattern" | awk '{print $1}'
+}
+
+lspr() {
+    ct lsprivate | grep -v '\[checkedout\]' | sort -r
+}
+
+lsprl() {
+    ct lsprivate | grep -v checkedout | grep $PWD | sed -e s,$PWD/,, | sort -r
+}
+
+lsprf() {
+    for f in $( lspr ) ; do
+	if [[ -f $f ]] ; then
+	    echo $f
+	fi
+    done
+}
+
+lsprfl() {
+    for f in $( lsprl ) ; do
+	if [[ -f $f ]] ; then
+	    echo $f
+	fi
+    done
+}
+
+lsco() {
+    ct lsco -cview -avobs -short | sort
+}
+
+lscol() {
+    ct lsco -cview -avobs -short | grep $PWD | sed -e s,$PWD/,, | sort
+}
+
+sv() {
+    ct setview $1
+}
+
+ssv() {
+    select view in `lsvg $1` ; do
+        sv $view
+        break;
+    done
+}
+
+setvobs() {
+    export CLEARCASE_AVOBS=`grep -v ^# ~/.vobs | tr '\n' ':' | sed -e 's,:$,,'`
+}
+
+
+if __isksh ; then
+    if [[ "x$CLEARCASE_CMDLINE" != "x" ]] ; then
+       setvobs
+    fi
+else
+    if [ "x$CLEARCASE_CMDLINE" != "x" ] ; then
+       setvobs
+    fi
+fi
+
+zeroversion() {
+    ct ls $1 | 
+     sed \
+        -e 's,^\(.*\)  *Rule.*$,\1,'     \
+        -e 's,^\(.*\)  *from.*$,\1,'     \
+        -e 's,^\(.*/\).*$,\1,'          \
+        -e 's,$,0,'
+}
+
+makeorig() {
+    for f in $* ; do
+        zv=`zeroversion $f`
+        rm -f $f.orig
+        echo $zv
+        cp $zv $f.orig
+    done
+}
+
+predversion() {
+    ct describe $1 | grep ^version | sed -e 's,^.*\" from \([^ ]*\).*$,\1,'
+}
+
+makepred() {
+    for f in $* ; do
+        pv=`predversion $f`
+        rm -f $f.orig
+        echo $f@@$pv
+        cp $f@@$pv $f.orig
+    done
+}
+
+efp() {
+    invob=0
+
+    if [[ x${1} != x${1#/} ]] ; then
+        path=${1}
+    else
+        path=$PWD/${1}
+    fi
+
+    if [[ ${path#/vob} != $path ]] ; then
+        invob=1
+    elif [[ ${path#/projects} != $path ]] ; then
+        invob=1
+    fi
+
+    if [[ ${invob} = 1 ]] ; then
+        echo /ssh:pknaack1@`hostname`:${CLEARCASE_ROOT}${path}
+    else
+        echo /ssh:pknaack1@`hostname`:${path}
+    fi
+}
+
+if [[ x$MY_INSCRIPT != x ]] ; then
+    local_inscript=$MY_INSCRIPT
+    unset MY_INSCRIPT
+    sh $local_inscript
+    rm -f $local_inscript
+    exit 0
+fi
+
+ccdiff() {
+    typeset file_arg
+    typeset opts
+    typeset ofile
+
+    if [[ x$1 == x+g ]] ; then
+        graphical=no
+        shift
+    else
+        graphical=yes
+    fi
+
+    file_arg=$1
+    shift
+    opts=$1
+
+    ofile=`zeroversion $file_arg`
+
+    if [[ $graphical == no ]] ; then
+        sd $file_arg $ofile
+    else
+        xsd $file_arg $ofile
+    fi
+}
+
+ccdiff2() {
+    typeset file_arg
+    typeset opts
+    typeset ofile
+
+    if [[ x$1 == x+g ]] ; then
+        graphical=no
+        shift
+    else
+        graphical=yes
+    fi
+
+    file_arg=$1
+    shift
+    opts=$1
+
+    ofile=`zeroversion $file_arg`
+
+    if [[ $graphical == no ]] ; then
+        sd2 $file_arg $ofile
+    else
+        xsd2 $file_arg $ofile
+    fi
+}

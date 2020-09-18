@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-15.21:07:37
+#      Last update: 2020-09-17.19:41:02
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -15,8 +15,8 @@
 #  because if it turns out that my nfs fileserver for my homedir is down,
 #  then I can't login.
 #
-#  So I do something funny. My login shell is /bin/ksh which is present
-#  on all ITS machines if nfs servers are up or down. This script then
+#  So I do something funny. My login shell is ksh or bash which is present
+#  on all machines if nfs servers are up or down. This script then
 #  attempts to locate my pfksh binary and if it is found, it is then exec'd.
 #  From that point on on that machine, $SHELL points to my home dir.
 #
@@ -55,14 +55,14 @@ fi
 export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER PFKUTILS_PREFIX
  
 if [ -f $HOME/.verbose ] ; then
-       __verbose() {
-               echo $$ $*
-               echo `hostname` `tty` `date` $$ $* >> $HOME/.verbose
-       }
+    __verbose() {
+        echo $$ $*
+        echo `hostname` `tty` `date` $$ $* >> $HOME/.verbose
+    }
 else
-       __verbose() {
-               return 0
-       }
+    __verbose() {
+        return 0
+    }
 fi
 
 __verbose 0=$0 RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST options=$- args=$*
@@ -72,15 +72,15 @@ __verbose 0=$0 RUN_CCS=$RUN_CCS GOOD_SHELL=$GOOD_SHELL SHELL=$SHELL HOST=$HOST o
 
 case $- in 
     *i*)
-       __noninteractive() {
-               return 1
-       }
-       ;;
+        __noninteractive() {
+            return 1
+        }
+        ;;
     *)
-       __noninteractive() {
-               return 0
-       }
-       ;;
+        __noninteractive() {
+            return 0
+        }
+        ;;
 esac
 
 case $- in 
@@ -203,10 +203,7 @@ case x$ENV_SET in
         __extend_path /usr/mot/bin
         __extend_path /apps/public/bin
         __extend_path /usr/local/bin
-        __extend_path /usr/local/wmplayer
         __extend_path /usr/local/X11
-        __extend_path /usr/ucb
-        __extend_path /usr/etc
         __extend_path /usr/dt/bin
         __extend_path /usr/ccs/bin
         __extend_path /bin
@@ -215,13 +212,7 @@ case x$ENV_SET in
         __extend_path /usr/sbin
         __extend_path /share/scripts
         __extend_path /share/bin
-        __extend_path /share/pd/bin
-        __extend_path /motorola/bin
-        __extend_path /opt/SUNWspro/bin
-        __extend_path /usr/vendor/hst/1.0/bin
-        __extend_path /usr/vendor/lb/3.3/bin.sol4
         __extend_path /open_source/bin-sun/gcc/bin
-        __extend_path /usr/public/sphinx/ITS/IDE
         __extend_path /usr/bin/X11
 
         unset -f __extend_path
@@ -229,7 +220,7 @@ case x$ENV_SET in
         PATH=$p
         ENV_SET=yes
         unset p
-    
+
         export PATH ENV_SET
 
         __verbose PATH=$PATH
@@ -350,8 +341,6 @@ alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
 
-#FUNCTIONS: emacsn x xsd xsd2 d sd sd2 xless ediff merge3 merge2 sendtree gettree aesenc aesdec
-
 emacsn() {
     if [ $# -lt 1 ] ; then
         echo usage: emacsn NUMBER files
@@ -364,14 +353,6 @@ emacsn() {
     shift
     emacs $* &
     return
-}
-
-echodate() {
-    while true ; do
-        date
-        random_hex 70
-        sleep 60
-    done
 }
 
 x() {
@@ -396,19 +377,30 @@ d() {
     xsd2 $1.orig $1
 }
 
+if [[ -x ${HOME}/pfk/${PFKARCH}/bin/xtermbar ]] ; then
+    ___xtermbar() {
+        ${HOME}/pfk/${PFKARCH}/bin/xtermbar "$@"
+    }
+else
+    ___xtermbar() {
+        # it is a no-op
+        return 0
+    }
+fi
+
 sd() {
     typeset cols
     cols=`stty size 2>/dev/null | awk '{print $2}'`
     if cmp -s $1 $2 ; then
         echo The files are identical.  | l
     else
-        xtermbar "sd $1 $2"
+        ___xtermbar "sd $1 $2"
         diff -bdNsyw --width $cols $* 2>&1 | l
     fi
 }
 
 sd2() {
-    xtermbar "sd2 $1 $2"
+    ___xtermbar "sd2 $1 $2"
     width=`stty size | awk '{print $2}'`
     diff -btyW $width $* | fmtsdiff $width | less '+/%[<>|]%'
 }
@@ -460,82 +452,6 @@ xless() {
 
     LESS="$OLDLESS"
     cd $olddir
-}
-
-z() {
-    typeset logfile tempfile count
-    typeset CLASS INSTANCE RECIPIENTS OPCODE
-
-    logfile=$HOME/.messages
-    tempfile=$TMP/zwrite.$USER.$$
-
-    CLASS=
-    INSTANCE=
-    RECIPIENTS=
-    OPCODE=
-
-    count=0
-
-    while [[ $# -gt 0 ]] ; do
-        case "$1" in
-        -c)
-            CLASS=$2
-            shift
-            ;;
-        -i)
-            INSTANCE=$2
-            shift
-            ;;
-        -O)
-            OPCODE=$2
-            shift
-            ;;
-        -*)
-            break
-            ;;
-        *)
-            RECIPIENTS="$RECIPIENTS $1"
-            count=$(( count + 1 ))
-            ;;
-        esac
-        shift
-    done
-
-    test -t 0 && print Enter your message, followed by control-D.
-
-    cat > $tempfile
-
-    print -n 'Message '
-
-    [[ "x$RECIPIENTS" = "x" ]] || {
-        print -- ------------------------------------------------------------
-        print -n MESSAGE SENT TO
-        [[ "x$CLASS"      = "x" ]] || print -n " class"     $CLASS
-        [[ "x$INSTANCE"   = "x" ]] || print -n " instance"  $INSTANCE
-        [[ "x$OPCODE"     = "x" ]] || print -n " opcode"    $OPCODE
-        if [[ $count = "1" ]] ; then 
-            print -n " recipient" $RECIPIENTS
-        else
-            print -n " recipients" $RECIPIENTS
-        fi
-        print -n " -- " ; date
-        cat $tempfile
-    } >> $logfile
-
-    [[ "x$CLASS"      = "x" ]] || CLASS="-c $CLASS"
-    [[ "x$INSTANCE"   = "x" ]] || INSTANCE="-i $INSTANCE"
-    [[ "x$OPCODE"     = "x" ]] || OPCODE="-O $OPCODE"
-
-    [[ $count = "0" || $count = "1" ]] || {
-        print ""
-        print "@center(CC: $RECIPIENTS)"
-    } >> $tempfile
-
-    zwrite -n -q $OPCODE $CLASS $INSTANCE $RECIPIENTS < $tempfile
-
-    test -t 0 && print sent.
-
-    rm -f $tempfile
 }
 
 ediff() {
@@ -608,32 +524,12 @@ EOF
 }
 
 fp() {
-    print $PWD/$1
+    echo $PWD/$1
 }
 
 title() {
     shellstring "$*"
-    xtermbar $*
-}
-
-sendtree() {
-    if [[ $# -lt 3 ]] ; then
-        echo 'usage: sendtree host port dir [dir..]'
-        return 1
-    fi
-    typeset host port
-    host=$1
-    port=$2
-    shift 2
-    tar cf - $* | i2 -v $host $port
-}
-
-gettree() {
-    if [[ $# -ne 1 ]] ; then
-        echo 'usage: gettree port'
-        return 1
-    fi
-    i2 -v $1 | tar xf -
+    ___xtermbar $*
 }
 
 __aesenc() {
@@ -760,11 +656,16 @@ if __isksh ; then
             ksh_final=$ksh_new
         elif [[ -x /bin/ksh ]] ; then
             ksh_final=/bin/ksh
+            echo WARNING: USING $ksh_final
         elif [[ -x /usr/local/bin/ksh ]] ; then
             ksh_final=/usr/local/bin/ksh
+            echo WARNING: USING $ksh_final
+        elif [[ -x /bin/bash ]] ; then
+            ksh_final=/bin/bash
+            echo NOTE: using $ksh_final
         else
-            print 'WARNING: USING /bin/sh!'
             ksh_final=/bin/sh
+            echo WARNING: USING $ksh_final
         fi
         if [[ $SHELL != $ksh_final ]] ; then
             __verbose switching shells, $SHELL to $ksh_final
@@ -781,11 +682,16 @@ else
             ksh_final=$ksh_new
         elif [ -x /bin/ksh ] ; then
             ksh_final=/bin/ksh
+            echo WARNING: USING $ksh_final
         elif [ -x /usr/local/bin/ksh ] ; then
             ksh_final=/usr/local/bin/ksh
+            echo WARNING: USING $ksh_final
+        elif [ -x /bin/bash ] ; then
+            ksh_final=/bin/bash
+            echo NOTE: USING $ksh_final
         else
-            echo 'WARNING: USING /bin/sh!'
             ksh_final=/bin/sh
+            echo WARNING: USING $ksh_final
         fi
         if [ $SHELL != $ksh_final ] ; then
             __verbose switching shells, $SHELL to $ksh_final
@@ -844,7 +750,7 @@ if __isksh ; then
         cd $HOME
         xrdb -load .Xresources
         fluxbox&
-        xtermbar Console
+        ___xtermbar Console
         xconsole_hook
         SHELLFILESTRING=shell,$HOST,$REMOTE_HOST,$$,$TTY,console
     else
@@ -967,14 +873,14 @@ if __isksh ; then
             bardisp="$USER@$HOST:$bardisp"
             if [[ x$I_AM_XCONSOLE == x ]] ; then
                 if [[ x$INSIDE_EMACS == x ]] ; then
-                    xtermbar "$bardisp"
+                    ___xtermbar "$bardisp"
                 fi
             fi
         fi
         if [[ "x$TMUX" != x ]] ; then
             if [[ x$INSIDE_EMACS == x ]] ; then
                 bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
-                xtermbar $bardisp
+                ___xtermbar $bardisp
             fi
         fi
         if [[ "x$gitroot" == "x" ]] ; then
