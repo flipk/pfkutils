@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-17.19:41:02
+#      Last update: 2020-09-18.12:25:31
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -766,20 +766,25 @@ if __isksh ; then
             echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
             return 1
         fi
+        pfk_envfile=
         if [[ -f .pfk_environ ]] ; then
-            echo signing $PWD/.pfk_environ ...
-            grep -v '#pfk_sign' .pfk_environ > .pfk_environ.1
-            set -- `( cat ${HOME}/.pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
-            echo '#pfk_sign' $1 >> .pfk_environ.1
-            mv .pfk_environ.1 .pfk_environ
+            pfk_envfile=.pfk_environ
+        elif [[ -f 0-pfk_environ ]] ; then
+            pfk_envfile=0-pfk_environ
         else
             echo ERROR: no .pfk_environ in this directory 1>&2
+            return 1
         fi
+        echo signing $PWD/${pfk_envfile} ...
+        grep -v '#pfk_sign' ${pfk_envfile} > .pfk_environ.1
+        set -- `( cat ${HOME}/.pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
+        echo '#pfk_sign' $1 >> .pfk_environ.1
+        mv .pfk_environ.1 ${pfk_envfile}
     }
 
     verify_pfk_environ() {
         envdir="$1"
-        envfile="${envdir}/.pfk_environ"
+        envfile="${envdir}/${2}"
         if [[ ! -f "$envfile" ]] ; then
             return 1
         fi
@@ -800,11 +805,18 @@ if __isksh ; then
         d="$PWD"
         while [[ "x${d}" != x ]] ; do
             if [[ -f "${d}/.pfk_environ" ]] ; then
-                if verify_pfk_environ "${d}" ; then
+                if verify_pfk_environ "${d}" .pfk_environ ; then
                     echo "${d}/.pfk_environ"
                     return 0
                 else
                     echo "${d}/.pfk_environ" failed signature check 1>&2
+                fi
+            elif [[ -f "${d}/0-pfk_environ" ]] ; then
+                if verify_pfk_environ "${d}" 0-pfk_environ ; then
+                    echo "${d}/0-pfk_environ"
+                    return 0
+                else
+                    echo "${d}/0-pfk_environ" failed signature check 1>&2
                 fi
             fi
             d="${d%/*}"
