@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-18.12:25:31
+#      Last update: 2020-09-22.20:12:53
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -654,15 +654,15 @@ if __isksh ; then
     if [[ x$GOOD_SHELL = x ]] ; then
         if [[ -x $ksh_new ]] ; then
             ksh_final=$ksh_new
+        elif [[ -x /bin/bash ]] ; then
+            ksh_final=/bin/bash
+            echo NOTE: using $ksh_final
         elif [[ -x /bin/ksh ]] ; then
             ksh_final=/bin/ksh
             echo WARNING: USING $ksh_final
         elif [[ -x /usr/local/bin/ksh ]] ; then
             ksh_final=/usr/local/bin/ksh
             echo WARNING: USING $ksh_final
-        elif [[ -x /bin/bash ]] ; then
-            ksh_final=/bin/bash
-            echo NOTE: using $ksh_final
         else
             ksh_final=/bin/sh
             echo WARNING: USING $ksh_final
@@ -680,15 +680,15 @@ else
     if [ x$GOOD_SHELL = x ] ; then
         if [ -x $ksh_new ] ; then
             ksh_final=$ksh_new
+        elif [ -x /bin/bash ] ; then
+            ksh_final=/bin/bash
+            echo NOTE: USING $ksh_final
         elif [ -x /bin/ksh ] ; then
             ksh_final=/bin/ksh
             echo WARNING: USING $ksh_final
         elif [ -x /usr/local/bin/ksh ] ; then
             ksh_final=/usr/local/bin/ksh
             echo WARNING: USING $ksh_final
-        elif [ -x /bin/bash ] ; then
-            ksh_final=/bin/bash
-            echo NOTE: USING $ksh_final
         else
             ksh_final=/bin/sh
             echo WARNING: USING $ksh_final
