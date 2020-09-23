@@ -25,7 +25,13 @@
 # 
 # For more information, please refer to <http://unlicense.org>
 
-ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
+NODENAME := $(shell uname -n)
+
+ifneq ($(wildcard $(HOME)/.pfkutils_config.$(NODENAME)),)
+
+CONFIG_FILE := $(HOME)/.pfkutils_config.$(NODENAME)
+
+else ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
 
 CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
 
