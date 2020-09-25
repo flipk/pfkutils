@@ -959,12 +959,6 @@ scripts_install:
 	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
 	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
 		$(PREPROC_SCRIPT_FILES)
-	$(Q)cd $(INSTALL_BIN_DIR) && binaries=`echo *` && \
-		cd $(SCRIPTS_DIR) && \
-		for f in $$binaries ; do \
-			rm -f $$f ; \
-			ln -s pf_frontend $$f ; \
-		done
 
 ## the contribs target is run separately, after the pfkutils-install,
 ## because contribs target depends on certain things already installed.
