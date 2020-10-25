@@ -4,6 +4,7 @@ cscope.files
 cscope.out
 /obj*
 .tsdb
+.ts2.db
 /[0-9]*
 /pfkutils*.bundle
 *.o

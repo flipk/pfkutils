@@ -10,6 +10,7 @@ PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
 PFK_BUILD_treescan=0
+PFK_BUILD_ts2=0
 PFK_BUILD_sudo=0
 PFK_BUILD_ampfk=0
 PFK_BUILD_pfkscript=1

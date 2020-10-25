@@ -21,6 +21,10 @@ PROG(0,treescan,"scan a tree producing tree info")
 /* not ready yet PROG(0,treesync,"sync one tree to another") */
 #endif
 
+#if @PFK_BUILD_ts2@
+PROG(0,ts2,"scan a tree v2")
+#endif
+
 #if @PFK_BUILD_sudo@
 PROG(1,sudo,"do a command as the superuser")
 #endif
