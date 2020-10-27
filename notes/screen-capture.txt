@@ -1,0 +1,8 @@
+
+ub18 terminal has a builtin keyboard shortcut to start recording,
+ctrl alt shift R or something like that.
+
+but i use simplescreenrecorder to establish the window coordinates
+and then byzanz-record to record with those coordinates plugged in.
+
+should also bind PrintScreen to gnome-screenshot -i

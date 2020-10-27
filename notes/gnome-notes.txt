@@ -33,3 +33,7 @@ xprintidle
 
 gnome-screensaver-command -a
 gnome-screensaver-command -l
+
+
+install "libgnome2-bin" to get "gnome-open" command (understands
+extension associations)

@@ -1,0 +1,16 @@
+
+wsl 1 works better than 2 for ip address and drives
+
+but wsl 2 works better for running a true linux kernel / mdcrypt, faster
+filesystem, and NFS support (no NFS in WSL 1).
+
+using VcXsrv (later version of Xming!)
+just do "xset +fp H:\fonts" or whatever, and it should work
+
+using Xming
+edit font-dirs in Program Files (x86)/Xming
+to include H:\apps\fonts\ which is pfkutils fonts
+/etc/fstab:
+H:\ /mnt/h drvfs defaults 0 0
+P:\ /mnt/p drvfs defaults 0 0
+L:\ /mnt/l drvfs defaults 0 0
