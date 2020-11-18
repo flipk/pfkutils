@@ -1,28 +1,18 @@
 #!/bin/bash
 
-fail=1
+case "$1" in
 
-if [[ "$1" = "name" ]] ; then
+    name)
+        img=
+        volname=
+        mountpoint=
+        ;;
 
-    img=
-    volname=
-    mountpoint=
-    label=
-    fail=0
+    *)
+        fail=1
+        ;;
 
-elif [[ "$1" = "name" ]] ; then
-
-    img=
-    volname=
-    mountpoint=
-    label=
-    fail=0
-
-else
-
-    fail=1
-
-fi
+esac
 
 set -e
 
@@ -31,19 +21,25 @@ if [[ $fail = 0 ]] ; then
     case "$2" in
 
         mount)
-            if [[ -d $mountpoint ]] ; then
-                echo mountpoint $mountpoint already 'exists!'
-                exit 1
+            if [[ $mountpoint != NONE ]] ; then
+                if [[ -d $mountpoint ]] ; then
+                    echo mountpoint $mountpoint already 'exists!'
+                    exit 1
+                fi
             fi
             sudo cryptsetup open --type luks $img $volname
-            sudo mkdir -p $mountpoint
-            sudo mount /dev/mapper/$volname $mountpoint
+            if [[ $mountpoint != NONE ]] ; then
+                sudo mkdir -p $mountpoint
+                sudo mount /dev/mapper/$volname $mountpoint
+            fi
             fail=0
             ;;
 
         umount)
-            sudo umount $mountpoint
-            sudo rmdir $mountpoint
+            if [[ $mountpoint != NONE ]] ; then
+                sudo umount $mountpoint
+                sudo rmdir $mountpoint
+            fi
             sudo cryptsetup close $volname
             fail=0
             ;;
