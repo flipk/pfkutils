@@ -309,12 +309,12 @@ struct file_list_db
              it != items_by_name.end();   it++)
         {
             file_list_item * i = it->second;
-            printf("%s : %lu : %lu : %lu : %u : ",
+            printf("%s : %lu : %lu : %lu : %lu : ",
                    i->relpath.c_str(),
-                   i->size,
-                   i->ino,
-                   i->mtime.tv_sec,
-                   i->mtime.tv_nsec);
+                   (uint64_t) i->size,
+                   (uint64_t) i->ino,
+                   (uint64_t) i->mtime.tv_sec,
+                   (uint64_t) i->mtime.tv_nsec);
             for (int ind = 0; ind < 32; ind++)
                 printf("%02x", i->hash[ind]);
             printf("\n");
