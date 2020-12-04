@@ -785,11 +785,12 @@ clocktos(t)
 	/* note: posix says must use max precision, ie, if clk_tck is
 	 * 1000, must print 3 places after decimal (if non-zero, else 1).
 	 */
-// note CLK_TCK conflicts with a cygwin header file!
-#define PFKSH_CLK_TCK 1000
-	if (PFKSH_CLK_TCK != 100)	/* convert to 1/100'ths */
-	    t = (t < 1000000000/PFKSH_CLK_TCK) ?
-		    (t * 100) / PFKSH_CLK_TCK : (t / PFKSH_CLK_TCK) * 100;
+
+        long tickrate = sysconf(_SC_CLK_TCK);
+
+	if (tickrate != 100)	/* convert to 1/100'ths */
+	    t = (t < 1000000000/tickrate) ?
+		    (t * 100) / tickrate : (t / tickrate) * 100;
 
 	*--cp = '\0';
 	for (i = -2; i <= 0 || t > 0; i++) {
