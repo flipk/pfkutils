@@ -34,7 +34,7 @@ SCRIPT_FILES = \
 	myemacs-checkout-helper myemacs-cscope-rebuild-helper \
 	pfkterm refresh set-background.sh myemacs-compile \
 	git-lsm git-lso git-mcs git-root x11-capture volmon.sh dodmsg \
-	$(SCRIPT_FILES_EXTRA) git-mygc
+	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh
 PREPROC_SCRIPT_FILES = \
 	cs emacs-lone myemacs-cscope-helper myshell-launcher \
 	myshell pf_frontend
