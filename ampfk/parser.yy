@@ -25,6 +25,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+/*
+ * note that this doesn't work :
+ * for some reason, it defines an enum (prefix_error) and
+ * a function with the same name! that's a bug in bison IMHO.
+ *  %define api.prefix {SOMEPREFIX_}
+ */
+
 %{
 
 #include <stdlib.h>

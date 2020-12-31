@@ -458,7 +458,11 @@ libampfk_DEFS = \
 	-Dyyparse=ampfk_yyparse -Dyylex=ampfk_yylex \
 	-Dyyerror=ampfk_yyerror -Dyyin=ampfk_yyin \
 	-Dyyout=ampfk_yyout -Dyylineno=ampfk_yylineno \
-	-Dyy_flex_debug=ampfk_yy_flex_debug
+	-Dyy_flex_debug=ampfk_yy_flex_debug \
+	-Dyynerrs=ampfk_yynerrs -Dyylval=ampfk_yylval \
+	-Dyychar=ampfk_yychar -Dyytext=ampfk_yytext \
+	-Dyyleng=ampfk_yyleng
+
 endif
 
 ##############################################
@@ -775,7 +779,11 @@ states_DEFS = \
 	-Dyyparse=states_yyparse -Dyylex=states_yylex \
 	-Dyyerror=states_yyerror -Dyyin=states_yyin \
 	-Dyyout=states_yyout -Dyylineno=states_yylineno \
-	-Dyy_flex_debug=states_yy_flex_debug
+	-Dyy_flex_debug=states_yy_flex_debug \
+	-Dyynerrs=states_yynerrs -Dyylval=states_yylval \
+	-Dyychar=states_yychar -Dyytext=states_yytext \
+	-Dyyleng=states_yyleng
+
 states_EXTRAOBJS = \
 	$(OBJDIR)/states-misc_states_template_classH.o \
 	$(OBJDIR)/states-misc_states_template_classC.o \

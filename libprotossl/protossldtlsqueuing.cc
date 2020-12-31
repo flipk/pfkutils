@@ -765,7 +765,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
         return MSG_NOT_INITIALIZED;
     }
 
-    uint32_t msg_size = (uint32_t) msg.ByteSize();
+    uint32_t msg_size = (uint32_t) msg.ByteSizeLong();
 
     // if the message can't fit in the entire window, then we
     // can't send it.
@@ -774,7 +774,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
         fprintf(stderr, "ProtoSslDtlsQueue :: send_message : "
                 "message size %u is bigger than the max message size "
                 "we can fragment (window size * fragment_size)!\n",
-                msg.ByteSize());
+                msg.ByteSizeLong());
         return MESSAGE_TOO_BIG;
     }
 
@@ -1186,7 +1186,7 @@ ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
         google::protobuf::io::StringOutputStream zos(&frag_send_buffer);
         {
             google::protobuf::io::CodedOutputStream cos(&zos);
-            cos.WriteVarint32(frag->pkthdr->ByteSize());
+            cos.WriteVarint32(frag->pkthdr->ByteSizeLong());
             frag->pkthdr->SerializeToCodedStream(&cos);
             if (frag->fragment.size() > 0)
                 cos.WriteRaw(frag->fragment.c_str(),

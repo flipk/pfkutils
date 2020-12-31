@@ -253,7 +253,7 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
     send_buffer += (char) 0x82; // WS_TYPE_BINARY
 //  send_buffer += (char) 0x88; // WS_TYPE_CLOSE
 
-    int len = msg.ByteSize();
+    int len = (int) msg.ByteSizeLong();
     int mask_bit = server ? 0 : 0x80;
 
     if (len < 126)

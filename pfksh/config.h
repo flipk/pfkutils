@@ -16,13 +16,13 @@
 #define RETSIGVAL 
 
 /* Define if `sys_siglist' is declared by <signal.h>.  */
-#define SYS_SIGLIST_DECLARED 1
+/* #define SYS_SIGLIST_DECLARED 1 */
 
 /* Define if sys_errlist[] and sys_nerr are in the C library */
 #define HAVE_SYS_ERRLIST 1
 
 /* Define if sys_siglist[] is in the C library */
-#define HAVE_SYS_SIGLIST 1
+/* #define HAVE_SYS_SIGLIST 1 */
 
 /* Define if you have a sane <termios.h> header file */
 #define HAVE_TERMIOS_H 1
