@@ -1,0 +1,24 @@
+https://www.emacswiki.org/emacs/InstallingPackages
+
+(setq custom-file (concat (getenv "HOME") "/pfk/etc/emacs/emacs-custom.el"))
+(load custom-file)
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+
+
+then, M-x list-packages
+and type 'i' next to every package you want. type 'x' to install them.
+
+package list :
+  counsel git-gutter git-timemachine ivy protobuf-mode swiper xcscope magit-lfs magit
+
+(note this is listed in "package-selected-packages" in emacs-custom.el)
+
+note that packages get installed into ~/emacs.d/elpa/
+
+i think emacs must reference this directory automatically on startup because i don't have
+to do (require) anymore to access things like ivy-mode.
+
+transferring the ~/emacs.d/elpa/ directory from one computer to another appears
+to successfully transport installed packages.

@@ -20,14 +20,8 @@ ifeq ($(ERRORS),1)
 CXXFLAGS += -Werror
 endif
 
-MAGIT_ELISP_FILES= \
-magit-apply.el magit-autorevert.el magit-bisect.el magit-blame.el magit-branch.el magit-commit.el magit-core.el magit-diff.el magit-ediff.el magit-extras.el magit-files.el magit-git.el magit-log.el magit-margin.el magit-mode.el magit-notes.el magit-obsolete.el magit-popup.el magit-process.el magit-refs.el magit-remote.el magit-repos.el magit-section.el magit-sequence.el magit-stash.el magit-status.el magit-submodule.el magit-subtree.el magit-utils.el magit-wip.el magit-worktree.el magit.el git-commit.el git-gutter.el git-rebase.el git-timemachine.el
-
-ELISP_FILES = emacs-lone.el go-mode.el xcscope.el \
-	colir.el counsel.el ivy-hydra.el ivy-overlay.el \
-	ivy-test.el ivy.el swiper.el $(MAGIT_ELISP_FILES) \
-	dash-functional.el dash.el with-editor.el protobuf-mode.el
-PREPROC_ELISP_FILES = emacs.el
+ELISP_FILES = emacs.el emacs-custom.el
+ELPA_ARCHIVE = elpa.tar.bz2
 SCRIPT_FILES = \
 	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \
 	git-diff-helper.sh git-merge-helper.sh make_linux_cscope mcs \
@@ -47,6 +41,7 @@ prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
 ETCBAKDIR := $(prefix)/etc-backup
 EMACSDIR := $(ETCDIR)/emacs
+ELPADIR := $(HOME)/.emacs.d/elpa/
 SCRIPTS_DIR := $(prefix)/bin
 INSTALL_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 INSTALL_LIB_DIR := $(prefix)/$(PFKARCH)/lib
@@ -57,7 +52,7 @@ VNCDIR := $(HOME)/.vnc
 ##############################################
 
 installdirs:
-	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) \
+	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) $(ELPADIR) \
 		$(INSTALL_BIN_DIR) $(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) \
 		$(VNCDIR)
 
@@ -125,7 +120,7 @@ PREPROC_SOURCES = \
 	main/sudo.h scripts/cs \
 	scripts/emacs-lone scripts/myemacs-cscope-helper \
 	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
-	environ/xsession environ/emacs.el
+	environ/xsession
 
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
@@ -940,8 +935,8 @@ POSTALL += # TODO doxygen
 environ_install:
 	@echo installing environ
 	$(Q)cd environ && cp $(DOT_FILES) $(KSHRC_LOCAL) $(ETCDIR)
-	$(Q)cd environ && cp $(ELISP_FILES) $(EMACSDIR)
-	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_ELISP_FILES) $(EMACSDIR)
+	$(Q)cd environ/emacs && cp $(ELISP_FILES) $(EMACSDIR)
+	$(Q)tar -C $(HOME)/.emacs.d -xvf environ/emacs/$(ELPA_ARCHIVE)
 	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_DOT_FILES) $(ETCDIR)
 	$(Q)set -e ; cd $(HOME) ; $(foreach f,\
 		$(DOT_FILES) $(PREPROC_DOT_FILES), \
