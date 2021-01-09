@@ -21,7 +21,7 @@ CXXFLAGS += -Werror
 endif
 
 ELISP_FILES = emacs.el emacs-custom.el
-ELPA_ARCHIVE = elpa.tar.bz2
+ELPA_ARCHIVE ?= elpa-2627.tar.bz2
 SCRIPT_FILES = \
 	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \
 	git-diff-helper.sh git-merge-helper.sh make_linux_cscope mcs \
