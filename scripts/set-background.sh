@@ -17,7 +17,7 @@ if [ -f $bg ] ; then
 fi
 
 # default bg if no image file or no program can be found.
-[ $found == 0 ] && xsetroot -solid \#102030
+[ $found = 0 ] && xsetroot -solid \#102030
 
 if [ x$1 = xwait ] ; then
     sleep 3600&
