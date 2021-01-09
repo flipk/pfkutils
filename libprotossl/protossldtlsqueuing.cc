@@ -7,6 +7,13 @@
 #define PRINT_SEQNOS 1
 #define PRINTF(x...) // printf(x)
 
+
+#if GOOGLE_PROTOBUF_VERSION >= 3004001
+#define BYTE_SIZE_FUNC ByteSizeLong
+#else
+#define BYTE_SIZE_FUNC ByteSize
+#endif
+
 using namespace ProtoSSL;
 
 
@@ -765,7 +772,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
         return MSG_NOT_INITIALIZED;
     }
 
-    uint32_t msg_size = (uint32_t) msg.ByteSizeLong();
+    uint32_t msg_size = (uint32_t) msg.BYTE_SIZE_FUNC();
 
     // if the message can't fit in the entire window, then we
     // can't send it.
@@ -774,7 +781,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
         fprintf(stderr, "ProtoSslDtlsQueue :: send_message : "
                 "message size %u is bigger than the max message size "
                 "we can fragment (window size * fragment_size)!\n",
-                msg.ByteSizeLong());
+                (uint32_t) msg.BYTE_SIZE_FUNC());
         return MESSAGE_TOO_BIG;
     }
 
@@ -1186,7 +1193,7 @@ ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
         google::protobuf::io::StringOutputStream zos(&frag_send_buffer);
         {
             google::protobuf::io::CodedOutputStream cos(&zos);
-            cos.WriteVarint32(frag->pkthdr->ByteSizeLong());
+            cos.WriteVarint32((uint32_t) frag->pkthdr->BYTE_SIZE_FUNC());
             frag->pkthdr->SerializeToCodedStream(&cos);
             if (frag->fragment.size() > 0)
                 cos.WriteRaw(frag->fragment.c_str(),

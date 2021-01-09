@@ -14,6 +14,13 @@
 #include <iostream>
 #include <iomanip>
 
+#if GOOGLE_PROTOBUF_VERSION >= 3004001
+#define BYTE_SIZE_FUNC ByteSizeLong
+#else
+#define BYTE_SIZE_FUNC ByteSize
+#endif
+
+
 //
 //   websocket message format:   (see RFC 6455)
 //
@@ -253,7 +260,7 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
     send_buffer += (char) 0x82; // WS_TYPE_BINARY
 //  send_buffer += (char) 0x88; // WS_TYPE_CLOSE
 
-    int len = (int) msg.ByteSizeLong();
+    int len = (int) msg.BYTE_SIZE_FUNC();
     int mask_bit = server ? 0 : 0x80;
 
     if (len < 126)
