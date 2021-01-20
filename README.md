@@ -9,15 +9,6 @@ projects.  It is also pfk's entire home dir setup (shell, dot files,
 emacs config, and a ~/pfk intall prefix for installing tools, libs,
 headers, and man pages.
 
-Library documentation is written in doxygen for:
-
-* [dll3](https://www.pfk.org/doc/dll3/html)
-* [libWebAppServer](https://www.pfk.org/doc/libWebAppServer/html)
-* [libpfkfb](https://www.pfk.org/doc/libpfkfb/html)
-* [shmempipe](https://www.pfk.org/doc/shmempipe/html)
-* [threadslinger](https://www.pfk.org/doc/threadslinger/html)
-* [posix_fe](https://www.pfk.org/doc/posix_fe)
-
 ### license ###
 
 Most of this code is under the "Unlicense" license.
