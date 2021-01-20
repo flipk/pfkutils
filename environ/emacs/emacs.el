@@ -147,6 +147,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
   (setq indent-tabs-mode nil)
   (message "setting sh mode thingies"))
 
+(global-set-key [f2]  'fill-region)
 (global-set-key [f6]  'eval-last-sexp)
 (global-set-key [f9]  'make-frame)
 (global-set-key [f10] 'delete-frame)
