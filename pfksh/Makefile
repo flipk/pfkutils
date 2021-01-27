@@ -61,7 +61,7 @@ POSTALL += $(OBJDIR)/pfksh.0
 include ../Makefile.inc
 
 define PFK_CONFIG_LINE
-	if [ "x$(PFK_CONFIG_$(value))" == "x" ] ; then \
+	if [ "x$(PFK_CONFIG_$(value))" = "x" ] ; then \
 	   echo 'plz define PFK_CONFIG_$(value) in config/$(CONFIG)' ; \
 	   exit 1 ; \
 	elif [ "$(PFK_CONFIG_$(value))" != "0" ] ; then \
