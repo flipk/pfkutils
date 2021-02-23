@@ -58,12 +58,8 @@ struct ProtoSSLCertParams
 /*************************** ProtoSSLConnClient ***************************/
 
 class ProtoSSLConnClient;
-class ProtoSSLConnClientHash;
 typedef DLL3::List<ProtoSSLConnClient, 1/*uniqueID*/,
                    true/*lockWarn*/,true/*validate*/>  ClientList_t;
-typedef DLL3::Hash<ProtoSSLConnClient, int/*fd*/,
-                   ProtoSSLConnClientHash, 2/*uniqueID*/,
-                   true/*lockWarn*/,true/*validate*/>  ClientHash_t;
 
 struct ProtoSSLPeerInfo
 {
@@ -73,11 +69,9 @@ struct ProtoSSLPeerInfo
     std::string org_unit;
 };
 
-class ProtoSSLConnClient : public ClientList_t::Links,
-                           public ClientHash_t::Links
+class ProtoSSLConnClient : public ClientList_t::Links
 {
     friend class ProtoSSLMsgs;
-    friend class ProtoSSLConnClientHash;
     friend class ProtoSSLConnServer;
     bool _ok;
     bool send_close_notify;
@@ -121,30 +115,16 @@ public:
     bool ok(void) const { return _ok; }
     bool get_peer_info(ProtoSSLPeerInfo &info);
 };
-class ProtoSSLConnClientHash {
-public:
-    static uint32_t obj2hash  (const ProtoSSLConnClient &obj)
-    { return obj.get_fd(); }
-    static uint32_t key2hash  (const int fd) { return fd; }
-    static bool     hashMatch (const int fd, const ProtoSSLConnClient &obj)
-    { return fd == obj.get_fd(); }
-};
 
 /*************************** ProtoSSLConnServer ***************************/
 
 class ProtoSSLConnServer;
-class ProtoSSLConnServerHash;
 typedef DLL3::List<ProtoSSLConnServer,/*uniqueID*/3,
                    true/*lockWarn*/,true/*validate*/>  ServerList_t;
-typedef DLL3::Hash<ProtoSSLConnServer, int/*fd*/,
-                   ProtoSSLConnServerHash, 4/*uniqueID*/,
-                   true/*lockWarn*/,true/*validate*/>  ServerHash_t;
 
-class ProtoSSLConnServer : public ServerList_t::Links,
-                           public ServerHash_t::Links
+class ProtoSSLConnServer : public ServerList_t::Links
 {
     friend class ProtoSSLMsgs;
-    friend class ProtoSSLConnServerHash;
     bool _ok;
     mbedtls_net_context netctx;
     ProtoSSLMsgs * msgs;
@@ -157,14 +137,6 @@ public:
     // returns NULL if accept failed for some reason
     ProtoSSLConnClient * handle_accept(void);
     bool ok(void) const { return _ok; }
-};
-class ProtoSSLConnServerHash {
-public:
-    static uint32_t obj2hash  (const ProtoSSLConnServer &obj)
-    { return obj.get_fd(); }
-    static uint32_t key2hash  (const int fd) { return fd; }
-    static bool     hashMatch (const int fd, const ProtoSSLConnServer &obj)
-    { return fd == obj.get_fd(); }
 };
 
 /*************************** ProtoSSLMsgs ***************************/
@@ -183,9 +155,7 @@ class ProtoSSLMsgs
     bool                     debugFlag;
     bool                     use_tcp;
     ClientList_t             clientList;
-    ClientHash_t             clientHash;
     ServerList_t             serverList;
-    ServerHash_t             serverHash;
     void   registerServer(ProtoSSLConnServer * svr);
     void unregisterServer(ProtoSSLConnServer * svr);
     void   registerClient(ProtoSSLConnClient * clnt);

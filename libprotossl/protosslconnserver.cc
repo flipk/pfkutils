@@ -10,7 +10,6 @@ ProtoSSLConnServer :: ProtoSSLConnServer(ProtoSSLMsgs * _msgs,
     : msgs(_msgs), use_tcp(_use_tcp)
 {
     _ok = false;
-    msgs->registerServer(this);
     Bufprintf<20> portString;
     portString.print("%d", listeningPort);
     mbedtls_net_init(&netctx);
@@ -30,6 +29,7 @@ ProtoSSLConnServer :: ProtoSSLConnServer(ProtoSSLMsgs * _msgs,
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));
         fprintf(stderr,"net bind returned 0x%x: %s\n", -ret, strbuf);
     }
+    msgs->registerServer(this);
 }
 
 ProtoSSLConnServer :: ~ProtoSSLConnServer(void)

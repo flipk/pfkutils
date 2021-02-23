@@ -16,11 +16,11 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     _ok = false;
     send_close_notify = false;
     ssl_initialized = false;
-    msgs->registerClient(this);
     netctx = new_netctx;
     net_initialized = true;
     WaitUtil::Lock lock(&ssl_lock);
     _ok = init_common(client_ip, cliip_len);
+    msgs->registerClient(this);
 }
 
 ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
@@ -32,7 +32,6 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     _ok = false;
     send_close_notify = false;
     ssl_initialized = false;
-    msgs->registerClient(this);
     net_initialized = false;
 
     WaitUtil::Lock lock(&ssl_lock);
@@ -51,6 +50,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
         fprintf(stderr, "net bind returned 0x%x: %s\n", -ret, strbuf);
         return;
     }
+    msgs->registerClient(this);
 
     // net_connect has a bug -- if connection fails, it closes
     // netctx.fd but does not set it to -1. then if you net_free,

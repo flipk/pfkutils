@@ -111,36 +111,28 @@ void
 ProtoSSLMsgs :: registerServer(ProtoSSLConnServer * svr)
 {
     WaitUtil::Lock lck1(&serverList);
-    WaitUtil::Lock lck2(&serverHash);
     serverList.add_tail(svr);
-    serverHash.add(svr);
 }
 
 void
 ProtoSSLMsgs :: unregisterServer(ProtoSSLConnServer * svr)
 {
     WaitUtil::Lock lck1(&serverList);
-    WaitUtil::Lock lck2(&serverHash);
     serverList.remove(svr);
-    serverHash.remove(svr);
 }
 
 void
 ProtoSSLMsgs :: registerClient(ProtoSSLConnClient * clnt)
 {
     WaitUtil::Lock lck1(&clientList);
-    WaitUtil::Lock lck2(&clientHash);
     clientList.add_tail(clnt);
-    clientHash.add(clnt);
 }
 
 void
 ProtoSSLMsgs :: unregisterClient(ProtoSSLConnClient * clnt)
 {
     WaitUtil::Lock lck1(&clientList);
-    WaitUtil::Lock lck2(&clientHash);
     clientList.remove(clnt);
-    clientHash.remove(clnt);
 }
 
 // returns true if it could load, false if error
