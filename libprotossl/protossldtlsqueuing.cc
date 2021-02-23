@@ -153,9 +153,30 @@ ProtoSslDtlsQueue :: fragpool_t :: deref(dtls_fragment *frag)
 void
 ProtoSslDtlsQueue :: shutdown(void)
 {
+    // prevent a possible race condition:
+    //   we send a DIE packet to send_thread.
+    //   it sends GOT_DISCONNECT to recv_q and dies.
+    //   two things happen in parallel in different threads:
+    //   1.a. handle_read gets the message and returns it to caller.
+    //     b. caller deletes ProtoSslDtlsQueue which calls shutdown again.
+    //     c. shutdown tries to delete client.
+    //   2.a. this thread wakes up from pthread_join
+    //     b. this thread deletes client (double free!)
+    // how do we prevent this?
+    // use dtls_lock, and atomically read and NULL the client pointer.
+    // then unlock the lock, and do the cleanup, deleting the client
+    // (which is now a thread-local private variable)
+    // error-free.
+
+    WaitUtil::Lock   lock(&dtls_lock);
     if (client == NULL)
         // already been shutdown()
         return;
+
+    ProtoSSLConnClient * l_client = client;
+    // signal that we should not call shutdown twice.
+    client = NULL;
+    lock.unlock();
 
     char dummy = 0;
     void * ptr = NULL;
@@ -178,8 +199,7 @@ ProtoSslDtlsQueue :: shutdown(void)
         if (thread_started[which])
             pthread_join(thread_ids[which], &ptr);
 
-    delete client;
-    client = NULL; // don't allow calling shutdown twice
+    delete l_client;
 }
 
 bool
