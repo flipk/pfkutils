@@ -18,24 +18,65 @@ duration=`ffprobe -v error -show_entries format=duration -of default=noprint_wra
 
 ---extract video, delete audio
 
-ffmpeg -i raw.mov -strict experimental -c:v copy -an raw-video.mov
+# in out
+extract_video_copy() {
+    in="$1" # i.e. mov
+    out="$2" # i.e. mp4 or mov
+    ffmpeg -i "$in" -strict experimental -c:v copy -an -y "$out"
+}
 
 ---extract video, convert to h264, delete audio
 
-ffmpeg -i raw.mov -strict experimental -c:v libx264 -preset fast -crf 28 -an raw-video.mp4
+# in out
+extract_video_cvth264() {
+    in="$1" # i.e. mov
+    out="$2" # i.e. mp4
+    ffmpeg -i "$in" -strict experimental -c:v libx264 \
+        -preset fast -crf 28 -an -y "$out"
+}
 
 ---extract audio, delete video (keep audio in original aac format)
 
-ffmpeg -i raw.mov -strict experimental -vn -c:a copy raw-audio.aac
+# in out
+extract_audio_orig() {
+    in="$1"
+    out="$2" # i.e. aac
+    ffmpeg -i "$in" -strict experimental -vn -c:a copy -y "$out"
+}
 
 ---extract audio, delete video (convert to signed 32bit LE WAV)
 
-ffmpeg -i iphone-raw.mov -strict experimental -vn -c:a pcm_s32le iphone-audio.wav
+# in out
+extract_audio_wav() {
+    in="$1"
+    out="$2"  # i.e. wav
+    ffmpeg -i "$in" -strict experimental -vn -c:a pcm_s32le -y "$out"
+}
 
 ---stupid MTS files from canon camera requires a special filter to make
    good video:
 
-ffmpeg -i $input -strict experimental -c:v libx264 -vf yadif=parity=auto -preset fast -crf 28 -c:a copy -copyts $output
+# in out
+deinterlace_mts() {
+    in="$1"  # i.e.  mts
+    out="$2" # i.e.  mp4
+    ffmpeg -i "$in" -strict experimental -c:v libx264 \
+        -vf yadif=parity=auto -preset fast -crf 28 \
+	-c:a copy -copyts -y "$out"
+}
+
+---convert H264 file from raspivid to mp4
+
+# in out
+cvt_raspih264() {
+    in="$1"   # input.h264
+    out="$2"  #  mp4
+    ffmpeg -i "$in" -c:v copy -an -y "$out"
+}
+
+raspivid -b 2000000 -t 0 -n -rot 180 -l -o tcp://0.0.0.0:3333
+vlc tcp/h264://10.0.0.23:3333
+i2 -v -o video.h264 10.0.0.23 3333
 
 ---combining video from one file and audio from another, this assumes
    input video has no audio track at all.
