@@ -132,6 +132,7 @@ class ProtoSSLConnServer : public ServerList_t::Links
     // private so only ProtoSSLMsgs can make it.
     ProtoSSLConnServer(ProtoSSLMsgs * _msgs, int listeningPort, bool _use_tcp);
 public:
+    ProtoSSLConnServer() = delete;
     virtual ~ProtoSSLConnServer(void);
     int get_fd(void) const { return netctx.fd; };
     // returns NULL if accept failed for some reason
