@@ -168,7 +168,7 @@ ProtoSslDtlsQueue :: shutdown(void)
     // (which is now a thread-local private variable)
     // error-free.
 
-    WaitUtil::Lock   lock(&dtls_lock);
+    WaitUtil::Lock lock(&dtls_lock);
     if (client == NULL)
         // already been shutdown()
         return;
