@@ -330,6 +330,7 @@ WebSocketConnection :: handle_message(void)
     {
         uint32_t readbuf_len = readbuf.size();
         uint32_t header_len = 2;
+        bool final_segment = true;
 
         if (readbuf_len < header_len)
             // not enough yet.
@@ -348,8 +349,7 @@ WebSocketConnection :: handle_message(void)
 
         if ((readbuf[0] & 0x80) == 0)
         {
-            cerr << "FIN=0 found, segmentation not supported" << endl;
-            return false;
+            final_segment = false;
         }
 
         if ((readbuf[1] & 0x80) == 0)
@@ -420,15 +420,22 @@ WebSocketConnection :: handle_message(void)
             readbuf[pos + counter] =
                 readbuf[pos + counter] ^ mask[counter&3];
 
-        if (wac)
-            if (wac->onMessage(
-                    WebAppMessage(
-                        msgType,
-                        readbuf.toString(pos,decoded_length))) == false)
-                return false;
-
+        reassembly_buffer.append(readbuf.toString(pos,decoded_length));
         pos += decoded_length;
         readbuf.erase0(pos);
+
+        if (final_segment)
+        {
+            if (wac)
+                if (wac->onMessage(
+                        WebAppMessage(
+                            msgType,
+                            reassembly_buffer)) == false)
+                    return false;
+
+            // prepare for next segment.
+            reassembly_buffer.resize(0);
+        }
     }
 
     return true;

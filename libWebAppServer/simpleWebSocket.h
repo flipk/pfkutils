@@ -101,6 +101,7 @@ class WebSocketClientConn : public WebSocketConn {
     std::string urlPath;
     std::string secWebsocketKey;
     std::string secWebsocketKeyResponse;
+    std::string reassembly_buffer;
     void generateWsHeaders(std::ostringstream &hdrs);
     const std::string hostForConn(void) const;
     void init_common(void);

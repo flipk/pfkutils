@@ -197,6 +197,7 @@ class WebSocketConnection : public WebServerConnectionBase {
     std::string origin;
     std::string version;
     std::string key;
+    std::string reassembly_buffer;
 
     // return false to close
     bool handle_header(void);

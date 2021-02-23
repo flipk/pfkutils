@@ -124,6 +124,7 @@ WebSocketConn :: handle_message(::google::protobuf::Message &msg)
     {
         uint32_t readbuf_len = readbuf.size();
         uint32_t header_len = 2;
+        bool final_segment = true;
 
         if (readbuf_len < header_len)
             // not enough yet.
@@ -142,8 +143,7 @@ WebSocketConn :: handle_message(::google::protobuf::Message &msg)
 
         if ((readbuf[0] & 0x80) == 0)
         {
-            cerr << "FIN=0 found, segmentation not supported" << endl;
-            return WEBSOCKET_CLOSED;
+            final_segment = false;
         }
 
         if (server)
@@ -233,11 +233,16 @@ WebSocketConn :: handle_message(::google::protobuf::Message &msg)
                     readbuf[pos + counter] ^ mask[counter&3];
         }
 
-        msg.Clear();
-        bool parseOk =
-            msg.ParseFromString(readbuf.toString(pos,decoded_length));
+        reassembly_buffer.append(readbuf.toString(pos,decoded_length));
         pos += decoded_length;
         readbuf.erase0(pos);
+
+        if (final_segment == false)
+            return WEBSOCKET_NO_MESSAGE;
+
+        msg.Clear();
+        bool parseOk = msg.ParseFromString(reassembly_buffer);
+        reassembly_buffer.resize(0);
         if (parseOk == false)
             return WEBSOCKET_CLOSED;
         //else
