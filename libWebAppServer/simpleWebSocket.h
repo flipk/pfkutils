@@ -27,6 +27,7 @@ protected:
     int got_flags;
     bool verbose;
     std::string send_buffer;
+    std::string reassembly_buffer;
     WebSocketConn( int fd, bool server, bool _verbose );
     static const int MAX_READBUF = 65536 + 0x1000; // 65K
     CircularReader  readbuf;
@@ -101,7 +102,6 @@ class WebSocketClientConn : public WebSocketConn {
     std::string urlPath;
     std::string secWebsocketKey;
     std::string secWebsocketKeyResponse;
-    std::string reassembly_buffer;
     void generateWsHeaders(std::ostringstream &hdrs);
     const std::string hostForConn(void) const;
     void init_common(void);
