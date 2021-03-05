@@ -147,6 +147,27 @@ nEnter c-mode-tabwidth value (4 or 8):")
   (setq indent-tabs-mode nil)
   (message "setting sh mode thingies"))
 
+(setq pfk-regular-font "pfk13")
+(setq pfk-regular-bold-font "pfk13") ; pfk13bold !
+(setq pfk-big-font "pfk20")
+(setq pfk-big-bold-font "pfk20bold")
+
+(setq pfk-make-big-flag nil)
+
+(defun my-make-big () "make window font bigger"
+  (interactive)
+  (if pfk-make-big-flag
+      (progn
+        (message (concat "setting frame font to " pfk-regular-font))
+        (set-frame-font pfk-regular-font)
+        (setq pfk-make-big-flag nil))
+    (progn
+        (message (concat "setting frame font to " pfk-big-font))
+     (set-frame-font pfk-big-font)
+     (setq pfk-make-big-flag t))))
+
+(global-set-key [f3]  'my-make-big)
+
 (global-set-key [f2]  'fill-region)
 (global-set-key [f6]  'eval-last-sexp)
 (global-set-key [f9]  'make-frame)
