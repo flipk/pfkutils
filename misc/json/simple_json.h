@@ -108,6 +108,7 @@ public:
     Property *getName(const std::string &n);
 };
 
+std::ostream &operator<<(std::ostream &, Property::propertyType);
 std::ostream &operator<<(std::ostream &, Property *);
 std::ostream &operator<<(std::ostream &, IntProperty *);
 std::ostream &operator<<(std::ostream &, FloatProperty *);

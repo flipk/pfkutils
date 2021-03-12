@@ -15,11 +15,15 @@ simplejson_YYSRCS = json_parser.yy
 simplejson_INCS = -I.
 simplejson_DEFS = -DPARSER_YY_HDR=\"simplejson-json_parser.hh\"
 
-PROG_TARGETS = test
+PROG_TARGETS = test nbtopy
 
 test_TARGET = $(OBJDIR)/test
 test_CXXSRCS = main.cc
 test_DEPLIBS = $(simplejson_TARGET)
+
+nbtopy_TARGET = $(OBJDIR)/nbtopy
+nbtopy_CXXSRCS = nbtopy.cc
+nbtopy_DEPLIBS = $(simplejson_TARGET)
 
 EXTRA_CLEAN = my_clean
 

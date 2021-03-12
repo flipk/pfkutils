@@ -147,6 +147,20 @@ output(std::ostream &str, Property *p)
     }
 }
 
+std::ostream &operator<<(std::ostream &s, Property::propertyType t)
+{
+    switch (t)
+    {
+    case Property::INT:      s << "INT";      break;
+    case Property::FLOAT:    s << "FLOAT";    break;
+    case Property::STRING:   s << "STRING";   break;
+    case Property::TRINARY:  s << "TRINARY";  break;
+    case Property::ARRAY:    s << "ARRAY";    break;
+    case Property::OBJECT:   s << "OBJECT";   break;
+    }
+    return s;
+}
+
 std::ostream &operator<<(std::ostream &str, Property *p)
 {
     if (p)
