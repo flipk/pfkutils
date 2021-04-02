@@ -313,7 +313,9 @@ pfksh_main(argc, argv)
 		warningf(FALSE, "Cannot determine current working directory");
 
 	if (Flag(FLOGIN)) {
+#if 0 // PFK : don't let system profile fudge up my shell.
 		pfksh_include(KSH_SYSTEM_PROFILE, 0, (char **) 0, 1);
+#endif
 		if (!Flag(FPRIVILEGED))
 			pfksh_include(substitute("$HOME/.profile", 0), 0,
 				(char **) 0, 1);
