@@ -3,10 +3,17 @@
 # be aware that /bin/sh is bash on fedora, but dash on ubuntu!
 # this means things like PATH wont be set up on ubuntu! gross!
 
+# also note, this is started by 'vncserver' command on fedora,
+# so it inherits many things; but on RealVNC boxes at work, it
+# is started by a daemon and doesn't inherit anything. that's why
+# we fully set PFKARCH, ENV, and PATH.
+
 cd $HOME
+PFKARCH=`@prefix@/bin/architecture`
+export PFKARCH
 ENV=$HOME/.kshrc
 export ENV
-PATH=$HOME/pfk/bin:$PATH
+PATH=$HOME/pfk/$PFKARCH/bin:$HOME/pfk/bin:$PATH
 export PATH
 
 xset +fp $HOME/pfk/fonts
