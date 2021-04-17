@@ -50,6 +50,7 @@ WebSocketConnection :: WebSocketConnection(
     state = STATE_HEADER;
     got_flags = GOT_NONE;
     memcpy(&remote_addr, sa, sizeof(struct sockaddr_in));
+    reassembly_msg_type = WS_TYPE_INVALID;
 }
 
 WebSocketConnection :: ~WebSocketConnection(void)
@@ -404,12 +405,12 @@ WebSocketConnection :: handle_message(void)
             mask[counter] = readbuf[pos + counter];
         pos += 4;
 
-        WebAppMessageType msgType = WS_TYPE_INVALID;
         switch (readbuf[0] & 0xf)
         {
-        case 1:  msgType = WS_TYPE_TEXT;    break;
-        case 2:  msgType = WS_TYPE_BINARY;  break;
-        case 8:  msgType = WS_TYPE_CLOSE;   break;
+        case 0:  /* continuation */                     break;
+        case 1:  reassembly_msg_type = WS_TYPE_TEXT;    break;
+        case 2:  reassembly_msg_type = WS_TYPE_BINARY;  break;
+        case 8:  reassembly_msg_type = WS_TYPE_CLOSE;   break;
         default:
             fprintf(stderr, "unhandled websocket opcode %d received\n",
                     readbuf[0] & 0xf);
@@ -429,12 +430,13 @@ WebSocketConnection :: handle_message(void)
             if (wac)
                 if (wac->onMessage(
                         WebAppMessage(
-                            msgType,
+                            reassembly_msg_type,
                             reassembly_buffer)) == false)
                     return false;
 
             // prepare for next segment.
             reassembly_buffer.resize(0);
+            reassembly_msg_type = WS_TYPE_INVALID;
         }
     }
 

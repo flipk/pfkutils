@@ -212,9 +212,13 @@ WebSocketConn :: handle_message(::google::protobuf::Message &msg)
         }
 
         int opcode = (readbuf[0] & 0xf);
-        if (opcode != 2) // WS_TYPE_BINARY
-        {
-            if (opcode != 8) // WS_TYPE_CLOSE
+	switch (opcode)
+	{
+	case 0: // segmentation continuation frame
+	case 2: // BINARY
+	  break; // this is ok
+	default: // any other type (TEXT not supported)
+	  if (opcode != 8) // CLOSE
                 fprintf(stderr, "unhandled websocket opcode %d received\n",
                         opcode);
             return WEBSOCKET_CLOSED;
