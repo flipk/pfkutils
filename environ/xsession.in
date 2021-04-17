@@ -8,20 +8,40 @@
 
 cd $HOME
 PFKARCH=`@prefix@/bin/architecture`
-SHELL=@prefix@/$PFKARCH/bin/pfksh
+
 ENV=$HOME/.kshrc
-export ENV PFKARCH SHELL
-PATH=$HOME/pfk/$PFKARCH/bin:$HOME/pfk/bin:$PATH
+export ENV PFKARCH
+archbin=@prefix@/$PFKARCH/bin
+PATH=$archbin:@prefix@/bin:$PATH
 export PATH
+
+if [   -f @prefix@/$PFKARCH/bin/pfksh ] ; then
+    SHELL=@prefix@/$PFKARCH/bin/pfksh
+    export SHELL
+fi
 
 xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources
 xset m 0
 set-background.sh
 
-if [ -f $HOME/safe-session ] ; then
+# whenever a patch install upgrades the kernel, the shell
+# and window manager/etc become hard to find, so have a
+# fallback
+
+safe=0
+if [   -f $HOME/safe-session        -o \
+     ! -f $archbin/pfkSessionMgr    -o \
+     ! -f $archbin/fluxbox          -o \
+     ! -f $archbin/pfkSessionXrandr ] ; then
+
+    safe=1
+
+fi
+
+if [ $safe = 1 ] ; then
     urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     exit 0
 else
-    exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
+    exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr
 fi
