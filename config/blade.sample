@@ -43,13 +43,13 @@ PROTOBUF_LIB = -lprotobuf
 MBEDTLS_INCS =
 MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 
-PFKUTILS_OS = fedora30
+PFKUTILS_OS = fedora33
 
 # SCRIPT_FILES_EXTRA = mhssh mhscp
 
 CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
-export PFK_CONFIG_flubox_xinerama=enable
+export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j9
 
 # turn off color compile output so emacs compile buffer can work;
