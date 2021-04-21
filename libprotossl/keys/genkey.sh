@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# BUG : this script uses locally formatted time as ZULU time
+#       which means if you make certs now, you can't use them
+#       until <timezone> hours later.
+# workaround :
+#       faketime '12 hours ago' ./genkey.sh
+
 #cd /etc/ssl/certs
 #openssl dhparam -out dhparam.pem 4096
 
