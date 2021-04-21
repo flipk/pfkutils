@@ -45,6 +45,8 @@ MBEDTLS_INCS =
 MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 
 PFKUTILS_OS = ubuntu18
+# ub18 comes with emacs 25.2 so override default setting of ELPA
+ELPA_ARCHIVE ?= elpa-25.tar.bz2
 
 CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
