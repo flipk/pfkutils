@@ -44,7 +44,6 @@
 //
 //  mask is always present client -> server,
 //  mask is never present server -> client.
-//  we don't support segmentation, so we error out.
 //
 
 using namespace std;
