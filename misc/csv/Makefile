@@ -1,4 +1,6 @@
 
+DEBUG_H_MACRO_GENERATION=y
+
 OBJDIR = obj
 PROG_TARGETS = test
 

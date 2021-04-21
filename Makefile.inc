@@ -369,6 +369,28 @@ endef
 
 $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_VARS)))
 
+ifeq ($(DEBUG_H_MACRO_GENERATION),y)
+
+define DEBUG_TARGET_VARS
+$(foreach src,$($(target)_YSRCS),
+$(info $(src) --> $(target)_$(src)_HDR = $(notdir $(call FROM_Y_TO_H, $(src))))
+)
+
+$(foreach src,$($(target)_YYSRCS),
+$(info $(src) --> $(target)_$(src)_HDR := $(notdir $(call FROM_YY_TO_HH, $(src))))
+)
+
+$(foreach src,$($(target)_PROTOSRCS),
+$(info $(src) --> $(target)_$(src)_HDR = $(notdir $(call FROM_PROTO_TO_H, $(src))))
+)
+
+endef
+
+$(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(DEBUG_TARGET_VARS)))
+
+endif
+
+
 ##############################################
 
 define TARGET_RULES
