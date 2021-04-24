@@ -1057,6 +1057,14 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
                                      int queue_number)
 {
     WaitUtil::Lock   lock(&dtls_lock);
+
+    if (client == NULL)
+        // dont attempt anything! we must be in a race.
+        // this means shutdown() is partway through, but we
+        // probably have a buildup of messages in send_q
+        // and we haven't gotten to the DIE message yet.
+        return false;
+
     const std::string &msg = dte->encoded_msg;
 
     if (dte->reliable == false)
