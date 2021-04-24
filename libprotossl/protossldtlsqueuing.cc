@@ -4,7 +4,7 @@
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#define PRINT_SEQNOS 1
+#define PRINT_SEQNOS 0
 #define PRINTF(x...) // printf(x)
 
 
@@ -445,7 +445,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
             }
         }
         if (printit)
-            printf("%s\n", str.str().c_str());
+            fprintf(stderr,"%s\n", str.str().c_str());
     }
 #endif
 
@@ -1270,7 +1270,7 @@ ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
             str << "due to " << reason;
         }
         if (printit)
-            printf("%s\n", str.str().c_str());
+            fprintf(stderr,"%s\n", str.str().c_str());
     }
 #endif
 

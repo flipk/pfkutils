@@ -253,7 +253,8 @@ ProtoSSLMsgs :: validateCertificates(void)
 
     if (pubkey.size() == 0 || pubkey != myCertPubkey)
     {
-        printf( "ProtoSSLMsgs::validateCertificates : ERROR : "
+        fprintf(stderr,
+                "ProtoSSLMsgs::validateCertificates : ERROR : "
                 "MY CERT and PRIVATE KEY MISMATCH\n");
         return false;
     }
@@ -269,7 +270,8 @@ ProtoSSLMsgs :: validateCertificates(void)
 #if 0 // debug prints
     gmtime_r(&t, &broken);
     strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
-    printf( "ProtoSSLMsgs::validateCertificates : "
+    fprintf(stderr,
+            "ProtoSSLMsgs::validateCertificates : "
             "devCert time %u (%s)\n", (uint32_t) t, broken_string);
 #endif
 
@@ -282,7 +284,8 @@ ProtoSSLMsgs :: validateCertificates(void)
 #if 0 // debug prints
         gmtime_r(&t, &broken);
         strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
-        printf( "ProtoSSLMsgs::validateCertificates : "
+        fprintf(stderr,
+                "ProtoSSLMsgs::validateCertificates : "
                 "caCert time %u (%s)\n", (uint32_t) t, broken_string);
 #endif
         if (t > latest_start_date)
@@ -305,7 +308,8 @@ ProtoSSLMsgs :: validateCertificates(void)
     {
         gmtime_r(&now, &broken);
         strftime(broken_string, sizeof(broken_string), "%F %T", &broken);
-        printf( "ProtoSSLMsgs::validateCertificates: ERROR: "
+        fprintf(stderr,
+                "ProtoSSLMsgs::validateCertificates: ERROR: "
                 "time now (%u %s) is outside certificate valid times\n",
                 (uint32_t) now, broken_string);
         return false;
@@ -329,13 +333,15 @@ ProtoSSLMsgs :: validateCertificates(void)
         if (parseRet >= 0)
         {
             info.resize(parseRet);
-            printf( "ProtoSSLMsgs::validateCertificates : ERROR: "
+            fprintf(stderr,
+                    "ProtoSSLMsgs::validateCertificates : ERROR: "
                     "CERTIFICATE VALIDATION FAILED: %s\n", info.c_str());
         }
 
         return false;
     }
-    printf("ProtoSSLMsgs::validateCertificates : certificates validated\n");
+    fprintf(stderr,
+            "ProtoSSLMsgs::validateCertificates : certificates validated\n");
     return true;
 }
 
