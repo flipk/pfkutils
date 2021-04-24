@@ -5,7 +5,7 @@ package PFK.i3;
 // common stuff first
 
 enum ProtocolVersion {
-  i3_VERSION_1 = 1;
+  i3_VERSION_1 = 2;
   // increment every time you modify this file
 };
 
@@ -17,8 +17,8 @@ message ProtoVersion {
 enum i3MsgType {
   i3_VERSION  = 1; // use proto_version arg
   i3_FILEDATA = 2; // use file_body arg
-  i3_DONE = 3;     // use file_done arg
-  i3_PINGACK = 4;
+  i3_DONE     = 3; // use file_done arg
+  i3_PINGACK  = 4;
 }
 
 message Ping {
@@ -42,7 +42,7 @@ message FileData {
 
 message FileDone {
   required uint64   file_size = 1;
-  required bytes    sha256    = 2; // 32 bytes long
+  optional bytes    sha256    = 2; // 32 bytes long
 }
 
 // this must fit in an SSL frame, so less than 16384 bytes.

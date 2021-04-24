@@ -424,14 +424,26 @@ ifeq ($(PFK_BUILD_i3),1)
 ifeq ($(PFK_BUILD_libprotossl),0)
 $(error PFK_BUILD_libprotossl is required for PFK_BUILD_i3)
 endif
-LIB_TARGETS += libi3
+LIB_TARGETS += libi3 libi3tcp libi3udp
+
 libi3_TARGET = $(OBJDIR)/libi3.a
 libi3_DEFS = -DI3_PROTO_HDR=\"$(libi3_i3/i3.proto_HDR)\"
 libi3_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
-libi3_CXXSRCS = i3/i3_options.cc i3/i3_main.cc
+libi3_CXXSRCS = i3/i3_options.cc
 libi3_PROTOSRCS = i3/i3.proto
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)
 pfkutils_LIBPROTOSSL = $(libprotossl_TARGET)
+
+libi3tcp_TARGET = $(OBJDIR)/libi3tcp.a
+libi3tcp_CXXSRCS = i3/i3_main_tcp.cc
+libi3tcp_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libi3tcp_DEFS = -DI3_PROTO_HDR=\"$(libi3_i3/i3.proto_HDR)\"
+
+libi3udp_TARGET = $(OBJDIR)/libi3udp.a
+libi3udp_CXXSRCS = i3/i3_main_udp.cc
+libi3udp_INCS = -Ilibprotossl -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libi3udp_DEFS = -DI3_PROTO_HDR=\"$(libi3_i3/i3.proto_HDR)\"
+
 endif
 
 ##############################################
@@ -887,7 +899,8 @@ pfkutils_DEPLIBS = \
 	$(libampfk_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
-	$(libxlock_TARGET) $(spinner_TARGET) $(libi3_TARGET) \
+	$(libxlock_TARGET) $(spinner_TARGET) \
+	$(libi3tcp_TARGET) $(libi3udp_TARGET) $(libi3_TARGET) \
 	$(pfkutils_LIBPROTOSSL) $(libpfkutil_TARGET)
 pfkutils_DEFS = \
 	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \

@@ -1,8 +1,4 @@
 
-// todo:
-//    -Ir : generate random data as input
-//    -Iz : generate zero data as input
-
 #include "pfkutils_config.h"
 #include "libprotossl.h"
 #include "i3_options.h"
@@ -15,7 +11,7 @@ using namespace PFK::i3;
 
 #define I3_APP_NAME "PFK_i3"
 
-class i3_program
+class i3_tcp_program
 {
     i3_options             opts;
     ProtoSSLCertParams  *  certs;
@@ -38,7 +34,7 @@ class i3_program
     pxfe_timeval           roundtrip;
     bool                   roundtrip_set;
 public:
-    i3_program(int argc, char ** argv)
+    i3_tcp_program(int argc, char ** argv)
         : opts(argc, argv)
     {
         certs = NULL;
@@ -57,7 +53,7 @@ public:
         preload_count = opts.pingack_preload;
         roundtrip_set = false;
     }
-    ~i3_program(void)
+    ~i3_tcp_program(void)
     {
         if (server)
             delete server;
@@ -452,9 +448,9 @@ private:
 };
 
 extern "C" int
-i3_main(int argc, char ** argv)
+i3_tcp_main(int argc, char ** argv)
 {
-    i3_program  i3(argc, argv);
+    i3_tcp_program  i3(argc, argv);
     if (i3.get_ok() == false)
         return 1;
     return i3.main();

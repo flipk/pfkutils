@@ -105,5 +105,6 @@ PROG(0,slowlink,"slow link simulator")
 #endif
 
 #if @PFK_BUILD_i3@
-PROG(0,i3,"internet pipe fitting mark III")
+PROG(0,i3_tcp,"internet pipe fitting mark III TCP")
+PROG(0,i3_udp,"internet pipe fitting mark III UDP")
 #endif
