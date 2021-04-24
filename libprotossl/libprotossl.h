@@ -262,6 +262,28 @@ public:
     }
 };
 
+struct ProtoSslDtlsQueueStatistics
+{
+    uint64_t bytes_sent;
+    uint64_t bytes_received;
+    uint64_t frags_sent;
+    uint64_t frags_received;
+    uint64_t frags_resent;
+    uint64_t missing_frags_detected;
+
+    ProtoSslDtlsQueueStatistics(void) { init(); }
+    void init(void)
+    {
+        bytes_sent = 0;
+        bytes_received = 0;
+        frags_sent = 0;
+        frags_received = 0;
+        frags_resent = 0;
+        missing_frags_detected = 0;
+    }
+    std::string Format(void);
+};
+
 class ProtoSslDtlsQueue
 {
     const ProtoSslDtlsQueueConfig config;
@@ -270,6 +292,7 @@ class ProtoSslDtlsQueue
     bool link_up;
     bool link_changed;
     bool _ok;
+    ProtoSslDtlsQueueStatistics stats;
 
 public:
     enum read_return_t {
@@ -442,6 +465,8 @@ public:
     // if you didn't call shutdown, this will do it for you. it will
     // also delete the SSLConnClient for you.
     ~ProtoSslDtlsQueue(void);
+
+    void get_stats(ProtoSslDtlsQueueStatistics *stats);
 
     send_return_t send_message(uint32_t queue_number, const MESSAGE &);
 

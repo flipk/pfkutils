@@ -276,6 +276,25 @@ ProtoSslDtlsQueue :: tick_thread(void)
     }
 }
 
+std::string
+ProtoSslDtlsQueueStatistics ::Format(void)
+{
+    std::ostringstream  ostr;
+    ostr << "bs " << bytes_sent
+         << " br " << bytes_received
+         << " fs " << frags_sent
+         << " fr " << frags_received
+         << " frs " << frags_resent
+         << " mfd " << missing_frags_detected;
+    return ostr.str();
+}
+
+void
+ProtoSslDtlsQueue :: get_stats(ProtoSslDtlsQueueStatistics *pstats)
+{
+    *pstats = stats;
+}
+
 ProtoSslDtlsQueue::read_return_t
 ProtoSslDtlsQueue :: handle_read(MESSAGE &msg)
 {
@@ -299,6 +318,7 @@ ProtoSslDtlsQueue :: handle_read(MESSAGE &msg)
             msg.Clear();
             ret = READ_MORE;
         }
+        stats.bytes_received += dre->encoded_msg.length();
         PRINTF("handle_read recv_q to user:\n%s\n", msg.DebugString().c_str());
     }
     read_pool.release(dre);
@@ -413,6 +433,8 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
     reliable = frag->pkthdr->has_sequence_no();
     seqno = reliable ? frag->pkthdr->sequence_no() : 0;
     frag->seqno = seqno;
+
+    stats.frags_received ++;
 
 #if PRINT_SEQNOS
     {
@@ -661,8 +683,11 @@ ProtoSslDtlsQueue :: recv_reassemble_deliver(uint32_t seqno)
         {
             rmi = recv_reassembly.find(seqno + ind);
             if (rmi == recv_reassembly.end())
+            {
+                stats.missing_frags_detected ++;
                 // not present.
                 return 0;
+            }
             f = rmi->second;
 
             // not supposed to happen.
@@ -793,6 +818,8 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
     }
 
     uint32_t msg_size = (uint32_t) msg.BYTE_SIZE_FUNC();
+
+    stats.bytes_sent += msg_size;
 
     // if the message can't fit in the entire window, then we
     // can't send it.
@@ -1029,6 +1056,7 @@ ProtoSslDtlsQueue :: handle_tick(void)
             if (frag->age > retransmit_age)
             {
                 frag->age = 0;
+                stats.frags_resent ++;
                 send_frag(frag, "age");
             }
         }
@@ -1157,6 +1185,7 @@ ProtoSslDtlsQueue :: handle_nack(dtls_send_event *dte)
     }
 
     // retransmit.
+    stats.frags_resent ++;
     send_frag(frag, "NACK");
 }
 
@@ -1230,6 +1259,8 @@ ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
         } // cos is destroyed here
 
     } // zos is destroyed here
+
+    stats.frags_sent ++;
 
     PRINTF("transmitting fragment: %s\n", frag->print().c_str());
 
