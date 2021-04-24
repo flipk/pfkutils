@@ -35,6 +35,7 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
     net_initialized = false;
 
     WaitUtil::Lock lock(&ssl_lock);
+    msgs->registerClient(this);
     Bufprintf<20> portString;
     portString.print("%d", remotePort);
     mbedtls_net_init(&netctx);
@@ -50,7 +51,6 @@ ProtoSSLConnClient :: ProtoSSLConnClient(ProtoSSLMsgs * _msgs,
         fprintf(stderr, "net bind returned 0x%x: %s\n", -ret, strbuf);
         return;
     }
-    msgs->registerClient(this);
 
     // net_connect has a bug -- if connection fails, it closes
     // netctx.fd but does not set it to -1. then if you net_free,
