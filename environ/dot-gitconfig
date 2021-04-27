@@ -10,7 +10,6 @@
 	co = checkout
 	cob = checkout -b
 	b = branch
-	ci = commit
 	s = status
 	f = fetch
 	l = log --graph --oneline --decorate
@@ -22,6 +21,7 @@
 	ssub = !git submodule foreach git status
 	dt = difftool
 	dtc = difftool --cached
+	wt = worktree
 [status]
 	submoduleSummary = true
 [diff]
@@ -30,3 +30,8 @@
 	tool = meld
 [difftool]
 	prompt = no
+[pager]
+	branch = false
+	tag = false
+[pull]
+	rebase = false
