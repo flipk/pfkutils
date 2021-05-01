@@ -50,6 +50,9 @@ if { $good == 0 } {
 spawn ssh-keygen -R $ip
 expect eof
 
+spawn xtermbar mhssh:$arg0
+expect eof
+
 # useful for debug
 # exp_internal 1
 
