@@ -33,5 +33,6 @@
 [pager]
 	branch = false
 	tag = false
+	stash = false
 [pull]
 	rebase = false
