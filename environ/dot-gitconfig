@@ -18,6 +18,7 @@
 	ka = !gitk --all &
 	sub = submodule
 	subfe = submodule foreach
+	substat = submodule status --recursive
 	ssub = !git submodule foreach git status
 	dt = difftool
 	dtc = difftool --cached
