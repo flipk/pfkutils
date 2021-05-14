@@ -1,15 +1,20 @@
 #!/bin/bash
 
+# TODO : implement 'remove'
+
 # dir structure:
-#    <base>/_repos/<repos.git>
+#    <base>/_repos/<repo>
+#    <base>/_repos/<repo>/worktrees/<work1>/
+#    <base>/_repos/<repo>/worktrees/<work2>/
 #    <base>/<work1>/ etc
 #    <base>/<work2>/ etc
+
+reposdir=.pfkwtgit
 
 # arg : repo_dir
 parse_submodules() {
     cd "$1"
     export SUBMOD_FILE=$( mktemp )
-    echo parsing to $SUBMOD_FILE
 
     if [[ ! -f .gitmodules ]] ; then
         numsubmods=0
@@ -43,7 +48,8 @@ BEGIN {
     # parsing relative urls is a LOT easier in awk than it
     # is in bash script.....
     origin_url = ENVIRON["ORIGIN_URL"]
-    print "THIS IS A RELATIVE URL, MUST COMBINE WITH " origin_url
+    print "RELATIVE URL = " url
+    print "NOTE origin = " origin_url
     norig = split(origin_url,origincomponents,/\//)
     relstart=1
     while (urlcomponents[relstart] == "..")
@@ -56,20 +62,20 @@ BEGIN {
     {
       if (ind!=1)
       {
-        print "ADDING /"
+#       print "ADDING /"
         finalurl = finalurl "/"
       }
-      print "ADDING " origincomponents[ind]
+#     print "ADDING " origincomponents[ind]
       finalurl = finalurl origincomponents[ind]
     }
     for (ind=relstart;ind<=nurl;ind++)
     {
-      print "ADDING /"
+#     print "ADDING /"
       finalurl = finalurl "/"
-      print "ADDING " urlcomponents[ind]
+#     print "ADDING " urlcomponents[ind]
       finalurl = finalurl urlcomponents[ind]
     }
-    print "FINAL URL: " finalurl
+    print "URL = " finalurl
     url=finalurl
   }
 }
@@ -114,7 +120,7 @@ function save_previous() {
 ' .gitmodules
 
     . $SUBMOD_FILE
-    cat $SUBMOD_FILE
+#   cat $SUBMOD_FILE
     rm -f $SUBMOD_FILE
     unset SUBMOD_FILE
 }
@@ -123,29 +129,31 @@ function save_previous() {
 wtclone() {
     base="$1"
     local url="$2"
-    local dest="$3"
     local reponame=$( basename "${url%/}" )
     reponame="${reponame%.git}"
 
-    if [[ ! -d "${base}/_repos/${reponame}" ]] ; then
+    if [[ ! -d "${base}/${reposdir}/${reponame}" ]] ; then
         echo $reponame does not exist, cloning...
-        mkdir -p "${base}/_repos"
-        cd "${base}/_repos"
+        mkdir -p "${base}/${reposdir}"
+        cd "${base}/${reposdir}"
         git clone -n "$url" TEMPDIRNEWCLONE
         mv TEMPDIRNEWCLONE/.git "${reponame}"
         rm -rf TEMPDIRNEWCLONE
         if [[ ! -f SUPER ]] ; then
             echo $reponame > SUPER
         fi
+        cd "${reponame}"
+        git rev-parse HEAD > NEWHEAD
+        mv NEWHEAD HEAD
     else
         echo $reponame already exists
-#        cd "${base}/_repos/${reponame}"
+#        cd "${base}/${reposdir}/${reponame}"
 #        git fetch --tags
     fi
 }
 
-# args <base> <reponame> <moduledir> <commit>
-#  <reponame> is the repo; <base>/_repos/<reponame> must exist.
+# args <base> <reponame> <modulename> <moduledir> <commit>
+#  <reponame> is the repo; <base>/${reposdir}/<reponame> must exist.
 #  <moduledir> is where it should be populated; it must be empty or not exist
 #  <commit> is the commit-ish that should be populated.
 wt_add() {
@@ -155,20 +163,27 @@ wt_add() {
     cd "${relbase}"
     local base="$PWD"
     echo relbase = $relbase
-    echo base = $base
+    echo 1 base = $base
     local reponame="${2%.git}"
+    echo 2 reponame=$reponame
 
-    local moduledir="$3"
-    echo 'moduledir before =' $moduledir
+    local modulename="$3"
+    echo 3 modulename=$modulename
+
+    local moduledir="$4"
+    echo 4 moduledir=$moduledir
     if [[ "x${moduledir#/}" == "x${moduledir}" ]] ; then
         moduledir=${base}/${moduledir}
     fi
-    echo 'moduledir after  =' $moduledir
+    echo 4 abs moduledir=$moduledir
 
-    local commit="$4"
-    local supername=$( cat "${base}/_repos/SUPER" )
+    local commit="$5"
+    echo 5 commit=$commit
 
-    cd "${base}/_repos/${reponame}"
+    local supername=$( cat "${base}/${reposdir}/SUPER" )
+    echo supername=$supername
+
+    cd "${base}/${reposdir}/${reponame}"
     local commitsha=$( git rev-parse "$commit" 2> /dev/null )
     if [[ "x$commitsha" == x ]] ; then
         echo ERROR: cannot rev-parse commit-ish $commit
@@ -176,16 +191,28 @@ wt_add() {
     fi
     cd "${base}"
 
-    echo reponame=$reponame
-    echo commit=$commit
+    wtbase="${base}/${reposdir}/${reponame}/worktrees"
+    noslashmodname=$( echo ${modulename} | tr / - )
+    modwtdir="${wtbase}/${noslashmodname}"
+
     echo commitsha=$commitsha
+    echo wtbase=$wtbase
+    echo noslashmodname=$noslashmodname
+    echo modwtdir=$modwtdir
+
+    mkdir -p "${modwtdir}"
+    cd       "${modwtdir}"
+
+    # error messages like
+    # fatal: 'master' is already checked out at 'path'
+    # contain a <slightly> more useful path
+    echo "${moduledir}/${path}" > gitdir
+    echo "${base}/${reposdir}/${reponame}" > commondir
+    echo $commitsha > HEAD
 
     mkdir -p "${moduledir}"
     cd "${moduledir}"
-    mkdir .git
-    echo "${base}/_repos/${supername}" > .git/gitdir
-    echo "${base}/_repos/${reponame}" > .git/commondir
-    echo $commitsha > .git/HEAD
+    echo "gitdir: ${modwtdir}" > .git
     git reset --hard
     git submodule init
     parse_submodules
@@ -203,15 +230,15 @@ wt_add() {
         local reponame=$( basename ${url%/} )
         reponame="${reponame%.git}"
 
-        # BUG : we have to reinvoke ourselves as new BASH instances
-        #       because parse_submodules sets global vars, so the
-        #       recursive nature of submodules in submodules breaks.
-        #       in other words, this function is not re-entrant.
-        #       we should find a way to 'eval' parse_submodules values
-        #       into function-locals so we can recurse safely.
+        # we have to reinvoke ourselves as new BASH instances because
+        # parse_submodules sets global vars, so the recursive nature
+        # of submodules in submodules breaks.  in other words, this
+        # function is not re-entrant.  we should find a way to 'eval'
+        # parse_submodules values into function-locals so we can
+        # recurse safely.
 
         $0 clone "$base" "$url"
-        $0 _add "$base" "$reponame" "${moduledir}/${path}" "$commit"
+        $0 _add "$base" "$reponame" "$modulename/modules/$submod" "${moduledir}/${path}" "$commit"
 
         (( ind++ ))
     done
@@ -227,14 +254,37 @@ wtadd() {
     echo workdir=$workdir
     echo commit=$commit
 
-    if [[ ! -f "${base}/_repos/SUPER" ]] ; then
-        echo 'ERROR: not a base dir? no _repos/SUPER file....'
+    if [[ ! -f "${base}/${reposdir}/SUPER" ]] ; then
+        echo 'ERROR: not a base dir? no ${reposdir}/SUPER file....'
         exit 1
     fi
 
-    reponame=$( cat "${base}/_repos/SUPER" )
+    reponame=$( cat "${base}/${reposdir}/SUPER" )
 
-    wt_add "$base" "$reponame" "$workdir" "$commit"
+    wt_add "$base" "$reponame" "$workdir" "$workdir" "$commit"
+}
+
+wtstatus() {
+    base="$1"
+    cd $base
+    gitfiles=$( find . -name .git -type f )
+    max=0
+    for gf in $gitfiles ; do
+        d=${gf%/.git}
+        d=${d#./}
+        l=${#d}
+        if [[ $l -gt $max ]] ; then
+            max=$l
+        fi
+    done
+    for gf in $gitfiles ; do
+        d=${gf%/.git}
+        d=${d#./}
+        set -- $( cat $gf )
+        gd="$2"
+        head=$( cat $gd/HEAD )
+        printf "%-${max}s  %s\n" "$d" "$head"
+    done
 }
 
 if [[ "x$1" == "xclone" ]] ; then
@@ -243,7 +293,7 @@ if [[ "x$1" == "xclone" ]] ; then
 
 elif [[ "x$1" == "x_add" ]] ; then
 
-    wt_add "$2" "$3" "$4" "$5"
+    wt_add "$2" "$3" "$4" "$5" "$6"
 
 elif [[ "x$1" == "xadd" ]] ; then
 
@@ -254,10 +304,15 @@ elif [[ "x$1" == "xadd" ]] ; then
     fi
     wtadd "$2" "$3" "$commit"
 
+elif [[ "x$1" == "xstatus" ]] ; then
+
+    wtstatus "$2"
+
 else
 
-    echo 'usage : git pfkwt clone BASEDIR URL'
-    echo '        git pfkwt add BASEDIR WORKDIR COMMIT'
+    echo 'usage : git pfkwt  clone BASEDIR URL'
+    echo '        git pfkwt    add BASEDIR WORKDIR COMMIT'
+    echo '        git pfkwt status BASEDIR'
     exit 1
 
 fi
