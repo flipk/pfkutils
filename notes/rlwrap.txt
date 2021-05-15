@@ -1,0 +1,3 @@
+
+rlwrap -I -C <something> -S “something>” /bin/nc -v $1 <portnumber>
+

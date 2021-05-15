@@ -1,0 +1,31 @@
+
+syntax = "proto2";
+
+package pfk.diskmanager.lsblk;
+
+// this file, through pfkutils json-proto parser, is meant to parse
+// the output of util-linux "lsblk -abJO" command.
+
+message BlockDevices_m {
+  repeated BlockDevice_m blockdevices = 1;
+}
+
+message BlockDevice_m {
+  optional string name = 1;
+  optional string kname = 2;
+  optional string pkname = 3;
+  optional string path = 4;
+  optional int64 size = 5;
+  optional string model = 6;
+  optional string serial = 7;
+  optional string fstype = 8; // crypto_LUKS, ext4, LVM2_member, swap, ???
+  optional string label = 9;
+  optional string partlabel = 10;
+  optional string mountpoint = 11;
+  optional string uuid = 12;
+  optional string type = 13; // disk, part, crypt, lvm
+  optional bool ro = 14;
+  optional bool hotplug = 15;
+
+  repeated BlockDevice_m children = 20;
+}

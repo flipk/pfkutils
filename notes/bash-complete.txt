@@ -1,0 +1,5 @@
+
+Learn how bash complete -F works, and compgen, does pfksh have that or
+something similar, or could it? git completion would be really, really
+cool (commands, tags, branches, etc)
+
