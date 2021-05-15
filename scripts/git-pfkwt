@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# TODO : implement 'remove'
-
 # dir structure:
 #    <base>/_repos/<repo>
 #    <base>/_repos/<repo>/worktrees/<work1>/
@@ -125,6 +123,55 @@ function save_previous() {
     unset SUBMOD_FILE
 }
 
+# args : dir_we_are_in dest_path
+makerelpath() {
+    src="$1" dest="$2" awk '
+BEGIN {
+  src   = ENVIRON["src"]
+  dest  = ENVIRON["dest"]
+  nsrc  = split( src, srcparts,/\//)
+  ndest = split(dest,destparts,/\//)
+
+  if (destparts[1] != "") {
+    relpath=dest    # dest is already relative
+  } else {
+    relpath=""
+    ind=1
+
+    while ((srcparts[ind] == destparts[ind]) &&
+           (ind <= nsrc)  && (ind <= ndest))
+    {
+#      print "compared " srcparts[ind] " to " destparts[ind]
+      ind++
+    }
+#    print "differ at " srcparts[ind] " to " destparts[ind]
+#    print "ind = " ind
+
+    indsrc = ind
+    while ((indsrc <= nsrc) && (srcparts[indsrc] != ""))
+    {
+#      print "need another ../"
+      relpath = relpath "../"
+      indsrc++
+    }
+#    print "indsrc = " indsrc
+
+    inddest = ind
+    while ((inddest <= ndest) && (destparts[inddest] != ""))
+    {
+#      print "adding " destparts[inddest] "/"
+      relpath = relpath destparts[inddest] "/"
+      inddest++
+    }
+#    print "inddest = " inddest
+  }
+#  print "         if you are in " src
+#  print "and you want to get to " dest
+  print relpath
+}
+'
+}
+
 # args <base> <url>
 wtclone() {
     base="$1"
@@ -204,15 +251,17 @@ wt_add() {
     cd       "${modwtdir}"
 
     # error messages like
-    # fatal: 'master' is already checked out at 'path'
+    #     fatal: 'master' is already checked out at 'path'
     # contain a <slightly> more useful path
-    echo "${moduledir}/${path}" > gitdir
-    echo "${base}/${reposdir}/${reponame}" > commondir
+    makerelpath "$PWD" "${moduledir}/${path}" > gitdir
+    makerelpath "$PWD" "${base}/${reposdir}/${reponame}" > commondir
     echo $commitsha > HEAD
+    echo $modulename > pfkmodulename
 
     mkdir -p "${moduledir}"
     cd "${moduledir}"
-    echo "gitdir: ${modwtdir}" > .git
+    relmodwtdir=$( makerelpath "$PWD" "${modwtdir}" )
+    echo "gitdir: ${relmodwtdir}" > .git
     git reset --hard
     git submodule init
     parse_submodules
@@ -238,7 +287,7 @@ wt_add() {
         # recurse safely.
 
         $0 clone "$base" "$url"
-        $0 _add "$base" "$reponame" "$modulename/modules/$submod" "${moduledir}/${path}" "$commit"
+        $0 _add "$base" "$reponame" "$modulename/$path" "${moduledir}/${path}" "$commit"
 
         (( ind++ ))
     done
@@ -264,27 +313,99 @@ wtadd() {
     wt_add "$base" "$reponame" "$workdir" "$workdir" "$commit"
 }
 
+get_desc() {
+    co="$1"
+    cat "${co}/HEAD"
+}
+
 wtstatus() {
     base="$1"
-    cd $base
-    gitfiles=$( find . -name .git -type f )
+    cd "$base"
+    base="$PWD"
+    wts="${reposdir}/*/worktrees"
+
+    # do it once to calculate max width
     max=0
-    for gf in $gitfiles ; do
-        d=${gf%/.git}
-        d=${d#./}
-        l=${#d}
-        if [[ $l -gt $max ]] ; then
-            max=$l
+    local -A repos
+    numrepos=0
+    for wt in $wts ; do
+        wt=${wt#${reposdir}/}
+        repo="${wt%/worktrees}"
+        cos="${reposdir}/${repo}/worktrees/*"
+        for co in $cos ; do
+            if [[ -f ${co}/pfkmodulename ]] ; then
+                modulename=$( cat ${co}/pfkmodulename )
+            else
+                modulename="${co#${reposdir}/${repo}/worktrees/}"
+            fi
+            l=${#modulename}
+            if [[ $l -gt $max ]] ; then
+                max=$l
+            fi
+        done
+    done
+
+    for wt in $wts ; do
+        wt=${wt#${reposdir}/}
+        repo=${wt%/worktrees}
+        echo '*****' ${repo}
+        cos="${reposdir}/${repo}/worktrees/*"
+        for co in $cos ; do
+            desc=$( get_desc "${co}" )
+            if [[ -f ${co}/pfkmodulename ]] ; then
+                modulename=$( cat ${co}/pfkmodulename )
+            else
+                modulename="${co#${reposdir}/${repo}/worktrees/}"
+            fi
+            printf " %-${max}s  %s\n" "$modulename" "$desc"
+        done
+    done
+}
+
+wtremove() {
+    base="$1"
+    workdir="$2"
+    cd "$base"
+    base="$PWD"
+
+    if [[ ! -d "${workdir}" ]] ; then
+        echo ERROR: $base/$workdir not found
+        exit 1
+    fi
+
+    echo in pfkwt $base
+    echo removing all the following directories:
+
+    echo '  ' $workdir
+    submoddirs="${reposdir}/*/worktrees/${workdir}-*"
+    for f in $submoddirs ; do
+        echo '  ' $f
+    done
+
+    echo are you absolutely sure? y/n
+    read answer
+    echo answer is $answer
+    if [[ "x$answer" != "xy" ]] ; then
+        echo ABORTING
+        exit 1
+    fi
+    echo removing $workdir
+    rm -rf "$workdir"
+    for f in $submoddirs ; do
+        echo removing $f
+        rm -rf "$f"
+    done
+}
+
+findbase() {
+    while [[ "$PWD" != "/" ]] ; do
+        if [[ -d ${reposdir} ]] ; then
+            echo "$PWD"
+            return
         fi
+        cd ..
     done
-    for gf in $gitfiles ; do
-        d=${gf%/.git}
-        d=${d#./}
-        set -- $( cat $gf )
-        gd="$2"
-        head=$( cat $gd/HEAD )
-        printf "%-${max}s  %s\n" "$d" "$head"
-    done
+    echo ""
 }
 
 if [[ "x$1" == "xclone" ]] ; then
@@ -297,22 +418,42 @@ elif [[ "x$1" == "x_add" ]] ; then
 
 elif [[ "x$1" == "xadd" ]] ; then
 
-    if [[ "x$4" == "x" ]] ; then
+    base=$( findbase )
+    if [[ "x$base" == "x" ]] ; then
+        echo 'ERROR: are we in a pfkwt?'
+        exit 1
+    fi
+    if [[ "x$3" == "x" ]] ; then
         commit=HEAD
     else
-        commit="$4"
+        commit="$3"
     fi
-    wtadd "$2" "$3" "$commit"
+    wtadd "$base" "$2" "$commit"
+
+elif [[ "x$1" == "xremove" ]] ; then
+
+    base=$( findbase )
+    if [[ "x$base" == "x" ]] ; then
+        echo 'ERROR: are we in a pfkwt?'
+        exit 1
+    fi
+    wtremove "$base" "$2"
 
 elif [[ "x$1" == "xstatus" ]] ; then
 
-    wtstatus "$2"
+    base=$( findbase )
+    if [[ "x$base" == "x" ]] ; then
+        echo 'ERROR: are we in a pfkwt?'
+        exit 1
+    fi
+    wtstatus "$base"
 
 else
 
     echo 'usage : git pfkwt  clone BASEDIR URL'
-    echo '        git pfkwt    add BASEDIR WORKDIR COMMIT'
-    echo '        git pfkwt status BASEDIR'
+    echo '        git pfkwt    add WORKDIR COMMIT'
+    echo '        git pfkwt remove WORKDIR'
+    echo '        git pfkwt status'
     exit 1
 
 fi
