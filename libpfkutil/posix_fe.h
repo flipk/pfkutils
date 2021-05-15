@@ -695,6 +695,7 @@ public:
     // pthread_attr_setstack
     // pthread_attr_setstackaddr
     // pthread_attr_setstacksize
+    // xxx implement above
 };
 
 /** front end to pipe(2) */
@@ -910,6 +911,8 @@ protected:
     virtual void send_stop(void) = 0;
 public:
     pxfe_pthread_attr attr;
+    // xxx consider making variants that start it using args passed
+    //     thru constructor?
     pxfe_pthread(void) {
         state = INIT;
         mut.init();
@@ -921,6 +924,14 @@ public:
         // hurt to repeat it here since stop and join both check the state.
         stopjoin();
     }
+    // xxx copy constructor disabled, move constructor that operates
+    //     like the move constructor of std::thread ? consider making
+    //     this closer to std::thread but retaining the startup/shutdown
+    //     sync.
+
+// xxx actually can we just extend std::thread?  (and then polyfill
+//     std::thread on platforms that don't have c++11 support?)
+
     int create(void *_user_arg=NULL) {
         pxfe_pthread_mutex_lock lock(mut);
         if (state != INIT)

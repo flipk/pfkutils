@@ -1,0 +1,15 @@
+
+syntax = "proto2";
+
+package pfk.tcptunnel;
+
+enum MessageType
+{
+  ESTABLISHED = 1;
+  // xxxxxxxxxxxxxxxxxxxxxxxxxxx
+}
+
+message TunnelMessage_m
+{
+  required MessageType  type  = 1;
+}

@@ -6,8 +6,11 @@
 #include <inttypes.h>
 #include <complex>
 
+#ifndef CPLX_DOUBLE_DEFINED
+#define CPLX_DOUBLE_DEFINED
 typedef std::complex<double> cplx_double;
 typedef std::complex<float>  cplx_float;
+#endif
 
 // possible optimization: if you know the filter coefficients
 // are symmetric (which they are if the filter is linear) then
