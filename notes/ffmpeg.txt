@@ -32,7 +32,7 @@ extract_video_cvth264() {
     in="$1" # i.e. mov
     out="$2" # i.e. mp4
     ffmpeg -i "$in" -strict experimental -c:v libx264 \
-        -preset fast -crf 28 -an -y "$out"
+        -preset fast -crf 18 -an -y "$out"
 }
 
 ---extract audio, delete video (keep audio in original aac format)
@@ -61,7 +61,7 @@ deinterlace_mts() {
     in="$1"  # i.e.  mts
     out="$2" # i.e.  mp4
     ffmpeg -i "$in" -strict experimental -c:v libx264 \
-        -vf yadif=parity=auto -preset fast -crf 28 \
+        -vf yadif=parity=auto -preset slow -crf 18 \
 	-c:a copy -copyts -y "$out"
 }
 
