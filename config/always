@@ -9,9 +9,9 @@ BUILD_DATE := $(shell date '+%Y-%m%d-%H%M%S')
 GIT_SRC_URL := https://github.com/flipk/pfkutils
 DOT_FILES = \
 	Xresources ctwmrc twmrc hexdump_format \
-	screenrc xinitrc vnc-xstartup
+	screenrc xinitrc
 PREPROC_DOT_FILES = \
-	kshrc profile xsession
+	kshrc profile xsession vnc-xstartup
 
 ifeq ($(WARNINGS),1)
 CXXFLAGS += -Wall -Wformat=2
@@ -121,7 +121,7 @@ PREPROC_SOURCES = \
 	main/sudo.h scripts/cs \
 	scripts/emacs-lone scripts/myemacs-cscope-helper \
 	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
-	environ/xsession
+	environ/xsession environ/vnc-xstartup
 
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
