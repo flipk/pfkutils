@@ -22,3 +22,48 @@ to do (require) anymore to access things like ivy-mode.
 
 transferring the ~/emacs.d/elpa/ directory from one computer to another appears
 to successfully transport installed packages.
+
+FLYCHECK  <NOTE DOESNT WORK>
+----------------------------
+C-c ! v : to verify setup.
+C-c ! c : force a check now.
+C-c ! n : next error
+C-c ! p : prev error
+C-c ! l : list errors
+
+add a .dir-locals.el file containing:
+(see https://www.flycheck.org/en/latest/languages.html#flycheck-languages)
+
+((c++-mode . ((flycheck-clang-include-path . (
+		 "HOME/proj/pfkutils/obj.blade"
+		 "HOME/proj/pfkutils/obj.blade/main"
+		 "HOME/proj/pfkutils/libprotossl"
+		 "HOME/proj/pfkutils/libpfkutil"))
+	      (flycheck-clang-definitions . (
+		 "BUILD_DATE=\"dummy\""
+		 "GIT_SRC_URL=\"dummy\""
+		 "PFKUTILS_BRANCH=\"main\""
+		 "PFKUTILS_COMMIT=\"0123\""))))
+ (c-mode . ((flycheck-clang-include-path . (
+		 "HOME/proj/pfkutils/obj.blade"
+		 "HOME/proj/pfkutils/obj.blade/main"))
+	      (flycheck-clang-definitions . (
+		 "BUILD_DATE=\"dummy\""
+		 "GIT_SRC_URL=\"dummy\""
+		 "PFKUTILS_BRANCH=\"main\""
+		 "PFKUTILS_COMMIT=\"0123\"")))))
+
+ʕ·ᴥ·ʔ Build EAR -- https://github.com/rizsotto/Bear
+dnf install bear
+apt install bear?
+bear -o compile_commands.json make
+
+LSP-MODE Language Server Protocol
+--------
+??
+
+
+DAP-MODE
+--------
+??
+
