@@ -1,21 +1,38 @@
 #!/bin/bash
 
-fs_list=(fs1 fs2 fs3)
+#
+#  the following fs is encrypted, but possibly automounted.
 #               img                 volname    mountpoint
-fs_params_fs1=( /path/to/file.img   luks-fs1   /mount/fs1 )
-fs_params_fs2=( UUID=xxxx           luks-fs3   NONE       )
-fs_params_fs3=( UUID=xxxx           luks-fs3   NONE       )
-
-specials=(script1 script2)
+fs_params_fs1=( UUID=xxxx           luks-fs3   NONE       )
+#
+# the following fs is not encrypted, but possibly automounted,
+# and only listed here to support fsck.
+#               img                 volname    mountpoint
+fs_params_fs2=( UUID=xxxx           NONE       NONE       )
+#
+# the following fs might be on one of the above parts and need to be
+# done separately from the others. this one is encrypted and hard-mounted.
+#               img                 volname    mountpoint
+fs_params_fs3=( /path/to/file.img   luks-fs1   /mount/fs1 )
 
 special_script1() {
-    pfk-fs.sh m fs1
-    pfk-fs.sh m fs2
+    pfk-fs.sh f fs1
+    pfk-fs.sh f fs2
 }
 special_script2() {
+    pfk-fs.sh m fs1
+    pfk-fs.sh m fs2
+    pfk-fs.sh m fs3
+}
+special_script3() {
     pfk-fs.sh u fs1
     pfk-fs.sh u fs2
+    pfk-fs.sh u fs3
 }
+
+# configuration variables
+fs_list=(fs1 fs2 fs3)
+specials=(script1 script2)
 
 # above this line is customized on install
 
@@ -32,6 +49,7 @@ special_script2() {
 #done
 
 fail=1
+fsck=0
 
 if [[ "$1" = m ]] ; then
     fail=0
@@ -41,6 +59,11 @@ elif [[ "$1" = u ]] ; then
     fail=0
     mount=0
     op="unmount"
+elif [[ "$1" = f ]] ; then
+    fail=0
+    mount=0
+    fsck=1
+    op="fsck"
 else
     for special in ${specials[@]} ; do
         if [[ "$1" = $special ]] ; then
@@ -77,6 +100,9 @@ if [[ $fail = 0 ]] ; then
             sudo mkdir -p $mountpoint
             sudo mount /dev/mapper/$volname $mountpoint
         fi
+    elif [[ $fsck = 1 ]] ; then
+        set -e
+        sudo fsck -y $img
     else
         set -e
         if [[ $mountpoint != NONE ]] ; then
@@ -90,7 +116,7 @@ fi
 if [[ $fail = 1 ]] ; then
 
     echo usage : $0 '<op> <fs>'
-    echo '   where <op> is one of : m u' ${specials[@]}
+    echo '   where <op> is one of : m u f' ${specials[@]}
     echo '   and <fs> is one of :' ${fs_list[@]}
 
 fi
