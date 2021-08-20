@@ -605,6 +605,10 @@ $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_RULES)))
 $(eval $(foreach target,$(LIB_TARGETS),$(LIB_TARGET_RULES)))
 $(eval $(foreach target,$(PROG_TARGETS),$(PROG_TARGET_RULES)))
 
+ALL_LIB_TARGETS := $(foreach target,$(LIB_TARGETS),$($(target)_TARGET))
+ALL_PROG_TARGETS := $(foreach target,$(PROG_TARGETS),$($(target)_TARGET))
+ALL_TARGETS := $(ALL_LIB_TARGETS) $(ALL_PROG_TARGETS)
+
 ##############################################
 
 define DOXYGEN_TARGET_RULES
@@ -657,4 +661,5 @@ doxygen: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen)
 doxygen-install: $(foreach target,$(DOXYGEN_TARGETS),$(target)_doxygen-install)
 
 clean: $(EXTRA_CLEAN)
+	rm -f $(ALL_TARGETS)
 	rm -rf $(OBJDIR) dox/*
