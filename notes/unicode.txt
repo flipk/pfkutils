@@ -10,12 +10,22 @@ to encode, see
 
 to encode a code point to UTF-8:
 
+- for code points <= U+007F, use 1-byte format.
+- for code points <= U+07FF, use 2-byte format.
+- for code points <= U+FFFF, use 3-byte format.
+- for code points  > U+FFFF, use 4-byte format.
+
 1 byte format: 0 <7 bits>
 2 byte format: 110 <5 bits>   10 <6 bits>
 3 byte format: 1110 <4 bits>  10 <6 bits> 10 <6 bits>
 4 byte format: 11110 <3 bits> 10 <6 bits> 10 <6 bits> 10 <6 bits>
 
 to encode a code point to UTF-16:
+
+- note D800 thru DFFF are reserved for UTF-16 surrogate pairs.
+- for code points <= U+FFFF, not including D800-DFFF, just send it
+   as one word.
+- for code points >  U+FFFF, use the surrogate pair format as follows.
 
 1 word:  xxxx xxxx xxxx xxxx
 2 word:  1101 10uu uuyy yyyy 1101 11zz zzzz zzzz
