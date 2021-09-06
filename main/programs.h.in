@@ -81,7 +81,8 @@ PROG(0,pfkstat,"My own stat/ls command")
 #endif
 
 #if @PFK_BUILD_deduplifier@
-PROG(0,deduplifier,"find identical files and link them")
+PROG(0,dedup1,"find identical files in a tree and symlink them")
+PROG(0,dedup2,"find identical files in two trees and hardlink them")
 #endif
 
 #if @PFK_BUILD_hilite@

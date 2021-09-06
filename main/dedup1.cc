@@ -76,14 +76,14 @@ MD5File(const std::string &path, char digest[16])
 
 
 extern "C" int
-deduplifier_main(int argc, char ** argv)
+dedup1_main(int argc, char ** argv)
 {
     digestFileMap_t digestFileMap;
     pendingDirs_t pendingDirs;
 
     if (argc != 2)
     {
-        cerr << "usage : dedup /full/path/to/rootdir" << endl;
+        cerr << "usage : dedup1 /full/path/to/rootdir" << endl;
         return 1;
     }
 
