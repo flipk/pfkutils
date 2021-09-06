@@ -823,13 +823,15 @@ public:
         return true;
     }
     /** attempt to open a file path (using std::string) */
-    bool open(const std::string &path, int flags, mode_t mode = 0600,
-              pxfe_errno *e = NULL) {
-        return open(path.c_str(), flags, mode, e);
+    bool open(const std::string &path, int flags,
+              pxfe_errno *e = NULL,
+              mode_t mode = 0600) {
+        return open(path.c_str(), flags, e, mode);
     }
     /** attempt to open a file path (using char*) */
-    bool open(const char *path, int flags, mode_t mode = 0600,
-              pxfe_errno *e = NULL) {
+    bool open(const char *path, int flags,
+              pxfe_errno *e = NULL,
+              mode_t mode = 0600) {
         fd = ::open(path, flags, mode);
         if (fd < 0)
             if (e) e->init(errno, "open");
