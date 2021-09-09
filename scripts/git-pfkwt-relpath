@@ -253,20 +253,15 @@ wt_add() {
     # error messages like
     #     fatal: 'master' is already checked out at 'path'
     # contain a <slightly> more useful path
-
-    # these are abs paths but could be makerelpaths
-    echo "${moduledir}/${path}" > gitdir
-    echo "${base}/${reposdir}/${reponame}" > commondir
-
+    makerelpath "$PWD" "${moduledir}/${path}" > gitdir
+    makerelpath "$PWD" "${base}/${reposdir}/${reponame}" > commondir
     echo $commitsha > HEAD
     echo $modulename > pfkmodulename
 
     mkdir -p "${moduledir}"
     cd "${moduledir}"
-
-    # this is abs path but could be makerelpath
-    echo "gitdir: ${modwtdir}" > .git
-
+    relmodwtdir=$( makerelpath "$PWD" "${modwtdir}" )
+    echo "gitdir: ${relmodwtdir}" > .git
     git reset --hard
     git submodule init
     parse_submodules
