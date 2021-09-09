@@ -188,9 +188,10 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
   (interactive)
-  (if (> (buffer-size) 250000)
+  (if (> (buffer-size) 500000)
      (isearch-forward)
    (swiper)))
+
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "C-s") 'isearch-or-swiper)
 (global-set-key (kbd "C-x C-f") 'counsel-find-file)
