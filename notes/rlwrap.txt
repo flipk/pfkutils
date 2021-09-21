@@ -1,0 +1,21 @@
+rlwrap -I -C <command> -S <prompt> /bin/nc -v $1 <portnumber>
+rlwrap -I -C <command> -S <prompt> i2 $1 <portnumber>
+
+ -I : rlwrap receiving SIGINT (^C) -> sending SIGTERM to child
+ -C <command> : history is stored under the name <command> (so you can
+                use 'nc' to different hosts and have different histories
+		for each)
+-S <prompt> : substitute the commands prompt for a new prompt
+-l <file> : log file
+-p <color> : color the prompt (black,  red,  green,  yellow,  blue,
+              cyan,   purple   (=magenta)  or  white)
+
+not useful if command is 'nc' or 'i2', but:
+
+-c : complete filenames with <tab>, because rlwrap will keep track of the
+     child's CWD
+-f <file> : <file> may contain a list of words for completion
+-o : one-shot : send EOF to command after accepting one line of input
+-R : renice : make rlwrap nicer than command
+-w <timeout> : wait x mS before cooking prompt
+
