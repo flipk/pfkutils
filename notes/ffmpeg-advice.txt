@@ -1,0 +1,125 @@
+
+https://superuser.com/questions/1556953/why-does-preset-veryfast-in-ffmpeg-generate-the-most-compressed-file-compared
+
+Lossy compression is a tradeoff between bitrate (file size) and
+quality, not just about getting the smallest files. If that's all you
+wanted, use -preset veryslow -crf 51 (and optionally downscale to
+256x144) to get a very tiny file that's mostly just blurred blobs with
+no detail.
+
+Encoding is a 3-way tradeoff of CPU time against quality against
+bitrate, very different from lossless compression like zip where file
+size is how you measure "best" compression, and is what you trade off
+vs. time in a 2-way tradeoff.1 Or 3-way if compression and
+decompression speed are independent...
+
+-preset veryslow gives you the best tradeoff x264 can offer2, by
+ spending more CPU time searching for ways to represent more detail
+ per bit. (i.e. best tradeoff of rate per distortion).
+
+This is mostly orthogonal to rate-control, which decides how many
+total bits to spend. x264' default rate-control is CRF 23 (ffmpeg -crf
+23); if you want smaller files, use -preset veryslow -crf 26 or
+something to spend fewer bits for the same complexity, resulting in
+more blurring. It's logarithmic so bumping up the CRF by a few numbers
+can change the bitrate by a factor of 2. For nearly transparent
+quality, -crf 18 or 20 is often good, but costs more bitrate.
+
+CRF mode is not true constant-quality (SSIM, PSNR, or any other
+metric). With faster encoding presets, x264 uses a simpler
+decision-making process to decide how / where to spend bits, resulting
+in some variation in bitrate for the same CRF setting.
+
+With different search tools to find redundancy as @szatmary explains,
+a higher preset might find a much smaller way to encode something that
+only looks slightly worse. Or a way to encode some blocks that looks
+much better but is only slightly larger. Depending which way these
+things go on average, the same CRF at different quality presets will
+have different quality and different bitrate.
+
+That's why you don't get progressively smaller files at identical
+quality; -preset veryfast typically looks worse . -preset ultrafast is
+usually noticeably bad even at high bitrate, but other presets can
+look as good as veryfast if you spend much more bitrate.
+
+Smaller file doesn't mean "better compression". Remember that quality
+is also variable. If you used ffmpeg -i in.mp4 -ssim 1 -tune ssim
+-preset veryslow out.mkv to get libx264 to calculate the SSIM visual
+quality metric, you'll find that veryslow has better quality per
+bitrate than veryfast. (If you're benchmarking quality, do it at fixed
+bitrate, i.e. 2-pass not CRF. See
+https://trac.ffmpeg.org/wiki/Encode/H.264)
+
+Keep in mind that psychovisual optimizations that make images look
+better to humans (like -psy-rd=1.0:0.15) can score worse on some
+quality metrics, so for real use you don't want -tune ssim. Psy-rd
+means to take human perception into account when optimizing the rate
+vs. distortion tradeoff. AQ (adaptive quantization) is another psy
+optimization, but one that SSIM is sophisticated enough to recognize
+as beneficial, unlike the simpler PSNR quality metric.
+
+Humans tend to perceive high (spatial) frequency noise as detail if
+it's small-scale, even if it's not the same detail as in the source
+image. And our eyes like detail instead of blurring. e.g. fringing and
+ringing artifacts from quantizing = rounding the DCT coefficients can
+actually look better than just blurring everything, if they're
+minor. Stuff that looks worse when you pause and zoom in can trick
+your eye pleasantly when you just watch normally. (h.264 has a
+deblocking filter in-loop, applied before frames are displayed and
+used as references, so it more easily avoids blocking than earlier
+codecs like DivX / h.263. Cranking that up can just blur everything at
+low bitrate).
+
+The idea here is similar to what MP3 and other advance audio codecs do
+for sound, except there's more room for psychoacoustic optimization
+because loud sounds really stop ears from hearing quiet stuff at
+nearby frequencies.
+
+If you're encoding once to keep the result for a long time, and/or
+serve it up over the internet, use -preset veryslow. Or at least
+-preset medium. You pay the CPU cost once, and reap the savings in
+file size (for a given quality) repeatedly.
+
+But if you're only going to watch an encode once, e.g. to put a video
+on a mobile device where you'll watch it once then delete it, then
+-preset faster -crf 20 makes sense if you have the storage space. Just
+spend extra bits.
+
+Footnote 1: In lossless compression, you trade off file size vs. speed
+of compression and/or decompression (which can be different; some
+codecs are very fast to decompress even if they allow good slow
+compression). Actually RAM usage / cache footprint can also be a
+variable if you want to get into that level of detail. In lossless
+compression, quality is fixed at "perfect", like x264 -qp 0
+
+h.264 decode performance can vary some with number of reference
+frames, more having a larger memory footprint and thus maybe more
+cache misses for a CPU decoder. But often h.264 is decoded by
+hardware. As with many lossless compression schemes, big changes in
+decode performance are only had with totally different codecs (like
+h.265), not different options for the same codec. Extra encode time is
+spent searching for different ways to encode the same bits, but
+there's only one way to decode.
+
+And yes, h.264 has a lossless mode, as part of the Hi444PP
+profile. No, you don't want to use it over the internet; many decoders
+other than FFmpeg lack support for that special feature, and the
+bitrate is enormous, like 100 to 200 Mbit/s for 1080p30 YUV 4:2:0 or
+RGB 4:4:4. How to create an uncompressed AVI from a series of 1000's
+of PNG images using FFMPEG has some test results from the Sintel
+trailer.
+
+Footnote 2: Other codecs like h.265 (with the x265 encoder) or VP9 can
+offer even better rate distortion tradeoffs, but at the cost of much
+more CPU time to encode. For a fixed encode time, I'm not sure if
+there's any advantage to x265 over x264. But decoder compatibility
+with h.265 is much less widespread than h.264.
+
+Decode compatibility is very good for h.264 main profile, and
+hopefully also high profile these days. (8x8 DCT is most useful for
+high resolutions like 1080p and especially 4k.) x264's default is high
+profile. Some obsolete mobile devices might only have hardware decode
+for h.264 baseline profile, but that's significantly worse quality per
+bitrate (no B-frames, and no CABAC, only the less efficient CAVLC for
+the final step of losslessly encoding structs into a bitstream.)
+
