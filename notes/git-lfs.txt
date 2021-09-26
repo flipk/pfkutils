@@ -1,0 +1,20 @@
+
+A git trick for getting a single LFS file
+
+make temp dir
+git init
+git remote add origin $REMOTE
+git archive --remote=$REMOTE $TREEISH $* | tar xvf -
+MATCHES=$(grep --files-with-matches --recursive "oid sha256" .)
+for FILE in $MATCHES; do
+    SHA=$(cat $FILE)
+    if [ -f ../$FILE ]; then
+        PREV_SHA=$(cat ../$FILE | git lfs clean $FILE)
+        if [ "$PREV_SHA" == "$SHA" ]; then
+            cp ../$FILE $FILE
+            continue
+        fi
+    fi
+    echo "$SHA" | git lfs smudge $FILE > $FILE
+done
+
