@@ -1,33 +1,66 @@
+#ifndef COST_THRESHOLD
+#define COST_THRESHOLD 10
+#endif
 
 /*
+ * to find the ideal pfk arch, we want to find a subdir that best
+ * matches the arch we're actually on. when automated patches update
+ * the linux kernel, a patch level increments but the major does not.
+ *
+ * this code works by using approximate string matching (described in
+ * more detail below) to locate several candidates which are
+ * "closest".  next, we extract "place values" for the numbers in the
+ * strings.  e.g. the string "Linux-5.10.6-200.fc33.x86_64" contains
+ * the following place values: 5, 10, 6, 200, 33, 86, 64.  (In this
+ * case the x86_64 is not relevant, but since they're so far to the
+ * right they don't play much of a role; if you have a pfkdir with
+ * lots of 'x86'_64 and also lots of 'i686', hopefully the approximate
+ * matching code percolates the matching CPU types to the top anyway.
+ *
+ * we then construct a single 64-bit integer using these place values
+ * by bitshifting them in. we figure out how many bits the first place
+ * requires (i.e. '5' requires 3 bits, '10' requires 4, and '200' requires
+ * 8 bits) and then shift the values together.
+ *
+ * note that we have to measure the bitwidths of every place value of
+ * every candidate, and pick the max bitwidth of that place value in
+ * all the candidates, before we shift any of them, because the nth
+ * place value of every candidate must be bitshifted to the same
+ * position.
+ *
+ * now, each entry can be numerically compared. the largest pvalue
+ * that doesn't go over the desired arch's pvalue wins.
+ *
+ * ======================================================================
+ *
  * this file contains an implementation of the "approximate string
- * matching" bestmatch algorithm as described in the class of
- * Computer Science 311, as taught at Iowa State University by
- * Mr Fernandez-Baca in spring semester 1997.
+ * matching" bestmatch algorithm as described in the class of Computer
+ * Science 311, as taught at Iowa State University by Mr
+ * Fernandez-Baca in spring semester 1997.
  *
- * implemented by Phillip F Knaack, copyright 1997-2021.
- * do with this as you like, but just don't claim you wrote it.
+ * implemented by Phillip F Knaack, copyright 1997-2021 as homework
+ * for that class.  do with this as you like, but just don't claim you
+ * wrote it.
  *
- * this algorithm constructs a two-dimensional array
- * of size m+1 by n+1, where m is the strlen of the text,
- * and n is the strlen of the pattern to search for in the text.
+ * this algorithm constructs a two-dimensional array of size m+1 by
+ * n+1, where m is the strlen of the text, and n is the strlen of the
+ * pattern to search for in the text.
  *
  * a pointer is started at the upper left.  a move to the right
  * indicates moving forward in the text by one character.  a move
- * downward indicates moving forward in the pattern.  at each
- * element, the value stored there indicates the number of
- * "corrections" which must be made to cause the pattern to match
- * the text.
+ * downward indicates moving forward in the pattern.  at each element,
+ * the value stored there indicates the number of "corrections" which
+ * must be made to cause the pattern to match the text.
  *
  * "corrections" come in three flavors.  first, substituting a letter.
  * second, inserting a "blank" into the text to change the lineup of
  * the text and pattern. and third, by inserting a "blank" into the
  * pattern to change the lineup with the text.
  *
- * using this matrix, all possible combinations of this are calculated,
- * by using the following rule:
- *  the value of an element of the matrix is the smallest of the
- *  following three cases.
+ * using this matrix, all possible combinations of this are
+ * calculated, by using the following rule:
+ *   the value of an element of the matrix is the smallest of the
+ *   following three cases.
  *      1) if the character in the text at that position matches
  *         the character in the pattern, add zero to the value to the
  *         upper left.  if they do not match, add 1 to the value to the
@@ -41,17 +74,20 @@
  *         this corresponds to adding a space in the text.
  *
  * when all elements of the matrix are calculated, the value in the
- * bottom right element is the number of corrections which must be made
- * for the best possible match between the string and the pattern.
+ * bottom right element is the number of corrections which must be
+ * made for the best possible match between the string and the
+ * pattern.
  *
- * also, an extension to this algorithm is that at each element we store
- * the case (1, 2, or 3) which we used to obtain that value.  then, the
- * "path" can be traced backwards from the bottom right element to the
- * first character of the text which is matched by the pattern.
+ * also, an extension to this algorithm is that at each element we
+ * store the case (1, 2, or 3) which we used to obtain that value.
+ * then, the "path" can be traced backwards from the bottom right
+ * element to the first character of the text which is matched by the
+ * pattern.
  */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
@@ -63,7 +99,7 @@
 struct bestmatch {
     int match_start;
     int match_end;
-    int approx;
+    int cost; // how many edits had to be made?
 };
 
 static void
@@ -82,7 +118,7 @@ bestmatch_cost( const char * text, const char * pattern,
     if ((m = strlen(text)) < n)
     {
         results->match_start = results->match_end = 0;
-        results->approx = n;
+        results->cost = n;
         return;
     }
 
@@ -248,35 +284,124 @@ bestmatch_cost( const char * text, const char * pattern,
 
     results->match_start = j - 1;
     results->match_end   = end_match - 1;
-    results->approx  = answer[IND(n,m)].value;
+    results->cost        = answer[IND(n,m)].value;
 
     free( answer );
 }
 
-static void
-print_matched_string( struct bestmatch * bm, char * line )
-{
-    int i;
+#define MAX_PVS 10
 
-    for (i=0; i < bm->match_start; i++)
-        putchar(line[i]);
-    printf("%c[7m", 27);
-    for (; i <= bm->match_end; i++)
-        putchar(line[i]);
-    printf("%c[m", 27);
-    for (; line[i] != 0; i++)
-        putchar(line[i]);
+struct candidate {
+    struct candidate * next;
+    char               name      [512];
+    int                cost;
+    uint64_t           pvs       [MAX_PVS];
+    int                bitwidths [MAX_PVS];
+    int                num_pvs;
+    uint64_t           pvalue;
+};
+
+static int
+calculate_width(int val)
+{
+    int ret = 0;
+    while (val != 0)
+    {
+        val >>= 1;
+        ret++;
+    }
+    return ret;
 }
 
-// NOTE for the problem of find-pfk-pf, agrep is not necessarily
-//      the right answer. probably would be better to understand
-//      number<separator>number<separator>number and sort them by
-//      highest top.major.minor.patch, but for now it will have to do.
+static void
+extract_pvs(struct candidate *c)
+{
+    int in_digit = 0;
+    const char * cp = c->name;
+
+    c->num_pvs = 0;
+    while (1)
+    {
+        // the loop is oriented this way on purpose, to
+        // process the tailing nul in the not-digit code.
+        // easiest way i could think of to finish every pv.
+        if (isdigit(*cp))
+        {
+            int d = (*cp - '0');
+            if (in_digit == 0)
+                // starting a new place
+                c->pvs[c->num_pvs] = d;
+            else
+                // continuing a place already started.
+                c->pvs[c->num_pvs] = (c->pvs[c->num_pvs] * 10) + d;
+            in_digit = 1;
+        }
+        else
+        {
+            if (in_digit)
+            {
+                // finishing a place
+                c->bitwidths[c->num_pvs] =
+                    calculate_width(c->pvs[c->num_pvs]);
+                if (++c->num_pvs >= MAX_PVS)
+                {
+                    fprintf(stderr, "OUT OF PVS\n");
+                    break;
+                }
+            }
+            in_digit = 0;
+        }
+        if (*cp == 0)
+            break;
+        cp++;
+    }
+}
+
+static void
+normalize_bitwidths(struct candidate *cands)
+{
+    int bitwidths[MAX_PVS];
+    int num_pvs = 0;
+    int ind;
+    struct candidate *c;
+
+    memset(bitwidths, 0, sizeof(bitwidths));
+
+    // find the largest bitwidth for each place
+    // across all candidates.
+    for (c = cands; c; c = c->next)
+    {
+        if (num_pvs < c->num_pvs)
+            num_pvs = c->num_pvs;
+        for (ind = 0; ind < c->num_pvs; ind++)
+            if (bitwidths[ind] < c->bitwidths[ind])
+                bitwidths[ind] = c->bitwidths[ind];
+    }
+
+    // now go back and calculate pvalues for each
+    // candidate using the max-bitwidths we just
+    // finished measuring.
+    for (c = cands; c; c = c->next)
+    {
+        uint64_t pvalue = 0;
+        int bitpos = 64;
+        for (ind = 0; ind < num_pvs; ind++)
+        {
+            bitpos -= bitwidths[ind];
+            pvalue |= (c->pvs[ind] << bitpos);
+        }
+        c->pvalue = pvalue;
+    }
+}
 
 int
 main(int argc, char ** argv)
 {
     int ret = 1;
+    struct candidate arch;
+    struct candidate * c, * best_c, * nc;
+    struct candidate * cands, ** pnext_cands;
+    const char * dirpath;
 
     if (argc != 3)
     {
@@ -284,12 +409,7 @@ main(int argc, char ** argv)
         return ret;
     }
 
-    const char * dirpath = argv[1];
-    const char * arch = argv[2];
-
-    fprintf(stderr, "looking for pfkarch '%s' in dir '%s'\n",
-            arch, dirpath);
-
+    dirpath = argv[1];
     if (chdir(dirpath) < 0)
     {
         int e = errno;
@@ -298,9 +418,12 @@ main(int argc, char ** argv)
         return 1;
     }
 
-    char best[512];
-    int cost = 99999;
-    best[0] = 0;
+    strncpy(arch.name, argv[2], sizeof(arch.name));
+    arch.name[sizeof(arch.name)-1] = 0;
+    extract_pvs(&arch);
+
+    cands = NULL;
+    pnext_cands = &cands;
 
     DIR * d = opendir(".");
     if (d)
@@ -327,18 +450,67 @@ main(int argc, char ** argv)
                 continue;
             }
 
-            bestmatch_cost( pfent, arch, &bm );
-            fprintf(stderr, "%s: %d edits\n", pfent, bm.approx);
-            if (bm.approx < cost)
+            // note we used stat, not lstat, so this returns
+            // "DIR" for a symlink to a dir, which is what
+            // we want -- many pfk arches are symlinks to dirs.
+            if (!S_ISDIR(sb.st_mode))
             {
-                strncpy(best, pfent, sizeof(best));
-                best[sizeof(best)-1] = 0;
-                cost = bm.approx;
+                // not a dir, skipping
+                continue;
+            }
+
+            bestmatch_cost( pfent, arch.name, &bm );
+            if (bm.cost < COST_THRESHOLD)
+            {
+                c = malloc(sizeof(struct candidate));
+                c->next = NULL;
+                c->cost = bm.cost;
+                strncpy(c->name, pfent, sizeof(c->name));
+                c->name[sizeof(c->name)-1] = 0;
+                c->pvalue = 0;
+                extract_pvs(c);
+                *pnext_cands = c;
+                pnext_cands = &c->next;
             }
         }
         closedir(d);
-        printf("%s", best);
+
+        // the input arch has to be among the normalized
+        // values, so put the linked list in arch's 'next'
+        // and pass it.
+        arch.next = cands;
+        normalize_bitwidths(&arch);
+
+        best_c = NULL;
+
+        for (c = cands; c; c = c->next)
+        {
+            if (c->pvalue > arch.pvalue)
+            {
+                // too new! reject
+            }
+            else if (best_c == NULL)
+            {
+                // first best
+                best_c = c;
+            }
+            else if (c->pvalue > best_c->pvalue)
+            {
+                // new best
+                best_c = c;
+            }
+        }
+        if (best_c)
+            printf("%s\n", best_c->name);
         ret = 0;
+
+        // release memory. technically don't have to if we're
+        // just about to exit(2) anyway, but i'm pedantic.
+        for (c = cands; c; c = nc)
+        {
+            nc = c->next;
+            free(c);
+        }
     }
     else
     {
