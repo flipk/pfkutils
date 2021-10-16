@@ -648,7 +648,7 @@ WebFastCGIConnection :: decodeInput(void)
         return false;
     }
 
-    unsigned char * inbuf = (unsigned char *) stdinBuffer.c_str();
+    const char * inbuf = stdinBuffer.c_str();
 
     std::string decodeBuf;
     int inpos = 0;
@@ -789,7 +789,7 @@ WebAppConnectionDataFastCGI :: sendMessage(const WebAppMessage &m)
     b64_str.resize((((left-1)/3)+1)*4);
 
     unsigned char * inbuf = (unsigned char *) m.buf.c_str();
-    unsigned char * outbuf = (unsigned char *) b64_str.c_str();
+    char * outbuf = (char*) b64_str.c_str();
 
     for (quant = 0; left > 0; quant++, left -= 3)
     {

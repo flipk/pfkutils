@@ -210,7 +210,7 @@ WebSocketServerConn :: send_handshake_response(void)
 
 #define SHA1HashSize 20
     uint8_t digest[SHA1HashSize];
-    uint8_t digest_b64[128];
+    char digest_b64[128];
 
     MBEDTLS_SHA1( (const unsigned char *) tempbuf.str().c_str(),
                   tempbuf.str().size(), digest );
@@ -229,7 +229,7 @@ WebSocketServerConn :: send_handshake_response(void)
         "HTTP/1.1 101 Switching Protocols\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
-        "Sec-WebSocket-Accept: " + ((char*) digest_b64) + "\r\n" +
+        "Sec-WebSocket-Accept: " + digest_b64 + "\r\n" +
         "\r\n";
 
     if (verbose)

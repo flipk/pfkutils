@@ -347,7 +347,7 @@ WebSocketClient :: generateWsHeaders(ostringstream &hdrs)
                   secWebsocketKey.size(),
                   digest );
 
-    uint8_t digest_b64[128];
+    char digest_b64[128];
 
     memset(digest_b64,  0, sizeof(digest_b64));
     int i, o;
@@ -359,7 +359,7 @@ WebSocketClient :: generateWsHeaders(ostringstream &hdrs)
         b64_encode_quantum(digest + i, len, digest_b64 + o);
     }
 
-    secWebsocketKeyResponse = (char*) digest_b64;
+    secWebsocketKeyResponse = digest_b64;
 }
 
 /*virtual*/

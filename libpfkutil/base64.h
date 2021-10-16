@@ -28,22 +28,40 @@ For more information, please refer to <http://unlicense.org>
 #ifndef __BASE64_H__
 #define __BASE64_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
+
+// note base64 strings are printable char strings and are thus
+//      represented by "char".  the binaries being encoded or
+//      decoded must be represented by "unsigned char" because
+//      it is binary. that is why you see char and unsigned char
+//      mixed here.
 
 int b64_is_valid_char( unsigned char c );
 
-/* return 4 if ok, 0 if not ok */
+// return 4 if ok, 0 if not ok
 int b64_encode_quantum( const unsigned char * in3, int in_len,
-                        unsigned char * out4 );
+                        char * out4 );
 
-/* return length of bytes decoded, or 0 if not ok */
-int b64_decode_quantum( const unsigned char * in4, unsigned char * out3 );
+// return length of bytes decoded (1, 2, or 3), or 0 if not ok
+int b64_decode_quantum( const char * in4, unsigned char * out3 );
 
+// init destlen to sizeof dest buffer, on return
+// it will be <= that size. destlen must be 4/3 bigger
+// than srclen, or this returns false.
+bool b64_encode(char *dest, int &destlen,
+                const unsigned char *src, int srclen);
 
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
+// init destlen to sizeof dest buffer, on return
+// it will be <= that size. destlen must be at least
+// 3/4 of srclen, or this returns false.
+// also returns false if src contains non-base64 chars.
+bool b64_decode(unsigned char *dest, int &destlen,
+                const char *src, int srclen);
+
+// there's no reason this will fail.
+void b64_encode(std::string &dest, const std::string &src);
+
+// this will return false if src has non-base64 chars in it.
+bool b64_decode(std::string &dest, const std::string &src);
 
 #endif /* __BASE64_H__ */
