@@ -1,3 +1,4 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
 
 DEBUG_H_MACRO_GENERATION=y
 

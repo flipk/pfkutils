@@ -1,0 +1,119 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+PFKUTILS_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+PFKUTILS_COMMIT = $(shell git rev-parse HEAD)
+
+PROG_TARGETS += pfkutils
+pfkutils_TARGET = $(OBJDIR)/pfkutils
+pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
+	-Ilibpfkfb -Ilibpfkdll2 $(MBEDTLS_INCS)
+pfkutils_CSRCS = \
+	main/crnl.c main/random-hex.c main/fmtsdiff.c \
+	main/genpw.c main/xtermbar.c main/waitpid.c 
+ifeq ($(PFK_BUILD_slowlink),1)
+pfkutils_CXXSRCS += main/slowlink.cc
+endif
+ifeq ($(PFK_BUILD_pfkstat),1)
+pfkutils_CSRCS += main/pfkstat.c
+endif
+ifeq ($(PFK_BUILD_he),1)
+pfkutils_CSRCS += main/he.c
+pfkutils_LIBNCURSES= -lncurses
+endif
+ifeq ($(PFK_BUILD_sudo),1)
+pfkutils_CSRCS += main/sudo.c
+endif
+ifeq ($(PFK_BUILD_treescan),1)
+pfkutils_CXXSRCS += main/treescan.cc
+endif
+ifeq ($(PFK_BUILD_ts2),1)
+pfkutils_CXXSRCS += main/ts2.cc
+endif
+ifeq ($(PFK_BUILD_checksize),1)
+pfkutils_CSRCS += main/checksize.c
+endif
+ifeq ($(PFK_BUILD_deduplifier),1)
+pfkutils_CXXSRCS += \
+	main/dedup1.cc \
+	main/dedup2.cc
+endif
+pfkutils_CXXSRCS += \
+	main/rmstar_new.cc main/main.cc
+ifeq ($(PFK_BUILD_libpfkfb),1)
+pfkutils_CXXSRCS += main/fbcompact.cc main/fbdump.cc main/btdump.cc
+endif
+ifeq ($(PFK_BUILD_sessionmgr),1)
+pfkutils_CXXSRCS += main/sessionManager.cc 
+endif
+
+ifeq ($(PFK_BUILD_spinner),1)
+pfkutils_CXXSRCS += main/spinner.cc
+endif
+
+
+ifeq ($(PFK_BUILD_xrandr),1)
+pfkutils_CXXSRCS += main/sessionXrandr.cc 
+pfkutils_LIBXRANDR= -lXrandr
+pfkutils_LIBX11= -lX11
+endif
+ifeq ($(PFK_BUILD_do_fft),1)
+PROG_TARGETS += do_fft
+do_fft_TARGET = $(OBJDIR)/do_fft
+do_fft_CXXSRCS = main/do_fft.cc
+do_fft_LIBS = -lfftw3
+do_fft_INSTALL = 1
+endif
+pfkutils_HDRS = \
+	$(OBJDIR)/main/programs.h
+pfkutils_LIBS += \
+	$(pfkutils_LIBNCURSES) $(pfkutils_LIBZ) \
+	$(pfkutils_LIBXRANDR) $(pfkutils_LIBX11) \
+	$(pfkutils_LIBHILITE) $(pfkutils_LIBUTILS) $(pfkutils_LIBFFTW) \
+	$(pfkutils_LIBPROTOBUF) $(MBEDTLS_LIBS) -lpthread -lrt
+pfkutils_DEPLIBS = \
+	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
+	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
+	$(pfktop_TARGET) $(libi2_TARGET) \
+	$(libampfk_TARGET) $(syslog_TARGET) \
+	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
+	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
+	$(libi3tcp_TARGET) $(libi3udp_TARGET) $(libi3_TARGET) \
+	$(pfkutils_LIBPROTOSSL) $(libpfkutil_TARGET)
+pfkutils_DEFS = \
+	-DPFKUTILS_BRANCH=\"$(PFKUTILS_BRANCH)\" \
+	-DPFKUTILS_COMMIT=\"$(PFKUTILS_COMMIT)\" \
+	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\" \
+	-DGIT_SRC_URL=\"$(GIT_SRC_URL)\"
+pfkutils_INSTALL = 1
+pfkutils_POSTINSTALL += pfkutils-post-install
+
+pfkutils-post-install:
+	@echo setting up pfkutils symlinks
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -dellinks
+ifeq ($(PFK_BUILD_sudo),1)
+	$(Q)cd $(INSTALL_BIN_DIR) && \
+		if [ -f pfkutils.old ] ; then \
+			ln -s pfkutils.old sudo ; \
+			./sudo chown root pfkutils ; \
+			./sudo chmod 4755 pfkutils ; \
+		fi ; true
+	@echo ""
+	@echo "*** also, if not already done, perform the following as root:"
+	@echo "     chown root $(INSTALL_BIN_DIR)/pfkutils"
+	@echo "     chmod 4755 $(INSTALL_BIN_DIR)/pfkutils"
+	@echo ""
+endif
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
+	$(Q)cp Makefile.inc $(prefix)
+
+POSTINSTALL += environ_install scripts_install
+
+ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
+# note cygwin doesn't support this, so it is disabled on cygwin.
+POSTALL += pfkutils-makelinks
+
+pfkutils-makelinks: $(pfkutils_TARGET)
+	@echo making pfkutils program links in $(OBJDIR)/bin
+	$(Q)cd $(OBJDIR) && rm -rf bin && mkdir bin && cd bin && \
+		ln -s ../pfkutils && ./pfkutils -makelinks
+endif

@@ -1,0 +1,48 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_libpfkfb),1)
+
+LIB_TARGETS += libpfkfb
+libpfkfb_TARGET = $(OBJDIR)/libpfkfb.a
+libpfkfb_INCS = -Ilibpfkutil -Ilibpfkdll2 $(MBEDTLS_INCS)
+libpfkfb_CXXSRCS = \
+	libpfkfb/BlockCache.cc libpfkfb/Btree.cc libpfkfb/BtreeNode.cc \
+	libpfkfb/FileBlockLocal.cc libpfkfb/FileBlockLocalAllocFree.cc \
+	libpfkfb/FileBlockLocalAuid.cc libpfkfb/FileBlockLocalAun.cc \
+	libpfkfb/FileBlockLocalBucket.cc libpfkfb/FileBlockLocalCompact.cc \
+	libpfkfb/FileBlockLocalDIB.cc libpfkfb/FileBlockLocalGetRel.cc \
+	libpfkfb/FileBlockLocalValidate.cc libpfkfb/FileBlock_iface.cc \
+	libpfkfb/PageCache.cc libpfkfb/PageIO.cc \
+	libpfkfb/PageIOFileDescriptor.cc libpfkfb/PageIONetworkTCPServer.cc \
+	libpfkfb/PageIODirectoryTree.cc \
+	libpfkfb/documentation.cc
+libpfkfb_INSTALL_HDRS = \
+	libpfkfb/BlockCache.h libpfkfb/Btree.h libpfkfb/BtreeDbClasses.h \
+	libpfkfb/FileBlockLocal.h libpfkfb/FileBlock_iface.h \
+	libpfkfb/PageCache.h libpfkfb/PageIO.h
+libpfkfb_HDRS = \
+	libpfkfb/BlockCache.h libpfkfb/BlockCache_internal.h \
+	libpfkfb/Btree.h libpfkfb/BtreeDbClasses.h \
+	libpfkfb/Btree_internal.h libpfkfb/FileBlockLocal.h \
+	libpfkfb/FileBlock_iface.h libpfkfb/PageCache.h \
+	libpfkfb/PageCache_internal.h libpfkfb/PageIO.h
+DOXYGEN_TARGETS += libpfkfb
+libpfkfb_DOXYFILE = libpfkfb/Doxyfile
+
+PROG_TARGETS += fb_testBtree
+fb_testBtree_TARGET = $(OBJDIR)/libpfkfb-testBtree
+fb_testBtree_INCS = $(libpfkfb_INCS) $(MBEDTLS_INCS)
+fb_testBtree_CXXSRCS = libpfkfb/testBtree.cc
+fb_testBtree_DEPLIBS = \
+	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
+fb_testBtree_LIBS += -lpthread $(MBEDTLS_LIBS)
+
+PROG_TARGETS += fb_testFileBlock
+fb_testFileBlock_TARGET = $(OBJDIR)/libpfkfb-testFileBlock
+fb_testFileBlock_INCS = $(libpfkfb_INCS) $(MBEDTLS_INCS)
+fb_testFileBlock_CXXSRCS = libpfkfb/testFileBlock.cc
+fb_testFileBlock_DEPLIBS = \
+	$(libpfkfb_TARGET) $(libpfkutil_TARGET) $(libpfkdll2_TARGET)
+fb_testFileBlock_LIBS += -lpthread $(MBEDTLS_LIBS)
+
+endif

@@ -1,0 +1,26 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_ampfk),1)
+
+LIB_TARGETS += libampfk
+libampfk_TARGET = $(OBJDIR)/libampfk.a
+libampfk_INCS = -Ilibpfkdll2 -I$(OBJDIR)/ampfk -Iampfk
+libampfk_LLSRCS = ampfk/tokenizer.ll
+libampfk_YYSRCS = ampfk/parser.yy
+libampfk_CXXSRCS = \
+	ampfk/automake_findtargets.cc ampfk/automake_ostream.cc \
+	ampfk/automake_output.cc ampfk/automake_parser.cc \
+	ampfk/automake_rules.cc ampfk/automake_utilities.cc \
+	ampfk/automake_variables.cc ampfk/condition.cc ampfk/main.cc
+libampfk_HDRS = \
+	ampfk/automake_parser.h ampfk/condition.h ampfk/tokenizer.h
+libampfk_DEFS = \
+	-Dyyparse=ampfk_yyparse -Dyylex=ampfk_yylex \
+	-Dyyerror=ampfk_yyerror -Dyyin=ampfk_yyin \
+	-Dyyout=ampfk_yyout -Dyylineno=ampfk_yylineno \
+	-Dyy_flex_debug=ampfk_yy_flex_debug \
+	-Dyynerrs=ampfk_yynerrs -Dyylval=ampfk_yylval \
+	-Dyychar=ampfk_yychar -Dyytext=ampfk_yytext \
+	-Dyyleng=ampfk_yyleng
+
+endif

@@ -1,0 +1,14 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_syslog),1)
+
+LIB_TARGETS += syslog
+syslog_TARGET = $(OBJDIR)/libsyslog.a
+syslog_CSRCS = \
+	syslog/config_file.c syslog/process_line.c syslog/strip_chars.c \
+	syslog/syslog-postprocess.c syslog/syslogd.c
+syslog_HDRS = \
+	syslog/config_file.h syslog/process_line.h syslog/rules.h \
+	syslog/strip_chars.h
+
+endif

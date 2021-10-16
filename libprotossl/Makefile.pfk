@@ -1,0 +1,47 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_protossl),1)
+
+LIB_TARGETS += libprotossl
+libprotossl_TARGET = $(OBJDIR)/libprotossl.a
+libprotossl_PROTOSRCS = libprotossl/protossldtlsqueuing.proto
+libprotossl_DEFS = $(MBEDTLS_FLAGS) \
+	-DPROTODTLSQUEUING_HDR=\"$(libprotossl_libprotossl/protossldtlsqueuing.proto_HDR)\"
+	-DTEST_PROTO_HDR=\"$(protossl_test_libprotossl/test_proto.proto_HDR)\"
+libprotossl_INCS = -Ilibprotossl -Ilibpfkutil $(PROTOBUF_INC) $(MBEDTLS_INCS)
+libprotossl_CXXSRCS = \
+	libprotossl/protosslcertparams.cc \
+	libprotossl/protosslconnclient.cc \
+	libprotossl/protosslconnserver.cc \
+	libprotossl/protossldtlsqueuing.cc \
+	libprotossl/protosslmsgs.cc
+libprotossl_HDRS = libprotossl/libprotossl.h
+libprotossl_INSTALL_HDRS = libprotossl/libprotossl.h
+libprotossl_POSTINSTALL = install_protossl
+
+# remove old protossl_make_keys.sh from previous version
+# of pfkutils and install new genkey.sh
+install_protossl:
+	@echo installing protossl
+	$(Q)rm -f $(HOME)/pfk/bin/protossl_make_keys.sh
+	$(Q)cp libprotossl/keys/genkey.sh $(HOME)/pfk/bin/protossl_genkey.sh
+	$(Q)chmod 755 $(HOME)/pfk/bin/protossl_genkey.sh
+
+PROG_TARGETS += protossl_test udp_proxy
+
+protossl_test_TARGET = $(OBJDIR)/protossl_test
+protossl_test_DEFS = $(MBEDTLS_FLAGS) \
+-DTEST_PROTO_HDR=\"$(protossl_test_libprotossl/test_proto.proto_HDR)\"
+protossl_test_INCS = -Ilibprotossl -Ilibpfkutil \
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
+protossl_test_PROTOSRCS = libprotossl/test_proto.proto
+protossl_test_CXXSRCS = libprotossl/test.cc
+protossl_test_DEPLIBS = $(libprotossl_TARGET) $(libpfkutil_TARGET)
+protossl_test_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread -lrt
+
+udp_proxy_TARGET = $(OBJDIR)/udp_proxy
+udp_proxy_CXXSRCS = misc/udp_proxy.cc
+udp_proxy_INCS = -Ilibpfkutil
+udp_proxy_LIBS = -lpthread -lrt
+
+endif

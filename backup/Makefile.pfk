@@ -1,0 +1,20 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_pfkbak),1)
+ifeq ($(PFK_BUILD_libpfkfb),0)
+$(error PFK_BUILD_libpfkfb is required for PFK_BUILD_pfkbak)
+endif
+
+LIB_TARGETS += libpfkbak
+libpfkbak_TARGET = $(OBJDIR)/libpfkbak.a
+libpfkbak_INCS = -Ilibpfkutil -Ilibpfkdll2 -Ilibpfkfb $(MBEDTLS_INCS)
+libpfkbak_CXXSRCS = \
+	backup/bakfile.cc backup/create.cc backup/deletevers.cc \
+	backup/export.cc backup/extract.cc backup/list.cc \
+	backup/main.cc backup/options.cc backup/update.cc \
+	backup/tarfile.cc
+libpfkbak_HDRS = \
+	backup/bakfile.h backup/database_items.h backup/options.h \
+	backup/tarfile.h
+
+endif

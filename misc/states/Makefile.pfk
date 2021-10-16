@@ -1,0 +1,63 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_states),1)
+
+LIB_TARGETS += states
+states_TARGET = $(OBJDIR)/libstates.a
+states_INCS = -Imisc/states
+states_CSRCS = \
+	misc/states/machine.c misc/states/main.c \
+	misc/states/parse_actions.c
+states_CXXSRCS =
+states_HDRS = \
+	misc/states/machine.h misc/states/parse_actions.h \
+	misc/states/wordentry.h
+states_YSRCS = \
+	misc/states/parser.y
+states_LSRCS = \
+	misc/states/tokenizer.l
+states_DEFS = \
+	-Dyyparse=states_yyparse -Dyylex=states_yylex \
+	-Dyyerror=states_yyerror -Dyyin=states_yyin \
+	-Dyyout=states_yyout -Dyylineno=states_yylineno \
+	-Dyy_flex_debug=states_yy_flex_debug \
+	-Dyynerrs=states_yynerrs -Dyylval=states_yylval \
+	-Dyychar=states_yychar -Dyytext=states_yytext \
+	-Dyyleng=states_yyleng
+
+states_EXTRAOBJS = \
+	$(OBJDIR)/states-misc_states_template_classH.o \
+	$(OBJDIR)/states-misc_states_template_classC.o \
+	$(OBJDIR)/states-misc_states_template_header.o \
+	$(OBJDIR)/states-misc_states_template_code.o \
+	$(OBJDIR)/states-misc_states_template_skel.o
+
+$(OBJDIR)/states-misc_states_tmpl_to_c: misc/states/tmpl_to_c.c
+	@echo making tmpl_to_c
+	$(Q)$(CC) $< -o $@
+
+# call STATES_TEMPL_SOURCE, c file, varname, template file
+define STATES_TEMPL_SOURCE
+
+$(OBJDIR)/states-misc_states_$(1:%.c=%.o): $(OBJDIR)/states-misc_states_$(1)
+	@echo compiling misc/states/$(1)
+	$(Q)$(CC) -c $$< -o $$@
+
+$(OBJDIR)/states-misc_states_$(1): $(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3)
+	@echo making misc/states/$(3)
+	$(Q)$(OBJDIR)/states-misc_states_tmpl_to_c misc/states/$(3) $(2) > $(OBJDIR)/states-misc_states_$(1)
+
+endef
+
+$(eval $(call STATES_TEMPL_SOURCE \
+,template_classH.c,baseclassH,pk_state_machine_base.h))
+$(eval $(call STATES_TEMPL_SOURCE \
+,template_classC.c,baseclassC,pk_state_machine_base.cc))
+$(eval $(call STATES_TEMPL_SOURCE \
+,template_header.c,template_header,template.header))
+$(eval $(call STATES_TEMPL_SOURCE \
+,template_code.c,template_code,template.code))
+$(eval $(call STATES_TEMPL_SOURCE \
+,template_skel.c,template_skel,template.skel))
+
+endif

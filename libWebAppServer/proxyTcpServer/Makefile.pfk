@@ -1,0 +1,44 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_libwas),1)
+ifeq ($(PFK_BUILD_wsproxy),1)
+
+LIB_TARGETS += wsProxyProtos
+
+wsProxyProtos_TARGET = $(OBJDIR)/libwsProxyProtos.a
+wsProxyProtos_PROTOSRCS = \
+	libWebAppServer/proxyTcpServer/proxyMsgs.proto
+
+PROG_TARGETS += wsProxyClient wsProxyServer
+
+wsProxyClient_TARGET = $(OBJDIR)/wsProxyClient
+wsProxyClient_INCS = \
+	-IlibWebAppServer -Ilibpfkutil \
+	-I$(OBJDIR)/libWebAppServer/proxyTcpServer \
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
+wsProxyClient_CXXSRCS = \
+	libWebAppServer/proxyTcpServer/proxyClientConn.cc \
+	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.cc \
+	libWebAppServer/proxyTcpServer/proxyClientMain.cc
+wsProxyClient_HDRS = \
+	libWebAppServer/proxyTcpServer/proxyClientConn.h \
+	libWebAppServer/proxyTcpServer/proxyClientTcpAcceptor.h
+wsProxyClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+wsProxyClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
+wsProxyClient_INSTALL = 1
+
+wsProxyServer_TARGET = $(OBJDIR)/wsProxyServer
+wsProxyServer_INCS = \
+	-IlibWebAppServer -Ilibpfkutil \
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
+wsProxyServer_CXXSRCS = \
+	libWebAppServer/proxyTcpServer/proxyServerConn.cc \
+	libWebAppServer/proxyTcpServer/proxyServerMain.cc
+wsProxyServer_HDRS = \
+	libWebAppServer/proxyTcpServer/proxyServerConn.h
+wsProxyServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+wsProxyServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET) $(wsProxyProtos_TARGET)
+wsProxyServer_INSTALL = 1
+
+endif
+endif

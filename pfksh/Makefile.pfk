@@ -1,0 +1,37 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_pfksh),1)
+
+LIB_TARGETS += libpfksh
+libpfksh_TARGET = $(OBJDIR)/libpfksh.a
+libpfksh_CSRCS = \
+	pfksh/alloc.c pfksh/c_ksh.c pfksh/c_sh.c pfksh/c_test.c \
+	pfksh/c_ulimit.c pfksh/edit.c pfksh/emacs.c pfksh/eval.c \
+	pfksh/exec.c pfksh/expr.c pfksh/history.c pfksh/io.c \
+	pfksh/jobs.c pfksh/lex.c pfksh/main.c pfksh/misc.c pfksh/path.c \
+	pfksh/shf.c pfksh/syn.c pfksh/table.c pfksh/trap.c pfksh/tree.c \
+	pfksh/tty.c pfksh/var.c pfksh/version.c
+libpfksh_CXXSRCS = \
+	pfksh/xtree.cc
+libpfksh_HDRS = \
+	pfksh/c_test.h pfksh/config.h pfksh/edit.h pfksh/emacs-gen.sh \
+	pfksh/emacs_autogen.h pfksh/expand.h pfksh/lex.h pfksh/proto.h \
+	pfksh/sh.h pfksh/shf.h pfksh/siglist-gen.sh pfksh/siglist_autogen.h \
+	pfksh/table.h pfksh/tree.h pfksh/tty.h
+libpfksh_DEFS = -DBUILD_DATE=\"pfksh-$(BUILD_DATE)\"
+pfkutils_LIBNCURSES= -lncurses
+POSTALL += $(OBJDIR)/pfksh.0
+pfkutils_POSTINSTALL += pfksh-install-man
+
+$(OBJDIR)/pfksh.0: pfksh/pfksh.man
+	nroff -man pfksh/pfksh.man > $(OBJDIR)/pfksh.0
+
+pfksh-install-man:
+	@mkdir -p $(INSTALL_MAN_DIR)/cat1
+	@mkdir -p $(INSTALL_MAN_DIR)/man1
+	@echo installing $(OBJDIR)/pfksh.0
+	@cp -f $(OBJDIR)/pfksh.0 $(INSTALL_MAN_DIR)/cat1
+	@echo installing pfksh/pfksh.man
+	@cp -f pfksh/pfksh.man $(INSTALL_MAN_DIR)/man1/pfksh.1
+
+endif

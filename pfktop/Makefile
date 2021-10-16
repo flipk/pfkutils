@@ -1,3 +1,4 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
 
 ifeq ($(TARGET),)
 OBJDIR = obj

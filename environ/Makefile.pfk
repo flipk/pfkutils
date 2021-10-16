@@ -1,0 +1,39 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+DOT_FILES = \
+	Xresources ctwmrc twmrc hexdump_format \
+	screenrc xinitrc
+
+PREPROC_DOT_FILES = \
+	kshrc profile xsession vnc-xstartup
+
+ELISP_FILES = emacs.el emacs-custom.el
+
+ELPA_ARCHIVE ?= elpa-2627.tar.bz2
+
+environ_install:
+	@echo installing environ
+	$(Q)cd environ && cp $(DOT_FILES) $(KSHRC_LOCAL) $(ETCDIR)
+	$(Q)cd environ/emacs && cp $(ELISP_FILES) $(EMACSDIR)
+	$(Q)tar -C $(HOME)/.emacs.d -xvf environ/emacs/$(ELPA_ARCHIVE)
+	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_DOT_FILES) $(ETCDIR)
+	$(Q)set -e ; cd $(HOME) ; $(foreach f,\
+		$(DOT_FILES) $(PREPROC_DOT_FILES), \
+		rm -f .$f ; ln -s $(ETCDIR)/$f .$f ;) true
+	$(Q)set -e ; cd $(HOME) ; rm -rf .kshrc.local .emacs .elisp ; \
+		ln -s $(ETCDIR)/$(KSHRC_LOCAL) .kshrc.local ; \
+		ln -s $(EMACSDIR) .elisp ; \
+		ln -s .elisp/emacs.el .emacs
+	$(Q)set -e ; cd $(HOME)/.vnc ; rm -f xstartup ; \
+		ln -s $(ETCDIR)/vnc-xstartup xstartup ; \
+		chmod u+x $(ETCDIR)/vnc-xstartup \
+			$(ETCDIR)/xinitrc $(ETCDIR)/xsession
+	$(Q)set -e ; tar -C environ -cf - fluxbox | tar -C $(ETCDIR) -xf -
+	$(Q)cd $(HOME) ; rm -rf .fluxbox ; ln -s $(ETCDIR)/fluxbox .fluxbox
+	@cd $(ETCDIR) && \
+		tar cf ~/etc-backup.tar . && \
+		rm -rf $(ETCBAKDIR) && \
+		mkdir -p $(ETCBAKDIR) && \
+		cd $(ETCBAKDIR) && \
+		tar xf ~/etc-backup.tar && \
+		rm -f ~/etc-backup.tar

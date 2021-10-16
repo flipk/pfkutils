@@ -1,0 +1,53 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_libpfkthread),1)
+
+LIB_TARGETS += libpfkthread
+libpfkthread_TARGET = $(OBJDIR)/libpfkthread.a
+libpfkthread_INCS = \
+	-Ilibpfkthread -Ilibpfkthread/int -Ilibpfkdll2 -Ilibpfkutil
+libpfkthread_CXXSRCS = \
+	libpfkthread/pk_filedescs.cc libpfkthread/pk_filedescs_thread.cc \
+	libpfkthread/pk_messages.cc libpfkthread/pk_messages_ext.cc \
+	libpfkthread/pk_messages_ext_link_tcp.cc \
+	libpfkthread/pk_semaphores.cc libpfkthread/pk_threads.cc \
+	libpfkthread/pk_timers.cc libpfkthread/stringhash.cc
+libpfkthread_INSTALL_HDRS = \
+	libpfkthread/pk_semaphores.h \
+	libpfkthread/pk_messages.h \
+	libpfkthread/pk_filedescs.h \
+	libpfkthread/pk_messages_ext.h \
+	libpfkthread/pk_timers.h \
+	libpfkthread/pk_threads.h \
+	libpfkthread/stringhash.h
+libpfkthread_HDRS = \
+	libpfkthread/pk_semaphores.h \
+	libpfkthread/pk_messages.h \
+	libpfkthread/pk_filedescs.h \
+	libpfkthread/pk_messages_ext.h \
+	libpfkthread/pk_timers.h \
+	libpfkthread/pk_threads.h \
+	libpfkthread/stringhash.h \
+	libpfkthread/int/pk_filedescs_internal.h \
+	libpfkthread/int/pk_messages_internal.h \
+	libpfkthread/int/pk_threads_internal.h \
+	libpfkthread/int/pk_timers_internal.h
+
+###################
+
+LIBPFKTHR_TEST_TARGETS = \
+	test-1 test-2 test-3 test-4
+
+define BUILD_LIBPFKTHR_TEST_TARGET
+PROG_TARGETS += pfkthr_$(t)
+pfkthr_$(t)_TARGET = $(OBJDIR)/libpfkthread-$(t)
+pfkthr_$(t)_INCS = $(libpfkthread_INCS)
+pfkthr_$(t)_CXXSRCS = libpfkthread/$(t).cc
+pfkthr_$(t)_LIBS += -lpthread
+pfkthr_$(t)_DEPLIBS = $(libpfkthread_TARGET) $(libpfkdll2_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBPFKTHR_TEST_TARGETS),$(BUILD_LIBPFKTHR_TEST_TARGET)))
+
+endif

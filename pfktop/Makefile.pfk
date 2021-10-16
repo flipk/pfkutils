@@ -1,0 +1,13 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_pfktop),1)
+
+LIB_TARGETS += pfktop
+pfktop_TARGET = $(OBJDIR)/libpfktop.a
+pfktop_INCS = -Ilibpfkutil
+pfktop_CXXSRCS = pfktop/pfktop.cc pfktop/pfkrenice.cc \
+	pfktop/pidlist.cc pfktop/options.cc pfktop/screen.cc \
+	pfktop/fileparser.cc pfktop/tiddb.cc pfktop/tidentry.cc
+pfktop_HDRS = pfktop/options.h pfktop/pidlist.h pfktop/screen.h
+
+endif

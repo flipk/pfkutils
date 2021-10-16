@@ -1,0 +1,20 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+SCRIPT_FILES = \
+	architecture changed doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 \
+	git-diff-helper.sh git-merge-helper.sh make_linux_cscope mcs \
+	myemacs-checkout-helper myemacs-cscope-rebuild-helper \
+	pfkterm refresh set-background.sh myemacs-compile \
+	git-lsm git-lso git-mcs git-root x11-capture volmon.sh dodmsg \
+	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
+	fixup-worktree-submods.sh git-pfkwt
+PREPROC_SCRIPT_FILES = \
+	cs emacs-lone myemacs-cscope-helper myshell-launcher \
+	myshell pf_frontend
+
+scripts_install:
+	@echo installing scripts
+	$(Q)cd scripts && cp $(SCRIPT_FILES) $(SCRIPTS_DIR)
+	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
+	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
+		$(PREPROC_SCRIPT_FILES)

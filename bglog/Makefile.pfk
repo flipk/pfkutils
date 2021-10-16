@@ -1,0 +1,11 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_bglog),1)
+
+LIB_TARGETS += bglog
+bglog_TARGET = $(OBJDIR)/libbglog.a
+bglog_CSRCS = bglog/log.c bglog/main.c
+bglog_HDRS = bglog/config.h bglog/log.h
+pfkutils_LIBUTILS = -lutil
+
+endif

@@ -1,0 +1,71 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_libwas),1)
+
+LIB_TARGETS += libWebAppServer
+libWebAppServer_TARGET = $(OBJDIR)/libWebAppServer.a
+libWebAppServer_INCS = -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libWebAppServer_CXXSRCS = \
+	libWebAppServer/WebAppConnection.cc \
+	libWebAppServer/WebAppServer.cc \
+	libWebAppServer/WebAppServerConfig.cc \
+	libWebAppServer/WebFastCGIConnection.cc \
+	libWebAppServer/WebServerConnectionBase.cc \
+	libWebAppServer/WebSocketClient.cc \
+	libWebAppServer/WebSocketConnection.cc \
+	libWebAppServer/serverPorts.cc \
+	libWebAppServer/simpleWebSocket.cc \
+	libWebAppServer/simpleWebSocketClientConn.cc \
+	libWebAppServer/simpleWebSocketServerConn.cc
+libWebAppServer_INSTALL_HDRS = \
+	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
+	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
+	libWebAppServer/WebAppServerInternal.h \
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h \
+	libWebAppServer/simpleWebSocket.h
+libWebAppServer_HDRS = \
+	libWebAppServer/CircularReader.h libWebAppServer/FastCGI.h \
+	libWebAppServer/WebAppMessage.h libWebAppServer/WebAppServer.h \
+	libWebAppServer/WebAppServerInternal.h \
+	libWebAppServer/WebSocketClient.h libWebAppServer/serverPorts.h \
+	libWebAppServer/simpleWebSocket.h
+
+DOXYGEN_TARGETS += libwas
+libwas_DOXYFILE = libWebAppServer/Doxyfile
+
+###################
+
+LIBWAS_TEST_TARGETS= \
+	testUrlRegex CircularReaderTest wsClientTest wsServerTest
+
+define BUILD_LIBWAS_TEST_TARGET
+PROG_TARGETS += libwas_$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libWebAppServer-$(t)
+libwas_$(t)_INCS = $(libWebAppServer_INCS) $(MBEDTLS_INCS)
+libwas_$(t)_CXXSRCS = libWebAppServer/$(t).cc
+libwas_$(t)_LIBS += -lpthread $(MBEDTLS_LIBS)
+libwas_$(t)_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
+PROG_TARGETS += simpleWsTestClient simpleWsTestServer
+
+simpleWsTestClient_TARGET = $(OBJDIR)/simpleWsTestClient
+simpleWsTestClient_INCS = $(PROTOBUF_INC)
+simpleWsTestClient_CXXSRCS = libWebAppServer/simpleWsTestClient.cc
+simpleWsTestClient_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
+simpleWsTestClient_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
+simpleWsTestClient_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+simpleWsTestClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+
+simpleWsTestServer_TARGET = $(OBJDIR)/simpleWsTestServer
+simpleWsTestServer_INCS = $(PROTOBUF_INC)
+simpleWsTestServer_CXXSRCS = libWebAppServer/simpleWsTestServer.cc
+simpleWsTestServer_PROTOSRCS = libWebAppServer/proxyTcpServer/proxyMsgs.proto
+simpleWsTestServer_DEFS = -DPROXYMSGS_PB_H=\"$(simpleWsTestClient_libWebAppServer/proxyTcpServer/proxyMsgs.proto_HDR)\"
+simpleWsTestServer_DEPLIBS = $(libWebAppServer_TARGET) $(libpfkutil_TARGET)
+simpleWsTestServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
+
+endif

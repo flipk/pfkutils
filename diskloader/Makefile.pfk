@@ -1,0 +1,12 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_diskloader),1)
+
+LIB_TARGETS += diskloader
+diskloader_TARGET = $(OBJDIR)/libdiskloader.a
+diskloader_CXXSRCS = \
+	diskloader/file_obj.cc diskloader/main.cc diskloader/pseudo_random.cc
+diskloader_HDRS = \
+	diskloader/file_obj.h diskloader/pseudo_random.h
+
+endif

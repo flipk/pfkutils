@@ -1,0 +1,9 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+LIB_TARGETS += libi2
+libi2_TARGET = $(OBJDIR)/libi2.a
+libi2_INCS = -Ilibpfkutil
+libi2_CXXSRCS = \
+	i2/i2_options.cc i2/i2_main.cc \
+	i2/i2f_options.cc i2/i2f_main.cc
+libi2_HDRS = i2/i2_options.h i2/i2f_options.h

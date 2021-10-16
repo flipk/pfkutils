@@ -1,0 +1,19 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+LIB_TARGETS += libpfkdll2
+libpfkdll2_TARGET = $(OBJDIR)/libpfkdll2.a
+libpfkdll2_CXXSRCS = libpfkdll2/dll2_hash.cc 
+libpfkdll2_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
+libpfkdll2_INSTALL_HDRS = libpfkdll2/dll2.h libpfkdll2/dll2_btree.h
+
+PROG_TARGETS += dll2_test_btree
+dll2_test_btree_TARGET = $(OBJDIR)/libpfkdll2-test_btree
+dll2_test_btree_CXXSRCS = libpfkdll2/test_btree.cc
+
+PROG_TARGETS += dll2_test_hash
+dll2_test_hash_TARGET = $(OBJDIR)/libpfkdll2-test_hash
+dll2_test_hash_CXXSRCS = \
+	libpfkdll2/test_hash.cc libpfkdll2/test_hash_add.cc \
+	libpfkdll2/test_hash_del.cc
+dll2_test_hash_HDRS = libpfkdll2/test_hash.h
+dll2_test_hash_DEPLIBS = $(libpfkdll2_TARGET)

@@ -1,0 +1,10 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_hilite),1)
+
+LIB_TARGETS += libhilite
+libhilite_TARGET = $(OBJDIR)/libhilite.a
+libhilite_CXXSRCS = hilite/color.cc hilite/config_file.cc hilite/hilite.cc
+pfkutils_LIBHILITE = $(OBJDIR)/libhilite.a
+
+endif

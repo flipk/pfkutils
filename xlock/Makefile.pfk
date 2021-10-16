@@ -1,0 +1,19 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_xlock),1)
+
+PROG_TARGETS += xlock
+
+xlock_TARGET = $(OBJDIR)/xlock.bin
+xlock_CSRCS = xlock/flame.c xlock/hsbramp.c xlock/pyro.c xlock/resource.c xlock/rotor.c xlock/swarm.c xlock/usleep.c xlock/worm.c xlock/xlock.c
+xlock_HDRS = xlock/xlock.h
+xlock_INCS= -Ixlock
+xlock_LIBS= -lX11 -lm
+xlock_INSTALL = 1
+xlock_POSTINSTALL = xlock-postinstall
+
+xlock-postinstall:
+	@echo renaming xlock.bin to xlock
+	$(Q)mv $(INSTALL_BIN_DIR)/xlock.bin $(INSTALL_BIN_DIR)/xlock
+
+endif

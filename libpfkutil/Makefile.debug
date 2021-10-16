@@ -1,3 +1,4 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
 
 LIB= libpfkutil.a
 CSRCS=	md5.c m.c base64.c inet_aton.c regex.c
