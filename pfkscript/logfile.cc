@@ -71,8 +71,13 @@ printError(int e /*errno*/, const std::string &func)
 }
 
 LogFile :: LogFile(const Options &_opts)
-    : opts(_opts), counter(0), currentStream(NULL)
+    : opts(_opts)
 {
+    if (opts.maxSizeSpecified)
+        counter = 1;
+    else
+        counter = 0;
+    currentStream = NULL;
     stayClosed = false;
     initialized = false;
 }
@@ -92,22 +97,26 @@ LogFile :: init(void)
         logFilebase = opts.logfileBase.substr(slashPos+1);
     }
 
+    // look for previous log files, and if found,
+    // find the next counter value.
+    LfeList list;
+    globLogFiles(list);
+
+    int largest_counter = 0;
+    for (auto le : list)
+        if (le.numbered)
+            if (largest_counter < le.count)
+                largest_counter = le.count;
+    if (largest_counter != 0)
+        counter = largest_counter + 1;
+
     if (0) // debug
     {
         cout << "logdir = " << logDir << endl;
         cout << "logFilebase = " << logFilebase << endl;
-
-        LfeList list;
-        globLogFiles(list);
-
         cout << "glob matches:\n";
-        for (uint32_t ind = 0; ind < list.size(); ind++)
-        {
-            cout << "entry " << ind << ": "
-                 << list[ind].timestamp << ": "
-                 << list[ind].isOriginal << ": "
-                 << list[ind].filename << endl;
-        }
+        for (auto le : list)
+            cout << le << endl;
     }
     initialized = true;
 }
@@ -125,14 +134,16 @@ LogFile :: ~LogFile(void)
     while (zipHandles.size() > 0)
     {
         for (zipList::iterator it = zipHandles.begin();
-             it != zipHandles.end(); it++)
+             it != zipHandles.end();)
         {
             ZipProcessHandle * zph = it->second;
             if (zph->getDone())
             {
-                zipHandles.erase(it);
+                it = zipHandles.erase(it);
                 delete zph;
             }
+            else
+                it++;
         }
         usleep(100000);
     }
@@ -141,10 +152,13 @@ LogFile :: ~LogFile(void)
 void
 LogFile :: nextLogFileName(void)
 {
-    counter++;
     ostringstream ostr;
     ostr << logDir << "/" << logFilebase;
-    ostr << "." << setw(4) << setfill('0') << counter;
+    if (counter != 0)
+    {
+        ostr << "." << setw(4) << setfill('0') << counter;
+        counter++;
+    }
     currentLogFile = ostr.str();
 }
 
@@ -197,19 +211,35 @@ LogFile :: closeFile(void)
     return trimFiles();
 }
 
-LogFile::logFileEnt::logFileEnt(const std::string &_fname, time_t _t,
-                                bool _isOrig)
-    : filename(_fname), timestamp(_t), isOriginal(_isOrig)
+logFileEnt::logFileEnt(const std::string &_fname, time_t _t,
+                                bool _numbered, bool _zipped,
+                                int _count /*= 0*/)
+    : filename(_fname), timestamp(_t),
+      numbered(_numbered), zipped(_zipped), count(_count)
 {
 }
 
 bool
-LogFile::logFileEnt::sortTimestamp(const logFileEnt &a,
+logFileEnt::sortTimestamp(const logFileEnt &a,
                                    const logFileEnt &b)
 {
     // this sorts the list in reverse order, so the oldest
     // stuff is at the end of the list.
     return a.timestamp > b.timestamp;
+}
+
+std::ostream &
+operator<<(std::ostream &str, const logFileEnt &lfe)
+{
+    str << "log file entry: "
+        << lfe.filename
+        << ":"
+        << lfe.timestamp;
+    if (lfe.numbered)
+        str << ":numbered:" << lfe.count;
+    if (lfe.zipped)
+        str << ":zipped";
+    return str;
 }
 
 void
@@ -222,31 +252,42 @@ LogFile :: globLogFiles(LogFile::LfeList &list)
         struct dirent de;
         while (d.read(de))
         {
-            string dirFileName(de.d_name);
-            if (logFilebase.compare(0, baselen,
-                                    dirFileName,
+            string fileName(de.d_name);
+            size_t fnLen = fileName.length();
+            if (logFilebase.compare(0, baselen, fileName,
                                     0, baselen) == 0)
             {
-                dirFileName = logDir + "/" + dirFileName;
+                string dirFileName = logDir + "/" + fileName;
                 struct stat sb;
                 if (stat(dirFileName.c_str(), &sb) == 0)
                 {
-                    bool isOrig = false;
-                    size_t len = dirFileName.length();
-                    if (len >= 6)
+                    bool numbered = false;
+                    bool zipped = false;
+                    int countvalue = 0;
+
+                    // enough room for ".%04d" ?
+                    if (fnLen >= (baselen + 5))
                     {
-                        if (dirFileName[len-5] == '.' &&
-                            isdigit(dirFileName[len-1]) &&
-                            isdigit(dirFileName[len-2]) &&
-                            isdigit(dirFileName[len-3]) &&
-                            isdigit(dirFileName[len-4]))
-                        {
-                            isOrig = true;
-                        }
+                        char numStr[5];
+                        memcpy(numStr,
+                               fileName.c_str() + baselen + 1, 4);
+                        numStr[4] = 0;
+                        countvalue = atoi(numStr);
+                        if (countvalue != 0)
+                            numbered = true;
+                        else
+                            countvalue = 0;
                     }
+
+                    // enough room for another period?
+                    if (fnLen >= (baselen + 6))
+                        if (fileName[baselen + 5] == '.')
+                            zipped = true;
+
                     list.push_back(logFileEnt(dirFileName,
                                               sb.st_mtime,
-                                              isOrig));
+                                              numbered, zipped,
+                                              countvalue));
                 }
                 else
                     printError(errno, string("stat: ") + dirFileName);
@@ -285,7 +326,7 @@ LogFile :: trimFiles(void)
     {
         for (uint32_t ind = 0; ind < list.size(); ind++)
         {
-            if (list[ind].isOriginal)
+            if (list[ind].numbered && !list[ind].zipped)
             {
                 ZipProcessHandle * zph = new ZipProcessHandle(
                     opts, list[ind].filename);
@@ -306,14 +347,16 @@ LogFile :: periodic(FilenameList_t &list)
     if (currentStream)
         currentStream->flush();
     for ( zipList::iterator it = zipHandles.begin();
-          it != zipHandles.end(); it++)
+          it != zipHandles.end();)
     {
         if (it->second->getDone())
         {
             list.push_back(it->second->outputFilename());
             delete it->second;
-            zipHandles.erase(it);
+            it = zipHandles.erase(it);
         }
+        else
+            it++;
     }
 }
 
@@ -355,6 +398,8 @@ LogFile :: getFilename(void) const
 bool
 LogFile :: rolloverNow(void)
 {
+    if (counter == 0)
+        counter = 1;
     stayClosed = false;
     bool ret = closeFile();
     openFile();
@@ -373,6 +418,8 @@ LogFile :: closeNow(void)
 void
 LogFile :: openNow(void)
 {
+    if (counter == 0)
+        counter = 1;
     stayClosed = false;
     if (currentStream == NULL)
         openFile();

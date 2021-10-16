@@ -44,11 +44,13 @@ For more information, please refer to <http://unlicense.org>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <fstream>
+#include <sys/ioctl.h>
 
 using namespace std;
 
 class Pfkscript_program {
-    Options opts;
+    static Pfkscript_program *instance;
+    const Options opts;
     LogFile logfile;
     int listenPortFd;
     int listenDataPortFd;
@@ -57,6 +59,7 @@ class Pfkscript_program {
     struct termios old_tios;
     bool sttyWasRun;
     pxfe_ticker ticker;
+    pxfe_pipe winch_pipe;
     int master_fd;
     pid_t child_pid;
     struct remoteResponseInfo {
@@ -420,6 +423,36 @@ class Pfkscript_program {
             remoteResponsePending.erase(it);
         }
     }
+    static void sigwinch_handler(int sig)
+    {
+        if (instance)
+        {
+            char c = 1;
+            instance->winch_pipe.write(&c,1);
+        }
+    }
+    void handle_sigwinch(void)
+    {
+        char c;
+        winch_pipe.read(&c,1);
+        set_winsize();
+    }
+    void set_winsize(void)
+    {
+        struct winsize sz;
+        if (ioctl(0, TIOCGWINSZ, &sz) < 0)
+        {
+            return;
+//            char * errstring = strerror(errno);
+//            cerr << "failed to get winsz: " << errstring << endl;
+        }
+        if (ioctl(master_fd, TIOCSWINSZ, &sz) < 0)
+        {
+            return;
+//            char * errstring = strerror(errno);
+//            cerr << "failed to set winsz: " << errstring << endl;
+        }
+    }
 public:
     Pfkscript_program(int argc, char ** argv)
         : opts(argc-1,argv+1),
@@ -429,9 +462,11 @@ public:
         listenDataPortFd = -1;
         use_ctrl_sock = false;
         sttyWasRun = false;
+        instance = this;
     }
     ~Pfkscript_program(void)
     {
+        instance = NULL;
     }
     int main(void)
     {
@@ -441,7 +476,7 @@ public:
             return 1;
         }
 
-        if (0) // debug
+        if (1) // debug
             opts.printOptions();
 
         if (opts.isRemoteCmd)
@@ -524,23 +559,13 @@ public:
             sttyWasRun = true;
         }
 
-#if 0
-    struct sigaction act;
-    act.sa_handler = &Screen::sigwinch_handler;
-    sigfillset(&act.sa_mask);
-    act.sa_flags = SA_RESTART;
-    sigaction(SIGWINCH, &act, NULL);
-//static
-void
-Screen :: sigwinch_handler(int sig)
-{
-    int c = 1;
-    if (write(instance->fds[1], &c, 1) < 0)
-        cerr << "Screen::sigwinch: write failed\n";
-}
-#endif
+        struct sigaction act;
+        act.sa_handler = &Pfkscript_program::sigwinch_handler;
+        sigfillset(&act.sa_mask);
+        act.sa_flags = SA_RESTART;
+        sigaction(SIGWINCH, &act, NULL);
 
-        // TODO forward window size changes to child PTY
+        set_winsize();
 
         ticker.start(0,150000);
         while (!done)
@@ -558,6 +583,7 @@ Screen :: sigwinch_handler(int sig)
             if (use_ctrl_sock)
                 sel.rfds.set(control_sock.getFd());
             sel.rfds.set(ticker.fd());
+            sel.rfds.set(winch_pipe.readEnd);
             sel.tv.set(1,0);
 
             cc = sel.select();
@@ -581,6 +607,8 @@ Screen :: sigwinch_handler(int sig)
                 handle_listen_port();
             if (listenDataPortFd > 0 && sel.rfds.is_set(listenDataPortFd))
                 handle_listen_data_port();
+            if (sel.rfds.is_set(winch_pipe.readEnd))
+                handle_sigwinch();
         }
         ticker.stopjoin();
 
@@ -596,6 +624,8 @@ Screen :: sigwinch_handler(int sig)
         return 0;
     }
 };
+
+Pfkscript_program * Pfkscript_program::instance = NULL;
 
 extern "C" int
 pfkscript_main(int argc, char ** argv)

@@ -229,7 +229,7 @@ Options :: Options( int _argc, char ** _argv )
 }
 
 void
-Options :: printOptions(void)
+Options :: printOptions(void) const
 {
     if (isError)
     {
@@ -259,7 +259,7 @@ Options :: printOptions(void)
 }
 
 void
-Options :: printHelp(void)
+Options :: printHelp(void) const
 {
     cerr <<
 "\n"

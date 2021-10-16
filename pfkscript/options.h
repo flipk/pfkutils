@@ -45,8 +45,8 @@ class Options {
     bool getString(std::string &str); // return false if error
 public:
     Options(int argc, char ** argv);
-    void printHelp(void);
-    void printOptions(void);
+    void printHelp(void) const;
+    void printOptions(void) const;
 
     bool isError;
     bool isRemoteCmd;

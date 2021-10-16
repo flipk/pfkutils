@@ -54,10 +54,26 @@ public:
     const std::string &outputFilename(void) { return finalOutputFileName; }
 };
 
+struct logFileEnt {
+    logFileEnt(const std::string &_fname, time_t _t,
+               bool _numbered, bool _zipped,
+               int _count = 0);
+    std::string filename;
+    time_t timestamp;
+    bool numbered; // has ".%04d" suffix
+    bool zipped;
+    int count; // if numbered, what's the suffix#?
+    static bool sortTimestamp(const logFileEnt &a,
+                              const logFileEnt &b);
+};
+
+std::ostream &operator<<(std::ostream &str, const logFileEnt &lfe);
+
 class LogFile {
     const Options &opts;
     std::string logDir;
     std::string logFilebase;
+    // if counter == 0, we are not doing file suffixes.
     int counter;
     std::string currentLogFile;
     void nextLogFileName(void);
@@ -67,14 +83,6 @@ class LogFile {
     bool closeFile(void);
     // return true if a zip process was started
     bool trimFiles(void);
-    struct logFileEnt {
-        logFileEnt(const std::string &_fname, time_t _t, bool _isOrig);
-        std::string filename;
-        time_t timestamp;
-        bool isOriginal; // has ".%04d" suffix
-        static bool sortTimestamp(const logFileEnt &a,
-                                  const logFileEnt &b);
-    };
     typedef std::vector<logFileEnt> LfeList;
     void globLogFiles(LfeList &list);
     std::ostream * currentStream;
