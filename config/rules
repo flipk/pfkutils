@@ -60,7 +60,7 @@ define PFK_CONFIG_LINE
 	fi ; 
 endef
 
-$(CONFIG_H): Makefile config/always $(CONFIG_FILE) main/config.h.template
+$(CONFIG_H): Makefile config/rules $(CONFIG_FILE) main/config.h.template
 	$(Q)echo \#define PACKAGE_NAME \"pfkutils\" > $(CONFIG_H).tmp
 	$(Q)echo \#define PACKAGE_STRING \"pfkutils 3.33\" >> $(CONFIG_H).tmp
 	$(Q)$(foreach value,$(CONFIG_VALUES),$(PFK_CONFIG_LINE))
@@ -104,7 +104,7 @@ PREPROC_SOURCES = \
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
 define PREPROC_SUBST
-$(OBJDIR)/$(file): $(file).in config/always $(CONFIG_FILE)
+$(OBJDIR)/$(file): $(file).in config/rules $(CONFIG_FILE)
 	@$(foreach sw,$(BUILD_SWITCHES),\
 		if [ "x$(PFK_BUILD_$(sw))" = "x" ] ; then \
 			echo 'plz set PFK_BUILD_$(sw) in $(CONFIG_FILE)' ; \
