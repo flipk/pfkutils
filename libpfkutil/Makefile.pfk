@@ -32,7 +32,7 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/simpleUrl.h \
 	libpfkutil/asm_parser.h
 libpfkutil_HDRS = \
-	libpfkutil/BackTrace.h libpfkutil/HSM.h libpfkutil/LockWait.h \
+	libpfkutil/HSM.h libpfkutil/LockWait.h \
 	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
 	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
 	libpfkutil/dll3.h \
