@@ -3,6 +3,9 @@
 PFKUTILS_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 PFKUTILS_COMMIT = $(shell git rev-parse HEAD)
 
+OBJDIRS_TOMAKE += main
+PREPROC_SOURCES += main/programs.h main/sudo.h
+
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
 pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
@@ -105,8 +108,6 @@ ifeq ($(PFK_BUILD_sudo),1)
 endif
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
 	$(Q)cp Makefile.inc $(prefix)
-
-POSTINSTALL += environ_install scripts_install
 
 ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
 # note cygwin doesn't support this, so it is disabled on cygwin.

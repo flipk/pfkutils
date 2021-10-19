@@ -30,12 +30,16 @@ VNCDIR := $(HOME)/.vnc
 
 ##############################################
 
-installdirs:
-	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) $(ELPADIR) \
-		$(INSTALL_BIN_DIR) $(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) \
-		$(VNCDIR)
+BUILD_SWITCHES = \
+	pfkbak pfksh syslog checksize treescan ts2 sudo \
+	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
+	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
+	libpfkthread xlock hilite do_fft protossl i3
 
-##############################################
+SUBST_VARS = \
+	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
+	PFK_FINDPF_GCC PFK_FINDPF_GCC_ARGS \
+	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
 
 CONFIG_VALUES= \
 	HAVE_NCURSES_CURSES_H HAVE_NCURSES_H HAVE_CURSES_H HAVE_DIRENT_H \
@@ -79,36 +83,43 @@ $(CONFIG_H): Makefile config/rules $(CONFIG_FILE) main/config.h.template
 
 ##############################################
 
-OBJDIRS_TOMAKE= \
-	environ main misc scripts contrib fonts
+include main/Makefile.pfk
+include misc/Makefile.pfk
+include libpfkutil/Makefile.pfk
+include libpfkdll2/Makefile.pfk
+include i2/Makefile.pfk
+include libpfkfb/Makefile.pfk
+include backup/Makefile.pfk
+include hilite/Makefile.pfk
+include pfksh/Makefile.pfk
+include libprotossl/Makefile.pfk
+include i3/Makefile.pfk
+include ampfk/Makefile.pfk
+include syslog/Makefile.pfk
+include pfkscript/Makefile.pfk
+include pfktop/Makefile.pfk
+include diskloader/Makefile.pfk
+include bglog/Makefile.pfk
+include libWebAppServer/Makefile.pfk
+include libWebAppServer/proxyTcpServer/Makefile.pfk
+include libpfkthread/Makefile.pfk
+include misc/states/Makefile.pfk
+include xlock/Makefile.pfk
+include environ/Makefile.pfk
+include scripts/Makefile.pfk
+include fonts/Makefile.pfk
+include contrib/Makefile.pfk
 
 ##############################################
-
-BUILD_SWITCHES = \
-	pfkbak pfksh syslog checksize treescan ts2 sudo \
-	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
-	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
-	libpfkthread xlock hilite do_fft protossl i3
-
-SUBST_VARS = \
-	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
-	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
-
-PREPROC_SOURCES = \
-	main/programs.h environ/kshrc environ/profile \
-	main/sudo.h scripts/cs \
-	scripts/emacs-lone scripts/myemacs-cscope-helper \
-	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
-	environ/xsession environ/vnc-xstartup
 
 PREPROC_TARGETS += $(foreach t,$(PREPROC_SOURCES),$(OBJDIR)/$(t))
 
 define PREPROC_SUBST
 $(OBJDIR)/$(file): $(file).in config/rules $(CONFIG_FILE)
-	@$(foreach sw,$(BUILD_SWITCHES),\
-		if [ "x$(PFK_BUILD_$(sw))" = "x" ] ; then \
-			echo 'plz set PFK_BUILD_$(sw) in $(CONFIG_FILE)' ; \
-			exit 1 ; \
+	@$(foreach v,$(SUBST_VARS),\
+		if [ "x$($(v))" = "x" ] ; then \
+			echo 'plz set $(v) in $(CONFIG_FILE)' ; \
+			exit 1; \
 		fi ; ) true
 	$(Q)sed $(foreach v,$(SUBST_VARS),-e 's,@$(v)@,$($(v)),') \
 		< $(file).in > $(OBJDIR)/$(file).tmp
@@ -130,56 +141,13 @@ $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
 
 ##############################################
 
-include libpfkutil/Makefile.pfk
-include libpfkdll2/Makefile.pfk
-include i2/Makefile.pfk
-include libpfkfb/Makefile.pfk
-include backup/Makefile.pfk
-include hilite/Makefile.pfk
-include pfksh/Makefile.pfk
-include libprotossl/Makefile.pfk
-include i3/Makefile.pfk
-include ampfk/Makefile.pfk
-include syslog/Makefile.pfk
-include pfkscript/Makefile.pfk
-include pfktop/Makefile.pfk
-include diskloader/Makefile.pfk
-include bglog/Makefile.pfk
-include libWebAppServer/Makefile.pfk
-include libWebAppServer/proxyTcpServer/Makefile.pfk
-include libpfkthread/Makefile.pfk
-include xlock/Makefile.pfk
-include fonts/Makefile.pfk
-include misc/states/Makefile.pfk
-include main/Makefile.pfk
-include environ/Makefile.pfk
-include scripts/Makefile.pfk
-
-##############################################
-
-POSTALL += # TODO doxygen
-
-## the contribs target is run separately, after the pfkutils-install,
-## because contribs target depends on certain things already installed.
-## it would be nice to not depend on that but unfortunately it does,
-## at least for now.
-
-contribs:
-	$(Q)+make -C contrib \
-		PROGS="$(CONTRIB_PROGS)" \
-		OBJDIR=$(PWD)/$(OBJDIR)/contrib
-
-contribs-install:
-	$(Q)+make -C contrib \
-		PROGS="$(CONTRIB_PROGS)" \
-		OBJDIR=$(PWD)/$(OBJDIR)/contrib \
-		INSTALL_BIN_DIR="$(INSTALL_BIN_DIR)" \
-		install
+installdirs:
+	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) $(ELPADIR) \
+		$(INSTALL_BIN_DIR) $(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) \
+		$(VNCDIR)
 
 diffdotfiles:
 	@cd $(prefix) && diff -r etc-backup etc
-
-# TODO cscope and ctwm should use custom makefiles
 
 # test cases :
 # - touch a .c file and see if it depends and makes

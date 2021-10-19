@@ -7,6 +7,16 @@ DOT_FILES = \
 PREPROC_DOT_FILES = \
 	kshrc profile xsession vnc-xstartup
 
+OBJDIRS_TOMAKE += environ
+
+PREPROC_SOURCES += \
+	environ/kshrc \
+	environ/profile \
+	environ/xsession \
+	environ/vnc-xstartup
+
+POSTINSTALL += environ_install
+
 ELISP_FILES = emacs.el emacs-custom.el
 
 ELPA_ARCHIVE ?= elpa-2627.tar.bz2

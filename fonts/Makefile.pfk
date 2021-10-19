@@ -5,6 +5,8 @@ ifeq ($(PFK_BUILD_fonts),1)
 FONTDIR= $(HOME)/pfk/fonts
 ALIAS= fonts/fonts.alias
 
+OBJDIRS_TOMAKE += fonts
+
 BDF_FILES= \
 	fonts/5x7.bdf \
 	fonts/6x13.bdf fonts/6x13bold.bdf \

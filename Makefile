@@ -61,7 +61,7 @@ else
 
 include $(CONFIG_FILE)
 
-PFKARCH := $(shell ./scripts/architecture)
+PFKARCH := $(shell ./scripts/architecture.simple)
 OBJDIR := obj.$(CONFIG)
 
 ifeq ($(DISABLE_RDYNAMIC),)

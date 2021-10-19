@@ -36,6 +36,9 @@ PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
 PFK_BUILD_slowlink=1
 
+PFK_FINDPF_GCC = gcc
+PFK_FINDPF_GCC_ARGS = -DDEBUG=0
+
 KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /usr/bin/protoc
 PROTOBUF_INC =

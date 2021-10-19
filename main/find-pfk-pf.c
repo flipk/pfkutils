@@ -228,7 +228,7 @@ bestmatch_cost( const char * text, const char * pattern,
  *  (index_of_pattern, index_of_text) = cost_of_match, where_came from
  */
 
-#ifdef DEBUG
+#if DEBUG
     for (j=0; j <= m; j++)
     {
         for (i=0; i <= n; i++)

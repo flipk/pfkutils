@@ -1,9 +1,8 @@
 #!/bin/sh
 
-# todo : make these @@macros@@
-pfkdir=${HOME}/pfk
-compile=gcc
-compileargs=
+prefix=@prefix@
+compile=@PFK_FINDPF_GCC@
+compileargs="@PFK_FINDPF_GCC_ARGS@"
 
 # gross: cygwin puts slashes and parens in the revision string!
 
@@ -13,11 +12,11 @@ pf=$os-$rev
 
 # note -d will return true if a symlink points to a dir
 #         which is what we want
-if ! [ -d "${HOME}/pfk/${pf}" ] ; then
+if ! [ -d "${prefix}/${pf}" ] ; then
     echo '!!!! NOTE:' PFKARCH=${pf} 'is not found! searching !!!!'
 
-    findpfsrc=${pfkdir}/src/find-pfk-pf.c
-    findpfbin=${pfkdir}/bin/find-pfk-pf
+    findpfsrc=${prefix}/src/find-pfk-pf.c
+    findpfbin=${prefix}/bin/find-pfk-pf
     buildlog=${HOME}/find-pfk-pf-compile.log
 
     rm -f ${findpfbin}
@@ -26,7 +25,7 @@ if ! [ -d "${HOME}/pfk/${pf}" ] ; then
              > ${buildlog} 2>&1
     chmod 600 ${buildlog}
     if [ -x ${findpfbin} ] ; then
-        pf=$( ${findpfbin} "${pfkdir}" "${pf}" )
+        pf=$( ${findpfbin} "${prefix}" "${pf}" )
     fi
 fi
 
