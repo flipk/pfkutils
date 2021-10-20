@@ -13,7 +13,7 @@ pf=$os-$rev
 # note -d will return true if a symlink points to a dir
 #         which is what we want
 if ! [ -d "${prefix}/${pf}" ] ; then
-    echo '!!!! NOTE:' PFKARCH=${pf} 'is not found! searching !!!!'
+    echo '!!!! NOTE:' PFKARCH=${pf} 'is not found! searching !!!!' 1>&2
 
     findpfsrc=${prefix}/src/find-pfk-pf.c
     findpfbin=${prefix}/bin/find-pfk-pf
