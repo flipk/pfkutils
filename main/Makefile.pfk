@@ -88,7 +88,11 @@ pfkutils_DEFS = \
 	-DBUILD_DATE=\"pfkutils-$(BUILD_DATE)\" \
 	-DGIT_SRC_URL=\"$(GIT_SRC_URL)\"
 pfkutils_INSTALL = 1
-pfkutils_POSTINSTALL += pfkutils-post-install
+
+# technically this should be pfkutils_POSTINSTALL,
+# but I want the 'echo' statements below to be last.
+# you know, so you see them.
+POSTINSTALL += pfkutils-post-install
 
 pfkutils-post-install:
 	@echo installing find-pfk-pf.c

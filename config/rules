@@ -84,7 +84,6 @@ $(CONFIG_H): Makefile config/rules $(CONFIG_FILE) main/config.h.template
 
 ##############################################
 
-include main/Makefile.pfk
 include misc/Makefile.pfk
 include libpfkutil/Makefile.pfk
 include libpfkdll2/Makefile.pfk
@@ -110,6 +109,7 @@ include environ/Makefile.pfk
 include scripts/Makefile.pfk
 include fonts/Makefile.pfk
 include contrib/Makefile.pfk
+include main/Makefile.pfk
 
 ##############################################
 
