@@ -204,10 +204,15 @@ dedup2_main(int argc, char ** argv)
         printtree(fi1);
     }
 
-    (void) chdir(starting_dir.c_str());
-    if (chdir(argv[2]) < 0)
+    if (chdir(starting_dir.c_str()) < 0)
     {
         e.init(errno, "chdir 2");
+        cout << e.Format() << endl;
+        return 1;
+    }
+    if (chdir(argv[2]) < 0)
+    {
+        e.init(errno, "chdir 3");
         cout << e.Format() << endl;
         return 1;
     }
