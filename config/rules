@@ -19,6 +19,7 @@ endif
 prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
 ETCBAKDIR := $(prefix)/etc-backup
+SRCDIR := $(prefix)/src
 EMACSDIR := $(ETCDIR)/emacs
 ELPADIR := $(HOME)/.emacs.d/elpa/
 SCRIPTS_DIR := $(prefix)/bin
@@ -142,9 +143,9 @@ $(eval $(foreach file,$(PREPROC_SOURCES),$(PREPROC_SUBST)))
 ##############################################
 
 installdirs:
-	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SCRIPTS_DIR) $(EMACSDIR) $(ELPADIR) \
-		$(INSTALL_BIN_DIR) $(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) \
-		$(VNCDIR)
+	$(Q)mkdir -p $(prefix) $(ETCDIR) $(SRCDIR) $(SCRIPTS_DIR) \
+		$(EMACSDIR) $(ELPADIR) $(INSTALL_BIN_DIR) \
+		$(INSTALL_LIB_DIR) $(INSTALL_INC_DIR) $(VNCDIR)
 
 diffdotfiles:
 	@cd $(prefix) && diff -r etc-backup etc
