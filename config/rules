@@ -82,34 +82,22 @@ $(CONFIG_H): Makefile config/rules $(CONFIG_FILE) main/config.h.template
 		mv $(CONFIG_H).tmp $(CONFIG_H) ; \
 	fi
 
-##############################################
+PFKUTIL_DIRS = \
+	libpfkfb libpfkutil libpfkdll2 libprotossl \
+	libWebAppServer libWebAppServer/proxyTcpServer \
+	libpfkthread \
+	i2 i3 misc backup hilite pfksh ampfk syslog \
+	pfkscript pfktop diskloader bglog misc/states \
+	xlock environ scripts fonts contrib main
 
-include misc/Makefile.pfk
-include libpfkutil/Makefile.pfk
-include libpfkdll2/Makefile.pfk
-include i2/Makefile.pfk
-include libpfkfb/Makefile.pfk
-include backup/Makefile.pfk
-include hilite/Makefile.pfk
-include pfksh/Makefile.pfk
-include libprotossl/Makefile.pfk
-include i3/Makefile.pfk
-include ampfk/Makefile.pfk
-include syslog/Makefile.pfk
-include pfkscript/Makefile.pfk
-include pfktop/Makefile.pfk
-include diskloader/Makefile.pfk
-include bglog/Makefile.pfk
-include libWebAppServer/Makefile.pfk
-include libWebAppServer/proxyTcpServer/Makefile.pfk
-include libpfkthread/Makefile.pfk
-include misc/states/Makefile.pfk
-include xlock/Makefile.pfk
-include environ/Makefile.pfk
-include scripts/Makefile.pfk
-include fonts/Makefile.pfk
-include contrib/Makefile.pfk
-include main/Makefile.pfk
+PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)
+
+include $(PFKUTIL_MAKEFILES)
+
+# NOTE: in this file is too late for the
+# "include $(INCLUDE_MAKEFILES)" line in Makefile.inc, but
+# not too late for the cscope dependency rules.
+INCLUDE_MAKEFILES += $(PFKUTIL_MAKEFILES)
 
 ##############################################
 
