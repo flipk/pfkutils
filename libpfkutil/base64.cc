@@ -183,6 +183,8 @@ bool b64_encode(char *dest, int &destlen,
         destleft -= 4;
         destlen += 4;
     }
+    if (destleft > 0)
+        *dest = 0; // null terminate
 
     return true;
 }
@@ -292,6 +294,8 @@ void test_chars(void)
     char out2[80];
     int out2len;
 
+    // test that null termination works
+    memset(out, '#', sizeof(out));
     outlen = sizeof(out);
     b64_encode(out, outlen, (const unsigned char*) in, inlen);
     printf("input :          '%s'\n"
