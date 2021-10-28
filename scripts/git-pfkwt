@@ -378,11 +378,14 @@ wtremove() {
         exit 1
     fi
 
+    local supername=$( cat "${base}/${reposdir}/SUPER" )
+
     echo in pfkwt $base
     echo removing all the following directories:
 
     echo '  ' $workdir
     submoddirs="${reposdir}/*/worktrees/${workdir}-*"
+    submoddirs="${submoddirs} ${reposdir}/${supername}/worktrees/${workdir}"
     for f in $submoddirs ; do
         echo '  ' $f
     done
