@@ -1,0 +1,17 @@
+
+//variable template args are weird
+template <class T, stuff, typename... FuncArgsTypes>
+class thing
+{
+    static int value;
+    T * func(int, int, FuncArgsTypes&&... funcArgs)
+    {
+        //"perfect argument forwarding" is weird
+        someotherfunc(std::forward<FuncArgsTypes>(funcArgs)...);
+    }
+};
+typedef thing<someClassT> RealThingClassT_t;
+RealThingClassT_t rt;
+// a template with a static global is weird too
+template <> int RealThingClassT_t::value = 4;
+rt.function(x,y,and_then_some_stuff)
