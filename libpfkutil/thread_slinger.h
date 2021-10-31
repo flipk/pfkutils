@@ -45,7 +45,6 @@ struct ThreadSlingerError : BackTraceUtil::BackTrace {
         MessageOnListDestructor, //!< message still on a list during destructor
         MessageNotFromThisPool,  //!< message freed to wrong pool
         DerefNoPool,             //!< refcount down to zero but poolptr is null
-        PoolInitBeforePoolsInit, //!< pool init before pools init
         __NUMERRS
     } err;
     // this can't be a std::string because it may get invoked
@@ -90,8 +89,9 @@ public:
     /** increase reference count */
     void ref(void);
     /** decrease reference count; if it hits zero, this buffer will be
-     * automatically returned to the pool */
-    void deref(void);
+     * automatically returned to the pool, returns true if this deref
+     * was the one that freed it */
+    bool deref(void);
 };
 
 class _thread_slinger_queue
@@ -186,10 +186,8 @@ typedef std::vector<poolReport> poolReportList_t;
 /** a static class which manages list of all known pools */
 class thread_slinger_pools
 {
-    static thread_slinger_pools * instance;
-    poolList_t  lst;
+    static poolList_t * lst;
 public:
-    thread_slinger_pools(void);
     static void register_pool(thread_slinger_pool_base * p);
     static void unregister_pool(thread_slinger_pool_base * p);
     /** retrieve stats about all pools */
@@ -233,6 +231,13 @@ public:
 };
 
 #include "thread_slinger.tcc"
+
+}; // namespace
+
+std::ostream &operator<<(std::ostream &strm,
+                         const ThreadSlinger::poolReport &pr);
+std::ostream &operator<<(std::ostream &strm,
+                         const ThreadSlinger::poolReportList_t &prs);
 
 /** \mainpage threadslinger user's API documentation
 
@@ -321,7 +326,5 @@ int main() {
 
 
 */
-
-}; // namespace
 
 #endif /* __THREADSLINGER_H__ */

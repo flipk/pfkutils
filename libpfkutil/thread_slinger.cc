@@ -31,15 +31,13 @@ For more information, please refer to <http://unlicense.org>
 
 #include "thread_slinger.h"
 
-using namespace ThreadSlinger;
+namespace ThreadSlinger {
 
 const char *
 ThreadSlingerError::errStrings[__NUMERRS] = {
     "message still on list in destructor",
     "message not from this pool",
     "dereference hit 0 but pool is null",
-    "initializing pool before Pools object initialized (are "
-    "you declaring a pool as a global variable?)"
 };
 
 //virtual
@@ -171,33 +169,39 @@ _thread_slinger_queue :: _dequeue(_thread_slinger_queue ** queues,
     return pMsg;
 }
 
-static thread_slinger_pools pools;
-thread_slinger_pools * thread_slinger_pools::instance = NULL;
+// NOTE thread_slinger_pools must NOT have a constructor, and it
+//      MUST rely on compile-time init of .data segment and/or
+//      exec-time zeroing of .bss segment; this is because there may
+//      be pools declared as global variables which must be able to
+//      register during the ".init" section of the executable (i.e.
+//      even before "main" has started or before all the .init sections
+//      of all the .o's have run).
 
-thread_slinger_pools::thread_slinger_pools(void)
-{
-    instance = this;
-}
+
+poolList_t *thread_slinger_pools::lst = NULL;
 
 //static
 void
 thread_slinger_pools::register_pool(thread_slinger_pool_base * p)
 {
-    if (thread_slinger_pools::instance == NULL)
-        ThreadSlingerError tse(ThreadSlingerError::PoolInitBeforePoolsInit);
-    else
-    {
-        WaitUtil::Lock  lock(&thread_slinger_pools::instance->lst);
-        thread_slinger_pools::instance->lst.add_tail(p);
-    }
+    // if there's a race in multiple threads trying to register pools,
+    // we need to make sure only the first one does 'new poolList_t'.
+    static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_lock(&mut);
+    if (thread_slinger_pools::lst == NULL)
+        thread_slinger_pools::lst = new poolList_t;
+    pthread_mutex_unlock(&mut);
+
+    WaitUtil::Lock  lock(thread_slinger_pools::lst);
+    thread_slinger_pools::lst->add_tail(p);
 }
 
 //static
 void
 thread_slinger_pools::unregister_pool(thread_slinger_pool_base * p)
 {
-    WaitUtil::Lock  lock(&instance->lst);
-    instance->lst.remove(p);
+    WaitUtil::Lock  lock(thread_slinger_pools::lst);
+    thread_slinger_pools::lst->remove(p);
 }
 
 //static
@@ -206,10 +210,10 @@ thread_slinger_pools::report_pools(poolReportList_t &report)
 {
     thread_slinger_pool_base * p;
     report.clear();
-    WaitUtil::Lock  lock(&thread_slinger_pools::instance->lst);
-    for (p = thread_slinger_pools::instance->lst.get_head();
+    WaitUtil::Lock  lock(thread_slinger_pools::lst);
+    for (p = thread_slinger_pools::lst->get_head();
          p != NULL;
-         p = thread_slinger_pools::instance->lst.get_next(p))
+         p = thread_slinger_pools::lst->get_next(p))
     {
         poolReport  r;
         p->getCounts(r.usedCount,
@@ -217,4 +221,23 @@ thread_slinger_pools::report_pools(poolReportList_t &report)
                      r.name);
         report.push_back(r);
     }
+}
+
+}; // namespace ThreadSlinger
+
+std::ostream &operator<<(std::ostream &strm,
+                         const ThreadSlinger::poolReportList_t &prs)
+{
+    for (auto item : prs)
+        strm << item;
+    return strm;
+}
+
+std::ostream &operator<<(std::ostream &strm,
+                         const ThreadSlinger::poolReport &pr)
+{
+    strm << "pool " << pr.name << ": "
+         << "used " << pr.usedCount << ", "
+         << "free " << pr.freeCount << "\n";
+    return strm;
 }

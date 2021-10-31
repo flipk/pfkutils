@@ -28,6 +28,9 @@ For more information, please refer to <http://unlicense.org>
 
 inline thread_slinger_message::thread_slinger_message(void)
 {
+    // if this object is allocated via 'new', then the pool ptr
+    // shouldn't point anywhere!
+    _slinger_pool = NULL;
     refcount = 0;
 }
 
@@ -46,19 +49,24 @@ thread_slinger_message::ref(void)
     refcount++;
 }
 
-inline void
+inline bool
 thread_slinger_message::deref(void)
 {
+    bool ret = false;
     WaitUtil::Lock lock(&refcountlock);
     refcount--;
     if (refcount <= 0)
     {
         if (_slinger_pool != NULL)
+        {
             _slinger_pool->release(this);
+            ret = true;
+        }
         else {
             ThreadSlingerError tse(ThreadSlingerError::DerefNoPool);
         }
     }
+    return ret;
 }
 
 //
@@ -129,9 +137,7 @@ void thread_slinger_pool<T>::add(int items)
     T * item;
     while (items-- > 0)
     {
-        item = new T;
-        item->_slinger_pool = this;
-        release(item);
+        release(new T);
     }
 }
 
@@ -173,14 +179,18 @@ void thread_slinger_pool<T>::release(thread_slinger_message * m)
 template <class T>
 void thread_slinger_pool<T>::release(T * buf)
 {
-    if (buf->_slinger_pool != this)
+    // if poolptr is null, this probably came from 'new'
+    // and the user wants to add it to the pool.
+    bool notnull = buf->_slinger_pool != NULL;
+    if (buf->_slinger_pool != this && notnull)
     {
         ThreadSlingerError tse(ThreadSlingerError::MessageNotFromThisPool);
         return;
     }
     q.enqueue_head(buf);
     WaitUtil::Lock  lock(&statsLockable);
-    usedCount--;
+    if (notnull)
+        usedCount--;
     freeCount++;
 }
 
