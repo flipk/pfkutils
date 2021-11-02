@@ -165,7 +165,7 @@ void HSM<T>::dispatch(HSMEvent const * evt)
     State newState = NULL;
     State state = currentState;
     bool done = true;
-    size_t ind;
+    int ind;
     if (evt->type == HSMEvent::HSM_TERMINATE)
     {
         // issue exit to all states.

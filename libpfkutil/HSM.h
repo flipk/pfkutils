@@ -104,11 +104,12 @@ struct HSMEventT : public HSMEvent {
  * \param __className  the name of the class of the event you're creating
  * \param __typeValue  a type value from an enum starting at HSM_USER_START
  * \param __body   optionally define contents of the event */
-#define HSM_EVENT_DECLARE(__className,__typeValue,__body) \
+#define HSM_EVENT_DECLARE(__className,__typeValue,__body)           \
 struct __className : ::HSM::HSMEventT<__className,__typeValue>      \
-{ \
-    const std::string evtName(void) const { return #__className; } \
-    __body \
+{                                                                   \
+    const std::string evtName(void) const override                  \
+    { return #__className; }                                        \
+    __body                                                          \
 }
 
 /** base class for a state machine without a thread */
@@ -252,9 +253,12 @@ protected:
 
 struct HSMSubEntry;
 class HSMSubEntryHash;
-typedef DLL3::Hash<HSMSubEntry,HSMEvent::Type,HSMSubEntryHash,1> HSMSubHash_t;
+typedef DLL3::Hash<HSMSubEntry,HSMEvent::Type,
+                   HSMSubEntryHash,1,false> HSMSubHash_t;
+typedef DLL3::List<HSMSubEntry,2,false> HSMSubList_t;
 
-struct HSMSubEntry : public HSMSubHash_t::Links
+struct HSMSubEntry : public HSMSubHash_t::Links,
+                     HSMSubList_t::Links
 {
     HSMEvent::Type type;
     std::vector<ActiveHSMBase*> activeObjs;
@@ -271,10 +275,33 @@ public:
     { return (item.type == key); }
 };
 
+class HSMActiveSubs_t : public WaitUtil::Lockable {
+    HSMSubHash_t hash;
+    HSMSubList_t list;
+public:
+    void add(HSMSubEntry *sub) {
+        hash.add(sub);
+        list.add_head(sub);
+    }
+    void remove(HSMSubEntry *sub) {
+        hash.remove(sub);
+        list.remove(sub);
+    }
+    HSMSubEntry *find(HSMEvent::Type _t) {
+        return hash.find(_t);
+    }
+    HSMSubEntry *get_head(void) {
+        return list.get_head();
+    }
+    HSMSubEntry *get_next(HSMSubEntry *sub) {
+        return list.get_next(sub);
+    }
+};
+
 /** a scheduler object, all ActiveHSM objs should be attached to this */
 class HSMScheduler {
     ActiveHSMList_t  active_hsms;
-    HSMSubHash_t  subHash;
+    HSMActiveSubs_t  subs;
     ThreadSlinger::thread_slinger_pool<HSMEventEnvelope>  eventEnvelopePool;
 public:
     HSMScheduler(void);

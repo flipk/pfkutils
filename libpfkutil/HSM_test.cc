@@ -200,32 +200,32 @@ public:
             printf("sm2 got KICKOFF in top\n");
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             printf("sm2 sending config\n");
             publish(myConfigEvt::alloc());
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             printf("sm2 sending connect\n");
             publish(myConnectEvt::alloc());
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             printf("sm2 sending auth\n");
             publish(myAuthEvt::alloc());
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             printf("sm2 sending discon\n");
             publish(myDisconEvt::alloc());
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             printf("sm2 sending dummy\n");
             publish(myDummyEvt::alloc());
 
             printf("sm2 sleeping\n");
-            sleep(1);
+            usleep(250000);
             done = true;
 
             return HANDLED();

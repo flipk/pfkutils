@@ -67,20 +67,42 @@ HSMScheduler::registerHSM(ActiveHSMBase *sm)
 void
 HSMScheduler::deregisterHSM(ActiveHSMBase *sm)
 {
-    WaitUtil::Lock lock(&active_hsms);
-    active_hsms.remove(sm);
+    {
+        WaitUtil::Lock lock(&active_hsms);
+        active_hsms.remove(sm);
+    }
+    {
+        WaitUtil::Lock lock(&subs);
+        HSMSubEntry *hse, *nhse;
+        for (HSMSubEntry *hse = subs.get_head();
+             hse;
+             hse = nhse)
+        {
+            nhse = subs.get_next(hse);
+            for (int ind = 0; ind < hse->activeObjs.size(); ind++)
+            {
+                if (hse->activeObjs[ind] == sm)
+                {
+                    hse->activeObjs.erase(hse->activeObjs.begin() + ind);
+                    break;
+                }
+            }
+            if (hse->activeObjs.size() == 0)
+                subs.remove(hse);
+        }
+    }
 }
 
 void
 HSMScheduler::subscribe(ActiveHSMBase *sm, HSMEvent::Type type)
 {
-    WaitUtil::Lock lock(&subHash);
+    WaitUtil::Lock lock(&subs);
     HSMSubEntry * se;
-    se = subHash.find(type);
+    se = subs.find(type);
     if (se == NULL)
     {
         se = new HSMSubEntry(type);
-        subHash.add(se);
+        subs.add(se);
     }
     se->activeObjs.push_back(sm);
 }
@@ -88,8 +110,8 @@ HSMScheduler::subscribe(ActiveHSMBase *sm, HSMEvent::Type type)
 void
 HSMScheduler::publish(HSMEvent * evt)
 {
-    WaitUtil::Lock lock(&subHash);
-    HSMSubEntry * se = subHash.find((HSMEvent::Type)evt->type);
+    WaitUtil::Lock lock(&subs);
+    HSMSubEntry * se = subs.find((HSMEvent::Type)evt->type);
     if (se == NULL)
     {
         lock.unlock();
