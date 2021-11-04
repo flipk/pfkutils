@@ -73,7 +73,12 @@ public:
 
 typedef DLL3::List<thread_slinger_message,1,false,false> messageList_t;
 
-/** base class for all user messages to go through thread_slinger */
+/** base class for all user messages to go through thread_slinger.
+ * \note Any class which derives from this must implement
+ * "void init(args) { }" which will be called by thread_slinger_pool
+ * during alloc(), and "void cleanup(void) { }" which will be called
+ * during release(). The InitArgs parameter to thread_slinger_pool
+ * determines the arg types passed to "init". */
 class thread_slinger_message : public messageList_t::Links
 {
     int refcount;
@@ -197,7 +202,7 @@ public:
 /** a convenient buffer pool for storing objects of any kind.
  * \param T   the type of object being stored in the queue,
  *          derived from thread_slinger_message. */
-template <class T>
+template <class T,typename... InitArgs>
 class thread_slinger_pool : public thread_slinger_pool_base
 {
     thread_slinger_queue<T>  q;
@@ -219,7 +224,8 @@ public:
      *          immediately, >0 means wait that number of usecs.
      * \param grow   if true, allocate new buffers if pool is empty.
      * \return a buffer pointer, or NULL if empty and timeout */
-    T * alloc(int uSecs=0, bool grow=false);
+    T * alloc(int uSecs=0, bool grow=false,
+              InitArgs&&... args);
     /** release a buffer into the pool
      * \param buf  the buffer pointer to release */
     void release(T * buf);

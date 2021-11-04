@@ -33,11 +33,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
-// TEST==1 is for testing single-queue dequeue()
-// TEST==2 is for testing multi-queue dequeue()
-
-#define TEST 2
-
 #include "thread_slinger.h"
 
 #include <stdio.h>
@@ -48,10 +43,12 @@ struct myMessage : public ThreadSlinger::thread_slinger_message
 {
     int a; // some field
     int b; // some other field
+    void init(int _a, int _b) { a=_a; b=_b; }
+    void cleanup(void) { a=0; b=0; }
 };
 
 typedef ThreadSlinger::thread_slinger_queue<myMessage> myMsgQ;
-typedef ThreadSlinger::thread_slinger_pool <myMessage> myMsgPool;
+typedef ThreadSlinger::thread_slinger_pool <myMessage,int,int> myMsgPool;
 
 myMsgPool *p  = NULL;
 myMsgQ    *q  = NULL;
@@ -62,7 +59,7 @@ void * t1( void * dummy )
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-        myMessage * m = p->alloc(random()%5000);
+        myMessage * m = p->alloc(random()%5000,false,1,2);
         if (m)
         {
             m->ref();
@@ -117,7 +114,7 @@ void * t3( void * dummy )
     uintptr_t  val = (uintptr_t) dummy;
     while (1)
     {
-        myMessage * m = p->alloc(random()%5000);
+        myMessage * m = p->alloc(random()%5000,false,3,4);
         if (m)
         {
             m->ref();
@@ -173,33 +170,45 @@ void * t4(void * dummy)
     return NULL;
 }
 
-int
-main()
+int main(int argc, char ** argv)
 {
+    if (argc != 2)
+    {
+        printf("usage: thread_slinger_test <test#>\n");
+        return 1;
+    }
+    int test = atoi(argv[1]);
+
     pthread_t id;
 
     p = new myMsgPool;
 
-#if TEST==1
-    q = new myMsgQ;
-    p->add(2);
-    pthread_create( &id, NULL, t1, (void*) 0 );
-    pthread_create( &id, NULL, t1, (void*) 1 );
-    pthread_create( &id, NULL, t2, (void*) 0 );
-    pthread_create( &id, NULL, t2, (void*) 1 );
-    pthread_join(id,NULL);
-    delete q;
-#elif TEST==2
-    q  = new myMsgQ;
-    q2 = new myMsgQ;
-    p->add(1);
-    pthread_create( &id, NULL, t3, (void*) 0 );
-    pthread_create( &id, NULL, t3, (void*) 1 );
-    pthread_create( &id, NULL, t4, (void*) 0 );
-    pthread_join(id,NULL);
-    delete q;
-    delete q2;
-#endif
+    if (test == 1)
+    {
+        printf("for this test you should see all eight of these chars: +=-_.,!?\n");
+        q = new myMsgQ;
+        p->add(2);
+        pthread_create( &id, NULL, t1, (void*) 0 );
+        pthread_create( &id, NULL, t1, (void*) 1 );
+        pthread_create( &id, NULL, t2, (void*) 0 );
+        pthread_create( &id, NULL, t2, (void*) 1 );
+        pthread_join(id,NULL);
+        delete q;
+    }
+    else if (test == 2)
+    {
+        printf("for this test you should see all seven of these chars: +=-_.,!\n");
+        q  = new myMsgQ;
+        q2 = new myMsgQ;
+        p->add(1);
+        pthread_create( &id, NULL, t3, (void*) 0 );
+        pthread_create( &id, NULL, t3, (void*) 1 );
+        pthread_create( &id, NULL, t4, (void*) 0 );
+        pthread_join(id,NULL);
+        delete q;
+        delete q2;
+    }
+
     delete p;
     return 0;
 }

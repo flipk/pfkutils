@@ -259,3 +259,44 @@ void HSM<T>::dispatch(HSMEvent const * evt)
         currentTrace = newTrace;
     }
 }
+
+template <class T>
+ActiveHSM<T>::ActiveHSM( HSMScheduler * __sched, 
+                         const std::string &name,
+                         bool __debug /*=false*/ )
+    : ActiveHSMBase(__sched, name),
+      HSM<T>(__debug)
+{
+    // ?
+}
+
+//virtual
+template <class T>
+ActiveHSM<T>::~ActiveHSM(void)
+{
+    // ?
+}
+
+template <class T>
+void ActiveHSM<T>::init(void)
+{
+    HSM<T>::HSMInit();
+}
+
+template <class T>
+void ActiveHSM<T>::AHSMdispatch(HSMEvent const * evt)
+{
+    HSM<T>::dispatch(evt);
+}
+
+template <class T>
+void ActiveHSM<T>::subscribe(int type)
+{
+    sched->subscribe(this,(HSMEvent::Type)type);
+}
+
+template <class T>
+void ActiveHSM<T>::publish(HSMEvent * evt)
+{
+    sched->publish(evt);
+}

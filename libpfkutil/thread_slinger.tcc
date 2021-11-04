@@ -59,6 +59,7 @@ thread_slinger_message::deref(void)
     {
         if (_slinger_pool != NULL)
         {
+            refcount = 0;
             _slinger_pool->release(this);
             ret = true;
         }
@@ -114,8 +115,8 @@ T * thread_slinger_queue<T>::dequeue(
 
 //
 
-template <class T>
-thread_slinger_pool<T>::thread_slinger_pool(
+template <class T,typename... InitArgs>
+thread_slinger_pool<T,InitArgs...>::thread_slinger_pool(
     pthread_mutexattr_t *mattr /*= NULL*/,
     pthread_condattr_t  *cattr /*= NULL*/)
     : q(mattr, cattr), statsLockable(mattr)
@@ -125,14 +126,14 @@ thread_slinger_pool<T>::thread_slinger_pool(
 }
 
 //virtual
-template <class T>
-thread_slinger_pool<T>::~thread_slinger_pool(void)
+template <class T,typename... InitArgs>
+thread_slinger_pool<T,InitArgs...>::~thread_slinger_pool(void)
 {
     thread_slinger_pools::unregister_pool(this);
 }
 
-template <class T>
-void thread_slinger_pool<T>::add(int items)
+template <class T,typename... InitArgs>
+void thread_slinger_pool<T,InitArgs...>::add(int items)
 {
     T * item;
     while (items-- > 0)
@@ -141,9 +142,10 @@ void thread_slinger_pool<T>::add(int items)
     }
 }
 
-template <class T>
-T * thread_slinger_pool<T>::alloc(int uSecs /*=0*/,
-                                  bool grow /*=false*/)
+template <class T,typename... InitArgs>
+T * thread_slinger_pool<T,InitArgs...>
+    ::alloc(int uSecs /*=0*/, bool grow /*=false*/,
+            InitArgs&&... args)
 {
     T * ret = q.dequeue(uSecs);
     if (ret)
@@ -158,6 +160,7 @@ T * thread_slinger_pool<T>::alloc(int uSecs /*=0*/,
     if (ret)
     {
         ret->_slinger_pool = this;
+        ret->init(std::forward<InitArgs>(args)...);
         WaitUtil::Lock  lock(&statsLockable);
         usedCount++;
         if (nameSet == false)
@@ -169,15 +172,15 @@ T * thread_slinger_pool<T>::alloc(int uSecs /*=0*/,
     return ret;
 }
 
-template <class T>
-void thread_slinger_pool<T>::release(thread_slinger_message * m)
+template <class T,typename... InitArgs>
+void thread_slinger_pool<T,InitArgs...>::release(thread_slinger_message * m)
 {
     T * derived = dynamic_cast<T*>(m);
     release(derived);
 }
 
-template <class T>
-void thread_slinger_pool<T>::release(T * buf)
+template <class T,typename... InitArgs>
+void thread_slinger_pool<T,InitArgs...>::release(T * buf)
 {
     // if poolptr is null, this probably came from 'new'
     // and the user wants to add it to the pool.
@@ -187,6 +190,7 @@ void thread_slinger_pool<T>::release(T * buf)
         ThreadSlingerError tse(ThreadSlingerError::MessageNotFromThisPool);
         return;
     }
+    buf->cleanup();
     q.enqueue_head(buf);
     WaitUtil::Lock  lock(&statsLockable);
     if (notnull)
@@ -194,8 +198,8 @@ void thread_slinger_pool<T>::release(T * buf)
     freeCount++;
 }
 
-template <class T>
-void thread_slinger_pool<T>::getCounts(int &used, int &free,
+template <class T,typename... InitArgs>
+void thread_slinger_pool<T,InitArgs...>::getCounts(int &used, int &free,
                                        std::string &name)
 {
     WaitUtil::Lock  lock(&statsLockable);
@@ -204,8 +208,8 @@ void thread_slinger_pool<T>::getCounts(int &used, int &free,
     name = msgName;
 }
 
-template <class T>
-bool thread_slinger_pool<T>::empty(void) const
+template <class T,typename... InitArgs>
+bool thread_slinger_pool<T,InitArgs...>::empty(void) const
 {
     return freeCount == 0;
 }

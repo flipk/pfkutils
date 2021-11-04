@@ -322,11 +322,15 @@ private:
         bool reliable; // used only for MSG
         uint32_t seqno; // used  by ACK/NACK; NOT valid for MSG
         std::string encoded_msg; // used by MSG
+        void init(void) { }
+        void cleanup(void) { encoded_msg.clear(); }
     };
     struct dtls_read_event : public ThreadSlinger::thread_slinger_message
     {
         read_return_t  retcode;
         std::string encoded_msg;
+        void init(void) { }
+        void cleanup(void) { encoded_msg.clear(); }
     };
 
     static const int pool_size = 1000;
@@ -398,6 +402,7 @@ private:
         ProtoSSL :: DTLS :: DTLS_PacketHeader_m  *pkthdr;
         // debug
         std::string print(void) const;
+        void cleanup(void) { fragment.clear(); }
     };
 
     struct fragpool_t {

@@ -105,6 +105,8 @@ class Slowlink {
         pxfe_timeval send_time; // dont send until after this time.
         bool ready;
         holding_buffer(void) { ready = false; }
+        void init(void) { ready = false; }
+        void cleanup(void) { ready = false; }
     };
     static const int holding_pool_initial_size = 1000;
     ThreadSlinger::thread_slinger_pool<holding_buffer>  holding_pool;
