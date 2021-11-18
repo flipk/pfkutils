@@ -29,8 +29,26 @@ For more information, please refer to <http://unlicense.org>
 #ifndef __posix_fe_h__
 #define __posix_fe_h__
 
-// stupid redhat
+// use inttypes.h instead of stdint.h.  inttypes.h includes
+// stdint.h for you, and then gives you more!
+
+// on many OS's, inttypes.h does not define PRIu64 or
+// any of the other PRI* macros unless you define this:
+#ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1
+#endif
+
+// on many OS's, stdint.h won't give you INT32_MAX or
+// any of the other *INT*MAX macros unless you define this:
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS 1
+#endif
+
+// on many OS's, stdint.h won't give you UINT8_C(x) or
+// any of the other *INT*C(x) macros unless you define this:
+#ifndef __STDC_CONSTANT_MACROS
+#define __STDC_CONSTANT_MACROS 1
+#endif
 
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -640,6 +658,23 @@ public:
 };
 
 /** classical counting semaphore like P and V from school */
+
+/*  FYI: V stands for 'Verhoog' and P stands for 'Prolaag', not 'Probeer'.
+    Verhoog can be translated as 'increasing'.
+    Decreasing would be 'Verlaag', but for better distinction between
+    the letters Dijkstra invented the word 'Prolaag'.
+    "Probeer te verlagen" is "try to decrease".
+    "Verhogen" is increase. Edsger Wybe Dijkstra's earliest paper
+    on the subject gives passering ("passing") as the meaning for P,
+    and vrijgave ("release") as the meaning for V.
+    It also mentions that the terminology is taken from that used in
+    railroad signals. Dijkstra subsequently wrote that
+    he intended P to stand for prolaag, short for probeer te verlagen,
+    literally "try to reduce", or to parallel the terms used in the other
+    case, "try to decrease". Some texts call them vacate and procure to
+    match the original Dutch initials.
+*/
+
 class pxfe_semaphore {
     pxfe_pthread_cond cond;
     pxfe_pthread_mutex mut;
