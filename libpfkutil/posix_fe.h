@@ -345,9 +345,9 @@ public:
     /** a name that will be printed "what: strerror" */
     const char * what;
     /** default constructor will init errno=0 and what="" */
-    pxfe_errno(int _e = 0, const char *_what = "") { init(_e, _what); }
+    pxfe_errno(int _e = 0, const char *_what = NULL) { init(_e, _what); }
     /** set errno and "what", will also set err = strerror */
-    void init(int _e, const char *_what = "") {
+    void init(int _e, const char *_what = NULL) {
         e = _e;
         what = _what;
         if (e > 0)
@@ -357,12 +357,12 @@ public:
     }
     /** format this errno into "what: error <number> (strerror)" */
     std::string Format(void) {
-        if (err == NULL)
-            return "";
         std::ostringstream  ostr;
         if (what)
             ostr << what << ": ";
-        ostr << "error " << e << " (" << err << ")";
+        ostr << "error " << e;
+        if (err)
+            ostr << " (" << err << ")";
         return ostr.str();
     }
 };
