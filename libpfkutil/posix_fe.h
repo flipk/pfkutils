@@ -1077,6 +1077,31 @@ public:
         }
         return true;
     }
+
+/*
+   I DO NOT USE "readdir_r" AND WILL NOT ENTERTAIN
+   REQUESTS TO CHANGE IT.  Here's why.
+
+   The reason you want _r implementations is to be thread-safe. But
+   readdir() references a data structure stored in the DIR* object, so
+   as long as you don't call readdir() on the same DIR* from two
+   threads, you will always be fine, no need for locks.
+
+   If one thread opens a DIR* using opendir, and another thread does
+   another opendir to get another DIR*, those two threads may do
+   readdir() on their respective DIR* objects just fine, too, no need
+   for locks.
+
+   And, in my opinion, if one thread does opendir(), and then many
+   threads proceed to do readdir() from that DIR*, that is a stupid
+   design and you should never have done that in the first place, even
+   if it was threadsafe, and even if you did intend to use readdir_r!
+
+   But one more thing!  GLIBC 2.24 marked readdir_r as DEPRECATED!
+   Apparently there's serious issues with it, see:
+   https://lwn.net/Articles/696474/
+*/
+
     /** read one directory entry, or return false if end of dir */
     bool read(dirent &de) {
         if (d == NULL)
