@@ -247,11 +247,11 @@ FastCGIParamsList :: FastCGIParamsList(const CircularReaderSubstr &queryString)
 FastCGIParamsList :: ~FastCGIParamsList(void)
 {
     FastCGIParamsList::paramIter_t it;
-    for (it = params.begin(); it != params.end(); it++)
+    for (it = params.begin(); it != params.end();)
     {
         FastCGIParam * p = it->second;
         delete p;
-        params.erase(it);
+        it = params.erase(it);
     }
 }
 
@@ -887,7 +887,7 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
         WaitUtil::Lock lock(this);
 
         ConnListIter_t it;
-        for (it = conns.begin(); it != conns.end(); it++)
+        for (it = conns.begin(); it != conns.end();)
         {
             WebAppConnection * wac = it->second;
             bool nukeIt = false;
@@ -904,8 +904,10 @@ WebAppServerFastCGIConfigRecord :: thread_entry(void)
 // private                wac->connData->fcgi()->lock();
                 wac->onDisconnect();
                 delete wac;
-                conns.erase(it);
+                it = conns.erase(it);
             }
+            else
+                it++;
         }
     }
 }
