@@ -13,11 +13,11 @@ copy_file( char * from, char * to )
     int cc;
     char buf[16384];
 
-    fromf = fopen( from, "r" );
+    fromf = fopen( from, "re" );
     if ( fromf == NULL )
         return -1;
 
-    tof = fopen( to, "w" );
+    tof = fopen( to, "we" );
     if ( tof == NULL )
     {
         int esave = errno;

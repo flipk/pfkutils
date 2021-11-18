@@ -21,7 +21,7 @@ main(int argc, char ** argv)
     if (getenv("STRING_ONLY") == NULL)
     {
         char buf[100];
-        FILE * f = fopen(argv[1], "r");
+        FILE * f = fopen(argv[1], "re");
         SimpleJson::SimpleJsonCollector   sjc(callback, NULL);
         if (f)
         {

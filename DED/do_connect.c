@@ -22,7 +22,7 @@ do_connect( char * host, int port )
     struct sockaddr_in sa;
     int salen;
 
-    sock = socket(AF_INET, SOCK_STREAM, 0);
+    sock = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
 
     if (sock < 0)
     {
@@ -56,7 +56,7 @@ do_connect( char * host, int port )
 
         listen(sock, 1);
         salen = sizeof(struct sockaddr_in);
-        ear = accept(sock, (struct sockaddr *)&sa, &salen);
+        ear = accept4(sock, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC);
 
         if (ear < 0)
         {

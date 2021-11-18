@@ -29,7 +29,7 @@ acceptor( void *sock0 )
 			int size;
 			size = sizeof( struct sockaddr_in );
 
-			ear = accept( sock, (struct sockaddr *) &sa, &size );
+			ear = accept4( sock, (struct sockaddr *) &sa, &size, SOCK_CLOEXEC );
 
 			if ( ear > 0 )
 			{

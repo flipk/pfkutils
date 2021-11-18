@@ -104,9 +104,9 @@ main(int argc, char ** argv)
             return 1;
         }
 
-        listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+        listen_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
         BAIL(listen_fd < 0, "socket");
-        cfg.client_fd = socket(AF_INET, SOCK_STREAM, 0);
+        cfg.client_fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
         BAIL(cfg.client_fd < 0, "socket");
         v = 1;
         setsockopt( listen_fd, SOL_SOCKET, SO_REUSEADDR,
@@ -118,7 +118,7 @@ main(int argc, char ** argv)
         BAIL(v < 0, "bind");
         listen( listen_fd, 1 );
         socklen_t salen = sizeof(sa);
-        cfg.server_fd = accept( listen_fd, (struct sockaddr *) &sa, &salen );
+        cfg.server_fd = accept4( listen_fd, (struct sockaddr *) &sa, &salen, SOCK_CLOEXEC );
         BAIL( cfg.server_fd < 0, "accept" );
         close( listen_fd );
         sa.sin_port = htons(remote_port);

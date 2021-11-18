@@ -10,7 +10,7 @@ int
 main(int argc, char ** argv)
 {
     char buf[100];
-    FILE * f = fopen(argv[1], "r");
+    FILE * f = fopen(argv[1], "re");
     SimpleJson::SimpleJsonCollector   sjc(callback, NULL);
     if (f)
     {

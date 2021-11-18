@@ -88,7 +88,7 @@ log_open(void)
     snprintf(fn, 256, LOGFILE_BASE "-%s-%03u",
              datestr, (unsigned int) tv_now.tv_usec / 1000);
 
-    logfile = fopen(fn, "w");
+    logfile = fopen(fn, "we");
     if (logfile == NULL)
         fprintf(console_f, "open '%s' : %d: %s\n",
                 fn, errno, strerror(errno));

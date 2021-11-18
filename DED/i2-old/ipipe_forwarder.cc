@@ -102,7 +102,7 @@ ipipe_forwarder :: ipipe_forwarder( int _fd, bool _doread, bool _dowrite,
     if (ipipe2_debug_log)
     {
         char * filename = next_debug_file_name();
-        debug_log_file = fopen( filename, "w");
+        debug_log_file = fopen( filename, "we");
         if (debug_log_file)
         {
             // PFK

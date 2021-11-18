@@ -49,8 +49,8 @@ main()
     }
 
     // plot
-    FILE * i = fopen("input.txt", "w");
-    FILE * o = fopen("output.txt", "w");
+    FILE * i = fopen("input.txt", "we");
+    FILE * o = fopen("output.txt", "we");
     for (int ind = 0; ind < SAMPLES; ind++)
     {
         fprintf(i,"%d %f %f\n", ind,  input[ind].real(),  input[ind].imag());

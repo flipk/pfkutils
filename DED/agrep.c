@@ -74,7 +74,7 @@ agrep_main( int argc, char ** argv )
             char inputline[300];
             struct bestmatch bm;
 
-            f = fopen(argv[0], "r");
+            f = fopen(argv[0], "re");
 
             if (!f)
             {

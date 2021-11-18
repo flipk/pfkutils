@@ -248,7 +248,7 @@ class id_name_db_real_printinfo : public btree_printinfo {
 public:
     id_name_db_real_printinfo(void) :
         btree_printinfo( KEY_REC_PTR | DATA_REC_PTR ) {
-        f = fopen( DUMPFILE, "w" );
+        f = fopen( DUMPFILE, "we" );
     }
     ~id_name_db_real_printinfo( void ) {
         fclose( f );

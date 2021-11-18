@@ -47,7 +47,7 @@ net_thread :: net_thread( short local_port,
         }
     }
 
-    fd = socket(PF_INET, SOCK_DGRAM, 0);
+    fd = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         perror("socket");

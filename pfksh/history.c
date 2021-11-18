@@ -613,7 +613,7 @@ hist_init(s)
 	} else
 		hname = str_save(f, APERM);
 
-	if ((fh = fopen(hname, "r"))) {
+	if ((fh = fopen(hname, "re"))) {
 		int pos = 0, nread = 0;
 		int contin = 0;		/* continuation of previous command */
 		char *end;
@@ -664,7 +664,7 @@ hist_finish()
     hp = &histptr[-histsize];
   else
     hp = history;
-  if (hname && (fh = fopen(hname, "w")))
+  if (hname && (fh = fopen(hname, "we")))
   {
     for (i = 0; hp + i <= histptr && hp[i]; i++)
       fprintf(fh, "%s%c", hp[i], '\0');

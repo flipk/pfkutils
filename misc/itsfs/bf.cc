@@ -39,7 +39,7 @@ main()
     int fd;
     struct sockaddr_in sa;
 
-    fd = socket( AF_INET, SOCK_DGRAM, 0 );
+    fd = socket( AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
     {
         printf( "socket failed: %d\n", errno );

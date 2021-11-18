@@ -56,7 +56,7 @@ WebSocketClientConn :: init_common(void)
     sa.sin_port = htons(urlPort);
     sa.sin_addr.s_addr = htonl(urlIp);
 
-    fd = socket(AF_INET, SOCK_STREAM, 0);
+    fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         fprintf(stderr, "socket failed: %s\n", strerror(errno));

@@ -81,10 +81,10 @@ parse_config_file(char *config_file)
     int enable_stdout;
 
 #if DEBUG_LOG
-    debug_log_file = fopen( "debug_log.txt", "w" );
+    debug_log_file = fopen( "debug_log.txt", "we" );
 #endif
 
-    f = fopen( config_file, "r" );
+    f = fopen( config_file, "re" );
     if (!f)
     {
         fprintf(stderr, "unable to open configuration file '%s'\n",
@@ -183,7 +183,7 @@ parse_config_file(char *config_file)
                         line_number);
                 exit(1);
             }
-            raw_output_file = fopen(match,"a");
+            raw_output_file = fopen(match,"ae");
             break;
 
         case ARG_OUTPUT:
@@ -203,7 +203,7 @@ parse_config_file(char *config_file)
             file_specified = 1;
             rfp = (struct rule_file *)malloc(sizeof(struct rule_file));
             rfp->next = NULL;
-            rfp->file = fopen(match,"a");
+            rfp->file = fopen(match,"ae");
             rfp->enable_stdout = 1;
             if (!rfp->file)
             {

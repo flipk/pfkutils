@@ -238,7 +238,7 @@ WebSocketClient :: init_common(const string &proxy,
     sa.sin_port = htons(destPort);
     sa.sin_addr = destAddr;
 
-    newfd = socket(AF_INET, SOCK_STREAM, 0);
+    newfd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (newfd < 0)
     {
         __WSERR(ERR_SOCKET);

@@ -54,7 +54,7 @@ syslogd_main( int argc, char ** argv )
     else
         parse_config_file(DEFAULT_CONFIG_FILE);
 
-    fd = socket( PF_INET, SOCK_DGRAM, 0 );
+    fd = socket( PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
     {
         fprintf( stderr, "unable to open socket: %s\n", strerror( errno ));

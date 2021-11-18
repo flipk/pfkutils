@@ -33,7 +33,7 @@ itsfsctl_main( int argc, char ** argv )
         FILE * statusfile;
         char pidline[80];
 
-        statusfile = fopen( "/i/status", "r" );
+        statusfile = fopen( "/i/status", "re" );
         if ( statusfile == NULL )
             BAIL(( "unable to open status file\n" ));
         if ( fgets( pidline, 80, statusfile ) != pidline )

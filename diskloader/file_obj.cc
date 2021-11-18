@@ -122,7 +122,7 @@ file_obj :: create(int max_file_size)
 #endif
 #endif
 
-    FILE * f = fopen(path, "w");
+    FILE * f = fopen(path, "we");
     if (!f)
     {
         fprintf(stderr, "error opening '%s': %d : %s\n",
@@ -148,7 +148,7 @@ file_obj :: verify(void)
 #if VERBOSE
     printf("v"); fflush(stdout);
 #endif
-    FILE * f = fopen(path, "r");
+    FILE * f = fopen(path, "re");
     if (!f)
     {
         fprintf(stderr, "error opening '%s': %d : %s\n",

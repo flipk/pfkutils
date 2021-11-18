@@ -457,7 +457,7 @@ remote_inode_client_tcp :: remote_inode_client_tcp( u_int addr, int port )
 {
     int flag;
     struct sockaddr_in sa;
-    fd = socket( AF_INET, SOCK_STREAM, 0 );
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
         return;
 
@@ -490,7 +490,7 @@ remote_inode_client_tcp :: remote_inode_client_tcp( u_int addr, int port )
         u_int salen = sizeof( struct sockaddr_in );
 #endif
 
-        ear = accept( fd, (struct sockaddr *)&sa, &salen );
+        ear = accept4( fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC );
         if ( ear < 0 )
         {
             close( fd );

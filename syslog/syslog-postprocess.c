@@ -50,7 +50,7 @@ postprocess_syslog_main( int argc, char ** argv )
     if (argc != 2)
         usage();
 
-    in = fopen(argv[1],"r");
+    in = fopen(argv[1],"re");
     if (!in)
     {
         fprintf(stderr, "error opening input file: %s\n",

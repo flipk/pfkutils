@@ -79,7 +79,7 @@ process_template( char * file, char * var )
     char line[132];
     FILE * f;
 
-    f = fopen( file, "r" );
+    f = fopen( file, "re" );
     if ( !f )
     {
         fprintf( stderr, "could not open file %s\n", file );

@@ -37,7 +37,7 @@ For more information, please refer to <http://unlicense.org>
 ipipe_acceptor :: ipipe_acceptor( short port, ipipe_new_connection * _factory )
 {
     connection_factory = _factory;
-    fd = socket( AF_INET, SOCK_STREAM, 0 );
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
     {
         fprintf( stderr, "\nsocket: %s\n", strerror( errno ));
@@ -81,7 +81,7 @@ ipipe_acceptor :: read ( fd_mgr * mgr )
     socklen_t  salen;
 
     salen = sizeof( sa );
-    int new_fd = accept( fd, (struct sockaddr *)&sa, &salen );
+    int new_fd = accept4( fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC );
 
     if ( new_fd < 0 )
     {

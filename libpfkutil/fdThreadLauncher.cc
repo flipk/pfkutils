@@ -286,7 +286,7 @@ fdThreadLauncher :: acceptConnection(struct sockaddr_in *addr)
     if (addr != NULL)
         psa = addr;
     socklen_t  salen = sizeof(sa);
-    return accept(fd, (struct sockaddr *)psa, &salen);
+    return accept4(fd, (struct sockaddr *)psa, &salen, SOCK_CLOEXEC);
 }
 
 // static
@@ -300,7 +300,7 @@ fdThreadLauncher :: makeListeningSocket(int port)
 int
 fdThreadLauncher :: makeListeningSocket(uint32_t ip, int port)
 {
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    int fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         fprintf(stderr, "socket : %s\n", strerror(errno));
@@ -327,7 +327,7 @@ fdThreadLauncher :: makeListeningSocket(uint32_t ip, int port)
 int
 fdThreadLauncher :: makeConnectingSocket(uint32_t ip, int port)
 {
-    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    int fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         fprintf(stderr, "socket : %s\n", strerror(errno));

@@ -183,14 +183,14 @@ _itsfssvr_main( int argc, char ** argv )
 
     // create nfs and rendevous sockets.
 
-    globs.nfs_rpc_udp_fd = socket( AF_INET, SOCK_DGRAM, 0 );
+    globs.nfs_rpc_udp_fd = socket( AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0 );
     if ( globs.nfs_rpc_udp_fd < 0 )
     {
         printf( "unable to create socket\n" );
         return -1;
     }
 
-    globs.slave_rendevous_fd = socket( AF_INET, SOCK_STREAM, 0 );
+    globs.slave_rendevous_fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0 );
     if ( globs.slave_rendevous_fd < 0 )
     {
         printf( "unable to create socket\n" );
@@ -430,9 +430,9 @@ _itsfssvr_main( int argc, char ** argv )
             int newfd;
 
             len = sizeof( addr );
-            newfd = accept( globs.slave_rendevous_fd,
+            newfd = accept4( globs.slave_rendevous_fd,
                             (struct sockaddr *)&addr,
-                            (socklen_t*)&len );
+                            (socklen_t*)&len, SOCK_CLOEXEC );
 
             // allocate a new index.  note that we don't
             // have to free it if we don't end up using it,

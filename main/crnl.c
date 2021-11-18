@@ -240,13 +240,13 @@ convert_file( char * file, read_filter r, write_filter w )
         fprintf( stderr, "error, cannot rename file '%s'\n", file );
         exit( 1 );
     }
-    inf = fopen( buffer, "r" );
+    inf = fopen( buffer, "re" );
     if ( inf == NULL )
     {
         fprintf( stderr, "error, cannot open input file '%s'\n", buffer );
         exit( 1 );
     }
-    outf = fopen( file, "w" );
+    outf = fopen( file, "we" );
     if ( outf == NULL )
     {
         fprintf( stderr, "error, cannot open output file '%s'\n", file );

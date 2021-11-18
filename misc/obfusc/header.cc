@@ -55,7 +55,7 @@ produce_header( Btree * bt )
 {
     FILE * header;
 
-    header = fopen( "transtags.h", "w" );
+    header = fopen( "transtags.h", "we" );
 
     Btree::printinfo  pi = {
         &spr,

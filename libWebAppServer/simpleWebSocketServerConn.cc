@@ -17,7 +17,7 @@ WebSocketServer :: WebSocketServer( uint16_t port, uint32_t addr,
                                     bool _verbose )
     : _ok(false), fd(-1), verbose(_verbose)
 {
-    fd = socket(AF_INET, SOCK_STREAM, 0);
+    fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
         return;
     struct sockaddr_in sa;
@@ -43,7 +43,7 @@ WebSocketServer::handle_accept(void)
 {
     struct sockaddr_in sa;
     socklen_t salen = sizeof(sa);
-    int new_fd = accept(fd, (struct sockaddr *)&sa, &salen);
+    int new_fd = accept4(fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC);
     if (new_fd < 0)
         return NULL;
     return new WebSocketServerConn(new_fd, sa, verbose);

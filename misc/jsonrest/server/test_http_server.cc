@@ -17,7 +17,7 @@ TestHttpServer :: TestHttpServer(int port)
     char err[100];
     int v = 1;
     fd = -1;
-    int d = socket(AF_INET, SOCK_STREAM, 0);
+    int d = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (d < 0)
     {
         int e = errno;
@@ -111,7 +111,7 @@ TestHttpServer :: run(void)
         struct sockaddr_in sa;
         socklen_t salen = sizeof(sa);
         printf("waiting for connection.\n");
-        int new_fd = accept(fd, (struct sockaddr *)&sa, &salen);
+        int new_fd = accept4(fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC);
         if (new_fd < 0)
         {
             int e = errno;

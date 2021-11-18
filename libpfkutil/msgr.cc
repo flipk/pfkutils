@@ -146,7 +146,7 @@ PfkMsgr :: common_init(const std::string &host, int port)
     sa.sin_port = htons(port);
     if (isServer)
     {
-        fd = socket(AF_INET, SOCK_STREAM, 0);
+        fd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
         if (fd < 0)
         {
             int e = errno;
@@ -246,7 +246,7 @@ PfkMsgr :: thread_main(void)
                 else if (FD_ISSET(fd, &rfds))
                 {
                     socklen_t salen = sizeof(sa);
-                    dataFd = accept(fd, (struct sockaddr *)&sa, &salen);
+                    dataFd = accept4(fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC);
                     if (dataFd < 0)
                     {
                         int e = errno;
@@ -259,7 +259,7 @@ PfkMsgr :: thread_main(void)
         else
         {
             // attempt connect or wait for close if fail
-            dataFd = socket(AF_INET, SOCK_STREAM, 0);
+            dataFd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
             if (dataFd < 0)
             {
                 int e = errno;

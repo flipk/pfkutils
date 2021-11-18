@@ -40,7 +40,7 @@ ipipe_connector :: ipipe_connector( struct sockaddr_in * sa,
 {
     connection_factory = inc;
 
-    fd = socket( AF_INET, SOCK_STREAM, 0 );
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
     {
         fprintf( stderr, "\nsocket: %s\n", strerror( errno ));

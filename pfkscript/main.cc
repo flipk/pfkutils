@@ -117,7 +117,7 @@ class Pfkscript_program {
 
     bool makeListenPort(void)
     {
-        listenPortFd = socket(AF_INET, SOCK_STREAM, 0);
+        listenPortFd = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
         int v = 1;
         setsockopt( listenPortFd, SOL_SOCKET, SO_REUSEADDR,
                     (void*) &v, sizeof( v ));
@@ -261,8 +261,8 @@ class Pfkscript_program {
     {
         struct sockaddr_in sa;
         socklen_t len = sizeof(sa);
-        int newfd = accept(listenPortFd, (struct sockaddr *)&sa,
-                           &len);
+        int newfd = accept4(listenPortFd, (struct sockaddr *)&sa,
+                           &len, SOCK_CLOEXEC);
         if (newfd > 0)
         {
             if (listenDataPortFd != -1)

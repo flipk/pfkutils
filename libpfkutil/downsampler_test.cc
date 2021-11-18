@@ -37,7 +37,7 @@ main()
         angle += incr;
     }
 
-    FILE * f = fopen("input.txt", "w");
+    FILE * f = fopen("input.txt", "we");
     for (int ind = 0; ind < samples_in.size(); ind++)
         fprintf(f, "%d %f %f\n", ind,
                 samples_in[ind].real(), samples_in[ind].imag());
@@ -54,7 +54,7 @@ main()
             samples_out.push_back(out);
     }
 
-    f = fopen("output.txt", "w");
+    f = fopen("output.txt", "we");
     for (int ind = 0; ind < samples_out.size(); ind++)
         fprintf(f, "%d %f %f\n", ind,
                 samples_out[ind].real(), samples_out[ind].imag());

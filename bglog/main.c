@@ -111,7 +111,7 @@ bglog_main(int argc, char ** argv)
 
     close(slave_fd);
     (void) unlink(CLEANUP_SCRIPT);
-    FILE * cleanup_f = fopen(CLEANUP_SCRIPT, "w");
+    FILE * cleanup_f = fopen(CLEANUP_SCRIPT, "we");
     fprintf(cleanup_f,
             "#!/bin/sh\n"
             "kill %d\n"

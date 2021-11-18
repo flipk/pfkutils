@@ -123,7 +123,7 @@ do_mount( char * rootfh_bytes )
 #else
     printf( "skipping mount!\n" ); ret = 0;
     {
-        int fd = socket( AF_INET, SOCK_DGRAM, 0 );
+        int fd = socket( AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0 );
         sendto( fd, mount_packet, sizeof( mount_packet ),
                 0, (struct sockaddr *)&sa, sizeof( sa ));
     }

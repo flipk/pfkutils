@@ -133,7 +133,7 @@ he_main( int argc, char ** argv )
     }
 
 #ifdef OPEN_TTY
-    debug_fd = fopen( OPEN_TTY, "w" );
+    debug_fd = fopen( OPEN_TTY, "we" );
     setlinebuf( debug_fd );
 #endif
 

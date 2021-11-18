@@ -832,7 +832,7 @@ public:
     bool open(const char *path, int flags,
               pxfe_errno *e = NULL,
               mode_t mode = 0600) {
-        fd = ::open(path, flags, mode);
+        fd = ::open(path, flags | O_CLOEXEC, mode);
         if (fd < 0)
             if (e) e->init(errno, "open");
         return (fd >= 0);
@@ -1286,7 +1286,7 @@ class pxfe_unix_dgram_socket : public pxfe_fd {
             counter++;
             path = str.str();
         }
-        fd = ::socket(AF_UNIX, SOCK_DGRAM, 0);
+        fd = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
         if (fd < 0)
         {
             if (e) e->init(errno, "socket");
@@ -1432,7 +1432,7 @@ public:
     }
     /** init the socket specifying a port number, return false if failure */
     bool init(int port, pxfe_errno *e = NULL) {
-        fd = ::socket(AF_INET, SOCK_DGRAM, 0);
+        fd = ::socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
         if (fd < 0)
         {
             if (e) e->init(errno, "socket");
@@ -1452,7 +1452,7 @@ public:
     }
     /** not sure what this is useful for */
     bool init_proto(int type, int protocol, pxfe_errno *e = NULL) {
-        fd = ::socket(AF_INET, type, protocol);
+        fd = ::socket(AF_INET, type | SOCK_CLOEXEC, protocol);
         if (fd < 0)
         {
             if (e) e->init(errno, "socket");
@@ -1557,7 +1557,7 @@ public:
     ~_pxfe_stream_socket(void) { }
     /** init the socket, does not bind it, return false if failure */
     bool init(pxfe_errno *e = NULL) {
-        fd = ::socket(PF_INET, SOCK_STREAM, protocolNumber);
+        fd = ::socket(PF_INET, SOCK_STREAM | SOCK_CLOEXEC, protocolNumber);
         if (fd < 0) {
             if (e) e->init(errno, "socket");
             return false;
@@ -1605,7 +1605,7 @@ public:
      * object, or returns NULL if accept fails */
     _pxfe_stream_socket *accept(pxfe_errno *e = NULL) {
         socklen_t sz = sizeof(sa);
-        int fdnew = ::accept(fd, sa(), &sz);
+        int fdnew = ::accept4(fd, sa(), &sz, SOCK_CLOEXEC);
         if (fdnew < 0) {
             if (e) e->init(errno, "accept");
             return NULL;

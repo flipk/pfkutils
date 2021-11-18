@@ -67,7 +67,7 @@ proxyClientTcpAcceptor :: read ( fd_mgr * mgr )
     socklen_t  salen;
 
     salen = sizeof( sa );
-    int new_fd = accept( fd, (struct sockaddr *)&sa, &salen );
+    int new_fd = accept4( fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC );
 
     if ( new_fd < 0 )
     {

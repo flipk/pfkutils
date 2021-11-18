@@ -44,7 +44,7 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     : PK_Message_Ext_Link(_handler),
       PK_Message_Ext_Manager(_handler,this)
 {
-    fd = socket( AF_INET, SOCK_STREAM, 0);
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         int err = errno;
@@ -68,7 +68,7 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     }
     listen(fd, 1);
     socklen_t salen = sizeof(sa);
-    int new_fd = accept( fd, (struct sockaddr *) &sa, &salen );
+    int new_fd = accept4( fd, (struct sockaddr *) &sa, &salen, SOCK_CLOEXEC );
     if (new_fd < 0)
     {
         int err = errno;
@@ -88,7 +88,7 @@ PK_Message_Ext_Link_TCP :: PK_Message_Ext_Link_TCP(
     : PK_Message_Ext_Link(_handler),
       PK_Message_Ext_Manager(_handler,this)
 {
-    fd = socket( AF_INET, SOCK_STREAM, 0);
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
     {
         int err = errno;

@@ -575,7 +575,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
     }
 
     struct sockaddr_in sa;
-    fd = socket( AF_INET, SOCK_STREAM, 0 );
+    fd = socket( AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0 );
     if ( fd < 0 )
     {
         printf( "socket: %s\n", strerror( errno ));
@@ -614,7 +614,7 @@ remote_inode_server_tcp :: remote_inode_server_tcp( u_int addr,
         u_int salen = sizeof( struct sockaddr_in );
 #endif
 
-        ear = accept( fd, (struct sockaddr *)&sa, &salen );
+        ear = accept4( fd, (struct sockaddr *)&sa, &salen, SOCK_CLOEXEC );
         if ( ear < 0 )
         {
             int e = errno;

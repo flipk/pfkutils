@@ -93,7 +93,7 @@ itsfsriw_main( int argc, char ** argv )
     if ( !pwd  ) pwd  = "unknownpwd";
 
     sprintf( logpath, "%s/.y.itsfsriw.%s.%d", home, host, getpid() );
-    fd = fopen( logpath, "w" );
+    fd = fopen( logpath, "we" );
     if ( fd )
     {
         fprintf( fd, "itsfsriw,%s,%d,p%d,%s,%s\n",

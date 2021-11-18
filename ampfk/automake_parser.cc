@@ -79,7 +79,7 @@ automake_file :: parse(const string &fname)
         { /*quiet compiler*/ }
     }
 
-    FILE * in = fopen(fname.c_str(), "r");
+    FILE * in = fopen(fname.c_str(), "re");
     if (!in)
         return false;
     tokenizer_init(in);
@@ -95,7 +95,7 @@ automake_file :: parse(const string &fname)
 void
 automake_file :: tokenize(const string &fname)
 {
-    FILE * in = fopen(fname.c_str(), "r");
+    FILE * in = fopen(fname.c_str(), "re");
     if (!in)
         return;
     tokenizer_init(in);
