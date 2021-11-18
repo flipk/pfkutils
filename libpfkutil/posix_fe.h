@@ -1310,6 +1310,7 @@ public:
     static bool hostname_to_ipaddr( const char * host, uint32_t * _addr )
     {
         uint32_t addr;
+// TODO : should use getaddrinfo getnameinfo (h_errno is gross)
         if ( ! (inet_aton( host, (in_addr*) &addr )))
         {
             struct hostent * he;
@@ -1359,6 +1360,8 @@ public:
         // string was not an integer
         return false;
     }
+// TODO format_ip should be replaced,
+//      convert all inet_aton/inet_ntoa in pfkutils to pton/ntop?
     /** format an IP address into a dotted quad string (A.B.C.D) */
     static std::string format_ip(uint32_t ip) {
         std::ostringstream ostr;
