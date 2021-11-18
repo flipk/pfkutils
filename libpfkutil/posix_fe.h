@@ -337,6 +337,7 @@ static inline bool operator<(const pxfe_timespec &lhs,
 
 /** container for an 'errno' */
 class pxfe_errno {
+    char error_string_storage[ 120 ];
 public:
     /** the actual errno */
     int e;
@@ -350,10 +351,53 @@ public:
     void init(int _e, const char *_what = NULL) {
         e = _e;
         what = _what;
-        if (e > 0)
-            err = strerror(e);
-        else
+        if (e <= 0)
             err = NULL;
+        else
+        {
+
+// NOTE : the strerror_r pooch got boned in all its holes
+//        by the vastly different XSI vs GNU definitions.
+
+#if (_POSIX_C_SOURCE >= 200112L) && !  _GNU_SOURCE
+
+// we have to use the XSI-compliant version of strerror_r
+// from POSIX.1-2001 (available since glibc 2.3.4,
+// but not POSIX-compliant until glibc 2.13):
+//    int strerror_r(int errnum, char *buf, size_t buflen)
+
+// sigh, prior to glibc 2.13, strerror_r returned a (positive)
+// error number, or 0 if success, but 2.13 and later, returns -1
+// for failure and sets errno. poor, poor pooch.
+
+            error_string_storage[0] = 0;
+            if (strerror_r(e, error_string_storage,
+                           sizeof(error_string_storage)) == 0)
+            {
+                err = error_string_storage;
+            }
+            else
+            {
+                // i don't care about the errno describing why we
+                // can't describe the errno, so i'm not going to
+                // bother with the glibc version# nonsense.  we'll
+                // just print the (original) errno and skip the
+                // textual description.
+                err = NULL;
+            }
+#else
+
+// we have to use the GNU-compliant version of strerror_r
+//    char *strerror_r(int errnum, char *buf, size_t buflen)
+
+            err = strerror_r(e, error_string_storage,
+                             sizeof(error_string_storage));
+            error_string_storage[sizeof(error_string_storage)-1] = 0;
+
+// well, that seemed easier.
+
+#endif
+        }
     }
     /** format this errno into "what: error <number> (strerror)" */
     std::string Format(void) {
