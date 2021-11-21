@@ -17,6 +17,8 @@ using namespace PFK::i3;
 
 class i3_udp_program
 {
+    struct threadsync;
+    typedef  void (i3_udp_program::*threadfunc_t)(threadsync *);
     i3_options              opts;
     ProtoSSLCertParams  *   certs;
     ProtoSSLMsgs        *   msgs;
@@ -38,8 +40,6 @@ class i3_udp_program
     pxfe_pipe               localreader_closerpipe;
     pxfe_pthread_mutex      lock;
     bool                    localreader_waiting;
-    void      (i3_udp_program::*threadfunc)(void);
-    pxfe_pthread_mutex      thread_start_sync;
     i3Msg                   inMsg;
     i3Msg                   outMsg;
 public:
@@ -70,8 +70,6 @@ public:
             ProtoSslDtlsQueueConfig::BYTES, // limit type
             1000000 // limit
             );
-        thread_start_sync.attr.settype(PTHREAD_MUTEX_NORMAL);
-        thread_start_sync.init();
         lock.init();
         lock.lock(); // place in locked state permanently.
     }
@@ -181,30 +179,58 @@ public:
     }
 private:
 
-    void threadstarter(pthread_t *id,
-                       void (i3_udp_program::*func)(void))
+    struct threadsync {
+        pxfe_pthread_cond   cond;
+        pxfe_pthread_mutex  mut;
+        bool                started;
+        i3_udp_program    * i3p;
+        threadfunc_t        threadfunc;
+
+        threadsync(i3_udp_program * _i3p, threadfunc_t  _threadfunc)
+        {
+            i3p = _i3p;
+            threadfunc = _threadfunc;
+            cond.init();
+            mut.attr.settype(PTHREAD_MUTEX_NORMAL);
+            mut.init();
+            started = false;
+        }
+        void waitstarted(void)
+        {
+            mut.lock();
+            while (started == false)
+                cond.wait(mut(), NULL);
+            mut.unlock();
+        }
+        void signal(void)
+        {
+            started = true;
+            cond.signal();
+        }
+    };
+
+    void threadstarter(pthread_t *id, threadfunc_t func)
     {
+        threadsync  ts(this, func);
         pxfe_pthread_attr  attr;
         attr.set_detach(false);
-        // lock once.
-        pxfe_pthread_mutex_lock  lock(thread_start_sync);
-        threadfunc = func;
-        pthread_create(id, attr(), &_threadstarter, (void*) this);
-        // lock again; blocks here until thread unlocks.
-        thread_start_sync.lock();
+        int ret = pthread_create(id, attr(), &_threadstarter, &ts);
+        ts.waitstarted();
     }
+
     static void *_threadstarter(void *arg)
     {
-        i3_udp_program *i3p = (i3_udp_program *) arg;
-        void (i3_udp_program::*func)(void) = i3p->threadfunc;
-        i3p->thread_start_sync.unlock(); // signal
-        (i3p->*func)();
+        threadsync  *ts = (threadsync *) arg;
+        i3_udp_program *i3p = ts->i3p;
+        threadfunc_t  func = ts->threadfunc;
+        (i3p->*func)(ts);
         return NULL;
     }
 
-    void server_thread(void)
+    void server_thread(threadsync *ts)
     {
         bool done = false;
+        ts->signal();
         while (!done)
         {
             client = server->handle_accept();
@@ -241,12 +267,13 @@ private:
         }
     }
 
-    void stats_thread(void)
+    void stats_thread(threadsync *ts)
     {
         ProtoSslDtlsQueueStatistics  stats;
         stats_thread_running = true;
         bool done = false;
         uint64_t last_bytes = 0;
+        ts->signal();
         while (!done)
         {
             pxfe_select  sel;
@@ -267,7 +294,7 @@ private:
         }
     }
 
-    void client_thread(void)
+    void client_thread(threadsync *ts)
     {
         client_running = true;
         check_peer();
@@ -276,6 +303,7 @@ private:
         threadstarter(&stats_thread_id, &i3_udp_program::stats_thread);
 
         bool done = false;
+        ts->signal();
         while (!done)
         {
             ProtoSSL::ProtoSslDtlsQueue::read_return_t ret;
@@ -317,6 +345,10 @@ private:
     bool handle_message(void)
     {
         bool done = false;
+
+        if (opts.debug_flag)
+            fprintf(stderr, "received message: %s\n",
+                    inMsg.DebugString().c_str());
 
         switch (inMsg.type())
         {
@@ -379,12 +411,13 @@ private:
         return done;
     }
 
-    void localreader_thread(void)
+    void localreader_thread(threadsync *ts)
     {
         uint32_t outseq = 1;
         int seqcount = 0;
         localreader_running = true;
         bool done = false;
+        ts->signal();
         while (!done)
         {
             pxfe_select  sel;
