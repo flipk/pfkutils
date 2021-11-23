@@ -17,7 +17,7 @@ if [[ $gitnummods = 0 ]] ; then
 fi
 
 index=$(( gitnummods - 1 ))
-repodir=${gitdir}/${gitsubdir[$index]}
+repodir=${gitsubdir[$index]}
 
 echo gc repo at : $repodir
 

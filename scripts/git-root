@@ -14,7 +14,8 @@
 #              gitnummods=1  --- count of modname[] and head[] entries
 #
 #              gitroot[x]="root dir of working tree or submod"
-#              gitsubdir[x]="path to repo or submod repo within .git"
+#              gitsubdir[x]="path to the .git dir for this repo"
+#              gitrelpath[x]="current dir within this repo"
 #              gitmodname[x]="dir name of working tree root or submod"
 #              githead[x]="branch or commit id for HEAD"
 #
@@ -64,7 +65,6 @@ fi
 # read "HEAD" and parse a ref name or shortened commit ID from it
 # $1 : topdir
 parseHEAD() {
-    local gitdir
     local head
     cd "$1"
     gitdir="$(git rev-parse --git-dir)"
@@ -94,6 +94,7 @@ gitrelpath="$rp"
 rels[0]="$rp"
 
 parseHEAD $toplevel
+dotgit[0]="$gitdir"
 heads[0]="$gh"
 gitnummods=1
 
@@ -108,6 +109,7 @@ gitnummods=1
             getrelpath
             rels[$gitnummods]="$rp"
             parseHEAD $d
+            dotgit[$gitnummods]="$gitdir"
             heads[$gitnummods]="$gh"
             modname[$gitnummods]="${d##*/}"
             (( gitnummods ++ ))
@@ -130,7 +132,8 @@ if [[ $vars == 1 ]] ; then
         (( index-- ))
         real gitroot[$count]=\"${tops[$index]}\"
         real githead[$count]=\"${heads[$index]}\"
-        real gitsubdir[$count]=\"${rels[$index]}\"
+        real gitsubdir[$count]=\"${dotgit[$index]}\"
+        real gitrelpath[$count]=\"${rels[$index]}\"
         real gitmodname[$count]=\"${modname[$index]}\"
         (( count++ ))
     done
