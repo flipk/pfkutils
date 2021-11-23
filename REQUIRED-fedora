@@ -1,5 +1,5 @@
 
-autoconf automake libtool doxygen graphviz
+autoconf automake libtool doxygen graphviz bzip2
 gcc gcc-c++ flex byacc bison imake zlib-devel ncurses-devel
 libX11-devel libXau-devel libICE-devel libSM-devel libXaw-devel
 libXpm-devel libXmu-devel libXext-devel libXt-devel libXrandr-devel

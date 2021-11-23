@@ -43,8 +43,9 @@ KSHRC_LOCAL = kshrc.local.blade
 PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
-MBEDTLS_INCS =
-MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
+MBEDTLS_DIR = /home/flipk/proj/pfkutils/contrib/mbedtls
+MBEDTLS_INCS = -I$(MBEDTLS_DIR)/include
+MBEDTLS_LIBS = -L$(MBEDTLS_DIR)/library -lmbedtls -lmbedx509 -lmbedcrypto
 
 PFKUTILS_OS = fedora33
 
