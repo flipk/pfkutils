@@ -113,11 +113,14 @@ public:
         MBEDTLS_SHA256_STARTS(&recv_hash,0);
         MBEDTLS_SHA256_STARTS(&send_hash,0);
 
+        pxfe_ticker tick;
+        tick.start(0,250000);
         bool done = false;
         while (!done)
         {
             pxfe_select sel;
 
+            sel.rfds.set(tick.fd());
             if (server)
                 sel.rfds.set(server->get_fd());
             if (client)
@@ -204,16 +207,16 @@ public:
                     done = true;
                 }
             }
-            if (opts.verbose)
+            if (sel.rfds.is_set(tick.fd()))
             {
-                time_t now = time(NULL);
-                if (now != last_stats)
+                tick.doread();
+                if (opts.verbose)
                 {
                     print_stats(/*final*/ false);
-                    last_stats = now;
                 }
             }
         }
+        tick.pause();
 
         // print one more stats before we exit with the latest
         // information so the last stats printed represents the full
