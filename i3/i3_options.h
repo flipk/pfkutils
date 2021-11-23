@@ -18,6 +18,7 @@ public:
     bool pingack;
     int pingack_preload;
     bool verbose;
+    bool very_verbose;
     int debug_flag;
 
     bool input_set;

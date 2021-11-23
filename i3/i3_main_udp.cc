@@ -30,6 +30,7 @@ class i3_udp_program
     mbedtls_sha256_context  recv_hash;
     mbedtls_sha256_context  send_hash;
     bool                    connected;
+    pxfe_timeval            connect_time;
     bool                    client_running;
     bool                    localreader_running;
     bool                    stats_thread_running;
@@ -164,6 +165,8 @@ public:
             pthread_join(server_thread_id,  &thread_ret);
         }
 
+        connect_time.getNow();
+
         // wait for client threads to finish.
         if (client_running)
             pthread_join(client_thread_id, &thread_ret);
@@ -272,13 +275,15 @@ private:
         ProtoSslDtlsQueueStatistics  stats;
         stats_thread_running = true;
         bool done = false;
-        uint64_t last_bytes = 0;
+        uint64_t last_total = 0;
+        pxfe_timeval now, diff;
+
         ts->signal();
         while (!done)
         {
             pxfe_select  sel;
             sel.rfds.set(localreader_closerpipe.readEnd);
-            sel.tv.set(1,0);
+            sel.tv.set(0,250000);
             sel.select();
             if (sel.rfds.is_set(localreader_closerpipe.readEnd))
                 done = true;
@@ -286,12 +291,26 @@ private:
             if (dtlsq)
                 dtlsq->get_stats(&stats);
 
-            uint64_t bytes = stats.bytes_received - last_bytes;
-            last_bytes = stats.bytes_received;
+            now.getNow();
+            diff = now - connect_time;
+            float t = diff.usecs() / 1000000.0;
+            if (t == 0.0)
+                t = 99999.0;
 
-            fprintf(stderr, "%s brps %u\n",
-                    stats.Format().c_str(), (uint32_t) bytes);
+            uint64_t total = stats.bytes_sent + stats.bytes_received;
+            float bytes_per_sec = (float) total / t;
+
+            fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
+                    "(%.0f Bps %.0f bps) ",
+                    total,
+                    (unsigned int) diff.tv_sec,
+                    (unsigned int) diff.tv_usec,
+                    bytes_per_sec, bytes_per_sec * 8.0);
+            if (opts.very_verbose)
+                fprintf(stderr, "%s ",
+                        stats.Format().c_str());
         }
+        printf("\n");
     }
 
     void client_thread(threadsync *ts)
@@ -329,7 +348,7 @@ private:
                 break;
 
             case ProtoSSL::ProtoSslDtlsQueue::LINK_DOWN:
-                fprintf(stderr, "dtlsq LINK-DOWN!\n");
+                fprintf(stderr, "\n\n\nLINK-DOWN!\n\n\n");
                 break;
 
             case ProtoSSL::ProtoSslDtlsQueue::LINK_UP:

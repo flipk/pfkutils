@@ -33,6 +33,7 @@ i3_options :: print_help(void)
    "   -P  : port# (default is 2005)\n"
    "   -p  : ping/ack to reduce network queuing, specify #pkts to preload\n"
    "   -v  : verbose reporting of stats\n"
+   "   -vv : very verbose reporting of stats\n"
    "   -d  : enable ssl debug\n"
    "   -c  : path to my certificate file\n"
    "   -k  : path to my private key file\n"
@@ -45,7 +46,7 @@ i3_options :: print_help(void)
 
 i3_options :: i3_options(int argc, char ** argv)
     : ok(false), pingack(false), pingack_preload(0), verbose(false),
-      debug_flag(0),
+      very_verbose(false), debug_flag(0),
       input_set(false), input_fd(-1), input_nul(false),
       input_rand(false), input_zero(false),
       output_set(false), output_fd(-1), output_discard(false),
@@ -147,6 +148,8 @@ i3_options :: i3_options(int argc, char ** argv)
             break;
 
         case 'v':
+            if (verbose)
+                very_verbose = true;
             verbose = true;
             break;
 
