@@ -98,7 +98,9 @@ ProtoSSLConnClient :: init_common(unsigned char *client_ip, size_t cliip_len)
         // and we get into a new client object just fine, so this is ok.
         if (ret == MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED)
         {
-            fprintf(stderr, "ProtoSSLConnClient: HELLO_VERIFY_REQUIRED (normal), retrying\n");
+// not printing this, because it's useless information.
+//    fprintf(stderr,
+//            "ProtoSSLConnClient: HELLO_VERIFY_REQUIRED (normal), retrying\n");
             mbedtls_ssl_session_reset( &sslctx );
             return false;
         }

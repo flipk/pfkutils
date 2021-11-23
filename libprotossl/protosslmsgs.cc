@@ -340,8 +340,6 @@ ProtoSSLMsgs :: validateCertificates(void)
 
         return false;
     }
-    fprintf(stderr,
-            "ProtoSSLMsgs::validateCertificates : certificates validated\n");
     return true;
 }
 
