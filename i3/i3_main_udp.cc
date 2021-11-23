@@ -470,9 +470,10 @@ private:
 
     void check_peer(void)
     {
-#if 0 // xxx broken -- we don't use 'client' pointer here.
+        if (!dtlsq)
+            return;
         ProtoSSLPeerInfo  info;
-        if (client->get_peer_info(info) == false)
+        if (dtlsq->get_peer_info(info) == false)
         {
             // we always print this information regardless of verbose
             // or debug settings, because this might represent a peer
@@ -493,7 +494,6 @@ private:
                  << " " << info.org_unit
                  << endl;
         }
-#endif
     }
     void sendmsg(void)
     {

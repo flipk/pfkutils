@@ -466,6 +466,7 @@ public:
 
     // call this after construction to see if construction was okay.
     bool ok(void) const { return _ok; }
+    bool get_peer_info(ProtoSSLPeerInfo &info);
 
     // if you didn't call shutdown, this will do it for you. it will
     // also delete the SSLConnClient for you.

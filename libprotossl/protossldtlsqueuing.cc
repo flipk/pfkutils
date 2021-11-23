@@ -289,6 +289,14 @@ ProtoSslDtlsQueueStatistics ::Format(void)
     return ostr.str();
 }
 
+bool
+ProtoSslDtlsQueue :: get_peer_info(ProtoSSLPeerInfo &info)
+{
+    if (client == NULL)
+        return false;
+    return client->get_peer_info(info);
+}
+
 void
 ProtoSslDtlsQueue :: get_stats(ProtoSslDtlsQueueStatistics *pstats)
 {
