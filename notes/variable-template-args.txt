@@ -15,3 +15,41 @@ RealThingClassT_t rt;
 // a template with a static global is weird too
 template <> int RealThingClassT_t::value = 4;
 rt.function(x,y,and_then_some_stuff)
+
+
+also, template functions!  dont even have to reference the word template,
+just call the func -- it will infer the FuncArgsTypes.
+
+template <typename... FuncArgsTypes>
+void something(FuncArgsTypes&&... funcArgs)
+{
+    someotherfunc(std::forward<FuncArgsTypes>(funcArgs)...);
+}
+
+
+something();
+something(a,b,c);
+
+
+also, #defines can do varargs.
+
+#define  SOME_MACRO(one, two, three...) \
+     something(one, two, three)
+
+except this MANDATES at least three args; if you want "three" to have the
+option of being null, you can expand it using ##, which the CPP manual page
+says "deletes the previous comma."  and yes, that works.
+
+int func(int a, int b, int c) { return a+b+c; }
+int func(int a, int b) { return a+b; }
+int func(int a) { return a; }
+
+#define FUNC(a,b...) func(a,##b)
+
+int main()
+{
+    printf("FUNC(6,6,6)=%d\n", FUNC(6,6,6));
+    printf("FUNC(6,6)=%d\n", FUNC(6,6));
+    printf("FUNC(6)=%d\n", FUNC(6));
+    return 0;
+}
