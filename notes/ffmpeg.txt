@@ -105,6 +105,29 @@ ffmpeg -i <input> -filter:v fps=fps=30 <output>
 
 -ar 48000
 
+--downmixing 5.1 surround to 2-channel stereo (DTS)
+  (why does "dca" mean "dts" ?)
+
+-c:a dca -ac 2
+
+--downmixing 5.1 surround to 2-channel stereo (AAC)
+  NOTE AAC doesn't work on 5.1 audio !
+       must downconvert to 2 channel! (-ac 2 required)
+
+-c:a dca -ac 2
+
+--interesting article about downmixing:
+
+https://superuser.com/questions/852400/properly-downmix-5-1-to-stereo-using-ffmpeg
+
+--converting a high res movie with several 5.1 audio tracks to ipad
+
+nice ffmpeg -i $in1 -strict experimental \
+       -map 0:0 -c:v libx264 \
+            -x264-params keyint=15 -b:v $vrate \
+       -map 0:1 -c:a aac -ac 2 \
+       -y $out1
+
 --cutting a specific piece out of a file.
 
 startpos=1020
