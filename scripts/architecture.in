@@ -25,7 +25,12 @@ if ! [ -d "${prefix}/${pf}" ] ; then
              > ${buildlog} 2>&1
     chmod 600 ${buildlog}
     if [ -x ${findpfbin} ] ; then
+        pf_old="${pf}"
         pf=$( ${findpfbin} "${prefix}" "${pf}" )
+        echo '!!!! NOTE: FOUND' PFKARCH=${pf} 1>&2
+        echo '!!!! NOTE: consider running the following commands:' 1>&2
+        echo '     cd pfk' 1>&2
+        echo '     ln -s' ${pf} ${pf_old} 1>&2
     fi
 fi
 
