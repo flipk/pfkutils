@@ -310,7 +310,7 @@ private:
                 fprintf(stderr, "%s ",
                         stats.Format().c_str());
         }
-        printf("\n");
+        fprintf(stderr,"\n");
     }
 
     void client_thread(threadsync *ts)
