@@ -5,7 +5,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
 #define PRINT_SEQNOS 0
-#define PRINTF(x...) // printf(x)
+#define PRINTF(x...) // fprintf(stderr,x)
 
 
 #if GOOGLE_PROTOBUF_VERSION >= 3004001
@@ -529,7 +529,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
 
     if (recv_window.size() < frag->pkthdr->window_size())
     {
-        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+        PRINTF("ProtoSslDtlsQueue :: handle_got_frag : "
                 "receive window size set to %u\n",
                 frag->pkthdr->window_size());
         recv_window.resize(frag->pkthdr->window_size());

@@ -1,4 +1,5 @@
 
+// needs -Iz (someday) and sha256 (someday)
 #define __STDC_FORMAT_MACROS 1
 
 #include "pfkutils_config.h"
@@ -7,6 +8,7 @@
 #include I3_PROTO_HDR
 #include <mbedtls/sha256.h>
 #include <pthread.h>
+#include <signal.h>
 #include "posix_fe.h"
 
 using namespace ProtoSSL;
@@ -180,6 +182,11 @@ public:
 
         return 0;
     }
+    void handle_signal(void)
+    {
+        fprintf(stderr, "\nkilled by ^C, cleaning up\n");
+        localreader_closerpipe.write((void*)" ", 1);
+    }
 private:
 
     struct threadsync {
@@ -236,7 +243,15 @@ private:
         ts->signal();
         while (!done)
         {
-            client = server->handle_accept();
+            pxfe_select  sel;
+            sel.rfds.set(server->get_fd());
+            sel.rfds.set(localreader_closerpipe.readEnd);
+            sel.tv.set(0,250000);
+            sel.select();
+            if (sel.rfds.is_set(localreader_closerpipe.readEnd))
+                done = true;
+            if (sel.rfds.is_set(server->get_fd()))
+                client = server->handle_accept();
             if (client)
             {
                 connected = true;
@@ -319,7 +334,8 @@ private:
         check_peer();
         send_proto_version();
 
-        threadstarter(&stats_thread_id, &i3_udp_program::stats_thread);
+        if (opts.verbose)
+            threadstarter(&stats_thread_id, &i3_udp_program::stats_thread);
 
         bool done = false;
         ts->signal();
@@ -382,11 +398,11 @@ private:
             {
                 ssize_t towrite = inMsg.file_data().file_data().length();
 //                fprintf(stderr,"about to write %d\n", (int) towrite);
-                if (towrite > 0)
+                if (towrite > 0 && opts.output_set)
                 {
                     void * ptr = (void*)
                         inMsg.file_data().file_data().c_str();
-                    ssize_t s = ::write(1, ptr, towrite);
+                    ssize_t s = ::write(opts.output_fd, ptr, towrite);
                     if (s != towrite)
                     {
                         fprintf(stderr, "::write failed: %d (%s)\n",
@@ -440,13 +456,14 @@ private:
         while (!done)
         {
             pxfe_select  sel;
-            sel.rfds.set(0);
+            if (opts.input_set)
+                sel.rfds.set(opts.input_fd);
             sel.rfds.set(localreader_closerpipe.readEnd);
             sel.tv.set(1,0);
             sel.select();
             if (sel.rfds.is_set(localreader_closerpipe.readEnd))
                 break;
-            if (sel.rfds.is_set(0))
+            if (opts.input_set && sel.rfds.is_set(opts.input_fd))
             {
                 bool block = false;
 
@@ -454,7 +471,8 @@ private:
                 std::string *data =
                     outMsg.mutable_file_data()->mutable_file_data();
                 data->resize(8000);
-                ssize_t s = ::read(0, (void*) data->c_str(), 4000);
+                ssize_t s = ::read(opts.input_fd,
+                                   (void*) data->c_str(), 4000);
                 if (s > 0)
                 {
                     data->resize(s);
@@ -571,11 +589,26 @@ private:
     }
 };
 
+static i3_udp_program * signal_handler_i3p = NULL;
+static void signal_handler(int sig)
+{
+    if (signal_handler_i3p)
+        signal_handler_i3p->handle_signal();
+}
+
 extern "C" int
 i3_udp_main(int argc, char ** argv)
 {
     i3_udp_program  i3(argc, argv);
     if (i3.get_ok() == false)
         return 1;
+
+    struct sigaction sa;
+    sa.sa_handler = &signal_handler;
+    sigfillset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    signal_handler_i3p = &i3;
+    sigaction(SIGINT, &sa, NULL);
+
     return i3.main();
 }
