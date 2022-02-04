@@ -326,6 +326,13 @@ private:
                         stats.Format().c_str());
         }
         fprintf(stderr,"\n");
+        if (dtlsq)
+        {
+            ProtoSSL::ProtoSslDtlsQueueStatistics stats;
+            dtlsq->get_stats(&stats);
+            fprintf(stderr, "dtlsq stats: %s\n",
+                    stats.Format().c_str());
+        }
     }
 
     void client_thread(threadsync *ts)
