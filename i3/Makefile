@@ -13,24 +13,6 @@ endif
 
 include $(CONFIG_FILE)
 
-ifeq ($(CONFIG),blade)
-PROTOC_PATH = /bin/protoc
-PROTOBUF_INC =
-PROTOBUF_LIB = -lprotobuf
-MBEDTLS_INCS =
-MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
-else
-ifeq ($(CONFIG),latec)
-PROTOC_PATH = /usr/bin/protoc
-PROTOBUF_INC =
-PROTOBUF_LIB = -lprotobuf
-mbedtls_prefix = $(HOME)/pfk/$(PFKARCH)/mbedtls-2.6.1
-MBEDTLS_INCS = -I$(mbedtls_prefix)/include
-MBEDTLS_LIBS = -L$(mbedtls_prefix)/lib -lmbedtls -lmbedx509 -lmbedcrypto
-else
-endif
-endif
-
 OBJDIR = obj
 
 INCS = -I../obj.$(CONFIG)
