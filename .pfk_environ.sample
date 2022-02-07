@@ -1,11 +1,13 @@
 # -*- Mode:shell-script -*-
 
 if [[ "x$1" = xenter ]] ; then
+    clear
     echo ENTERING PFKUTILS LAND, BRANCHES:
     git branch -v
 fi
 
 if [[ "x$1" = xleave ]] ; then
+    clear
     echo LEAVING PFKUTILS LAND
 fi
 
