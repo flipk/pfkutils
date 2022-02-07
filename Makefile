@@ -76,8 +76,9 @@ include Makefile.inc
 
 endif # $CONFIG
 
+bundle := pfkutils-$(shell date +%Y-%m%d-%H%M ).bundle
+
 bundle:
 	@echo making bundle
-	f=pfkutils-`date +%Y-%m%d-%H%M`.bundle && \
-	  git bundle create $$f --all && \
-	  git bundle verify $$f
+	git bundle create $(bundle) --all && \
+	  git bundle verify $(bundle) > $(bundle).txt

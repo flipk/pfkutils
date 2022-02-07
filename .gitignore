@@ -6,6 +6,6 @@ cscope.out
 .tsdb
 .ts2.db
 /[0-9]*
-/pfkutils*.bundle
+/pfkutils*.bundle*
 *.o
 .pfk_environ
