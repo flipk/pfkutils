@@ -4,7 +4,7 @@ set hostname [exec hostname]
 
 proc doxterm { } {
         catch {
-                exec xterm &
+                exec pfkterm &
         }
 }
 proc doxterm2 { } {
@@ -20,10 +20,10 @@ proc cleanup { } {
         exit
 }
 
-if { [lindex $argv 0] = "-3" } {
+if { [lindex $argv 0] == "-3" } {
     set geom "=+297+25"
 } {
-    if { [lindex $argv 0] = "-2" } {
+    if { [lindex $argv 0] == "-2" } {
         set geom "=+211+25"
     } {
         set geom "=+125+25"
