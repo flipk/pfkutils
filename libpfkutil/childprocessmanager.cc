@@ -176,7 +176,8 @@ Manager :: createChild(Handle *handle)
         // don't allow the child to inhert any
         // "interesting" file descriptors. note this
         // also closes all the pipe ends we don't use in the child.
-        for (int i = 3; i < sysconf(_SC_OPEN_MAX); i++)
+        int maxfd = sysconf(_SC_OPEN_MAX);
+        for (int i = 3; i < maxfd; i++)
             if (i != forkErrorPipe[1])
                 close(i);
 

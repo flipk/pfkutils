@@ -101,6 +101,11 @@ bglog_main(int argc, char ** argv)
             exit(1);
         }
 
+// note normally i would do a for-loop calling close() on every fd we
+// don't want inherited to the child.  but in this case, bglog pretty
+// closely controls its fds so i'm not worried about inheriting a bad
+// fd to the child.
+
         execvp(args[0], args);
         fprintf(console_f,
                 "execvp failed: %d: %s\n", errno, strerror(errno));

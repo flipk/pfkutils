@@ -233,7 +233,8 @@ Command :: start(void)
 
         // don't allow the child to inhert any
         // "interesting" file descriptors.
-        for (int i = 3; i < sysconf(_SC_OPEN_MAX); i++)
+        int maxfd = sysconf(_SC_OPEN_MAX);
+        for (int i = 3; i < maxfd; i++)
             close(i);
 
         execvp(args[0], (char *const*)args.data());
