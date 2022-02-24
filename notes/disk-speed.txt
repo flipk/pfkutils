@@ -1,0 +1,6 @@
+
+echo 3 > /proc/sys/vm/drop_caches
+
+time this sequence, not just the dd:
+dd if=blah of=blah bs=65536 count=larger_than_1GB status=progress
+sync
