@@ -1,6 +1,6 @@
 
 var pchatBoxDirectiveLastModified = {
-    file:"directive-pchatbox.js", modified:"2013/09/25  12:57:08"
+    file:"directive-pchatbox.js", modified:"2022/02/23  22:07:02"
 };
 var pchatBoxDirectiveHTMLlastModified = {
     file : "directive-pchatbox.html", modified : "<not loaded>"
@@ -137,7 +137,7 @@ var pchatBoxDirective = function(data, $http, $compile, $animate) {
   mode: javascript
   indent-tabs-mode: nil
   tab-width: 8
-  eval: (add-hook 'write-file-hooks 'time-stamp)
+  eval: (add-hook 'write-file-functions 'time-stamp)
   time-stamp-line-limit: 5
   time-stamp-start: "modified:\""
   time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""

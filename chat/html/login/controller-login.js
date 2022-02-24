@@ -1,6 +1,6 @@
 
 var pfkChatLoginCtlrLastModified = {
-    file:"controller-login.js", modified:"2013/10/01  22:17:53"
+    file:"controller-login.js", modified:"2022/02/23  22:07:48"
 };
 
 var pfkChatLoginCtlr = function($scope, depData) {
@@ -66,7 +66,7 @@ var pfkChatLoginCtlr = function($scope, depData) {
   mode: javascript
   indent-tabs-mode: nil
   tab-width: 8
-  eval: (add-hook 'write-file-hooks 'time-stamp)
+  eval: (add-hook 'write-file-functions 'time-stamp)
   time-stamp-line-limit: 5
   time-stamp-start: "modified:\""
   time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""

@@ -1,6 +1,6 @@
 
 var chatBoxDirectiveLastModified = {
-    file:"directive-chatbox.js", modified:"2013/09/25  00:41:26"
+    file:"directive-chatbox.js", modified:"2022/02/23  22:06:47"
 };
 var chatBoxDirectiveHTMLlastModified = {
     file : "directive-chatbox.html", modified : "<not loaded>"
@@ -149,7 +149,7 @@ var chatBoxDirective = function($sce) {
   mode: javascript
   indent-tabs-mode: nil
   tab-width: 8
-  eval: (add-hook 'write-file-hooks 'time-stamp)
+  eval: (add-hook 'write-file-functions 'time-stamp)
   time-stamp-line-limit: 5
   time-stamp-start: "modified:\""
   time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""

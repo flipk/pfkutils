@@ -1,6 +1,6 @@
 
 var webSocketServiceLastModified = {
-    file:"service-websocket.js", modified:"2014/05/26  23:18:10"
+    file:"service-websocket.js", modified:"2022/02/23  22:08:43"
 };
 
 var webSocketService = function($rootScope, data) {
@@ -208,7 +208,7 @@ console.log("got new wac msg : ", stc);
   mode: javascript
   indent-tabs-mode: nil
   tab-width: 8
-  eval: (add-hook 'write-file-hooks 'time-stamp)
+  eval: (add-hook 'write-file-functions 'time-stamp)
   time-stamp-line-limit: 5
   time-stamp-start: "modified:\""
   time-stamp-format: "%:y/%02m/%02d  %02H:%02M:%02S\""
