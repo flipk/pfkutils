@@ -35,51 +35,63 @@
 #    this specifies where all build products will go. it is assumed
 #    to be the name of a subdirectory relative to the current directory.
 #
-#    you can set CC, CXX, AR, RANLIB, BISON, FLEX, PROTOC_PATH
-#    CFLAGS, CXXFLAGS, LDFLAGS, INCS, DEFS.
+# CC, CXX, AR, RANLIB, BISON, FLEX, PROTOC_PATH
 #    these variables affect every build target of this makefile.
-#    Makefile.inc supplies reasonable defaults for these but you
-#    can override them if you need to.
+#    Makefile.inc supplies reasonable defaults for these but you can
+#    override them if you need to.
 #
-#    if you want assembler listings from your C or CC files, add
+# TODO someday: support $(target)_{CC,CXX,AR,RANLIB,BISON,FLEX,PROTOC_PATH}
+#
+# CFLAGS, CXXFLAGS
+#    command line arguments to $(CC) or $(CXX) respectively. applied
+#    before $(target)_CFLAGS or $(target)_CXXFLAGS.
+#    e.g. if you want assembler listings from your C or CC files, add
 #       -Wa,-ahls=$$(@:.o=.L)
 #    to CFLAGS, CXXFLAGS, $(target)_CFLAGS, and/or $(target)_CXXFLAGS
 #    (assuming your assembler is gnu gas, of course)
 #
-#    LDFLAGS : flags applied to program linker, i.e. -rdynamic.
-#    applied to all targets in PROG_TARGETS, applied before
-#    $(target)_LDFLAGS.
+# LDFLAGS
+#    flags applied to program linker, i.e. -rdynamic.  applied to all
+#    targets in PROG_TARGETS, applied before $(target)_LDFLAGS.
 #
-#    INCS, DEFS : cpp type arguments. INCS should be -I's, DEFS should
-#    be -D's.  note these are global for all LIB and PROG targets! if
-#    different LIB and PROG need different values, use $(target)_INCS
-#    and $(target)_DEFS below. add -D_FORTIFY_SOURCE to test
-#    warn_unused stuff is okay.
+# INCS, DEFS
+#    cpp-type arguments. INCS should be -I's, DEFS should be -D's.
+#    note these are global for all LIB and PROG targets! the
+#    $(target)_INCS is applied to the command line *before* the global
+#    $(INCS) so a header file in the $(target)_INCS with the same file
+#    name as a header file from $(INCS) can be found by a specific
+#    build target.  on the other hand, $(target)_DEFS is applied
+#    *after* the global $(DEFS) so a target can override a global
+#    $(DEFS) variable definition.  e.g.  you can set
+#    DEFS="-D_FORTIFY_SOURCE" to test functions with the "warn_unused"
+#    attribute (on ubuntu at least).
 #
-#    PREPROC_TARGETS : if you have files to preprocess before
-#    computing dependencies, here's your hook to add target
-#    recipes. of course this makefile doesn't do any work for you, you
-#    have to write the target recipes. this is invoked after objdirs
-#    but before deps.
+# PREPROC_TARGETS
+#    if you have files to preprocess before computing dependencies,
+#    here's your hook to add target recipes. of course this makefile
+#    doesn't do any work for you, you have to write the target
+#    recipes. this is invoked after objdirs but before deps.  if
+#    you're using this to do "cpp" type operations, it is recommended
+#    to include the global $(INCS) and $(DEFS) rules.
 #
-#    POSTALL : if you have more recipes you want to run after the
-#    "all" rule in this makefile as run (i.e. after all PREPROC, LIB,
-#    and PROG) then this is your opportunity to name more recipe rules
-#    to invoke.
+# POSTALL
+#    if you have more recipes you want to run after the "all" rule in
+#    this makefile as run (i.e. after all PREPROC, LIB, and PROG) then
+#    this is your opportunity to name more recipe rules to invoke.
 #
-#    EXTRA_CLEAN : 'make clean' will blow away the $(OBJDIR) and dox
-#    directories, but if you have more you'd like to clean, make
-#    another recipe and add the recipe name(s) to $(EXTRA_CLEAN).
+# EXTRA_CLEAN
+#    'make clean' will blow away the $(OBJDIR) and dox directories,
+#    but if you have more you'd like to clean, make another recipe and
+#    add the recipe name(s) to $(EXTRA_CLEAN).
 #
+# LIB_TARGETS = example somelib someotherlib
+# PROG_TARGETS = prog1 phils_prog testprog
 #    you MUST tell Makefile.inc what you want to build. you can build
 #    libraries, or programs. make a list of target names. put those
 #    target names into a variable LIB_TARGETS or PROG_TARGETS (depending
 #    on whether each target is a library or program). don't worry about
 #    the actual filenames produced yet, these target names are just used
 #    for specifying other makefile variable names specific to that target.
-#
-# LIB_TARGETS = example somelib someotherlib
-# PROG_TARGETS = prog1 phils_prog testprog
 #
 #    each target name is used as the prefix for another set of
 #    variables, e.g.  if you have a library target named "thingy",
@@ -98,7 +110,7 @@
 #    the name of the target you want to build):
 #
 # $(target)_TARGET = <library or executable filename to build, required>
-# $(target)_CSRCS = <a list of "c" files to pas to $(CC)>
+# $(target)_CSRCS = <a list of "c" files to pass to $(CC)>
 # $(target)_CXXSRCS = <a list of "cc" files to pass to $(CXX)>
 # $(target)_YSRCS = <a list of "y" files to pass to $(BISON)>
 # $(target)_LSRCS = <a list of "l" files to pass to $(FLEX)>
@@ -118,19 +130,24 @@
 # there will be an autodefined variable produced for each proto source
 # of the form  "$(target)_$(proto_filename)_HDR"  which contains the
 # path to the autogenerated header file created from that proto file.
+#
 # example:
 #         LIB_TARGETS += testProto
 #         testProto_TARGET = $(OBJDIR)/libtestProto.a
 #         testProto_PROTOSRCS = test1.proto test2.proto
+#
 # this will result in the following variables being defined:
 #         testProto_test1.proto_HDR = $(OBJDIR)/testProto-test1.pb.h
 #         testProto_test2.proto_HDR = $(OBJDIR)/testProto-test2.pb.h
+#
 # you can see debug $(info) statements which tell you exactly what the
 # _HDR variable names are going to look like using this:
 #         DEBUG_H_MACRO_GENERATION=y
+#
 # these macros are then suitable to put in a C file like this:
 #         testProto_CXXSRCS = test1.cc
 #         testProto_DEFS = -DTEST_PROTO_HDR=\"$(testProto_test1.proto_HDR)\"
+#
 # and then in the file test1.cc:
 #         #include TEST_PROTO_HDR
 #
@@ -140,9 +157,9 @@
 #
 #    PROG_TARGETS can also have:
 #
-# $(targt)_DEPLIBS = $(somelib_TARGET) <a list of _TARGET dependencies>
-# $(targt)_LIBS = -L/path -lpthread <a list of libraries to link against>
-# $(targt)_LDFLAGS = -rdynamic <a list of options passed to linker>
+# $(target)_DEPLIBS = $(somelib_TARGET) <a list of _TARGET dependencies>
+# $(target)_LIBS = -L/path -lpthread <a list of libraries to link against>
+# $(target)_LDFLAGS = -rdynamic <a list of options passed to linker>
 # $(target)_INSTALL=1   # only if you want this prog installed
 #
 #    doxyen targets can define:
