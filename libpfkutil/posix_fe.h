@@ -1119,6 +1119,110 @@ public:
     }
 };
 
+template <typename... Ts>
+struct pxfe_largest_type;
+
+template <typename T>
+struct pxfe_largest_type<T>
+{
+    using type = T;
+    static const int size = sizeof(type);
+};
+
+template <typename T, typename U, typename... Ts>
+struct pxfe_largest_type<T, U, Ts...>
+{
+    using type =
+        typename pxfe_largest_type<
+            typename std::conditional<
+                (sizeof(U) <= sizeof(T)), T, U
+            >::type, Ts...
+        >::type;
+    static const int size = sizeof(type);
+};
+
+/** container for all types of sockaddrs */
+struct pxfe_sockaddr {
+    static const int addr_data_size =
+        pxfe_largest_type<
+            sockaddr,
+            sockaddr_in,
+            sockaddr_in6,
+            sockaddr_un   >::size;
+    uint8_t  addr_data[addr_data_size];
+
+    sockaddr * sa(void) {
+        return (sockaddr *) addr_data;
+    }
+    const sockaddr * sa(void) const {
+        return (const sockaddr *) addr_data;
+    }
+    socklen_t salen(void) const {
+        switch (family()) {
+        case AF_INET:  return sizeof(sockaddr_in);
+        case AF_INET6: return sizeof(sockaddr_in6);
+        }
+        return 0;
+    }
+    sa_family_t family(void) const {
+        return sa()->sa_family;
+    }
+    void set_family(sa_family_t f) {
+        sa()->sa_family = f;
+    }
+    sockaddr_in *in4(void) {
+        return (sockaddr_in *) addr_data;
+    }
+    const sockaddr_in *in4(void) const {
+        return (const sockaddr_in *) addr_data;
+    }
+    sockaddr_in6 *in6(void) {
+        return (sockaddr_in6 *) addr_data;
+    }
+    const sockaddr_in6 *in6(void) const {
+        return (const sockaddr_in6 *) addr_data;
+    }
+    bool set4(const char * s) {
+        if (inet_pton(AF_INET, s, &in4()->sin_addr) == 1)
+        {
+            set_family(AF_INET);
+            return true;
+        }
+        return false;
+    }
+    bool set6(const char * s) {
+        if (inet_pton(AF_INET6, s, &in6()->sin6_addr) == 1)
+        {
+            set_family(AF_INET6);
+            return true;
+        }
+        return false;
+    }
+    bool set(const char * s) {
+        if (set4(s))
+            return true;
+        return set6(s);
+    }
+    std::string Format(void) {
+        std::string ret;
+        switch (family()) {
+        case AF_INET:
+            ret.resize(INET_ADDRSTRLEN);
+            inet_ntop(AF_INET, &in4()->sin_addr,
+                      (char*) ret.c_str(), ret.length());
+            break;
+        case AF_INET6:
+            ret.resize(INET6_ADDRSTRLEN);
+            inet_ntop(AF_INET6, &in6()->sin6_addr,
+                      (char*) ret.c_str(), ret.length());
+            break;
+        }
+        ret.resize(strlen(ret.c_str()));
+        return ret;
+    }
+
+};
+
 /** wrapper for struct sockaddr_in (IP address) */
 struct pxfe_sockaddr_in : public sockaddr_in {
     /** set family to AF_INET */
@@ -1300,17 +1404,16 @@ public:
 /** container for several useful IP-related utility methods */
 class pxfe_iputils {
 public:
-    /** gethostbyname or inet_aton to get IP address (using std::string) */
+    /** gethostbyname or inet_aton to get IPv4 address (using std::string) */
     static bool hostname_to_ipaddr( const std::string &host,
                                     uint32_t * _addr )
     {
         return hostname_to_ipaddr(host.c_str(), _addr);
     }
-    /** gethostbyname or inet_aton to get IP address (using char*) */
+    /** gethostbyname or inet_aton to get IPv4 address (using char*) */
     static bool hostname_to_ipaddr( const char * host, uint32_t * _addr )
     {
         uint32_t addr;
-// TODO : should use getaddrinfo getnameinfo (h_errno is gross)
         if ( ! (inet_aton( host, (in_addr*) &addr )))
         {
             struct hostent * he;
@@ -1360,16 +1463,31 @@ public:
         // string was not an integer
         return false;
     }
-// TODO format_ip should be replaced,
-//      convert all inet_aton/inet_ntoa in pfkutils to pton/ntop?
-    /** format an IP address into a dotted quad string (A.B.C.D) */
+    /** format an IPv4 address into a dotted quad string (A.B.C.D) */
+    static std::string format_ip(struct in_addr &ia) {
+        std::string ret;
+        ret.resize(INET_ADDRSTRLEN);
+        // string.resize() on a brand new string
+        // guarantees the bytes are already zero'd.
+        inet_ntop(AF_INET, &ia, (char*) ret.c_str(), ret.length());
+        ret.resize(strlen(ret.c_str()));
+        return ret;
+    }
+    /** format an IPv4 address into a dotted quad string (A.B.C.D) */
     static std::string format_ip(uint32_t ip) {
-        std::ostringstream ostr;
-        ostr << ((ip >> 24) & 0xFF) << "."
-             << ((ip >> 16) & 0xFF) << "."
-             << ((ip >>  8) & 0xFF) << "."
-             << ((ip >>  0) & 0xFF);
-        return ostr.str();
+        struct in_addr ia;
+        ia.s_addr = htonl(ip);
+        return format_ip(ia);
+    }
+    /** format an IPv6 address into a string */
+    static std::string format_ip6(struct in6_addr &ia) {
+        std::string ret;
+        ret.resize(INET6_ADDRSTRLEN);
+        // string.resize() on a brand new string
+        // guarantees the bytes are already zero'd.
+        inet_ntop(AF_INET6, &ia, (char*) ret.c_str(), ret.length());
+        ret.resize(strlen(ret.c_str()));
+        return ret;
     }
 };
 
