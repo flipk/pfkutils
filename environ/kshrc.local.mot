@@ -27,6 +27,21 @@ if [[ x${PATH#/home/${USER}/bin} == x$PATH ]] ; then
     export PATH
 fi
 
+mhctrl() {
+    if [[ $# -ne 3 ]] ; then
+        echo 'usage: mhctrl name X.Y port'
+        echo '  where X and Y are 11.1.X.Y'
+        return
+    fi
+    local name=$1
+    local ip=11.1.$2
+    local port=$3
+    local prompt=$1_$2
+    echo NOTE history is saved in ~/.${name}_history
+    touch ~/.${name}_history
+    rlwrap -I -C ${name} -S ${prompt}'>' -pyellow -f. i2 $ip $port
+}
+
 # help rxvt understand how to display
 # line drawing characters.
 LC_CTYPE=en_US.utf8

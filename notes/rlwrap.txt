@@ -5,6 +5,9 @@ rlwrap -I -C <command> -S <prompt> i2 $1 <portnumber>
  -C <command> : history is stored under the name <command> (so you can
                 use 'nc' to different hosts and have different histories
 		for each)
+
+NOTE history is kept in ~/.<command>_history
+
 -S <prompt> : substitute the commands prompt for a new prompt
 -l <file> : log file
 -p <color> : color the prompt (black,  red,  green,  yellow,  blue,
