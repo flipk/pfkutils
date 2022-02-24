@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2020-09-22.20:12:53
+#      Last update: 2022-02-23.22:03:15
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -943,7 +943,7 @@ __verbose done with kshrc, enjoy your shell
 # mode: Shell-script
 # indent-tabs-mode: nil
 # tab-width: 8
-# eval: (add-hook 'write-file-hooks 'time-stamp)
+# eval: (add-hook 'write-file-functions 'time-stamp)
 # time-stamp-start: "Last update: "
 # time-stamp-format: "%:y-%02m-%02d.%02H:%02M:%02S"
 # time-stamp-end: "$"
