@@ -588,36 +588,34 @@ public:
  * locking and unlocking on construction and destruction */
 class pxfe_pthread_mutex_lock {
     pxfe_pthread_mutex &mut;
-    bool locked;
+    bool ilocked;
 public:
     /** constructor will automatically lock the mutex on construction */
      pxfe_pthread_mutex_lock(pxfe_pthread_mutex &_mut, bool dolock=true)
-        : mut(_mut), locked(false) {
-        if (dolock) {
+        : mut(_mut), ilocked(dolock) {
+        if (dolock)
             mut.lock();
-            locked = true;
-        }
     }
     /** destructor automatically unlocks if locked upon destruction */
     ~pxfe_pthread_mutex_lock(void) {
-        if (locked) {
+        if (ilocked) {
             mut.unlock();
         }
     }
     /** manually locked if not locked */
     bool lock(void) {
-        if (locked)
+        if (ilocked)
             return false;
         mut.lock();
-        locked = true;
+        ilocked = true;
         return true;
     }
     /** manually unlock if currently locked */
     bool unlock(void) {
-        if (!locked)
+        if (!ilocked)
             return false;
         mut.unlock();
-        locked = false;
+        ilocked = false;
         return true;
     }
 };
@@ -641,6 +639,12 @@ public:
     // but not: CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID
         pthread_condattr_setclock(&attr,id);
     }
+    /** set clock to REALTIME */
+    void setclock_rt(void) { setclock(CLOCK_REALTIME); }
+    /** set clock to MONOTONIC */
+    void setclock_monotonic(void) { setclock(CLOCK_MONOTONIC); }
+    /** set clock to BOOTTIME */
+    void setclock_boottime(void) { setclock(CLOCK_BOOTTIME); }
     /** set PTHREAD_PROCESS_SHARED or PRIVATE */
     void setpshared(bool shared = true) {
         pthread_condattr_setpshared(
@@ -706,9 +710,9 @@ public:
 /*  FYI: V stands for 'Verhoog' and P stands for 'Prolaag', not 'Probeer'.
     Verhoog can be translated as 'increasing'.
     Decreasing would be 'Verlaag', but for better distinction between
-    the letters Dijkstra invented the word 'Prolaag'.
+    the letters, Edsger Wybe Dijkstra invented the word 'Prolaag'.
     "Probeer te verlagen" is "try to decrease".
-    "Verhogen" is increase. Edsger Wybe Dijkstra's earliest paper
+    "Verhogen" is increase. Dijkstra's earliest paper
     on the subject gives passering ("passing") as the meaning for P,
     and vrijgave ("release") as the meaning for V.
     It also mentions that the terminology is taken from that used in
@@ -748,32 +752,71 @@ public:
         value--;
         return true;
     }
+    void P(void) { give(); }
+    bool V(timespec *expire = NULL) { return take(expire); }
 };
 
-// needs doxygen
 class pxfe_pthread_attr {
     pthread_attr_t _attr;
 public:
+    /** initializes attr with pthread defaults */
     pxfe_pthread_attr(void) {
         pthread_attr_init(&_attr);
     }
+    /** cleanup */
     ~pxfe_pthread_attr(void) {
         pthread_attr_destroy(&_attr);
     }
+    /** handy accessor returns the attr for passing to pthread_create */
     const pthread_attr_t *operator()(void) { return &_attr; }
+    /** select DETACHED vs JOINABLE */
     void set_detach(bool set=true) {
         int state = set ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE;
         pthread_attr_setdetachstate(&_attr, state);
     }
-    // pthread_attr_setaffinity_np
-    // pthread_attr_setguardsize
-    // pthread_attr_setinheritsched
-    // pthread_attr_setschedparam
-    // pthread_attr_setschedpolicy
-    // pthread_attr_setscope
-    // pthread_attr_setstack
-    // pthread_attr_setstackaddr
-    // pthread_attr_setstacksize
+#ifdef _GNU_SOURCE
+    /** set CPU affinity */
+    void setaffinity(size_t cpusetsize, const cpu_set_t *cpuset) {
+        pthread_attr_setaffinity_np(&_attr, cpusetsize, cpuset);
+    }
+#endif
+    /** set size of virtual space (rounded up to page size)
+     * left unmapped between stacks as a guard between stacks */
+    void setguardsize(size_t guardsize) {
+        pthread_attr_setguardsize(&_attr, guardsize);
+    }
+    /** set whether new thread inherits scheduling info from parent
+     * or takes it from this attr object */
+    void setinheritsched(bool inherit=true) {
+        int i = inherit ? PTHREAD_INHERIT_SCHED : PTHREAD_EXPLICIT_SCHED;
+        pthread_attr_setinheritsched(&_attr, i);
+    }
+    /** set scheduler to FIFO with a given rt priority */
+    void setfifoprio(int prio) {
+        struct sched_param par;
+        par.sched_priority = prio;
+        pthread_attr_setschedpolicy(&_attr, SCHED_FIFO);
+        pthread_attr_setschedparam(&_attr, &par);
+    }
+    /** set scheduler to RR with a given rt priority */
+    void setrrprio(int prio) {
+        struct sched_param par;
+        par.sched_priority = prio;
+        pthread_attr_setschedpolicy(&_attr, SCHED_RR);
+        pthread_attr_setschedparam(&_attr, &par);
+    }
+    /** set scheduler to OTHER with given non-rt priority */
+    void setotherprio(int prio) {
+        struct sched_param par;
+        par.sched_priority = prio;
+        pthread_attr_setschedpolicy(&_attr, SCHED_OTHER);
+        pthread_attr_setschedparam(&_attr, &par);
+    }
+    // chose not to implement
+    //   pthread_attr_setstack
+    //   pthread_attr_setstackaddr
+    //   pthread_attr_setstacksize
+    // pthread_attr_setscope -- SCOPE_PROCESS not supported on linux
 };
 
 /** front end to pipe(2) */
@@ -1141,7 +1184,7 @@ struct pxfe_largest_type<T, U, Ts...>
     static const int size = sizeof(type);
 };
 
-/** container for all types of sockaddrs */
+/** container for sockaddrs, supporting IPv4, IPv6, and UNIX domain */
 struct pxfe_sockaddr {
     static const int addr_data_size =
         pxfe_largest_type<
@@ -1157,10 +1200,14 @@ struct pxfe_sockaddr {
     const sockaddr * sa(void) const {
         return (const sockaddr *) addr_data;
     }
-    socklen_t salen(void) const {
+    sockaddr *operator()() {
+        return (sockaddr *) addr_data;
+    }
+    socklen_t sasize(void) const {
         switch (family()) {
         case AF_INET:  return sizeof(sockaddr_in);
         case AF_INET6: return sizeof(sockaddr_in6);
+        case AF_UNIX:  return sizeof(sockaddr_un);
         }
         return 0;
     }
@@ -1182,6 +1229,12 @@ struct pxfe_sockaddr {
     const sockaddr_in6 *in6(void) const {
         return (const sockaddr_in6 *) addr_data;
     }
+    sockaddr_un *un(void) {
+        return (sockaddr_un *) addr_data;
+    }
+    const sockaddr_un *un(void) const {
+        return (sockaddr_un *) addr_data;
+    }
     bool set4(const char * s) {
         if (inet_pton(AF_INET, s, &in4()->sin_addr) == 1)
         {
@@ -1198,10 +1251,22 @@ struct pxfe_sockaddr {
         }
         return false;
     }
-    bool set(const char * s) {
+    bool set46(const char * s) {
         if (set4(s))
             return true;
         return set6(s);
+    }
+    void set_un(const std::string &str) { set_un(str.c_str()); }
+    void set_un(const char *p) {
+        int len = sizeof(un()->sun_path)-1;
+        strncpy(un()->sun_path, p, len);
+        un()->sun_path[len] = 0;
+    }
+    void get_un(std::string &str) {
+        if (family() == AF_INET)
+            str.assign(un()->sun_path);
+        else
+            str = "";
     }
     std::string Format(void) {
         std::string ret;
@@ -1215,6 +1280,10 @@ struct pxfe_sockaddr {
             ret.resize(INET6_ADDRSTRLEN);
             inet_ntop(AF_INET6, &in6()->sin6_addr,
                       (char*) ret.c_str(), ret.length());
+            break;
+        case AF_UNIX:
+            ret = "unix:";
+            ret.append(un()->sun_path);
             break;
         }
         ret.resize(strlen(ret.c_str()));
