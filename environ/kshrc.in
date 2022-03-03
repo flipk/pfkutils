@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-02-23.22:03:15
+#      Last update: 2022-03-02.20:48:47
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -854,12 +854,13 @@ if __isksh ; then
         if [[ x$INSIDE_EMACS != x ]] ; then
             echo SHELL_CWD_BEGIN:$PWD:SHELL_CWD_END
         fi
-        typeset file_part bardisp
+        typeset shellfilepart file_part bardisp
         if [[ "x$SHELLFILESPECIAL" != x ]] ; then
-            bardisp="$SHELLFILESPECIAL:"
+            shellfilepart="$SHELLFILESPECIAL:"
         else
-            bardisp=""
-        fi 
+            shellfilepart=""
+        fi
+        bardisp=""
         if [[ "x$CLEARCASE_ROOT" != x ]] ; then
             typeset viewname
             viewname="${CLEARCASE_ROOT#/view/}"
@@ -880,19 +881,18 @@ if __isksh ; then
         if [[ "x$IN_PFKSCRIPT" != x ]] ; then
             bardisp="PFKSCRIPT:$IN_PFKSCRIPT:$bardisp"
         fi
-        _set_prompt "$bardisp"
+        _set_prompt "$shellfilepart$bardisp"
         if [[ "x$DISPLAY" != x ]] ; then
-            bardisp="$USER@$HOST:$bardisp"
             if [[ x$I_AM_XCONSOLE == x ]] ; then
                 if [[ x$INSIDE_EMACS == x ]] ; then
-                    ___xtermbar "$bardisp"
+                    ___xtermbar "$shellfilepart$USER@$HOST:$bardisp"
                 fi
             fi
         fi
         if [[ "x$TMUX" != x ]] ; then
             if [[ x$INSIDE_EMACS == x ]] ; then
                 bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
-                ___xtermbar $bardisp
+                ___xtermbar "$shellfilepart$bardisp"
             fi
         fi
         if [[ "x$gitroot" == "x" ]] ; then
