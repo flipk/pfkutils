@@ -442,17 +442,18 @@ main(int argc, char ** argv)
                 continue;
             }
 
-            if (stat(pfent, &sb) < 0)
+            if (lstat(pfent, &sb) < 0)
             {
                 int e = errno;
-                fprintf(stderr, "stat '%s/%s': %d: %s\n",
+                fprintf(stderr, "lstat '%s/%s': %d: %s\n",
                         dirpath, pfent, e, strerror(e));
                 continue;
             }
 
-            // note we used stat, not lstat, so this returns
-            // "DIR" for a symlink to a dir, which is what
-            // we want -- many pfk arches are symlinks to dirs.
+            // note we used lstat, not stat, so this returns
+            // "LINK" for a symlink to a dir, which is what
+            // we want -- many pfk arches are symlinks to dirs,
+            // and we want real dirs only.
             if (!S_ISDIR(sb.st_mode))
             {
                 // not a dir, skipping
