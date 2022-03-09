@@ -192,6 +192,15 @@ outrate=48000
 ffmpeg -i $input -ar $outrate -y $output
 
 
+--- rotate video 90 degrees by reencoding
+ffmpeg -i input.mp4 -vf "transpose=1" output.mp4
+0 : ccw and flip vertically
+1 : cw
+2 : ccw
+3 : cw and flip vertically
+
+--- rotate video 90 degrees by changing meta-data
+ffmpeg -i input.mp4 -c copy -metadata:s:v:0 rotate=90 output.mp4
 
 make list.txt:
 
