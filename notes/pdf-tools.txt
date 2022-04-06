@@ -1,0 +1,33 @@
+
+https://jdhao.github.io/2019/11/20/convert_pdf_to_image_imagemagick
+
+convert -density 150 presentation.pdf -quality 90 output-%3d.jpg
+just one page:
+convert -density 150 presentation.pdf[0] -quality 90 test.jpg
+
+
+pdf tools can be found in the "poppler" package.
+pdfunite file1.pdf file2.pdf file3.pdf   outputfile.pdf
+pdftoppm -jpeg -jpegopt quality=100 -r 300  input.pdf  output
+
+------------------
+
+# rename brother scanner outputs to short names but
+# keeping the scan number
+for f in *.pdf ; do
+   g=scan_${f#U65195L1X113730_????????_??????_}
+   mv $f $g
+done
+
+# converting every pdf to all jpgs
+for f in *.pdf ; do
+   g=output/${f%.pdf}.jpg
+   echo  $f
+   convert -density 300 -rotate 180  $f -quality 100 $g
+done
+
+# rotate upside-down pdfs but keep them pdf
+for f in *.pdf
+do
+   convert -rotate 180 $f output/$f
+done
