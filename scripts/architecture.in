@@ -10,6 +10,8 @@ os=`uname -s`
 rev=`uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g'`
 pf=$os-$rev
 
+pf_real="unset PFKARCH_REAL"
+
 # note -d will return true if a symlink points to a dir
 #         which is what we want
 if ! [ -d "${prefix}/${pf}" ] ; then
@@ -28,12 +30,16 @@ if ! [ -d "${prefix}/${pf}" ] ; then
         pf_old="${pf}"
         pf=$( ${findpfbin} "${prefix}" "${pf}" )
         echo '!!!! NOTE: FOUND' PFKARCH=${pf} 1>&2
-        echo '!!!! NOTE: consider running the following commands:' 1>&2
-        echo '     cd pfk' 1>&2
-        echo '     ln -s' ${pf} ${pf_old} 1>&2
+        echo '!!!! NOTE: consider running the following command:' 1>&2
+        echo '     makepflink' 1>&2
+        pf_real=PFKARCH_REAL=${pf_old}
     fi
 fi
 
-echo $pf
+if [ "x$1" = x-e ] ; then
+    echo PFKARCH=$pf $pf_real
+else
+    echo $pf
+fi
 
 exit 0

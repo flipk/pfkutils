@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-03-02.20:48:47
+#      Last update: 2022-04-08.21:22:13
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -146,15 +146,29 @@ export LAST_HOST
 
 if __isksh ; then
     if [[ x$PFKARCH == x ]] ; then
-        PFKARCH=`@prefix@/bin/architecture`
+        eval $( @prefix@/bin/architecture -e )
         export PFKARCH
     fi
+    if [[ x$PFKARCH_REAL != x ]] ; then
+        makepflink() {
+            cd $HOME/pfk
+            ln -s $PFKARCH $PFKARCH_REAL
+        }
+        export PFKARCH_REAL
+    fi
 else
-    PFKARCH=`@prefix@/bin/architecture`
+    eval $( @prefix@/bin/architecture -e )
     export PFKARCH
+    if [ x$PFKARCH_REAL != x ] ; then
+        makepflink() {
+            cd $HOME/pfk
+            ln -s $PFKARCH $PFKARCH_REAL
+        }
+        export PFKARCH_REAL
+    fi
 fi
 
-__verbose PFKARCH=$PFKARCH
+__verbose PFKARCH=$PFKARCH PFKARCH_REAL=$PFKARCH_REAL
 
 #
 # convoluted way to set the path. this works
