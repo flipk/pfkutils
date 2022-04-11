@@ -10,7 +10,7 @@ os=`uname -s`
 rev=`uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g'`
 pf=$os-$rev
 
-pf_real="unset PFKARCH_REAL"
+pf_real="; unset PFKARCH_REAL"
 
 # note -d will return true if a symlink points to a dir
 #         which is what we want
