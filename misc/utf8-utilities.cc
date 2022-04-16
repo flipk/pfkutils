@@ -1,6 +1,7 @@
 #if 0
 set -e -x
-g++ utf16toutf8.cc -o utf16toutf8
+g++ -DTEST_utf16_to_utf8 utf8-utilities.cc -o utf16toutf8
+g++ -DTEST_decode_utf8   utf8-utilities.cc -o decode_utf8
 exit 0
 #endif
 
@@ -8,6 +9,8 @@ exit 0
 #include <iostream>
 #include <stdio.h>
 #include <inttypes.h>
+#include <unistd.h>
+#include <string.h>
 
 using namespace std;
 
@@ -131,9 +134,50 @@ void utf16_to_utf8(const std::string  &in, std::string &out,
     }
 }
 
+// take in a binary UTF8 stream and return the next code
+// point in "point"; also return the number of chars consumed.
+// return 0 if nul was encountered, return -1 if an incomplete
+// utf8 was encountered.
+int
+decode_utf8(uint32_t &point, const uint8_t *buf, size_t len)
+{
+    if ((len >= 1) && ((buf[0] & 0b10000000) == 0))
+    {
+        // 1 byte format.
+        point = buf[0];
+        return 1;
+    }
+    else if ((len >= 2) && ((buf[0] & 0b11100000) == 0b11000000))
+    {
+        // 2 byte format
+        uint32_t b1 = buf[0] & 0b00011111;
+        uint32_t b2 = buf[1] & 0b00111111;
+        point = (b1 << 6) + b2;
+        return 2;
+    }
+    else if ((len >= 3) && ((buf[0] & 0b11110000) == 0b11100000))
+    {
+        // 3 byte format
+        uint32_t b1 = buf[0] & 0b00001111;
+        uint32_t b2 = buf[1] & 0b00111111;
+        uint32_t b3 = buf[2] & 0b00111111;
+        point = (b1 << 12) + (b2 << 6) + b3;
+        return 3;
+    }
+    else if ((len >= 4) && ((buf[0] & 0b11111000) == 0b11110000))
+    {
+        // 3 byte format
+        uint32_t b1 = buf[0] & 0b00000111;
+        uint32_t b2 = buf[1] & 0b00111111;
+        uint32_t b3 = buf[2] & 0b00111111;
+        uint32_t b4 = buf[3] & 0b00111111;
+        point = (b1 << 18) + (b2 << 12) + (b3 << 6) + b4;
+        return 4;
+    }
+    return -1;
+}
 
-
-void print_hex(const char *prefix, const std::string &s)
+static void print_hex(const char *prefix, const std::string &s)
 {
     if (prefix)
         printf("%s", prefix);
@@ -145,7 +189,7 @@ void print_hex(const char *prefix, const std::string &s)
     printf("\n");
 }
 
-
+#ifdef TEST_utf16_to_utf8
 // samples mentioned in unicode 11 chapter 3
 
 const unsigned char seq_1[] =
@@ -186,3 +230,49 @@ main()
 
     return 0;
 }
+#endif /* TEST_utf16_to_utf8 */
+
+#ifdef TEST_decode_utf8
+
+void decode_buf(std::string &buf)
+{
+    size_t remain = buf.size();
+    uint8_t *ptr = (uint8_t*) buf.c_str();
+    char temp[5];
+    while (remain > 0)
+    {
+        uint32_t point;
+        int consume = decode_utf8(point, ptr, remain);
+        if (consume <= 0)
+            return;
+        memset(temp,0,5);
+        for (int i = 0; i < consume; i++)
+        {
+            temp[i] = (char)ptr[i];
+            printf("%02x", ptr[i]);
+        }
+        printf(":  U+%X   %s\n", point, temp);
+        ptr += consume;
+        remain -= consume;
+    }
+}
+
+int main()
+{
+    std::string buf;
+
+    int cc = 1;
+    do {
+        buf.resize(16384);
+        cc = ::read(0, (void*) buf.c_str(), buf.size());
+        if (cc > 0)
+        {
+            buf.resize(cc);
+            decode_buf(buf);
+        }
+    } while (cc > 0);
+
+    return 0;
+}
+
+#endif /* TEST_decode_utf8 */
