@@ -28,6 +28,9 @@
 (cond (window-system
        (progn
          (let ((desktop (getenv "EMACS_NUMBER")))
+	   (setq frame-title-format
+		 (list "emacs" desktop " %b "
+		       user-login-name "@" system-name))
            (let ((minibuftitle (concat "Emacs Minibuffer" desktop)))
              (setq
               default-frame-alist
