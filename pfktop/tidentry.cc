@@ -175,6 +175,8 @@ tidEntry :: update(void)
     if (nf == 52 || nf == 42 || nf == 44)
     {
         cmd = fp[1];
+        if (cmd.size() > 16)
+            cmd.resize(16);
         utime = strtoull(fp[13].c_str(),NULL,10);
         stime = strtoull(fp[14].c_str(),NULL,10);
         if (first_update)

@@ -245,11 +245,11 @@ PidList :: print(void) const
     // no, there IS no "nl" here. this code prints a nl
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
-    cout << screen.header_color << "   ";
+    cout << screen.header_color << "    ";
     cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
     cout << "              ";
     cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
-    cout << "     ";
+    cout << "      ";
     cout << ((opts.sort == Options::SORT_VSZ) ? "VSZ" : "Vsz");
     cout << "     ";
     cout << ((opts.sort == Options::SORT_RSS) ? "RSS" : "Rss");
@@ -267,7 +267,7 @@ PidList :: print(void) const
         tidEntry * te = *vit;
         cout
             << nl
-            << setw(6)  << te->tid;
+            << setw(7)  << te->tid;
 
         if (te->tid == te->pid)
             cout << "+";
@@ -281,7 +281,7 @@ PidList :: print(void) const
 
         cout
             << setw(16) << te->cmd  << " " << screen.normal_color
-            << setw(7)  << te->vsz  << " "
+            << setw(8)  << te->vsz  << " "
             << setw(7)  << te->rss  << " "
             << setw(4)  << te->prio << "  ";
 
@@ -330,14 +330,14 @@ PidList :: print(void) const
         << nl
         << screen.header_color
         << " 'h' for help            TOTAL "
-        << "              " << setw(3) << totalCpu;
+        << "                " << setw(3) << totalCpu;
 
     if (more)
         cout
-            << "                          MORE";
+            << "                         MORE";
     else
         cout
-            << "                              ";
+            << "                             ";
 
     cout
         << screen.normal_color;

@@ -37,9 +37,18 @@ Options :: Options(int argc, const char * const * argv,
     : screen(_screen)
 {
     sort = SORT_TIME;
-    background = BG_DARK;
+    background = BG_LIGHT;
 
     // ..... we could support command line options here ......
+
+    char * modevar = getenv("PFKTOP_MODE");
+    if (modevar)
+    {
+        if (modevar[0] == 'l')
+            background = BG_LIGHT;
+        else if (modevar[0] == 'd')
+            background = BG_DARK;
+    }
 
     screen.set_light_background(background == BG_LIGHT);
     isOk = true;
@@ -107,6 +116,8 @@ Options :: usage(bool color)
         << screen.nl
         << "         l : light background mode" << screen.nl
         << "         d : dark background mode" << screen.nl
+        << screen.nl
+        << "   ENV var PFKTOP_MODE can be set to 'l' or 'd'" << screen.nl
         << screen.nl
         << screen.header_color
         << "       options              -pfktop-       "

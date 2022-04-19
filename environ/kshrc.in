@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-04-08.21:22:13
+#      Last update: 2022-04-18.23:23:36
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -309,6 +309,7 @@ export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'
 export XLESS='-X -j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
 export WGFILE=$TMP/wg.$USER
+export PFKTOP_MODE=d
 
 # for some reason setting HISTSIZE resets the set -o emacs option!
 
