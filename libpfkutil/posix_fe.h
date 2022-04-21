@@ -442,12 +442,11 @@ public:
     pxfe_shared_ptr<T> &operator=(const pxfe_shared_ptr<BaseT> &other)
     {
         deref();
-        ptr = dynamic_cast<T*>(other.ptr);
+        ptr = dynamic_cast<T*>(*other);
         ref();
         return *this;
     }
     /** move assignment operator, takes over ownership */
-    template <class BaseT>
     pxfe_shared_ptr<T> &operator=(pxfe_shared_ptr<T> &&other)
     {
         deref();
@@ -469,6 +468,8 @@ public:
     T * operator->(void) const { return ptr; }
     /** accessor that returns the pointer within */
     T * operator*(void) const { return ptr; }
+    /** accessor that returns the pointer within */
+    T * get(void) const { return ptr; }
 };
 
 /** container for an 'errno' */
