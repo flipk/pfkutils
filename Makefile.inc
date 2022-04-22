@@ -41,6 +41,7 @@
 #    override them if you need to.
 #
 # TODO someday: support $(target)_{CC,CXX,AR,RANLIB,BISON,FLEX,PROTOC_PATH}
+#    so that different targets can be built using different compilers.
 #
 # CFLAGS, CXXFLAGS
 #    command line arguments to $(CC) or $(CXX) respectively. applied
@@ -111,6 +112,7 @@
 #
 # $(target)_TARGET = <library or executable filename to build, required>
 # $(target)_CSRCS = <a list of "c" files to pass to $(CC)>
+# $(target)_HDRS = <a list of "h" files; only used for cscope>
 # $(target)_CXXSRCS = <a list of "cc" files to pass to $(CXX)>
 # $(target)_YSRCS = <a list of "y" files to pass to $(BISON)>
 # $(target)_LSRCS = <a list of "l" files to pass to $(FLEX)>
@@ -125,6 +127,15 @@
 # $(target)_POSTINSTALL = <a recipe name to run after installing>
 # $(target)_PREMAKE = <a recipe name to run before making _TARGET>
 # $(target)_POSTMAKE = <a recipe name to run after making _TARGET>
+#
+# NOTE Makefile.inc provides two make targets 'cscope' and 'cscope.files'
+# which are fed by *_CSRCS, *_CXXSRCS, and *_HDRS. They will autogenerate
+# a 'cscope.files' list and run 'cscope -bk' based on all the sources
+# and headers from all the libraries and programs in your Makefile. NOTE
+# if you have conditionals which alter the list of sources and headers
+# which are built or alter the LIB_TARGETS or PROG_TARGETS lists, this
+# will impact 'cscope.files'; in other words, the cscope database will
+# be built ONLY over the source files actually being built.
 #
 # NOTE if you define $(target)_PROTOSRCS with a list of proto files,
 # there will be an autodefined variable produced for each proto source
