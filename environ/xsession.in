@@ -43,5 +43,5 @@ if [ $safe = 1 ] ; then
     urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     exit 0
 else
-    exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr
+    exec ssh-agent pfkscript $HOME/.xsession.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fluxbox pfkSessionXrandr
 fi

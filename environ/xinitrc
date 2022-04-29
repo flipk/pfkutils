@@ -13,5 +13,5 @@ else
     xrdb -load .Xresources
     xset m 0
     set-background.sh
-    exec ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
+    exec ssh-agent pfkscript $HOME/.xinitrc.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
 fi

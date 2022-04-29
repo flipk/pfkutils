@@ -26,7 +26,7 @@ else
     # for safety's sake on that network where it is hard to get to
     # console, make it so there's a way to fix it if it's busted.
 #    urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
-    ssh-agent pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
+    ssh-agent pfkscript $HOME/.vnc/pfkSession${DISPLAY}.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fluxbox pfkSessionXrandr 'set-background.sh wait'
     # when the user "logs out" (pfkSessionMgr -c stop) the vnc will be killed.
 fi
 vncserver -kill $DISPLAY
