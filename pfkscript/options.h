@@ -48,6 +48,7 @@ public:
     void printHelp(void) const;
     void printOptions(void) const;
 
+    bool debug;
     bool isError;
     bool isRemoteCmd;
     std::string remoteCmd;

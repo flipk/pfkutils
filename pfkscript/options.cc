@@ -100,6 +100,7 @@ Options :: getString(std::string &str)
 Options :: Options( int _argc, char ** _argv )
     : argc(_argc), argv(_argv), ind(0), isError(true)
 {
+    debug = false;
     maxSizeSpecified = false;
     zipSpecified = false;
     zipProgram = ZIP_NONE;
@@ -128,7 +129,11 @@ Options :: Options( int _argc, char ** _argv )
     {
         string  arg = nextArg();
 
-        if (arg == "-s")
+        if (arg == "-d")
+        {
+            debug = true;
+        }
+        else if (arg == "-s")
         {
             LargeInt v;
             if (getInteger(v) == false)
@@ -264,11 +269,13 @@ Options :: printHelp(void) const
     cerr <<
 "\n"
 "pfkscript logfile [-b pid_path] [-s max_size_in_mb] [-m max_files] \n"
-"                  [-zg|-zb|-zx] [-c command....]\n"
+"                  [-zg|-zb|-zx] [-d] [-n] [-O] [-l port] [-c command....]\n"
+"pfkscript -r cmd\n"
 "\n"
 "   logfile      : required. if -s is not present, this is the file name all\n"
 "                  command output will be logged to. if -s is present, this is\n"
 "                  the basename of the file (see -s).\n"
+"   -d           : enable debug prints\n"
 "   -s max_size  : when this option is present, 'logfile' is a basename,\n"
 "                  appended by '.%%04d', counter starting at 0001. when each\n"
 "                  file reaches max_size (specified in MiB) it is closed,\n"

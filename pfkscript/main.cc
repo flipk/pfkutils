@@ -476,7 +476,7 @@ public:
             return 1;
         }
 
-        if (1) // debug
+        if (opts.debug) // debug
             opts.printOptions();
 
         if (opts.isRemoteCmd)
@@ -506,6 +506,10 @@ public:
         if (control_sock.init())
         {
             use_ctrl_sock = true;
+            if (opts.debug)
+                printf("setting %s = %s\n",
+                       pfkscript_ctrl::env_var_name,
+                       control_sock.getPath().c_str());
             setenv(pfkscript_ctrl::env_var_name,
                    control_sock.getPath().c_str(), 1);
         }
@@ -534,6 +538,8 @@ public:
 
             char ppid[16];
             sprintf(ppid,"%d",getppid());
+            if (opts.debug)
+                printf("setting IN_PFKSCRIPT = %s\n",ppid);
             setenv("IN_PFKSCRIPT", ppid, 1);
 
             execvp(opts.command[0], (char *const*)opts.command.data());
