@@ -456,7 +456,10 @@ startProcesses(void)
 
         for (ind = 0; ind < commands.size(); ind++)
             commands[ind]->kill();
-        kill_orphaned_children();
+
+        if (doStop == true)
+            // dont kill orphans on a restart, only on a stop.
+            kill_orphaned_children();
     }
 
     return true;
