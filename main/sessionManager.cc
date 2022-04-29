@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -44,7 +45,10 @@ For more information, please refer to <http://unlicense.org>
 #include <stdio.h>
 #include <inttypes.h>
 #include <X11/Xlib.h>
+#include <sys/prctl.h>
 
+#include "simpleRegex.h"
+#include "posix_fe.h"
 #include "sessionManager.h"
 
 using namespace std;
@@ -187,6 +191,7 @@ static void sighand(int s)
             pid = waitpid(/*wait for any child*/-1, &status, WNOHANG);
             if (pid > 0)
             {
+                bool found = false;
                 for (uint32_t ind = 0; ind < commands.size(); ind++)
                 {
                     Command * cmd = commands[ind];
@@ -194,12 +199,128 @@ static void sighand(int s)
                     {
                         cmd->pid = -1;
                         cmd->status = status;
+                        found = true;
                         break;
                     }
                 }
+                if (!found)
+                    printf("detected death of orphaned child "
+                           "pid %u  with status %d\n",
+                           (uint32_t) pid, status);
             }
         } while (pid > 0);
         break;
+    }
+}
+
+class procPidDirRegex : public regex<2>
+{
+public:
+    procPidDirRegex(void) : regex("^[0-9]+$") { }
+};
+procPidDirRegex  pid_re;
+
+class procStatFileRegex : public regex<10>
+{
+public:
+    procStatFileRegex(void) : regex(
+        "^([0-9]+) \\((.*)\\) ([^ ]+) ([0-9]+) .*$"
+        ) { }
+    uint32_t  pid(const std::string &l) {
+        uint32_t v;
+        pxfe_utils::parse_number(match(l,1).c_str(),&v);
+        return v;
+    }
+    std::string name(const std::string &l) {
+        return match(l,2);
+    }
+    std::string state(const std::string &l) {
+        return match(l,3);
+    }
+    uint32_t  ppid(const std::string &l) {
+        uint32_t v;
+        pxfe_utils::parse_number(match(l,4).c_str(),&v);
+        return v;
+    }
+};
+procStatFileRegex  psf_re;
+
+bool pid_is_child(uint32_t pid)
+{
+    std::ostringstream  os;
+    os << "/proc/" << pid << "/stat";
+    std::ifstream ifs(os.str().c_str());
+    if (ifs.good())
+    {
+        std::string l;
+        std::getline(ifs, l);
+        if (ifs.good())
+        {
+            if (psf_re.exec(l))
+            {
+                if (psf_re.ppid(l) == getpid())
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void list_orphaned_children(std::vector<pid_t> &pids)
+{
+    pids.clear();
+    pxfe_readdir   rd;
+    if (rd.open("/proc"))
+    {
+        dirent de;
+        while (rd.read(de))
+        {
+            std::string  name = de.d_name;
+            if (name == "." || name == "..")
+                continue;
+            if (pid_re.exec(name))
+            {
+                uint32_t  v;
+                if (pxfe_utils::parse_number(name.c_str(), &v, 10))
+                {
+                    if (pid_is_child(v))
+                        pids.push_back((pid_t) v);
+                }
+            }
+        }
+    }
+}
+
+static int try_to_kill_orphaned_children(int sig,
+                                         const char *signame)
+{
+    std::vector<pid_t>  pids;
+    list_orphaned_children(pids);
+    for (auto p : pids)
+    {
+        printf("sending %s to orphaned child %u\n",
+               signame, (uint32_t) p);
+        ::kill(p, sig);
+    }
+    return pids.size();
+}
+
+static void kill_orphaned_children(void)
+{
+    for (int count = 0; count < 5; count++)
+    {
+        if (try_to_kill_orphaned_children(SIGTERM, "SIGTERM") == 0)
+            return; // done!
+        sleep(1);
+        count++;
+    }
+    // escalate
+    for (int count = 0; count < 5; count++)
+    {
+        if (try_to_kill_orphaned_children(SIGKILL, "SIGKILL") == 0)
+            return; // done!
+        sleep(1);
+        count++;
     }
 }
 
@@ -298,6 +419,14 @@ startProcesses(void)
     if (openDisplay() == false)
         return false;
 
+    if (prctl(PR_SET_CHILD_SUBREAPER, 1) < 0)
+    {
+        int e = errno;
+        printf("prctl SUBREAPER : %d (%s)\n",
+               e, strerror(e));
+        // otherwise ignore
+    }
+
     uint32_t ind;
     while (doStop == false)
     {
@@ -327,6 +456,7 @@ startProcesses(void)
 
         for (ind = 0; ind < commands.size(); ind++)
             commands[ind]->kill();
+        kill_orphaned_children();
     }
 
     return true;
