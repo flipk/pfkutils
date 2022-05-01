@@ -427,6 +427,9 @@ startProcesses(void)
         // otherwise ignore
     }
 
+    unsetenv("PFKSCRIPT_CTRL_SOCKET");
+    unsetenv("IN_PFKSCRIPT");
+
     uint32_t ind;
     while (doStop == false)
     {
