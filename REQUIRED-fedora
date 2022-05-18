@@ -4,4 +4,5 @@ gcc gcc-c++ flex byacc bison imake zlib-devel ncurses-devel
 libX11-devel libXau-devel libICE-devel libSM-devel libXaw-devel
 libXpm-devel libXmu-devel libXext-devel libXt-devel libXrandr-devel
 feh git gitk protobuf-devel mbedtls-devel make fftw3-devel emacs
+tcl tk expect tclx
 

@@ -1,5 +1,7 @@
 #!/usr/bin/wish -f
 
+package require Tclx
+
 set hostname [exec hostname]
 
 proc doxterm { } {
@@ -20,14 +22,17 @@ proc cleanup { } {
         exit
 }
 
-if { [lindex $argv 0] == "-3" } {
-    set geom "=+297+25"
+proc child_death { } {
+    set waitret [wait -nohang]
+#    puts "CHILD DEATH : $waitret"
+}
+
+signal -restart trap SIGCHLD child_death
+
+if [info exists ::env(DOXTRMS_GEOMETRY)] {
+    set geom $::env(DOXTRMS_GEOMETRY)
 } {
-    if { [lindex $argv 0] == "-2" } {
-        set geom "=+211+25"
-    } {
-        set geom "=+125+25"
-    }
+    set geom "+0+0"
 }
 
 wm title . "x-$hostname"
