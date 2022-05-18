@@ -207,6 +207,14 @@ UNAMER := $(shell uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g')
 OBJDIR := obj.$(shell uname -m).$(shell uname -s).$(UNAMER)
 endif
 
+ifeq ($(OBJDIR),$(filter /%,$(OBJDIR)))
+# objdir is absolute path.
+OBJDIR_FULLPATH := $(OBJDIR)
+else
+# objdir is relative path.
+OBJDIR_FULLPATH := $(PWD)/$(OBJDIR)
+endif
+
 # additional subdirs of $(OBJDIR) to create, if your source tree
 # has has a tree of relpath "dir/file.c" sources.
 OBJDIRS_TOMAKE ?=
@@ -293,7 +301,7 @@ objdirs:
 
 # $(call FROM_X_TO_Y,cc,o,dirA/dirB/file.cc) == objdir/target-dirA_dirB_file.o
 
-FROM_X_TO_Y = $(patsubst %.$(1), $(OBJDIR)/$(target)-%.$(2), $(subst /,_,$(3)))
+FROM_X_TO_Y = $(patsubst %.$(1), $(OBJDIR_FULLPATH)/$(target)-%.$(2), $(subst /,_,$(3)))
 
 FROM_C_TO_O      = $(call FROM_X_TO_Y,c,o,$(1))
 FROM_C_TO_D      = $(call FROM_X_TO_Y,c,c.d,$(1))
@@ -544,7 +552,7 @@ $(foreach src,$($(target)_PROTOSRCS),
 $(call FROM_PROTO_TO_CC, $(src)): $(src)
 	@echo making $$@
 	$(Q)cd $$(dir $$<) && $(PROTOC_PATH) \
-		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
+		--cpp_out=$$(dir $$@) $$(notdir $$<)
 	$(Q)mv $(OBJDIR)/$$(notdir $(src:.proto=.pb.h)) $$(@:.pb.cc=.pb.h)
 	$(Q)sed -e s,$$(notdir $(src:.proto=.pb.h)),$$(notdir $$(@:.pb.cc=.pb.h)), \
 		<  $(OBJDIR)/$$(notdir $(src:.proto=.pb.cc)) \
