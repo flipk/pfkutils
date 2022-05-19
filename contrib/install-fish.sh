@@ -2,7 +2,7 @@
 
 set -e -x
 
-PFKARCH=$( sh ../scripts/architecture )
+PFKARCH=$( architecture )
 export PFKARCH
 
 if [ ! -d fish-shell ] ; then

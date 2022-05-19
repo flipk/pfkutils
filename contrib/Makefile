@@ -6,8 +6,8 @@ mkobjdir:
 
 install: $(foreach prog,$(PROGS),$(prog)-install )
 
-RXVT_VERSION= pfk-2016-0410
-FLUXBOX_VERSION= pfk-1_3_7
+RXVT_VERSION= pfk-2021-0403
+FLUXBOX_VERSION= origin/pfk
 FISH_VERSION= 2.4.0
 
 ######################################################
