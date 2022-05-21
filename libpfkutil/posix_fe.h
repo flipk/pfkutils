@@ -866,7 +866,8 @@ class pxfe_semaphore {
     int value;
 public:
     /** initialize semaphore with an initial value */
-    pxfe_semaphore(int initial) {
+    pxfe_semaphore(int initial = 1) {
+        value = initial;
         mut.init();
         cond.init();
     }
