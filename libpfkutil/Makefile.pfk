@@ -55,7 +55,7 @@ LIBPFKUTIL_TEST_TARGETS = \
 	msgr-test-clnt msgr-test-msg msgr-test-svr \
 	shmempipe_test_master shmempipe_test_slave testpipe \
 	childprocessmanager_test signal_backtrace_test \
-	thread_slinger_test
+	thread_slinger_test posix_fe_test
 # HSM_test
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
