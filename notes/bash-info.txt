@@ -1,0 +1,60 @@
+
+to open somefile as fd 4
+   exec 4<>somefile
+   exec 4>somefile
+   exec 4>>somefile
+   exec 4<somefile
+
+to output to fd 4:
+   echo hello 1>&4 2>&4
+
+to input from fd 4:
+   read v 0<&4
+   cat 0<&4
+
+to close fd 4:
+   exec 4>&-
+   exec 4<&-
+
+flocking
+   exec 9<>lock
+   flock -w 1 9 || {
+      echo failed to lock
+      exit 1
+   }
+   echo doing stuff while locked
+   exec 9>&-
+
+index arrays
+   gitdirs=(one two three)   <--- zero based indexing
+   gitdirs[$numgitdirs]=$gitdir
+   gitdir=${gitdirs[$count]}
+   unset gitdirs
+   negative indexes are from the end (-1 is last)
+   number of elements in array: ${#gitdirs[@]} 
+   all the values: "${gitdirs[@]}"  <-- many words
+   all the values: "${gitdirs[*]}"  <-- a single word, using $IFS
+   all the keys: "${!gitdirs[@]}" (or *)
+   afterspace=( $( du -ks $repodir ) )
+   echo kb size after : ${afterspace[0]}
+
+associative arrays
+   declare -A gitdirs
+   gitdirs[stuff]=one
+   gitdirs[things]=two
+   echo ${gitdirs[stuff]}
+   echo ${gitdirs[things]}
+   unset gitdirs
+   number of elements in array: ${#gitdirs[@]}
+   a list of keys: "${!gitdirs[@]}" (or *)
+   all the values: "${gitdirs[@]}" (or *)
+
+math
+   count=0
+   (( count++ ))            <--- silent
+   echo $(( count++ ))      <--- returns value
+
+splitting a line
+   IFS=" "  set -- $line
+   echo $# $1 $2
+
