@@ -653,12 +653,17 @@ public:
     void settype(int type) {
         pthread_mutexattr_settype(&attr, type);
     }
-#ifdef PTHREAD_MUTEX_ROBUST
+#if HAVE_PTHREAD_MUTEXATTR_SETROBUST || HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP
     /** set to PTHREAD_MUTEX_ROBUST or PTHREAD_MUTEX_STALLED
      * (default is STALLED) */
     void setrobust(bool robust = true) {
+#if HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP
+        pthread_mutexattr_setrobust_np(
+            &attr, robust ? PTHREAD_MUTEX_ROBUST : PTHREAD_MUTEX_STALLED);
+#elif HAVE_PTHREAD_MUTEXATTR_SETROBUST
         pthread_mutexattr_setrobust(
             &attr, robust ? PTHREAD_MUTEX_ROBUST : PTHREAD_MUTEX_STALLED);
+#endif
     }
 #else
     /** set to PTHREAD_MUTEX_ROBUST or PTHREAD_MUTEX_STALLED

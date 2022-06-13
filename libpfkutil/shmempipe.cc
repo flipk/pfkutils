@@ -258,6 +258,10 @@ shmempipeBufferList :: init(void)
 #endif
 #if HAVE_PTHREAD_MUTEXATTR_SETROBUST_NP
     pthread_mutexattr_setrobust_np(&mattr, PTHREAD_MUTEX_ROBUST_NP);
+#elif HAVE_PTHREAD_MUTEXATTR_SETROBUST
+    pthread_mutexattr_setrobust(&mattr, PTHREAD_MUTEX_ROBUST_NP);
+#else
+#warning "really should have robust mutex for this"
 #endif
 #if HAVE_PTHREAD_CONDATTR_SETPSHARED
     pthread_condattr_setpshared(&cattr, PTHREAD_PROCESS_SHARED);

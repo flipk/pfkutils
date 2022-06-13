@@ -315,6 +315,14 @@ shmempipeBufferList :: lock(void)
             pthread_mutex_consistent_np(&mutex);
             pthread_mutex_unlock( &mutex );
         }
+#elif HAVE_PTHREAD_MUTEX_CONSISTENT
+        if (ret == EOWNERDEAD)
+        {
+            pthread_mutex_consistent(&mutex);
+            pthread_mutex_unlock( &mutex );
+        }
+#else
+#warning "really should have usable consistent pthread"
 #endif
         return false;
     }
