@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-04-18.23:23:36
+#      Last update: 2022-06-12.23:01:48
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -46,6 +46,8 @@ TMPDIR=$TMP
 TEMP=$TMP
 USERID=@PFK_USER_ID@
 GROUP=@PFK_GROUP_ID@
+SCREENDIR=$TMPDIR/screen
+TMUX_TMPDIR=$TMPDIR
 
 if [ ! -d $TMP ] ; then
     mkdir -p $TMP
@@ -53,7 +55,8 @@ if [ ! -d $TMP ] ; then
 fi
 
 export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER PFKUTILS_PREFIX
- 
+export USERID GROUP SCREENDIR TMUX_TMPDIR
+
 if [ -f $HOME/.verbose ] ; then
     __verbose() {
         echo $$ $*
@@ -355,6 +358,7 @@ alias pfkman='MANPATH=`find $HOME/pfk -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
+alias tmux='TERM=rxvt \tmux'
 
 emacsn() {
     if [ $# -lt 1 ] ; then
