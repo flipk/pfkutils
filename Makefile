@@ -61,8 +61,11 @@ else
 
 include $(CONFIG_FILE)
 
+# NOTE OBJDIR can be overriden in the CONFIG_FILE.
+# but also note no matter what it can be overridden
+# on the command line too "make OBJDIR=/tmp/$USER/pfkutils-obj"
 PFKARCH := $(shell ./scripts/architecture.simple)
-OBJDIR := obj.$(CONFIG)
+OBJDIR ?= obj.$(CONFIG)
 
 ifeq ($(DISABLE_RDYNAMIC),)
 LDFLAGS += -rdynamic # for backtrace
