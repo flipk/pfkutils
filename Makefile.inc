@@ -40,8 +40,13 @@
 #    Makefile.inc supplies reasonable defaults for these but you can
 #    override them if you need to.
 #
-# TODO someday: support $(target)_{CC,CXX,AR,RANLIB,BISON,FLEX,PROTOC_PATH}
-#    so that different targets can be built using different compilers.
+# $(target)_{CC,CXX,AR,RANLIB,BISON,FLEX,PROTOC_PATH}
+#    if none of these variables exist, the global ones above will be
+#    used.  but you can supply per-target customizations of these
+#    variables, for instance if you want to use this makefile to
+#    compile one target for the host machine's CPU and cross-compile
+#    another target for a different architecture.
+#    NOTE these values *replace* their global counterparts, if specified.
 #
 # CFLAGS, CXXFLAGS
 #    command line arguments to $(CC) or $(CXX) respectively. applied
@@ -50,14 +55,20 @@
 #       -Wa,-ahls=$$(@:.o=.L)
 #    to CFLAGS, CXXFLAGS, $(target)_CFLAGS, and/or $(target)_CXXFLAGS
 #    (assuming your assembler is gnu gas, of course)
+#    NOTE these values are specified *in addition to*
+#         their target-specific counterparts, with the globals coming
+#         first on the compiler command line.
 #
 # LDFLAGS
 #    flags applied to program linker, i.e. -rdynamic.  applied to all
 #    targets in PROG_TARGETS, applied before $(target)_LDFLAGS.
+#    NOTE these values are specified *in addition to*
+#         their target-specific counterparts, with the globals coming
+#         first on the linker command line.
 #
 # INCS, DEFS
 #    cpp-type arguments. INCS should be -I's, DEFS should be -D's.
-#    note these are global for all LIB and PROG targets! the
+#    NOTE these are global for all LIB and PROG targets! the
 #    $(target)_INCS is applied to the command line *before* the global
 #    $(INCS) so a header file in the $(target)_INCS with the same file
 #    name as a header file from $(INCS) can be found by a specific
@@ -111,6 +122,13 @@
 #    the name of the target you want to build):
 #
 # $(target)_TARGET = <library or executable filename to build, required>
+# $(target)_CC = <target-specific compiler, uses $(CC), if not specified>
+# $(target)_CXX = <target-specific compiler, uses $(CXX), if not specified>
+# $(target)_AR = <t-s archiver, uses $(AR), ins>
+# $(target)_RANLIB = <t-s library indexer, uses $(RANLIB), ins>
+# $(target)_BISON = <t-s parser generator, uses $(BISON), ins>
+# $(target)_FLEX = <t-s lexical scanner, uses $(FLEX), ins>
+# $(target)_PROTOC_PATH = <t-s protobuf compiler, uses $(PROTOC_PATH), ins>
 # $(target)_CSRCS = <a list of "c" files to pass to $(CC)>
 # $(target)_HDRS = <a list of "h" files; only used for cscope>
 # $(target)_CXXSRCS = <a list of "cc" files to pass to $(CXX)>
@@ -413,19 +431,26 @@ HDRS += $($(target)_HDRS)
 CSRCS += $($(target)_CSRCS) $($(target)_YGENSRCS) $($(target)_LGENSRCS)
 CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
 
+$(eval $(target)_CC ?= $(CC))
+$(eval $(target)_CXX ?= $(CXX))
+$(eval $(target)_AR ?= $(AR))
+$(eval $(target)_RANLIB ?= $(RANLIB))
+$(eval $(target)_BISON ?= $(BISON))
+$(eval $(target)_FLEX ?= $(FLEX))
+$(eval $(target)_PROTOC_PATH ?= $(PROTOC_PATH))
 
 # handle C files
 
 $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_O, $(src)): $(src)
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
+	$(Q)$($(target)_CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
 	@echo depending $$<
-	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_C_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -435,7 +460,7 @@ $(foreach src,$($(target)_CSRCS),$(call FROM_C_TO_D, $(src)): $(src)
 
 $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_O, $(src)): $(src)
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
+	$(Q)$($(target)_CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$$< -o $$@
@@ -444,7 +469,7 @@ $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_O, $(src)): $(src)
 
 $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_D, $(src)): $(src)
 	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_CC_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -454,7 +479,7 @@ $(foreach src,$($(target)_CXXSRCS),$(call FROM_CC_TO_D, $(src)): $(src)
 
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_O, $(src)): $(call FROM_Y_TO_C, $(src))
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
+	$(Q)$($(target)_CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$$< -o $$@
@@ -462,12 +487,12 @@ $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_O, $(src)): $(call FROM_Y_TO_C
 
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_C, $(src)) $(call FROM_Y_TO_H, $(src)): $(src)
 	@echo making $$@
-	$(Q)$(BISON) -d $$< -o $$@
+	$(Q)$($(target)_BISON) -d $$< -o $$@
 )
 
 $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C, $(src)) $(call FROM_Y_TO_H, $(src))
 	@echo depending $$<
-	$(Q)$(CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CC) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_Y_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -477,12 +502,12 @@ $(foreach src,$($(target)_YSRCS),$(call FROM_Y_TO_D, $(src)): $(call FROM_Y_TO_C
 
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_CC, $(src)) $(call FROM_YY_TO_HH, $(src)): $(src)
 	@echo making $$@
-	$(Q)$(BISON) -d $$< -o $$@
+	$(Q)$($(target)_BISON) -d $$< -o $$@
 )
 
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_TO_CC, $(src))
 	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_YY_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -490,7 +515,7 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_D, $(src)): $(call FROM_YY_T
 
 $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_TO_CC, $(src)) $(call FROM_YY_TO_HH, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
+	$(Q)$($(target)_CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
@@ -499,12 +524,12 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_T
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_C, $(src)): $(src)
 	@echo making $$@
-	$(Q)$(FLEX) --stdout $$<  > $$@
+	$(Q)$($(target)_FLEX) --stdout $$<  > $$@
 )
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C, $(src))
 	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_L_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -512,7 +537,7 @@ $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C, $(src))
 	@echo compiling $$<
-	$(Q)$(CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
+	$(Q)$($(target)_CC) -c -I$(OBJDIR) $(CFLAGS) $($(target)_CFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) \
 		$$< -o $$@
@@ -522,19 +547,19 @@ $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_CC, $(src)): $(src)
 	@echo making $$@
-	$(Q)$(FLEX) --stdout $$<  > $$@
+	$(Q)$($(target)_FLEX) --stdout $$<  > $$@
 )
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_O, $(src)): $(call FROM_LL_TO_CC, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
+	$(Q)$($(target)_CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_D, $(src)): $(call FROM_LL_TO_CC, $(src))
 	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
+	$(Q)$($(target)_CXX) -I$(OBJDIR) $($(target)_INCS) $(INCS) \
 		$(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_LL_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -551,7 +576,7 @@ $(foreach src,$($(target)_PROTOSRCS),
 
 $(call FROM_PROTO_TO_CC, $(src)): $(src)
 	@echo making $$@
-	$(Q)cd $$(dir $$<) && $(PROTOC_PATH) \
+	$(Q)cd $$(dir $$<) && $($(target)_PROTOC_PATH) \
 		--cpp_out=$$(dir $$@) $$(notdir $$<)
 	$(Q)mv $(OBJDIR)/$$(notdir $(src:.proto=.pb.h)) $$(@:.pb.cc=.pb.h)
 	$(Q)sed -e s,$$(notdir $(src:.proto=.pb.h)),$$(notdir $$(@:.pb.cc=.pb.h)), \
@@ -562,14 +587,14 @@ $(call FROM_PROTO_TO_CC, $(src)): $(src)
 
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_O, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo compiling $$<
-	$(Q)$(CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
+	$(Q)$($(target)_CXX) -c -I$(OBJDIR) $(CXXFLAGS) $($(target)_CXXFLAGS) \
 		$($(target)_INCS) $(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) $$< -o $$@
 )
 
 $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FROM_PROTO_TO_CC, $(src))
 	@echo depending $$<
-	$(Q)$(CXX) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
+	$(Q)$($(target)_CXX) -I$(OBJDIR) $($(target)_INCS) $(PROTOBUF_INC) \
 		$(INCS) $(DEFS) $($(target)_DEFS) -DDEPENDING=1 \
 		-M $$< -MT $(call FROM_PROTO_TO_O,$(src)) -MF $$@.tmp
 	$(Q)mv $$@.tmp $$@
@@ -578,7 +603,7 @@ $(foreach src,$($(target)_PROTOSRCS),$(call FROM_PROTO_TO_D, $(src)): $(call FRO
 # here for reference
 #$($(target)_PROTOGENSRCS): $(OBJDIR)/%.pb.cc : %.proto
 #	@echo making $$@
-#	@cd $$(dir $$<) && $(PROTOC_PATH) \
+#	@cd $$(dir $$<) && $($(target)_PROTOC_PATH) \
 #		--cpp_out=$$(dir $(PWD)/$$@) $$(notdir $$<)
 
 endef
@@ -598,8 +623,8 @@ define LIB_TARGET_RULES
 $($(target)_TARGET): $($(target)_OBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)rm -f $($(target)_TARGET)
-	$(Q)$(AR) cq $($(target)_TARGET) $($(target)_OBJS)
-	$(Q)$(RANLIB) $($(target)_TARGET)
+	$(Q)$($(target)_AR) cq $($(target)_TARGET) $($(target)_OBJS)
+	$(Q)$($(target)_RANLIB) $($(target)_TARGET)
 
 $(target)_install: $($(target)_TARGET)
 	$(Q)set -e ; if [ "x$($(target)_INSTALL_HDRS)" != "x" ] ; then \
@@ -615,7 +640,7 @@ define PROG_TARGET_RULES
 
 $($(target)_TARGET): $($(target)_OBJS) $($(target)_DEPLIBS)
 	@echo linking $($(target)_TARGET)
-	$(Q)$(CXX) -o $($(target)_TARGET) $($(target)_OBJS) \
+	$(Q)$($(target)_CXX) -o $($(target)_TARGET) $($(target)_OBJS) \
 		$($(target)_DEPLIBS) \
 		$(LDFLAGS) $($(target)_LDFLAGS) \
 		$($(target)_LIBS)
