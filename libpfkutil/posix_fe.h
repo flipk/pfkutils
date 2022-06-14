@@ -159,6 +159,17 @@ struct pxfe_timeval : public timeval
         ms[sizeof(ms)-1] = 0;
         return std::string(ymdhms) + "." + ms;
     }
+    /** if this timeval is a duration, turn it into h,m,s,usec
+     * which you can easily format using %02u:%02u:%02u.%06u */
+    void breakdown(uint32_t &hours, uint32_t &minutes,
+                   uint32_t &seconds, uint32_t &usecs) {
+        seconds = tv_sec;
+        hours  = seconds / 3600;
+        seconds -= hours * 3600;
+        minutes  = seconds / 60;
+        seconds -= minutes * 60;
+        usecs = tv_usec;
+    }
     /** convert sec/usec into single milliseconds value */
     uint32_t msecs(void) {
         return (tv_sec * 1000) + (tv_usec / 1000);
@@ -289,6 +300,17 @@ struct pxfe_timespec : public timespec
         snprintf(ns,sizeof(ns),"%09ld", tv_nsec);
         ns[sizeof(ns)-1] = 0;
         return std::string(ymdhms) + "." + ns;
+    }
+    /** if this timeval is a duration, turn it into h,m,s,nsec
+     * which you can easily format using %02u:%02u:%02u.%09u */
+    void breakdown(uint32_t &hours, uint32_t &minutes,
+                   uint32_t &seconds, uint32_t &nsecs) {
+        seconds = tv_sec;
+        hours  = seconds / 3600;
+        seconds -= hours * 3600;
+        minutes  = seconds / 60;
+        seconds -= minutes * 60;
+        nsecs = tv_nsec;
     }
     /** convert sec/usec into single milliseconds value */
     uint32_t msecs(void) {

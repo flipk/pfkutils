@@ -98,6 +98,8 @@ public:
     // returns list of zip files completed.
     void periodic(FilenameList_t &list);
     void addData(const char * data, size_t len);
+    void addData(const std::string &data)
+    { addData(data.c_str(), data.length()); }
     const bool isOpen(void) const;
     // dont call this if isOpen return false.
     const std::string &getFilename(void) const;

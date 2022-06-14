@@ -45,6 +45,8 @@ For more information, please refer to <http://unlicense.org>
 #include <fcntl.h>
 #include <fstream>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -55,12 +57,16 @@ class Pfkscript_program {
     int listenPortFd;
     int listenDataPortFd;
     bool use_ctrl_sock;
+    pxfe_timeval  start_time;
+    pxfe_timeval  stop_time;
     pxfe_unix_dgram_socket control_sock;
     struct termios old_tios;
     bool sttyWasRun;
     pxfe_ticker ticker;
     pxfe_pipe winch_pipe;
     int master_fd;
+    bool wait_status_collected;
+    int wait_status;
     pid_t child_pid;
     struct remoteResponseInfo {
         PfkscriptMsg   msg;
@@ -144,6 +150,31 @@ class Pfkscript_program {
         sigemptyset(&sa.sa_mask);
         sa.sa_flags = 0;
         sigaction(SIGPIPE, &sa, NULL);
+    }
+
+    static void sigchild_handler(int s)
+    {
+        if (instance)
+        {
+            wait(&instance->wait_status);
+            instance->wait_status_collected = true;
+        }
+        else
+        {
+            int dummy;
+            wait(&dummy);
+            printf("\r\n\r\nCHILD PROCESS EXITED WITH STATUS: %d\r\n\r\n",
+                   dummy);
+        }
+    }
+
+    void setup_sigchild(void)
+    {
+        struct sigaction sa;
+        sa.sa_handler = &sigchild_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        sigaction(SIGCHLD, &sa, NULL);
     }
 
     void daemonize(void)
@@ -462,6 +493,8 @@ public:
         listenDataPortFd = -1;
         use_ctrl_sock = false;
         sttyWasRun = false;
+        wait_status_collected = false;
+        wait_status = 0;
         instance = this;
     }
     ~Pfkscript_program(void)
@@ -499,6 +532,7 @@ public:
         }
 
         block_sigpipe();
+        setup_sigchild();
 
         if (opts.backgroundSpecified)
             daemonize();
@@ -548,6 +582,8 @@ public:
 
             _exit(99);
         }
+
+        start_time.getNow();
 
         // parent
         close(slave_fd);
@@ -617,6 +653,79 @@ public:
                 handle_sigwinch();
         }
         ticker.stopjoin();
+        stop_time.getNow();
+
+        {
+            pxfe_timeval  diffTime = stop_time - start_time;
+            uint32_t h,m,s,u;
+            char timeBuffer[64];
+            std::ostringstream ostr;
+            struct rusage usage;
+
+            // NOTE getrusage(children) doesn't do much if we dont
+            //  call wait(2).  that's how CPU usage of children get
+            //  into the parent's stats.
+
+            int counter = 1000;
+            while (counter-- > 0)
+            {
+                // might be a race in SIGCHILD handler being
+                // called, so wait for it.
+                if (wait_status_collected == false)
+                    usleep(1);
+            }
+            ostr << "\n\n\n";
+            if (wait_status_collected)
+            {
+                if (WIFEXITED(wait_status))
+                    ostr << "Child process exited normally with status: "
+                         << WEXITSTATUS(wait_status) << "\n";
+                if (WIFSIGNALED(wait_status))
+                    ostr << "Child process exited due to signal: "
+                         << WTERMSIG(wait_status) << "\n";
+                if (WCOREDUMP(wait_status))
+                    ostr << "Child process dumped core\n";
+            }
+
+            diffTime.breakdown(h,m,s,u);
+            snprintf(timeBuffer,sizeof(timeBuffer),
+                     "%02u:%02u:%02u.%06u", h, m, s, u);
+            ostr << "elapsed real time: " << timeBuffer << "\n";
+
+            pxfe_errno e;
+            if (getrusage(RUSAGE_CHILDREN, &usage) < 0)
+            {
+                e.init(errno, "getrusage");
+                ostr << "error: " << e.Format();
+            }
+            else
+            {
+                pxfe_timeval *rut = (pxfe_timeval *) &usage.ru_utime;
+                rut->breakdown(h,m,s,u);
+                snprintf(timeBuffer,sizeof(timeBuffer),
+                         "%02u:%02u:%02u.%06u", h, m, s, u);
+                ostr << "user CPU time: " << timeBuffer << "\n";
+
+                rut = (pxfe_timeval *) &usage.ru_stime;
+                rut->breakdown(h,m,s,u);
+                snprintf(timeBuffer,sizeof(timeBuffer),
+                         "%02u:%02u:%02u.%06u", h, m, s, u);
+                ostr << "system CPU time: " << timeBuffer << "\n";
+
+                ostr
+               << "max resident set size: " << usage.ru_maxrss << "\n"
+               << "page reclaims: " << usage.ru_minflt << "\n"
+               << "page faults: " << usage.ru_majflt << "\n"
+               << "swaps: " << usage.ru_nswap << "\n"
+               << "block input ops: " << usage.ru_inblock << "\n"
+               << "block output ops: " << usage.ru_oublock << "\n"
+               << "signals rcvd: " << usage.ru_nsignals << "\n"
+               << "voluntary context switches: " << usage.ru_nvcsw << "\n"
+               << "involuntary context switches: " << usage.ru_nivcsw;
+            }
+
+            logfile.addData(ostr.str());
+        }
 
         if (listenDataPortFd > 0)
             close(listenDataPortFd);
