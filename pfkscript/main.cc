@@ -658,7 +658,9 @@ public:
         {
             pxfe_timeval  diffTime = stop_time - start_time;
             uint32_t h,m,s,u;
-            char timeBuffer[64];
+            char timeBuffer1[64] = {0};
+            char timeBuffer2[64] = {0};
+            char timeBuffer3[64] = {0};
             std::ostringstream ostr;
             struct rusage usage;
 
@@ -675,22 +677,28 @@ public:
                     usleep(1);
             }
             ostr << "\n\n\n";
+            const char * exit_reason = NULL;
+            const char * dumped_core = NULL;
+            int exit_value = 0;
             if (wait_status_collected)
             {
                 if (WIFEXITED(wait_status))
-                    ostr << "Child process exited normally with status: "
-                         << WEXITSTATUS(wait_status) << "\n";
+                {
+                    exit_reason = "normal exit with status";
+                    exit_value = WEXITSTATUS(wait_status);
+                }
                 if (WIFSIGNALED(wait_status))
-                    ostr << "Child process exited due to signal: "
-                         << WTERMSIG(wait_status) << "\n";
+                {
+                    exit_reason = "exit due to signal";
+                    exit_value = WTERMSIG(wait_status);
+                }
                 if (WCOREDUMP(wait_status))
-                    ostr << "Child process dumped core\n";
+                    dumped_core = "CHILD PROCESS DUMPED CORE";
             }
 
             diffTime.breakdown(h,m,s,u);
-            snprintf(timeBuffer,sizeof(timeBuffer),
-                     "%02u:%02u:%02u.%06u", h, m, s, u);
-            ostr << "elapsed real time: " << timeBuffer << "\n";
+            snprintf(timeBuffer1,sizeof(timeBuffer1),
+                     "   %02u:%02u:%02u.%06u", h, m, s, u);
 
             pxfe_errno e;
             if (getrusage(RUSAGE_CHILDREN, &usage) < 0)
@@ -702,27 +710,42 @@ public:
             {
                 pxfe_timeval *rut = (pxfe_timeval *) &usage.ru_utime;
                 rut->breakdown(h,m,s,u);
-                snprintf(timeBuffer,sizeof(timeBuffer),
-                         "%02u:%02u:%02u.%06u", h, m, s, u);
-                ostr << "user CPU time: " << timeBuffer << "\n";
+                snprintf(timeBuffer2,sizeof(timeBuffer2),
+                         "   %02u:%02u:%02u.%06u", h, m, s, u);
 
                 rut = (pxfe_timeval *) &usage.ru_stime;
                 rut->breakdown(h,m,s,u);
-                snprintf(timeBuffer,sizeof(timeBuffer),
-                         "%02u:%02u:%02u.%06u", h, m, s, u);
-                ostr << "system CPU time: " << timeBuffer << "\n";
-
-                ostr
-               << "max resident set size: " << usage.ru_maxrss << "\n"
-               << "page reclaims: " << usage.ru_minflt << "\n"
-               << "page faults: " << usage.ru_majflt << "\n"
-               << "swaps: " << usage.ru_nswap << "\n"
-               << "block input ops: " << usage.ru_inblock << "\n"
-               << "block output ops: " << usage.ru_oublock << "\n"
-               << "signals rcvd: " << usage.ru_nsignals << "\n"
-               << "voluntary context switches: " << usage.ru_nvcsw << "\n"
-               << "involuntary context switches: " << usage.ru_nivcsw;
+                snprintf(timeBuffer3,sizeof(timeBuffer3),
+                         "   %02u:%02u:%02u.%06u", h, m, s, u);
             }
+
+#define F(s,v) \
+        << setw(30) << setiosflags(std::ios_base::right) << s << ":" \
+        << setw(9)  << setiosflags(std::ios_base::right) << v \
+        << "\n"
+
+            if (dumped_core)
+                ostr << setw(30) << setiosflags(std::ios_base::right)
+                     << dumped_core << "\n";
+            if (exit_reason)
+                ostr F(exit_reason, exit_value);
+
+            ostr
+                F(       "max resident set size",usage.ru_maxrss)
+                F(               "page reclaims",usage.ru_minflt)
+                F(                 "page faults",usage.ru_majflt)
+                F(                       "swaps",usage.ru_nswap)
+                F(             "block input ops",usage.ru_inblock)
+                F(            "block output ops",usage.ru_oublock)
+                F(                "signals rcvd",usage.ru_nsignals)
+                F(  "voluntary context switches",usage.ru_nvcsw)
+                F("involuntary context switches",usage.ru_nivcsw)
+                F(           "elapsed real time",timeBuffer1)
+                F(               "user CPU time",timeBuffer2)
+                F(             "system CPU time",timeBuffer3)
+                ;
+
+#undef F
 
             logfile.addData(ostr.str());
         }
