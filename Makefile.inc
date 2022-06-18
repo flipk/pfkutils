@@ -309,6 +309,19 @@ endif
 ifneq ($(MAKEJOBS),)
 	@echo MAKEJOBS=$(MAKEJOBS)
 endif
+	@echo PROTOBUF: PROTOC_PATH=$(PROTOC_PATH) PROTOBUF_INC=$(PROTOBUF_INC) PROTOBUF_LIB=$(PROTOBUF_LIB)
+	@echo MBEDTLS: MBEDTLS_INCS=$(MBEDTLS_INCS) MBEDTLS_LIBS=$(MBEDTLS_LIBS)
+	@echo TOOLS: CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) BISON=$(BISON) FLEX=$(FLEX)
+	@echo CFLAGS: $(CFLAGS)
+	@echo CXXFLAGS: $(CXXFLAGS)
+	@echo LDFLAGS: $(LDFLAGS)
+	@echo INCS=$(INCS)
+	@echo -n DEFS=$(DEFS)
+	@echo -n -e $(CUSTOM_TOOLS)
+	@echo -n -e $(CUSTOM_INCS)
+	@echo -n -e $(CUSTOM_DEFS)
+	@echo -n -e $(CUSTOM_CFLAGS)
+	@echo  -e $(CUSTOM_CXXFLAGS)
 	@echo '**************** CURRENT CONFIGURATION ************************'
 	@echo ''
 
@@ -430,6 +443,31 @@ CXXGENDEPS += $($(target)_YYGENDEPS) $($(target)_LLGENDEPS) \
 HDRS += $($(target)_HDRS)
 CSRCS += $($(target)_CSRCS) $($(target)_YGENSRCS) $($(target)_LGENSRCS)
 CXXSRCS += $($(target)_CXXSRCS) $($(target)_YYGENSRCS) $($(target)_LLGENSRCS)
+
+# the 'echoconfig' target uses 'echo -e' so we can use command sequences
+# like "\n" to make newlines.
+$(if $(subst undefined,,$(origin $(target)_CC)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_CC=$($(target)_CC)))
+$(if $(subst undefined,,$(origin $(target)_CXX)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_CXX=$($(target)_CXX)))
+$(if $(subst undefined,,$(origin $(target)_AR)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_AR=$($(target)_AR)))
+$(if $(subst undefined,,$(origin $(target)_RANLIB)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_RANLIB=$($(target)_RANLIB)))
+$(if $(subst undefined,,$(origin $(target)_BISON)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_BISON=$($(target)_BISON)))
+$(if $(subst undefined,,$(origin $(target)_FLEX)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_FLEX=$($(target)_FLEX)))
+$(if $(subst undefined,,$(origin $(target)_PROTOC_PATH)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_PROTOC_PATH=$($(target)_PROTOC_PATH)))
+$(if $(subst undefined,,$(origin $(target)_INCS)),
+  $(eval CUSTOM_INCS += \\n$(target)_INCS=\"$($(target)_INCS)\"))
+$(if $(subst undefined,,$(origin $(target)_DEFS)),
+  $(eval CUSTOM_DEFS += \\n$(target)_DEFS=\"$($(target)_DEFS)\"))
+$(if $(subst undefined,,$(origin $(target)_CFLAGS)),
+  $(eval CUSTOM_CFLAGS += \\n$(target)_CFLAGS=\"$($(target)_CFLAGS)\"))
+$(if $(subst undefined,,$(origin $(target)_CXXFLAGS)),
+  $(eval CUSTOM_CXXFLAGS += \\n$(target)_CXXFLAGS=\"$($(target)_CXXFLAGS)\"))
 
 $(eval $(target)_CC ?= $(CC))
 $(eval $(target)_CXX ?= $(CXX))
