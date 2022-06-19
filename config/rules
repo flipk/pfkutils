@@ -56,6 +56,8 @@ CONFIG_VALUES= \
 
 CONFIG_H= $(OBJDIR)/pfkutils_config.h
 
+PREPROC_TARGETS += $(CONFIG_H)
+
 define PFK_CONFIG_LINE
 	if [ "x$(PFK_CONFIG_$(value))" = "x" ] ; then \
 	   echo 'plz define PFK_CONFIG_$(value) in $(CONFIG_FILE)' ; \

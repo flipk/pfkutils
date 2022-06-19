@@ -3,8 +3,24 @@
 PFKUTILS_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 PFKUTILS_COMMIT = $(shell git rev-parse HEAD)
 
+PFKUTILS_CONFIG_C = $(OBJDIR)/pfkutils-config.c
+
 OBJDIRS_TOMAKE += main
 PREPROC_SOURCES += main/programs.h main/sudo.h
+PREPROC_TARGETS += $(PFKUTILS_CONFIG_C)
+
+# turn config.txt into pfkutils-config.c, except for build_date,
+# which changes every time and doesn't need to trigger a rebuild.
+$(PFKUTILS_CONFIG_C): $(CONFIG_TXT)
+	@echo 'const char pfkutils_config[] = ' > $@.new
+	@sed -e s/\"//g -e s/^/\"/ -e s/$$/\\\\n\"/ \
+	   -e s/-DBUILD_DATE=.*-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9]// \
+	   < $< >> $@.new
+	@echo ';' >> $@.new
+	@if ! cmp -s $@ $@.new ; then \
+		echo updating pfkutils-config.c ; \
+		mv $@.new $@ ; \
+	fi
 
 PROG_TARGETS += pfkutils
 pfkutils_TARGET = $(OBJDIR)/pfkutils
@@ -12,7 +28,8 @@ pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
 	-Ilibpfkfb -Ilibpfkdll2 $(MBEDTLS_INCS)
 pfkutils_CSRCS = \
 	main/crnl.c main/random-hex.c main/fmtsdiff.c \
-	main/genpw.c main/xtermbar.c main/waitpid.c 
+	main/genpw.c main/xtermbar.c main/waitpid.c \
+	$(PFKUTILS_CONFIG_C)
 ifeq ($(PFK_BUILD_slowlink),1)
 pfkutils_CXXSRCS += main/slowlink.cc
 endif

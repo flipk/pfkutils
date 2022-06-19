@@ -272,6 +272,7 @@ PROG_TARGETS ?=
 DOXYGEN_TARGETS ?=
 POSTALL ?= 
 EXTRA_CLEAN ?=
+CONFIG_TXT ?= $(OBJDIR)/config.txt
 
 ifeq ($(VERBOSE),1)
 Q=
@@ -281,49 +282,43 @@ endif
 export VERBOSE
 
 all:
-	$(Q)+make echoconfig objdirs preprocs protobufs
+	$(Q)+make objdirs echoconfig preprocs protobufs
 	$(Q)make deps
 	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
 
 include $(INCLUDE_MAKEFILES)
 
 echoconfig:
-	@echo ''
-	@echo '**************** CURRENT CONFIGURATION ************************'
-ifneq ($(CONFIG),)
-	@echo CONFIG=$(CONFIG)
-endif
-ifneq ($(PFKARCH),)
-	@echo PFKARCH=$(PFKARCH)
-endif
-	@echo OBJDIR=$(OBJDIR)
-ifneq ($(PREPROC_TARGETS),)
-	@echo PREPROC_TARGETS=$(PREPROC_TARGETS)
-endif
-ifneq ($(LIB_TARGETS),)
-	@echo LIB_TARGETS=$(LIB_TARGETS)
-endif
-ifneq ($(PROG_TARGETS),)
-	@echo PROG_TARGETS=$(PROG_TARGETS)
-endif
-ifneq ($(MAKEJOBS),)
-	@echo MAKEJOBS=$(MAKEJOBS)
-endif
-	@echo PROTOBUF: PROTOC_PATH=$(PROTOC_PATH) PROTOBUF_INC=$(PROTOBUF_INC) PROTOBUF_LIB=$(PROTOBUF_LIB)
-	@echo MBEDTLS: MBEDTLS_INCS=$(MBEDTLS_INCS) MBEDTLS_LIBS=$(MBEDTLS_LIBS)
-	@echo TOOLS: CC=$(CC) CXX=$(CXX) AR=$(AR) RANLIB=$(RANLIB) BISON=$(BISON) FLEX=$(FLEX)
-	@echo CFLAGS: $(CFLAGS)
-	@echo CXXFLAGS: $(CXXFLAGS)
-	@echo LDFLAGS: $(LDFLAGS)
-	@echo INCS=$(INCS)
-	@echo -n DEFS=$(DEFS)
-	@echo -n -e $(CUSTOM_TOOLS)
-	@echo -n -e $(CUSTOM_INCS)
-	@echo -n -e $(CUSTOM_DEFS)
-	@echo -n -e $(CUSTOM_CFLAGS)
-	@echo  -e $(CUSTOM_CXXFLAGS)
-	@echo '**************** CURRENT CONFIGURATION ************************'
-	@echo ''
+	@echo CONFIG=$(CONFIG) > $(CONFIG_TXT)
+	@echo PFKARCH=$(PFKARCH) >> $(CONFIG_TXT)
+	@echo OBJDIR=$(OBJDIR) >> $(CONFIG_TXT)
+	@echo PREPROC_TARGETS=$(PREPROC_TARGETS) >> $(CONFIG_TXT)
+	@echo LIB_TARGETS=$(LIB_TARGETS) >> $(CONFIG_TXT)
+	@echo PROG_TARGETS=$(PROG_TARGETS) >> $(CONFIG_TXT)
+	@echo MAKEJOBS=$(MAKEJOBS) >> $(CONFIG_TXT)
+	@echo PROTOC_PATH=$(PROTOC_PATH) >> $(CONFIG_TXT)
+	@echo PROTOBUF_INC=$(PROTOBUF_INC) >> $(CONFIG_TXT)
+	@echo PROTOBUF_LIB=$(PROTOBUF_LIB) >> $(CONFIG_TXT)
+	@echo MBEDTLS_INCS=$(MBEDTLS_INCS) >> $(CONFIG_TXT)
+	@echo MBEDTLS_LIBS=$(MBEDTLS_LIBS) >> $(CONFIG_TXT)
+	@echo CC=$(CC) >> $(CONFIG_TXT)
+	@echo CXX=$(CXX) >> $(CONFIG_TXT)
+	@echo AR=$(AR) >> $(CONFIG_TXT)
+	@echo RANLIB=$(RANLIB) >> $(CONFIG_TXT)
+	@echo BISON=$(BISON) >> $(CONFIG_TXT)
+	@echo FLEX=$(FLEX) >> $(CONFIG_TXT)
+	@echo CFLAGS=$(CFLAGS) >> $(CONFIG_TXT)
+	@echo CXXFLAGS=$(CXXFLAGS) >> $(CONFIG_TXT)
+	@echo LDFLAGS=$(LDFLAGS) >> $(CONFIG_TXT)
+	@echo INCS=$(INCS) >> $(CONFIG_TXT)
+	@echo -n DEFS=$(DEFS) >> $(CONFIG_TXT)
+	@echo -n -e $(CUSTOM_TOOLS) >> $(CONFIG_TXT)
+	@echo -n -e $(CUSTOM_INCS) >> $(CONFIG_TXT)
+	@echo -n -e $(CUSTOM_DEFS) >> $(CONFIG_TXT)
+	@echo -n -e $(CUSTOM_CFLAGS) >> $(CONFIG_TXT)
+	@echo  -e $(CUSTOM_CXXFLAGS) >> $(CONFIG_TXT)
+	@echo TARGETS=$(LIB_TARGETS) $(PROG_TARGETS)
+	@echo recording configuration in $(CONFIG_TXT)
 
 objdirs:
 	$(Q)mkdir -p $(OBJDIR) $(foreach d,$(OBJDIRS_TOMAKE),$(OBJDIR)/$(d))
@@ -723,7 +718,7 @@ $(eval $(foreach target,$(DOXYGEN_TARGETS),$(DOXYGEN_TARGET_RULES)))
 
 ##############################################
 
-preprocs: $(CONFIG_H) $(PREPROC_TARGETS)
+preprocs: $(PREPROC_TARGETS)
 
 ##############################################
 
