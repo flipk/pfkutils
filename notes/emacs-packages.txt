@@ -1,5 +1,6 @@
 https://www.emacswiki.org/emacs/InstallingPackages
 
+(global-set-key [f6]  'eval-last-sexp)
 (setq custom-file (concat (getenv "HOME") "/pfk/etc/emacs/emacs-custom.el"))
 (load custom-file)
 (require 'package)
@@ -11,7 +12,11 @@ then, M-x list-packages
 and type 'i' next to every package you want. type 'x' to install them.
 
 package list :
-  counsel git-gutter git-timemachine ivy protobuf-mode swiper xcscope magit-lfs magit
+   code-library counsel-projectile dap-mode flycheck flycheck-clang-analyzer
+   flycheck-clangcheck flycheck-inline git-gutter git-timemachine ibuffer-git
+   ibuffer-project ibuffer-projectile ivy-todo lsp-mode magit magit-lfs
+   org-doing org-notebook org-projectile projectile projectile-codesearch
+   protobuf-mode term-projectile xcscope counsel ivy org org-modern swiper
 
 (note this is listed in "package-selected-packages" in emacs-custom.el)
 

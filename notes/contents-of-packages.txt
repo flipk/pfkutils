@@ -1,0 +1,7 @@
+
+how to list files in a dnf package:
+
+   dnf repoquery -l <reponame>
+   rm -ql <reponame>
+
+i.e. reponame=java-latest-openjdk-src
