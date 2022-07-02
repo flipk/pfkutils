@@ -55,8 +55,7 @@
  '(verilog-auto-newline nil)
  '(verilog-indent-begin-after-if nil)
  '(package-selected-packages
-   (quote
-    (counsel git-gutter git-timemachine ivy protobuf-mode swiper xcscope magit-lfs magit)))
+   '(code-library counsel-projectile dap-mode flycheck flycheck-clang-analyzer flycheck-clangcheck flycheck-inline git-gutter git-timemachine ibuffer-git ibuffer-project ibuffer-projectile ivy-todo lsp-mode magit magit-lfs org-doing org-notebook org-projectile projectile projectile-codesearch protobuf-mode term-projectile xcscope counsel ivy org org-modern swiper))
  '(tool-bar-mode nil))
 
 
