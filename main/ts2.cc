@@ -418,7 +418,7 @@ compare_dbs(const std::string &rootdir,
             // if name is different, it has been renamed.
             if (old_item->relpath != new_item->relpath)
             {
-                printf("M %s %s\n",
+                printf("M \"%s\" \"%s\"\n",
                        old_item->relpath.c_str(),
                        new_item->relpath.c_str());
             }
