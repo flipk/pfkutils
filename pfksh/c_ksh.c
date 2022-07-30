@@ -320,6 +320,7 @@ c_print(wp)
 				case 'b': c = '\b'; break;
 				case 'c': flags &= ~PO_NL;
 					  continue; /* AT&T brain damage */
+                                case 'e': c = 0x1b; break;
 				case 'f': c = '\f'; break;
 				case 'n': c = '\n'; break;
 				case 'r': c = '\r'; break;
