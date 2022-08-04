@@ -53,8 +53,20 @@ math
    count=0
    (( count++ ))            <--- silent
    echo $(( count++ ))      <--- returns value
+   (( 5 > 4 )) && echo success
+   (( 5 < 4 )) || echo failure
 
 splitting a line
    IFS=" "  set -- $line
    echo $# $1 $2
+   set -- $( docker inspect $id --format \
+               '{{.Id}} "{{.Parent}}" {{.Size}}
+               "{{.RepoTags}}" {{.ContainerConfig.Cmd}}' )
+   # grab the first 12 chars of the sha
+   id=$( echo $1 | \
+         sed -e 's,sha256:\(............\).*,\1,' )
+   # also strip the quotes as they're no longer needed.
+   parent=$( echo $2 | \
+             sed -e 's,\"sha256:\(............\).*,\1,' \
+	         -e 's,",,g' )
 
