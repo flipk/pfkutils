@@ -18,7 +18,12 @@ POSTALL += build_fonts
 build_fonts: $(PCFGZ_FILES)
 
 $(PCFGZ_FILES) : $(OBJDIR)/%.pcf.gz: %.bdf
-	bdftopcf -t < $< | gzip > $@
+	@rm -f $@
+	@echo bdftopcf $< $@
+	@bdftopcf -t < $< > $@.temp.pcf
+	@gzip < $@.temp.pcf > $@.tmp
+	@mv $@.tmp $@
+	@rm -f $@.temp.pcf
 
 POSTINSTALL += install_fonts
 
