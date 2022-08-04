@@ -54,4 +54,17 @@ rmstar_TARGET = $(OBJDIR)/rmstar
 rmstar_CXXSRCS = rmstar_new.cc
 rmstar_DEFS = -Drmstar_main=main
 
+PROG_TARGETS += he
+he_TARGET = $(OBJDIR)/he
+he_CSRCS = he.c ../libpfkutil/m.c
+he_DEFS = -Dhe_main=main
+he_INCS = -I../obj.blade -I../libpfkutil
+he_LIBS = -lcurses
+
+PROG_TARGETS += m
+m_TARGET = $(OBJDIR)/m
+m_CSRCS = ../libpfkutil/m.c
+m_DEFS = -Dm_main=main
+m_INCS = -I../libpfkutil
+
 include ../Makefile.inc
