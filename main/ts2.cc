@@ -427,7 +427,7 @@ compare_dbs(const std::string &rootdir,
                 old_item->mtime.tv_sec != new_item->mtime.tv_sec ||
                 old_item->mtime.tv_nsec != new_item->mtime.tv_nsec)
             {
-                printf("U %s\n", new_item->relpath.c_str());
+                printf("U \"%s\"\n", new_item->relpath.c_str());
                 new_item->update_hash(rootdir);
             }
             else
@@ -436,7 +436,7 @@ compare_dbs(const std::string &rootdir,
         else
         {
             // if in old but not new, it was deleted
-            printf("D %s\n", old_item->relpath.c_str());
+            printf("D \"%s\"\n", old_item->relpath.c_str());
         }
     }
 
@@ -451,7 +451,7 @@ compare_dbs(const std::string &rootdir,
         old_ino_it = old_db.items_by_ino.find(new_item->ino);
         if (old_ino_it == old_db.items_by_ino.end())
         {
-            printf("N %s\n", new_item->relpath.c_str());
+            printf("N \"%s\"\n", new_item->relpath.c_str());
             new_item->update_hash(rootdir);
         }
     }
