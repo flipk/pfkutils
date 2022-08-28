@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-06-12.23:01:48
+#      Last update: 2022-08-27.18:55:11
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -159,6 +159,12 @@ if __isksh ; then
         }
         export PFKARCH_REAL
     fi
+    if [[ x$PFKLDPATHSET == x ]] ; then
+        LD_LIBRARY_PATH=@prefix@/$PFKARCH/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH
+        __verbose LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+        PFKLDPATHSET=yes
+    fi
 else
     eval $( @prefix@/bin/architecture -e )
     export PFKARCH
@@ -168,6 +174,12 @@ else
             ln -s $PFKARCH $PFKARCH_REAL
         }
         export PFKARCH_REAL
+    fi
+    if [ x$PFKLDPATHSET != xyes ] ; then
+        LD_LIBRARY_PATH=@prefix@/$PFKARCH/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH
+        __verbose LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+        PFKLDPATHSET=yes
     fi
 fi
 
