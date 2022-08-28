@@ -1,0 +1,11 @@
+
+convert webm to mp4:
+
+ffmpeg -i $in -c:v libx264 -preset slow -crf 18 -y $out
+
+
+convert webp to jpg:
+
+- install ImageMagick "convert"
+
+convert file.webp file.jpg
