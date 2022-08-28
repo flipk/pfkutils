@@ -154,7 +154,7 @@ if __isksh ; then
     fi
     if [[ x$PFKARCH_REAL != x ]] ; then
         makepflink() {
-            cd $HOME/pfk
+            cd @prefix@
             ln -s $PFKARCH $PFKARCH_REAL
         }
         export PFKARCH_REAL
@@ -164,7 +164,7 @@ else
     export PFKARCH
     if [ x$PFKARCH_REAL != x ] ; then
         makepflink() {
-            cd $HOME/pfk
+            cd @prefix@
             ln -s $PFKARCH $PFKARCH_REAL
         }
         export PFKARCH_REAL
@@ -354,7 +354,7 @@ alias p='rm -f *~'
 alias ed='echo export DISPLAY=$DISPLAY'
 alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
-alias pfkman='MANPATH=`find $HOME/pfk -name man | tr "\n" ":"` man'
+alias pfkman='MANPATH=`find @prefix@ -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
@@ -396,9 +396,9 @@ d() {
     xsd2 $1.orig $1
 }
 
-if [[ -x ${HOME}/pfk/${PFKARCH}/bin/xtermbar ]] ; then
+if [[ -x @prefix@/${PFKARCH}/bin/xtermbar ]] ; then
     ___xtermbar() {
-        ${HOME}/pfk/${PFKARCH}/bin/xtermbar "$@"
+        @prefix@/${PFKARCH}/bin/xtermbar "$@"
     }
 else
     ___xtermbar() {
@@ -755,7 +755,7 @@ fi
 __verbose bindings complete
 
 if __isksh ; then
-    SHELLFILEDIR=$HOME/pfk/shells
+    SHELLFILEDIR=@prefix@/shells
     if [[ ! -d $SHELLFILEDIR ]] ; then
         mkdir -p $SHELLFILEDIR
     fi
