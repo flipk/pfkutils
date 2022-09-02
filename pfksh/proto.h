@@ -206,6 +206,8 @@ struct op * compile	ARGS((Source *s));
 /* table.c */
 unsigned int 	hash	ARGS((const char *n));
 void 	tinit		ARGS((struct table *tp, Area *ap, int tsize));
+// this fixes fedora 36 (for some reason!)
+#define tsearch _pfksh_tsearch
 struct tbl *	tsearch	ARGS((struct table *tp, const char *n, unsigned int h));
 struct tbl *	tenter	ARGS((struct table *tp, const char *n, unsigned int h));
 void 	tdelete		ARGS((struct tbl *p));
