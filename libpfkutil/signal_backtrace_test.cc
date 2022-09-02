@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <pthread.h>
 
 using namespace BackTraceUtil;
 
