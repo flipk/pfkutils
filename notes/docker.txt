@@ -36,6 +36,40 @@ HOME=/home/flipk
 SHELL=/bin/bash
 USER=flipk
 
+
+
+another way to add users to a docker:
+-------------------------------------
+
+# acquire the password entry from /etc/passwd
+# or use 'adquery user $USER'
+# usage : prefix passwd:entry
+do_adduser() {
+    prefix="$1"  # "msi-" or "vbox-" or ""
+    entry="$2"
+    IFS=":"
+    set -- $entry
+    IFS=" "
+    username="$1"
+    userid="$3"
+    groupid="$4"
+    comment="$5"
+    homedir="$6"
+    useradd -m -u $userid -g $groupid -o -s /bin/bash \
+        $prefix$username -d $homedir --comment "$comment"
+}
+
+
+running fedora 35 and 36 in a docker:
+-------------------------------------
+
+for some reason, default security profile blocks "clone3"
+system call. use this to un-do that:
+
+docker run --rm -it --security-opt seccomp=unconfined fedora:36 /bin/bash
+
+
+
 blade ub18.04:
 --------------
  % docker run --rm -it -w / -v $HOME:$HOME docker.io/ubuntu:18.04 /bin/bash
