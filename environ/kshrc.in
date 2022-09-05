@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-08-27.18:55:11
+#      Last update: 2022-09-05.12:16:27
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -37,7 +37,7 @@
 USER=@PFK_USER_NAME@
 PFKUTILS_PREFIX=@prefix@
 REALUSER=`id -u -n`
-HOME=/home/$USER
+HOME=@PFK_HOME@
 ENV=$HOME/.kshrc
 HOST=`hostname`
 HOST=${HOST%%\.*}

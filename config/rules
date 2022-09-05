@@ -3,6 +3,7 @@
 PFK_USER_NAME := $(shell whoami)
 PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
+PFK_HOME := $(HOME)
 UNAMES= /bin/uname /usr/bin/uname /sbin/uname /usr/sbin/uname
 PFK_UNAME_PATH := $(firstword $(wildcard $(UNAMES)))
 BUILD_DATE := $(shell date '+%Y-%m%d-%H%M%S')
@@ -39,7 +40,7 @@ BUILD_SWITCHES = \
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
-	PFK_FINDPF_GCC PFK_FINDPF_GCC_ARGS \
+	PFK_FINDPF_GCC PFK_FINDPF_GCC_ARGS PFK_HOME \
 	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
 
 CONFIG_VALUES= \
