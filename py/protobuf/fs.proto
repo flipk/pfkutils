@@ -1,0 +1,53 @@
+// turn this into python with this command:
+//   protoc --python_out=. --mypy_out=. fs.proto
+
+syntax = "proto2";
+
+package MyFS;
+
+enum MessageType {
+  LOGIN = 1;
+  LOGIN_RESP = 2;
+  REQUEST_FILE = 3;
+  REQUEST_FILE_STATUS = 4;
+  FILE_CONTENTS = 5;
+}
+
+message Login {
+  optional string user = 1;
+  optional string password = 2;
+}
+
+message LoginResp {
+  optional bool success = 1;
+  optional string reason = 2;
+}
+
+message RequestFile {
+  optional string filename = 1;
+}
+
+message RequestFileStatus {
+  optional bool success = 1;
+  optional string reason = 2;
+  optional int32 size = 3;
+}
+
+message FileContents {
+  optional int32 position = 1;
+  optional int32 block_number = 2;
+  optional bytes data = 3;
+}
+
+message Client2Server {
+  optional MessageType type = 1;
+  optional Login login = 2;
+  optional RequestFile requestfile = 3;
+}
+
+message Server2Client {
+  optional MessageType type = 1;
+  optional LoginResp loginresp = 2;
+  optional RequestFileStatus requestfilestatus = 3;
+  optional FileContents filecontents = 4;
+}
