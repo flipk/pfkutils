@@ -1,5 +1,5 @@
 // turn this into python with this command:
-//   protoc --python_out=. --mypy_out=. fs.proto
+//   protoc --python_out=. --mypy_out=. MyFS.proto
 
 syntax = "proto2";
 
@@ -8,9 +8,11 @@ package MyFS;
 enum MessageType {
   LOGIN = 1;
   LOGIN_RESP = 2;
-  REQUEST_FILE = 3;
-  REQUEST_FILE_STATUS = 4;
-  FILE_CONTENTS = 5;
+  LIST_DIR = 3;
+  LIST_DIR_RESP = 4;
+  REQUEST_FILE = 5;
+  REQUEST_FILE_STATUS = 6;
+  FILE_CONTENTS = 7;
 }
 
 message Login {
@@ -23,13 +25,37 @@ message LoginResp {
   optional string reason = 2;
 }
 
+message ListDir {
+  optional string dirname = 1;
+}
+
+enum DirEntryType {
+  TYPE_FILE = 1;
+  TYPE_DIR = 2;
+}
+message DirEntry {
+  optional string entry_name = 1;
+  optional DirEntryType type = 2;
+  // only populated for type=TYPE_FILE
+  optional int32 size = 3;
+}
+
+message ListDirResp {
+  optional bool success = 1;
+  // only populated if not success
+  optional string reason = 2;
+  repeated DirEntry entries = 3;
+}
+
 message RequestFile {
   optional string filename = 1;
 }
 
 message RequestFileStatus {
   optional bool success = 1;
+  // only present if not success
   optional string reason = 2;
+  // only present if success
   optional int32 size = 3;
 }
 
@@ -43,6 +69,7 @@ message Client2Server {
   optional MessageType type = 1;
   optional Login login = 2;
   optional RequestFile requestfile = 3;
+  optional ListDir listdir = 4;
 }
 
 message Server2Client {
@@ -50,4 +77,5 @@ message Server2Client {
   optional LoginResp loginresp = 2;
   optional RequestFileStatus requestfilestatus = 3;
   optional FileContents filecontents = 4;
+  optional ListDirResp listdirresp = 5;
 }

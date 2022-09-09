@@ -14,8 +14,16 @@ if __name__ == '__main__':
     #    "UnicodeEncodeError: 'ascii' codec can't encode character"
     # use:   export PYTHONIOENCODING=utf-8
 
-    # this does not seem to work (too late?)
+    # this does not work, too late, but interesting anyway.
     os.environ["PYTHONIOENCODING"] = "utf-8"
+
+    version = sys.version_info.major + (sys.version_info.minor / 10.0)
+    if version >= 3.7:
+        sys.stdout.reconfigure(encoding='utf-8')
+    else:
+        # reconfigure method not supported, so instead:
+        sys.stdout = open(sys.stdout.fileno(), mode='w',
+                          encoding='utf8', buffering=1)
 
     which = 0  # main
     for arg in sys.argv:

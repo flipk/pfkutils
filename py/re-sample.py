@@ -14,3 +14,5 @@ import re
             else:
                 num = int(g3)
             output.write("%s: %s %d\n" % (mtg, wg, num))
+
+# don't forget existence of generator range()
