@@ -19,6 +19,19 @@ class _FileEntry:
         self.filename = os.path.basename(fullpath).upper()
         self.firstwo = self.filename[0:2]
 
+    def __str__(self) -> str:
+        if self.is_keeper():
+            return "%s:%s" % (self.firsttwo, self.fullpath)
+        return ""
+
+    @property
+    def doc(self) -> Union[dict, None]:
+        if self.is_keeper():
+            return {'firsttwo': self.firsttwo,
+                    'filename': self.filename,
+                    'fullpath': self.fullpath}
+        return None
+
     # for now lets only keep the ones that look like our ids.
     # this is probably over simplified.
     def is_keeper(self):
@@ -41,6 +54,25 @@ class FileList:
     FileList = dict
     _filelist: FileList
     _handle: TextIO
+
+    def __init__(self, path: str):
+        """
+        this version forks a 'find' command and parses the stdout.
+        so, that's neat, right?
+        """
+        self._ok = False
+        try:
+            cp = subprocess.run(['find', path, '-type', 'f'],
+                                stdout=subprocess.PIPE, encoding='utf-8', check=True)
+            self._files = []
+            lines = cp.stdout.split('\n')
+            for line in lines:
+                if len(line) > 0:
+                    fe = _FileEntry(line)
+                    self._files.append(fe)
+            self._ok = True
+        except Exception as e:
+            print('subprocess exception:', e)
 
     def __init__(self, fn: str):
         """

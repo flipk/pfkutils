@@ -1,5 +1,11 @@
 // turn this into python with this command:
 //   protoc --python_out=. --mypy_out=. MyFS.proto
+// mypy_out can dramatically improve the PyCharm
+// autocompletion experience.
+
+// fedora: dnf install python3-protobuf python3-mypy
+// ubuntu: ?
+// pip3 install mypy-protobuf types-protobuf
 
 syntax = "proto2";
 

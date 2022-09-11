@@ -1,7 +1,7 @@
 
 import os
 from typing import Dict, Callable
-import MyFS_pb2
+from MyFS import MyFS_pb2
 import threading
 import socket
 
@@ -32,14 +32,18 @@ class PbServer:
     _server_port: socket.socket
     _ok: bool
     _root_dir: str
+    _username: str
+    _password: str
 
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str, username: str, password: str):
         self._ok = False
         try:
             self._lck = threading.Lock()
             self._server_port = socket.socket()
             self._server_port.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
             self._server_port.bind(('', self.SERVER_PORT))
+            self._username = username
+            self._password = password
             self._handlers = {
                 MyFS_pb2.LOGIN: self._handle_login,
                 MyFS_pb2.REQUEST_FILE: self._handle_request_file,
@@ -72,7 +76,8 @@ class PbServer:
         ret = False
         s2c = MyFS_pb2.Server2Client()
         s2c.type = MyFS_pb2.LOGIN_RESP
-        if c2s.login.user == "pfk" and c2s.login.password == "password":
+        if c2s.login.user == self._username and \
+           c2s.login.password == self._password:
             cd.authenticated = True
             print('user authenticated!')
             s2c.loginresp.success = True

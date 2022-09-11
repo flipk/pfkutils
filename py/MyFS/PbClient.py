@@ -1,8 +1,7 @@
 
-import MyFS_pb2
+from MyFS import PbServer
+from MyFS import MyFS_pb2
 import socket
-# from google.protobuf import message
-import PbServer
 from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 
