@@ -3,6 +3,9 @@
 #     sys.path.append('/code/feature_blahblah/python/')
 #     then import
 
+# OR, to override something installed, prepend your path:
+# sys.path = ['/my_dev_dir/other_package'] + sys.path
+
 import os
 import sys
 
