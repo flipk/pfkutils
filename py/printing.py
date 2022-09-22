@@ -29,6 +29,9 @@ for c in some_string:
     out = out + '{:04x}'.format(ord(c))
 print(out)
 
+# is this equivalent?
+print(" ".join("{:02x}".format(c) for c in encoded))
+print(" ".join("{:04x}".format(ord(c)) for c in some_string))
 
 # formatting a decimal number with commas !   use {:,}
 
