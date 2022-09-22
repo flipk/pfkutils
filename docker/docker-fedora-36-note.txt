@@ -1,0 +1,8 @@
+
+if you have trouble with 'dnf' / 'curl' not working, it is because
+docker is blocking access to "clone3" call due to policy.
+
+to get around that:
+
+docker run --rm -it --security-opt seccomp=unconfined fedora:36 /bin/bash
+
