@@ -1,0 +1,80 @@
+dropbox
+blender from website (in /auto/pfk250ssd)
+virtualbox from website
+
+check for 'discard' in /etc/crypttab
+
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+sudo dnf install ./google-chrome-stable_current_x86_64.rpm
+
+
+--------------36
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-36.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-36.noarch.rpm
+
+# note, some 'free' versions of some codecs are installed by default, and you have
+# to provide the --allowerasing option so this can replace them with nonfree versions.
+
+dnf install -y --allowerasing \
+vlc ffmpeg dosemu lame unace unrar xv gsview handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat  simplescreenrecorder
+
+# skip nvidia
+akmod-nvidia kmod-nvidia nvidia-settings xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-cuda-libs
+# VirtualBox
+VirtualBox virtualbox-guest-additions.x86_64
+
+
+--------------34
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-34.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-34.noarch.rpm
+
+dnf install \
+vlc ffmpeg dosemu lame unace unrar xv gsview handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat  simplescreenrecorder libheif
+
+# skip nvidia
+akmod-nvidia kmod-nvidia nvidia-settings xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-cuda-libs
+# VirtualBox
+VirtualBox virtualbox-guest-additions.x86_64
+#NOT YET, OR MAYBE NEVER BECAUSE displaylink SUCKS
+http://www.nosuchhost.net/~cheese/fedora/packages/34/x86_64/cheese-release-34-1.fc34.noarch.rpm
+displaylink
+
+
+--------------33
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-33.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-33.noarch.rpm \
+http://www.nosuchhost.net/~cheese/fedora/packages/33/x86_64/cheese-release-33-1.fc33.noarch.rpm
+
+dnf install \
+vlc ffmpeg dosemu lame unace unrar xv gsview gstreamer-ffmpeg \
+gstreamer-plugins-ugly gstreamer1-plugins-ugly handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat displaylink akmod-nvidia kmod-nvidia \
+nvidia-settings xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-cuda-libs \
+VirtualBox virtualbox-guest-additions.x86_64 simplescreenrecorder
+
+
+--------------31
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-31.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-31.noarch.rpm \
+http://www.nosuchhost.net/~cheese/fedora/packages/31/x86_64/cheese-release-31-2.fc31.noarch.rpm
+
+
+dnf install \
+vlc ffmpeg dosemu lame unace unrar xv gsview gstreamer-ffmpeg \
+gstreamer-plugins-ugly gstreamer1-plugins-ugly handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat displaylink
+
+--------------30
+dnf install \
+? rpmfusion ? \
+http://www.nosuchhost.net/~cheese/fedora/packages/30/x86_64/cheese-release-30-2.fc30.noarch.rpm
+
+dnf install vlc ffmpeg dosemu lame unace unrar xv gsview gstreamer-ffmpeg \
+gstreamer-plugins-ugly gstreamer1-plugins-bad-nonfree gstreamer1-plugins-ugly \
+handbrake handbrake-gui x264
