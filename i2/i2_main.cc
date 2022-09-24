@@ -25,6 +25,8 @@ public:
         : opts(argc, argv), _ok(false)
     {
         _ok = opts.ok;
+        // debug only
+        // opts.print();
         net_fd = NULL;
         bytes_received = 0;
         bytes_sent = 0;
@@ -106,8 +108,6 @@ public:
 
             if (opts.input_set)
                 p.set(opts.input_fd, POLLIN);
-            else
-                p.set(opts.input_fd, 0);
 
             p.poll(1000);
             evt = p.rget(net_fd->getFd());
