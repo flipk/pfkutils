@@ -39,6 +39,20 @@ For more information, please refer to <http://unlicense.org>
 #define MAX_ARGS 20
 #define STACK_SIZE 20
 
+// base 2, 8, 10, and 16 use the same char set.
+static const char * const m_base_16 = "0123456789ABCDEF";
+// base 32, 36, and 62 are made up by me and are alphanumeric only.
+// advantage of this one is it is sortable.
+static const char * const m_base_62 =
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz";
+// this is compliant to RFC 4648 section 5, base64url.
+static const char * const m_base_64 =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789-_";
+
 static void
 usage( void )
 {
@@ -50,7 +64,7 @@ usage( void )
 "\n"
 "    -s       assembly format output\n"
 "    -b       binary format output\n"
-"    -B base  output in arbitrary base\n"
+"    -B base  output in specified base (2,8,10,16,32,36,62,64, see below)\n"
 "    -d       decimal format output\n"
 "    -u       unsigned decimal output\n"
 "    -h       hex output\n"
@@ -92,9 +106,19 @@ usage( void )
 "                      [0-9a-f]+h : hex (emon format)\n"
 "               -?[0-9]+,-?[0-9]+ : assembly decimal implicit\n"
 "     -?0x[0-9a-f]+,-?0x[0-9a-f]+ : assembly hex explicit\n"
-"           -?[0-9A-Za-z]+@[0-9]+ : arbitrary base (number@base)\n"
 "                        [01]+bin : binary explicit\n"
+"                  base[0-9]+(.*) : arbitrary base N (see below)\n"
 "\n"
+"default char set for base 2, 8, 10, 16:\n   %s\n"
+"default char set for base 32, 36, 62 (note this is sortable):\n   %s\n"
+"default char set for base 64 (RFC 4648 section 5 base64url):\n   %s\n"
+"\n"
+"custom bases: if you want a custom base, set an environment variable\n"
+"M_BASE_CHARSET containing the charset to use. to output in that charset,\n"
+"specify -B <base>.\n"
+"if you put <base> as 0, strlen(M_BASE_CHARSET) will be used.\n"
+"\n",
+             m_base_16, m_base_62, m_base_64
         );
     exit( 0 );
 }
@@ -148,8 +172,8 @@ static const char * arg_expr_string = "\
 ^([0-9a-f]+h)$|\
 ^(-?[0-9]+,-?[0-9]+)$|\
 ^(-?0x[0-9a-f]+,-?0x[0-9a-f]+)$|\
-^(-?[0-9A-Za-z]+@[0-9]+)$|\
 ^([01]+bin)$|\
+^(base([0-9]+)\\((.*)\\).*)$|\
 ^(.*)$\
 ";
 
@@ -169,8 +193,9 @@ enum arg_type {
     ARG_SWAP32, ARG_SWAP16, ARG_RSHFT, ARG_LSHFT,
     ARG_LT, ARG_LTEQ, ARG_GT, ARG_GTEQ, ARG_EQ,
     ARG_OCTAL, ARG_DECIMAL, ARG_HEX_IMPL, ARG_HEX_P, ARG_HEX_H,
-    ARG_HEX_ASSEM1, ARG_HEX_ASSEM2, ARG_ARBITRARY, ARG_BINARY, ARG_ERR,
-    ARG_MAX
+    ARG_HEX_ASSEM1, ARG_HEX_ASSEM2, ARG_BINARY,
+    ARG_ARBITRARY_BASE, ARG_ARBBASE_BASE, ARG_ARBBASE_VALUE,
+    ARG_ERR, ARG_MAX
 };
 
 #define MAX_MATCHES ARG_MAX
@@ -188,12 +213,14 @@ static char * arg_type_names[] = {
     "lesseq", "greater", "greatereq", "equal",
     "octal with 'o'", "decimal",
     "hex implied", "hex w/prefix", "hex with 'h'",
-    "hex in @ha,@l", "hex in (0x)@ha,@l", "arbitrary base", "binary", 
+    "hex in @ha,@l", "hex in (0x)@ha,@l", "binary",
+    "arbitrary base", "arb base", "arb value",
     "parse error"
 };
 #endif
 
 static char errbuf[80];
+static const char * m_chosen_base = m_base_16;
 static int output_base_B = 10;
 
 #define FLAGS_HEX_ASSM   0x01
@@ -319,23 +346,6 @@ m_cvt_octal( char * s )
 }
 
 static M_INT64
-m_cvt_arbitrary( char * str )
-{
-    M_INT64 ret;
-    char *baseptr;
-    int base;
-
-    baseptr = strchr( str, '@' );
-    base = atoi( baseptr+1 );
-    if ( m_parse_number( &ret, str, baseptr - str, base ) != 0 )
-    {
-        // error parsing arbitrary base number
-        return 0;
-    }
-    return ret;
-}
-
-static M_INT64
 m_cvt_binary( char * s )
 {
     M_INT64 ret;
@@ -394,10 +404,12 @@ parse_value( int val_type, char * str )
         DO_TYPE( ARG_HEX_H,       m_cvt_hex       );
         DO_TYPE( ARG_HEX_P,       m_cvt_hex       );
         DO_TYPE( ARG_OCTAL,       m_cvt_octal     );
-        DO_TYPE( ARG_ARBITRARY,   m_cvt_arbitrary );
         DO_TYPE( ARG_BINARY,      m_cvt_binary    );
         DO_TYPE( ARG_HEX_ASSEM1,  parse_assem1    );
         DO_TYPE( ARG_HEX_ASSEM2,  parse_assem2    );
+        // ARG_ARBITRARY_BASE is not included here, because
+        // the parsing regex provides additional information.
+        // it is done separately.
 #undef  DO_TYPE
     }
 
@@ -572,6 +584,11 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             goto out;
         }
 
+//        for ( i = 1; i < MAX_MATCHES; i++)
+//            printf("matches[%d] : %d - %d\n", i,
+//                   matches[i].rm_so,
+//                   matches[i].rm_eo);
+
         /* find the first subexpression of the regex 
            which matched */
         for ( i = 1; i < ARG_MAX; i++ )
@@ -597,6 +614,50 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             {
                 args++; numargs--;
                 output_base_B = atoi(*args);
+
+                char * base_env = getenv("M_BASE_CHARSET");
+                if (base_env)
+                {
+                    if (output_base_B == 0)
+                        output_base_B = strlen(base_env);
+                    else if (strlen(base_env) < output_base_B)
+                    {
+                        fprintf(stderr, "M_BASE_CHARSET does not "
+                                "supply enough chars for base %u\n",
+                                output_base_B);
+                        err = M_MATH_UNSUPPORTED_BASE;
+                        goto out;
+                    }
+                    m_chosen_base = base_env;
+                }
+                else
+                {
+                    switch (output_base_B)
+                    {
+                    case 8:
+                    case 10:
+                    case 16:
+                        m_chosen_base = m_base_16;
+                        break;
+
+                    case 32:
+                    case 36:
+                    case 62:
+                        m_chosen_base = m_base_62;
+                        break;
+
+                    case 64:
+                        m_chosen_base = m_base_64;
+                        break;
+
+                    default:
+                        fprintf(stderr, "unsupported output base %d "
+                                "(only supported: 8, 10, 16, 62, 64)\n",
+                                output_base_B);
+                        err = M_MATH_UNSUPPORTED_BASE;
+                        goto out;
+                    }
+                }
             }
             break;
 
@@ -604,7 +665,6 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
         case ARG_DECIMAL:      case ARG_HEX_IMPL:
         case ARG_HEX_P:        case ARG_HEX_H:
         case ARG_HEX_ASSEM1:   case ARG_HEX_ASSEM2:
-        case ARG_ARBITRARY:
 
             if ( top == STACK_SIZE )
             {
@@ -619,6 +679,93 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             }
             top++;
             break;
+
+        case ARG_ARBITRARY_BASE:
+        {
+            char * basevalue = strdup(*args);
+            basevalue[matches[ARG_ARBBASE_BASE].rm_eo] = 0;
+            int base = atoi(basevalue +
+                            matches[ARG_ARBBASE_BASE].rm_so);
+            char * value = basevalue + matches[ARG_ARBBASE_VALUE].rm_so;
+            basevalue[matches[ARG_ARBBASE_VALUE].rm_eo] = 0;
+            int valuelen =
+                matches[ARG_ARBBASE_VALUE].rm_eo -
+                matches[ARG_ARBBASE_VALUE].rm_so;
+
+//            printf("found arbitrary base %d value '%s' len %d\n",
+//                   base, value, valuelen);
+
+            const char * decoder_base_charset = getenv("M_BASE_CHARSET");
+            if (!decoder_base_charset)
+            {
+                switch (base)
+                {
+                case 2: case 8: case 10: case 16:
+                    decoder_base_charset = m_base_16;
+                    break;
+                case 32: case 36: case 62:
+                    decoder_base_charset = m_base_62;
+                    break;
+                case 64:
+                    decoder_base_charset = m_base_64;
+                    break;
+                default:
+                    fprintf(stderr, "unsupported base %d without "
+                            "M_BASE_CHARSET supplied\n", base);
+                    err = M_MATH_UNSUPPORTED_BASE;
+                    free(basevalue);
+                    goto out;
+                }
+            }
+
+            char placevalue[128];
+            int ind;
+            for (ind = 0; ind < 128; ind++)
+                placevalue[ind] = -1;
+            for (ind = 0; decoder_base_charset[ind]; ind++)
+            {
+                char c = decoder_base_charset[ind];
+                if (c < 0 || c > 127)
+                {
+                    fprintf(stderr, "M_BASE_CHARSET has unsupported chars\n");
+                    err = M_MATH_UNSUPPORTED_BASE;
+                    free(basevalue);
+                    goto out;
+                }
+                placevalue[c] = ind;
+            }
+
+//            printf("placevalues: ");
+//            for (ind = 0; ind < 128; ind++)
+//                if (placevalue[ind] >= 0)
+//                    printf("'%c':%d ", ind, placevalue[ind]);
+//            printf("\n");
+
+            M_INT64 v = 0;
+
+            for (ind = 0; value[ind]; ind++)
+            {
+                char c = value[ind];
+                if (c < 0 || c > 127)
+                {
+                badchar:
+                    fprintf(stderr, "value '%s' could not be parsed\n",
+                            *args);
+                    err = M_MATH_PARSEVALUEERR;
+                    free(basevalue);
+                    goto out;
+                }
+                int pv = (int) placevalue[c];
+                if (pv < 0)
+                    goto badchar;
+                v *= base;
+                v += pv;
+            }
+
+            free(basevalue);
+            stack[top++] = v;
+            break;
+        }
 
         case ARG_PLUS:    case ARG_MINUS:    case ARG_TIMES:
         case ARG_DIVIDE:  case ARG_RSHFT:    case ARG_LSHFT:
@@ -783,7 +930,7 @@ m_dump_number( M_INT64 num, int base )
 
     if ( num == 0 )
     {
-        ret[ retpos++ ] = '0';
+        ret[ retpos++ ] = m_chosen_base[0];
     }
     else
     {
@@ -791,10 +938,9 @@ m_dump_number( M_INT64 num, int base )
         {
             M_INT64 quot = num / base;
             int dig = num % base;
-            intret[ intretpos++ ] =
-                "0123456789"
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                "abcdefghijklmnopqrstuvwxyz"[ dig ];
+//            printf("%lu / %u -> %lu,  %lu % %u -> %u\n",
+//                   num, base, quot, num, base, dig);
+            intret[ intretpos++ ] = m_chosen_base[dig];
             num = quot;
         }
         do {
@@ -819,7 +965,7 @@ m_main( int argc, char ** argv )
 
     if ( err != M_MATH_OK )
     {
-        fprintf( stderr, "error %d\n", err );
+        fprintf( stderr, "error %d (%s)\n", err, m_strerror(err) );
         goto out;
     }
 
