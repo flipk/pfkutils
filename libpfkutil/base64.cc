@@ -6,6 +6,52 @@ exit 0
 ;;
 #endif
 
+// all the base 64 variants!  note we support RFC 4648 section 4.
+//
+// RFC 1421 privacy enhanced mail (deprecated)
+//   lines no longer than 64, padding with = mandatory
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+//   non-decoding chars error
+// RFC 2045 base64 for MIME
+//   lines no longer than 76, padding with = mandatory
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+//   non-decoding chars discarded
+// RFC 2152 UTF-7
+//   no line breaks, no padding
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+// RFC 3501 IMAP mailbox names
+//   no line breaks, no padding
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+,
+// RFC 3548 attempts to unify RFC 1421 and RFC 2045
+//   obsoleted by RFC 4648
+// RFC 4648 section 4 standard base64 (www etc)
+//   no line breaks, padding with = optional
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+// RFC 4648 section 5 base64url (url and filename-safe)
+//   no line breaks, padding with = optional
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_
+// RFC 4880 radix-64 for OpenPGP
+//   lines no longer than 76, padding with = mandatory
+//   ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/
+//   ALSO requires radix-64 encoded 24-bit CRC
+// uuencode / uudecode (6 bit value plus 0x20 --> ascii)
+//   note below, first char is space (0x20)
+//    !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_
+// binhex4 (mac OS) excludes visually confusing chars
+//   !"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr
+// unix crypt ("B64")
+//   ./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+// GEDCOM 5.5 standard (geological data interchange)
+//   <same as unix crypt>
+// bcrypt (niels provos, david mazières, based on blowfish)
+//   ./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+// xxencoding
+//   +-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+// 6PACK....... no.
+// GNU BASH
+//   0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@_
+//
+
 /*
 This is free and unencumbered software released into the public domain.
 
