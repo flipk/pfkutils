@@ -852,6 +852,30 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     return err;
 }
 
+const char *
+m_strerror(enum m_math_retvals e)
+{
+    // be sure to keep this in sync with enum m_math_retvals !
+    switch (e)
+    {
+    case M_MATH_OK:                return "no error";
+    case M_MATH_SYNTAX:            return "syntax error";
+    case M_MATH_NOFLAGS:           return "no flags specified";
+    case M_MATH_STACKFULL:         return "stack full";
+    case M_MATH_TOOMANYARGS:       return "too many args";
+    case M_MATH_EMPTYSTACK:        return "stack empty";
+    case M_MATH_STACKNOTONE:       return "stack not reduced to 1";
+    case M_MATH_REGERR:            return "error in regular expression";
+    case M_MATH_TOOFEWARGS:        return "too few arguments";
+    case M_MATH_OVERFLOW:          return "arg too long (string overflow)";
+    case M_MATH_UNSUPPORTED_BASE:  return "unsupported base";
+    case M_MATH_DIVIDE_BY_ZERO:    return "divide by zero";
+    case M_MATH_PARSEVALUEERR:     return "value parse error";
+    case M_MATH_OP1ERR:            return "op1 error";
+    case M_MATH_OP2ERR:            return "op2 error";
+    }
+}
+
 int
 m_parse_number( M_INT64 * result, char * string, int len, int base )
 {

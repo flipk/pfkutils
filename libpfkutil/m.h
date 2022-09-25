@@ -33,6 +33,7 @@ extern "C" {
 #endif
 
 enum m_math_retvals {
+// keep this in sync with m_strerror()
 	M_MATH_OK = 0,
 	M_MATH_SYNTAX,
 	M_MATH_NOFLAGS,
@@ -40,15 +41,17 @@ enum m_math_retvals {
 	M_MATH_TOOMANYARGS,
 	M_MATH_EMPTYSTACK,
 	M_MATH_STACKNOTONE,
-	M_MATH_REGERR,
+	M_MATH_REGERR,    // should be an internal-only error!
 	M_MATH_TOOFEWARGS,
 	M_MATH_OVERFLOW,
         M_MATH_UNSUPPORTED_BASE,
 	M_MATH_DIVIDE_BY_ZERO,
 	M_MATH_PARSEVALUEERR,
-	M_MATH_OP1ERR,
-	M_MATH_OP2ERR
+	M_MATH_OP1ERR,    // should be an internal-only error!
+	M_MATH_OP2ERR     // should be an internal-only error!
 };
+
+const char * m_strerror(enum m_math_retvals e);
 
 #define M_INT64  unsigned long long
 
