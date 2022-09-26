@@ -220,8 +220,13 @@ static char * arg_type_names[] = {
 #endif
 
 static char errbuf[80];
-static const char * m_chosen_base = m_base_16;
+static const char * m_chosen_base = NULL;
 static int output_base_B = 10;
+#define INIT_BASE()                             \
+    do {                                        \
+        if (!m_chosen_base)                     \
+            m_chosen_base = m_base_16;          \
+    } while (0)
 
 #define FLAGS_HEX_ASSM   0x01
 #define FLAGS_BINARY     0x02
@@ -481,6 +486,7 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
     int i, inlength, numargs;
     enum m_math_retvals err;
 
+    INIT_BASE();
     memset(stack, 0, sizeof(stack));
 
     instring = _instring;
@@ -882,6 +888,7 @@ m_parse_number( M_INT64 * result, char * string, int len, int base )
     M_INT64 ret = 0;
     int neg = 0;
 
+    INIT_BASE();
     if ( len > 0 && *string == '-' )
     {
         neg = 1;
@@ -939,6 +946,7 @@ m_dump_number( M_INT64 num, int base )
     int retpos = 0;
     int intretpos = 0;
 
+    INIT_BASE();
     if ( base < 0 )
     {
         M_INT64 bit63 = 1;
