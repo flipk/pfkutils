@@ -1,5 +1,3 @@
-hostname
-net-tools
 ImageMagick
 ImageMagick-devel
 SDL-devel
@@ -129,6 +127,7 @@ gtk2-devel
 gzip
 harfbuzz-devel
 hdf5-devel
+hostname
 imake
 imlib2-devel
 iptables
@@ -215,6 +214,7 @@ nano
 nautilus
 ncurses
 ncurses-devel
+net-tools
 nfs-utils
 nginx
 nodejs
@@ -272,6 +272,7 @@ qt-devel
 qt5-qtbase-devel
 qt5-qtsvg-devel
 qwt-devel
+rclone
 rcs
 readline
 readline-devel

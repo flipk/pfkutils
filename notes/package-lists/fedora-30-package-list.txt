@@ -266,6 +266,7 @@ qt-devel
 qt5-qtbase-devel
 qt5-qtsvg-devel
 qwt-devel
+rclone
 rcs
 readline
 readline-devel
