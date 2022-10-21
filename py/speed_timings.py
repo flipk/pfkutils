@@ -1,3 +1,4 @@
+import time
 
 class speed_timing:
     _timings: list
