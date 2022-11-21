@@ -1,0 +1,7 @@
+emacs shell commands
+http://www.gnu.org/software/libtool/manual/emacs/Shell-Ring.html#Shell-Ring
+control-up, control-down, alt-p, alt-n : command history
+alt-r  : backwards i-search of command history
+control-c period : last arg of previous command
+control-c control-L (lower case) : list of previous commands in another window - click left button on cmd to paste it.
+

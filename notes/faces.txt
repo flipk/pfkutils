@@ -1,0 +1,108 @@
+
+https://fsymbols.com/generators/aboqe-flip/
+https://www.branah.com/unicode-converter
+
+version 2022-1120-2039
+⟹𝕡𝕗𝕜⟸  🡆𝓹𝓯𝓴🡄  🠊𝓟𝓕𝓚🠈  ⲷⲷⲸⳀⲊⲔⲴⲷⲷ
+ⓅⒻⓀ  🄿🄵🄺   ⮞ꓘꓞꓒ⮜  𝗣𝗙𝗞  𝕻𝕱𝕶  ƤƑƘ   ƥƒƙ   ツ
+
+breakdown of codes:
+BOM (byte order marker) : efbbbf  
+⟹𝕡𝕗𝕜⟸ : e29fb9  f09d95a1 f09d9597  f09d959c e29fb8 
+🡆𝓹𝓯𝓴🡄 : f09fa186 f09d93b9 f09d93af f09d93b4 f09fa184
+🠊𝓟𝓕𝓚🠈 : f09fa08a f09d939f f09d9395 f09d939a f09fa088
+ⲷⲷⲸⳀⲊⲔⲴⲷⲷ : e2b2b7  e2b2b7 e2b2b8 e2b380 e2b28a e2b294 e2b2b4 e2b2b7 e2b2b7
+ⓅⒻⓀ : e29385 e292bb e29380
+🄿🄵🄺 : f09f84bf  f09f84b5 f09f84ba 
+⮞ꓘꓞꓒ⮜ : e2ae9e ea9398 ea939e ea9392 e2ae9c
+𝗣𝗙𝗞 : f09d97a3 f09d9799  f09d979e
+𝕻𝕱𝕶 : f09d95bb f09d95b1 f09d95b6
+ƤƑƘ : c6a4 c691 c698
+ƥƒƙ : c6a5 c692 c699 
+ツ : e38384 : U+30C4 KATAKANA LETTER TU
+━━━━ : e29481 : U+2501  BOX DRAWINGS HEAVY HORIZONTAL
+± : c2b1 : U+00B1 PLUS-MINUS SIGN
+
+™©Ⓡ  (ಠ_ಠ)    ( •_•)      ( •_•)>⌐■-■     (⌐■_■)    ¯\_(ツ)_/¯   (◔̯◔)   (^̮^)  ⌤
+(≧◡≦)  (ᗒᗣᗕ)    ʕ•ᴥ•ʔ   (ಠ~ಠ)  (ノಠ益ಠ)ノ彡┻━┻  (¬‿¬)  ಠ╭╮ಠ  ᕙ(⇀‸↼‶)ᕗ
+<3   Ɛ>   ♡❤ 💔❥
+(╯°□°)╯︵ ʞooqǝɔɐɟ
+(ノಠ益ಠ)ノ彡ꓕꓱꓠꓤꓱꓕꓠI
+(ノಠ益ಠ)ノ彡⇒ꓘꓞꓒ⇐
+in MSWord, type hex digits, then hit alt-X
+0ca0 ಠ
+2022 •
+25a0 ■
+2310 ⌐
+25d4 ◔   works best at ms-gothic 14
+032f  ̯
+
+https://www.unicode.org/charts/PDF/U2190.pdf
+→← 2190 2192
+⇉⇇ 21c7 21c9
+⇒⇐ 21d2 21d0
+⇛⇚  21DA 21DB
+⇨⇦ 21E6 21E8
+↑↓ 2191 2193
+ ─  │ ┌  ┐  └  ┘
+↑↕↓ ←↔→  ↙↗↘↖  »   🠈🠉🠊🠋⮜⮝⮞⮟  ✔   ‼
+
+https://www.unicode.org/charts/PDF/U30A0.pdf
+ツ  30C4  KATAKANA LETTER TU (TSU)
+
+https://www.unicode.org/charts/PDF/U27F0.pdf
+⟹⟸ 27F9 27F8 
+
+https://www.unicode.org/charts/PDF/U1F800.pdf
+🡆🡄 1F846 1F844
+
+https://www.unicode.org/charts/PDF/U0180.pdf
+ƤƑƘ   01A4 0191 0198
+ƥƒƙ  01A5 0192 0199
+
+https://www.unicode.org/charts/PDF/U2C80.pdf  
+ⲷ : 2CB7  COPTIC SMALL LETTER CRYPTOGRAMMIC EIE
+Ⲹ : 2CB8   COPTIC CAPITAL LETTER DIALECT-P KAPA
+Ⳁ : 2CC0   COPTIC CAPITAL LETTER SAMPI
+Ⲋ : 2C8A  COPTIC CAPITAL LETTER SOU
+Ⲕ : 2C94  COPTIC CAPITAL LETTER KAPA
+Ⲵ : 2CB4  COPTIC CAPITAL LETTER OLD COPTIC AIN
+
+https://www.unicode.org/charts/PDF/U1D400.pdf
+𝐏𝐅𝐊 1D40F 1D405 1D40A
+𝓟𝓕𝓚 1D4DF 1D4D5 1D4DA
+𝕻𝕱𝕶   1D57B 1D571 1D576
+𝗣𝗙𝗞  1D5E3 1D5D9 1D5DE
+𝓹𝓯𝓴 1D4F9 1D4EF 1D4F4 
+ 𝕡𝕗𝕜  1D561 1D557 1D55C    “MATHEMATICAL DOUBLE-STRUCK SMALL”
+    (works best in a LARGE font)
+
+https://www.unicode.org/charts/PDF/UA4D0.pdf   LISU LETTERS
+ꓘꓞꓒ     A4D8 A4DE  A4D2 
+https://www.unicode.org/charts/PDF/U2460.pdf
+ⓅⒻⓀ    24C5 24BB 24C0
+https://www.unicode.org/charts/PDF/U1F100.pdf
+🄿🄵🄺  1F13F 1F135 1F13A 
+
+
+
+
+
+🡆 𝕡𝕗𝕜 ƤƑƘ 𝐏𝐅𝐊 𝓟𝓕𝓚 ꓘꓞꓒ 𝕻𝕱𝕶 𝓹𝓯𝓴 𝗣𝗙𝗞 🡄 ツ
+
+bytes : efbbbfe29fb9f09d95a1f09d9597f09d959ce29fb820e38384 
+renders as :
+⟹𝕡𝕗𝕜⟸ ツ
+
+UTF-8    code point Unicode description
+─────    ────────── ───────────────────
+efbbbf   U+FEFF     (optional) ZERO WIDTH NO-BREAK SPACE / Byte Order Marker
+e29fb9   U+27F9     LONG RIGHTWARDS DOUBLE ARROW
+f09d95a1 U+1D561    MATHEMATICAL DOUBLE-STRUCK SMALL p
+f09d9597 U+1D557    MATHEMATICAL DOUBLE-STRUCK SMALL f
+f09d959c U+1D55C    MATHEMATICAL DOUBLE-STRUCK SMALL k
+e29fb8   U+27F8     LONG LEFTWARDS DOUBLE ARROW
+20       U+0020     SPACE
+e38384   U+30C4     KATAKANA LETTER TU (TSU)
+
+
