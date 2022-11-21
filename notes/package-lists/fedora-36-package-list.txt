@@ -135,6 +135,7 @@ java-latest-openjdk-src
 keepassx
 kernel-devel
 kernel-headers
+kernel-tools
 keyutils-libs-devel
 kpartx
 krb5-devel
@@ -253,6 +254,7 @@ perl-bignum
 perl-devel
 pidgin
 pixman-devel
+powertop
 protobuf
 protobuf-c
 protobuf-compiler

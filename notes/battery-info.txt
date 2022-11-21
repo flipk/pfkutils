@@ -1,0 +1,14 @@
+
+watch -n 10 upower -i /org/freedesktop/UPower/devices/battery_BAT0 
+
+sudo cpupower frequency-info
+
+sudo cpupower frequency-set --max 800MHz
+
+sudo cpupower frequency-set --max 3600MHz
+
+sudo powertop
+
+
+on fedora, 'cpupower' is in kernel-tools, and powertop is in 'powertop'
+
