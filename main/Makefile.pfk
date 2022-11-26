@@ -132,6 +132,23 @@ endif
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
 	$(Q)cp Makefile.inc $(prefix)
 
+
+PROG_TARGETS += decode_utf8 utf16_to_utf8
+
+decode_utf8_TARGET = $(OBJDIR)/decode_utf8
+decode_utf8_CXXSRCS = main/utf8-utilities.cc
+decode_utf8_DEFS = -DTEST_decode_utf8
+
+utf16_to_utf8_TARGET = $(OBJDIR)/utf16_to_utf8
+utf16_to_utf8_CXXSRCS = main/utf8-utilities.cc
+utf16_to_utf8_DEFS = -DTEST_utf16_to_utf8
+
+POSTINSTALL += utf8_post_install
+
+utf8_post_install:
+	@echo installing decode_utf8 utf16_to_utf8
+	cp $(decode_utf8_TARGET) $(utf16_to_utf8_TARGET) $(INSTALL_BIN_DIR)
+
 ifeq ($(PFK_CONFIG_DISABLE_MAKELINKS),)
 # note cygwin doesn't support this, so it is disabled on cygwin.
 POSTALL += pfkutils-makelinks
