@@ -66,6 +66,7 @@ For more information, please refer to <http://unlicense.org>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <poll.h>
@@ -2019,6 +2020,16 @@ public:
         fd = ::socket(PF_INET, SOCK_STREAM | SOCK_CLOEXEC, protocolNumber);
         if (fd < 0) {
             if (e) e->init(errno, "socket");
+            return false;
+        }
+        return true;
+    }
+    /** set TCP_USER_TIMEOUT socket option to time in milliseconds */
+    bool set_user_timeout(unsigned int timeout_ms, pxfe_errno *e = NULL) {
+        if (setsockopt( fd, IPPROTO_TCP, TCP_USER_TIMEOUT,
+                        (void*) &timeout_ms, sizeof(timeout_ms)) < 0)
+        {
+            if (e) e->init(errno, "setsockopt timeout");
             return false;
         }
         return true;
