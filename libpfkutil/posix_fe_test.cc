@@ -27,6 +27,32 @@ void *func(void*arg)
     return NULL;
 }
 
+static void print_value64(uint64_t v)
+{
+    std::string  out;
+    pxfe_utils::format_thousands(out, v);
+    printf("%016" PRIx64 " = %20" PRIu64 " = '%s'\n",
+           v, v, out.c_str());
+}
+
+static void test_format_thousands(void)
+{
+    uint64_t  v = 0;
+    uint32_t dig = 1;
+    uint32_t ctr;
+
+    print_value64(v);
+
+    for (ctr = 0; ctr < 20; ctr++)
+    {
+        v *= 10;
+        v += dig;
+        dig++;
+        dig %= 10;
+        print_value64(v);
+    }
+}
+
 int main()
 {
     struct thread_data td;
@@ -50,6 +76,8 @@ int main()
 
     void *ret = NULL;
     pthread_join(id, &ret);
+
+    test_format_thousands();
 
     return 0;
 }

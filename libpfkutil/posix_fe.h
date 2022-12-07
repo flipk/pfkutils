@@ -1634,6 +1634,38 @@ public:
         }
         return false;
     }
+    static void format_thousands(std::string &out, uint64_t  v)
+    {
+        if (v == 0)
+        {
+            out = "0";
+            return;
+        }
+        out.resize(48);
+        char * buf = (char*) out.c_str();
+        memset(buf, '-', 48);
+        char * triple = buf + 48;
+        while (true)
+        {
+            uint32_t  limb = v % 1000;
+            triple -= 3;
+            char temp[4];
+            sprintf(temp, "%03d", limb);
+            triple[0] = temp[0];
+            triple[1] = temp[1];
+            triple[2] = temp[2];
+            v /= 1000;
+            if (v == 0)
+                break;
+            triple --;
+            *triple = ',';
+        }
+        while (triple[0] == '0')
+            triple++;
+        size_t len = buf + 48 - triple;
+        memmove(buf, triple, len);
+        out.resize(len);
+    }
 };
 
 /** container for several useful IP-related utility methods */
