@@ -208,6 +208,27 @@ private:
         if (opts.verbose)
             print_stats(/*final*/false);
     }
+    static float format_rate(float r, char &units)
+    {
+        if (r > 1000000000)
+        {
+            r /= 1000000000;
+            units = 'G';
+        }
+        else if (r > 1000000)
+        {
+            r /= 1000000;
+            units = 'M';
+        }
+        else if (r > 1000)
+        {
+            r /= 1000;
+            units = 'K';
+        }
+        else
+            units = ' ';
+        return r;
+    }
     void print_stats(bool final)
     {
         pxfe_timeval now, diff;
@@ -219,12 +240,21 @@ private:
             t = 99999.0;
         float bytes_per_sec = (float) total / t;
         float bits_per_sec = bytes_per_sec * 8.0;
-        fprintf(stderr, "\r%" PRIu64 " in %u.%06u s "
-               "(%.0f Bps %.0f bps)",
-               total,
-               (unsigned int) diff.tv_sec,
-               (unsigned int) diff.tv_usec,
-               bytes_per_sec, bits_per_sec);
+
+        std::string total_str;
+        pxfe_utils::format_thousands(total_str, total);
+
+        char Bps_units, bps_units;
+        bytes_per_sec = format_rate(bytes_per_sec, Bps_units);
+        bits_per_sec  = format_rate(bits_per_sec,  bps_units);
+
+        fprintf(stderr, "  %s bytes in %u.%06u s "
+                "(%.3f %cBps %.3f %cbps)   \r",
+                total_str.c_str(),
+                (unsigned int) diff.tv_sec,
+                (unsigned int) diff.tv_usec,
+                bytes_per_sec, Bps_units,
+                bits_per_sec,  bps_units);
         if (final)
             fprintf(stderr, "\n");
     }
