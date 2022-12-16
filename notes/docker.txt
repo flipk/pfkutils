@@ -15,6 +15,9 @@ docker image save -o FILE.tar
 
 docker run --rm -it -v /dir:/dir:ro -v /dir:/dir $IMAGE:$VERSION /bin/bash
 
+consider use of --env DISPLAY=$DISPLAY --hostname $(hostname)
+to make $DISPLAY work with :num, consider -v /tmp/.X11-unix:/tmp/.X11-unix
+
 groupadd --gid $gid $group
 useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
 echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
