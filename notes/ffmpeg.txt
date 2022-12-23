@@ -172,7 +172,8 @@ rerate() {
     outfile="$2"
     rate="$3"
     keying="-x264-params keyint=15"
-    video="-strict experimental -c:v libx264 $keying -b:v $rate"
+    #fps="-filter:v fps=fps=30"
+    video="-strict experimental -c:v libx264 $keying $fps -b:v $rate"
     audio="-c:a copy"
     ffmpeg -i $infile $video $audio $outfile
 }
