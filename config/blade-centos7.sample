@@ -35,6 +35,7 @@ PFK_BUILD_do_fft=1
 PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
 PFK_BUILD_slowlink=0 # no g++ support for 'auto'
+PFK_BUILD_uuz=1
 
 PFK_FINDPF_GCC = gcc
 PFK_FINDPF_GCC_ARGS = -DDEBUG=0
@@ -46,6 +47,8 @@ PROTOBUF_LIB = -lprotobuf
 mbedtls_path = $(HOME)/proj/pfkutils/contrib/mbedtls/obj.blade-centos7
 MBEDTLS_INCS = -I$(mbedtls_path)/include
 MBEDTLS_LIBS = -L$(mbedtls_path)/lib -lmbedtls -lmbedx509 -lmbedcrypto
+LIBZ_INCS =
+LIBZ_LIB = -lz
 
 PFKUTILS_OS = centos7
 

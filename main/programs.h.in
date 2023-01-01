@@ -89,6 +89,10 @@ PROG(0,dedup2,"find identical files in two trees and hardlink them")
 PROG(0,hilite,"highlight text matching regex patterns using ANSI colors")
 #endif
 
+#if @PFK_BUILD_uuz@
+PROG(0,uuz,"unix to unix base64 zlib encrypting encoder")
+#endif
+
 // always built
 PROG(0,m,"hex/dec/bin mathematics on command line")
 PROG(0,random_hex,"generate a random hex number")

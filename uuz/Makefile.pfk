@@ -1,0 +1,24 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_uuz),1)
+
+# enable this to see what PROTOSRCS does
+# DEBUG_H_MACRO_GENERATION=y
+
+LIB_TARGETS += libuuz
+
+libuuz_TARGET = $(OBJDIR)/libuuz.a
+libuuz_CXXSRCS = \
+	uuz/uuz_options.cc \
+	uuz/uuz_decode.cc \
+	uuz/uuz_encode.cc \
+	uuz/uuz.cc
+libuuz_PROTOSRCS = uuz/uuz.proto
+libuuz_DEFS = -DUUZ_PROTO_HDR=\"$(libuuz_uuz/uuz.proto_HDR)\"
+# libuuz_LIBS = -lprotobuf -lz -lmbedcrypto
+libuuz_INCS = -Ilibpfkutil
+
+pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)
+pfkutils_LIBZ = $(LIBZ_LIB)
+
+endif

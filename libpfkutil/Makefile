@@ -22,12 +22,13 @@ libpfkutil_CXXSRCS = \
 	hsmthread.cc signal_backtrace.cc \
 	dll3.cc dll3_btree.cc \
 	childprocessmanager.cc \
-	thread_slinger.cc
+	thread_slinger.cc \
+	newbase64.cc
 
 LIBPFKUTIL_TEST_TARGETS = \
         hsmthread_test dll3_test dll3_btree_test \
         childprocessmanager_test signal_backtrace_test \
-        thread_slinger_test posix_fe_test
+        thread_slinger_test posix_fe_test newbase64_test
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)
