@@ -36,7 +36,7 @@ BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan ts2 sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
-	libpfkthread xlock hilite do_fft protossl i3
+	libpfkthread xlock hilite do_fft protossl i3 uuz
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
@@ -91,7 +91,7 @@ PFKUTIL_DIRS = \
 	libpfkthread \
 	i2 i3 misc backup hilite pfksh ampfk syslog \
 	pfkscript pfktop diskloader bglog misc/states \
-	xlock environ scripts fonts contrib main
+	uuz xlock environ scripts fonts contrib main
 
 PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)
 

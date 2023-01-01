@@ -35,6 +35,7 @@ PFK_BUILD_do_fft=0
 PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
 PFK_BUILD_slowlink=1
+PFK_BUILD_uuz=1
 
 PFK_FINDPF_GCC = gcc
 PFK_FINDPF_GCC_ARGS = -DDEBUG=0
@@ -45,6 +46,8 @@ PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
 MBEDTLS_INCS = 
 MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
+LIBZ_INCS =
+LIBZ_LIB = -lz
 
 PFKUTILS_OS = ubuntu18
 # ub18 comes with emacs 25.2 so override default setting of ELPA

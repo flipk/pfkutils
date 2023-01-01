@@ -93,7 +93,7 @@ pfkutils_LIBS += \
 pfkutils_DEPLIBS = \
 	$(libpfksh_TARGET) $(libpfkbak_TARGET) $(libpfkfb_TARGET) \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
-	$(pfktop_TARGET) $(libi2_TARGET) \
+	$(pfktop_TARGET) $(libi2_TARGET) $(libuuz_TARGET) \
 	$(libampfk_TARGET) $(syslog_TARGET) \
 	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \

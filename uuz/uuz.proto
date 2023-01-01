@@ -1,0 +1,65 @@
+
+syntax = "proto2";
+
+package PFK.uuz;
+
+enum ProtocolVersion {
+  uuz_VERSION_1 = 1;
+  // increment every time you modify this file.
+};
+
+message ProtoVersion {
+  required string app_name    = 1; // PFK_UUZ_APP_NAME
+  required int32  version     = 2; // uuz_VERSION_x
+  required int32  b64variant  = 3; // enum Base64Variant
+};
+
+enum CompressionSetting {
+  NO_COMPRESSION = 1;
+  LIBZ_COMPRESSION = 2;
+};
+
+enum EncryptionSetting {
+  NO_ENCRYPTION = 1;
+  AES256_ENCRYPTION = 2;
+};
+
+enum HMACSetting {
+  NO_HMAC = 1;
+  HMAC_SHA256HMAC = 2;
+};
+
+message FileInfo {
+  required  string  file_name = 1;
+  required  uint64  file_size = 2; // original uncompressed size
+  optional  CompressionSetting  compression = 3; // NO_COMPRESSION default
+  optional  EncryptionSetting   encryption = 4;
+  optional  HMACSetting         hmac = 5;
+};
+
+message FileData {
+  required  uint64  position = 1;
+  required  uint32  data_size = 2; // after decrypting
+  required  bytes   data = 3; // padded out for encryption
+  optional  bytes   hmac = 4;
+};
+
+message FileComplete {
+  required uint64 compressed_size = 1;
+  optional bytes  sha = 2; // sha256 of original file data
+};
+
+enum uuzMsgType {
+  uuz_VERSION   = 1;
+  uuz_FILE_INFO = 2;
+  uuz_FILE_DATA = 3;
+  uuz_FILE_COMPLETE = 4;
+};
+
+message uuzMsg {
+  required uuzMsgType    type  =  1;
+  optional ProtoVersion  proto_version = 2;
+  optional FileInfo      file_info = 3;
+  optional FileData      file_data = 4;
+  optional FileComplete  file_complete = 5;
+};

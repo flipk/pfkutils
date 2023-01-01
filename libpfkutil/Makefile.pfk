@@ -15,6 +15,7 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/thread_slinger.cc \
 	libpfkutil/signal_backtrace.cc \
 	libpfkutil/simpleUrl.cc \
+	libpfkutil/newbase64.cc \
 	libpfkutil/asm_parser.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/HSM.h libpfkutil/LockWait.h \
@@ -30,6 +31,7 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h \
+	libpfkutil/newbase64.h \
 	libpfkutil/asm_parser.h
 libpfkutil_HDRS = \
 	libpfkutil/HSM.h libpfkutil/LockWait.h \
@@ -55,7 +57,7 @@ LIBPFKUTIL_TEST_TARGETS = \
 	msgr-test-clnt msgr-test-msg msgr-test-svr \
 	shmempipe_test_master shmempipe_test_slave testpipe \
 	childprocessmanager_test signal_backtrace_test \
-	thread_slinger_test posix_fe_test
+	thread_slinger_test posix_fe_test newbase64_test
 # HSM_test
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
