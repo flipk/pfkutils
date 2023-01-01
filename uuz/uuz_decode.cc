@@ -344,8 +344,9 @@ void uuz :: handle_s3_data(void)
             mbedtls_md_hmac_update(&hmac_ctx,
                                    (const unsigned char *) fdbuf.c_str(),
                                    fdbuf.size());
-            DEBUGHMAC("HMAC update with %d bytes %08x %08x %08x %08x\n",
-                      fdbuf.size(),
+            DEBUGHMAC("HMAC update with %" PRIu32
+                      " bytes %08x %08x %08x %08x\n",
+                      (uint32_t) fdbuf.size(),
                       ((uint32_t*)fdbuf.c_str())[0],
                       ((uint32_t*)fdbuf.c_str())[1],
                       ((uint32_t*)fdbuf.c_str())[2],
@@ -399,8 +400,9 @@ void uuz :: handle_s3_data(void)
             mbedtls_md_hmac_update(&hmac_ctx,
                                    (const unsigned char*) fdbuf.c_str(),
                                    fdbuf.size());
-            DEBUGHMAC("HMAC update with %d bytes %08x %08x %08x %08x\n",
-                      fdbuf.size(),
+            DEBUGHMAC("HMAC update with %" PRIu32
+                      " bytes %08x %08x %08x %08x\n",
+                      (uint32_t) fdbuf.size(),
                       ((uint32_t*)fdbuf.c_str())[0],
                       ((uint32_t*)fdbuf.c_str())[1],
                       ((uint32_t*)fdbuf.c_str())[2],

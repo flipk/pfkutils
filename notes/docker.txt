@@ -66,8 +66,8 @@ do_adduser() {
 running fedora 35 and 36 in a docker:
 -------------------------------------
 
-for some reason, default security profile blocks "clone3"
-system call. use this to un-do that:
+for some reason, default security profile blocks "clone3" and
+also blocks "threaded lstat" system call. use this to un-do that:
 
 docker run --rm -it --security-opt seccomp=unconfined fedora:36 /bin/bash
 

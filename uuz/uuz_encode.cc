@@ -187,8 +187,9 @@ int uuz::uuz_encode(void)
                 mbedtls_md_hmac_update(&hmac_ctx,
                                        (const unsigned char *)fdbuf->c_str(),
                                        fdbuf->size());
-                DEBUGHMAC("HMAC update with %d bytes %08x %08x %08x %08x\n",
-                          fdbuf->size(),
+                DEBUGHMAC("HMAC update with %" PRIu32
+                          " bytes %08x %08x %08x %08x\n",
+                          (uint32_t) fdbuf->size(),
                           ((uint32_t*)fdbuf->c_str())[0],
                           ((uint32_t*)fdbuf->c_str())[1],
                           ((uint32_t*)fdbuf->c_str())[2],
@@ -207,8 +208,8 @@ int uuz::uuz_encode(void)
             if (opts.text_headers)
             {
                 fprintf(opts.uuz_f,
-                        "# FILE DATA %d bytes at position %" PRIu64,
-                       fdbuf->size(), (uint64_t) pos);
+                        "# FILE DATA %" PRIu32 " bytes at position %" PRIu64,
+                        (uint32_t) fdbuf->size(), (uint64_t) pos);
                 print_comprencrhmac(opts);
                 fprintf(opts.uuz_f, "\n");
             }
@@ -286,9 +287,9 @@ int uuz::uuz_encode(void)
                     mbedtls_md_hmac_update(&hmac_ctx,
                                            (unsigned char *) fdbuf->c_str(),
                                            fdbuf->size());
-                    DEBUGHMAC("HMAC update with %d bytes "
+                    DEBUGHMAC("HMAC update with %" PRIu32 " bytes "
                               "%08x %08x %08x %08x\n",
-                              fdbuf->size(),
+                              (uint32_t) fdbuf->size(),
                               ((uint32_t*)fdbuf->c_str())[0],
                               ((uint32_t*)fdbuf->c_str())[1],
                               ((uint32_t*)fdbuf->c_str())[2],

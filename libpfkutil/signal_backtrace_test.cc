@@ -59,6 +59,10 @@ main(int argc, char ** argv)
         SignalBacktrace::get_instance()->register_handler(
             "signal_test", NULL, &my_handler);
         char * ptr = (char*) 1;
+        // NOTE on gcc 12 this generates a warning:
+        //    "warning: writing 1 byte into a region of size 0"
+        // you can ignore this warning, that's kind of the point.
+        // this line is trying to *intentionally* cause a SIGSEGV.
         *ptr = 0;
         SignalBacktrace::cleanup();
     }
