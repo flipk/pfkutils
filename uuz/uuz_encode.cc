@@ -133,6 +133,8 @@ int uuz::uuz_encode(void)
     m.set_type(PFK::uuz::uuz_FILE_INFO);
     m.mutable_file_info()->set_file_name(inf->path);
     m.mutable_file_info()->set_file_size(inf->sb.st_size);
+    // store the mode, but only the rwx bits.
+    m.mutable_file_info()->set_file_mode(inf->sb.st_mode & 0777);
     m.mutable_file_info()->set_compression(opts.compression);
     m.mutable_file_info()->set_encryption(opts.encryption);
     m.mutable_file_info()->set_hmac(opts.hmac);

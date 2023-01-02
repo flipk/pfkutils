@@ -243,6 +243,11 @@ void uuz :: handle_s2_file_info(void)
     output_filename = m.file_info().file_name();
     output_filesize = m.file_info().file_size();
 
+    if (m.file_info().has_file_mode())
+        output_filemode = m.file_info().file_mode();
+    else
+        output_filemode = 0;
+
     final_output_filename = output_filename;
     output_filename += ".TEMP_OUTPUT";
 
@@ -276,6 +281,13 @@ void uuz :: handle_s2_file_info(void)
         int e = errno;
         fprintf(stderr, "failed to open output filename: %d (%s)\n",
                 e, strerror(e));
+    }
+    else
+    {
+        if (output_filemode != 0)
+        {
+            chmod(output_filename.c_str(), S_IWUSR);
+        }
     }
     expected_pos = 0;
 }
@@ -522,6 +534,10 @@ void uuz :: handle_s9_complete(void)
             int e = errno;
             fprintf(stderr, "renaming file filename: %d (%s)\n",
                     e, strerror(e));
+        }
+        if (output_filemode != 0)
+        {
+            chmod(final_output_filename.c_str(), output_filemode);
         }
     }
 

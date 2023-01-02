@@ -59,6 +59,7 @@ class uuz {
     std::string   final_output_filename;
     std::string   output_filename;
     size_t        output_filesize;
+    uint32_t      output_filemode; // 0 means not specified
     FILE         *output_f;
     PFK::uuz::CompressionSetting  compression;
     size_t        expected_pos;

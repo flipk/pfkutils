@@ -12,8 +12,10 @@ mkdir test
 set -e -x
 
 cp Makefile test/0
+chmod 400 test/0
 cp obj/uuz test/1
 tar cf test/2 obj
+chmod 777 test/2
 cd test
 
 ../obj/uuz e $debug $variant $compr -t $enckey -o 3 $maxsize 0 1 2
