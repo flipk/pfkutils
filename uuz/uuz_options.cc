@@ -281,6 +281,11 @@ uuzopts :: uuzopts(int argc, char ** argv)
         inf->f = fdopen(inf->fd, "r");
         input_files.push_back(inf);
     }
+    if (input_files.size() == 0)
+    {
+        fprintf(stderr, "ERROR: you must specify at least 1 input file\n");
+        return;
+    }
     current_file = input_files[0];
     _ok = true;
 }
