@@ -1,7 +1,7 @@
 #!/bin/bash
 
 enckey="-e password_here"
-variant="-v 5"
+variant="-v 4"
 #compr="-c none"
 #debug="-d 127"
 maxsize="-m 15000"

@@ -43,12 +43,33 @@ bool uuz::encode_m(int Scode)
 {
     DEBUGPROTO("encoding msg:\n%s\n", m.DebugString().c_str());
 
+    // base64 encodes 3 binary bytes to 4. for most b64 variants,
+    // you don't have to worry about that multiple of 3 -- if it's
+    // shorter, the encoder pads and the decoder truncates to the correct
+    // length. but UUENCODE variant is broken in this manner, it cannot
+    // pad or detect properly, so you can get 1 or 2 extra bytes of junk
+    // (rounding up to the next multiple of 3). this can screw up the
+    // protobuf decode, so we encode the length of the protobuf in
+    // the stream.
+
     serialized_pb.resize(0);
-    if (m.SerializeToString(&serialized_pb) == false)
     {
-        fprintf(stderr, "cannot encode msg of Scode %d\n", Scode);
-        return false;
-    }
+        google::protobuf::io::StringOutputStream zos(&serialized_pb);
+        {
+            google::protobuf::io::CodedOutputStream cos(&zos);
+            uint32_t  len = (uint32_t) m.ByteSizeLong();
+            cos.WriteVarint32( len );
+            if (m.SerializeToCodedStream(&cos) == false)
+            {
+                fprintf(stderr, "cannot encode msg of Scode %d\n", Scode);
+                return false;
+            }
+        } // cos destroyed here
+    } // zos destroyed here.
+
+    serialized_pb += partial_serialized_pb;
+    partial_serialized_pb.resize(0);
+
     b64_encoded_pb.resize(0);
     if (Scode == SCODE_VERSION)
         format_hexbytes(b64_encoded_pb, serialized_pb);

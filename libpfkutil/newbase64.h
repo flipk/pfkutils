@@ -74,6 +74,8 @@ enum Base64Variant
 //   no
 // 6PACK
 //   no!!
+//
+// NOTE : there are NO PLANS WHATSOEVER to support yEnc, either.
 
     __BASE64_NUM_VARIANTS,
     __BASE64_VARIANT_DEFAULT = BASE64_RFC4648_S4_STANDARD,

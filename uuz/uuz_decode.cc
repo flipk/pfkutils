@@ -179,11 +179,23 @@ uuz :: decode_b64_res_t uuz :: decode_b64(char s, int Scode)
 
 bool uuz:: decode_m(void)
 {
-    m.Clear();
-    if (m.ParseFromString(serialized_pb))
+    google::protobuf::io::ArrayInputStream ais(
+        serialized_pb.data(), serialized_pb.size());
+
     {
-        DEBUGPROTO("parsed proto:\n%s\n", m.DebugString().c_str());
-        return true;
+        google::protobuf::io::CodedInputStream cis(&ais);
+        uint32_t len = 0;
+        if (cis.ReadVarint32(&len) == false)
+            return false;
+        auto old = cis.PushLimit(len);
+        m.Clear();
+        int r = m.ParseFromCodedStream(&cis);
+        cis.PopLimit(old);
+        if (r)
+        {
+            DEBUGPROTO("parsed proto:\n%s\n", m.DebugString().c_str());
+            return true;
+        }
     }
     return false;
 }
