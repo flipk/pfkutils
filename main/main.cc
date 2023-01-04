@@ -123,7 +123,11 @@ handle_admin( int argc, char ** argv )
     {
     usage:
         printf( "usage: pfkutils [-dellinks] [-makelinks] "
-                "[-help]\n" );
+                "[-config] [-help]\n" );
+        printf("   -dellinks : remove all symlinks pointing to pfkutils\n");
+        printf("   -makelinks : make symlinks for all known tools\n");
+        printf("   -config : print out build-time configuration\n");
+        printf("   -help : print help (this message)\n");
         printf( "or symlink 'pfkutils' to one of the following names\n");
         return -2;
     }
@@ -151,6 +155,12 @@ handle_admin( int argc, char ** argv )
             }
         }
 
+        return 0;
+    }
+
+    if ( arg0 == "-config" )
+    {
+        cout << pfkutils_config;
         return 0;
     }
 
@@ -210,9 +220,6 @@ main( int argc, char ** argv )
         cout << setw(18) << pt->program
              << " - " << pt->help << endl;
     }
-
-    cout << endl << endl;
-    cout << pfkutils_config;
 
     return 0;
 }
