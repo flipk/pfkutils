@@ -62,7 +62,7 @@ bool uuz::encode_m(int Scode)
             if (m.SerializeToCodedStream(&cos) == false)
             {
                 fprintf(stderr, "cannot encode msg of Scode %d\n", Scode);
-                return false;
+                exit(1);
             }
         } // cos destroyed here
     } // zos destroyed here.

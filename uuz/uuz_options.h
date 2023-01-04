@@ -40,7 +40,7 @@ struct uuzopts {
     int            outfile_counter;
     void           check_rollover(void);
 
-    enum {  NONE, ENCODE, DECODE } mode;
+    enum {  NONE, ENCODE, DECODE, LIST } mode;
     PFK::uuz::CompressionSetting   compression;
     PFK::uuz::EncryptionSetting    encryption;
     std::string                    encryption_key;

@@ -23,7 +23,7 @@ uuz_LIBS = -lprotobuf -lz -lmbedcrypto
 uuz_INCS = -I ../libpfkutil
 
 new_all:
-	@make all
+	@+make all
 	@make alltest
 
 EXTRA_CLEAN += alltest_clean

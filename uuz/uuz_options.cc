@@ -37,6 +37,8 @@ uuzopts :: uuzopts(int argc, char ** argv)
         mode = ENCODE;
     else if (arg1 == "d")
         mode = DECODE;
+    else if (arg1 == "t")
+        mode = LIST;
     else
         return;
     argc -= 1;
@@ -102,6 +104,13 @@ uuzopts :: uuzopts(int argc, char ** argv)
             break;
         case 'o':
         {
+            if (mode != ENCODE)
+            {
+                fprintf(stderr,
+                        "ERROR: output file setting valid "
+                        "only when encoding\n");
+                return;
+            }
             output_uuz = optarg;
             break;
         }
@@ -267,7 +276,7 @@ uuzopts :: uuzopts(int argc, char ** argv)
         if (die)
             return;
     }
-    else if (mode == DECODE)
+    else if (mode == DECODE || mode == LIST)
     {
         input_file * inf = new input_file;
         if (argc == optind+1)
@@ -366,6 +375,7 @@ void uuzopts :: usage(void)
     fprintf(stderr,
             "usage:\n"
             "    uuz e [encode options] file [file...]\n"
+            "    uuz t [list options] file.uuz\n"
             "    uuz d [decode options] file.uuz\n"
             "      (file.uuz can be '-' for stdin)\n"
             "encode options:\n"
@@ -398,7 +408,7 @@ void uuzopts :: usage(void)
                 Base64::variant_name((Base64Variant) v));
     }
     fprintf(stderr,
-            "decode options:\n"
+            "decode and list options:\n"
             "    -d FLAGS : debug mode\n"
             "    -e PASSWORD : decrypt with AES256\n"
         );

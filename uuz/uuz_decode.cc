@@ -23,7 +23,7 @@ bool uuz :: getline(void)
 }
 
 uuz :: uuz_decode_ret_t
-uuz :: uuz_decode(void)
+uuz :: uuz_decode(bool list_only)
 {
     uuz_decode_ret_t ret = DECODE_ERR;
 
@@ -101,20 +101,20 @@ uuz :: uuz_decode(void)
                 switch (Scode)
                 {
                 case SCODE_VERSION:
-                    handle_s1_version();
+                    handle_s1_version(list_only);
                     break;
 
                 case SCODE_FILE_INFO:
-                    if (handle_s2_file_info() == false)
+                    if (handle_s2_file_info(list_only) == false)
                         done = true;
                     break;
 
                 case SCODE_DATA:
-                    handle_s3_data();
+                    handle_s3_data(list_only);
                     break;
 
                 case SCODE_COMPLETE:
-                    handle_s9_complete();
+                    handle_s9_complete(list_only);
                     done = true;
                     ret = DECODE_MORE;
                     break;
@@ -201,7 +201,7 @@ bool uuz:: decode_m(void)
     return false;
 }
 
-void uuz :: handle_s1_version(void)
+void uuz :: handle_s1_version(bool list_only)
 {
     if (m.type() != PFK::uuz::uuz_VERSION)
     {
@@ -220,39 +220,92 @@ void uuz :: handle_s1_version(void)
         fprintf(stderr, "S1 proto missing required version fields!\n");
         return;
     }
-    fprintf(stderr, "starting decode from %s:%d\n",
-            m.proto_version().app_name().c_str(),
-            m.proto_version().version());
     Base64Variant  variant = (Base64Variant) m.proto_version().b64variant();
     if (!b64.set_variant(variant))
+    {
         fprintf(stderr, "ERROR INVALID Base64 VARIANT SPECIFIED (%d)\n",
                 variant);
+        exit(1);
+    }
     else
         got_version = true;
+    if (list_only)
+    {
+        printf("VERSION_INFO: program=\"%s\" protoversion=%d "
+               "b64variant=%d=%s\n", m.proto_version().app_name().c_str(),
+               m.proto_version().version(),
+               (int) variant,
+               Base64::variant_name(opts.data_block_variant));
+    }
+    else
+    {
+        fprintf(stderr, "starting decode from %s:%d\n",
+                m.proto_version().app_name().c_str(),
+                m.proto_version().version());
+    }
 }
 
-bool uuz :: handle_s2_file_info(void)
+bool uuz :: handle_s2_file_info(bool list_only)
 {
     if (!got_version)
     {
-        fprintf(stderr, "ERROR GOT S2 WITHOUT S1\n");
-        return false;
+        fprintf(stderr, "ERROR: GOT S2 WITHOUT S1\n");
+        exit(1);
     }
     if (m.type() != PFK::uuz::uuz_FILE_INFO)
     {
-        fprintf(stderr, "S2 proto type mismatch\n");
-        return false;
+        fprintf(stderr, "ERROR: S2 proto type mismatch\n");
+        exit(1);
     }
     if (!m.has_file_info() ||
         !m.file_info().has_file_name()  ||
         !m.file_info().has_file_size())
     {
-        fprintf(stderr, "S2 required fields missing\n");
-        return false;
+        fprintf(stderr, "ERROR: S2 required fields missing\n");
+        exit(1);
     }
     compression = PFK::uuz::NO_COMPRESSION;
     if (m.file_info().has_compression())
         compression = m.file_info().compression();
+    compression_name = "no compression";
+    switch (compression)
+    {
+    case PFK::uuz::NO_COMPRESSION:
+        // already set
+        break;
+    case PFK::uuz::LIBZ_COMPRESSION:
+        compression_name = "libz";
+        break;
+    }
+
+    encryption_name = "no encryption";
+    encryption = PFK::uuz::NO_ENCRYPTION;
+    if (m.file_info().has_encryption())
+        encryption = m.file_info().encryption();
+    switch (encryption)
+    {
+    case PFK::uuz::NO_ENCRYPTION:
+        // already set
+        break;
+    case PFK::uuz::AES256_ENCRYPTION:
+        encryption_name = "AES256";
+        break;
+    }
+
+    hmac_name = "no hmac";
+    hmac = PFK::uuz::NO_HMAC;
+    if (m.file_info().has_hmac())
+        hmac = m.file_info().hmac();
+    switch (hmac)
+    {
+    case PFK::uuz::NO_HMAC:
+        // already set
+        break;
+    case PFK::uuz::HMAC_SHA256HMAC:
+        hmac_name = "SHA256HMAC";
+        break;
+    }
+
     output_filename = m.file_info().file_name();
     output_filesize = m.file_info().file_size();
 
@@ -274,19 +327,17 @@ bool uuz :: handle_s2_file_info(void)
         }
     }
 
-    switch (compression)
+    expected_pos = 0;
+    output_file_pos = 0;
+    if (list_only)
     {
-    case PFK::uuz::NO_COMPRESSION:
-        fprintf(stderr, "starting file %s (%" PRIu64
-                " bytes) with no compression\n",
-                final_output_filename.c_str(), (uint64_t) output_filesize);
-        break;
-    case PFK::uuz::LIBZ_COMPRESSION:
-        fprintf(stderr, "starting file %s (%" PRIu64
-                " bytes) with LIBZ compression\n",
-                final_output_filename.c_str(), (uint64_t) output_filesize);
-        break;
+        return true;
     }
+
+    fprintf(stderr, "starting file %s (%" PRIu64
+            " bytes) with %s %s %s\n",
+            final_output_filename.c_str(), (uint64_t) output_filesize,
+            compression_name, encryption_name, hmac_name);
 
     bool dir_fail = false;
     {
@@ -334,33 +385,32 @@ bool uuz :: handle_s2_file_info(void)
             chmod(output_filename.c_str(), S_IWUSR);
         }
     }
-    expected_pos = 0;
     return true;
 }
 
-void uuz :: handle_s3_data(void)
+void uuz :: handle_s3_data(bool list_only)
 {
     if (!got_version)
     {
-        fprintf(stderr, "ERROR GOT S3 WITHOUT S1\n");
-        return;
+        fprintf(stderr, "ERROR: GOT S3 WITHOUT S1\n");
+        exit(1);
     }
-    if (!output_f)
+    if (!output_f && !list_only)
     {
-        fprintf(stderr, "ERROR GOT S3 BUT FILE ISN'T OPEN\n");
-        return;
+        fprintf(stderr, "ERROR: GOT S3 BUT FILE ISN'T OPEN\n");
+        exit(1);
     }
     if (m.type() != PFK::uuz::uuz_FILE_DATA)
     {
-        fprintf(stderr, "S3 BUT PROTO TYPE MISMATCH\n");
-        return;
+        fprintf(stderr, "ERROR: S3 BUT PROTO TYPE MISMATCH\n");
+        exit(1);
     }
     if (!m.has_file_data() ||
         !m.file_data().has_position() ||
         !m.file_data().has_data())
     {
-        fprintf(stderr, "S3 MISSING REQUIRED FIELDS\n");
-        return;
+        fprintf(stderr, "ERROR: S3 MISSING REQUIRED FIELDS\n");
+        exit(1);
     }
 
     const PFK::uuz::FileData &fd = m.file_data();
@@ -368,9 +418,10 @@ void uuz :: handle_s3_data(void)
 
     if (fd.position() != expected_pos)
     {
-        fprintf(stderr, "S3 INCORRECT POSITION (%" PRIu64 " != %" PRIu64 ")\n",
+        fprintf(stderr, "ERROR: S3 POSITION MISMATCH, DATA MISSING? "
+                "(%" PRIu64 " != %" PRIu64 ")\n",
                 (uint64_t) fd.position(), (uint64_t) expected_pos);
-        return;
+        exit(1);
     }
     expected_pos += fd.data_size();
 
@@ -427,7 +478,9 @@ void uuz :: handle_s3_data(void)
         }
 
         decrypt(obuf, fdbuf);
-        fwrite(obuf, fd.data_size(), 1, output_f);
+        if (!list_only)
+            fwrite(obuf, fd.data_size(), 1, output_f);
+        output_file_pos += fd.data_size();
         mbedtls_md_update(&md_ctx, obuf, fd.data_size());
     }
     else if (compression == PFK::uuz::LIBZ_COMPRESSION)
@@ -501,7 +554,9 @@ void uuz :: handle_s3_data(void)
 
         if (produced > 0)
         {
-            fwrite(obuf, produced, 1, output_f);
+            if (!list_only)
+                fwrite(obuf, produced, 1, output_f);
+            output_file_pos += produced;
             mbedtls_md_update(&md_ctx, obuf, produced);
         }
 
@@ -518,28 +573,28 @@ void uuz :: handle_s3_data(void)
     }
 }
 
-void uuz :: handle_s9_complete(void)
+void uuz :: handle_s9_complete(bool list_only)
 {
     if (!got_version)
     {
-        fprintf(stderr, "ERROR GOT S9 WITHOUT S1\n");
-        return;
+        fprintf(stderr, "ERROR: GOT S9 WITHOUT S1\n");
+        exit(1);
     }
-    if (!output_f)
+    if (!output_f && !list_only)
     {
-        fprintf(stderr, "GOT S9 WITH NO FILE OPEN\n");
-        return;
+        fprintf(stderr, "ERROR: GOT S9 WITH NO FILE OPEN\n");
+        exit(1);
     }
     if (m.type() != PFK::uuz::uuz_FILE_COMPLETE)
     {
-        fprintf(stderr, "S9 BUT PROTO MSG TYPE MISMATCH\n");
-        return;
+        fprintf(stderr, "ERROR: S9 BUT PROTO MSG TYPE MISMATCH\n");
+        exit(1);
     }
     if (!m.has_file_complete() ||
         !m.file_complete().has_compressed_size())
     {
-        fprintf(stderr, "S9 MISSING REQUIRED FIELDS\n");
-        return;
+        fprintf(stderr, "ERROR: S9 MISSING REQUIRED FIELDS\n");
+        exit(1);
     }
     size_t compressed_size = m.file_complete().compressed_size();
 
@@ -557,7 +612,9 @@ void uuz :: handle_s9_complete(void)
         int produced = BUFFER_SIZE - zs.avail_out;
         if (produced > 0)
         {
-            fwrite(obuf, produced, 1, output_f);
+            if (!list_only)
+                fwrite(obuf, produced, 1, output_f);
+            output_file_pos += produced;
             mbedtls_md_update(&md_ctx, obuf, produced);
         }
 
@@ -569,7 +626,6 @@ void uuz :: handle_s9_complete(void)
         }
     }
 
-    off_t  output_file_pos = ftello(output_f);
     if (output_f)
     {
         fclose(output_f);
@@ -593,7 +649,7 @@ void uuz :: handle_s9_complete(void)
         fprintf(stderr, "ERROR missing compressed data? "
                 "(%" PRIu64 " != %" PRIu64 ")\n",
                 (uint64_t) expected_pos, (uint64_t) compressed_size);
-        return;
+        exit(1);
     }
 
     if ((size_t) output_file_pos != output_filesize)
@@ -602,25 +658,69 @@ void uuz :: handle_s9_complete(void)
                 "(%" PRIu64 " != %" PRIu64 ")\n",
                 (uint64_t) output_file_pos,
                 (uint64_t) output_filesize);
-        return;
+        exit(1);
     }
 
+    bool sha_match = false;
+    {
+        std::string sha;
+        sha.resize(md_size);
+        mbedtls_md_finish(&md_ctx, (unsigned char*) sha.c_str());
+        sha_match = (sha == m.file_complete().sha());
+    }
+    if (sha_match == false)
+    {
+        fprintf(stderr, "ERROR: SHA256 MISMATCH!\n");
+        exit(1);
+    }
+
+    if (list_only)
+    {
+        ListInfo * li = new ListInfo;
+
+        li->filename = final_output_filename;
+        li->mode = output_filemode;
+        li->size = output_filesize;
+        if (m.file_complete().has_compressed_size()  &&
+            compression != PFK::uuz::NO_COMPRESSION)
+        {
+            li->csize = m.file_complete().compressed_size();
+            uint32_t percent_compressed =
+                (m.file_complete().compressed_size() * 100) /
+                output_filesize;
+            li->percent = percent_compressed;
+        }
+        else
+        {
+            li->csize = 0;
+            li->percent = 0;
+        }
+        if (opts.hmac != PFK::uuz::NO_HMAC)
+            li->hmac_status = " OK ";
+        else
+            li->hmac_status = "  - ";
+        if (sha_match)
+            li->sha_status = " OK ";
+        else
+            li->sha_status = "FAIL";
+
+        list_output.push_back(li);
+    }
+    else
     {
         // if we made it this far with HMAC turned on,
         // then HMAC must be good too.
         if (opts.hmac != PFK::uuz::NO_HMAC)
-            printf("HMAC match!\n");
-
-        std::string sha;
-        sha.resize(md_size);
-        mbedtls_md_finish(&md_ctx, (unsigned char*) sha.c_str());
-        if (sha != m.file_complete().sha())
-            printf("ERROR: SHA256 MISMATCH\n");
+            fprintf(stderr, "HMAC match!\n");
+        if (sha_match)
+            fprintf(stderr, "SHA256 match!\n");
         else
-            printf("SHA256 match!\n");
+        {
+            fprintf(stderr, "ERROR: SHA256 MISMATCH\n");
+            exit(1);
+        }
+        fprintf(stderr, "decode successful\n");
     }
-
-    fprintf(stderr, "decode successful\n");
 }
 
 void uuz :: decrypt(unsigned char *out, const std::string &in)
@@ -638,7 +738,7 @@ void uuz :: decrypt(unsigned char *out, const std::string &in)
         {
             fprintf(stderr, "ERROR: encrypted block is not "
                     "multiple of 16\n");
-            return;
+            exit(1);
         }
         int blocks = sz / 16;
 

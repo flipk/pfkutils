@@ -59,27 +59,44 @@ class uuz {
     std::string   final_output_filename;
     std::string   output_filename;
     size_t        output_filesize;
+    off_t         output_file_pos;
     uint32_t      output_filemode; // 0 means not specified
     FILE         *output_f;
-    PFK::uuz::CompressionSetting  compression;
     size_t        expected_pos;
+    PFK::uuz::CompressionSetting  compression;
+    PFK::uuz::EncryptionSetting   encryption;
+    PFK::uuz::HMACSetting         hmac;
+    const char                  * compression_name;
+    const char                  * encryption_name;
+    const char                  * hmac_name;
+
+    struct ListInfo {
+        std::string   filename;
+        uint32_t      mode;
+        uint64_t      size;
+        uint64_t      csize;   // 0 if not compr
+        uint32_t      percent; // 0 if not compr
+        std::string   hmac_status; // "OK" "FAIL" "-"
+        std::string   sha_status;  // "OK" "FAIL"
+    };
+    std::vector<ListInfo*>  list_output;
 
     typedef enum {
         DECODE_ERR,
         DECODE_COMPLETE,
         DECODE_MORE
     } uuz_decode_ret_t;
-    uuz_decode_ret_t uuz_decode(void);
+    uuz_decode_ret_t uuz_decode(bool list_only);
     void decrypt(unsigned char *out, const std::string &in);
     bool getline(void);
     enum decode_b64_res_t { INVALID_B64, PARTIAL_B64, COMPLETE_B64 };
     bool decode_version(std::string &out, const std::string &in);
     decode_b64_res_t decode_b64(char s, int Scode);
     bool decode_m(void);
-    void handle_s1_version(void);
-    bool handle_s2_file_info(void);
-    void handle_s3_data(void);
-    void handle_s9_complete(void);
+    void handle_s1_version(bool list_only);
+    bool handle_s2_file_info(bool list_only);
+    void handle_s3_data(bool list_only);
+    void handle_s9_complete(bool list_only);
 
 public:
     uuz(int argc, char ** argv);

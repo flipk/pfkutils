@@ -11,26 +11,27 @@ mkdir test
 
 set -e -x
 
-cp Makefile test/0
-chmod 400 test/0
-cp obj/uuz test/1
-tar cf test/2 obj
-chmod 777 test/2
+file1=1-Makefile
+file2=2-obj-uuz-binary
+file3=3-big-tar-file.tar
+files="$file1 $file2 $file3"
+
+cp Makefile test/$file1
+chmod 400 test/$file1
+cp obj/uuz test/$file2
+tar cf test/$file3 obj
+chmod 777 test/$file3
 cd test
 
-../obj/uuz e $debug $variant $compr -t $enckey -o 3 $maxsize 0 1 2
-mv 0 00
-mv 1 11
-mv 2 22
+../obj/uuz e $debug $variant $compr -t $enckey -o 4.uuz $maxsize $files
+sha256sum $files > before.txt
 # assumption: when bash does "3.*" globbing, the results
 # are listed in numeric (actually alphabetical) order.
 # this wouldn't work if they were in random order.
-cat 3.* | ../obj/uuz d $debug $enckey -
+cat 4.uuz.* | ../obj/uuz d $debug $enckey -
+sha256sum $files > after.txt
+diff before.txt after.txt
+cat 4.uuz.* | ../obj/uuz t $debug $enckey -
 
-sha256sum 0 00 1 11 2 22
-ls -l 3.???
-cmp 0 00
-cmp 1 11
-cmp 2 22
 
 exit 0
