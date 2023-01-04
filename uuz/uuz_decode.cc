@@ -105,7 +105,8 @@ uuz :: uuz_decode(void)
                     break;
 
                 case SCODE_FILE_INFO:
-                    handle_s2_file_info();
+                    if (handle_s2_file_info() == false)
+                        done = true;
                     break;
 
                 case SCODE_DATA:
@@ -230,24 +231,24 @@ void uuz :: handle_s1_version(void)
         got_version = true;
 }
 
-void uuz :: handle_s2_file_info(void)
+bool uuz :: handle_s2_file_info(void)
 {
     if (!got_version)
     {
         fprintf(stderr, "ERROR GOT S2 WITHOUT S1\n");
-        return;
+        return false;
     }
     if (m.type() != PFK::uuz::uuz_FILE_INFO)
     {
         fprintf(stderr, "S2 proto type mismatch\n");
-        return;
+        return false;
     }
     if (!m.has_file_info() ||
         !m.file_info().has_file_name()  ||
         !m.file_info().has_file_size())
     {
         fprintf(stderr, "S2 required fields missing\n");
-        return;
+        return false;
     }
     compression = PFK::uuz::NO_COMPRESSION;
     if (m.file_info().has_compression())
@@ -287,12 +288,44 @@ void uuz :: handle_s2_file_info(void)
         break;
     }
 
+    bool dir_fail = false;
+    {
+        std::vector<std::string>  components;
+        splitString(components, output_filename);
+        std::string dirToMake;
+
+        for (int ind = 0; ind < (components.size()-1); ind++)
+        {
+            dirToMake += components[ind];
+            if (mkdir(dirToMake.c_str(), 0700) < 0)
+            {
+                int e = errno;
+                if (e == EEXIST)
+                {
+                    // this is OK
+                }
+                else
+                {
+                    printf("ERROR: mkdir '%s': %d (%s)\n",
+                           dirToMake.c_str(), e, strerror(e));
+                    dir_fail = true;
+                    break;
+                }
+            }
+            dirToMake += "/";
+        }
+    }
+
+    if (dir_fail)
+        return false;
+
     output_f = fopen(output_filename.c_str(), "w");
     if (!output_f)
     {
         int e = errno;
         fprintf(stderr, "failed to open output filename: %d (%s)\n",
                 e, strerror(e));
+        return false;
     }
     else
     {
@@ -302,6 +335,7 @@ void uuz :: handle_s2_file_info(void)
         }
     }
     expected_pos = 0;
+    return true;
 }
 
 void uuz :: handle_s3_data(void)

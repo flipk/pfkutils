@@ -90,6 +90,25 @@ static inline const char * deflateretstring(int cc)
     return "UNKNOWN RETURN VALUE";
 }
 
+static inline void splitString(std::vector<std::string> &out,
+                               const std::string &line )
+{
+    out.clear();
+    size_t pos;
+    for (pos = 0; ;)
+    {
+        size_t found = line.find_first_of("/",pos);
+        if (found == std::string::npos)
+        {
+            if (pos != line.size())
+                out.push_back(line.substr(pos,line.size()-pos));
+            break;
+        }
+        if (found > pos)
+            out.push_back(line.substr(pos,found-pos));
+        pos = found+1;
+    }
+}
 
 }; // namespace PFK_uuz
 

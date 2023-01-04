@@ -203,6 +203,30 @@ uuzopts :: uuzopts(int argc, char ** argv)
             char * fn = argv[ind];
             input_file * inf = new input_file;
             inf->path = fn;
+
+            while (inf->path[0] == '/')
+            {
+                fprintf(stderr, "WARNING: stripping leading '/' "
+                        "from pathnames\n");
+                inf->path.erase(0,1);
+            }
+
+            {
+                std::vector<std::string>  components;
+                splitString(components, inf->path);
+
+                for (auto &s : components)
+                {
+                    if (s == "." || s == "..")
+                    {
+                        fprintf(stderr, "ERROR: path components "
+                                "'.' and '..' "
+                                "are not allowed\n");
+                        return;
+                    }
+                }
+            }
+
             if (stat(fn, &inf->sb) < 0)
             {
                 int e = errno;
@@ -217,6 +241,12 @@ uuzopts :: uuzopts(int argc, char ** argv)
             }
             if (!die)
             {
+                if (inf->sb.st_mode & S_IFDIR)
+                {
+                    fprintf(stderr, "ERROR: recursing into subdirs not "
+                            "supported\n");
+                    return;
+                }
                 inf->fd = open(fn, O_RDONLY);
                 if (inf->fd < 0)
                 {

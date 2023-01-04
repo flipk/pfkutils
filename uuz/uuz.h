@@ -77,7 +77,7 @@ class uuz {
     decode_b64_res_t decode_b64(char s, int Scode);
     bool decode_m(void);
     void handle_s1_version(void);
-    void handle_s2_file_info(void);
+    bool handle_s2_file_info(void);
     void handle_s3_data(void);
     void handle_s9_complete(void);
 
