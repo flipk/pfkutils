@@ -41,7 +41,9 @@ static inline void print_comprencrhmac(const uuzopts &opts)
 
 bool uuz::encode_m(int Scode)
 {
-    DEBUGPROTO("encoding msg:\n%s\n", m.DebugString().c_str());
+    DEBUGPROTO("encoding msg of size %u:\n%s\n",
+               (uint32_t) m.ByteSizeLong(),
+               m.DebugString().c_str());
 
     // base64 encodes 3 binary bytes to 4. for most b64 variants,
     // you don't have to worry about that multiple of 3 -- if it's
@@ -52,23 +54,108 @@ bool uuz::encode_m(int Scode)
     // protobuf decode, so we encode the length of the protobuf in
     // the stream.
 
+    google::protobuf::Message * msg_to_serialize = &m;
+    serialized_pb.resize(0);
+
+    if (Scode != SCODE_VERSION)
+    {
+        if (encryption == PFK::uuz::AES256_ENCRYPTION)
+        {
+            if (m.SerializeToString(&serialized_pb) == false)
+            {
+                fprintf(stderr, "cannot encode msg of Scode %d\n", Scode);
+                exit(1);
+            }
+            encrypted_container.Clear();
+            int message_size = serialized_pb.size();
+
+            // leave enough room for encrypt to PAD if it needs to.
+            // ... this is gross, because encrypt() will write to its
+            // input parameter *beyond* the size you specify.
+            serialized_pb.resize( message_size + 16 );
+
+            // but pass the original message size as the length.
+            encrypt(*encrypted_container.mutable_data(),
+                    (unsigned char *) serialized_pb.c_str(),
+                    message_size);
+
+            // be sure original message size makes it to decoder.
+            encrypted_container.set_data_size(message_size);
+
+            uint32_t salt = random();
+            encrypted_container.set_salt(salt);
+
+            if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
+            {
+                // construct hmac key
+                //   encryption key + data_size + salt
+                std::ostringstream hmac_key_str;
+                hmac_key_str << opts.encryption_key
+                             << message_size
+                             << salt;
+                std::string  hmac_key = hmac_key_str.str();
+
+                mbedtls_md_hmac_starts(
+                    &hmac_ctx,
+                    (const unsigned char*) hmac_key.c_str(),
+                    hmac_key.size());
+
+                if (DEBUGFLAG_HMAC)
+                {
+                    std::string key_string;
+                    format_hexbytes(key_string, hmac_key);
+                    fprintf(stderr, "HMAC STARTS with key %s\n",
+                            key_string.c_str());
+                }
+
+                mbedtls_md_hmac_update(&hmac_ctx,
+                                       (unsigned char *) serialized_pb.c_str(),
+                                       message_size);
+                DEBUGHMAC("HMAC update with %" PRIu32 " bytes "
+                          "%08x %08x %08x %08x\n",
+                          (uint32_t) message_size,
+                          ((uint32_t*)serialized_pb.c_str())[0],
+                          ((uint32_t*)serialized_pb.c_str())[1],
+                          ((uint32_t*)serialized_pb.c_str())[2],
+                          ((uint32_t*)serialized_pb.c_str())[3]);
+
+                std::string *hmac = encrypted_container.mutable_hmac();
+                hmac->resize(md_size);
+                mbedtls_md_hmac_finish(&hmac_ctx,
+                                       (unsigned char*) hmac->c_str());
+                DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
+                          ((uint32_t*)hmac->c_str())[0],
+                          ((uint32_t*)hmac->c_str())[1],
+                          ((uint32_t*)hmac->c_str())[2],
+                          ((uint32_t*)hmac->c_str())[3]);
+                mbedtls_md_hmac_reset(&hmac_ctx);
+            }
+
+            // overwrite serialized_pb with encrypted message.
+            encrypted_container.SerializeToString(&serialized_pb);
+
+            DEBUGPROTO("encoding encrypted msg of size %u:\n%s\n",
+                       (uint32_t) encrypted_container.ByteSizeLong(),
+                       encrypted_container.DebugString().c_str());
+
+            msg_to_serialize = &encrypted_container;
+        }
+    }
+
     serialized_pb.resize(0);
     {
         google::protobuf::io::StringOutputStream zos(&serialized_pb);
         {
             google::protobuf::io::CodedOutputStream cos(&zos);
-            uint32_t  len = (uint32_t) m.ByteSizeLong();
+            uint32_t  len = (uint32_t) msg_to_serialize->ByteSizeLong();
             cos.WriteVarint32( len );
-            if (m.SerializeToCodedStream(&cos) == false)
+            if (msg_to_serialize->SerializeToCodedStream(&cos) == false)
             {
                 fprintf(stderr, "cannot encode msg of Scode %d\n", Scode);
                 exit(1);
             }
         } // cos destroyed here
     } // zos destroyed here.
-
-    serialized_pb += partial_serialized_pb;
-    partial_serialized_pb.resize(0);
 
     b64_encoded_pb.resize(0);
     if (Scode == SCODE_VERSION)
@@ -98,19 +185,65 @@ bool uuz::encode_m(int Scode)
 // this is called once at the start.
 bool uuz::uuz_encode_emit_s1(void)
 {
+    compression = opts.compression;
+    encryption = opts.encryption;
+    hmac = opts.hmac;
+
     if (opts.text_headers)
+    {
+        compression_name = "no compression";
+        switch (opts.compression)
+        {
+        case PFK::uuz::NO_COMPRESSION:
+            // already set
+            break;
+        case PFK::uuz::LIBZ_COMPRESSION:
+            compression_name = "libz";
+            break;
+        }
+
+        encryption_name = "no encryption";
+        switch (encryption)
+        {
+        case PFK::uuz::NO_ENCRYPTION:
+            // already set
+            break;
+        case PFK::uuz::AES256_ENCRYPTION:
+            encryption_name = "AES256";
+            break;
+        }
+
+        hmac_name = "no hmac";
+        switch (hmac)
+        {
+        case PFK::uuz::NO_HMAC:
+            // already set
+            break;
+        case PFK::uuz::HMAC_SHA256HMAC:
+            hmac_name = "SHA256HMAC";
+            break;
+        }
+
         fprintf(opts.uuz_f,
-                "# program %s protoversion %d using b64 variant %d (%s)\n",
+                "# program %s protoversion %d b64variant %d (%s)"
+                " %s %s %s\n",
                PFK_UUZ_APP_NAME,
-               PFK::uuz::uuz_VERSION_1,
+               PFK::uuz::uuz_VERSION_2,
                (int) opts.data_block_variant,
-               Base64::variant_name(opts.data_block_variant));
+               Base64::variant_name(opts.data_block_variant),
+               compression_name,
+               encryption_name,
+               hmac_name);
+    }
     m.Clear();
     m.set_type(PFK::uuz::uuz_VERSION);
     m.mutable_proto_version()->set_app_name(PFK_UUZ_APP_NAME);
-    m.mutable_proto_version()->set_version(PFK::uuz::uuz_VERSION_1);
+    m.mutable_proto_version()->set_version(PFK::uuz::uuz_VERSION_2);
     m.mutable_proto_version()->set_b64variant(
         (int) opts.data_block_variant);
+    m.mutable_proto_version()->set_compression(opts.compression);
+    m.mutable_proto_version()->set_encryption(opts.encryption);
+    m.mutable_proto_version()->set_hmac(opts.hmac);
     if (encode_m(SCODE_VERSION) == false)
         return false;
     m.Clear();
@@ -156,9 +289,6 @@ int uuz::uuz_encode(void)
     m.mutable_file_info()->set_file_size(inf->sb.st_size);
     // store the mode, but only the rwx bits.
     m.mutable_file_info()->set_file_mode(inf->sb.st_mode & 0777);
-    m.mutable_file_info()->set_compression(opts.compression);
-    m.mutable_file_info()->set_encryption(opts.encryption);
-    m.mutable_file_info()->set_hmac(opts.hmac);
     if (encode_m(SCODE_FILE_INFO) == false)
         goto out;
     m.Clear();
@@ -177,57 +307,16 @@ int uuz::uuz_encode(void)
         int cc;
         while (1)
         {
-            cc = ::fread(ibuf, 1, BUFFER_SIZE, inf->f);
+            fdbuf->resize(BUFFER_SIZE);
+            cc = ::fread((void*) fdbuf->c_str(), 1, BUFFER_SIZE, inf->f);
             if (cc <= 0)
                 break;
+            mbedtls_md_update(&md_ctx,
+                              (const unsigned char *) fdbuf->c_str(),
+                              cc);
             fd->set_data_size(cc);
-            mbedtls_md_update(&md_ctx, ibuf, cc);
-            encrypt(*fdbuf, ibuf, cc);
+            fdbuf->resize(cc);
             fd->set_position(pos);
-            if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
-            {
-                // construct hmac key
-                //   encryption key + filename + position
-                std::ostringstream hmac_key_str;
-                hmac_key_str << opts.encryption_key
-                             << inf->path
-                             << pos;
-                std::string  hmac_key = hmac_key_str.str();
-
-                mbedtls_md_hmac_starts(
-                    &hmac_ctx,
-                    (const unsigned char*) hmac_key.c_str(),
-                    hmac_key.size());
-
-                if (DEBUGFLAG_HMAC)
-                {
-                    std::string key_string;
-                    format_hexbytes(key_string, hmac_key);
-                    fprintf(stderr, "HMAC STARTS with key %s\n",
-                            key_string.c_str());
-                }
-
-                mbedtls_md_hmac_update(&hmac_ctx,
-                                       (const unsigned char *)fdbuf->c_str(),
-                                       fdbuf->size());
-                DEBUGHMAC("HMAC update with %" PRIu32
-                          " bytes %08x %08x %08x %08x\n",
-                          (uint32_t) fdbuf->size(),
-                          ((uint32_t*)fdbuf->c_str())[0],
-                          ((uint32_t*)fdbuf->c_str())[1],
-                          ((uint32_t*)fdbuf->c_str())[2],
-                          ((uint32_t*)fdbuf->c_str())[3]);
-
-                std::string *hmac = fd->mutable_hmac();
-                hmac->resize(md_size);
-                mbedtls_md_hmac_finish(&hmac_ctx,
-                                       (unsigned char*) hmac->c_str());
-                DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
-                          ((uint32_t*)hmac->c_str())[0],
-                          ((uint32_t*)hmac->c_str())[1],
-                          ((uint32_t*)hmac->c_str())[2],
-                          ((uint32_t*)hmac->c_str())[3]);
-            }
             if (opts.text_headers)
             {
                 fprintf(opts.uuz_f,
@@ -282,54 +371,7 @@ int uuz::uuz_encode(void)
                     print_comprencrhmac(opts);
                     fprintf(opts.uuz_f, "\n");
                 }
-                encrypt(*fdbuf, obuf, remaining);
-
-                if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
-                {
-                    // construct hmac key
-                    //   encryption key + filename + position
-                    std::ostringstream hmac_key_str;
-                    hmac_key_str << opts.encryption_key
-                                 << inf->path
-                                 << pos;
-                    std::string  hmac_key = hmac_key_str.str();
-
-                    mbedtls_md_hmac_starts(
-                        &hmac_ctx,
-                        (const unsigned char*) hmac_key.c_str(),
-                        hmac_key.size());
-
-                    if (DEBUGFLAG_HMAC)
-                    {
-                        std::string key_string;
-                        format_hexbytes(key_string, hmac_key);
-                        fprintf(stderr, "HMAC STARTS with key %s\n",
-                                key_string.c_str());
-                    }
-
-                    mbedtls_md_hmac_update(&hmac_ctx,
-                                           (unsigned char *) fdbuf->c_str(),
-                                           fdbuf->size());
-                    DEBUGHMAC("HMAC update with %" PRIu32 " bytes "
-                              "%08x %08x %08x %08x\n",
-                              (uint32_t) fdbuf->size(),
-                              ((uint32_t*)fdbuf->c_str())[0],
-                              ((uint32_t*)fdbuf->c_str())[1],
-                              ((uint32_t*)fdbuf->c_str())[2],
-                              ((uint32_t*)fdbuf->c_str())[3]);
-
-                    std::string *hmac = fd->mutable_hmac();
-                    hmac->resize(md_size);
-                    mbedtls_md_hmac_finish(&hmac_ctx,
-                                           (unsigned char*) hmac->c_str());
-                    DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
-                              ((uint32_t*)hmac->c_str())[0],
-                              ((uint32_t*)hmac->c_str())[1],
-                              ((uint32_t*)hmac->c_str())[2],
-                              ((uint32_t*)hmac->c_str())[3]);
-                    mbedtls_md_hmac_reset(&hmac_ctx);
-                }
-
+                fdbuf->assign((char*) obuf, remaining);
                 fd->set_data_size(remaining);
                 fd->set_position(pos);
                 pos += remaining;

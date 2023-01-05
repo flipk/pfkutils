@@ -46,6 +46,7 @@ class uuz {
     PFK::uuz::uuzMsg   m;
     std::string   serialized_pb;
     std::string   b64_encoded_pb;
+    PFK::uuz::EncryptedContainer   encrypted_container;
 
     void format_hexbytes(std::string &out, const std::string &in);
 
@@ -92,7 +93,7 @@ class uuz {
     enum decode_b64_res_t { INVALID_B64, PARTIAL_B64, COMPLETE_B64 };
     bool decode_version(std::string &out, const std::string &in);
     decode_b64_res_t decode_b64(char s, int Scode);
-    bool decode_m(void);
+    bool decode_m(int Scode);
     void handle_s1_version(bool list_only);
     bool handle_s2_file_info(bool list_only);
     void handle_s3_data(bool list_only);

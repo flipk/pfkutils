@@ -97,7 +97,7 @@ uuz :: uuz_decode(bool list_only)
 
         case COMPLETE_B64:
             DEBUGDECODE("completed Scode %d\n", Scode);
-            if (decode_m())
+            if (decode_m(Scode))
                 switch (Scode)
                 {
                 case SCODE_VERSION:
@@ -178,27 +178,125 @@ uuz :: decode_b64_res_t uuz :: decode_b64(char s, int Scode)
     return (s == 'S') ? COMPLETE_B64 : PARTIAL_B64;
 }
 
-bool uuz:: decode_m(void)
+bool uuz:: decode_m(int Scode)
 {
-    google::protobuf::io::ArrayInputStream ais(
-        serialized_pb.data(), serialized_pb.size());
+    google::protobuf::Message * msg_to_decode = &m;
 
+    if (Scode != SCODE_VERSION)
     {
-        google::protobuf::io::CodedInputStream cis(&ais);
-        uint32_t len = 0;
-        if (cis.ReadVarint32(&len) == false)
-            return false;
-        auto old = cis.PushLimit(len);
-        m.Clear();
-        int r = m.ParseFromCodedStream(&cis);
-        cis.PopLimit(old);
-        if (r)
+        if (encryption != PFK::uuz::NO_ENCRYPTION)
         {
-            DEBUGPROTO("parsed proto:\n%s\n", m.DebugString().c_str());
-            return true;
+            msg_to_decode = &encrypted_container;
         }
     }
-    return false;
+
+    msg_to_decode->Clear();
+    {
+        google::protobuf::io::ArrayInputStream ais(
+            serialized_pb.data(), serialized_pb.size());
+        {
+            google::protobuf::io::CodedInputStream cis(&ais);
+            uint32_t len = 0;
+            if (cis.ReadVarint32(&len) == false)
+                return false;
+            auto old = cis.PushLimit(len);
+            m.Clear();
+            bool r = msg_to_decode->ParseFromCodedStream(&cis);
+            cis.PopLimit(old);
+            if (!r)
+            {
+                fprintf(stderr, "failed to decode stream of len %u\n",
+                        len);
+                return false;
+            }
+        } // destroy cis
+    } // destroy ais
+
+    DEBUGPROTO("parsed proto:\n%s\n",
+               msg_to_decode->DebugString().c_str());
+
+    if (Scode != SCODE_VERSION)
+    {
+        if (encryption == PFK::uuz::AES256_ENCRYPTION)
+        {
+            if (!encrypted_container.has_data() ||
+                !encrypted_container.has_data_size() ||
+                !encrypted_container.has_salt()  ||
+                !encrypted_container.has_hmac())
+            {
+                fprintf(stderr, "ERROR encrypted data missing "
+                        "required fields\n");
+                return false;
+            }
+
+            // make buffer big enough to decrypt with padding.
+            serialized_pb.resize( encrypted_container.data().size()  );
+            decrypt((unsigned char*) serialized_pb.c_str(),
+                    encrypted_container.data());
+            // then truncate the unused.
+            serialized_pb.resize( encrypted_container.data_size() );
+
+            if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
+            {
+                // construct hmac key
+                //   encryption key + data_size + salt
+                std::ostringstream hmac_key_str;
+                hmac_key_str << opts.encryption_key
+                             << encrypted_container.data_size()
+                             << encrypted_container.salt();
+                std::string  hmac_key = hmac_key_str.str();
+
+                mbedtls_md_hmac_starts(
+                    &hmac_ctx,
+                    (const unsigned char*) hmac_key.c_str(),
+                    hmac_key.size());
+
+                if (DEBUGFLAG_HMAC)
+                {
+                    std::string key_string;
+                    format_hexbytes(key_string, hmac_key);
+                    fprintf(stderr, "HMAC STARTS with key %s\n",
+                            key_string.c_str());
+                }
+
+                mbedtls_md_hmac_update(&hmac_ctx,
+                                       (unsigned char *) serialized_pb.c_str(),
+                                       encrypted_container.data_size());
+                DEBUGHMAC("HMAC update with %" PRIu32 " bytes "
+                          "%08x %08x %08x %08x\n",
+                          (uint32_t) encrypted_container.data_size(),
+                          ((uint32_t*)serialized_pb.c_str())[0],
+                          ((uint32_t*)serialized_pb.c_str())[1],
+                          ((uint32_t*)serialized_pb.c_str())[2],
+                          ((uint32_t*)serialized_pb.c_str())[3]);
+
+                std::string hmac;
+                hmac.resize(md_size);
+                mbedtls_md_hmac_finish(&hmac_ctx,
+                                       (unsigned char*) hmac.c_str());
+                DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
+                          ((uint32_t*)hmac.c_str())[0],
+                          ((uint32_t*)hmac.c_str())[1],
+                          ((uint32_t*)hmac.c_str())[2],
+                          ((uint32_t*)hmac.c_str())[3]);
+                mbedtls_md_hmac_reset(&hmac_ctx);
+
+                if (hmac != encrypted_container.hmac())
+                {
+                    fprintf(stderr, "ERROR: HMAC MISMATCH!\n");
+                    exit(1);
+                }
+            }
+
+            if (!m.ParseFromString(serialized_pb))
+                return false;
+
+            DEBUGPROTO("parsed proto:\n%s\n",
+                       m.DebugString().c_str());
+        }
+    }
+
+    return true;
 }
 
 void uuz :: handle_s1_version(bool list_only)
@@ -220,6 +318,12 @@ void uuz :: handle_s1_version(bool list_only)
         fprintf(stderr, "S1 proto missing required version fields!\n");
         return;
     }
+    if (m.proto_version().version() != PFK::uuz::uuz_VERSION_2)
+    {
+        fprintf(stderr, "S1 proto version %d not supported! (only %d)!\n",
+                m.proto_version().version(), PFK::uuz::uuz_VERSION_2);
+        return;
+    }
     Base64Variant  variant = (Base64Variant) m.proto_version().b64variant();
     if (!b64.set_variant(variant))
     {
@@ -227,15 +331,73 @@ void uuz :: handle_s1_version(bool list_only)
                 variant);
         exit(1);
     }
-    else
-        got_version = true;
+
+    // defaults
+    compression = PFK::uuz::NO_COMPRESSION;
+    encryption = PFK::uuz::NO_ENCRYPTION;
+    hmac = PFK::uuz::NO_HMAC;
+
+    if (m.proto_version().has_compression())
+        compression = m.proto_version().compression();
+    if (m.proto_version().has_encryption())
+        encryption = m.proto_version().encryption();
+    if (m.proto_version().has_hmac())
+        hmac = m.proto_version().hmac();
+
+    compression_name = "no compression";
+    switch (compression)
+    {
+    case PFK::uuz::NO_COMPRESSION:
+        // already set
+        break;
+    case PFK::uuz::LIBZ_COMPRESSION:
+        compression_name = "libz";
+        break;
+    }
+
+    encryption_name = "no encryption";
+    switch (encryption)
+    {
+    case PFK::uuz::NO_ENCRYPTION:
+        // already set
+        break;
+    case PFK::uuz::AES256_ENCRYPTION:
+        encryption_name = "AES256";
+        break;
+    }
+
+    if (encryption != PFK::uuz::NO_ENCRYPTION)
+    {
+        if (opts.encryption_key.size() == 0)
+        {
+            fprintf(stderr, "ERROR: input encrypted but no key provided!\n");
+            exit(1);
+        }
+    }
+
+    hmac_name = "no hmac";
+    switch (hmac)
+    {
+    case PFK::uuz::NO_HMAC:
+        // already set
+        break;
+    case PFK::uuz::HMAC_SHA256HMAC:
+        hmac_name = "SHA256HMAC";
+        break;
+    }
+
+    got_version = true;
     if (list_only)
     {
-        printf("VERSION_INFO: program=\"%s\" protoversion=%d "
-               "b64variant=%d=%s\n", m.proto_version().app_name().c_str(),
+        printf("VERSION_INFO: program \"%s\" protoversion %d "
+               "b64variant %d (%s) %s %s %s\n",
+               m.proto_version().app_name().c_str(),
                m.proto_version().version(),
                (int) variant,
-               Base64::variant_name(opts.data_block_variant));
+               Base64::variant_name(opts.data_block_variant),
+               compression_name,
+               encryption_name,
+               hmac_name);
     }
     else
     {
@@ -264,47 +426,6 @@ bool uuz :: handle_s2_file_info(bool list_only)
         fprintf(stderr, "ERROR: S2 required fields missing\n");
         exit(1);
     }
-    compression = PFK::uuz::NO_COMPRESSION;
-    if (m.file_info().has_compression())
-        compression = m.file_info().compression();
-    compression_name = "no compression";
-    switch (compression)
-    {
-    case PFK::uuz::NO_COMPRESSION:
-        // already set
-        break;
-    case PFK::uuz::LIBZ_COMPRESSION:
-        compression_name = "libz";
-        break;
-    }
-
-    encryption_name = "no encryption";
-    encryption = PFK::uuz::NO_ENCRYPTION;
-    if (m.file_info().has_encryption())
-        encryption = m.file_info().encryption();
-    switch (encryption)
-    {
-    case PFK::uuz::NO_ENCRYPTION:
-        // already set
-        break;
-    case PFK::uuz::AES256_ENCRYPTION:
-        encryption_name = "AES256";
-        break;
-    }
-
-    hmac_name = "no hmac";
-    hmac = PFK::uuz::NO_HMAC;
-    if (m.file_info().has_hmac())
-        hmac = m.file_info().hmac();
-    switch (hmac)
-    {
-    case PFK::uuz::NO_HMAC:
-        // already set
-        break;
-    case PFK::uuz::HMAC_SHA256HMAC:
-        hmac_name = "SHA256HMAC";
-        break;
-    }
 
     output_filename = m.file_info().file_name();
     output_filesize = m.file_info().file_size();
@@ -316,16 +437,6 @@ bool uuz :: handle_s2_file_info(bool list_only)
 
     final_output_filename = output_filename;
     output_filename += ".TEMP_OUTPUT";
-
-    if (m.file_info().has_encryption()   &&
-        m.file_info().encryption() != PFK::uuz::NO_ENCRYPTION)
-    {
-        if (opts.encryption_key.size() == 0)
-        {
-            fprintf(stderr, "ERROR: input encrypted but no key provided!\n");
-            exit(1);
-        }
-    }
 
     expected_pos = 0;
     output_file_pos = 0;
@@ -427,116 +538,16 @@ void uuz :: handle_s3_data(bool list_only)
 
     if (compression == PFK::uuz::NO_COMPRESSION)
     {
-        if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
-        {
-            // construct hmac key
-            //   encryption key + filename + position
-            std::ostringstream hmac_key_str;
-            hmac_key_str << opts.encryption_key
-                         << final_output_filename
-                         << fd.position();
-            std::string  hmac_key = hmac_key_str.str();
-
-            mbedtls_md_hmac_starts(
-                &hmac_ctx,
-                (const unsigned char*) hmac_key.c_str(),
-                hmac_key.size());
-
-            if (DEBUGFLAG_HMAC)
-            {
-                std::string key_string;
-                format_hexbytes(key_string, hmac_key);
-                fprintf(stderr, "HMAC STARTS with key %s\n",
-                        key_string.c_str());
-            }
-
-            mbedtls_md_hmac_update(&hmac_ctx,
-                                   (const unsigned char *) fdbuf.c_str(),
-                                   fdbuf.size());
-            DEBUGHMAC("HMAC update with %" PRIu32
-                      " bytes %08x %08x %08x %08x\n",
-                      (uint32_t) fdbuf.size(),
-                      ((uint32_t*)fdbuf.c_str())[0],
-                      ((uint32_t*)fdbuf.c_str())[1],
-                      ((uint32_t*)fdbuf.c_str())[2],
-                      ((uint32_t*)fdbuf.c_str())[3]);
-            std::string hmac;
-            hmac.resize(md_size);
-            mbedtls_md_hmac_finish(&hmac_ctx,
-                                   (unsigned char*) hmac.c_str());
-            DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
-                      ((uint32_t*)hmac.c_str())[0],
-                      ((uint32_t*)hmac.c_str())[1],
-                      ((uint32_t*)hmac.c_str())[2],
-                      ((uint32_t*)hmac.c_str())[3]);
-            if (hmac != fd.hmac())
-            {
-                printf("ERROR: HMAC MISMATCH! check your keys\n");
-                exit(1);
-            }
-            mbedtls_md_hmac_reset(&hmac_ctx);
-        }
-
-        decrypt(obuf, fdbuf);
         if (!list_only)
-            fwrite(obuf, fd.data_size(), 1, output_f);
+            fwrite(fdbuf.c_str(), fd.data_size(), 1, output_f);
         output_file_pos += fd.data_size();
-        mbedtls_md_update(&md_ctx, obuf, fd.data_size());
+        mbedtls_md_update(&md_ctx,
+                          (const unsigned char *) fdbuf.c_str(),
+                          fd.data_size());
     }
     else if (compression == PFK::uuz::LIBZ_COMPRESSION)
     {
-        if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
-        {
-            // construct hmac key
-            //   encryption key + filename + position
-            std::ostringstream hmac_key_str;
-            hmac_key_str << opts.encryption_key
-                         << final_output_filename
-                         << fd.position();
-            std::string  hmac_key = hmac_key_str.str();
-
-            mbedtls_md_hmac_starts(
-                &hmac_ctx,
-                (const unsigned char*) hmac_key.c_str(),
-                hmac_key.size());
-
-            if (DEBUGFLAG_HMAC)
-            {
-                std::string key_string;
-                format_hexbytes(key_string, hmac_key);
-                fprintf(stderr, "HMAC STARTS with key %s\n",
-                        key_string.c_str());
-            }
-
-            mbedtls_md_hmac_update(&hmac_ctx,
-                                   (const unsigned char*) fdbuf.c_str(),
-                                   fdbuf.size());
-            DEBUGHMAC("HMAC update with %" PRIu32
-                      " bytes %08x %08x %08x %08x\n",
-                      (uint32_t) fdbuf.size(),
-                      ((uint32_t*)fdbuf.c_str())[0],
-                      ((uint32_t*)fdbuf.c_str())[1],
-                      ((uint32_t*)fdbuf.c_str())[2],
-                      ((uint32_t*)fdbuf.c_str())[3]);
-            std::string hmac;
-            hmac.resize(md_size);
-            mbedtls_md_hmac_finish(&hmac_ctx,
-                                   (unsigned char*) hmac.c_str());
-            DEBUGHMAC("HMAC calculated %08x %08x %08x %08x\n",
-                      ((uint32_t*)hmac.c_str())[0],
-                      ((uint32_t*)hmac.c_str())[1],
-                      ((uint32_t*)hmac.c_str())[2],
-                      ((uint32_t*)hmac.c_str())[3]);
-            if (hmac != fd.hmac())
-            {
-                printf("ERROR: HMAC MISMATCH! check your keys\n");
-                exit(1);
-            }
-            mbedtls_md_hmac_reset(&hmac_ctx);
-        }
-
-        decrypt(ibuf, fdbuf);
-        zs.next_in = (Bytef*) ibuf;
+        zs.next_in = (Bytef*) fdbuf.c_str();
         zs.avail_in = fd.data_size();
 
     again:
@@ -695,7 +706,7 @@ void uuz :: handle_s9_complete(bool list_only)
             li->csize = 0;
             li->percent = 0;
         }
-        if (opts.hmac != PFK::uuz::NO_HMAC)
+        if (hmac != PFK::uuz::NO_HMAC)
             li->hmac_status = " OK ";
         else
             li->hmac_status = "  - ";
@@ -710,7 +721,7 @@ void uuz :: handle_s9_complete(bool list_only)
     {
         // if we made it this far with HMAC turned on,
         // then HMAC must be good too.
-        if (opts.hmac != PFK::uuz::NO_HMAC)
+        if (hmac != PFK::uuz::NO_HMAC)
             fprintf(stderr, "HMAC match!\n");
         if (sha_match)
             fprintf(stderr, "SHA256 match!\n");
@@ -725,7 +736,7 @@ void uuz :: handle_s9_complete(bool list_only)
 
 void uuz :: decrypt(unsigned char *out, const std::string &in)
 {
-    switch (opts.encryption)
+    switch (encryption)
     {
     case PFK::uuz::NO_ENCRYPTION:
         memcpy(out, in.c_str(), in.size());
