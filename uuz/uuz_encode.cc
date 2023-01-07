@@ -69,10 +69,19 @@ bool uuz::encode_m(int Scode)
             encrypted_container.Clear();
             int message_size = serialized_pb.size();
 
+
+            if (Scode == SCODE_FILE_INFO)
+            {
+                // start a new IV for each file.
+                iv.resize(mbed_iv_length);
+                fillRandomBuffer((void*) iv.c_str(), mbed_iv_length);
+                encrypted_container.set_iv(iv);
+            }
+
             // leave enough room for encrypt to PAD if it needs to.
             // ... this is gross, because encrypt() will write to its
             // input parameter *beyond* the size you specify.
-            serialized_pb.resize( message_size + 16 );
+            serialized_pb.resize( message_size + mbed_aes_block_size );
 
             // but pass the original message size as the length.
             encrypt(*encrypted_container.mutable_data(),
@@ -82,7 +91,8 @@ bool uuz::encode_m(int Scode)
             // be sure original message size makes it to decoder.
             encrypted_container.set_data_size(message_size);
 
-            uint32_t salt = random();
+            uint32_t salt;
+            fillRandomBuffer(&salt, 4);
             encrypted_container.set_salt(salt);
 
             if (opts.hmac == PFK::uuz::HMAC_SHA256HMAC)
@@ -427,35 +437,52 @@ void uuz :: encrypt(std::string &out,
 
     case PFK::uuz::AES256_ENCRYPTION:
     {
-        // need to pad up to 16 to use AES256.
+        // need to pad up to mbed_aes_block_size to use AES256.
         int sz = ilen;
-        int blocks = (sz + 15) / 16;
-        int newsize = blocks * 16;
+        int blocks = (sz + (mbed_aes_block_size-1)) / mbed_aes_block_size;
+        int newsize = blocks * mbed_aes_block_size;
         int pad = newsize - sz;
 
         DEBUGMBED("size %d blocks %d newsize %d pad %d\n",
                   sz, blocks, newsize, pad);
 
         if (newsize != sz)
-        {
-            // fill the pad with random fill.
-            for (int ind = 0; ind < pad; ind++)
-                in[sz + ind] = (char)(random() & 0xFF);
-        }
+            fillRandomBuffer((void*)(in + sz), pad);
 
         out.resize(newsize);
-        unsigned char * outp = (unsigned char *) out.c_str();
-        unsigned char * inp = (unsigned char *) in;
 
-        for (int ind = 0; ind < blocks; ind++)
+        if (DEBUGFLAG_MBED)
         {
-            mbedtls_aes_crypt_ecb(
-                &aes_ctx, MBEDTLS_AES_ENCRYPT,
-                inp, outp);
-
-            inp += 16;
-            outp += 16;
+            std::string  hex_iv;
+            std::string  hex_in;
+            format_hexbytes(hex_iv, iv);
+            format_hexbytes(hex_in, std::string((char*)in, ilen));
+            fprintf(stderr, "AES encrypt %u bytes, iv before %s\n"
+                    "inbytes %s\n",
+                    mbed_aes_block_size * blocks,
+                    hex_iv.c_str(),
+                    hex_in.c_str());
         }
+
+        mbedtls_aes_crypt_cbc(
+            &aes_ctx, MBEDTLS_AES_ENCRYPT,
+            mbed_aes_block_size * blocks,
+            (unsigned char *) iv.c_str(),
+            (unsigned char *) in,
+            (unsigned char *) out.c_str());
+
+        if (DEBUGFLAG_MBED)
+        {
+            std::string  hex_iv;
+            std::string  hex_out;
+            format_hexbytes(hex_iv, iv);
+            format_hexbytes(hex_out, out);
+            fprintf(stderr, "AES encrypt iv after %s\n"
+                    "outbytes %s\n",
+                    hex_iv.c_str(),
+                    hex_out.c_str());
+        }
+
         break;
     }
     }

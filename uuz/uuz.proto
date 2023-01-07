@@ -65,9 +65,13 @@ message uuzMsg {
   optional FileComplete  file_complete = 5;
 };
 
+// NOTE field numbers for this message are completely different
+// from all other messages in this file deliberately.
 message EncryptedContainer {
   required bytes data = 50;
   required uint32 data_size = 51;
   required uint32 salt = 52;
   required bytes hmac = 53;
+  // required on a FileInfo that uses AES-256-CBC
+  optional bytes iv = 54;
 };

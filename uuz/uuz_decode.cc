@@ -229,6 +229,9 @@ bool uuz:: decode_m(int Scode)
                 return false;
             }
 
+            if (encrypted_container.has_iv())
+                iv = encrypted_container.iv();
+
             // make buffer big enough to decrypt with padding.
             serialized_pb.resize( encrypted_container.data().size()  );
             decrypt((unsigned char*) serialized_pb.c_str(),
@@ -756,14 +759,36 @@ void uuz :: decrypt(unsigned char *out, const std::string &in)
         unsigned char *outp = out;
         const unsigned char *inp = (const unsigned char *) in.c_str();
 
-        for (int ind = 0; ind < blocks; ind++)
+        if (DEBUGFLAG_MBED)
         {
-            mbedtls_aes_crypt_ecb(
-                &aes_ctx, MBEDTLS_AES_DECRYPT,
-                inp, outp);
+            std::string  hex_iv;
+            std::string  hex_in;
+            format_hexbytes(hex_iv, iv);
+            format_hexbytes(hex_in, in);
+            fprintf(stderr, "AES decrypt %u bytes, iv before %s\n"
+                    "inbytes %s\n",
+                    mbed_aes_block_size * blocks,
+                    hex_iv.c_str(),
+                    hex_in.c_str());
+        }
 
-            inp += 16;
-            outp += 16;
+        mbedtls_aes_crypt_cbc(
+            &aes_ctx, MBEDTLS_AES_DECRYPT,
+            mbed_aes_block_size * blocks,
+            (unsigned char *) iv.c_str(),
+            (unsigned char *) in.c_str(),
+            (unsigned char *) out);
+
+        if (DEBUGFLAG_MBED)
+        {
+            std::string  hex_iv;
+            std::string  hex_out;
+            format_hexbytes(hex_iv, iv);
+            format_hexbytes(hex_out, std::string((char*)out, in.size()));
+            fprintf(stderr, "AES encrypt iv after %s\n"
+                    "outbytes %s\n",
+                    hex_iv.c_str(),
+                    hex_out.c_str());
         }
 
         break;

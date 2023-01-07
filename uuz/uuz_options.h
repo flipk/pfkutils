@@ -4,6 +4,7 @@
 
 #include <string>
 #include <sys/stat.h>
+#include <sys/random.h>
 #include <zlib.h>
 #include <vector>
 #include UUZ_PROTO_HDR
@@ -14,9 +15,13 @@ namespace PFK_uuz {
 #define DEBUGPROTO(x...)  if (opts.debug &  1) fprintf(stderr, x)
 #define DEBUGLIBZ(x...)   if (opts.debug &  2) fprintf(stderr, x)
 #define DEBUGDECODE(x...) if (opts.debug &  4) fprintf(stderr, x)
-#define DEBUGMBED(x...)   if (opts.debug &  8) fprintf(stderr, x)
-#define DEBUGHMAC(x...)   if (opts.debug & 16) fprintf(stderr, x)
-#define DEBUGFLAG_HMAC    (opts.debug & 16)
+
+#define DEBUGFLAG_MBED       (opts.debug & 16)
+#define DEBUGMBED(x...)   if   DEBUGFLAG_MBED  fprintf(stderr, x)
+
+#define DEBUGFLAG_HMAC       (opts.debug & 16)
+#define DEBUGHMAC(x...)   if   DEBUGFLAG_HMAC  fprintf(stderr, x)
+
 
 struct uuzopts {
     bool           _ok;
@@ -107,6 +112,16 @@ static inline void splitString(std::vector<std::string> &out,
         if (found > pos)
             out.push_back(line.substr(pos,found-pos));
         pos = found+1;
+    }
+}
+
+static inline void fillRandomBuffer(void *buf, size_t len)
+{
+    ssize_t  sz = getrandom(buf, len, 0);
+    if (sz != len)
+    {
+        fprintf(stderr, "WARNING: getrandom returned short "
+                "buffer (%d != %d)\n", sz, len);
     }
 }
 

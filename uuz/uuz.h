@@ -55,6 +55,9 @@ class uuz {
     void encrypt(std::string &out, unsigned char *in, int ilen);
     bool encode_m(int Scode);
 
+    static const int mbed_iv_length = 16;
+    static const int mbed_aes_block_size = 16;
+
     std::string   partial_serialized_pb;
     bool got_version;
     std::string   final_output_filename;
@@ -64,6 +67,8 @@ class uuz {
     uint32_t      output_filemode; // 0 means not specified
     FILE         *output_f;
     size_t        expected_pos;
+    std::string   iv;
+
     PFK::uuz::CompressionSetting  compression;
     PFK::uuz::EncryptionSetting   encryption;
     PFK::uuz::HMACSetting         hmac;
