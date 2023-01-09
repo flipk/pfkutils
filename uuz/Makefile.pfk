@@ -16,7 +16,7 @@ libuuz_CXXSRCS = \
 libuuz_PROTOSRCS = uuz/uuz.proto
 libuuz_DEFS = -DUUZ_PROTO_HDR=\"$(libuuz_uuz/uuz.proto_HDR)\"
 # libuuz_LIBS = -lprotobuf -lz -lmbedcrypto
-libuuz_INCS = -Ilibpfkutil
+libuuz_INCS = -Ilibpfkutil $(PROTOBUF_INC)
 
 pfkutils_LIBPROTOBUF = $(PROTOBUF_LIB)
 pfkutils_LIBZ = $(LIBZ_LIB)
