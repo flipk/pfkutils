@@ -7,6 +7,17 @@
 #include <mbedtls/aes.h>
 #include <mbedtls/md.h>
 #include <google/protobuf/message.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
+
+#ifdef GOOGLE_PROTOBUF_VERSION
+#if GOOGLE_PROTOBUF_VERSION < 3004000
+#define PROTOBUF_BYTE_SIZE ByteSize
+#else
+#define PROTOBUF_BYTE_SIZE ByteSizeLong
+#endif
+#endif
+
 #include UUZ_PROTO_HDR
 
 namespace PFK_uuz {

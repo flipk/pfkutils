@@ -42,7 +42,7 @@ static inline void print_comprencrhmac(const uuzopts &opts)
 bool uuz::encode_m(int Scode)
 {
     DEBUGPROTO("encoding msg of size %u:\n%s\n",
-               (uint32_t) m.ByteSizeLong(),
+               (uint32_t) m. PROTOBUF_BYTE_SIZE(),
                m.DebugString().c_str());
 
     // base64 encodes 3 binary bytes to 4. for most b64 variants,
@@ -145,7 +145,7 @@ bool uuz::encode_m(int Scode)
             encrypted_container.SerializeToString(&serialized_pb);
 
             DEBUGPROTO("encoding encrypted msg of size %u:\n%s\n",
-                       (uint32_t) encrypted_container.ByteSizeLong(),
+                       (uint32_t) encrypted_container.PROTOBUF_BYTE_SIZE(),
                        encrypted_container.DebugString().c_str());
 
             msg_to_serialize = &encrypted_container;
@@ -157,7 +157,7 @@ bool uuz::encode_m(int Scode)
         google::protobuf::io::StringOutputStream zos(&serialized_pb);
         {
             google::protobuf::io::CodedOutputStream cos(&zos);
-            uint32_t  len = (uint32_t) msg_to_serialize->ByteSizeLong();
+            uint32_t  len = (uint32_t) msg_to_serialize->PROTOBUF_BYTE_SIZE();
             cos.WriteVarint32( len );
             if (msg_to_serialize->SerializeToCodedStream(&cos) == false)
             {

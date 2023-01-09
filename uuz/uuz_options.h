@@ -121,7 +121,7 @@ static inline void fillRandomBuffer(void *buf, size_t len)
     if (sz != len)
     {
         fprintf(stderr, "WARNING: getrandom returned short "
-                "buffer (%d != %d)\n", sz, len);
+                "buffer (%d != %d)\n", (int) sz, (int) len);
     }
 }
 

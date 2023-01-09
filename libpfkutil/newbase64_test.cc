@@ -148,7 +148,7 @@ void _test_encode_str(Base64 &b,
 
     if (Base64::VERBOSE)
     {
-        printf("src = (%d) (%d) ", (int) b.get_variant(), src.size());
+        printf("src = (%d) (%d) ", (int) b.get_variant(), (int) src.size());
         for (i = 0; i < src.size(); i++)
             printf("%02x ", (unsigned char) src[i]);
         printf("\n");
@@ -164,7 +164,7 @@ void _test_encode_str(Base64 &b,
 
     if (Base64::VERBOSE)
     {
-        printf("encoded = (%d) '", dest.size());
+        printf("encoded = (%d) '", (int) dest.size());
         for (i = 0; i < dest.size(); i++)
             printf("%c", dest[i]);
         printf("'\n");
@@ -180,7 +180,7 @@ void _test_encode_str(Base64 &b,
 
     if (Base64::VERBOSE)
     {
-        printf("out = (%d) ", out.size());
+        printf("out = (%d) ", (int) out.size());
         for (i = 0; i < out.size(); i++)
             printf("%02x ", (unsigned char) out[i]);
         printf("\n");
