@@ -20,10 +20,15 @@ The (optional) compression used is libz, at its maximum setting,
 roughly equivalent to "gzip -9".
 
 The (optional) encryption used is AES256 in CBC mode, as supplied by
-the mbedtls crypto library.  The IV for CBC mode is reinitialized on
-every file. If encryption is enabled, then SHA-256-HMAC is used as
-well; HMAC is done in blocks of roughly 4 kilobytes; a salt value is
-used on each HMAC unit.
+the mbedtls crypto library.  The key for AES256 is generated using
+SHA256 of the supplied password (TODO: use a more formal KDF method).
+The IV for CBC mode is randomly generated for every file.  When
+encryption is enabled, SHA-256-HMAC is also used as well; HMAC is done
+in blocks of roughly 4 kilobytes.  The key for each HMAC is constructed by
+concatenating the following values:
+  - the encryption key;
+  - the message size as a decimal ascii string;
+  - and a random salt value as a decimal ascii string.
 
 UUZ files are text files containing only ASCII characters between 0x20
 (space) and 0x7e (tidle), and newlines characters; the encoder creates

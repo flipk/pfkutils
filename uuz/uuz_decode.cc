@@ -328,6 +328,7 @@ void uuz :: handle_s1_version(bool list_only)
         return;
     }
     Base64Variant  variant = (Base64Variant) m.proto_version().b64variant();
+    opts.data_block_variant = variant;
     if (!b64.set_variant(variant))
     {
         fprintf(stderr, "ERROR INVALID Base64 VARIANT SPECIFIED (%d)\n",
@@ -396,7 +397,7 @@ void uuz :: handle_s1_version(bool list_only)
                "b64variant %d (%s) %s %s %s\n",
                m.proto_version().app_name().c_str(),
                m.proto_version().version(),
-               (int) variant,
+               (int) opts.data_block_variant,
                Base64::variant_name(opts.data_block_variant),
                compression_name,
                encryption_name,
