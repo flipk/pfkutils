@@ -36,7 +36,7 @@ BUILD_SWITCHES = \
 	pfkbak pfksh syslog checksize treescan ts2 sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
-	libpfkthread xlock hilite do_fft protossl i3 uuz
+	libpfkthread xlock hilite do_fft protossl i3 uuz tickler
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \

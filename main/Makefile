@@ -67,4 +67,11 @@ m_CSRCS = ../libpfkutil/m.c
 m_DEFS = -Dm_main=main
 m_INCS = -I../libpfkutil
 
+PROG_TARGETS += tickler
+tickler_TARGET = $(OBJDIR)/tickler
+tickler_CXXSRCS = tickler.cc
+tickler_DEFS = -Dtickler_main=main
+tickler_INCS = -I../libpfkutil
+tickler_LIBS = -lpthread
+
 include ../Makefile.inc

@@ -70,6 +70,9 @@ ifeq ($(PFK_BUILD_spinner),1)
 pfkutils_CXXSRCS += main/spinner.cc
 endif
 
+ifeq ($(PFK_BUILD_tickler),1)
+pfkutils_CXXSRCS += main/tickler.cc
+endif
 
 ifeq ($(PFK_BUILD_xrandr),1)
 pfkutils_CXXSRCS += main/sessionXrandr.cc 

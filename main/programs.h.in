@@ -93,6 +93,10 @@ PROG(0,hilite,"highlight text matching regex patterns using ANSI colors")
 PROG(0,uuz,"unix to unix base64 zlib encrypting encoder")
 #endif
 
+#if @PFK_BUILD_tickler@
+PROG(0,tickler,"tickle hard disk mount points so they dont stop spinning")
+#endif
+
 // always built
 PROG(0,m,"hex/dec/bin mathematics on command line")
 PROG(0,random_hex,"generate a random hex number")

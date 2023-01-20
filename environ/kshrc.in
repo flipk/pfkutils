@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2022-09-05.12:16:27
+#      Last update: 2023-01-16.12:03:23
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -48,6 +48,7 @@ USERID=@PFK_USER_ID@
 GROUP=@PFK_GROUP_ID@
 SCREENDIR=$TMPDIR/screen
 TMUX_TMPDIR=$TMPDIR
+TICKLER_SOCK=$TMP/tickler.sock
 
 if [ ! -d $TMP ] ; then
     mkdir -p $TMP
@@ -55,7 +56,7 @@ if [ ! -d $TMP ] ; then
 fi
 
 export USER HOME ENV HOST TMP TMPDIR TEMP REALUSER PFKUTILS_PREFIX
-export USERID GROUP SCREENDIR TMUX_TMPDIR
+export USERID GROUP SCREENDIR TMUX_TMPDIR TICKLER_SOCK
 
 if [ -f $HOME/.verbose ] ; then
     __verbose() {
