@@ -191,7 +191,7 @@ int tickler_main(int argc, char ** argv)
             return 1;
         }
 
-        daemon(0,1);
+        daemon(0,0);
 
         act.sa_handler = &sig_hand;
         sigfillset(&act.sa_mask);
@@ -326,7 +326,7 @@ int tickler_main(int argc, char ** argv)
             return 1;
         }
 
-        printf("sent stop command; waiting for response\n");
+        printf("sent add command; waiting for response\n");
         if (!control_sock.recv(msg, &e))
         {
             fprintf(stderr, "recv: %s\n", e.Format().c_str());
@@ -347,7 +347,7 @@ int tickler_main(int argc, char ** argv)
             return 1;
         }
 
-        printf("sent stop command; waiting for response\n");
+        printf("sent remove command; waiting for response\n");
         if (!control_sock.recv(msg, &e))
         {
             fprintf(stderr, "recv: %s\n", e.Format().c_str());
@@ -366,7 +366,7 @@ int tickler_main(int argc, char ** argv)
             return 1;
         }
 
-        printf("sent stop command; waiting for response\n");
+        printf("sent status command; waiting for response\n");
         if (!control_sock.recv(msg, &e))
         {
             fprintf(stderr, "recv: %s\n", e.Format().c_str());
