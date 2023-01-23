@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-01-16.12:03:23
+#      Last update: 2023-01-23.10:13:51
 #
 #  ATTENTION READER OF THIS FILE
 #
@@ -262,7 +262,6 @@ esac
 # exit attributes: sgr0 or me   \E[m
 
 if __isksh ; then
-    _set_prompt_first_time=1
     TTY=`tty`
     TTY=${TTY#/dev/}
 
@@ -290,12 +289,10 @@ if __isksh ; then
         else
             _ps="${_ps} $PFKSH_BUILD"
         fi
-        if [[ $_set_prompt_first_time -eq 1 ]] ; then
-            _ps="${_ps}\n % "
-            _set_prompt_first_time=0
-        else
-            _ps="${_ps}\n $COLOR_INVERT%$COLOR_NORMAL "
-        fi
+        _ps="${_ps}\n % "
+        # i used to invert the '%' but bash has
+        # a problem with up-arrow in that case.
+        # _ps="${_ps}\n $COLOR_INVERT%$COLOR_NORMAL "
         export PS1="$_ps"
     }
 
