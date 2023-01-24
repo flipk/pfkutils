@@ -38,3 +38,4 @@ docker-containerd
 chromium-browser
 gnome-screensaver
 dconf-editor
+xfonts-utils
