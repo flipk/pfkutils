@@ -96,3 +96,27 @@ def main2(argv: list) -> int:
 if __name__ == '__main__':
     # exit(main1(sys.argv))
     exit(main2(sys.argv))
+
+
+
+    @staticmethod
+    def _rmtree(path: str):
+        todo = [path]
+        rmdirtodo = [path]
+        while len(todo) > 0:
+            p = todo[0]
+            todo = todo[1:]
+            d: collections.Iterable
+            with os.scandir(p) as d:
+                de: os.DirEntry
+                for de in d:
+                    e = p + '/' + de.name
+                    if de.is_dir():
+                        todo.append(e)
+                        rmdirtodo.insert(0, e)
+                    elif de.is_file():
+                        os.unlink(e)
+        removedir: str
+        for removedir in rmdirtodo:
+            os.rmdir(removedir)
+        return
