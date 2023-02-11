@@ -31,3 +31,4 @@ libgtk-3-dev
 fftw3-dev
 libmbedtls-dev
 docker.io
+xfonts-utils

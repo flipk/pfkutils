@@ -25,7 +25,7 @@
 # 
 # For more information, please refer to <http://unlicense.org>
 
-NODENAME := $(shell uname -n)
+NODENAME := $(shell scripts/architecture)
 
 ifneq ($(wildcard $(HOME)/.pfkutils_config.$(NODENAME)),)
 
