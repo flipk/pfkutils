@@ -6,7 +6,6 @@ CONFIG = latdc
 MAKEJOBS ?= -j3
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_pfksh=1
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
 PFK_BUILD_treescan=1
@@ -38,10 +37,7 @@ PFK_BUILD_slowlink=1
 PFK_BUILD_uuz=1
 PFK_BUILD_tickler=0
 
-PFK_FINDPF_GCC = gcc
-PFK_FINDPF_GCC_ARGS = -DDEBUG=0
-
-KSHRC_LOCAL = kshrc.local.mot
+BASHRC_LOCAL = bashrc.local.mot
 PROTOC_PATH = /usr/bin/protoc
 PROTOBUF_INC = 
 PROTOBUF_LIB = -lprotobuf

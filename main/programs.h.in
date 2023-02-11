@@ -3,10 +3,6 @@
 PROG(0,pfkbak,"Incremental and full-history backup tool")
 #endif
 
-#if @PFK_BUILD_pfksh@
-PROG(0,pfksh,"public domain pdksh-based shell")
-#endif
-
 #if @PFK_BUILD_syslog@
 PROG(0,syslogd,"syslogd server with regex patterns")
 PROG(0,postprocess_syslog,"syslog postprocessor with regex patterns")

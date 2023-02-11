@@ -1,9 +1,5 @@
-ENV=$HOME/.kshrc
+ENV=$HOME/.bashrc
 export ENV
-
-if [ `@PFK_UNAME_PATH@ -s` = "SunOS" ] ; then
-   exec @prefix@/bin/pfksh
-fi
 
 if [ $SHELL = /bin/bash ] ; then
    . $ENV

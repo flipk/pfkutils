@@ -35,10 +35,6 @@ spinner_DEFS = -Dspinner_main=main
 spinner_INCS = -I ../libpfkutil
 spinner_LIBS = -lpthread
 
-PROG_TARGETS += find_pfk_pf
-find_pfk_pf_TARGET = $(OBJDIR)/find-pfk-pf
-find_pfk_pf_CSRCS = find-pfk-pf.c
-
 PROG_TARGETS += random_hex
 random_hex_TARGET = $(OBJDIR)/random-hex
 random_hex_CSRCS = random-hex.c

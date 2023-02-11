@@ -9,16 +9,11 @@
 cd $HOME
 PFKARCH=`@prefix@/bin/architecture`
 
-ENV=$HOME/.kshrc
+ENV=$HOME/.bashrc
 export ENV PFKARCH
 archbin=@prefix@/$PFKARCH/bin
 PATH=$archbin:@prefix@/bin:$PATH
 export PATH
-
-if [   -f @prefix@/$PFKARCH/bin/pfksh ] ; then
-    SHELL=@prefix@/$PFKARCH/bin/pfksh
-    export SHELL
-fi
 
 xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources

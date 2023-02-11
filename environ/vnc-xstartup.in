@@ -11,7 +11,7 @@
 cd $HOME
 PFKARCH=`@prefix@/bin/architecture`
 export PFKARCH
-ENV=$HOME/.kshrc
+ENV=$HOME/.bashrc
 export ENV
 PATH=$HOME/pfk/$PFKARCH/bin:$HOME/pfk/bin:$PATH
 export PATH

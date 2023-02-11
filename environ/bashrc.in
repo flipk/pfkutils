@@ -1,0 +1,707 @@
+###########################################################################
+#
+#      Last update: 2023-02-10.18:48:30
+#
+#############################################################################
+
+#
+# always ensure this file is specified as ENV.
+#
+
+export USER=@PFK_USER_NAME@
+export PFKUTILS_PREFIX=@prefix@
+export REALUSER=`id -u -n`
+export HOME=@PFK_HOME@
+export ENV=$HOME/.bashrc
+export HOST=`hostname`
+export HOST=${HOST%%\.*}
+export TMP=/tmp/$USER
+export TMPDIR=$TMP
+export TEMP=$TMP
+export USERID=@PFK_USER_ID@
+export GROUPID=@PFK_GROUP_ID@
+export SCREENDIR=$TMPDIR/screen
+export TMUX_TMPDIR=$TMPDIR
+export TICKLER_SOCK=$TMP/tickler.sock
+
+if [ ! -d $TMP ] ; then
+    mkdir -p $TMP
+    chmod 700 $TMP
+fi
+
+if [ -f $HOME/.verbose ] ; then
+    __verbose() {
+        echo $$ $*
+        echo `hostname` `tty` `date` $$ $* >> $HOME/.verbose
+    }
+else
+    __verbose() {
+        return 0
+    }
+fi
+
+__verbose 0=$0 SHELL=$SHELL HOST=$HOST options=$- args=$*
+
+case $- in 
+    *i*)
+        __noninteractive() {
+            return 1
+        }
+        ;;
+    *)
+        __noninteractive() {
+            return 0
+        }
+        ;;
+esac
+
+case $- in 
+    *l*)
+        unset ENV_SET
+        ;;
+esac
+
+COLOR_INVERT="\e[7m"
+COLOR_FG_RED="\e[31;1m"
+COLOR_FG_YEL="\e[33;1m"
+COLOR_FG_LT_YEL="\e[33m"
+COLOR_FG_BLU="\e[34;1m"
+COLOR_BG_RED="\e[41m"
+COLOR_BG_YEL="\e[43m"
+COLOR_BG_BLU="\e[44m"
+COLOR_NORMAL="\e[m"
+
+if [[ x$LAST_HOST != x$HOST ]] ; then
+    __verbose from $LAST_HOST to $HOST, regen ENV
+    unset ENV_SET
+fi
+
+LAST_HOST=$HOST
+export LAST_HOST
+
+
+if [[ x$PFKARCH == x ]] ; then
+    eval $( @prefix@/bin/architecture -e )
+    export PFKARCH
+fi
+if [[ x$PFKLDPATHSET == x ]] ; then
+    LD_LIBRARY_PATH=@prefix@/$PFKARCH/lib:$LD_LIBRARY_PATH
+    export LD_LIBRARY_PATH
+    __verbose LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+    PFKLDPATHSET=yes
+fi
+
+__verbose PFKARCH=$PFKARCH
+
+case x$ENV_SET in 
+    x)
+        __extend_path() {
+            if [[ -d $1 ]] ; then
+                if [[ x$p = x ]] ; then
+                    p=$1
+                else
+                    p=$p:$1
+                fi
+            fi
+        }
+
+        p=''
+        __extend_path @prefix@/$PFKARCH/bin
+        __extend_path @prefix@/bin
+        __extend_path ~/bin
+        __extend_path /usr/misc/X11/bin
+        __extend_path /usr/misc/GNU/bin
+        __extend_path /opt/site/bin
+        __extend_path /opt/local/bin
+        __extend_path /opt/gnu/bin
+        __extend_path /usr/X11R6/bin
+        __extend_path /usr/openwin/bin
+        __extend_path /opt/X11R6.4/bin
+        __extend_path /usr/misc/bin
+        __extend_path /usr/vendor/bin
+        __extend_path /usr/atria/bin
+        __extend_path /usr/mot/bin
+        __extend_path /apps/public/bin
+        __extend_path /usr/local/bin
+        __extend_path /usr/local/X11
+        __extend_path /usr/dt/bin
+        __extend_path /usr/ccs/bin
+        __extend_path /bin
+        __extend_path /usr/bin
+        __extend_path /sbin
+        __extend_path /usr/sbin
+        __extend_path /share/scripts
+        __extend_path /share/bin
+        __extend_path /open_source/bin-sun/gcc/bin
+        __extend_path /usr/bin/X11
+
+        unset -f __extend_path
+
+        export PATH=$p
+        export ENV_SET=yes
+        unset p
+
+        __verbose PATH=$PATH
+
+        ;;
+esac
+
+# reverse mode : rev or mr      \E[7m
+# exit attributes: sgr0 or me   \E[m
+
+TTY=`tty`
+TTY=${TTY#/dev/}
+
+_set_prompt() {
+    typeset _ps
+    _ps=''
+    if [[ "x$1" != x ]] ; then
+        _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL\n"
+    fi
+    if [[ $REALUSER == "root" ]] ; then
+        _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL"
+    else
+        _ps="${_ps}$COLOR_FG_RED$REALUSER@$HOST$COLOR_NORMAL"
+    fi
+    if [[ x$CLEARCASE_ROOT != x ]] ; then
+        _ps="${_ps} in CC"
+    fi
+# this no longer works :(    _ps="${_ps} ${COLOR_FG_RED}e\x$COLOR_NORMAL"
+    _ps="${_ps} $COLOR_FG_LT_YEL\t$COLOR_NORMAL"
+    _ps="${_ps} $$ $TTY"
+    if [[ x$WINDOW != x ]] ; then
+        _ps="${_ps} scr $STY-$WINDOW"
+    elif [[ "x$TMUX_PANE" != x ]] ; then
+        _ps="${_ps} tmux $TMUX_PANE"
+    else
+        _ps="${_ps} $PFKSH_BUILD"
+    fi
+    _ps="${_ps}\n % "
+    # i used to invert the '%' but bash has
+    # a problem with up-arrow in that case.
+    # _ps="${_ps}\n $COLOR_INVERT%$COLOR_NORMAL "
+    export PS1="$_ps"
+}
+
+
+if [[ "x$INSIDE_EMACS" == "x" ]] ; then
+    export EDITOR=vi
+    export VISUAL=vi
+    export VIEWER=xless
+    export PAGER=less
+else
+    export EDITOR=emacsclient
+    export VISUAL=emacsclient
+    export VIEWER=emacsclient
+    export PAGER=cat
+fi
+
+export LC_CTYPE=en_US.utf8
+export LANG=C
+export CSCOPE_EDITOR=$HOME/bin/ec
+export NPCL_EDITOR=less
+export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'
+export XLESS='-X -j5 -c -d -h 5 -i -M -q -R'
+export BLOCKSIZE=1024
+export WGFILE=$TMP/wg.$USER
+export PFKTOP_MODE=d
+
+# for some reason setting HISTSIZE resets the set -o emacs option!
+
+export HISTSIZE=250
+
+#
+# fix up TERM to make it sane.
+#
+
+if [ x$RXVT_PID != x ] ; then
+    TERM=rxvt
+else
+    case $TERM in
+        xterm|xterms|linux|screen|rmhost-*)
+            TERM=vt100
+            ;;
+        cygwin)
+            TERM=vt100
+            stty rows 24 cols 80
+            ;;
+    esac
+fi
+export TERM
+
+#
+# aliases go here
+#
+
+alias h='fc -l'
+alias s=screen
+alias res='eval `resize -u`'
+alias ls='ls -F'
+alias xl=xless
+alias l=less
+alias lt='l -n +G'
+alias zl='zcat \!* | less'
+alias zt='l -n +G ~/.messages'
+alias p='rm -f *~'
+alias ed='echo export DISPLAY=$DISPLAY'
+alias mem='top -n 1 | grep ^Mem'
+alias cdc='cd $HOME;clear'
+alias pfkman='MANPATH=`find @prefix@ -name man | tr "\n" ":"` man'
+alias setdate='date "+date %m%d%H%M%Y.%S"'
+alias gitlog='git log --decorate=full --parents --graph'
+alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
+alias tmux='TERM=rxvt \tmux'
+
+emacsn() {
+    if [ $# -lt 1 ] ; then
+        echo usage: emacsn NUMBER files
+        return
+    fi
+    echo export EMACS_NUMBER=$1
+    export EMACS_NUMBER=$1
+    echo export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
+    export EMACSCLIENT_SOCKET=/tmp/$USER/emacs-$EMACS_NUMBER/server
+    shift
+    emacs $* &
+    return
+}
+
+x() {
+    if [[ $# -eq 0 ]] ; then
+        pfkterm &
+    else
+        pfkterm -e $* &
+    fi
+}
+
+diffheight=50
+
+xsd() {
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd $1 $2" &
+}
+
+xsd2() {
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd2 $1 $2" &
+}
+
+d() {
+    xsd2 $1.orig $1
+}
+
+if [[ -x @prefix@/${PFKARCH}/bin/xtermbar ]] ; then
+    ___xtermbar() {
+        @prefix@/${PFKARCH}/bin/xtermbar "$@"
+    }
+else
+    ___xtermbar() {
+        # it is a no-op
+        return 0
+    }
+fi
+
+sd() {
+    typeset cols
+    cols=`stty size 2>/dev/null | awk '{print $2}'`
+    if cmp -s $1 $2 ; then
+        echo The files are identical.  | l
+    else
+        ___xtermbar "sd $1 $2"
+        diff -bdNsyw --width $cols $* 2>&1 | l
+    fi
+}
+
+sd2() {
+    ___xtermbar "sd2 $1 $2"
+    width=`stty size | awk '{print $2}'`
+    diff -btyW $width $* | fmtsdiff $width | less '+/%[<>|]%'
+}
+
+xless() {
+    typeset args file dir i olddir
+    olddir=$PWD
+
+    for i in $* ; do
+        if [[ -f $i ]] ; then
+            # figure out the directory, minus the last four path components.
+            dir=${i%/*/*/*/*/*}
+            # figure out the last four components.
+            file=${i##$dir}
+            # strip off an extra slash
+            file=${file#/}
+            # if the above algorithm messes up, $file will be null.
+            # in that case just pass the args thru unmodified.
+            # this can happen if the full path has less than four
+            # components, or if the path doesn't start with '/'.
+            if [[ x$file = x || x$dir = x ]] ; then
+                dir=.
+                file=$i
+            fi
+            # rebuild command line with the filename argument, so that
+            # the filename arg appears just as we want it at the bottom
+            # of the xterm.
+            args="$args $file"
+        else
+            args="$args $i"
+        fi
+    done
+
+    if [[ x$file = x ]] ; then
+        echo "I didn't find any files on the command line."
+        return
+    fi
+
+    if [[ x$dir != x ]] ; then
+        cd $dir
+    fi
+
+    typeset OLDLESS
+    OLDLESS="$LESS"
+    LESS="$XLESS"
+    export LESS
+
+    pfkterm -g 80x45 -e less $args &
+
+    LESS="$OLDLESS"
+    cd $olddir
+}
+
+ediff() {
+    if [ $# -ne 2 ] ; then
+        echo usage : file-1 file-2
+        return
+    fi
+
+    lisp=$HOME/ediff.$$
+
+    cat << EOF > $lisp
+        (custom-set-variables
+          '(ediff-split-window-function 'split-window-horizontally)
+          '(blink-matching-paren-distance nil)
+          '(inhibit-startup-buffer-menu t)
+          '(inhibit-startup-echo-area-message (getenv "USER"))
+          '(inhibit-startup-screen t)
+          '(menu-bar-mode nil)
+          '(tool-bar-mode nil)
+          )
+        (ediff "$1" "$2")
+EOF
+
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x70+25+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
+merge3() {
+    typeset lisp
+
+    if [ $# -ne 4 ] ; then
+        echo usage : file-A file-B common-ancestor output
+        return
+    fi
+
+    lisp=$HOME/merge3.$$
+
+    cat << EOF > $lisp
+        (tool-bar-mode 0)
+        (ediff-merge-files-with-ancestor "$1" "$2" "$3" nil "$4")
+EOF
+
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x54+25+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
+merge2() {
+    typeset lisp
+
+    if [ $# -ne 3 ] ; then
+        echo usage : file-A file-B output
+        return
+    fi
+
+    lisp=$HOME/merge3.$$
+
+    cat << EOF > $lisp
+        (tool-bar-mode 0)
+        (ediff-merge-files "$1" "$2" nil "$3")
+EOF
+
+    emacs -fn '-misc-*-*-r-semicondensed-*-13-120-*-*-*-*-iso8859-1' \
+          -g 162x54+25+5 --no-init-file --load $lisp
+
+    rm -f $lisp
+}
+
+fp() {
+    echo $PWD/$1
+}
+
+title() {
+    shellstring "$*"
+    ___xtermbar $*
+}
+
+__aesenc() {
+    if [ $# -ne 2 ] ; then
+        echo usage : aesenc pass file
+    else
+        pass=$1
+        infile=$2
+        outfile=$2.enc
+        openssl aes-256-cbc -e -salt \
+                -in $infile -out $outfile \
+                -md sha256 -pass pass:$pass
+        ls -l $infile $outfile
+    fi
+}
+
+aesenc() {
+    pass=$1
+    shift
+    for f in $* ; do
+        __aesenc $pass $f
+    done
+}
+
+__aesdec() {
+    if [ $# -ne 2 ] ; then
+        echo usage : aesdec pass file
+    else
+        pass=$1
+        infile=$2
+        outfile=${2%.enc}
+        openssl aes-256-cbc -d \
+                -in $infile -out $outfile \
+                -md sha256 -pass pass:$pass
+        ls -l $infile $outfile
+    fi
+}
+
+aesdec() {
+    pass=$1
+    shift
+    for f in $* ; do
+        __aesdec $pass $f
+    done
+}
+
+
+__sed=''
+if [[ -f /bin/sed ]] ; then
+    __sed=/bin/sed
+elif [[ -f /usr/bin/sed ]] ; then
+    __sed=/usr/bin/sed
+fi
+if [[ x$__sed != x ]] ; then
+    dir() {
+        ls -n $* | $__sed 's, ->.*, @,'
+    }
+fi
+
+__verbose funcs and aliases done
+
+#  
+# allow per-host customizations.  note that the file
+# .kshrc.local must have execute permissions
+#  
+
+xconsole_hook() {
+    return 0
+}
+if [[ -f $HOME/.bashrc.local ]] ; then
+    __verbose sourcing bashrc.local
+    . $HOME/.bashrc.local
+    __verbose DONE sourcing bashrc.local
+else
+    __verbose no bashrc.local
+fi
+
+#
+# noninteractive shells don't do any more.
+#
+
+if __noninteractive ; then 
+    __verbose noninteractive shell, exiting
+    return
+fi
+
+# prevent bugs with recursive myshell scripts
+
+unset __MYSHELL_LAUNCHER
+
+sign_pfk_environ() {
+    if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
+        echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
+        return 1
+    fi
+    pfk_envfile=
+    if [[ -f .pfk_environ ]] ; then
+        pfk_envfile=.pfk_environ
+    elif [[ -f 0-pfk_environ ]] ; then
+        pfk_envfile=0-pfk_environ
+    else
+        echo ERROR: no .pfk_environ in this directory 1>&2
+        return 1
+    fi
+    echo signing $PWD/${pfk_envfile} ...
+    grep -v '#pfk_sign' ${pfk_envfile} > .pfk_environ.1
+    set -- `( cat ${HOME}/.pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
+    echo '#pfk_sign' $1 >> .pfk_environ.1
+    mv .pfk_environ.1 ${pfk_envfile}
+}
+
+verify_pfk_environ() {
+    envdir="$1"
+    envfile="${envdir}/${2}"
+    if [[ ! -f "$envfile" ]] ; then
+        return 1
+    fi
+    if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
+        echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
+        return 1
+    fi
+    set -- `( cat ${HOME}/.pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ; echo "$envdir" ) | sha256sum -`
+    calculated=$1
+    infile=$( awk '/#pfk_sign/ { print $2} ' "$envfile" )
+    if [[ "x$infile" = "x$calculated" ]] ; then
+        return 0
+    fi
+    return 1
+}
+
+find_pfk_environ() {
+    d="$PWD"
+    while [[ "x${d}" != x ]] ; do
+        if [[ -f "${d}/.pfk_environ" ]] ; then
+            if verify_pfk_environ "${d}" .pfk_environ ; then
+                echo "${d}/.pfk_environ"
+                return 0
+            else
+                echo "${d}/.pfk_environ" failed signature check 1>&2
+            fi
+        elif [[ -f "${d}/0-pfk_environ" ]] ; then
+            if verify_pfk_environ "${d}" 0-pfk_environ ; then
+                echo "${d}/0-pfk_environ"
+                return 0
+            else
+                echo "${d}/0-pfk_environ" failed signature check 1>&2
+            fi
+        fi
+        d="${d%/*}"
+    done
+    return 1
+}
+
+new_pfk_environ_file=
+current_pfk_environ_file=
+
+cd() {
+    if [[ $# -eq 0 ]] ; then
+        command cd
+    else
+        command cd "$*"
+    fi
+
+    new_pfk_environ_file=$(find_pfk_environ)
+    if [[ "x$new_pfk_environ_file" != "x$current_pfk_environ_file" ]] ; then
+        if [[ "x$current_pfk_environ_file" != "x" ]] ; then
+            # if the environ file was removed in between
+            # entering and leaving, dont crash this function.
+            if [[ -f "$current_pfk_environ_file" ]] ; then
+                . "$current_pfk_environ_file" leave
+            else
+                echo NOTE: "$current_pfk_environ_file" was removed 1>&2
+            fi
+        fi
+        if [[ "x$new_pfk_environ_file" != "x" ]] ; then
+            . "$new_pfk_environ_file" enter
+        fi
+        current_pfk_environ_file="$new_pfk_environ_file"
+    fi
+
+    if [[ x$INSIDE_EMACS != x ]] ; then
+        echo SHELL_CWD_BEGIN:$PWD:SHELL_CWD_END
+    fi
+    typeset shellfilepart file_part bardisp
+    if [[ "x$SHELLFILESPECIAL" != x ]] ; then
+        shellfilepart="$SHELLFILESPECIAL:"
+    else
+        shellfilepart=""
+    fi
+    bardisp=""
+    if [[ "x$CLEARCASE_ROOT" != x ]] ; then
+        typeset viewname
+        viewname="${CLEARCASE_ROOT#/view/}"
+        bardisp="$bardisp[$viewname]:"
+    fi
+    eval `git-root -v`
+    if [[ "x$gr" != "x" ]] ; then
+        typeset count
+        count=0
+        while [[ $count -lt $gitnummods ]] ; do
+            bardisp="$bardisp{${gitmodname[$count]}:${githead[$count]}}:"
+            count=$(( count + 1 ))
+        done
+        bardisp="$bardisp$gitrelpath"
+    else
+        bardisp="$bardisp${PWD}"
+    fi
+    if [[ "x$IN_PFKSCRIPT" != x ]] ; then
+        bardisp="PFKSCRIPT:$IN_PFKSCRIPT:$bardisp"
+    fi
+    _set_prompt "$shellfilepart$bardisp"
+    if [[ "x$DISPLAY" != x ]] ; then
+        if [[ x$I_AM_XCONSOLE == x ]] ; then
+            if [[ x$INSIDE_EMACS == x ]] ; then
+                ___xtermbar "$shellfilepart$USER@$HOST:$bardisp"
+            fi
+        fi
+    fi
+    if [[ "x$TMUX" != x ]] ; then
+        if [[ x$INSIDE_EMACS == x ]] ; then
+            bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
+            ___xtermbar "$shellfilepart$bardisp"
+        fi
+    fi
+    if [[ "x$gitroot" == "x" ]] ; then
+        CDPATH=.:$HOME
+    else
+        CDPATH=.:$gitroot:$HOME
+    fi
+}
+
+shellstring() {
+    SHELLFILESPECIAL=$1
+    cd .
+}
+
+# update xterm title
+cd .
+
+umask 022
+
+#
+# these must be after the environment variables, 
+# because setting HISTSIZE resets the emacs option.
+# i don't know why that should be so.
+#
+
+__verbose starting settings
+
+set -o nolog
+set -o emacs
+
+__verbose settings complete
+__verbose done with bashrc, enjoy your shell
+
+# Local Variables:
+# mode: Shell-script
+# indent-tabs-mode: nil
+# tab-width: 8
+# eval: (add-hook 'write-file-functions 'time-stamp)
+# time-stamp-start: "Last update: "
+# time-stamp-format: "%:y-%02m-%02d.%02H:%02M:%02S"
+# time-stamp-end: "$"
+# End:

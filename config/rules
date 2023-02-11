@@ -20,7 +20,7 @@ endif
 prefix := $(HOME)/pfk
 ETCDIR := $(prefix)/etc
 ETCBAKDIR := $(prefix)/etc-backup
-SRCDIR := $(prefix)/src
+# no longer used... SRCDIR := $(prefix)/src
 EMACSDIR := $(ETCDIR)/emacs
 ELPADIR := $(HOME)/.emacs.d/elpa/
 SCRIPTS_DIR := $(prefix)/bin
@@ -33,14 +33,14 @@ VNCDIR := $(HOME)/.vnc
 ##############################################
 
 BUILD_SWITCHES = \
-	pfkbak pfksh syslog checksize treescan ts2 sudo \
+	pfkbak syslog checksize treescan ts2 sudo \
 	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
 	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
 	libpfkthread xlock hilite do_fft protossl i3 uuz tickler
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
-	PFK_FINDPF_GCC PFK_FINDPF_GCC_ARGS PFK_HOME \
+	PFK_HOME \
 	$(foreach sw,$(BUILD_SWITCHES),PFK_BUILD_$(sw))
 
 CONFIG_VALUES= \
@@ -89,7 +89,7 @@ PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
 	libWebAppServer libWebAppServer/proxyTcpServer \
 	libpfkthread \
-	i2 i3 misc backup hilite pfksh ampfk syslog \
+	i2 i3 misc backup hilite ampfk syslog \
 	pfkscript pfktop diskloader bglog misc/states \
 	uuz xlock environ scripts fonts contrib main
 

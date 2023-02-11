@@ -7,11 +7,11 @@ SCRIPT_FILES = \
 	pfkterm refresh set-background.sh myemacs-compile \
 	git-lsm git-lso git-mcs git-root x11-capture volmon.sh dodmsg \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
-	fixup-worktree-submods.sh git-pfkwt architecture.simple
+	fixup-worktree-submods.sh git-pfkwt architecture
 
 PREPROC_SCRIPT_FILES = \
 	cs emacs-lone myemacs-cscope-helper myshell-launcher \
-	myshell pf_frontend architecture
+	myshell pf_frontend
 
 OBJDIRS_TOMAKE += scripts
 
@@ -26,6 +26,5 @@ scripts_install:
 
 PREPROC_SOURCES += \
 	scripts/cs scripts/emacs-lone scripts/myemacs-cscope-helper \
-	scripts/myshell-launcher scripts/myshell scripts/pf_frontend \
-	scripts/architecture
+	scripts/myshell-launcher scripts/myshell scripts/pf_frontend
 

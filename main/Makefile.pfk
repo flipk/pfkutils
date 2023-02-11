@@ -115,8 +115,6 @@ pfkutils_INSTALL = 1
 POSTINSTALL += pfkutils-post-install
 
 pfkutils-post-install:
-	@echo installing find-pfk-pf.c
-	cp main/find-pfk-pf.c $(SRCDIR)/find-pfk-pf.c
 	@echo setting up pfkutils symlinks
 	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -dellinks
 ifeq ($(PFK_BUILD_sudo),1)

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ -f /etc/system-release-cpe ] ; then
+    pf=fedora-$(awk -F: '/^cpe/ {print $5}' /etc/system-release-cpe)
+elif [ -f /etc/lsb-release ] ; then
+    . /etc/lsb-release
+    pf=ubuntu-$DISTRIB_RELEASE
+else
+    pf=unknown
+fi
+if [ -f /.dockerenv ] ; then
+    pf=${pf}-docker
+fi
+if [ "x$1" = x-e ] ; then
+    echo PFKARCH=$pf
+else
+    echo $pf
+fi
+
+exit 0
