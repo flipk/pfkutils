@@ -93,7 +93,6 @@ ghostscript-x11
 giflib
 giflib-devel
 gimp
-gimp-heif-plugin
 git
 git-extras
 git-gui
