@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-02-10.20:48:11
+#      Last update: 2023-02-15.23:02:02
 #
 #############################################################################
 
@@ -255,6 +255,8 @@ alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
 alias tmux='TERM=rxvt \tmux'
+alias dkr=docker
+alias dit=docker-image-tree.sh
 
 emacsn() {
     if [ $# -lt 1 ] ; then
