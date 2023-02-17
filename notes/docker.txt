@@ -1,4 +1,11 @@
 
+/etc/docker/daemon.json
+  { "data-root": "/path/to/var/lib/docker" }
+
+if you're not on BTRFS and docker wants to use BTRFS by default,
+add    "storage-driver": "overlay"
+
+
 docker images
 docker ps -a
 
