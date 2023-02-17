@@ -53,7 +53,6 @@ ELPA_ARCHIVE ?= elpa-25.tar.bz2
 SCRIPT_FILES_EXTRA = # mhssh mhscp
 
 CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
-# cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j1

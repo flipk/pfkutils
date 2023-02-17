@@ -1,8 +1,41 @@
-
-autoconf automake libtool doxygen graphviz bzip2
-gcc gcc-c++ flex byacc bison imake zlib-devel ncurses-devel
-libX11-devel libXau-devel libICE-devel libSM-devel libXaw-devel
-libXpm-devel libXmu-devel libXext-devel libXt-devel libXrandr-devel
-feh git gitk protobuf-devel mbedtls-devel make fftw3-devel emacs
-tcl tk expect tclx bdftopcf gbdfed xsetroot
-
+autoconf
+automake
+bdftopcf
+bison
+byacc
+bzip2
+doxygen
+emacs
+expect
+feh
+fftw3-devel
+flex
+gbdfed
+gcc
+gcc-c++
+git
+gitk
+graphviz
+hostname
+imake
+libICE-devel
+libSM-devel
+libX11-devel
+libXau-devel
+libXaw-devel
+libXext-devel
+libXmu-devel
+libXpm-devel
+libXrandr-devel
+libXt-devel
+libtool
+make
+mbedtls-devel
+ncurses-devel
+protobuf-devel
+tcl
+tclx
+tk
+xset
+xsetroot
+zlib-devel

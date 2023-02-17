@@ -41,9 +41,10 @@ BASHRC_LOCAL = bashrc.local.blade
 PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
-MBEDTLS_DIR = /home/flipk/proj/pfkutils/contrib/mbedtls
-MBEDTLS_INCS = -I$(MBEDTLS_DIR)/include
-MBEDTLS_LIBS = -L$(MBEDTLS_DIR)/library -lmbedtls -lmbedx509 -lmbedcrypto
+#MBEDTLS_DIR = /home/flipk/proj/pfkutils/contrib/mbedtls
+#MBEDTLS_INCS = -I$(MBEDTLS_DIR)/include
+#MBEDTLS_LIBS = -L$(MBEDTLS_DIR)/library -lmbedtls -lmbedx509 -lmbedcrypto
+MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 LIBZ_INCS =
 LIBZ_LIB = -lz
 
@@ -51,7 +52,9 @@ PFKUTILS_OS = fedora33
 
 # SCRIPT_FILES_EXTRA = mhssh mhscp
 
-CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
+# not used right now: fish-pfk
+# no longer used: ctwm-pfk mscgen-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j9

@@ -49,7 +49,6 @@ PFKUTILS_OS = chromeos
 # SCRIPT_FILES_EXTRA = mhssh mhscp
 
 CONTRIB_PROGS= rxvt-pfk 
-# cscope-pfk ctwm-pfk fluxbox-pfk fish-pfk mscgen-pfk
 
 export PFK_CONFIG_flubox_xinerama=enable
 export PFK_CONFIG_contrib_makejobs=-j4

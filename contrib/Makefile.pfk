@@ -9,11 +9,11 @@ OBJDIRS_TOMAKE += contrib
 contribs:
 	$(Q)+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" \
-		OBJDIR=$(PWD)/$(OBJDIR)/contrib
+		OBJDIR=$(OBJDIR_FULLPATH)/contrib
 
 contribs-install:
 	$(Q)+make -C contrib \
 		PROGS="$(CONTRIB_PROGS)" \
-		OBJDIR=$(PWD)/$(OBJDIR)/contrib \
+		OBJDIR=$(OBJDIR_FULLPATH)/contrib \
 		INSTALL_BIN_DIR="$(INSTALL_BIN_DIR)" \
 		install

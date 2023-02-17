@@ -1,6 +1,6 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-CONFIG = blade-ubuntu-22.10-docker
+CONFIG = ubuntu-22.10-docker
 
 # blade is a hyperthreaded quad-core-- use it.
 MAKEJOBS ?= -j8
@@ -48,10 +48,7 @@ LIBZ_LIB = -lz
 
 PFKUTILS_OS = ubuntu22
 
-# SCRIPT_FILES_EXTRA = mhssh mhscp
-
-CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
-# broken for some reason: ctwm-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j9

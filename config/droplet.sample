@@ -48,5 +48,5 @@ LIBZ_LIB = -lz
 
 PFKUTILS_OS = fedora32
 
-# CONTRIB_PROGS= cscope-pfk ctwm-pfk rxvt-pfk fluxbox-pfk fish-pfk mscgen-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
