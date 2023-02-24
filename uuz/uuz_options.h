@@ -7,6 +7,8 @@
 #include <sys/random.h>
 #include <zlib.h>
 #include <vector>
+#include <termios.h>
+
 #include UUZ_PROTO_HDR
 #include "newbase64.h"
 
@@ -37,6 +39,8 @@ struct uuzopts {
     input_file    *current_file;
     uint32_t       debug;
     bool           text_headers;
+    struct termios old_tios;
+    bool           set_tios;
 
     std::string    output_uuz;
     FILE          *uuz_f;

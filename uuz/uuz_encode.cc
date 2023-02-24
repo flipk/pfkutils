@@ -420,7 +420,6 @@ int uuz::uuz_encode(void)
         goto out;
 
     ret = 0;
-    fprintf(stderr, "encode '%s' successful\n", inf->path.c_str());
 
 out:
     return ret;

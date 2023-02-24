@@ -403,12 +403,6 @@ void uuz :: handle_s1_version(bool list_only)
                encryption_name,
                hmac_name);
     }
-    else
-    {
-        fprintf(stderr, "starting decode from %s:%d\n",
-                m.proto_version().app_name().c_str(),
-                m.proto_version().version());
-    }
 }
 
 bool uuz :: handle_s2_file_info(bool list_only)
@@ -449,7 +443,7 @@ bool uuz :: handle_s2_file_info(bool list_only)
         return true;
     }
 
-    fprintf(stderr, "starting file %s (%" PRIu64
+    DEBUGDECODE("starting file %s (%" PRIu64
             " bytes) with %s %s %s\n",
             final_output_filename.c_str(), (uint64_t) output_filesize,
             compression_name, encryption_name, hmac_name);
@@ -726,15 +720,19 @@ void uuz :: handle_s9_complete(bool list_only)
         // if we made it this far with HMAC turned on,
         // then HMAC must be good too.
         if (hmac != PFK::uuz::NO_HMAC)
-            fprintf(stderr, "HMAC match!\n");
+        {
+            DEBUGMBED("HMAC match!\n");
+        }
         if (sha_match)
-            fprintf(stderr, "SHA256 match!\n");
+        {
+            DEBUGMBED("SHA256 match!\n");
+        }
         else
         {
             fprintf(stderr, "ERROR: SHA256 MISMATCH\n");
             exit(1);
         }
-        fprintf(stderr, "decode successful\n");
+        fprintf(stderr, "decoded: %s\n", final_output_filename.c_str());
     }
 }
 

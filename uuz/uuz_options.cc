@@ -29,6 +29,7 @@ uuzopts :: uuzopts(int argc, char ** argv)
     outfile_counter = 1;
     encryption = PFK::uuz::NO_ENCRYPTION;
     hmac = PFK::uuz::NO_HMAC;
+    set_tios = false;
 
     if (argc < 2)
         return;
@@ -292,6 +293,28 @@ uuzopts :: uuzopts(int argc, char ** argv)
         {
             inf->fd = 0; // stdin
             memset(&inf->sb, 0, sizeof(struct stat));
+
+            struct termios  new_tios;
+
+            if (tcgetattr(0, &old_tios) < 0)
+            {
+                char * errstring = strerror(errno);
+                fprintf(stderr, "failed to get termios: %s\n", errstring);
+                return;
+            }
+            new_tios = old_tios;
+            set_tios = true;
+
+            new_tios.c_lflag &= ~ECHO;
+            new_tios.c_cc[VMIN] = 1;
+            new_tios.c_cc[VTIME] = 0;
+            if (tcsetattr(0, TCSANOW, &new_tios) < 0)
+            {
+                char * errstring = strerror(errno);
+                fprintf(stderr, "failed to set termios: %s\n", errstring);
+                return;
+            }
+            printf("local echo disabled; paste your uuz and hit ^D now.\n");
         }
         else
         {
@@ -331,6 +354,13 @@ uuzopts :: uuzopts(int argc, char ** argv)
 
 uuzopts :: ~uuzopts(void)
 {
+    if (set_tios)
+        if (tcsetattr(0, TCSANOW, &old_tios) < 0)
+        {
+            char * errstring = strerror(errno);
+            fprintf(stderr, "failed to set termios: %s\n", errstring);
+            return;
+        }
     for (auto inf : input_files)
     {
         if (inf->f)
