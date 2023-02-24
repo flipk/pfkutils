@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-02-15.23:02:02
+#      Last update: 2023-02-23.19:42:27
 #
 #############################################################################
 
@@ -163,9 +163,9 @@ _set_prompt() {
         _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL\n"
     fi
     if [[ $REALUSER == "root" ]] ; then
-        _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL"
+        _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL[$PFKARCH]"
     else
-        _ps="${_ps}$COLOR_FG_RED$REALUSER@$HOST$COLOR_NORMAL"
+        _ps="${_ps}$COLOR_FG_RED$REALUSER@$HOST$COLOR_NORMAL[$PFKARCH]"
     fi
     if [[ x$CLEARCASE_ROOT != x ]] ; then
         _ps="${_ps} in CC"
@@ -177,8 +177,8 @@ _set_prompt() {
         _ps="${_ps} scr $STY-$WINDOW"
     elif [[ "x$TMUX_PANE" != x ]] ; then
         _ps="${_ps} tmux $TMUX_PANE"
-    else
-        _ps="${_ps} $PFKSH_BUILD"
+    elif [[ "x$BASH_VERSION" != x ]] ; then
+        _ps="${_ps} bash-$BASH_VERSION"
     fi
     _ps="${_ps}\n % "
     # i used to invert the '%' but bash has
