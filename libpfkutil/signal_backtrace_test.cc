@@ -63,7 +63,11 @@ main(int argc, char ** argv)
         //    "warning: writing 1 byte into a region of size 0"
         // you can ignore this warning, that's kind of the point.
         // this line is trying to *intentionally* cause a SIGSEGV.
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
         *ptr = 0;
+#pragma GCC diagnostic pop
         SignalBacktrace::cleanup();
     }
     else if (test == 4)
