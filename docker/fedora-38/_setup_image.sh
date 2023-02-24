@@ -2,6 +2,14 @@
 
 set -e -x
 
+# install chrome directly from google.
+# DISABLED: chrome 110 does not pass signature validation!
+#google=https://dl.google.com
+#chrome_stable=$google/linux/direct/google-chrome-stable_current_x86_64.rpm
+#dnf install -y $chrome_stable
+
+dnf install -y `cat /tmp/_setup_package_list_38.txt`
+
 # install rpmfusion repos and keys.
 
 fusion=https://download1.rpmfusion.org
@@ -12,19 +20,8 @@ dnf install -y $fusionfree $fusionnonfree
 
 # now install a bunch of rpmfusion packages.
 
-dnf install -y \
-    vlc ffmpeg dosemu lame unace unrar \
-    gimp-heif-plugin libheif
-
-# install chrome directly from google.
-
-#google=https://dl.google.com
-#chrome_stable=$google/linux/direct/google-chrome-stable_current_x86_64.rpm
-#dnf install -y $chrome_stable
-# chrome 109 doesn't pass signature !!!
-
-
-dnf install -y `cat /tmp/_setup_package_list_38.txt`
+dnf install -y --allowerasing \
+    vlc ffmpeg gimp-heif-plugin libheif
 
 # see https://pypi.org/
 
