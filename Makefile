@@ -71,7 +71,7 @@ ifeq ($(DISABLE_RDYNAMIC),)
 LDFLAGS += -rdynamic # for backtrace
 endif
 
-INCLUDE_MAKEFILES= config/os/$(PFKUTILS_OS) config/rules
+INCLUDE_MAKEFILES= config/rules
 
 include Makefile.inc
 
