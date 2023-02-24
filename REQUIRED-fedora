@@ -39,3 +39,4 @@ tk
 xset
 xsetroot
 zlib-devel
+glibc-langpack-en
