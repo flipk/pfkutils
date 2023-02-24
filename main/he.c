@@ -1398,13 +1398,13 @@ do_mark( enum mark_op op )
         if ( mark_locations[c] != -1 )
         {
             wprintw( mark_win,
-                     "mark %c was set at offset %08x\n     ",
+                     "mark %c was set at offset %08" PRIx64 "\n     ",
                      c + 'a', mark_locations[c] );
             now = "now ";
         }
         mark_locations[c] = file_position;
         wprintw( mark_win,
-                 "mark %c %sset at offset %08x",
+                 "mark %c %sset at offset %08" PRIx64,
                  c + 'a', now, mark_locations[c] );
     }
 
