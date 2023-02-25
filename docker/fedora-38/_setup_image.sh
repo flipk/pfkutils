@@ -8,6 +8,7 @@ set -e -x
 #chrome_stable=$google/linux/direct/google-chrome-stable_current_x86_64.rpm
 #dnf install -y $chrome_stable
 
+dnf update -y
 dnf install -y `cat /tmp/_setup_package_list_38.txt`
 
 # install rpmfusion repos and keys.
@@ -36,6 +37,9 @@ pip install \
 cd /tmp
 mv _setup_user_shell.sh /
 chmod 755 /_setup_user_shell.sh
-rm -f setup*
+
+g++ _setup_su_reaper.cc -o /su_reaper
+
+rm -f _setup*
 
 exit 0
