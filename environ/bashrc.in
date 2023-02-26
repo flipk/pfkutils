@@ -200,8 +200,8 @@ else
     export PAGER=cat
 fi
 
-export LC_CTYPE=en_US.utf8
-export LANG=C
+#export LC_CTYPE=en_US.utf8
+#export LANG=C
 export CSCOPE_EDITOR=$HOME/bin/ec
 export NPCL_EDITOR=less
 export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'

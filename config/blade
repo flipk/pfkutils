@@ -48,7 +48,7 @@ MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 LIBZ_INCS =
 LIBZ_LIB = -lz
 
-PFKUTILS_OS = fedora33
+PFKUTILS_OS = fedora37
 
 # SCRIPT_FILES_EXTRA = mhssh mhscp
 
