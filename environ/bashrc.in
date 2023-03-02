@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-03-01.23:50:06
+#      Last update: 2023-03-02.08:59:28
 #
 #############################################################################
 
@@ -516,22 +516,6 @@ __verbose funcs and aliases done
 xconsole_hook() {
     return 0
 }
-if [[ -f $HOME/.bashrc.local ]] ; then
-    __verbose sourcing bashrc.local
-    . $HOME/.bashrc.local
-    __verbose DONE sourcing bashrc.local
-else
-    __verbose no bashrc.local
-fi
-
-#
-# noninteractive shells don't do any more.
-#
-
-if __noninteractive ; then 
-    __verbose noninteractive shell, exiting
-    return
-fi
 
 find_ssh_agent() {
     if [[ "$SSH_AUTH_SOCK" == "" ]] ; then
@@ -556,6 +540,23 @@ find_ssh_agent() {
         fi
     fi
 }
+
+if [[ -f $HOME/.bashrc.local ]] ; then
+    __verbose sourcing bashrc.local
+    . $HOME/.bashrc.local
+    __verbose DONE sourcing bashrc.local
+else
+    __verbose no bashrc.local
+fi
+
+#
+# noninteractive shells don't do any more.
+#
+
+if __noninteractive ; then 
+    __verbose noninteractive shell, exiting
+    return
+fi
 
 sign_pfk_environ() {
     if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
