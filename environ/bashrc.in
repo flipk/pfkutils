@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-02-23.19:42:27
+#      Last update: 2023-03-01.23:50:06
 #
 #############################################################################
 
@@ -533,9 +533,29 @@ if __noninteractive ; then
     return
 fi
 
-# prevent bugs with recursive myshell scripts
-
-unset __MYSHELL_LAUNCHER
+find_ssh_agent() {
+    if [[ "$SSH_AUTH_SOCK" == "" ]] ; then
+        ssh_agent_file=$HOME/.ssh-agent.sh
+        if [[ -f $ssh_agent_file ]] ; then
+            . $ssh_agent_file
+            ssh-add -l
+            code=$?
+            if [[ $code -eq 1 ]] ; then
+                ssh-add
+            elif [[ $code -eq 2 ]] ; then
+                echo starting new ssh agent
+                ssh-agent -s > $ssh_agent_file
+                . $ssh_agent_file
+                ssh-add
+            fi
+        else
+            echo starting new ssh agent
+            ssh-agent -s > $ssh_agent_file
+            . $ssh_agent_file
+            ssh-add
+        fi
+    fi
+}
 
 sign_pfk_environ() {
     if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
