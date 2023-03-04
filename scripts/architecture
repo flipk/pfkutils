@@ -5,6 +5,13 @@ if [ -f /etc/system-release-cpe ] ; then
 elif [ -f /etc/lsb-release ] ; then
     . /etc/lsb-release
     pf=ubuntu-$DISTRIB_RELEASE
+elif [ -f /etc/os-release ] ; then
+    if grep -q ID=debian /etc/os-release ; then
+        . /etc/os-release
+        pf=chrome-deb-$VERSION_ID
+    else
+        echo os-release-unknown
+    fi
 else
     pf=unknown
 fi

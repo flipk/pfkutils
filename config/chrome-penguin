@@ -5,7 +5,7 @@ CONFIG = penguin
 # my acer is a 4-core
 MAKEJOBS ?= -j4
 
-PFK_BUILD_pfkbak=1
+PFK_BUILD_pfkbak=0
 PFK_BUILD_syslog=0
 PFK_BUILD_checksize=0
 PFK_BUILD_treescan=0
@@ -18,7 +18,7 @@ PFK_BUILD_xrandr=0
 PFK_BUILD_states=0
 PFK_BUILD_bglog=0
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=1
+PFK_BUILD_libpfkfb=0
 PFK_BUILD_diskloader=0
 PFK_BUILD_pfkstat=0
 PFK_BUILD_deduplifier=0
