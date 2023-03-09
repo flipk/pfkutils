@@ -8,7 +8,8 @@ SCRIPT_FILES = \
 	git-lsm git-lso git-mcs git-root x11-capture volmon.sh dodmsg \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
 	fixup-worktree-submods.sh git-pfkwt architecture \
-	docker-image-tree.sh ldd-findpaths.sh killme.sh
+	docker-image-tree.sh ldd-findpaths.sh killme.sh \
+	ffprobepfk.sh
 
 PREPROC_SCRIPT_FILES = \
 	cs emacs-lone myemacs-cscope-helper myshell-launcher \
