@@ -25,7 +25,8 @@ environ_install:
 	@echo installing environ
 	$(Q)cd environ && cp $(DOT_FILES) $(BASHRC_LOCAL) $(ETCDIR)
 	$(Q)cd environ/emacs && cp $(ELISP_FILES) $(EMACSDIR)
-	$(Q)tar -C $(HOME)/.emacs.d -xvf environ/emacs/$(ELPA_ARCHIVE)
+	$(Q)echo installing $(ELPA_ARCHIVE)
+	$(Q)tar -C $(HOME)/.emacs.d -xf environ/emacs/$(ELPA_ARCHIVE)
 	$(Q)cd $(OBJDIR)/environ && cp $(PREPROC_DOT_FILES) $(ETCDIR)
 	$(Q)set -e ; cd $(HOME) ; $(foreach f,\
 		$(DOT_FILES) $(PREPROC_DOT_FILES), \

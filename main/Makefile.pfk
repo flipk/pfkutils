@@ -94,31 +94,6 @@ pfkutils_DEFS = \
 	-DGIT_SRC_URL=\"$(GIT_SRC_URL)\"
 pfkutils_INSTALL = 1
 
-# technically this should be pfkutils_POSTINSTALL,
-# but I want the 'echo' statements below to be last.
-# you know, so you see them.
-POSTINSTALL += pfkutils-post-install
-
-pfkutils-post-install:
-	@echo setting up pfkutils symlinks
-	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -dellinks
-ifeq ($(PFK_BUILD_sudo),1)
-	$(Q)cd $(INSTALL_BIN_DIR) && \
-		if [ -f pfkutils.old ] ; then \
-			ln -s pfkutils.old sudo ; \
-			./sudo chown root pfkutils ; \
-			./sudo chmod 4755 pfkutils ; \
-		fi ; true
-	@echo ""
-	@echo "*** also, if not already done, perform the following as root:"
-	@echo "     chown root $(INSTALL_BIN_DIR)/pfkutils"
-	@echo "     chmod 4755 $(INSTALL_BIN_DIR)/pfkutils"
-	@echo ""
-endif
-	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
-	$(Q)cp Makefile.inc $(prefix)
-
-
 PROG_TARGETS += decode_utf8 utf16_to_utf8
 
 decode_utf8_TARGET = $(OBJDIR)/decode_utf8
@@ -144,3 +119,33 @@ pfkutils-makelinks: $(pfkutils_TARGET)
 	$(Q)cd $(OBJDIR) && rm -rf bin && mkdir bin && cd bin && \
 		ln -s ../pfkutils && ./pfkutils -makelinks
 endif
+
+
+
+# technically this should be pfkutils_POSTINSTALL,
+# but I want the 'echo' statements below to be last.
+# you know, so you see them.
+POSTINSTALL += pfkutils-post-install
+
+pfkutils-post-install:
+	@echo setting up pfkutils symlinks
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -dellinks
+	$(Q)cp Makefile.inc $(prefix)
+ifeq ($(PFK_BUILD_sudo),1)
+	$(Q)cd $(INSTALL_BIN_DIR) && \
+		rm -f $(OBJDIR_FULLPATH)/needs-chown ; \
+		if [ -f pfkutils.old ] ; then \
+			ln -s pfkutils.old sudo ; \
+			./sudo chown root pfkutils || \
+				touch $(OBJDIR_FULLPATH)/needs-chown ; \
+			./sudo chmod 4755 pfkutils && \
+				echo installed sudo as root ; \
+		else touch $(OBJDIR_FULLPATH)/needs-chown ; fi ; true
+	@if [[ -f $(OBJDIR_FULLPATH)/needs-chown ]] ; then \
+	  echo "" ;\
+	  echo "*** please perform the following as root:" ;\
+	  echo "     chown root $(INSTALL_BIN_DIR)/pfkutils" ;\
+	  echo "     chmod 4755 $(INSTALL_BIN_DIR)/pfkutils" ;\
+	  echo "" ; fi
+endif
+	$(Q)cd $(INSTALL_BIN_DIR) && ./pfkutils -makelinks
