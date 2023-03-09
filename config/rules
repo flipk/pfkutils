@@ -36,7 +36,7 @@ VNCDIR := $(HOME)/.vnc
 ##############################################
 
 BUILD_SWITCHES = \
-	pfkbak syslog treescan ts2 sudo \
+	pfkbak ts2 sudo \
 	pfkscript pfktop sessionmgr xrandr he \
 	libpfkfb slowlink libwas \
 	libpfkthread xlock hilite do_fft protossl i3 uuz tickler
@@ -93,7 +93,7 @@ PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
 	libWebAppServer libWebAppServer/proxyTcpServer \
 	libpfkthread \
-	i2 i3 misc backup hilite syslog \
+	i2 i3 misc backup hilite \
 	pfkscript pfktop \
 	uuz xlock environ scripts fonts contrib main
 

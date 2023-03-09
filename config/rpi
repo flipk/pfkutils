@@ -1,13 +1,11 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-CONFIG = centos7
+CONFIG = rpi
 
-# blade is a hyperthreaded quad-core-- use it.
-MAKEJOBS ?= -j8
+# pi0 is a single core
+MAKEJOBS ?= -j1
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_syslog=1
-PFK_BUILD_treescan=1
 PFK_BUILD_ts2=1
 PFK_BUILD_sudo=1
 PFK_BUILD_pfkscript=1
@@ -17,36 +15,37 @@ PFK_BUILD_he=1
 PFK_BUILD_libpfkfb=1
 PFK_BUILD_libwas=1
 PFK_BUILD_libpfkthread=1
-PFK_BUILD_wsproxy=1
-PFK_BUILD_xlock=1
+PFK_BUILD_wsproxy=0
+PFK_BUILD_xlock=0
 PFK_BUILD_fonts=1
 PFK_BUILD_pfktop=1
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=1
 PFK_BUILD_protossl=1
 PFK_BUILD_i3=1
-PFK_BUILD_slowlink=0 # no g++ support for 'auto'
+PFK_BUILD_slowlink=1
 PFK_BUILD_uuz=1
 PFK_BUILD_tickler=0
 
 BASHRC_LOCAL = bashrc.local.blade
-PROTOC_PATH = /bin/protoc
+PROTOC_PATH = /usr/bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
-mbedtls_path = $(HOME)/proj/pfkutils/contrib/mbedtls/obj.blade-centos7
-MBEDTLS_INCS = -I$(mbedtls_path)/include
-MBEDTLS_LIBS = -L$(mbedtls_path)/lib -lmbedtls -lmbedx509 -lmbedcrypto
+MBEDTLS_INCS = 
+MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 LIBZ_INCS =
 LIBZ_LIB = -lz
 
-PFKUTILS_OS = centos7
+PFKUTILS_OS = raspbian10
+# ub18 comes with emacs 25.2 so override default setting of ELPA
+ELPA_ARCHIVE ?= elpa-25.tar.bz2
 
-# SCRIPT_FILES_EXTRA = mhssh mhscp
+SCRIPT_FILES_EXTRA = # mhssh mhscp
 
 CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
-export PFK_CONFIG_flubox_xinerama=enable
-export PFK_CONFIG_contrib_makejobs=-j9
+export PFK_CONFIG_flubox_xinerama=disable
+export PFK_CONFIG_contrib_makejobs=-j1
 
 # turn off color compile output so emacs compile buffer can work;
 # need a more generic solution for compiling in emacs compile buffer.

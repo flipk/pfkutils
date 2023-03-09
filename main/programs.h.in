@@ -3,16 +3,6 @@
 PROG(0,pfkbak,"Incremental and full-history backup tool")
 #endif
 
-#if @PFK_BUILD_syslog@
-PROG(0,syslogd,"syslogd server with regex patterns")
-PROG(0,postprocess_syslog,"syslog postprocessor with regex patterns")
-#endif
-
-#if @PFK_BUILD_treescan@
-PROG(0,treescan,"scan a tree producing tree info")
-/* not ready yet PROG(0,treesync,"sync one tree to another") */
-#endif
-
 #if @PFK_BUILD_ts2@
 PROG(0,ts2,"scan a tree v2")
 #endif

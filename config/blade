@@ -6,8 +6,6 @@ CONFIG = blade
 MAKEJOBS ?= -j8
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_syslog=1
-PFK_BUILD_treescan=1
 PFK_BUILD_ts2=1
 PFK_BUILD_sudo=1
 PFK_BUILD_pfkscript=1

@@ -5,8 +5,6 @@ CONFIG = cygwin
 # windows sucks. don't set MAKEJOBS-- it won't matter.
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_syslog=0
-PFK_BUILD_treescan=0
 PFK_BUILD_ts2=0
 PFK_BUILD_sudo=0
 PFK_BUILD_pfkscript=1

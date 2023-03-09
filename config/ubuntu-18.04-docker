@@ -6,8 +6,6 @@ CONFIG = ubuntu-18.04-docker
 MAKEJOBS ?= -j8
 
 PFK_BUILD_pfkbak=0
-PFK_BUILD_syslog=0
-PFK_BUILD_treescan=0
 PFK_BUILD_ts2=1
 PFK_BUILD_sudo=0
 PFK_BUILD_pfkscript=1
