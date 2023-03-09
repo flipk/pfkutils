@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-03-02.08:59:28
+#      Last update: 2023-03-08.19:51:07
 #
 #############################################################################
 
@@ -8,10 +8,12 @@
 # always ensure this file is specified as ENV.
 #
 
-export USER=@PFK_USER_NAME@
+# NOTE: on AWS, usernames have --->BACKSLASHES<--- in them! (wtf, inorite?)
+# so we have to quote this to make it not suck.
+export USER='@PFK_USER_NAME@'
 export PFKUTILS_PREFIX=@prefix@
 export REALUSER=`id -u -n`
-export HOME=@PFK_HOME@
+export HOME='@PFK_HOME@'
 export ENV=$HOME/.bashrc
 export HOST=`hostname`
 export HOST=${HOST%%\.*}
@@ -23,6 +25,13 @@ export GROUPID=@PFK_GROUP_ID@
 export SCREENDIR=$TMPDIR/screen
 export TMUX_TMPDIR=$TMPDIR
 export TICKLER_SOCK=$TMP/tickler.sock
+
+# on AWS, hostnames and usernames SUCK. the bashrc_early concept allows
+# the local machine a chance to fix HOST and REALUSER to something that
+# fits on a line.
+if [[ -f "$HOME/.bashrc_early" ]] ; then
+    . "$HOME/.bashrc_early"
+fi
 
 if [ ! -d $TMP ] ; then
     mkdir -p $TMP
@@ -682,7 +691,7 @@ cd() {
     if [[ "x$DISPLAY" != x ]] ; then
         if [[ x$I_AM_XCONSOLE == x ]] ; then
             if [[ x$INSIDE_EMACS == x ]] ; then
-                ___xtermbar "$shellfilepart$USER@$HOST:$bardisp"
+                ___xtermbar "$shellfilepart$REALUSER@$HOST:$bardisp"
             fi
         fi
     fi

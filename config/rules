@@ -1,6 +1,7 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-PFK_USER_NAME := $(shell whoami)
+# NOTE: on AWS, usernames have --->BACKSLASHES<--- in them! (wtf, inorite?)
+PFK_USER_NAME := $(shell whoami | sed -e 's,\\,\\\\,')
 PFK_USER_ID := $(shell id -u)
 PFK_GROUP_ID := $(shell id -g)
 PFK_HOME := $(HOME)
