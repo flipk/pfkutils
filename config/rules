@@ -36,9 +36,9 @@ VNCDIR := $(HOME)/.vnc
 ##############################################
 
 BUILD_SWITCHES = \
-	pfkbak syslog checksize treescan ts2 sudo \
-	ampfk pfkscript pfktop sessionmgr spinner xrandr states bglog he \
-	libpfkfb diskloader pfkstat slowlink deduplifier libwas \
+	pfkbak syslog treescan ts2 sudo \
+	pfkscript pfktop sessionmgr xrandr he \
+	libpfkfb slowlink libwas \
 	libpfkthread xlock hilite do_fft protossl i3 uuz tickler
 
 SUBST_VARS = \
@@ -93,8 +93,8 @@ PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
 	libWebAppServer libWebAppServer/proxyTcpServer \
 	libpfkthread \
-	i2 i3 misc backup hilite ampfk syslog \
-	pfkscript pfktop diskloader bglog misc/states \
+	i2 i3 misc backup hilite syslog \
+	pfkscript pfktop \
 	uuz xlock environ scripts fonts contrib main
 
 PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)

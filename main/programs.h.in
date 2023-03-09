@@ -8,10 +8,6 @@ PROG(0,syslogd,"syslogd server with regex patterns")
 PROG(0,postprocess_syslog,"syslog postprocessor with regex patterns")
 #endif
 
-#if @PFK_BUILD_checksize@
-PROG(0,checksize,"check size of hard disk partition")
-#endif
-
 #if @PFK_BUILD_treescan@
 PROG(0,treescan,"scan a tree producing tree info")
 /* not ready yet PROG(0,treesync,"sync one tree to another") */
@@ -23,14 +19,6 @@ PROG(0,ts2,"scan a tree v2")
 
 #if @PFK_BUILD_sudo@
 PROG(1,sudo,"do a command as the superuser")
-#endif
-
-#if @PFK_BUILD_spinner@
-PROG(0,spinner,"spin and burn CPU")
-#endif
-
-#if @PFK_BUILD_ampfk@
-PROG(0,ampfk,"pfk build utils")
 #endif
 
 #if @PFK_BUILD_pfkscript@
@@ -50,14 +38,6 @@ PROG(0,pfkSessionMgr,"session manager")
 PROG(0,pfkSessionXrandr,"xrandr event monitor")
 #endif
 
-#if @PFK_BUILD_states@
-PROG(0,states,"state machine generator")
-#endif
-
-#if @PFK_BUILD_bglog@
-PROG(0,bglog,"background logger")
-#endif
-
 #if @PFK_BUILD_he@
 PROG(0,he,"hexedit")
 #endif
@@ -66,19 +46,6 @@ PROG(0,he,"hexedit")
 PROG(0,fbdump,"FileBlock dumper")
 PROG(0,fbcompact,"FileBlock compacter")
 PROG(0,btdump,"FileBlock Btree dumper")
-#endif
-
-#if @PFK_BUILD_diskloader@
-PROG(0,diskloader,"exercise a filesystem")
-#endif
-
-#if @PFK_BUILD_pfkstat@
-PROG(0,pfkstat,"My own stat/ls command")
-#endif
-
-#if @PFK_BUILD_deduplifier@
-PROG(0,dedup1,"find identical files in a tree and symlink them")
-PROG(0,dedup2,"find identical files in two trees and hardlink them")
 #endif
 
 #if @PFK_BUILD_hilite@

@@ -1,35 +1,34 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-CONFIG = blade
+CONFIG = amazon2
 
-# blade is a hyperthreaded quad-core-- use it.
-MAKEJOBS ?= -j8
+MAKEJOBS ?= -j2
 
-PFK_BUILD_pfkbak=1
-PFK_BUILD_syslog=1
-PFK_BUILD_treescan=1
-PFK_BUILD_ts2=1
-PFK_BUILD_sudo=1
+PFK_BUILD_pfkbak=0
+PFK_BUILD_syslog=0
+PFK_BUILD_treescan=0
+PFK_BUILD_ts2=0
+PFK_BUILD_sudo=0
 PFK_BUILD_pfkscript=1
-PFK_BUILD_sessionmgr=1
-PFK_BUILD_xrandr=1
+PFK_BUILD_sessionmgr=0
+PFK_BUILD_xrandr=0
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=1
-PFK_BUILD_libwas=1
-PFK_BUILD_libpfkthread=1
-PFK_BUILD_wsproxy=1
-PFK_BUILD_xlock=1
+PFK_BUILD_libpfkfb=0
+PFK_BUILD_libwas=0
+PFK_BUILD_libpfkthread=0
+PFK_BUILD_wsproxy=0
+PFK_BUILD_xlock=0
 PFK_BUILD_fonts=1
-PFK_BUILD_pfktop=1
-PFK_BUILD_hilite=1
-PFK_BUILD_do_fft=1
-PFK_BUILD_protossl=1
-PFK_BUILD_i3=1
-PFK_BUILD_slowlink=1
+PFK_BUILD_pfktop=0
+PFK_BUILD_hilite=0
+PFK_BUILD_do_fft=0
+PFK_BUILD_protossl=0
+PFK_BUILD_i3=0
+PFK_BUILD_slowlink=0
 PFK_BUILD_uuz=1
-PFK_BUILD_tickler=1
+PFK_BUILD_tickler=0
 
-BASHRC_LOCAL = bashrc.local.blade
+BASHRC_LOCAL = bashrc.local.mot
 PROTOC_PATH = /bin/protoc
 PROTOBUF_INC =
 PROTOBUF_LIB = -lprotobuf
@@ -40,16 +39,16 @@ MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 LIBZ_INCS =
 LIBZ_LIB = -lz
 
-PFKUTILS_OS = fedora37
+PFKUTILS_OS = amazon2
 
 # SCRIPT_FILES_EXTRA = mhssh mhscp
 
-# not used right now: fish-pfk
+# not used right now: fish-pfk fluxbox-pfk
 # no longer used: ctwm-pfk mscgen-pfk
-CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
-export PFK_CONFIG_contrib_makejobs=-j9
+export PFK_CONFIG_contrib_makejobs=-j2
 
 # turn off color compile output so emacs compile buffer can work;
 # need a more generic solution for compiling in emacs compile buffer.

@@ -33,9 +33,6 @@ pfkutils_CSRCS = \
 ifeq ($(PFK_BUILD_slowlink),1)
 pfkutils_CXXSRCS += main/slowlink.cc
 endif
-ifeq ($(PFK_BUILD_pfkstat),1)
-pfkutils_CSRCS += main/pfkstat.c
-endif
 ifeq ($(PFK_BUILD_he),1)
 pfkutils_CSRCS += main/he.c
 pfkutils_LIBNCURSES= -lncurses
@@ -49,14 +46,6 @@ endif
 ifeq ($(PFK_BUILD_ts2),1)
 pfkutils_CXXSRCS += main/ts2.cc
 endif
-ifeq ($(PFK_BUILD_checksize),1)
-pfkutils_CSRCS += main/checksize.c
-endif
-ifeq ($(PFK_BUILD_deduplifier),1)
-pfkutils_CXXSRCS += \
-	main/dedup1.cc \
-	main/dedup2.cc
-endif
 pfkutils_CXXSRCS += \
 	main/rmstar_new.cc main/main.cc
 ifeq ($(PFK_BUILD_libpfkfb),1)
@@ -64,10 +53,6 @@ pfkutils_CXXSRCS += main/fbcompact.cc main/fbdump.cc main/btdump.cc
 endif
 ifeq ($(PFK_BUILD_sessionmgr),1)
 pfkutils_CXXSRCS += main/sessionManager.cc 
-endif
-
-ifeq ($(PFK_BUILD_spinner),1)
-pfkutils_CXXSRCS += main/spinner.cc
 endif
 
 ifeq ($(PFK_BUILD_tickler),1)
