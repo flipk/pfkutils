@@ -1,0 +1,20 @@
+--- mandatory:
+
+sudo yum install -y amazon-linux-extras
+sudo amazon-linux-extras install epel -y
+
+--- mandatory to build or run pfkutils:
+
+sudo yum install -y \
+  bison flex gawk gcc gcc-c++ git git-gui git-lfs gitk \
+  less libX11-devel libXau-devel mbedtls-devel \
+  ncurses-devel protobuf-compiler protobuf-devel \
+  make bdftopcf
+
+--- mandatory to make a machine not suck:
+
+sudo yum install -y \
+ man-pages bzip2 unzip zip xz \
+ diffutils emacs wget procps-ng python3 python3-pip \
+ screen vim-enhanced xorg-x11-font-utils
+
