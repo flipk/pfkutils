@@ -141,7 +141,7 @@ ifeq ($(PFK_BUILD_sudo),1)
 			./sudo chmod 4755 pfkutils && \
 				echo installed sudo as root ; \
 		else touch $(OBJDIR_FULLPATH)/needs-chown ; fi ; true
-	@if [[ -f $(OBJDIR_FULLPATH)/needs-chown ]] ; then \
+	@if [ -f $(OBJDIR_FULLPATH)/needs-chown ] ; then \
 	  echo "" ;\
 	  echo "*** please perform the following as root:" ;\
 	  echo "     chown root $(INSTALL_BIN_DIR)/pfkutils" ;\
