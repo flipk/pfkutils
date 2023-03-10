@@ -1,0 +1,28 @@
+
+sudo systemctl stop sshd
+
+--> start in a screen:
+docker start -ai ssh-server
+/usr/sbin/sshd -E /var/log/sshd.log
+tail -f /var/log/sshd.log
+
+
+sudo systemctl start sshd
+
+
+--> first time
+docker run -it -p 22:22 --name ssh-server fedora:38 /bin/bash
+dnf install openssh-server openssh-clients procps-ng
+tar up and copy /etc/ssh from host to docker
+-> do not add a password for user, leave as !!
+adduser uuzBqIo7
+vipw ; vipw -s ; delete all users but root, sshd, uuzBqIo7
+su - uuzBqIo7
+ssh-keygen
+add ec key from iphone & chromebook to authorized_keys
+add a .ssh/config:
+Host blade
+    Port 2222
+    HostName 10.0.0.3
+    User flipk
+
