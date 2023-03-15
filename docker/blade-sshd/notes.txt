@@ -7,6 +7,9 @@ docker start -ai ssh-server
 tail -f /var/log/sshd.log
 
 
+reconfigure system sshd to listen on 2222
+modify firewall "permanent" to add port 2222
+
 sudo systemctl start sshd
 
 
