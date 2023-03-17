@@ -1,3 +1,4 @@
 _setup_etcssh.tar
 _setup_authorized_keys
 _setup_config
+_setup_known_hosts

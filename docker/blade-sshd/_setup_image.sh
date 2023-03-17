@@ -3,7 +3,7 @@
 set -e -x
 
 dnf update -y
-dnf install -y openssh-server openssh-clients procps-ng
+dnf install -y openssh-server openssh-clients procps-ng xauth
 
 cd /
 tar xpvf /tmp/_setup_etcssh.tar
@@ -25,6 +25,7 @@ adduser uuzBqIo7
 install -m 700 -o uuzBqIo7 -g uuzBqIo7 -d /home/uuzBqIo7/.ssh/
 install -m 600 -o uuzBqIo7 -g uuzBqIo7 /tmp/_setup_authorized_keys /home/uuzBqIo7/.ssh/authorized_keys 
 install -m 600 -o uuzBqIo7 -g uuzBqIo7 /tmp/_setup_config /home/uuzBqIo7/.ssh/config
+install -m 600 -o uuzBqIo7 -g uuzBqIo7 /tmp/_setup_known_hosts /home/uuzBqIo7/.ssh/known_hosts
 
 install -m 700 -o root -g root /tmp/_setup_start.sh /start.sh
 

@@ -15,6 +15,11 @@ if [[ ! -f _setup_config ]] ; then
     exit 1
 fi
 
+if [[ ! -f _setup_known_hosts ]] ; then
+    echo please place _setup_known_hosts in this directory
+    exit 1
+fi
+
 tag=blade-sshd:1
 
 sudo tar cf /tmp/_setup_etcssh.tar /etc/ssh
