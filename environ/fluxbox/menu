@@ -22,6 +22,7 @@
       [exec] (1920x1128 maximized 1920x1200 with win11 startbar)  {xrandr -s 1920x1128}
       [exec] (1840x1056 maximized 1920x1080 with win10 startbar)  {xrandr -s 1840x1056}
       [exec] (1280x952  maximized 1280x1024 with win11 startbar)  {xrandr -s 1280x952 }
+      [exec] (1280x1000  maximized 1280x1024)  {xrandr -s 1280x1000 }
       [exec] (1280x1024)  {xrandr -s 1280x1024}
       [exec] (1400x1040)  {xrandr -s 1400x1040}
       [exec] (1280x960)   {xrandr -s 1280x960 }
