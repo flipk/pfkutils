@@ -2,7 +2,11 @@
 
 package require Tclx
 
-set hostname [exec hostname]
+if { [info exists ::env(HOST)] } {
+    set hostname $env(HOST)
+} {
+    set hostname [exec hostname]
+}
 
 proc doxterm { } {
         catch {
