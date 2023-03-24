@@ -1,31 +1,19 @@
 
 sudo systemctl stop sshd
-
---> start in a screen:
-docker start -ai ssh-server
-/usr/sbin/sshd -E /var/log/sshd.log
-tail -f /var/log/sshd.log
-
-
 reconfigure system sshd to listen on 2222
 modify firewall "permanent" to add port 2222
-
 sudo systemctl start sshd
 
+password for config files is in kee, under 'blade homegroup'
 
---> first time
-docker run -it -p 22:22 --name ssh-server fedora:38 /bin/bash
-dnf install openssh-server openssh-clients procps-ng
-tar up and copy /etc/ssh from host to docker
--> do not add a password for user, leave as !!
-adduser uuzBqIo7
-vipw ; vipw -s ; delete all users but root, sshd, uuzBqIo7
-su - uuzBqIo7
-ssh-keygen
-add ec key from iphone & chromebook to authorized_keys
-add a .ssh/config:
-Host blade
-    Port 2222
-    HostName 10.0.0.3
-    User flipk
+uuz d -e $pass config_files.uuz
+
+if you modify, rebuild with:
+uuz e -e $pass -o config_files.uuz \
+    _setup_authorized_keys _setup_config _setup_known_hosts
+
+./build-blade-sshd.sh
+./start-blade-ssh.sh
+tail -f $TMP/sshd-logs/sshd.log
+
 
