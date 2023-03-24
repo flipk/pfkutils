@@ -123,7 +123,7 @@ int uuz :: main(void)
             if (w > filenamewidth) filenamewidth = w;
         }
 
-        printf("%-11s %*s %*s  %% hmac sha  filename\n",
+        printf("%-11s %*s %*s   %% hmac sha  filename\n",
                "---mode---", sizewidth, "size", csizewidth, "csize");
 
         for (auto &li : list_output)
@@ -141,7 +141,7 @@ int uuz :: main(void)
 
             if (li->csize != 0)
             {
-                printf(" %*" PRIu64 " %*" PRIu64 " %2d %s %s %s\n",
+                printf(" %*" PRIu64 " %*" PRIu64 " %3d %s %s %s\n",
                        sizewidth, li->size,
                        csizewidth, li->csize,
                        li->percent,
