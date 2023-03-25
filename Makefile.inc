@@ -282,8 +282,10 @@ endif
 export VERBOSE
 
 all:
-	$(Q)+make objdirs echoconfig preprocs protobufs
-	$(Q)make deps
+	$(Q)make objdirs echoconfig
+	$(Q)+make preprocs
+	$(Q)+make protobufs
+	$(Q)+make deps
 	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
 
 include $(INCLUDE_MAKEFILES)
