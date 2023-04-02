@@ -1,0 +1,7 @@
+
+with fedora 37 and rtx 4090 card:
+
+dnf install kmod-nvidia
+reboot
+nvidia-settings
+
