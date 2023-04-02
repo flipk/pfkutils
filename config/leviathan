@@ -47,7 +47,7 @@ PFKUTILS_OS = fedora37
 CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
-export PFK_CONFIG_contrib_makejobs=-j9
+export PFK_CONFIG_contrib_makejobs=-j32
 
 # turn off color compile output so emacs compile buffer can work;
 # need a more generic solution for compiling in emacs compile buffer.
