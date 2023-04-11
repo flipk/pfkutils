@@ -1,89 +1,113 @@
 
-import collections
+import sys
+import collections.abc
 from elasticsearch import Elasticsearch
+import threading
 
 
-CERT_FINGERPRINT = "<hex-number>"
-ELASTIC_USERNAME = "<elastic-username>"
-ELASTIC_PASSWORD = "<elastic-password>"
-ELASTIC_IPADDR = "<elastic-ipaddr>"
-ELASTIC_INDEX = "<elastic-index>"
 ELASTIC_BULK_INSERT_SIZE = 400
-ELASTIC_INDEX_MAPPINGS = {
-    "properties": {
-        "item_counter": {
-            "type": "long"
-        },
-        "some_int": {
-            "type": "long"
-        },
-        "Date": {
-            "type": "date",
-            "format": "MM/dd/yyyy HH:mm:ss"
-        }
-    }
-}
+# ELASTIC_INDEX_MAPPINGS = {
+#     "properties": {
+#         "item_counter": {
+#             "type": "long"
+#         },
+#         "some_int": {
+#             "type": "long"
+#         },
+#         "Date": {
+#             "type": "date",
+#             "format": "MM/dd/yyyy HH:mm:ss"
+#         }
+#     }
+# }
 
-class _BulkOps:
+
+class BulkOps:
     """
     an accumulator class for elastic search bulk operations.
     use ElasticIF.bulk_start() to get one of these.
     """
     _bulk_index: str
     _bulk_ops_size: int   # max size of ops
+    _lock: threading.Lock
+    _eif_lock: threading.Lock
     _bulk_ops: list
     _client: Elasticsearch
 
-    def __init__(self, client: Elasticsearch, index_name: str, bulk_size: int):
+    def __init__(self,
+                 client: Elasticsearch,
+                 eiflock: threading.Lock,
+                 index_name: str,
+                 bulk_size: int = ELASTIC_BULK_INSERT_SIZE):
         self._bulk_index = index_name
         self._bulk_ops_size = bulk_size
+        self._lock = threading.Lock()
+        self._eif_lock = eiflock
         self._bulk_ops = []
         self._client = client
 
-    def insert(self, doc: dict):
+    def insert(self, doc: dict) -> bool:
+        self._lock.acquire()
         self._bulk_ops.append({"index": {"_index": self._bulk_index}})
         self._bulk_ops.append(doc)
         if len(self._bulk_ops) >= self._bulk_ops_size:
-            success = self.finish()
+            success = self.finish(do_lock=False)
         else:
             success = True
+        self._lock.release()
         return success
 
-    def update(self, _id: str, doc: dict):
+    def update(self, _id: str, doc: dict) -> bool:
+        self._lock.acquire()
         self._bulk_ops.append({"update": {"_index": self._bulk_index, "_id": _id}})
         self._bulk_ops.append({"doc": doc})
         if len(self._bulk_ops) >= self._bulk_ops_size:
-            success = self.finish()
+            success = self.finish(do_lock=False)
         else:
             success = True
+        self._lock.release()
         return success
 
-    def delete(self, _id: str):
+    def delete(self, _id: str) -> bool:
+        self._lock.acquire()
         self._bulk_ops.append({"delete": {"_index": self._bulk_index, "_id": _id}})
         if len(self._bulk_ops) >= self._bulk_ops_size:
-            success = self.finish()
+            success = self.finish(do_lock=False)
         else:
             success = True
+        self._lock.release()
         return success
 
-    def finish(self):
+    def finish(self, do_lock: bool = True, refresh: bool = False) -> None:
         errs = []
-        try:
-            resp = self._client.bulk(operations=self._bulk_ops)
-            success = True
-            print("bulk response:", resp)
-            if resp.get('errors', None):
-                i: dict
-                for i in resp.get('items', []):
-                    for j, k in i.items():
-                        status = k.get('status', 499)
-                        if 400 <= status <= 499:
-                            errs.append({j: k})
+        success = True
+        if do_lock:
+            self._lock.acquire()
+        if len(self._bulk_ops) > 0:
+            self._eif_lock.acquire()
+            try:
+                # print(f'performing bulk with {len(self._bulk_ops)} ops')
+                resp = self._client.bulk(operations=self._bulk_ops,
+                                         refresh=refresh)
+                success = True
+            except BaseException as e:
+                resp = None
                 success = False
-        except BaseException as e:
-            success = False
-            print("client bulk exception:", e)
-        self._bulk_ops = []
+                print("client bulk exception:", e)
+            self._eif_lock.release()
+            if success:
+                # print("bulk response:", resp)
+                if resp.get('errors', None):
+                    i: dict
+                    for i in resp.get('items', []):
+                        for j, k in i.items():
+                            status = k.get('status', 499)
+                            if 400 <= status <= 499:
+                                errs.append({j: k})
+                    success = False
+            self._bulk_ops = []
+        if do_lock:
+            self._lock.release()
         if len(errs) > 0:
             print("errors:", errs)
         return success, errs
@@ -103,20 +127,28 @@ class ElasticIF:
     a class for interfacing to ElasticSearch.
     """
     _client: Elasticsearch
+    _lock: threading.Lock
 
-    def __init__(self, ipaddr: str, username: str, password: str,
+    def __init__(self,
+                 ipaddr: str,
+                 port: int,
+                 username: str,
+                 password: str,
                  cert_fingerprint: str):
         try:
+            url = f'https://{ipaddr}:{port}'
+            print(f'attempting connection to url: {url}')
             self._client = Elasticsearch(
-                "https://" + ipaddr + ":9200",
+                url,
                 ssl_assert_fingerprint=cert_fingerprint,
                 basic_auth=(username, password)
             )
             print("connection success:", self._client.info())
         except BaseException as err:
-            print("PFK detected error: ", err)
+            print("ElasticIF detected error: ", err)
             print("    of type: ", type(err))
             exit(1)
+        self._lock = threading.Lock()
 
     def get_records(self, index_name: str,
                     source: bool = False,
@@ -136,6 +168,7 @@ class ElasticIF:
             body = {'query': {'match_all': {}}}
         success = False
         resp = None
+        self._lock.acquire()
         try:
             resp = self._client.search(
                 index=index_name,
@@ -146,24 +179,29 @@ class ElasticIF:
             success = True
         except BaseException as e:
             print("query: ", body, "\nexception:", e)
+        self._lock.release()
         return success, resp
 
     def record_generator(self, index_name: str, source=False,
-                         size=10, body=None, scroll=None) -> collections.Iterable:
+                         size=10, body=None, scroll=None) -> collections.abc.Iterable:
         if not body:
             body = {'query': {'match_all': {}}}
         if not scroll:
             scroll = '5m'
         try:
+            self._lock.acquire()
             resp = self._client.search(index=index_name, source=source,
                                        size=size, body=body, scroll=scroll)
+            self._lock.release()
             scroll_id = resp['_scroll_id']
             hits = resp['hits']['hits']
             # print("search got %u hits" % len(hits))
             for h in hits:
                 yield h
             while len(hits) > 0:
+                self._lock.acquire()
                 resp = self._client.scroll(scroll_id=scroll_id, scroll=scroll)
+                self._lock.release()
                 hits = resp['hits']['hits']
                 # print("scroll got %u hits" % len(hits))
                 for h in hits:
@@ -186,12 +224,14 @@ class ElasticIF:
         resp = None
         success: bool = False
         try:
+            self._lock.acquire()
             resp = self._client.update(
                 index=index_name,
                 id=_id,
                 refresh=refresh,
                 doc=_doc
                 )
+            self._lock.release()
             success = True
         except BaseException as e:
             print("update exception:", e)
@@ -202,11 +242,13 @@ class ElasticIF:
         resp = None
         success = True
         try:
+            self._lock.acquire()
             resp = self._client.delete(
                 index=index_name,
                 refresh=refresh,
                 id=_id
                 )
+            self._lock.release()
             success = True
         except BaseException as e:
             print("delete id", _id, "exception:", e)
@@ -217,23 +259,28 @@ class ElasticIF:
         success: bool = False
         resp = ''
         try:
+            self._lock.acquire()
             resp = self._client.index(index=index_name,
                                       refresh=refresh,
-                                      body=doc)
+                                      document=doc)
+            self._lock.release()
             success = True
         except BaseException as e:
             print("client insert exception:", e)
         return success, resp
 
-    def bulk_start(self, index_name: str, bulk_size: int) -> _BulkOps:
-        return _BulkOps(self._client, index_name, bulk_size)
+    def bulk_start(self, index_name: str,
+                   bulk_size: int = ELASTIC_BULK_INSERT_SIZE) -> BulkOps:
+        return BulkOps(self._client, self._lock, index_name, bulk_size)
 
     def create_index(self, index_name: str, mappings):
         success = False
         resp = ''
         try:
+            self._lock.acquire()
             resp = self._client.indices.create(index=index_name,
                                                mappings=mappings)
+            self._lock.release()
             success = True
         except BaseException as e:
             print("create index", index_name, "exception:", e)
@@ -245,7 +292,9 @@ class ElasticIF:
         success = False
         resp = ''
         try:
+            self._lock.acquire()
             resp = self._client.indices.delete(index=index_name)
+            self._lock.release()
             success = True
         except BaseException as e:
             print("delete index", index_name, "exception:", e)

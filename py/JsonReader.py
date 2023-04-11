@@ -1,8 +1,7 @@
 
-
 from typing import TextIO
 import json
-import collections
+import collections.abc
 
 
 class JsonReader:
@@ -32,7 +31,7 @@ class JsonReader:
     def lines(self) -> int:
         return self._lines
 
-    def records(self) -> collections.Iterable:
+    def records(self) -> collections.abc.Iterable:
         """
         Generator: Reads one line and returns (json dict).
         """
@@ -51,4 +50,3 @@ class JsonReader:
                 print("\n" "on line %d line = '%s'" % (self._lines, line))
                 print(e)
                 self._ok = False
-

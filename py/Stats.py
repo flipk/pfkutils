@@ -1,5 +1,8 @@
 
+import queue
 import time
+import threading
+from typing import Callable
 
 
 class Stat:
@@ -25,15 +28,18 @@ class Stat:
         self._start = time.monotonic()
 
     @property
+    def name(self) -> str:
+        return self._name
+
+    @property
     def total(self) -> int:
         return self._total
 
-    def peg(self):
-        self._iter_count += 1
-        self._total += 1
+    def peg(self, count=1):
+        self._iter_count += count
+        self._total += count
 
     def format(self) -> str:
-        # ret = self._name + ":%4d/%6d" % (self._iter_count, self._total)
         ret = self._name + ":" + str(self._iter_count) + "/" + str(self._total)
         if self._timestat:
             now = time.monotonic()
@@ -47,29 +53,58 @@ class Stat:
 
 class Stats:
     """
-    a container for a set of stats. the format method automatically
-    iterates over every registered stat and calls format() on each
-    stat in turn.
+    a container for a set of stats.
     """
-    _ss: list
+    _ss: dict[str, Stat]
+    _default_timestat: bool
+    _print_interval: float
+    _print_func: Callable[[str], None]
+    _thread_shutdown_q: queue.Queue
+    _thread_running: bool
 
-    def __init__(self):
-        self._ss = []
+    def __init__(self,
+                 default_timestat: bool = False,
+                 print_interval: float = 1.0,
+                 print_func: Callable[[str], None] = print
+                 ):
+        self._ss = {}
+        self._default_timestat = default_timestat
+        self._print_interval = print_interval
+        self._print_func = print_func
+        self._thread_shutdown_q = queue.Queue()
+        self._stats_thread = threading.Thread(target=self._stats_printer, daemon=True)
+        self._stats_thread.start()
+        self._thread_running = True
 
-    # i wanted to hint "stat" as Stat but python doesn't have
-    # forward declarations (to be clear, python doesn't need it
-    # but i don't know how to clear a warning from PyCharm)
-    def stat(self, name: str, timestat: bool = False) -> Stat:
-        s = Stat(name, timestat)
-        self._ss.append(s)
+    def __del__(self):
+        self.stop()
+
+    def get(self, name: str) -> Stat:
+        if name in self._ss:
+            return self._ss[name]
+        s = Stat(name, self._default_timestat)
+        self._ss[name] = s
         return s
 
-    def format(self) -> str:
+    def stop(self):
+        if self._thread_running:
+            self._thread_shutdown_q.put('stop')
+            self._stats_thread.join()
+        self._thread_running = False
+
+    def _format(self) -> str:
         ret = ""
-        first = True
-        for s in self._ss:
-            if not first:
-                ret += " "
-            first = False
-            ret += s.format()
+        for s in self._ss.values():
+            ret += s.format() + "  "
         return ret
+
+    def _stats_printer(self):
+        go = True
+        while go:
+            try:
+                msg = self._thread_shutdown_q.get(timeout=self._print_interval)
+                if msg == 'stop':
+                    go = False
+            except queue.Empty:
+                pass
+            self._print_func(self._format())

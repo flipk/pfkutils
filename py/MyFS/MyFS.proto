@@ -1,5 +1,5 @@
 // turn this into python with this command:
-//   protoc --python_out=. --mypy_out=. MyFS.proto
+//   ./rebuild-proto.sh
 // mypy_out can dramatically improve the PyCharm
 // autocompletion experience.
 
@@ -12,13 +12,27 @@ syntax = "proto2";
 package MyFS;
 
 enum MessageType {
-  LOGIN = 1;
-  LOGIN_RESP = 2;
-  LIST_DIR = 3;
-  LIST_DIR_RESP = 4;
-  REQUEST_FILE = 5;
-  REQUEST_FILE_STATUS = 6;
-  FILE_CONTENTS = 7;
+  LOGIN = 1;                // Login
+  LOGIN_RESP = 2;           // LoginResp
+  LIST_DIR = 3;             // ListDir
+  LIST_DIR_RESP = 4;        // ListDirResp
+  LIST_ARCHIVE = 16;        // GetFile
+  LIST_ARCHIVE_STATUS = 17; // ListDirResp
+  GET_FILE = 5;             // GetFile
+  GET_FILE_STATUS = 6;      // GetFileStatus
+  PUT_FILE = 7;             // PutFile
+  PUT_FILE_STATUS = 8;      // PutFileStatus
+  GET_ARCHIVE = 18;         // GetArchive
+  GET_ARCHIVE_STATUS = 19;  // GetArchiveStatus
+  FILE_CONTENTS = 9;        // FileContents
+  DELETE = 10;              // GetFile
+  DELETE_STATUS = 11;       // reuses PutFileStatus
+  MKDIR = 12;               // GetFile
+  MKDIR_STATUS = 13;        // reuses PutFileStatus
+  RMDIR = 14;               // GetFile
+  RMDIR_STATUS = 15;        // reuses PutFileStatus
+  REMOVE_TREE = 20;         // GetFile
+  REMOVE_TREE_STATUS = 21;  // PutFileStatus
 }
 
 message Login {
@@ -28,6 +42,7 @@ message Login {
 
 message LoginResp {
   optional bool success = 1;
+  // only if success = False
   optional string reason = 2;
 }
 
@@ -50,19 +65,35 @@ message ListDirResp {
   optional bool success = 1;
   // only populated if not success
   optional string reason = 2;
-  repeated DirEntry entries = 3;
+  optional bool final = 3; // if false, more coming
+  repeated DirEntry entries = 4;
 }
 
-message RequestFile {
+message GetFile {
   optional string filename = 1;
+
+  // if REQUEST_FILE just wants to know if a file exists
+  // or not, set this to true.
+  optional bool just_check = 2;
 }
 
-message RequestFileStatus {
+message GetFileStatus {
   optional bool success = 1;
   // only present if not success
   optional string reason = 2;
   // only present if success
   optional int32 size = 3;
+}
+
+message PutFile {
+  optional string filename = 1;
+  optional int32 size = 2;
+}
+
+message PutFileStatus {
+  optional bool success = 1;
+  // only present if not success
+  optional string reason = 2;
 }
 
 message FileContents {
@@ -71,17 +102,55 @@ message FileContents {
   optional bytes data = 3;
 }
 
+enum GetArchiveType {
+  ARCH_DOWNLOAD = 1;
+  ARCH_SAVE_SERVER = 2;
+}
+message GetArchive {
+  // two types:
+  //   ARCH_DOWNLOAD: client wants to receive the data.
+  //        (do not populate 'destinations')
+  //   ARCH_SAVE_SERVER: client doesn't want to receive the data,
+  //        instead save it on the server. (and populate 'destinations'
+  //        with the snacksfs-relative paths to put the members. note
+  //        length of destinations must match length of members.)
+  optional GetArchiveType requesttype = 3;
+  optional string filename = 1;
+  repeated string members = 2;
+  repeated string destinations = 4;
+}
+
+message GetArchiveStatus {
+  optional bool success = 1;
+  // only present if not success
+  optional string reason = 2;
+  // if requesttype was ARCH_DOWNLOAD, this will
+  // be present. if ARCH_SAVE_SERVER, this is absent.
+  // tell the recipient how many bytes to expect
+  // for each file it is asking for. NOTE if any
+  // of the 'members' from GetArchive are not
+  // actually found in the zip, you get success==False
+  // and nothing else. server only returns anything
+  // if it can return everything.
+  repeated int32 sizes = 3;
+}
+
 message Client2Server {
   optional MessageType type = 1;
   optional Login login = 2;
-  optional RequestFile requestfile = 3;
-  optional ListDir listdir = 4;
+  optional GetFile getfile = 3;
+  optional PutFile putfile = 4;
+  optional FileContents filecontents = 5;
+  optional ListDir listdir = 6;
+  optional GetArchive getarchive = 7;
 }
 
 message Server2Client {
   optional MessageType type = 1;
   optional LoginResp loginresp = 2;
-  optional RequestFileStatus requestfilestatus = 3;
-  optional FileContents filecontents = 4;
-  optional ListDirResp listdirresp = 5;
+  optional GetFileStatus getfilestatus = 3;
+  optional PutFileStatus putfilestatus = 4;
+  optional FileContents filecontents = 5;
+  optional ListDirResp listdirresp = 6;
+  optional GetArchiveStatus getarchivestatus = 7;
 }
