@@ -225,6 +225,10 @@ UNAMER := $(shell uname -r | sed -e 's,/,_,g' -e 's,[(|)],_,g')
 OBJDIR := obj.$(shell uname -m).$(shell uname -s).$(UNAMER)
 endif
 
+ifeq ($(DBG),1)
+OBJDIR := $(OBJDIR).dbg
+endif
+
 ifeq ($(OBJDIR),$(filter /%,$(OBJDIR)))
 # objdir is absolute path.
 OBJDIR_FULLPATH := $(OBJDIR)
@@ -257,7 +261,6 @@ PROTOC_PATH ?= $(firstword $(wildcard $(POSSIBLE_PROTOC_PATHS)))
 ifeq ($(DBG),1)
 CFLAGS  += -O0 -g3
 CXXFLAGS += -O0 -g3
-OBJDIR := $(OBJDIR).dbg
 else
 CFLAGS ?= -O2
 CXXFLAGS ?= -O2

@@ -143,7 +143,8 @@ std::ostream &operator<<(std::ostream &strm, const ProtoFileEnumValue *ev);
 
 #ifdef __SIMPLE_PROTOBUF_INTERNAL__
 // used by flex to customize the lex function's signature and args
-#define YY_DECL int protobuf_tokenizer_lex(YYSTYPE *yylval, yyscan_t yyscanner)
+#define YY_DECL int protobuf_tokenizer_lex(\
+    PROTOBUF_PARSER_STYPE *yylval, yyscan_t yyscanner)
 #endif /* __SIMPLE_PROTOBUF_INTERNAL__ */
 
 #if 0 // useful for testing the scanner standalone

@@ -96,3 +96,16 @@ def dump(obj, name: str = 'arg', doprint: Callable = print):
     for attr in dir(obj):
         a = getattr(obj, attr)
         doprint(f'{name}.{attr}: {type(a)}: {a}')
+
+
+def dump_dict(d: dict, n: str, spaces: str = '', level: int = 1,
+              doprint: Callable = print):
+    print(f'{level}-{spaces}{n}:')
+    spaces += '   '
+    level += 1
+    for k in d.keys():
+        v = d[k]
+        if isinstance(v, dict):
+            dump_dict(v, f'{k}', spaces, level, doprint)
+        else:
+            doprint(f'{level}-{spaces}{k}: {v}')

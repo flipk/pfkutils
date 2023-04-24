@@ -2,7 +2,7 @@
 
 %parse-param {yyscan_t yyscanner}
 %define api.pure
-%name-prefix "protobuf_parser_"
+%define api.prefix {protobuf_parser_}
 
 %{
 
@@ -239,7 +239,7 @@ protobuf_parser_debug_tokenize(const std::string &fname)
 
     int c;
     do {
-        YYSTYPE  yylval;
+        PROTOBUF_PARSER_STYPE  yylval;
         c = protobuf_tokenizer_lex(&yylval, scanner);
         if (c < 256)
             printf("%d ", c);

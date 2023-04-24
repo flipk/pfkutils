@@ -173,7 +173,7 @@ protobuf_parser_debug_tokenize(FILE *f)
 
     int c;
     do {
-        YYSTYPE  yylval;
+        PROTOBUF_PARSER_STYPE  yylval;
         c = protobuf_tokenizer_lex(&yylval, scanner);
         if (c < 255)
             printf("%d ", c);
