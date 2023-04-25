@@ -66,6 +66,10 @@
 #         their target-specific counterparts, with the globals coming
 #         first on the linker command line.
 #
+# ARCMD
+#    command passed to $(AR), by default "cq". See below concerning
+#    shared libraries, and python libraries.
+#
 # INCS, DEFS
 #    cpp-type arguments. INCS should be -I's, DEFS should be -D's.
 #    NOTE these are global for all LIB and PROG targets! the
@@ -125,6 +129,7 @@
 # $(target)_CC = <target-specific compiler, uses $(CC), if not specified>
 # $(target)_CXX = <target-specific compiler, uses $(CXX), if not specified>
 # $(target)_AR = <t-s archiver, uses $(AR), ins>
+# $(target)_ARCMD = <t-s archiver cmd args, uses $(ARCMD), ins>
 # $(target)_RANLIB = <t-s library indexer, uses $(RANLIB), ins>
 # $(target)_BISON = <t-s parser generator, uses $(BISON), ins>
 # $(target)_FLEX = <t-s lexical scanner, uses $(FLEX), ins>
@@ -191,6 +196,21 @@
 # $(target)_LDFLAGS = -rdynamic <a list of options passed to linker>
 # $(target)_INSTALL=1   # only if you want this prog installed
 #
+#    Shared Libraries
+#
+# If you want to build a dynamic shared-object (.so), you should set
+# $(target)_AR to "g++", $(target)_ARCMD to "-shared -o", and
+# $(target)_RANLIB to "true" (effecively disabling the ranlib
+# step). You also need to add "-fpic -DPIC" to $(target)_CFLAGS and
+# $(target)_CXXFLAGS.  (Note this is not called ARFLAGS because GNU
+# MAKE defines that variable by default, which is confusing.)
+#
+#    Python Libraries
+#
+# If you want to build a python dynamic-load library, set AR to "g++",
+# ARCMD to "-shared -Wl,-z,relro -Wl,--as-needed -Wl,-z,now
+# -Wl,--build-id=sha1 -o" and RANLIB to "true".
+#
 #    doxyen targets can define:
 #
 # $(target)_DOXYFILE = Doxyfile
@@ -245,6 +265,7 @@ OBJDIRS_TOMAKE ?=
 CC ?= gcc
 CXX ?= g++
 AR ?= ar
+ARCMD ?= cq
 RANLIB ?= ranlib
 BISON ?= bison
 FLEX ?= flex
@@ -309,6 +330,7 @@ echoconfig:
 	@echo CC=$(CC) >> $(CONFIG_TXT)
 	@echo CXX=$(CXX) >> $(CONFIG_TXT)
 	@echo AR=$(AR) >> $(CONFIG_TXT)
+	@echo ARCMD=$(ARCMD) >> $(CONFIG_TXT)
 	@echo RANLIB=$(RANLIB) >> $(CONFIG_TXT)
 	@echo BISON=$(BISON) >> $(CONFIG_TXT)
 	@echo FLEX=$(FLEX) >> $(CONFIG_TXT)
@@ -322,6 +344,7 @@ echoconfig:
 	@echo -n -e $(CUSTOM_DEFS) >> $(CONFIG_TXT)
 	@echo -n -e $(CUSTOM_CFLAGS) >> $(CONFIG_TXT)
 	@echo  -e $(CUSTOM_CXXFLAGS) >> $(CONFIG_TXT)
+	@echo  -e $(CUSTOM_ARCMD) >> $(CONFIG_TXT)
 	@echo TARGETS=$(LIB_TARGETS) $(PROG_TARGETS)
 	@echo recording configuration in $(CONFIG_TXT)
 
@@ -452,6 +475,8 @@ $(if $(subst undefined,,$(origin $(target)_CXX)),
   $(eval CUSTOM_TOOLS += \\n$(target)_CXX=$($(target)_CXX)))
 $(if $(subst undefined,,$(origin $(target)_AR)),
   $(eval CUSTOM_TOOLS += \\n$(target)_AR=$($(target)_AR)))
+$(if $(subst undefined,,$(origin $(target)_ARCMD)),
+  $(eval CUSTOM_TOOLS += \\n$(target)_ARCMD=$($(target)_ARCMD)))
 $(if $(subst undefined,,$(origin $(target)_RANLIB)),
   $(eval CUSTOM_TOOLS += \\n$(target)_RANLIB=$($(target)_RANLIB)))
 $(if $(subst undefined,,$(origin $(target)_BISON)),
@@ -472,6 +497,7 @@ $(if $(subst undefined,,$(origin $(target)_CXXFLAGS)),
 $(eval $(target)_CC ?= $(CC))
 $(eval $(target)_CXX ?= $(CXX))
 $(eval $(target)_AR ?= $(AR))
+$(eval $(target)_ARCMD ?= $(ARCMD))
 $(eval $(target)_RANLIB ?= $(RANLIB))
 $(eval $(target)_BISON ?= $(BISON))
 $(eval $(target)_FLEX ?= $(FLEX))
@@ -661,7 +687,8 @@ define LIB_TARGET_RULES
 $($(target)_TARGET): $($(target)_OBJS)
 	@echo linking $($(target)_TARGET)
 	$(Q)rm -f $($(target)_TARGET)
-	$(Q)$($(target)_AR) cq $($(target)_TARGET) $($(target)_OBJS)
+	$(Q)$($(target)_AR) $($(target)_ARCMD) \
+		$($(target)_TARGET) $($(target)_OBJS)
 	$(Q)$($(target)_RANLIB) $($(target)_TARGET)
 
 $(target)_install: $($(target)_TARGET)
