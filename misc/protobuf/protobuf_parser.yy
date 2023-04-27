@@ -14,7 +14,7 @@
 #include <iostream>
 #include <pthread.h>
 #ifndef DEPENDING
-#include "protobuf_tokenizer.h"
+#include TOKENIZER_LL_HDR
 #endif
 #define __SIMPLE_PROTOBUF_INTERNAL__ 1
 #include "protobuf_tokenize_and_parse.h"

@@ -4,8 +4,6 @@
 %option yylineno
 %option reentrant
 %option prefix="protobuf_tokenizer_"
-%option outfile="protobuf_tokenizer.cc"
-%option header-file="obj/protobuf_tokenizer.h"
 
 %{
 

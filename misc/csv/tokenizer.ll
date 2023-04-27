@@ -2,8 +2,6 @@
 
 %option noyywrap
 %option yylineno
-%option outfile="lex.yy.cc"
- /* header-file="lex.yy.h" */
 
 %{
 

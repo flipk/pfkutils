@@ -2,8 +2,6 @@
 
 %option noyywrap
 %option yylineno
-%option outfile="lex.yy.cc"
-%option header-file="obj/test-tokenizer.h"
 %option reentrant
 %option prefix="xml_tokenizer_"
 

@@ -2,6 +2,9 @@
 
 %parse-param {yyscan_t yyscanner}
 %define api.pure
+
+ /* should change this, but it breaks for some reason!
+    %define api.prefix {json_parser_} */
 %name-prefix "json_parser_"
 
 %{
@@ -16,7 +19,7 @@
 #include <pthread.h>
 #include <inttypes.h>
 #ifndef DEPENDING
-#include "json_tokenizer.h"
+#include TOKENIZER_LL_HDR
 #endif
 #include "simple_json.h"
 #define __JSON_PARSER_INTERNAL__ 1

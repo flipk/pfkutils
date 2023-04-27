@@ -355,7 +355,7 @@ objdirs:
 
 # $(call FROM_X_TO_Y,cc,o,dirA/dirB/file.cc) == objdir/target-dirA_dirB_file.o
 
-FROM_X_TO_Y = $(patsubst %.$(1), $(OBJDIR_FULLPATH)/$(target)-%.$(2), $(subst /,_,$(3)))
+FROM_X_TO_Y = $(patsubst %.$(1),$(OBJDIR_FULLPATH)/$(target)-%.$(2),$(subst /,_,$(3)))
 
 FROM_C_TO_O      = $(call FROM_X_TO_Y,c,o,$(1))
 FROM_C_TO_D      = $(call FROM_X_TO_Y,c,c.d,$(1))
@@ -370,9 +370,11 @@ FROM_YY_TO_HH    = $(call FROM_X_TO_Y,yy,hh,$(1))
 FROM_YY_TO_D     = $(call FROM_X_TO_Y,yy,cc.d,$(1))
 FROM_YY_TO_O     = $(call FROM_X_TO_Y,yy,o,$(1))
 FROM_L_TO_C      = $(call FROM_X_TO_Y,l,c,$(1))
+FROM_L_TO_H      = $(call FROM_X_TO_Y,l,h,$(1))
 FROM_L_TO_D      = $(call FROM_X_TO_Y,l,c.d,$(1))
 FROM_L_TO_O      = $(call FROM_X_TO_Y,l,o,$(1))
 FROM_LL_TO_CC    = $(call FROM_X_TO_Y,ll,cc,$(1))
+FROM_LL_TO_HH    = $(call FROM_X_TO_Y,ll,hh,$(1))
 FROM_LL_TO_D     = $(call FROM_X_TO_Y,ll,cc.d,$(1))
 FROM_LL_TO_O     = $(call FROM_X_TO_Y,ll,o,$(1))
 FROM_PROTO_TO_CC = $(call FROM_X_TO_Y,proto,pb.cc,$(1))
@@ -403,6 +405,14 @@ $(target)_PROTOGENHDRS = $(call FROM_PROTO_TO_H,$($(target)_PROTOSRCS))
 $(target)_PROTOGENDEPS = $(call FROM_PROTO_TO_D,$($(target)_PROTOSRCS))
 $(target)_PROTOGENOBJS = $(call FROM_PROTO_TO_O,$($(target)_PROTOSRCS))
 
+$(foreach src,$($(target)_LSRCS),
+$(target)_$(src)_HDR := $(notdir $(call FROM_L_TO_H, $(src)))
+)
+
+$(foreach src,$($(target)_LLSRCS),
+$(target)_$(src)_HDR := $(notdir $(call FROM_LL_TO_HH, $(src)))
+)
+
 $(foreach src,$($(target)_YSRCS),
 $(target)_$(src)_HDR := $(notdir $(call FROM_Y_TO_H, $(src)))
 )
@@ -421,6 +431,14 @@ $(eval $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS),$(TARGET_VARS)))
 ifeq ($(DEBUG_H_MACRO_GENERATION),y)
 
 define DEBUG_TARGET_VARS
+$(foreach src,$($(target)_LSRCS),
+$(info $(src) --> $(target)_$(src)_HDR = $(notdir $(call FROM_L_TO_H, $(src))))
+)
+
+$(foreach src,$($(target)_LLSRCS),
+$(info $(src) --> $(target)_$(src)_HDR = $(notdir $(call FROM_LL_TO_HH, $(src))))
+)
+
 $(foreach src,$($(target)_YSRCS),
 $(info $(src) --> $(target)_$(src)_HDR = $(notdir $(call FROM_Y_TO_H, $(src))))
 )
@@ -588,7 +606,8 @@ $(foreach src,$($(target)_YYSRCS),$(call FROM_YY_TO_O, $(src)): $(call FROM_YY_T
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_C, $(src)): $(src)
 	@echo making $$@
-	$(Q)$($(target)_FLEX) --stdout $$<  > $$@
+	$(Q)$($(target)_FLEX) --outfile=$$@ \
+		--header-file=$(call FROM_L_TO_H,$(src)) $$<
 )
 
 $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_D, $(src)): $(call FROM_L_TO_C, $(src))
@@ -611,7 +630,8 @@ $(foreach src,$($(target)_LSRCS),$(call FROM_L_TO_O, $(src)): $(call FROM_L_TO_C
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_CC, $(src)): $(src)
 	@echo making $$@
-	$(Q)$($(target)_FLEX) --stdout $$<  > $$@
+	$(Q)$($(target)_FLEX) --outfile=$$@ \
+		--header-file=$(call FROM_LL_TO_HH,$(src)) $$<
 )
 
 $(foreach src,$($(target)_LLSRCS),$(call FROM_LL_TO_O, $(src)): $(call FROM_LL_TO_CC, $(src))

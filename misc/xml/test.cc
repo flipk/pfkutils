@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string>
 #include "tokenizer.h"
-#include "test-tokenizer.h"
+#include TOKENIZER_LL_HDR
 
 const char * token_names[] = {
     "__dummy",

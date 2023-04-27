@@ -15,7 +15,9 @@ simplejson_CXXSRCS = simple_json.cc
 simplejson_LLSRCS = json_tokenizer.ll
 simplejson_YYSRCS = json_parser.yy
 simplejson_INCS = -I.
-simplejson_DEFS = -DPARSER_YY_HDR=\"simplejson-json_parser.hh\"
+simplejson_DEFS = \
+	-DPARSER_YY_HDR=\"$(simplejson_json_parser.yy_HDR)\" \
+	-DTOKENIZER_LL_HDR=\"$(simplejson_json_tokenizer.ll_HDR)\"
 
 PROG_TARGETS = test nbtopy
 

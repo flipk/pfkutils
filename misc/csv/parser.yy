@@ -6,6 +6,9 @@
 #include <iostream>
 #include "../tokenizer.h"
 #include "../parser.h"
+#ifndef DEPENDING
+#include TOKENIZER_LL_HDR
+#endif
 
 extern int yylex( void );
 extern void yyerror( csvfile *f, const std::string e );

@@ -8,7 +8,9 @@ test_TARGET = $(OBJDIR)/test
 test_CXXSRCS = main.cc
 test_LLSRCS = tokenizer.ll
 test_YYSRCS = parser.yy
-test_DEFS = -DPARSER_YY_HDR=\"$(test_parser.yy_HDR)\" 
+test_DEFS = \
+	-DPARSER_YY_HDR=\"$(test_parser.yy_HDR)\"  \
+	-DTOKENIZER_LL_HDR=\"$(test_tokenizer.ll_HDR)\"
 
 include $(HOME)/proj/pfkutils/Makefile.inc
 

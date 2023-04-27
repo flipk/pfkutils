@@ -14,7 +14,9 @@ protoparser_TARGET = $(OBJDIR)/libprotoparser.a
 protoparser_LLSRCS = protobuf_tokenizer.ll
 protoparser_YYSRCS = protobuf_parser.yy
 protoparser_INCS = -I.
-protoparser_DEFS = -DPARSER_YY_HDR=\"protoparser-protobuf_parser.hh\"
+protoparser_DEFS = \
+	-DPARSER_YY_HDR=\"$(protoparser_protobuf_parser.yy_HDR)\" \
+	-DTOKENIZER_LL_HDR=\"$(protoparser_protobuf_tokenizer.ll_HDR)\"
 
 PROG_TARGETS = test
 

@@ -4,8 +4,6 @@
 %option yylineno
 %option reentrant
 %option prefix="json_tokenizer_"
-%option outfile="json_tokenizer.cc"
-%option header-file="obj/json_tokenizer.h"
 
 %{
 
