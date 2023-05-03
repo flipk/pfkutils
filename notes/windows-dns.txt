@@ -1,0 +1,12 @@
+scenario:
+
+reboot a linux server
+when it comes back up, it's a different IP address!
+ping <hostname> in WSL goes to old IP and doesn't work.
+open powershell, nslookup <hostname> returns new IP.
+close and restart WSL shell, it gets new IP and works.
+attempt to connect to host using VNCViewer, it uses old IP!
+in powershell: C:\> ipconfig /flushdns
+repeat attempt with VNCViewer : it succeeds.
+
+dafuq, ms?
