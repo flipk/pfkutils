@@ -29,4 +29,4 @@ test_TARGET = $(OBJDIR)/test
 test_CXXSRCS = main.cc
 test_LIBS = $(OBJDIR)/pfksqlparser.so -lpython3
 
-include Makefile.inc
+include ../../Makefile.inc
