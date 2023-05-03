@@ -1,0 +1,3 @@
+
+# this is defined in pfksqlparser/pfksqlparsermodule.cc
+def parse(line: str) -> dict: ...

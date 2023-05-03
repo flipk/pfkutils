@@ -1,3 +1,6 @@
+# reference:
+#    https://elasticsearch-py.readthedocs.io/en/v8.6.1/
+#    https://www.elastic.co/guide/en/elasticsearch/reference/current/rest-apis.html
 
 import sys
 import collections.abc
@@ -33,18 +36,21 @@ class BulkOps:
     _eif_lock: threading.Lock
     _bulk_ops: list
     _client: Elasticsearch
+    _refresh: bool
 
     def __init__(self,
                  client: Elasticsearch,
                  eiflock: threading.Lock,
                  index_name: str,
-                 bulk_size: int = ELASTIC_BULK_INSERT_SIZE):
+                 bulk_size: int = ELASTIC_BULK_INSERT_SIZE,
+                 refresh: bool = False):
         self._bulk_index = index_name
         self._bulk_ops_size = bulk_size
         self._lock = threading.Lock()
         self._eif_lock = eiflock
         self._bulk_ops = []
         self._client = client
+        self._refresh = refresh
 
     def insert(self, doc: dict) -> bool:
         self._lock.acquire()
@@ -78,7 +84,7 @@ class BulkOps:
         self._lock.release()
         return success
 
-    def finish(self, do_lock: bool = True, refresh: bool = False) -> None:
+    def finish(self, do_lock: bool = True) -> bool:
         errs = []
         success = True
         if do_lock:
@@ -88,7 +94,7 @@ class BulkOps:
             try:
                 # print(f'performing bulk with {len(self._bulk_ops)} ops')
                 resp = self._client.bulk(operations=self._bulk_ops,
-                                         refresh=refresh)
+                                         refresh=self._refresh)
                 success = True
             except BaseException as e:
                 resp = None
@@ -137,53 +143,24 @@ class ElasticIF:
                  cert_fingerprint: str):
         try:
             url = f'https://{ipaddr}:{port}'
-            print(f'attempting connection to url: {url}')
+            print(f'attempting connection to url: {url}', file=sys.stderr)
             self._client = Elasticsearch(
                 url,
                 ssl_assert_fingerprint=cert_fingerprint,
                 basic_auth=(username, password)
             )
-            print("connection success:", self._client.info())
+            print("connection success:", self._client.info(), file=sys.stderr)
         except BaseException as err:
-            print("ElasticIF detected error: ", err)
-            print("    of type: ", type(err))
+            print(f'ElasticIF detected error: {err}', file=sys.stderr)
+            print(f'    of type: {err}', file=sys.stderr)
             exit(1)
         self._lock = threading.Lock()
 
-    def get_records(self, index_name: str,
-                    source: bool = False,
-                    from_: int = 0,
-                    size: int = 10,
-                    body: dict = None) -> (bool, dict):
-        """
-        perform a query of records from ElasticSearch.
-        :param index_name: the name of the index.
-        :param source: bool: return the entire source record or not.
-        :param from_: int: starting record number to retrieve, default 0.
-        :param size: int: number of records to retrieve, default 10.
-        :param body: dict: query language, default to match all.
-        :return: (success: bool, response: dict)
-        """
-        if not body:
-            body = {'query': {'match_all': {}}}
-        success = False
-        resp = None
-        self._lock.acquire()
-        try:
-            resp = self._client.search(
-                index=index_name,
-                source=source,
-                size=size, from_=from_,
-                body=body
-            )
-            success = True
-        except BaseException as e:
-            print("query: ", body, "\nexception:", e)
-        self._lock.release()
-        return success, resp
+    def eif(self):
+        return self._client
 
     def record_generator(self, index_name: str, source=False,
-                         size=10, body=None, scroll=None) -> collections.abc.Iterable:
+                         size=10, body=None, scroll=None, fields=None) -> collections.abc.Iterable:
         if not body:
             body = {'query': {'match_all': {}}}
         if not scroll:
@@ -191,7 +168,8 @@ class ElasticIF:
         try:
             self._lock.acquire()
             resp = self._client.search(index=index_name, source=source,
-                                       size=size, body=body, scroll=scroll)
+                                       size=size, body=body, scroll=scroll,
+                                       fields=fields)
             self._lock.release()
             scroll_id = resp['_scroll_id']
             hits = resp['hits']['hits']
@@ -270,8 +248,10 @@ class ElasticIF:
         return success, resp
 
     def bulk_start(self, index_name: str,
-                   bulk_size: int = ELASTIC_BULK_INSERT_SIZE) -> BulkOps:
-        return BulkOps(self._client, self._lock, index_name, bulk_size)
+                   bulk_size: int = ELASTIC_BULK_INSERT_SIZE,
+                   refresh: bool = False) -> BulkOps:
+        return BulkOps(self._client, self._lock, index_name,
+                       bulk_size, refresh)
 
     def create_index(self, index_name: str, mappings):
         success = False

@@ -49,4 +49,4 @@ class ThreadedPrinter:
 
 
 tprinter: ThreadedPrinter = ThreadedPrinter()
-tprint = printer.print
+tprint = tprinter.print
