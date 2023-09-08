@@ -308,6 +308,7 @@ export VERBOSE
 all:
 	$(Q)make objdirs echoconfig
 	$(Q)+make preprocs
+	$(Q)+make tokenparsers
 	$(Q)+make protobufs
 	$(Q)+make deps
 	$(Q)+make $(MAKEJOBS) __INCLUDE_DEPS=1 _all
@@ -743,6 +744,9 @@ $(target)_install: $($(target)_TARGET)
 
 endef
 
+TOKENPARSERSRCS := $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS), \
+	$($(target)_YGENSRCS) $($(target)_LGENSRCS) \
+	$($(target)_YYGENSRCS) $($(target)_LLGENSRCS))
 PROTOGENSRCS := $(foreach target,$(LIB_TARGETS) $(PROG_TARGETS), \
 	$($(target)_PROTOGENSRCS))
 
@@ -774,6 +778,7 @@ preprocs: $(PREPROC_TARGETS)
 
 ##############################################
 
+tokenparsers: $(TOKENPARSERSRCS)
 protobufs: $(PROTOGENSRCS)
 
 ##############################################
