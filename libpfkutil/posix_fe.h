@@ -389,6 +389,8 @@ public:
  *    failed). */
 template <class T>
 class pxfe_shared_ptr {
+    static_assert(std::is_base_of<pxfe_shared_ptr_base, T>::value == true,
+                  "T must be derived from pxfe_shared_ptr_base");
     T * ptr;
     void ref(void)
     {
@@ -408,6 +410,12 @@ public:
     pxfe_shared_ptr<T>(T * _ptr = NULL)
     {
         ptr = _ptr;
+        ref();
+    }
+    /** copy constructor */
+    constexpr pxfe_shared_ptr(const pxfe_shared_ptr<T>& other)
+    {
+        ptr = other.ptr;
         ref();
     }
     /** casting constructor, if dynamic_cast to the new type
@@ -458,6 +466,15 @@ public:
         // so don't modify the refcount here.
         ptr = NULL;
         return ret;
+    }
+
+    /** explicit assignment operator */
+    constexpr pxfe_shared_ptr<T>& operator=(const pxfe_shared_ptr<T>& other)
+    {
+        deref();
+        ptr = other.ptr;
+        ref();
+        return *this;
     }
     /** casting assignment operator, attempts dynamic_cast. if
      * casting fails, this object is now empty (NULL) */
