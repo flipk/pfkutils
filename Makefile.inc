@@ -667,6 +667,7 @@ $(call FROM_PROTO_TO_CC, $(src)): $(src)
 	$(Q)sed -e s,$$(notdir $(src:.proto=.pb.h)),$$(notdir $$(@:.pb.cc=.pb.h)), \
 		<  $(OBJDIR)/$$(notdir $(src:.proto=.pb.cc)) \
 		> $$(@).TEMP
+	$(Q)rm -f $(OBJDIR)/$$(notdir $(src:.proto=.pb.cc))
 	$(Q)mv $$(@).TEMP $$(@)
 )
 

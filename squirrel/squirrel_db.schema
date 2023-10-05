@@ -1,0 +1,26 @@
+
+PACKAGE "squirrel_db"
+
+OPTIONS (protobuf)
+
+# if you change VERSION, also change SquirrelLog::init_sql_tables()
+TABLE LogMessages VERSION 1
+{
+    # PROTOID 1 is reserved for the row id
+
+    time_text   TEXT    PROTOID 3
+
+    area        TEXT    PROTOID 10 # functional area name
+    level       INT     PROTOID 11 # CRIT ERR WARN INFO DBG TRACE
+    message     TEXT    PROTOID 13
+
+    file        TEXT    PROTOID 8
+    line        INT     PROTOID 9
+
+    process     TEXT    PROTOID 4
+    pid         INT     PROTOID 5
+    thread      TEXT    PROTOID 6
+    tid         INT     PROTOID 7
+    backtrace   TEXT    PROTOID 12
+    timestamp   DOUBLE  PROTOID 2
+}
