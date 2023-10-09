@@ -13,7 +13,7 @@ static void dumper(std::shared_ptr<SquirrelLog::log_row_buf_ref> row)
     squirrel_db::SQL_TABLE_LogMessages *r = &row->lrb->row;
     fprintf(stderr, "%s:%d:%s\n",
             r->file.c_str(), r->line, r->message.c_str());
-    r->delete_rowid();
+//    r->delete_rowid();
 }
 
 int main()
@@ -36,7 +36,7 @@ int main()
 //    SquirrelLog::verbose_sql = true;
     SquirrelLog::sql_transaction  t;
     t.t.begin();
-    SquirrelLog::instance->iterate(&dumper);
+    SquirrelLog::iterate(&dumper);
     t.t.commit();
 //    SquirrelLog::verbose_sql = false;
 

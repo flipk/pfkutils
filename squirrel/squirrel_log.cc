@@ -243,6 +243,7 @@ void SquirrelLog :: default_log_callback(
             r->file.c_str(), r->line, r->message.c_str());
 }
 
+//static
 void SquirrelLog :: iterate(logmsg_callback_func_t  callback)
 {
     auto lrbr = std::make_shared<log_row_buf_ref>();

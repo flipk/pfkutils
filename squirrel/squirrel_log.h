@@ -21,10 +21,6 @@ public:
     // the last thing you do before you exit() is cleanup.
     static void cleanup(void);
 
-    // if you need to directly access any methods, like iterate(),
-    // access the instance through this pointer.
-    static SquirrelLog * instance;
-
     // set this if you want to see SQL statements printed on stderr.
     // this can be changed at any time and takes effect immediately.
     static bool verbose_sql;
@@ -174,7 +170,7 @@ public:
 
     // use this function to retrieve and/or delete log rows
     // from the database.
-    void iterate(logmsg_callback_func_t  callback);
+    static void iterate(logmsg_callback_func_t  callback);
 
     // utilities for logging and time conversion.
     static std::string hexdump_buffer(const uint8_t *buf, int len);
@@ -189,6 +185,7 @@ public:
     static int gettid(void);
 
 private:
+    static SquirrelLog * instance;
     SquirrelLog(const std::string &dbpath, bool allow_core);
     ~SquirrelLog(void);
 
