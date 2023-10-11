@@ -1,4 +1,7 @@
 
+# note you can set CRASH=1 on make cmdline
+# and that will enable a seg fault in test_squirrel
+
 SQL3GEN = ../../sqlite3gen/build_native/sql3gen
 
 OBJDIR = obj
@@ -24,6 +27,11 @@ PROG_TARGETS += test_squirrel
 test_squirrel_TARGET = $(OBJDIR)/test_squirrel
 test_squirrel_DEFS = \
 	-DSQUIRREL_DB_PROTO_HDR=\"$(squirrel_obj/squirrel_db.proto_HDR)\"
+
+ifeq ($(CRASH),1)
+test_squirrel_DEFS += -DCRASH
+endif
+
 test_squirrel_DEPLIBS = $(squirrel_TARGET)
 test_squirrel_LIBS = -lsqlite3 -lprotobuf -lpthread
 test_squirrel_INCS = -I../libpfkutil

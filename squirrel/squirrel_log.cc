@@ -219,8 +219,10 @@ void SquirrelLog :: vlog(const char* file, int line, bool do_backtrace,
         syms = backtrace_symbols(bt_buffer, bt_size);
 
         std::ostringstream str;
+        str << "-----------------BACKTRACE-----------------\n";
         for (int ind = 0; ind < bt_size; ind++)
             str << syms[ind] << "\n";
+        str << "-------------------------------------------\n";
         lrbr->lrb->row.backtrace = str.str();
     }
 

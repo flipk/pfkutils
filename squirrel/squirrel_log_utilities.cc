@@ -112,10 +112,76 @@ int SquirrelLog :: gettid(void)
 }
 
 //static
-void SquirrelLog :: signal_handler_trace(int sig, siginfo_t *info, void *)
+size_t SquirrelLog :: format_siginfo (char *dest, size_t sz,
+                                      const siginfo_t *info)
 {
-    bool raw_bt = false;
-    const char * hdr = "CRASH";
+    FILE * f = fmemopen(dest, sz, "w");
+
+    fprintf(f, "----------------SIGINFO----------------\n");
+    fprintf(f, "signo: %d   errno: %d    code: 0x%x    ",
+            info->si_signo, info->si_errno, info->si_code);
+    fprintf(f, "fault address: %p\n", info->si_addr);
+    fprintf(f, "(see asm-generic/siginfo.h si_codes)\n");
+    fprintf(f, "---------------------------------------\n");
+
+    size_t ret = ftell(f);
+    fclose(f);
+    return ret;
+}
+
+//static
+size_t SquirrelLog :: format_ucontext(char *dest, size_t sz,
+                                      const void *_uc)
+{
+    FILE * f = fmemopen(dest, sz, "w");
+    const uint8_t * uc = (const uint8_t *) _uc;
+//    const ucontext_t *uc = (const ucontext_t *) _uc;
+
+    fprintf(f, "--------------------------------UCONTEXT"
+            "--------------------------------\n");
+
+    for (int i = 0; i < sizeof(ucontext_t); i++)
+    {
+        if (i % 24 == 0)
+            fprintf(f, "%03x: ", i);
+        fprintf(f, "%02x ", uc[i]);
+        if (i % 24 == 23)
+            fprintf(f, "\n");
+    }
+    fprintf(f, "\n-------------------------------"
+            "-----------------------------------------\n");
+
+    int ret = ftell(f);
+    fclose(f);
+    return ret;
+}
+
+//static
+void SquirrelLog :: signal_handler_trace(int sig, siginfo_t *info, void *uc)
+{
+    bool          raw_bt = false;
+    const char *  hdr = "CRASH";
+    char          siginfo[16384];
+    char        * si = siginfo;
+    size_t        siremain = sizeof(siginfo) - 1;
+
+    // in case there is no info nor uc, put a nul.
+    si[0] = 0;
+
+    if (info)
+    {
+        size_t sigot = format_siginfo(si, siremain, info);
+        // in case there is no uc, put a nul.
+        si[sigot] = 0;
+        si += sigot;
+        siremain -= sigot;
+    }
+    if (uc)
+    {
+        size_t sigot = format_ucontext(si, siremain, uc);
+        // make sure it's nul terminated.
+        si[sigot] = 0;
+    }
 
     if (in_signal_handler)
     {
@@ -128,7 +194,7 @@ void SquirrelLog :: signal_handler_trace(int sig, siginfo_t *info, void *)
         in_signal_handler = true;
         if (instance)
         {
-            LOG_FBT("SQUIRREL", CRIT, "CRASH: signal %d", sig);
+            LOG_FBT("SQUIRREL", CRIT, "CRASH: signal %d\n%s", sig, siginfo);
         }
         else
         {
@@ -146,6 +212,7 @@ void SquirrelLog :: signal_handler_trace(int sig, siginfo_t *info, void *)
 
         // hopefully someone is logging the stdout/stderr.
         fprintf(stderr, "\n\n\n----------%s-------------\n", hdr);
+        fprintf(stderr, "%s\n", siginfo);
         backtrace_symbols_fd(bt_buffer, bt_size, /*stderr*/2);
         fprintf(stderr, "\n----------%s-------------\n\n\n", hdr);
     }

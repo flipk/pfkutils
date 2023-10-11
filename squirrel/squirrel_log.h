@@ -221,6 +221,13 @@ private:
     static void log_sql_row(void *arg, const std::string &msg);
     static void log_sql_err(void *arg, const std::string &msg);
 
+    // destination buffer should be at least 16kb in size.
+    // returns length written.
+    static size_t format_siginfo (char *dest, size_t sz,
+                                  const siginfo_t *info);
+    static size_t format_ucontext(char *dest, size_t sz,
+                                  const void *uc);
+
     pxfe_pthread_mutex all_log_row_bufs_mutex;
     std::vector<log_row_buf*>  all_log_row_bufs;
     // the pool of SQL_TABLE_LogMessages. starts at 0, and
