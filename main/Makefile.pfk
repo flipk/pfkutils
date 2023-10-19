@@ -83,7 +83,7 @@ pfkutils_DEPLIBS = \
 	$(pfkscript_TARGET) $(libpfkscriptutil_TARGET) \
 	$(pfktop_TARGET) $(libi2_TARGET) $(libuuz_TARGET) \
 	$(libampfk_TARGET) $(syslog_TARGET) \
-	$(diskloader_TARGET) $(libWebAppServer_TARGET) $(bglog_TARGET) \
+	$(diskloader_TARGET) $(libwebsocket_TARGET) $(bglog_TARGET) \
 	$(libpfkthread_TARGET) $(states_TARGET) $(libpfkdll2_TARGET) \
 	$(libi3tcp_TARGET) $(libi3udp_TARGET) $(libi3_TARGET) \
 	$(pfkutils_LIBPROTOSSL) $(libpfkutil_TARGET)

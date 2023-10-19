@@ -38,8 +38,8 @@ VNCDIR := $(HOME)/.vnc
 BUILD_SWITCHES = \
 	pfkbak ts2 sudo \
 	pfkscript pfktop sessionmgr xrandr he \
-	libpfkfb slowlink libwas \
-	libpfkthread xlock hilite do_fft protossl i3 uuz tickler
+	libpfkfb slowlink libwebsock \
+	xlock hilite do_fft protossl i3 uuz tickler
 
 SUBST_VARS = \
 	PFK_USER_NAME PFK_USER_ID PFK_GROUP_ID PFK_UNAME_PATH prefix \
@@ -91,11 +91,8 @@ $(CONFIG_H): Makefile config/rules config/os/$(PFKUTILS_OS) \
 
 PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
-	libWebAppServer libWebAppServer/proxyTcpServer \
-	libpfkthread \
-	i2 i3 misc backup hilite \
-	pfkscript pfktop \
-	uuz xlock environ scripts fonts contrib main
+	libwebsocket i2 i3 misc backup hilite \
+	pfkscript pfktop uuz xlock environ scripts fonts contrib main
 
 PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)
 

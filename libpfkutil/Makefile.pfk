@@ -3,47 +3,55 @@
 LIB_TARGETS += libpfkutil
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a
 libpfkutil_CSRCS = \
-	libpfkutil/inet_aton.c libpfkutil/m.c \
-	libpfkutil/regex.c
+	libpfkutil/m.c
 libpfkutil_CXXSRCS = \
-	libpfkutil/HSM.cc \
-	libpfkutil/childprocessmanager.cc libpfkutil/dll3.cc \
-	libpfkutil/dll3_btree.cc libpfkutil/fdThreadLauncher.cc \
-	libpfkutil/fd_mgr.cc libpfkutil/hsmthread.cc \
-	libpfkutil/msgr.cc libpfkutil/prioWorkQ.cc \
-	libpfkutil/shmempipe.cc libpfkutil/base64.cc \
+	libpfkutil/childprocessmanager.cc \
+	libpfkutil/dll3.cc \
+	libpfkutil/dll3_btree.cc \
+	libpfkutil/fdThreadLauncher.cc \
+	libpfkutil/fd_mgr.cc \
+	libpfkutil/shmempipe.cc \
+	libpfkutil/base64.cc \
 	libpfkutil/thread_slinger.cc \
 	libpfkutil/signal_backtrace.cc \
 	libpfkutil/simpleUrl.cc \
-	libpfkutil/newbase64.cc \
-	libpfkutil/asm_parser.cc
+	libpfkutil/newbase64.cc
 libpfkutil_INSTALL_HDRS = \
-	libpfkutil/HSM.h libpfkutil/LockWait.h \
-	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
-	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
+	libpfkutil/LockWait.h \
+	libpfkutil/base64.h \
+	libpfkutil/bst.h \
+	libpfkutil/bufprintf.h \
+	libpfkutil/childprocessmanager.h \
+	libpfkutil/circular_buffer.h \
 	libpfkutil/dll3.h \
-	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
-	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/m.h \
-	libpfkutil/msgr.h libpfkutil/posix_fe.h \
-	libpfkutil/prioWorkQ.h libpfkutil/regex.h \
-	libpfkutil/shmempipe.h libpfkutil/thread_slinger.h \
+	libpfkutil/dll3_btree.h \
+	libpfkutil/fdThreadLauncher.h \
+	libpfkutil/fd_mgr.h \
+	libpfkutil/m.h \
+	libpfkutil/posix_fe.h \
+	libpfkutil/shmempipe.h \
+	libpfkutil/thread_slinger.h \
 	libpfkutil/dll3.tcc \
-	libpfkutil/thread_slinger.tcc libpfkutil/HSM.tcc libpfkutil/HSM.h \
+	libpfkutil/thread_slinger.tcc \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h \
-	libpfkutil/newbase64.h \
-	libpfkutil/asm_parser.h
+	libpfkutil/newbase64.h
 libpfkutil_HDRS = \
-	libpfkutil/HSM.h libpfkutil/LockWait.h \
-	libpfkutil/base64.h libpfkutil/bst.h libpfkutil/bufprintf.h \
-	libpfkutil/childprocessmanager.h libpfkutil/circular_buffer.h \
+	libpfkutil/LockWait.h \
+	libpfkutil/base64.h \
+	libpfkutil/bst.h \
+	libpfkutil/bufprintf.h \
+	libpfkutil/childprocessmanager.h \
+	libpfkutil/circular_buffer.h \
 	libpfkutil/dll3.h \
-	libpfkutil/dll3_btree.h libpfkutil/fdThreadLauncher.h \
-	libpfkutil/fd_mgr.h libpfkutil/hsmthread.h libpfkutil/inet_aton.h \
-	libpfkutil/lognew.h libpfkutil/m.h libpfkutil/msgr.h \
-	libpfkutil/posix_fe.h libpfkutil/prioWorkQ.h \
-	libpfkutil/regex.h libpfkutil/shmempipe.h \
-	libpfkutil/shmempipe_test_msg.h libpfkutil/thread_slinger.h \
+	libpfkutil/dll3_btree.h \
+	libpfkutil/fdThreadLauncher.h \
+	libpfkutil/fd_mgr.h \
+	libpfkutil/m.h \
+	libpfkutil/posix_fe.h \
+	libpfkutil/shmempipe.h \
+	libpfkutil/shmempipe_test_msg.h \
+	libpfkutil/thread_slinger.h \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h
 
@@ -53,12 +61,11 @@ shmempipe_DOXYFILE = libpfkutil/Doxyfile.shmempipe
 threadslinger_DOXYFILE = libpfkutil/Doxyfile.threadslinger
 
 LIBPFKUTIL_TEST_TARGETS = \
-	hsmthread_test dll3_test dll3_btree_test \
-	msgr-test-clnt msgr-test-msg msgr-test-svr \
+	dll3_test dll3_btree_test \
 	shmempipe_test_master shmempipe_test_slave testpipe \
 	childprocessmanager_test signal_backtrace_test \
 	thread_slinger_test posix_fe_test newbase64_test
-# HSM_test
+
 
 define BUILD_LIBPFKUTIL_TEST_TARGET
 PROG_TARGETS += $(t)

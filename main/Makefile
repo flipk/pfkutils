@@ -1,4 +1,12 @@
 
+PFKCONFIG_PATH := $(shell find .. -name pfkutils_config.h | sed -e s,/pfkutils_config.h,,)
+
+ifeq ($(PFKCONFIG_PATH),)
+$(error cannot find pfkutils_config.h, did you build at top level?)
+else
+$(info NOTE using $(PFKCONFIG_PATH) for pfkutils_config.h)
+endif
+
 OBJDIR = obj
 
 PROG_TARGETS += slowlink
@@ -28,13 +36,6 @@ xtermbar_CSRCS = xtermbar.c
 xtermbar_DEFS = -Dxtermbar_main=main
 xtermbar_INCS = -I ../libpfkutil
 
-PROG_TARGETS += spinner
-spinner_TARGET = $(OBJDIR)/spinner
-spinner_CXXSRCS = spinner.cc
-spinner_DEFS = -Dspinner_main=main
-spinner_INCS = -I ../libpfkutil
-spinner_LIBS = -lpthread
-
 PROG_TARGETS += random_hex
 random_hex_TARGET = $(OBJDIR)/random-hex
 random_hex_CSRCS = random-hex.c
@@ -54,7 +55,7 @@ PROG_TARGETS += he
 he_TARGET = $(OBJDIR)/he
 he_CSRCS = he.c ../libpfkutil/m.c
 he_DEFS = -Dhe_main=main
-he_INCS = -I../obj.blade -I../libpfkutil
+he_INCS = -I$(PFKCONFIG_PATH) -I../libpfkutil
 he_LIBS = -lcurses
 
 PROG_TARGETS += m

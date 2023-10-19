@@ -1,0 +1,39 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_libwebsock),1)
+
+LIB_TARGETS += libwebsocket
+libwebsocket_TARGET = $(OBJDIR)/libwebsocket.a
+libwebsocket_INCS = -Ilibpfkutil $(MBEDTLS_INCS) $(PROTOBUF_INC)
+libwebsocket_CXXSRCS = \
+	libwebsocket/simpleWebSocket.cc \
+	libwebsocket/simpleWebSocketClientConn.cc \
+	libwebsocket/simpleWebSocketServerConn.cc
+libwebsocket_INSTALL_HDRS = \
+	libwebsocket/CircularReader.h \
+	libwebsocket/simpleWebSocket.h
+libwebsocket_HDRS = \
+	libwebsocket/CircularReader.h \
+	libwebsocket/simpleWebSocket.h
+
+DOXYGEN_TARGETS += libwas
+libwas_DOXYFILE = libwebsocket/Doxyfile
+
+###################
+
+LIBWAS_TEST_TARGETS= \
+	testUrlRegex CircularReaderTest
+
+define BUILD_LIBWAS_TEST_TARGET
+PROG_TARGETS += libwas_$(t)
+libwas_$(t)_TARGET = $(OBJDIR)/libwebsocket-$(t)
+libwas_$(t)_INCS = $(libwebsocket_INCS) $(MBEDTLS_INCS)
+libwas_$(t)_CXXSRCS = libwebsocket/$(t).cc
+libwas_$(t)_LIBS += -lpthread $(MBEDTLS_LIBS)
+libwas_$(t)_DEPLIBS = $(libwebsocket_TARGET) $(libpfkutil_TARGET)
+
+endef
+
+$(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
+
+endif
