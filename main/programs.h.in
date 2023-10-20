@@ -59,7 +59,6 @@ PROG(0,xtermbar,"change title in the xterm")
 PROG(0,waitpid,"wait for some process ids to exit")
 PROG(0,i2,"internet pipe fitting mark II")
 PROG(0,i2f,"internet pipe fitting forwarder")
-PROG(0,crnl,"carriage return/newline add/delete dos/unix/mac")
 PROG(0,rmstar,"recursive rm -rf but verbosely")
 PROG(0,fmtsdiff,"format sdiff output")
 #if @PFK_BUILD_slowlink@

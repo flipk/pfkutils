@@ -11,10 +11,6 @@ base64_test_TARGET = $(OBJDIR)/base64_test
 base64_test_CXXSRCS = base64.cc
 base64_test_DEFS = -DINCLUDE_BASE64_TEST_MAIN
 
-PROG_TARGETS += printbuf_test
-printbuf_test_TARGET = $(OBJDIR)/libpfkutil-printbuf_test
-printbuf_test_CSRCS = printbuf.c
-
 LIB_TARGETS += libpfkutil
 
 libpfkutil_TARGET = $(OBJDIR)/libpfkutil.a

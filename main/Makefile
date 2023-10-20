@@ -48,7 +48,7 @@ random_text_DEFS = -Drandom_text_main=main
 
 PROG_TARGETS += rmstar
 rmstar_TARGET = $(OBJDIR)/rmstar
-rmstar_CXXSRCS = rmstar_new.cc
+rmstar_CXXSRCS = rmstar.cc
 rmstar_DEFS = -Drmstar_main=main
 
 PROG_TARGETS += he

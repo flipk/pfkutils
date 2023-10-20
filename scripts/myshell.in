@@ -1,8 +1,0 @@
-#!/bin/sh
-
-HOME=/home/@PFK_USER_NAME@
-ENV=$HOME/.kshrc
-
-export HOME ENV
-
-exec @prefix@/bin/pfksh "$@"

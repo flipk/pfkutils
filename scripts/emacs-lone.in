@@ -1,4 +1,0 @@
-#!/bin/sh
-
-cd $HOME
-exec emacs --no-init-file -l @prefix@/etc/emacs-lone.el $*

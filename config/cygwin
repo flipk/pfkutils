@@ -1,0 +1,38 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+CONFIG = cygwin
+
+# windows sucks. don't set MAKEJOBS-- it won't matter.
+
+PFK_BUILD_pfkbak=1
+PFK_BUILD_ts2=0
+PFK_BUILD_sudo=0
+PFK_BUILD_pfkscript=1
+PFK_BUILD_pfktop=0
+PFK_BUILD_sessionmgr=0
+PFK_BUILD_xrandr=0
+PFK_BUILD_he=1
+PFK_BUILD_libpfkfb=1
+PFK_BUILD_slowlink=0
+PFK_BUILD_libwebsock=0
+PFK_BUILD_fonts=0
+PFK_BUILD_xlock=0
+PFK_BUILD_hilite=0
+PFK_BUILD_do_fft=0
+PFK_BUILD_protossl=0
+PFK_BUILD_i3=0
+PFK_BUILD_uuz=1
+PFK_BUILD_tickler=0
+
+BASHRC_LOCAL = bashrc.local.cygwin
+PROTOC_PATH = /usr/bin/protoc
+PROTOBUF_INC =
+PROTOBUF_LIB = -lprotobuf
+MBEDTLS_INCS =
+MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
+LIBZ_INCS =
+LIBZ_LIB = -lz
+
+PFKUTILS_OS = cygwin
+
+CONTRIB_PROGS=

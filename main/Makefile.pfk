@@ -27,7 +27,7 @@ pfkutils_TARGET = $(OBJDIR)/pfkutils
 pfkutils_INCS = -Ilibpfkutil -I$(OBJDIR)/main \
 	-Ilibpfkfb -Ilibpfkdll2 $(MBEDTLS_INCS)
 pfkutils_CSRCS = \
-	main/crnl.c main/random-hex.c main/fmtsdiff.c \
+	main/random-hex.c main/fmtsdiff.c \
 	main/genpw.c main/xtermbar.c main/waitpid.c \
 	$(PFKUTILS_CONFIG_C)
 ifeq ($(PFK_BUILD_slowlink),1)
@@ -47,7 +47,7 @@ ifeq ($(PFK_BUILD_ts2),1)
 pfkutils_CXXSRCS += main/ts2.cc
 endif
 pfkutils_CXXSRCS += \
-	main/rmstar_new.cc main/main.cc
+	main/rmstar.cc main/main.cc
 ifeq ($(PFK_BUILD_libpfkfb),1)
 pfkutils_CXXSRCS += main/fbcompact.cc main/fbdump.cc main/btdump.cc
 endif

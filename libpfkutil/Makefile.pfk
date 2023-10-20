@@ -9,13 +9,13 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/dll3.cc \
 	libpfkutil/dll3_btree.cc \
 	libpfkutil/fdThreadLauncher.cc \
-	libpfkutil/fd_mgr.cc \
 	libpfkutil/shmempipe.cc \
 	libpfkutil/base64.cc \
 	libpfkutil/thread_slinger.cc \
 	libpfkutil/signal_backtrace.cc \
 	libpfkutil/simpleUrl.cc \
-	libpfkutil/newbase64.cc
+	libpfkutil/newbase64.cc \
+	libpfkutil/timers.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/LockWait.h \
 	libpfkutil/base64.h \
@@ -26,7 +26,6 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h \
 	libpfkutil/fdThreadLauncher.h \
-	libpfkutil/fd_mgr.h \
 	libpfkutil/m.h \
 	libpfkutil/posix_fe.h \
 	libpfkutil/shmempipe.h \
@@ -35,7 +34,8 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/thread_slinger.tcc \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h \
-	libpfkutil/newbase64.h
+	libpfkutil/newbase64.h \
+	libpfkutil/timers.h
 libpfkutil_HDRS = \
 	libpfkutil/LockWait.h \
 	libpfkutil/base64.h \
@@ -46,14 +46,14 @@ libpfkutil_HDRS = \
 	libpfkutil/dll3.h \
 	libpfkutil/dll3_btree.h \
 	libpfkutil/fdThreadLauncher.h \
-	libpfkutil/fd_mgr.h \
 	libpfkutil/m.h \
 	libpfkutil/posix_fe.h \
 	libpfkutil/shmempipe.h \
 	libpfkutil/shmempipe_test_msg.h \
 	libpfkutil/thread_slinger.h \
 	libpfkutil/signal_backtrace.h \
-	libpfkutil/simpleUrl.h
+	libpfkutil/simpleUrl.h \
+	libpfkutil/timers.h
 
 DOXYGEN_TARGETS += dll3 shmempipe threadslinger
 dll3_DOXYFILE = libpfkutil/Doxyfile.dll3
@@ -77,10 +77,6 @@ $(t)_DEPLIBS = $(libpfkutil_TARGET)
 endef
 
 $(eval $(foreach t,$(LIBPFKUTIL_TEST_TARGETS),$(BUILD_LIBPFKUTIL_TEST_TARGET)))
-
-PROG_TARGETS += printbuf_test
-printbuf_test_TARGET = $(OBJDIR)/libpfkutil-printbuf_test
-printbuf_test_CSRCS = libpfkutil/printbuf.c
 
 PROG_TARGETS += base64_test
 base64_test_TARGET = $(OBJDIR)/base64_test

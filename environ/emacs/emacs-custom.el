@@ -6,7 +6,6 @@
  '(blink-matching-paren-distance nil)
  '(column-number-mode t)
  '(compilation-scroll-output t)
- '(compile-command (concat (getenv "HOME") "/pfk/bin/myemacs-compile"))
  '(cscope-close-window-after-select nil)
  '(cscope-option-kernel-mode t)
  '(display-time-format "%H:%M")

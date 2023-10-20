@@ -2,18 +2,15 @@
 
 SCRIPT_FILES = \
 	doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 ec9 \
-	git-diff-helper.sh git-merge-helper.sh make_linux_cscope mcs \
-	myemacs-checkout-helper myemacs-cscope-rebuild-helper \
-	pfkterm set-background.sh myemacs-compile \
+	git-diff-helper.sh git-merge-helper.sh make_linux_cscope \
+	pfkterm set-background.sh  \
 	git-lsm git-lso git-mcs git-root x11-capture dodmsg \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
 	git-pfkwt architecture \
 	docker-image-tree.sh ldd-findpaths.sh killme.sh \
 	ffprobepfk.sh
 
-PREPROC_SCRIPT_FILES = \
-	cs emacs-lone myemacs-cscope-helper myshell-launcher \
-	myshell pf_frontend
+PREPROC_SCRIPT_FILES = cs
 
 OBJDIRS_TOMAKE += scripts
 
@@ -22,11 +19,8 @@ POSTINSTALL += scripts_install
 scripts_install:
 	@echo installing scripts
 	$(Q)cd scripts && cp $(SCRIPT_FILES) $(SCRIPTS_DIR)
-	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
+#	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
 	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
 		$(PREPROC_SCRIPT_FILES)
 
-PREPROC_SOURCES += \
-	scripts/cs scripts/emacs-lone scripts/myemacs-cscope-helper \
-	scripts/myshell-launcher scripts/myshell scripts/pf_frontend
-
+PREPROC_SOURCES += scripts/cs
