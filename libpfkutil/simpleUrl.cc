@@ -31,7 +31,7 @@ SimpleUrl :: ~SimpleUrl(void)
 {
 }
 
-class UrlRegex : public regex<> {
+class UrlRegex : public pxfe_regex<> {
     static const char * patt;
 public:
     enum groups {
@@ -45,7 +45,7 @@ public:
         ANCHOR   = 14,
         QUERY    = 16
     };
-    UrlRegex(void) : regex<>(patt) { }
+    UrlRegex(void) : pxfe_regex<>(patt) { }
     ~UrlRegex(void) { }
 };
 
@@ -82,6 +82,14 @@ bool
 SimpleUrl :: parse(const std::string &_url)
 {
     UrlRegex r;
+
+    if (!r.ok())
+    {
+        // this should only happen if you changed the code and
+        // introduced a bug!
+        cerr << "URL REGEX FAILED TO COMPILE, WHAT DID YOU DO RAY\n";
+        exit(1);
+    }
 
     url = _url;
 

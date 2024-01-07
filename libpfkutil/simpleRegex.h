@@ -4,23 +4,47 @@
 #include <string>
 #include <sstream>
 
-template <int max_matches=25> class regex {
+template <int _max_matches=25> class pxfe_regex {
+public:
+    static const int max_matches = _max_matches;
+private:
+    bool _ok;
     regex_t reg;
     regmatch_t matches[max_matches];
+    char errbuf[200];
 public:
-    regex(const char *patt) {
-        regcomp(&reg, patt, REG_EXTENDED);
+    pxfe_regex(const char *patt) {
+        _ok = false;
+        errbuf[0] = 0;
+        int cc = regcomp(&reg, patt, REG_EXTENDED);
+        if (cc == 0)
+            _ok = true;
+        else
+        {
+            regerror(cc, &reg, errbuf, sizeof(errbuf));
+            errbuf[sizeof(errbuf)-1] = 0;
+        }
     }
-    ~regex(void) {
+    ~pxfe_regex(void) {
         regfree(&reg);
     }
+    bool ok(void) const { return _ok; }
+    const char * err(void) const { return errbuf; }
     bool exec(const std::string &str) {
         int cc = regexec(&reg, str.c_str(), max_matches, matches, 0);
-        return (cc == 0);
+        if (cc == 0)
+            return true;
+        regerror(cc, &reg, errbuf, sizeof(errbuf));
+        errbuf[sizeof(errbuf)-1] = 0;
+        return false;
     }
-    bool match(int ind) const {
+    bool match(int ind, int *pstart_pos = NULL, int *plen = NULL) const {
         if (ind >= max_matches) return false;
-        return matches[ind].rm_so != -1;
+        int s = matches[ind].rm_so;
+        if (s == -1) return false;
+        if (pstart_pos) *pstart_pos = s;
+        if (plen) *plen = matches[ind].rm_eo - s;
+        return true;
     }
     std::string match(const std::string &str, int ind) const {
         if (ind >= max_matches) return "";

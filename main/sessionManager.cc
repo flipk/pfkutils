@@ -213,17 +213,17 @@ static void sighand(int s)
     }
 }
 
-class procPidDirRegex : public regex<2>
+class procPidDirRegex : public pxfe_regex<2>
 {
 public:
-    procPidDirRegex(void) : regex("^[0-9]+$") { }
+    procPidDirRegex(void) : pxfe_regex("^[0-9]+$") { }
 };
 procPidDirRegex  pid_re;
 
-class procStatFileRegex : public regex<10>
+class procStatFileRegex : public pxfe_regex<10>
 {
 public:
-    procStatFileRegex(void) : regex(
+    procStatFileRegex(void) : pxfe_regex(
         "^([0-9]+) \\((.*)\\) ([^ ]+) ([0-9]+) .*$"
         ) { }
     uint32_t  pid(const std::string &l) {

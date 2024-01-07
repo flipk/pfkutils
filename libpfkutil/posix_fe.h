@@ -413,7 +413,9 @@ public:
         ref();
     }
     /** copy constructor */
-    constexpr pxfe_shared_ptr(const pxfe_shared_ptr<T>& other)
+    /* constexpr <-- gcc error?
+       "constexpr constructor does not have empty body" */
+    pxfe_shared_ptr(const pxfe_shared_ptr<T>& other)
     {
         ptr = other.ptr;
         ref();
