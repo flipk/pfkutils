@@ -12,23 +12,23 @@ DOXYGEN_TARGETS += t2t2
 
 PROG_TARGETS = t1
 t1_TARGET = $(OBJDIR)/t1
-t1_CXXSRCS = thread2thread2_test.cc
-t1_INCS = -I../libpfkutil
+t1_CXXSRCS = test/thread2thread2_test.cc
+t1_INCS = -I../libpfkutil -I.
 t1_DEPLIBS = $(t2t2_TARGET)
 t1_LIBS = -lpthread
 TESTS = test1_run
 
 PROG_TARGETS += t2
 t2_TARGET = $(OBJDIR)/t2
-t2_CXXSRCS = hsm_test.cc
-t2_INCS = -I../libpfkutil
+t2_CXXSRCS = test/hsm_test.cc
+t2_INCS = -I../libpfkutil -I.
 t2_DEPLIBS = $(t2t2_TARGET)
 t2_LIBS = -lpthread
 TESTS += test2_run
 
 PROG_TARGETS += t3
 t3_TARGET = $(OBJDIR)/t3
-t3_CXXSRCS = func_sig_regex_test.cc
+t3_CXXSRCS = test/func_sig_regex_test.cc
 t3_INCS = -I../libpfkutil
 
 EXTRA_CLEAN += testrun_clean

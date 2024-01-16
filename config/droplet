@@ -8,6 +8,7 @@ MAKEJOBS ?= -j1
 PFK_BUILD_pfkbak=0
 PFK_BUILD_ts2=0
 PFK_BUILD_sudo=0
+PFK_BUILD_t2t2=1
 PFK_BUILD_pfkscript=1
 PFK_BUILD_pfktop=0
 PFK_BUILD_sessionmgr=0

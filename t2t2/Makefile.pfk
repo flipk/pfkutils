@@ -1,0 +1,39 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+ifeq ($(PFK_BUILD_t2t2),1)
+
+LIB_TARGETS += t2t2lib
+
+t2t2lib_TARGET = $(OBJDIR)/libt2t2.a
+t2t2lib_INCS = -Ilibpfkutil
+t2t2lib_CXXSRCS = \
+	t2t2/hsm.cc \
+	t2t2/thread2thread2.cc
+t2t2lib_INSTALL_HDRS = \
+	t2t2/hsm.h \
+	t2t2/thread2thread2.h \
+	t2t2/thread2thread2_internal.h
+
+PROG_TARGETS += t2t2_t1
+
+t2t2_t1_TARGET = $(OBJDIR)/t2t2_t1
+t2t2_t1_CXXSRCS = t2t2/test/thread2thread2_test.cc
+t2t2_t1_INCS = -Ilibpfkutil -It2t2
+t2t2_t1_DEPLIBS = $(t2t2lib_TARGET)
+t2t2_t1_LIBS = -lpthread
+TESTS = t2t2_test1_run
+
+PROG_TARGETS += t2t2_t2
+t2t2_t2_TARGET = $(OBJDIR)/t2t2_t2
+t2t2_t2_CXXSRCS = t2t2/test/hsm_test.cc
+t2t2_t2_INCS = -Ilibpfkutil -It2t2
+t2t2_t2_DEPLIBS = $(t2t2lib_TARGET)
+t2t2_t2_LIBS = -lpthread
+TESTS += t2t2_test2_run
+
+PROG_TARGETS += t2t2_t3
+t2t2_t3_TARGET = $(OBJDIR)/t2t2_t3
+t2t2_t3_CXXSRCS = t2t2/test/func_sig_regex_test.cc
+t2t2_t3_INCS = -Ilibpfkutil
+
+endif

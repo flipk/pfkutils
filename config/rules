@@ -36,7 +36,7 @@ VNCDIR := $(HOME)/.vnc
 ##############################################
 
 BUILD_SWITCHES = \
-	pfkbak ts2 sudo \
+	pfkbak ts2 sudo t2t2 \
 	pfkscript pfktop sessionmgr xrandr he \
 	libpfkfb slowlink libwebsock fonts \
 	xlock hilite do_fft protossl i3 uuz tickler
@@ -91,7 +91,7 @@ $(CONFIG_H): Makefile config/rules config/os/$(PFKUTILS_OS) \
 
 PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
-	libwebsocket i2 i3 backup hilite \
+	libwebsocket i2 i3 backup hilite t2t2 \
 	pfkscript pfktop uuz xlock environ scripts fonts contrib main
 
 PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)
