@@ -1,0 +1,15 @@
+
+the following things are different for the .VNC version:
+
+init:
+the keyFile and menuFile entries point to different files
+on the dual-monitor system, session.screen0.toolbar.onhead
+points to monitor 2.
+
+keys:
+in many places, use mod4 (WIN) instead of mod1 (ALT) so that
+a vnc session can be nested but window move/resize still works.
+
+menu:
+the 'resolution change' menu exists in vnc but not on hardware.
+also, vncviewer to 127.1:0

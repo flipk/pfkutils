@@ -11,24 +11,21 @@ OnDesktop Mouse5 :NextWorkspace
 OnToolbar Mouse4 :PrevWindow {static groups} (iconhidden=no)
 OnToolbar Mouse5 :NextWindow {static groups} (iconhidden=no)
 
-# alt + left/right click to move/resize a window
-OnWindow Mod1 Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}
+# WIN + left/right click to move/resize a window
+OnWindow Mod4 Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}
 OnWindowBorder Move1 :StartMoving
 # numeric keypad PgUp (9) will raise a window.
 81 OnWindow :Raise
 # numeric keypad PgDn (3) will lower a window.
 89 OnWindow :Lower
 
-OnWindow Mod1 Mouse3 :MacroCmd {Raise} {Focus} {StartResizing NearestCornerOrEdge}
+OnWindow Mod4 Mouse3 :MacroCmd {Raise} {Focus} {StartResizing NearestCornerOrEdge}
 OnLeftGrip Move1 :StartResizing bottomleft
 OnRightGrip Move1 :StartResizing bottomright
 
-# alt + middle click to lower the window
-# disable this because urxvt uses alt+mouse2 for paste CLIPBOARD
-# OnWindow Mod1 Mouse2 :Lower
-
 # control-click a window's titlebar and drag to attach windows
-OnTitlebar Control Mouse1 :StartTabbing
+# this causes a HANG in a nested session! disable for now.
+# OnTitlebar Control Mouse1 :StartTabbing
 
 # double click on the titlebar to shade
 OnTitlebar Double Mouse1 :Shade
@@ -43,11 +40,12 @@ OnTitlebar Mouse2 :Lower
 # right click on the titlebar for a menu of options
 OnTitlebar Mouse3 :WindowMenu
 
-# alt-tab
-Mod1 Tab :NextWindow {groups} (workspace=[current])
-Mod1 Shift Tab :PrevWindow {groups} (workspace=[current])
+# alt-tab : i never use this, disable it
+#Mod1 Tab :NextWindow {groups} (workspace=[current])
+#Mod1 Shift Tab :PrevWindow {groups} (workspace=[current])
 
 # cycle through tabs in the current window
+# i never use this, disable it
 #Mod4 Tab :NextTab
 #Mod4 Shift Tab :PrevTab
 
@@ -63,40 +61,21 @@ Mod1 8 :Tab 8
 Mod1 9 :Tab 9
 
 # open a terminal
-Mod1 F1 :Exec pfkterm
+Mod4 F1 :Exec pfkterm
 
 # open a dialog to run programs
-Mod1 F2 :Exec fbrun
-
-# volume settings, using common keycodes
-# if these don't work, use xev to find out your real keycodes
-# these do not work on green at work! disable
-#176 :Exec amixer sset Master,0 1+
-#174 :Exec amixer sset Master,0 1-
-#160 :Exec amixer sset Master,0 toggle
-
-# plus key on numeric keyboard
-#86 :Exec amixer sset Master,0 1+
-# minus key on numeric keyboard
-#82 :Exec amixer sset Master,0 1-
-# enter key on numeric keyboard
-#104 :Exec amixer sset Master,0 toggle
-
-# star (multiply) key on numeric keypad -- doesn't work some places
-#63 :Exec xlock
-# slash (divide) on numeric keypad -- doesn't work some places
-#106 :Exec pfkterm
+Mod4 F2 :Exec fbrun
 
 # current window commands
-Mod1 F4 :Close
-Mod1 F5 :Kill
-Mod1 F9 :Minimize
-Mod1 F10 :Maximize
-Mod1 F11 :Fullscreen
-Mod1 F12 :ToggleWindowTitle
+#Mod1 F4 :Close
+#Mod1 F5 :Kill
+#Mod1 F9 :Minimize
+#Mod1 F10 :Maximize
+Mod4 F11 :Fullscreen
+Mod4 F12 :ToggleWindowTitle
 
 # open the window menu
-Mod1 space :WindowMenu
+Mod4 space :WindowMenu
 
 # exit fluxbox ; disable so citrix works
 # Control Mod1 Delete :Exit
@@ -106,31 +85,34 @@ Control Mod1 Left :PrevWorkspace
 Control Mod1 Right :NextWorkspace
 
 # send the current window to previous/next workspace
-#Mod4 Left :SendToPrevWorkspace
-#Mod4 Right :SendToNextWorkspace
-# send the current window and follow it to previous/next workspace
-#Control Mod4 Left :TakeToPrevWorkspace
-#Control Mod4 Right :TakeToNextWorkspace
+Mod4 Left :SendToPrevWorkspace
+Mod4 Right :SendToNextWorkspace
 
-# lock screen
+# lock screen - DISABLE IN VNC
 #Mod4 l : Exec gnome-screensaver-command --lock
 #Shift Mod4 l : Exec xlock
+
+# send the current window and follow it to previous/next workspace
+# i never use these, disable
+#Control Mod4 Left :TakeToPrevWorkspace
+#Control Mod4 Right :TakeToNextWorkspace
 
 # change to a specific workspace
 Control F1 :Workspace 1
 Control F2 :Workspace 2
 Control F3 :Workspace 3
 Control F4 :Workspace 4
-#Control F5 :Workspace 5
-#Control F6 :Workspace 6
-#Control F7 :Workspace 7
-#Control F8 :Workspace 8
-#Control F9 :Workspace 9
-#Control F10 :Workspace 10
-#Control F11 :Workspace 11
-#Control F12 :Workspace 12
+Control F5 :Workspace 5
+Control F6 :Workspace 6
+Control F7 :Workspace 7
+Control F8 :Workspace 8
+Control F9 :Workspace 9
+Control F10 :Workspace 10
+Control F11 :Workspace 11
+Control F12 :Workspace 12
 
 # send the current window to a specific workspace
+# i never use these, disable
 #Mod4 F1 :SendToWorkspace 1
 #Mod4 F2 :SendToWorkspace 2
 #Mod4 F3 :SendToWorkspace 3
@@ -145,6 +127,7 @@ Control F4 :Workspace 4
 #Mod4 F12 :SendToWorkspace 12
 
 # send the current window and change to a specific workspace
+# i never use these, disable
 #Control Mod4 F1 :TakeToWorkspace 1
 #Control Mod4 F2 :TakeToWorkspace 2
 #Control Mod4 F3 :TakeToWorkspace 3

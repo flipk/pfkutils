@@ -1,0 +1,48 @@
+[begin] (Fluxbox)
+  [encoding] {UTF-8}
+    [exec] (pfkterm) {pfkterm}
+    [exec] (rxvt fixed) {urxvt -fn fixed -fb fixed}
+    [exec] (emacs) {emacs}
+    [exec] (google-chrome) {google-chrome}
+    [exec] (firefox) {firefox --new-instance}
+    [exec] (chromium) {chromium-browser}
+    [separator]
+    [exec] (nautilus) {nautilus --no-desktop}
+    [exec] (nemo) {nemo --no-desktop}
+    [separator]
+    [exec] (Reload resources) {xrdb -remove; xrdb -load $HOME/.Xresources}
+    [separator]
+    [submenu] (Resolutions) {Choose a resolution...}
+      [exec] (1920x1056 maximized 1920x1080)  {xrandr -s 1920x1056}
+      [exec] (1920x1176 maximized 1920x1200)  {xrandr -s 1920x1176}
+      [exec] (2560x1408 maximized 2560x1440)  {xrandr -s 2560x1408}
+      [exec] (1920x1008 maximized 1920x1080 with win11 startbar)  {xrandr -s 1920x1008}
+      [exec] (1920x1128 maximized 1920x1200 with win11 startbar)  {xrandr -s 1920x1128}
+      [exec] (1840x1056 maximized 1920x1080 with win10 startbar)  {xrandr -s 1840x1056}
+      [exec] (1840x1176 maximized 1920x1200 with win10 startbar)  {xrandr -s 1840x1176}
+      [exec] (1280x952  maximized 1280x1024 with win11 startbar)  {xrandr -s 1280x952 }
+      [exec] (1280x1000 maximized 1280x1024)  {xrandr -s 1280x1000 }
+      [exec] (1024x1208 maximized 1024x1280 with win11 startbar)  {xrandr -s 1024x1208 }
+      [exec] (1280x1024)  {xrandr -s 1280x1024}
+      [exec] (1400x1040)  {xrandr -s 1400x1040}
+      [exec] (1280x960)   {xrandr -s 1280x960 }
+      [exec] (1920x1080)  {xrandr -s 1920x1080}
+      [exec] (3840x1080)  {xrandr -s 3840x1080}
+    [end]
+    [separator]
+    [config] (Configure)
+    [submenu] (System Styles) {Choose a style...}
+      [stylesdir] (~/pfk/share/fluxbox/styles)
+    [end]
+    [submenu] (User Styles) {Choose a style...}
+      [stylesdir] (~/pfk/etc/fluxbox/styles)
+    [end]
+    [workspaces] (Workspace List)
+    [commanddialog] (Fluxbox Command)
+    [separator]
+    [reconfig] (Reload config)
+    [exec] (Restart) {pfkSessionMgr -c restart}
+    [exec] (Logout) {pfkSessionMgr -c stop}
+    [exit] (Exit)
+  [endencoding]
+[end]
