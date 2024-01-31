@@ -32,8 +32,12 @@
 #    first, set some variables before including Makefile.inc.
 #
 # OBJDIR= <subdir, such as "obj">
-#    this specifies where all build products will go. it is assumed
-#    to be the name of a subdirectory relative to the current directory.
+#    this specifies where all build products will go. if it does not
+#    have a leading slash, it is assumed to be the name of a
+#    subdirectory relative to the current directory. but it may be an
+#    absolute path to some completely different directory, for
+#    instance if the sources are on an NFS server but you'd like the
+#    build dir to be in /tmp/.
 #
 # CC, CXX, AR, RANLIB, BISON, FLEX, PROTOC_PATH
 #    these variables affect every build target of this makefile.
@@ -48,39 +52,42 @@
 #    another target for a different architecture.
 #    NOTE these values *replace* their global counterparts, if specified.
 #
-# CFLAGS, CXXFLAGS
-#    command line arguments to $(CC) or $(CXX) respectively. applied
-#    before $(target)_CFLAGS or $(target)_CXXFLAGS.
-#    e.g. if you want assembler listings from your C or CC files, add
+# CFLAGS, CXXFLAGS, $(target)_CFLAGS, $(target)_CXXFLAGS
+#    command line arguments to $(CC) or $(CXX) respectively. $(CFLAGS)
+#    and $(CXXFLAGS) are applied before target-specific
+#    $(target)_CFLAGS or $(target)_CXXFLAGS.  e.g. if you want
+#    assembler listings from your C or CC files, add
 #       -Wa,-ahls=$$(@:.o=.L)
-#    to CFLAGS, CXXFLAGS, $(target)_CFLAGS, and/or $(target)_CXXFLAGS
+#    to CFLAGS, CXXFLAGS, $(target)_CFLAGS, or $(target)_CXXFLAGS
 #    (assuming your assembler is gnu gas, of course)
 #    NOTE these values are specified *in addition to*
 #         their target-specific counterparts, with the globals coming
 #         first on the compiler command line.
 #
-# LDFLAGS
+# LDFLAGS, $(target)_LDFLAGS
 #    flags applied to program linker, i.e. -rdynamic.  applied to all
 #    targets in PROG_TARGETS, applied before $(target)_LDFLAGS.
 #    NOTE these values are specified *in addition to*
 #         their target-specific counterparts, with the globals coming
 #         first on the linker command line.
 #
-# ARCMD
+# ARCMD, $(target)_ARCMD
 #    command passed to $(AR), by default "cq". See below concerning
 #    shared libraries, and python libraries.
 #
-# INCS, DEFS
+# INCS, DEFS, $(target)_INCS, $(target)_DEFS
 #    cpp-type arguments. INCS should be -I's, DEFS should be -D's.
-#    NOTE these are global for all LIB and PROG targets! the
-#    $(target)_INCS is applied to the command line *before* the global
-#    $(INCS) so a header file in the $(target)_INCS with the same file
-#    name as a header file from $(INCS) can be found by a specific
-#    build target.  on the other hand, $(target)_DEFS is applied
-#    *after* the global $(DEFS) so a target can override a global
-#    $(DEFS) variable definition.  e.g.  you can set
+#    NOTE $(INCS) and $(DEFS) are global for all LIB and PROG targets!
+#    the $(target)_INCS is applied to the command line *before* the
+#    global $(INCS) so a header file in the $(target)_INCS with the
+#    same file name as a header file from $(INCS) can be found by a
+#    specific build target.  on the other hand, $(target)_DEFS is
+#    applied *after* the global $(DEFS) so a target can override a
+#    global $(DEFS) variable definition.  e.g.  you can set
 #    DEFS="-D_FORTIFY_SOURCE" to test functions with the "warn_unused"
-#    attribute (on ubuntu at least).
+#    attribute (on ubuntu at least). don't forget you can also specify
+#    -Uvariable, so a $(target)_DEFS can undefine something set by
+#    $(DEFS).
 #
 # PREPROC_TARGETS
 #    if you have files to preprocess before computing dependencies,
@@ -88,7 +95,7 @@
 #    doesn't do any work for you, you have to write the target
 #    recipes. this is invoked after objdirs but before deps.  if
 #    you're using this to do "cpp" type operations, it is recommended
-#    to include the global $(INCS) and $(DEFS) rules.
+#    to reference and honor the global $(INCS) and $(DEFS) variables.
 #
 # POSTALL
 #    if you have more recipes you want to run after the "all" rule in
@@ -217,6 +224,14 @@
 #
 #    now that you have set all these variables, you can include
 #    this file.
+#
+# INCLUDE_MAKEFILES = path/to/makefile path/to/makefile
+#
+#    this variable will cause Makefile.inc to include more makefiles
+#    after defining the "all" rule but before defining other rules,
+#    so you can define other makefiles, say if you want a makefile
+#    snippet in every subdir of your project instead of a single
+#    top level makefile that contains every target.
 #
 # include /path/to/Makefile.inc
 #
