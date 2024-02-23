@@ -19,7 +19,7 @@ POSTINSTALL += scripts_install
 scripts_install:
 	@echo installing scripts
 	$(Q)cd scripts && cp $(SCRIPT_FILES) $(SCRIPTS_DIR)
-#	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
+	$(Q)cd $(OBJDIR)/scripts && cp $(PREPROC_SCRIPT_FILES) $(SCRIPTS_DIR)
 	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(SCRIPT_FILES) \
 		$(PREPROC_SCRIPT_FILES)
 

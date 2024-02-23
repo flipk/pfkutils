@@ -20,18 +20,23 @@ CXXFLAGS += -Werror
 endif
 
 # install info
-prefix := $(HOME)/pfk
+# NOTE: the _REL versions are useful when making symlinks
+#       in a DESTDIR that point to the relative place.
+prefix := $(DESTDIR)$(HOME)/pfk
+prefix_rel := pfk
 ETCDIR := $(prefix)/etc
+ETCDIR_REL := $(prefix_rel)/etc
 ETCBAKDIR := $(prefix)/etc-backup
 # no longer used... SRCDIR := $(prefix)/src
 EMACSDIR := $(ETCDIR)/emacs
-ELPADIR := $(HOME)/.emacs.d/elpa/
+EMACSDIR_REL := $(ETCDIR_REL)/emacs
+ELPADIR := $(DESTDIR)$(HOME)/.emacs.d/elpa/
 SCRIPTS_DIR := $(prefix)/bin
 INSTALL_BIN_DIR := $(prefix)/$(PFKARCH)/bin
 INSTALL_LIB_DIR := $(prefix)/$(PFKARCH)/lib
 INSTALL_INC_DIR := $(prefix)/include
 INSTALL_MAN_DIR := $(prefix)/man
-VNCDIR := $(HOME)/.vnc
+VNCDIR := $(DESTDIR)$(HOME)/.vnc
 
 ##############################################
 
