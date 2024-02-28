@@ -9,6 +9,10 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <vector>
+
+#include "simpleRegex.h"
 
 void
 usage(const std::string &errstr)
@@ -26,109 +30,126 @@ usage(const std::string &errstr)
 "   b[so][rq][c]16[bl] -- binary 16 bit\n"
 "                  [signed 2's complement | offset by 0x8000]\n"
 "                  [real | quadrature] [conjugate] [big | little]\n"
-"   t[wc][rq][c]   -- text integer [whitespace | comma]\n"
-"                  [real | quadrature] [conjugate]\n"
+"   t[rq][c][Cn] -- text integer \n"
+"                  [real | quadrature] [conjugate] [column #]\n"
 "first_sample is 0-based, 0 if not specified\n"
-"repeat_count is #fft of sample_count each, 1 if not specified\n",
+"repeat_count is #fft of sample_count each, 1 if not specified\n"
+"column # is 1-based, like gnuplot\n"
+"NOTE for reverse mode, the input order is a bit odd:\n"
+" 0=[dc] 1=[small +freq] ... (n/2)-1=[large +freq]\n"
+" (n/2)=[nyquist freq]  (n/2)+1=[large -freq] ... (n-1)=[small -freq]\n",
             errstr.c_str()
         );
 }
 
+class input_format_regex : public pxfe_regex<> {
+public:
+    static const int BINARY = 2;
+    static const int BIN_S_OR_O = 3;
+    static const int BIN_R_OR_Q = 4;
+    static const int BIN_C = 5;
+    static const int BIN_816bl = 6;
+    static const int TEXT = 7;
+    static const int TEXT_R_OR_Q = 8;
+    static const int TEXT_C = 9;
+    static const int TEXT_COLNUM = 10;
+
+    input_format_regex(void) :
+        pxfe_regex(
+            "^((b(s|o)(r|q)(c|)(8|16b|16l))|(t(r|q)(c|)([0-9]+)))$"
+            ) { }
+};
+
 struct InputFormat {
+    input_format_regex  reg;
     bool ok;
     double ioffset, qoffset;
     enum { BINARY, TEXT } binary;
     enum { BITS8, BITS16 } binarySize;
     enum { BIG, LITTLE } endian;
     enum { SIGNED, OFFSET } representation;
-    enum { WHITESPACE, COMMA } textsep;
     enum { REAL, QUADRATURE } complexity;
     bool conjugate;
+    int text_colnum;
+    int line_number;
+    std::vector<std::string> splitString( const std::string &line )
+    {
+        std::vector<std::string> ret;
+        size_t pos;
+        for (pos = 0; ;)
+        {
+            // valid token separators are tab, space, or comma
+            size_t found = line.find_first_of("\t ,",pos);
+            if (found == std::string::npos)
+            {
+                if (pos != line.size())
+                    ret.push_back(line.substr(pos,line.size()-pos));
+                break;
+            }
+            if (found > pos)
+                ret.push_back(line.substr(pos,found-pos));
+            pos = found+1;
+        }
+        return ret;
+    }
     InputFormat(const std::string &arg) {
         binary = BINARY;
         binarySize = BITS8;
         endian = BIG;
         representation = SIGNED;
-        textsep = WHITESPACE;
         complexity = REAL;
         conjugate = false;
         ioffset = qoffset = 0.0;
+        text_colnum = 1;
+        line_number = 0;
         ok = false;
-        if (arg.length() < 3)
-            return;
-        switch (arg[0]) {
-        case 'b':
+
+        if (!reg.ok())
         {
-            binary = BINARY;
-            switch (arg[1]) {
-            case 's': representation = SIGNED; break;
-            case 'o': representation = OFFSET; break;
-            default:
-                fprintf(stderr,
-                        "input_format binary second char must be s or o\n");
-                return;
-            }
-            switch (arg[2]) {
-            case 'r': complexity = REAL;       break;
-            case 'q': complexity = QUADRATURE; break;
-            default:
-                fprintf(stderr,
-                        "input_format binary third char must be r or q\n");
-                return;
-            }
-            if (arg[3] == 'c')
+            printf("ERROR REGEX COMPILE FAILED\n");
+            return;
+        }
+        if (!reg.exec(arg))
+        {
+            printf("input format string '%s' did not parse\n", arg.c_str());
+            return;
+        }
+        if (reg.match(input_format_regex::BINARY))
+        {
+            if (reg.match(arg, input_format_regex::BIN_R_OR_Q) == "q")
+                complexity = QUADRATURE;
+            if (reg.match(arg, input_format_regex::BIN_C) == "c")
                 conjugate = true;
-            const std::string &wordsize = arg.substr(conjugate ? 4 : 3);
-            if (wordsize == "8") {
-                binarySize = BITS8;
-                if (representation == OFFSET)
-                    ioffset = 128;
-            } else if (wordsize == "16b") {
-                binarySize = BITS16;
-                endian = BIG;
-                if (representation == OFFSET)
-                    ioffset = 32768;
-            } else if (wordsize == "16l") {
+            std::string sz = reg.match(arg, input_format_regex::BIN_816bl);
+            if (sz == "16l")
+            {
                 binarySize = BITS16;
                 endian = LITTLE;
-                if (representation == OFFSET)
-                    ioffset = 32768;
-            } else {
-                fprintf(stderr,
-                        "input_format word size part must be 8, 16b, "
-                        "or 16l, not '%s'\n", wordsize.c_str());
-                return;
             }
-            if (complexity == QUADRATURE)
-                qoffset = ioffset;
-            break;
+            else if (sz == "16b")
+            {
+                binarySize = BITS16;
+                endian = BIG;
+            }
+            if (reg.match(arg, input_format_regex::BIN_S_OR_O) == "o")
+            {
+                representation = OFFSET;
+                if (binarySize == BITS8)
+                    ioffset = qoffset = 0x80;
+                else
+                    ioffset = qoffset = 0x8000;
+            }
         }
-        case 't':
+        else if (reg.match(input_format_regex::TEXT))
         {
             binary = TEXT;
-            switch (arg[1]) {
-            case 'w': textsep = WHITESPACE; break;
-            case 'c': textsep = COMMA;      break;
-            default:
-                fprintf(stderr,
-                        "input_format text second char must be w or c\n");
-                return;
-            }
-            switch (arg[2]) {
-            case 'r': complexity = REAL;       break;
-            case 'q': complexity = QUADRATURE; break;
-            default:
-                fprintf(stderr,
-                        "input_format text third char must be r or q\n");
-                return;
-            }
-            if (arg.length() == 3 && arg[3] == 'c')
+            if (reg.match(arg, input_format_regex::TEXT_R_OR_Q) == "q")
+                complexity = QUADRATURE;
+            if (reg.match(arg, input_format_regex::TEXT_C) == "c")
                 conjugate = true;
-            break;
-        }
-        default:
-            fprintf(stderr,"input_format first char must be b or t\n");
-            return;
+            std::string colnum = reg.match(arg,
+                                           input_format_regex::TEXT_COLNUM);
+            text_colnum = atoi(colnum.c_str());
         }
         ok = true;
     }
@@ -162,17 +183,49 @@ public:
                     val[1] = 0.0;
             }
         } else { // TEXT
+            std::string line;
+            std::getline(istr, line);
+            line_number ++;
+            std::vector<std::string> fields = splitString(line);
             if (complexity == REAL) {
-                // xxx TEXT real ws,comma
-            } else {
-                if (textsep == WHITESPACE)
+                if (fields.size() < text_colnum)
                 {
-                    // TEXT QUAD SPACE
-                    istr >> val[0] >> val[1];
+                    printf("ERROR on line %d of input: not enough columns\n",
+                           line_number);
+                    return false;
                 }
-                else
+                // remember, colnum is 1-based
+                char *endptr = NULL;
+                val[0] = strtof(fields[text_colnum-1].c_str(), &endptr);
+                if (*endptr != 0)
                 {
-                    // xxx TEXT quadrature comma
+                    printf("ERROR on line %d of input: not a number?\n",
+                           line_number);
+                    return false;
+                }
+                val[1] = 0;
+            } else {
+                if (fields.size() < (text_colnum+1))
+                {
+                    printf("ERROR on line %d of input: not enough columns\n",
+                           line_number);
+                    return false;
+                }
+                // remember, colnum is 1-based
+                char *endptr = NULL;
+                val[0] = strtof(fields[text_colnum-1].c_str(), &endptr);
+                if (*endptr != 0)
+                {
+                    printf("ERROR on line %d of input: not a number?\n",
+                           line_number);
+                    return false;
+                }
+                val[1] = strtof(fields[text_colnum].c_str(), &endptr);
+                if (*endptr != 0)
+                {
+                    printf("ERROR on line %d of input: not a number?\n",
+                           line_number);
+                    return false;
                 }
             }
         }
@@ -193,15 +246,14 @@ main(int argc, char ** argv)
         exit(1);
     }
 
-// direction is not currently used...
-//  enum { DIR_FORW, DIR_REV } direction = DIR_FORW;
+    int direction;
     switch (argv[1][0])
     {
     case 'f':
-//      direction = DIR_FORW;
+        direction = FFTW_FORWARD;
         break;
     case 'r':
-//      direction = DIR_REV;
+        direction = FFTW_BACKWARD;
         break;
     default:
         usage("direction must be f or r");
@@ -259,7 +311,7 @@ main(int argc, char ** argv)
     int N = sample_count;
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+    p = fftw_plan_dft_1d(N, in, out, direction, FFTW_ESTIMATE);
 
     uint64_t sample_num = 0;
     fftw_complex  dummy;
@@ -298,31 +350,45 @@ main(int argc, char ** argv)
 
         fftw_execute(p);
 
-        // 4.8.1 The 1d Discrete Fourier Transform (DFT)
-        //
-        // "For those who like to think in terms of positive and
-        // negative frequencies, this means that the positive
-        // frequencies are stored in the first half of the output and
-        // the negative frequencies are stored in backwards order in
-        // the second half of the output."
-     
-        for (ind = 0; ind < (int) (sample_count/2); ind++)
+        if (direction == FFTW_FORWARD)
         {
-            if (repeat_count > 1)
-                printf("%d ", repeat_counter);
-            printf("%d %f %f\n",
-                   ind - (sample_count/2),
-                   out[(sample_count/2)+ind][0],
-                   out[(sample_count/2)+ind][1]);
-        }
+            // 4.8.1 The 1d Discrete Fourier Transform (DFT)
+            //
+            // "For those who like to think in terms of positive and
+            // negative frequencies, this means that the positive
+            // frequencies are stored in the first half of the output and
+            // the negative frequencies are stored in backwards order in
+            // the second half of the output."
 
-        for (ind = 0; ind < (int) (sample_count/2); ind++)
+            for (ind = 0; ind < (int) (sample_count/2); ind++)
+            {
+                if (repeat_count > 1)
+                    printf("%d ", repeat_counter);
+                printf("%d %f %f\n",
+                       ind - (sample_count/2),
+                       out[(sample_count/2)+ind][0],
+                       out[(sample_count/2)+ind][1]);
+            }
+
+            for (ind = 0; ind < (int) (sample_count/2); ind++)
+            {
+                if (repeat_count > 1)
+                    printf("%d ", repeat_counter);
+                printf("%d %f %f\n", ind,
+                       out[ind][0],
+                       out[ind][1]);
+            }
+        }
+        else
         {
-            if (repeat_count > 1)
-                printf("%d ", repeat_counter);
-            printf("%d %f %f\n", ind,
-                   out[ind][0],
-                   out[ind][1]);
+            for (ind = 0; ind < sample_count; ind++)
+            {
+                if (repeat_count > 1)
+                    printf("%d ", repeat_counter);
+                printf("%d %f %f\n", ind,
+                       out[ind][0],
+                       out[ind][1]);
+            }
         }
 
         repeat_counter++;
