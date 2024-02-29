@@ -308,6 +308,18 @@ main(int argc, char ** argv)
     fftw_complex *in, *out;
     fftw_plan p;
 
+// note technically if format.complexity == InputFormat::REAL,
+// we should be using fftw_plan_dft_r2c_1d / fftw_plan_dft_c2r_1d,
+// to do the hermitian fft; but, hermitian ffts are very odd in that
+// the inputs and outputs are not the same size and i just didn't
+// feel like dealing with that for now. it actually works okay to
+// just use the complex fft on real data, just ignore half the buckets,
+// since the negative half of the fft output is just the conjugate of
+// the positive half. this tool wasn't designed to be maximally efficient.
+//
+// for more details, see:
+//   https://www.fftw.org/fftw3_doc/One_002dDimensional-DFTs-of-Real-Data.html#One_002dDimensional-DFTs-of-Real-Data
+
     int N = sample_count;
     in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
     out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
