@@ -1,4 +1,7 @@
 
+also see :
+https://espterm.github.io/docs/VT100%20escape%20codes.html
+
 important rxvt codes (see rxvt.0 for more)
 
 ESC [ s = save cursor
@@ -8,12 +11,23 @@ ESC [ NUM B = cursor down NUM times
 ESC [ NUM C = cursor forward NUM times
 ESC [ NUM D = cursor backward NUM times
 ESC [ ROW ; COL H = move to position
-ESC [ 6 n = report cursor position with ESC [ ROW ; COL R
-ESC [ 18; t = report window size with ESC [ 8; ROW ; COL t
+ESC [ H = move to position 0,0 (HOME)
+ESC [ K = clear to end of line
+ESC [ J = clear to end of screen
+ESC [ D = scroll window up one line
+ESC [ M = scroll window down one line
+ESC [ 6 n = report cursor position with next seq
+ESC [ ROW ; COL R = (response) cursor position is at {ROW,COL}
+ESC [ 18; t = report window size with next seq
+ESC [ 8; ROW ; COL t = (response) windows size is ROW x COL
+ESC [ c = identify terminal type with next seq
+ESC [ ?1;<n>0c = (response) terminal is type code n (but what is n=2?)
+ESC c = reset terminal
 ESC [ 24; HEIGHT t = set window height
 ESC [ Pm m = set char attributes
           Pm = 0    Normal (default)
           Pm = 1 / 21    On / Off Bold (bright fg)
+          Pm = 2         low intensity
           Pm = 3 / 23    On / Off Italic
           Pm = 4 / 24    On / Off Underline
           Pm = 5 / 25    On / Off Slow Blink (bright bg)

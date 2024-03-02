@@ -1,0 +1,11 @@
+
+ip addr add 11.0.0.1/24 dev enp0s25 label enp0s25:0
+
+one machine:
+ip link add link enp2s0 net11 type vlan id 0x901 protocol 802.1Q
+sudo ifconfig net11 inet 11.0.0.1 netmask 255.255.0.0
+
+another machine:
+ip link add link enp0s25 net11 type vlan id 0x901 protocol 802.1Q
+ifconfig net11 inet 11.0.0.2 netmask 255.255.0.0
+

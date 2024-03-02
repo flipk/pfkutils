@@ -2,9 +2,11 @@
 https://fsymbols.com/generators/aboqe-flip/
 https://www.branah.com/unicode-converter
 
-version 2022-1120-2039
+version 2024-0220-1500
 ⟹𝕡𝕗𝕜⟸  🡆𝓹𝓯𝓴🡄  🠊𝓟𝓕𝓚🠈  ⲷⲷⲸⳀⲊⲔⲴⲷⲷ
 ⓅⒻⓀ  🄿🄵🄺   ⮞ꓘꓞꓒ⮜  𝗣𝗙𝗞  𝕻𝕱𝕶  ƤƑƘ   ƥƒƙ   ツ
+
+special chars:  ⍵ꭥΩβ✕·π±°÷  →←
 
 breakdown of codes:
 BOM (byte order marker) : efbbbf  
@@ -26,7 +28,7 @@ BOM (byte order marker) : efbbbf
 ™©Ⓡ  (ಠ_ಠ)    ( •_•)      ( •_•)>⌐■-■     (⌐■_■)    ¯\_(ツ)_/¯   (◔̯◔)   (^̮^)  ⌤
 (≧◡≦)  (ᗒᗣᗕ)    ʕ•ᴥ•ʔ   (ಠ~ಠ)  (ノಠ益ಠ)ノ彡┻━┻  (¬‿¬)  ಠ╭╮ಠ  ᕙ(⇀‸↼‶)ᕗ
 <3   Ɛ>   ♡❤ 💔❥
-(╯°□°)╯︵ ʞooqǝɔɐɟ
+(╯°□°)╯︵ ʞooqǝɔɐɟ    (see below)
 (ノಠ益ಠ)ノ彡ꓕꓱꓠꓤꓱꓕꓠI
 (ノಠ益ಠ)ノ彡⇒ꓘꓞꓒ⇐
 in MSWord, type hex digits, then hit alt-X
@@ -105,4 +107,118 @@ e29fb8   U+27F8     LONG LEFTWARDS DOUBLE ARROW
 20       U+0020     SPACE
 e38384   U+30C4     KATAKANA LETTER TU (TSU)
 
+
+ʞooqǝɔɐɟ :
+UTF-8    code point   char    Unicode description
+─────    ──────────   ────    ───────────────────
+ca9e     U+29E        ʞ       LATIN SMALL LETTER TURNED K
+                              proposed for velar click
+                              uppercase is A7B0 Ʞ
+                              withdrawn by IPA in 1970
+                              → 1DF10 𝼐  latin letter small capital turned k
+                              https://www.unicode.org/charts/PDF/U0250.pdf
+6f       U+6F         o       LATIN SMALL LETTER O
+71       U+71         q       LATIN SMALL LETTER Q
+c79d     U+1DD        ǝ       LATIN SMALL LETTER TURNED E
+                              Pan-Nigerian alphabet
+                              all other usages of schwa are 0259 ə
+                              uppercase is 018E Ǝ
+                              → 0259 ə  latin small letter schwa
+                              https://www.unicode.org/charts/PDF/U0180.pdf
+c994     U+254        ɔ       LATIN SMALL LETTER OPEN O
+                              typographically a turned c
+                              lower-mid back rounded vowel
+                              in older Danish usage “ɔ:” stands for “that is”
+                              uppercase is 0186 Ɔ
+                              → 1D10 ᴐ  latin letter small capital open o
+                              → 2184 ↄ  latin small letter reversed c
+c990     U+250        ɐ       LATIN SMALL LETTER TURNED A
+                              low central unrounded vowel
+                              uppercase is 2C6F Ɐ
+c99f     U+25F        ɟ       LATIN SMALL LETTER DOTLESS J WITH STROKE
+                              voiced palatal stop
+                              typographically a turned f,
+			      but better thought of as a form of j
+                              “gy” in Hungarian orthography
+                              also archaic phonetic for
+			      palatoalveolar affricate 02A4 ʤ
+
+
+
+
+
+bytes :
+efbbbfe2 9fb9f09d  95a1f09d 9597f09d  959ce29f b82020f0  9fa186f0
+9d93b9f0 9d93aff0  9d93b4f0 9fa18420  20f09fa0 8af09d93  9ff09d93
+95f09d93 9af09fa0  882020e2 b2b7e2b2  b7e2b2b8 e2b380e2  b28ae2b2
+94e2b2b4 e2b2b7e2  b2b70ae2 9385e292  bbe29380 2020f09f  84bff09f
+84b5f09f 84ba2020  20e2ae9e ea9398ea  939eea93 92e2ae9c  2020f09d
+95bbf09d 95b1f09d  95b62020 c6a4c691  c6982020 20c6a5c6  92c69920
+2020e383 84
+
+renders as :
+⟹𝕡𝕗𝕜⟸  🡆𝓹𝓯𝓴🡄  🠊𝓟𝓕𝓚🠈  ⲷⲷⲸⳀⲊⲔⲴⲷⲷ
+ⓅⒻⓀ  🄿🄵🄺   ⮞ꓘꓞꓒ⮜  𝕻𝕱𝕶  ƤƑƘ   ƥƒƙ   ツ
+
+UTF-8    code point   char    Unicode description
+─────    ──────────   ────    ───────────────────
+efbbbf   U+FEFF       (none)  ZERO WIDTH NO-BREAK SPACE / Byte Order Marker
+e29fb9   U+27F9       ⟹       LONG RIGHTWARDS DOUBLE ARROW
+                              https://www.unicode.org/charts/PDF/U27F0.pdf
+f09d95a1 U+1D561      𝕡       MATHEMATICAL DOUBLE-STRUCK SMALL p
+                              https://www.unicode.org/charts/PDF/U1D400.pdf
+f09d9597 U+1D557      𝕗       MATHEMATICAL DOUBLE-STRUCK SMALL f
+f09d959c U+1D55C      𝕜       MATHEMATICAL DOUBLE-STRUCK SMALL k
+e29fb8   U+27F8       ⟸       LONG LEFTWARDS DOUBLE ARROW
+f09fa186 U+1F846      🡆      RIGHTWARDS HEAVY ARROW
+                              https://www.unicode.org/charts/PDF/U1F800.pdf
+f09d93b9 U+1D4F9      𝓹       MATHEMATICAL BOLD SCRIPT SMALL P
+                              https://www.unicode.org/charts/PDF/U1D400.pdf
+f09d93af U+1D4EF      𝓯       MATHEMATICAL BOLD SCRIPT SMALL F
+f09d93b4 U+1D4F4      𝓴       MATHEMATICAL BOLD SCRIPT SMALL K
+f09fa184 U+1F844      🡄      LEFTWARDS HEAVY ARROW
+f09fa08a U+1F80A      🠊      RIGHTWARDS ARROW WITH LARGE TRIANGLE ARROWHEAD
+f09d939f U+1D4DF      𝓟       MATHEMATICAL BOLD SCRIPT CAPITAL P
+                              https://www.unicode.org/charts/PDF/U1D400.pdf
+f09d9395 U+1D4D5      𝓕       MATHEMATICAL BOLD SCRIPT CAPITAL F
+f09d939a U+1D4DA      𝓚       MATHEMATICAL BOLD SCRIPT CAPITAL K
+f09fa088 U+1F808      🠈       LEFTWARDS ARROW WITH LARGE TRIANGLE ARROWHEAD
+e2b2b7   U+2CB7       ⲷ       COPTIC SMALL LETTER CRYPTOGRAMMIC EIE
+                              https://www.unicode.org/charts/PDF/U2C80.pdf
+e2b2b8   U+2CB8       Ⲹ       COPTIC CAPITAL LETTER DIALECT-P KAPA
+e2b380   U+2CC0       Ⳁ       COPTIC CAPITAL LETTER SAMPI
+e2b28a   U+2C8A       Ⲋ       COPTIC CAPITAL LETTER SOU
+e2b294   U+2C94       Ⲕ       COPTIC CAPITAL LETTER KAPA
+e2b2b4   U+2CB4       Ⲵ       COPTIC CAPITAL LETTER OLD COPTIC AIN
+e29385   U+24C5       Ⓟ       CIRCLED LATIN CAPITAL LETTER P
+                              https://www.unicode.org/charts/PDF/U2460.pdf
+e292bb   U+24BB       Ⓕ       CIRCLED LATIN CAPITAL LETTER F
+e29380   U+24C0       Ⓚ       CIRCLED LATIN CAPITAL LETTER K
+f09f84bf U+1F13F      🄿       SQUARED LATIN CAPITAL LETTER P
+                              https://www.unicode.org/charts/PDF/U1F100.pdf
+f09f84b5 U+1F135      🄵       SQUARED LATIN CAPITAL LETTER F
+f09f84ba U+1F13A      🄺       SQUARED LATIN CAPITAL LETTER K
+e2ae9e   U+2B9E       ⮞       BLACK RIGHTWARDS EQUILATERAL ARROWHEAD
+                              https://www.unicode.org/charts/PDF/U2B00.pdf
+ea9398   U+A4D8       ꓘ       LISU LETTER KHA
+                              https://www.unicode.org/charts/PDF/UA4D0.pdf
+ea939e   U+A4DE       ꓞ       LISU LETTER TSA
+ea9392   U+A4D2       ꓒ       LISU LETTER PHA
+e2ae9c   U+2B9C       ⮜       BLACK LEFTWARDS EQUILATERAL ARROWHEAD
+f09d97a3 U+1D5E3      𝗣       MATHEMATICAL SANS-SERIF BOLD CAPITAL P 
+                              https://www.unicode.org/charts/PDF/U1D400.pdf
+f09d9799 U+1D5D9      𝗙       MATHEMATICAL SANS-SERIF BOLD CAPITAL F 
+f09d979e U+1D5DE      𝗞       MATHEMATICAL SANS-SERIF BOLD CAPITAL K
+f09d95bb U+1D57B      𝕻       MATHEMATICAL BOLD FRAKTUR CAPITAL P
+f09d95b1 U+1D571      𝕱       MATHEMATICAL BOLD FRAKTUR CAPITAL F 
+f09d95b6 U+1D576      𝕶       MATHEMATICAL BOLD FRAKTUR CAPITAL K
+c6a4     U+01A4       Ƥ       LATIN CAPITAL LETTER P WITH HOOK
+                              https://www.unicode.org/charts/PDF/U0180.pdf
+c691     U+0191       Ƒ       LATIN CAPITAL LETTER F WITH HOOK
+c698     U+0198       Ƙ       LATIN CAPITAL LETTER K WITH HOOK
+c6a5     U+01A5       ƥ       LATIN SMALL LETTER P WITH HOOK
+c692     U+0192       ƒ       LATIN SMALL LETTER F WITH HOOK
+c699     U+0199       ƙ       LATIN SMALL LETTER K WITH HOOK
+e38384   U+30C4       ツ       KATAKANA LETTER TU (TSU)
+                              https://www.unicode.org/charts/PDF/U30A0.pdf
 

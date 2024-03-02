@@ -25,7 +25,44 @@ flocking
    echo doing stuff while locked
    exec 9>&-
 
+vars
+   ${varname%word} : remove 'word' shortest match from end of string (shortest)
+   ${varname%%word} : remove longest match from end of string
+   ${varname#word} : remove shortest match from beginning
+   ${varname##word} : remove longest match from beginning
+   ${varname[@]%word} : remove match from end of all members of array
+   ${wt#${reposdir}/} : remove string ${reposdir}/ from beginning of $wt
+   ${#varname} : number of characters in string
+   printf "%-${widest_id}s %${sizeprefix}${widest_size}d %${widest_size}d\n" \
+          "$idind"         $relsize                      $size
+   local name : variable which exists only within a function
+   how to do aliases:
+      # declare an 'alias' variable
+      # since i can't find any other way to indirectly name
+      # an array variable and reference its members.
+      declare -n params=fs_params_${fs}
+      img=${params[0]}
+      volname=${params[1]}
+      mountpoint=${params[2]}
+   $0   : the name of the shell or shell script
+   $*   : expand positional parameters 1-n as separate words, subject to
+          further word splitting and pathname expansion.
+   "$*" : expand positional parameters 1-n as a single word, separated by
+          $IFS
+   $@   : expand positional parameters 1-n as separate words, but if there
+          are none, equivalent to nothing being present at all. subject to
+	  further word splitting and pathname expansion.
+   "$@" : expand positional parameters 1-n as a single word, separated by
+          space; but if there are none, equivalent to nothing being
+	  present at all.
+   $# : number of positional parameters in decimal.
+   $? : exit status of the most recently executed foreground pipeline.
+   $- : current option flags
+   $$ : process ID of the shell  (and never the pid of a subshell)
+   $! : process ID of cmd most recently placed into background
+
 index arrays
+   for i in $( seq 0 7 ) ; do ... done
    gitdirs=(one two three)   <--- zero based indexing
    gitdirs[$numgitdirs]=$gitdir
    gitdir=${gitdirs[$count]}
@@ -37,6 +74,7 @@ index arrays
    all the keys: "${!gitdirs[@]}" (or *)
    afterspace=( $( du -ks $repodir ) )
    echo kb size after : ${afterspace[0]}
+   for special in ${specials[@]} ; do ... done
 
 associative arrays
    declare -A gitdirs
@@ -46,8 +84,8 @@ associative arrays
    echo ${gitdirs[things]}
    unset gitdirs
    number of elements in array: ${#gitdirs[@]}
-   a list of keys: "${!gitdirs[@]}" (or *)
-   all the values: "${gitdirs[@]}" (or *)
+   a list of keys: "${!gitdirs[@]}" (or *, many words vs single word IFS)
+   all the values: "${gitdirs[@]}" (or *, many words vs single word IFS)
 
 math
    count=0
@@ -55,6 +93,8 @@ math
    echo $(( count++ ))      <--- returns value
    (( 5 > 4 )) && echo success
    (( 5 < 4 )) || echo failure
+   (( ${#size} > $widest_size )) && widest_size=${#size}
+   (( ${#tag}  > $widest_tag  )) && widest_tag=${#tag}
 
 splitting a line
    IFS=" "  set -- $line
