@@ -121,6 +121,14 @@ static bool init_socket(pxfe_unix_dgram_socket  &control_sock,
         fprintf(stderr, "initializing socket: %s\n", e.Format().c_str());
         return false;
     }
+    if (getuid() == 0)
+    {
+        // if the client is running as root, then the server (running
+        // as me) will not be able to reply, so open up the socket.
+        // yes this is a security hole, but only if you run the client
+        // as root, so you generally shouldn't do that.
+        chmod(control_sock.getPath().c_str(), 0666);
+    }
     if (!control_sock.connect(sock_path, &e))
     {
         fprintf(stderr, "connect socket: %s\n", e.Format().c_str());
@@ -228,8 +236,7 @@ int tickler_main(int argc, char ** argv)
                     ticklers.push_back(t);
                     if (!control_sock.send("started", remote_path, &e))
                     {
-                        fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                        return 1;
+                        fprintf(stderr, "send started: %s\n", e.Format().c_str());
                     }
                 }
                 else
@@ -239,8 +246,7 @@ int tickler_main(int argc, char ** argv)
                     delete t;
                     if (!ret)
                     {
-                        fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                        return 1;
+                        fprintf(stderr, "send err: %s\n", e.Format().c_str());
                     }
                 }
             }
@@ -266,16 +272,14 @@ int tickler_main(int argc, char ** argv)
                     delete t;
                     if (!control_sock.send("removed", remote_path, &e))
                     {
-                        fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                        return 1;
+                        fprintf(stderr, "send removed: %s\n", e.Format().c_str());
                     }
                 }
                 else
                 {
                     if (!control_sock.send("not found", remote_path, &e))
                     {
-                        fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                        return 1;
+                        fprintf(stderr, "send err: %s\n", e.Format().c_str());
                     }
                 }
             }
@@ -289,8 +293,7 @@ int tickler_main(int argc, char ** argv)
                         << "\n";
                 if (!control_sock.send(str.str(), remote_path, &e))
                 {
-                    fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                    return 1;
+                    fprintf(stderr, "send status: %s\n", e.Format().c_str());
                 }
             }
             else if (cmd_args[0] == "stop")
@@ -306,7 +309,6 @@ int tickler_main(int argc, char ** argv)
                 if (!control_sock.send("stopped", remote_path, &e))
                 {
                     fprintf(stderr, "send stop: %s\n", e.Format().c_str());
-                    return 1;
                 }
                 keep_running = false;
             }
@@ -322,17 +324,25 @@ int tickler_main(int argc, char ** argv)
 
         if (!control_sock.send(cmd, &e))
         {
-            fprintf(stderr, "send stop: %s\n", e.Format().c_str());
+            fprintf(stderr, "send add: %s\n", e.Format().c_str());
             return 1;
         }
 
         printf("sent add command; waiting for response\n");
-        if (!control_sock.recv(msg, &e))
+        pxfe_select sel;
+        sel.rfds.set(control_sock);
+        sel.tv.set(2,0);
+        if (sel.select() > 0)
         {
-            fprintf(stderr, "recv: %s\n", e.Format().c_str());
-            return 1;
+            if (!control_sock.recv(msg, &e))
+            {
+                fprintf(stderr, "recv: %s\n", e.Format().c_str());
+                return 1;
+            }
+            printf("response:\n%s\n", msg.c_str());
         }
-        printf("response:\n%s\n", msg.c_str());
+        else
+            printf("timeout waiting for response!\n");
     }
     else if (args.size() == 2 && args[0] == "remove")
     {
@@ -343,17 +353,25 @@ int tickler_main(int argc, char ** argv)
 
         if (!control_sock.send(cmd, &e))
         {
-            fprintf(stderr, "send stop: %s\n", e.Format().c_str());
+            fprintf(stderr, "send remove: %s\n", e.Format().c_str());
             return 1;
         }
 
         printf("sent remove command; waiting for response\n");
-        if (!control_sock.recv(msg, &e))
+        pxfe_select sel;
+        sel.rfds.set(control_sock);
+        sel.tv.set(2,0);
+        if (sel.select() > 0)
         {
-            fprintf(stderr, "recv: %s\n", e.Format().c_str());
-            return 1;
+            if (!control_sock.recv(msg, &e))
+            {
+                fprintf(stderr, "recv: %s\n", e.Format().c_str());
+                return 1;
+            }
+            printf("response:\n%s\n", msg.c_str());
         }
-        printf("response:\n%s\n", msg.c_str());
+        else
+            printf("timeout waiting for response!\n");
     }
     else if (args.size() == 1 && args[0] == "status")
     {
@@ -362,17 +380,25 @@ int tickler_main(int argc, char ** argv)
 
         if (!control_sock.send("status", &e))
         {
-            fprintf(stderr, "send stop: %s\n", e.Format().c_str());
+            fprintf(stderr, "send status: %s\n", e.Format().c_str());
             return 1;
         }
 
         printf("sent status command; waiting for response\n");
-        if (!control_sock.recv(msg, &e))
+        pxfe_select sel;
+        sel.rfds.set(control_sock);
+        sel.tv.set(2,0);
+        if (sel.select() > 0)
         {
-            fprintf(stderr, "recv: %s\n", e.Format().c_str());
-            return 1;
+            if (!control_sock.recv(msg, &e))
+            {
+                fprintf(stderr, "recv: %s\n", e.Format().c_str());
+                return 1;
+            }
+            printf("response:\n%s\n", msg.c_str());
         }
-        printf("response:\n%s\n", msg.c_str());
+        else
+            printf("timeout waiting for response!\n");
     }
     else if (args.size() == 1 && args[0] == "stop")
     {
@@ -386,12 +412,20 @@ int tickler_main(int argc, char ** argv)
         }
 
         printf("sent stop command; waiting for response\n");
-        if (!control_sock.recv(msg, &e))
+        pxfe_select sel;
+        sel.rfds.set(control_sock);
+        sel.tv.set(2,0);
+        if (sel.select() > 0)
         {
-            fprintf(stderr, "recv: %s\n", e.Format().c_str());
-            return 1;
+            if (!control_sock.recv(msg, &e))
+            {
+                fprintf(stderr, "recv: %s\n", e.Format().c_str());
+                return 1;
+            }
+            printf("response: %s\n", msg.c_str());
         }
-        printf("response: %s\n", msg.c_str());
+        else
+            printf("timeout waiting for response!\n");
     }
     else
     {

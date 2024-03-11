@@ -2,6 +2,7 @@
 import zipfile
 import subprocess
 import shutil
+import os
 
 # if lowriter takes more than 30 seconds, i dont think we want
 # to keep the output anyway. harumph.
