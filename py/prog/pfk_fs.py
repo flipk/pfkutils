@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# TODO if exe doesn't exist, it crashes instead of printing graceful error.
+# TODO if there's a problem with mounting or unmounting, tickler status
+#      is inconsistent.
+
 import curses
 import select
 import subprocess
@@ -21,7 +25,7 @@ def measure_widths():
     widths['pass'] = 1  # not a string
     widths['num'] = 2  # not in fs
     widths['open'] = 4  # not in fs
-    widths['mounted'] = 3  # not in fs
+    widths['mounted'] = 7  # not in fs
     widths['checked'] = 3  # not in fs
 
     # measure the ones that are in fs
@@ -35,6 +39,9 @@ def measure_widths():
                 if width < len(fs[f]):
                     width = len(fs[f])
         widths[f] = width
+
+    if widths['depends'] < 7:
+        widths['depends'] = 7
 
     pos = 0
     for f in ['num', 'name', 'depends', 'luks',

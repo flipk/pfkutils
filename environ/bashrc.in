@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2023-03-08.19:51:07
+#      Last update: 2024-03-11.19:47:57
 #
 #############################################################################
 
@@ -266,6 +266,8 @@ alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager 
 alias tmux='TERM=rxvt \tmux'
 alias dkr=docker
 alias dit=docker-image-tree.sh
+alias cpupower='sudo $HOME/proj/pfkutils/py/prog/cpupower.py'
+alias pfk_fs='sudo $HOME/proj/pfkutils/py/prog/pfk_fs.py'
 
 emacsn() {
     if [ $# -lt 1 ] ; then
