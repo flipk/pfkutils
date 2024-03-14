@@ -11,14 +11,14 @@ BEGIN {
    exit
 }'
 
-for f in $* ; do
+for f in "$@" ; do
 
     if [[ -f "$f" ]] ; then
 
         set -- $( ls -1s "$f"  )
 
         out=$( mktemp )
-        ffprobe $f  > $out  2>&1
+        ffprobe "$f"  > $out  2>&1
 
         if [[ $? = 0 ]] ; then
 

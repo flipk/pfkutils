@@ -43,6 +43,7 @@ def main():
     # (try/except FileNotFoundError) cpudirstat = os.stat(cpudir)
     # if stat.S_ISDIR(cpudirstat.st_mode):
     for hwmondir in ['/sys/devices/platform/coretemp.0/hwmon/hwmon',
+                     '/sys/devices/platform/coretemp.0/hwmon/hwmon1',
                      '/sys/devices/platform/coretemp.0/hwmon/hwmon2',
                      '/sys/devices/platform/coretemp.0/hwmon/hwmon3']:
         if os.path.exists(f'{hwmondir}/temp2_label'):

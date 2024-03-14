@@ -8,6 +8,16 @@ chrome_url=https://dl.google.com/linux/direct/google-chrome-stable_current_x86_6
 sudo dnf install -y $chrome_url
 
 
+--------------39
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-39.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-39.noarch.rpm
+
+
+dnf install -y --allowerasing \
+vlc ffmpeg dosemu lame unace unrar handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat  simplescreenrecorder
+
 --------------37
 dnf install \
 https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-37.noarch.rpm \
@@ -67,6 +77,14 @@ gstreamer-plugins-ugly gstreamer1-plugins-ugly handbrake handbrake-gui \
 x264 exfat-utils fuse-exfat displaylink akmod-nvidia kmod-nvidia \
 nvidia-settings xorg-x11-drv-nvidia-cuda xorg-x11-drv-nvidia-cuda-libs \
 VirtualBox virtualbox-guest-additions.x86_64 simplescreenrecorder
+
+--------------32
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-32.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-32.noarch.rpm
+
+dnf install \
+vlc ffmpeg xv gsview x264 simplescreenrecorder
 
 
 --------------31
