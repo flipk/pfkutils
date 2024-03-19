@@ -22,14 +22,8 @@ luks = {}
 
 
 def measure_widths():
-    widths['pass'] = 1  # not a string
-    widths['num'] = 2  # not in fs
-    widths['open'] = 4  # not in fs
-    widths['mounted'] = 7  # not in fs
-    widths['checked'] = 3  # not in fs
-
     # measure the ones that are in fs
-    for f in ['name', 'UUID', 'imgfile', 'depends', 'luks', 'mntpt']:
+    for f in ['name', 'UUID', 'imgfile', 'depends', 'luks', 'mntpt', 'nfs']:
         width = 0
         for fs in pfk_fs_config.fs_list:
             if f not in fs:
@@ -40,15 +34,23 @@ def measure_widths():
                     width = len(fs[f])
         widths[f] = width
 
-    if widths['depends'] < 7:
-        widths['depends'] = 7
+    has_checked = False
+    for fs in pfk_fs_config.fs_list:
+        if fs['UUID'] or fs['imgfile']:
+            has_checked = True
+
+    widths['num'] = 2  # not in fs
+    widths['pass'] = 1 if widths['luks'] > 0 else 0  # not a string
+    widths['open'] = 4 if widths['luks'] > 0 else 0  # not in fs
+    widths['checked'] = 3 if has_checked else 0  # not in fs
+    widths['mounted'] = 7  # not in fs
 
     pos = 0
     for f in ['num', 'name', 'depends', 'luks',
-              'pass', 'open', 'checked', 'mntpt', 'mounted']:
+              'pass', 'open', 'checked', 'nfs', 'mntpt', 'mounted']:
         cols[f] = pos
-        pos += widths[f]
-        pos += 1
+        if widths[f] > 0:
+            pos += widths[f] + 1
 
 
 def run_command(cmd: list[str]):
@@ -125,14 +127,22 @@ def init_status():
 
 def draw_table(selected: int):
     global scr
+    global widths
     scr.addstr(0, cols['num'], '##', curses.A_UNDERLINE)
     scr.addstr(0, cols['name'], 'name', curses.A_UNDERLINE)
-    scr.addstr(0, cols['depends'], 'depends', curses.A_UNDERLINE)
-    scr.addstr(0, cols['luks'], 'luks', curses.A_UNDERLINE)
-    scr.addstr(0, cols['pass'], 'p', curses.A_UNDERLINE)
-    scr.addstr(0, cols['open'], 'open', curses.A_UNDERLINE)
+    if widths['depends'] > 0:
+        scr.addstr(0, cols['depends'], 'depends', curses.A_UNDERLINE)
+    if widths['luks'] > 0:
+        scr.addstr(0, cols['luks'], 'luks', curses.A_UNDERLINE)
+    if widths['pass'] > 0:
+        scr.addstr(0, cols['pass'], 'p', curses.A_UNDERLINE)
+    if widths['open'] > 0:
+        scr.addstr(0, cols['open'], 'open', curses.A_UNDERLINE)
     # ✓✔√
-    scr.addstr(0, cols['checked'], '✓ed', curses.A_UNDERLINE)
+    if widths['checked'] > 0:
+        scr.addstr(0, cols['checked'], '✓ed', curses.A_UNDERLINE)
+    if widths['nfs'] > 0:
+        scr.addstr(0, cols['nfs'], 'nfs', curses.A_UNDERLINE)
     scr.addstr(0, cols['mntpt'], 'mnt point', curses.A_UNDERLINE)
     scr.addstr(0, cols['mounted'], 'mounted', curses.A_UNDERLINE)
     rownum = 1
@@ -148,17 +158,20 @@ def draw_table(selected: int):
         if fs['luks']:
             scr.addstr(rownum, cols['luks'], f'{fs["luks"]}')
         else:
-            scr.addstr(rownum, cols['luks'], '<none>')
+            scr.addstr(rownum, cols['luks'], 'n/a')
         if fs['pass']:
             scr.addstr(rownum, cols['pass'], f'{fs["pass"]}')
         if fs['open']:
             scr.addstr(rownum, cols['open'], 'yes')
         else:
             scr.addstr(rownum, cols['open'], 'no ')
-        if fs['checked']:
-            scr.addstr(rownum, cols['checked'], 'yes')
-        else:
-            scr.addstr(rownum, cols['checked'], 'no ')
+        if widths['checked'] > 0:
+            if fs['checked']:
+                scr.addstr(rownum, cols['checked'], 'yes')
+            else:
+                scr.addstr(rownum, cols['checked'], 'no ')
+        if widths['nfs'] > 0:
+            scr.addstr(rownum, cols['nfs'], f'{fs["nfs"]}')
         scr.addstr(rownum, cols['mntpt'], f'{fs["mntpt"]}')
         if fs['mounted']:
             scr.addstr(rownum, cols['mounted'], 'yes')
@@ -190,8 +203,9 @@ def draw_table(selected: int):
                 else:
                     scr.addstr('<o>pen-luks ')
         else:
-            if not selected_fs['checked']:
-                scr.addstr('<f>sck ')
+            if widths['checked'] > 0:
+                if not selected_fs['checked']:
+                    scr.addstr('<f>sck ')
             if not selected_fs['mounted']:
                 if selected_fs['luks']:
                     scr.addstr('<c>lose-luks ')
@@ -314,8 +328,10 @@ def mount(selected: int):
     if fs:
         if fs['luks']:
             source = f'/dev/mapper/{fs["luks"]}'
-        else:
+        elif fs['UUID']:
             source = f'UUID={fs["UUID"]}'
+        else:
+            source = fs['nfs']
         scr.addstr(f'    {fs["mntpt"]}: {source}\n')
 
         cmd = ['/bin/mount', source, fs['mntpt']]
