@@ -77,10 +77,9 @@ def init_status():
         print(f'ERROR: unable to init:\n{stdoutlines}')
         exit(1)
     mounts = {}
+    patt = re.compile('^([^ ]+) on ([^ ]+) type ([^ ]+) \\((.*)\\)')
     for line in stdoutlines:
-        m = re.search(
-            '^([^ ]+) on ([^ ]+) type ([^ ]+) \\((.*)\\)',
-            line)
+        m = patt.search(line)
         if m:
             newm = {
                 'path': m.group(2),
@@ -378,18 +377,17 @@ def umount(selected: int):
             source = f'UUID={fs["UUID"]}'
         scr.addstr(f'    {fs["mntpt"]}: {source}\n')
 
-        # we dont check fs['tickle'], we just try anyway
-        # and ignore an error.
-        cmd = ['tickler', 'remove', fs['mntpt']]
-        scr.addstr(f'running command: ')
-        for c in cmd:
-            scr.addstr(f'{c} ')
-        scr.addstr('\n')
-        ok, stdoutlines = run_command(cmd)
-        if not ok:
-            scr.addstr('  ERROR:\n')
-        for line in stdoutlines:
-            scr.addstr(f'{line}\n')
+        if fs['tickle']:
+            cmd = ['tickler', 'remove', fs['mntpt']]
+            scr.addstr(f'running command: ')
+            for c in cmd:
+                scr.addstr(f'{c} ')
+            scr.addstr('\n')
+            ok, stdoutlines = run_command(cmd)
+            if not ok:
+                scr.addstr('  ERROR:\n')
+            for line in stdoutlines:
+                scr.addstr(f'{line}\n')
 
         cmd = ['/bin/umount', fs['mntpt']]
         scr.addstr(f'running command: ')
