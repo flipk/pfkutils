@@ -178,14 +178,22 @@ if __name__ == '__main__':
     curses.cbreak()
     scr.keypad(True)
     r = 1
+    err = None
     try:
         # r = main(sys.argv)
         r = main()
     except KeyboardInterrupt:
+        err = 'interrupted by keyboard'
+        pass
+    except curses.error as e:
+        err = e
         pass
     scr.keypad(False)
     del scr
     curses.nocbreak()
     curses.echo()
     curses.endwin()
+    if err:
+        print(f'ERROR: {err}')
+        print('does the window need to be bigger?')
     exit(r)

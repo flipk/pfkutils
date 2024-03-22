@@ -504,22 +504,19 @@ if __name__ == '__main__':
     curses.cbreak()
     scr.keypad(True)
     r = 1
+    err = None
     # noinspection PyBroadException
     try:
         # r = main(sys.argv)
         r = main()
-    except:
-        # clean up curses before raising the exception
-        # so the exception can print out cleanly.
-        scr.keypad(False)
-        del scr
-        curses.nocbreak()
-        curses.echo()
-        curses.endwin()
-        raise
+    except curses.error as e:
+        err = e
     scr.keypad(False)
     del scr
     curses.nocbreak()
     curses.echo()
     curses.endwin()
+    if err:
+        print(f'ERROR: {err}')
+        print('does the window need to be bigger?')
     exit(r)
