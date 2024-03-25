@@ -92,6 +92,7 @@ class Widths:
 
 class Fs:
     name: str
+    online: bool
     mntpt: str
     UUID: str | None
     imgfile: str | None
@@ -103,9 +104,7 @@ class Fs:
     mounted: bool
     passgrp: int | None
     tickle: bool
-    open_output: str
-    fsck_output: str
-    mount_output: str
+    output: str
     widths: Widths
 
     def __init__(self, name: str,
@@ -130,12 +129,18 @@ class Fs:
         self.name = name
         self.widths.uuid = len(uuid) if uuid else 0
         self.UUID = uuid
+        self.online = False
         self.imgfile = imgfile
         if imgfile or uuid:
             self.widths.checked = 3
         self.widths.nfs = len(nfs) if nfs else 0
         self.nfs = nfs
-        self.widths.depends = len(depends) if depends else 0
+        if depends:
+            self.widths.depends = len(depends)
+            if self.widths.depends < 7:
+                self.widths.depends = 7
+        else:
+            self.widths.depends = 0
         self.depends = depends
         if luks:
             self.widths.luks = len(luks)
@@ -151,6 +156,4 @@ class Fs:
         self.widths.mntpt = len(mntpt) if mntpt else 0
         self.mntpt = mntpt
         self.tickle = tickle
-        self.open_output = ''
-        self.fsck_output = ''
-        self.mount_output = ''
+        self.output = ''

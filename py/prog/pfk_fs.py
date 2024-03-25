@@ -9,15 +9,37 @@ import _pfk_fs
 import pfk_fs_config
 import os
 import time
+import json
 
+
+class Rows:
+    menuline: int
+    cursorline: int
+    statusline: int
+
+    def __init__(self):
+        self.menuline = 0
+        self.cursorline = 0
+        self.statusline = 0
+
+
+rows = Rows()
 widths = _pfk_fs.Widths()
 cols = _pfk_fs.Widths()
-rows = {}
 passwords = {}
 mounts = {}
-luks = {}
 ticklers = {}
 nfs_server_running = False
+
+
+class PfkFsErrorStatus(Exception):
+    errstr: str
+
+    def __init__(self, errstr: str):
+        self.errstr = errstr + '\n\nIs tickler running?\n'
+
+    def __str__(self):
+        return self.errstr
 
 
 def measure_widths():
@@ -31,7 +53,8 @@ def measure_widths():
 def run_command(cmd: list[str]):
     try:
         cp = subprocess.run(cmd,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
                             timeout=30)
     except subprocess.TimeoutExpired:
         print(f'ERROR: subprocess {cmd} timeout')
@@ -51,7 +74,6 @@ def init_status():
     global rows
     global passwords
     global mounts
-    global luks
     global ticklers
     global nfs_server_running
 
@@ -91,6 +113,8 @@ def init_status():
                     'count': m.group(3)
                 }
                 ticklers[m.group(2)] = newtickler
+    else:
+        raise PfkFsErrorStatus(f'tickler error:\n{stdoutlines}')
 
     for fs in pfk_fs_config.fs_list:
         if fs.passgrp:
@@ -130,6 +154,36 @@ def init_status():
             pass
     nfs_server_running = nfs_servers > 0
 
+    # reset all online flags to False and re-walk lsblk
+    for fs in pfk_fs_config.fs_list:
+        fs.online = False
+    cmd = ['/bin/lsblk', '-fJ']
+    ok, stdoutlines = run_command(cmd)
+    if not ok:
+        print(f'lblk failed:\n{stdoutlines}')
+    else:
+        data = json.loads(" ".join(stdoutlines))
+
+        def do_bd(obj):
+            if 'uuid' in obj:
+                uuid = obj['uuid']
+                if uuid:
+                    for fs2 in pfk_fs_config.fs_list:
+                        if fs2.UUID == uuid:
+                            fs2.online = True
+                            if fs2.mounted:
+                                for fs3 in pfk_fs_config.fs_list:
+                                    if fs3.depends == fs2.name:
+                                        fs3.online = True
+                            break
+            if 'children' in obj:
+                for child in obj['children']:
+                    do_bd(child)
+
+        if 'blockdevices' in data:
+            for bd in data['blockdevices']:
+                do_bd(bd)
+
 
 def draw_table(selected: int):
     global scr
@@ -138,7 +192,6 @@ def draw_table(selected: int):
     global rows
     global passwords
     global mounts
-    global luks
     global ticklers
     global nfs_server_running
 
@@ -170,7 +223,10 @@ def draw_table(selected: int):
         scr.addstr(rownum, cols.name, f'{fs.name}')
         if fs.depends:
             scr.addstr(rownum, cols.depends, f'{fs.depends}')
-        if fs.luks:
+
+        if not fs.online:
+            scr.addstr(rownum, cols.luksnfs, 'OFFLINE')
+        elif fs.luks:
             scr.addstr(rownum, cols.luksnfs, f'{fs.luks}')
             if fs.open:
                 scr.addstr(rownum, cols.open, 'yes')
@@ -178,24 +234,26 @@ def draw_table(selected: int):
                 scr.addstr(rownum, cols.open, 'no')
         elif fs.nfs:
             scr.addstr(rownum, cols.luksnfs, f'{fs.nfs}')
-        if not fs.nfs and widths.checked > 0:
-            if fs.checked:
-                scr.addstr(rownum, cols.checked, 'yes')
-            else:
-                scr.addstr(rownum, cols.checked, 'no')
         if fs.passgrp:
             scr.addstr(rownum, cols.passgrp, f'{fs.passgrp}')
         scr.addstr(rownum, cols.mntpt, f'{fs.mntpt}')
-        if fs.mounted:
-            scr.addstr(rownum, cols.mounted, 'yes')
-        else:
-            scr.addstr(rownum, cols.mounted, 'no')
-        if fs.tickle:
-            t = ticklers.get(fs.mntpt, None)
-            if t:
-                scr.addstr(rownum, cols.tickle, 'yes')
+        if fs.online:
+            if not fs.nfs and widths.checked > 0:
+                if fs.checked:
+                    scr.addstr(rownum, cols.checked, 'yes')
+                else:
+                    scr.addstr(rownum, cols.checked, 'no')
+            if fs.mounted:
+                scr.addstr(rownum, cols.mounted, 'yes')
             else:
-                scr.addstr(rownum, cols.tickle, 'no')
+                scr.addstr(rownum, cols.mounted, 'no')
+            if fs.tickle:
+                t = ticklers.get(fs.mntpt, None)
+                if t:
+                    scr.addstr(rownum, cols.tickle, 'yes')
+                else:
+                    scr.addstr(rownum, cols.tickle, 'no')
+
         scr.attroff(curses.A_REVERSE)
         rownum += 1
     rownum += 1
@@ -211,7 +269,7 @@ def draw_table(selected: int):
         scr.clrtoeol()
         rownum += 1
     rownum += 1
-    rows['menuline'] = rownum
+    rows.menuline = rownum
     scr.move(rownum, 0)
     if selected_fs:
         if not selected_fs.open:
@@ -245,8 +303,23 @@ def draw_table(selected: int):
         else:
             scr.addstr(rownum, 0, "NFS server NOT running (<S> start)")
         rownum += 1
-    rows['cursorline'] = rownum
-    scr.move(rownum, 0)
+    rows.cursorline = rownum
+    rownum += 1
+    rows.statusline = rownum
+    scr.move(rows.statusline, 0)
+    if selected_fs:
+        if selected_fs.output:
+            scr.addstr(selected_fs.output)
+    scr.move(rows.cursorline, 0)
+
+
+def draw_output(fs):
+    global scr
+    global rows
+    scr.move(rows.statusline, 0)
+    scr.clrtobot()
+    scr.addstr(fs.output)
+    scr.refresh()
 
 
 def load_password(selected: int):
@@ -254,17 +327,17 @@ def load_password(selected: int):
     global passwords
     passnum = selected - 100
     if passnum not in passwords:
-        scr.addstr(rows['cursorline'], 0, f'  pass# should be one of: [')
+        scr.addstr(rows.cursorline, 0, f'  pass# should be one of: [')
         for p in passwords.keys():
             scr.addstr(f'{p},')
         scr.addstr(']')
     else:
-        scr.addstr(rows['cursorline'], 0, 'enter password: ')
+        scr.addstr(rows.cursorline, 0, 'enter password: ')
         curses.echo()
         passphrase = scr.getstr()
         curses.noecho()
         passwords[passnum] = passphrase  # passphrase.decode()
-        scr.move(rows['cursorline'], 0)
+        scr.move(rows.cursorline, 0)
         scr.clrtoeol()
     pass
 
@@ -277,14 +350,9 @@ def open_luks(selected: int):
         fs = pfk_fs_config.fs_list[entnum]
     if fs:
         if fs.luks:
-            source = f'/dev/mapper/{fs.luks}'
-        else:
-            source = f'UUID={fs.UUID}'
-        scr.addstr(f'    {fs.mntpt}: {source}\n')
-        if fs.luks:
             password = passwords[fs.passgrp]
             if len(password) == 0:
-                scr.addstr(f'ERROR: password {fs.passgrp} is not loaded!')
+                fs.output = f'   password {fs.passgrp} is not loaded!'
             else:
                 passfile = tempfile.NamedTemporaryFile(delete=False)
                 passfile.write(password)
@@ -295,23 +363,15 @@ def open_luks(selected: int):
                     source = f'UUID={fs.UUID}'
                 cmd = ['/sbin/cryptsetup', 'open', '--type', 'luks',
                        '--key-file', passfile.name, source, fs.luks]
-                scr.addstr(f'running command: ')
-                for c in cmd:
-                    scr.addstr(f'{c} ')
-                scr.addstr('\n')
-                scr.refresh()
+                fs.output = f'running command: {" ".join(cmd)}\n'
+                draw_output(fs)
                 ok, stdoutlines = run_command(cmd)
-                if ok:
-                    scr.addstr('  opened!')
-                else:
-                    scr.addstr('  ERROR:\n')
-                    for line in stdoutlines:
-                        scr.addstr(f'{line}\n')
+                if not ok:
+                    fs.output += '  ERROR:\n'
+                fs.output += '\n'.join(stdoutlines)
                 os.unlink(passfile.name)
         else:
-            scr.addstr(f'  ERROR: {fs.name} is not encrypted')
-    else:
-        scr.addstr(f'  ERROR: did not find entry # {entnum}')
+            fs.output = f'   {fs.name} is not encrypted'
 
 
 def fsck(selected: int):
@@ -325,28 +385,22 @@ def fsck(selected: int):
             source = f'/dev/mapper/{fs.luks}'
         else:
             source = f'UUID={fs.UUID}'
-        scr.addstr(f'    {fs.mntpt}: {source}\n')
+
         cmd = ['/sbin/fsck', '-y', source]
-        scr.addstr(f'running command: ')
-        for c in cmd:
-            scr.addstr(f'{c} ')
-        scr.addstr('\n')
-        scr.refresh()
+        fs.output = f'running command: {" ".join(cmd)}\n'
+        draw_output(fs)
         ok, stdoutlines = run_command(cmd)
-        for line in stdoutlines:
-            scr.addstr(f'{line}\n')
-        if ok:
-            scr.addstr('  done!')
-            fs.checked = True
-        else:
+        if not ok:
+            fs.output += '   ERROR!\n'
             fs.checked = False
-            scr.addstr('  FAILED\n')
-    else:
-        scr.addstr(f'  ERROR: did not find entry # {entnum}')
+        else:
+            fs.checked = True
+        fs.output += '\n'.join(stdoutlines)
 
 
 def mount(selected: int):
     global scr
+    global rows
     entnum = selected - 1
     fs = None
     if 0 <= entnum < len(pfk_fs_config.fs_list):
@@ -358,36 +412,24 @@ def mount(selected: int):
             source = f'UUID={fs.UUID}'
         else:
             source = fs.nfs
-        scr.addstr(f'    {fs.mntpt}: {source}\n')
 
         cmd = ['/bin/mount', source, fs.mntpt]
-        scr.addstr(f'running command: ')
-        for c in cmd:
-            scr.addstr(f'{c} ')
-        scr.addstr('\n')
-        scr.refresh()
+        fs.output = f'running command: {" ".join(cmd)}\n'
+        draw_output(fs)
         ok, stdoutlines = run_command(cmd)
-        if ok:
-            scr.addstr('  mounted!')
-        else:
-            scr.addstr('  ERROR:\n')
-            for line in stdoutlines:
-                scr.addstr(f'{line}\n')
+        if not ok:
+            fs.output += '  ERROR:\n'
+        fs.output += '\n'.join(stdoutlines)
 
         if fs.tickle:
             cmd = ['tickler', 'add', '30 ', fs.mntpt]
-            scr.addstr(f'running command: ')
-            for c in cmd:
-                scr.addstr(f'{c} ')
-            scr.addstr('\n')
+            runout = f'running command: {" ".join(cmd)}\n'
+            fs.output += runout
+            scr.addstr(runout)
             ok, stdoutlines = run_command(cmd)
             if not ok:
-                scr.addstr('  ERROR:\n')
-            for line in stdoutlines:
-                scr.addstr(f'{line}\n')
-
-    else:
-        scr.addstr(f'  ERROR: did not find entry # {entnum}')
+                fs.output += '  ERROR:\n'
+            fs.output += '\n'.join(stdoutlines)
 
 
 def umount(selected: int):
@@ -397,39 +439,22 @@ def umount(selected: int):
     if 0 <= entnum < len(pfk_fs_config.fs_list):
         fs = pfk_fs_config.fs_list[entnum]
     if fs:
-        if fs.luks:
-            source = f'/dev/mapper/{fs.luks}'
-        else:
-            source = f'UUID={fs.UUID}'
-        scr.addstr(f'    {fs.mntpt}: {source}\n')
-
         if fs.tickle:
             cmd = ['tickler', 'remove', fs.mntpt]
-            scr.addstr(f'running command: ')
-            for c in cmd:
-                scr.addstr(f'{c} ')
-            scr.addstr('\n')
+            fs.output = f'running command: {" ".join(cmd)}\n'
+            draw_output(fs)
             ok, stdoutlines = run_command(cmd)
             if not ok:
-                scr.addstr('  ERROR:\n')
-            for line in stdoutlines:
-                scr.addstr(f'{line}\n')
+                fs.output += '  ERROR:\n'
+            fs.output += '\n'.join(stdoutlines)
 
         cmd = ['/bin/umount', fs.mntpt]
-        scr.addstr(f'running command: ')
-        for c in cmd:
-            scr.addstr(f'{c} ')
-        scr.addstr('\n')
-        scr.refresh()
+        fs.output += f'running command: {" ".join(cmd)}\n'
+        draw_output(fs)
         ok, stdoutlines = run_command(cmd)
-        if ok:
-            scr.addstr('  unmounted!')
-        else:
-            scr.addstr('  ERROR:\n')
-            for line in stdoutlines:
-                scr.addstr(f'{line}\n')
-    else:
-        scr.addstr(f'  ERROR: did not find entry # {entnum}')
+        if not ok:
+            fs.output += '  ERROR!'
+        fs.output += '\n'.join(stdoutlines)
 
 
 def close_luks(selected: int):
@@ -440,29 +465,15 @@ def close_luks(selected: int):
         fs = pfk_fs_config.fs_list[entnum]
     if fs:
         if fs.luks:
-            source = f'/dev/mapper/{fs.luks}'
-        else:
-            source = f'UUID={fs.UUID}'
-        scr.addstr(f'    {fs.mntpt}: {source}\n')
-        # cryptsetup close $volname
-        if fs.luks:
             cmd = ['/sbin/cryptsetup', 'close', fs.luks]
-            scr.addstr(f'running command: ')
-            for c in cmd:
-                scr.addstr(f'{c} ')
-            scr.addstr('\n')
-            scr.refresh()
+            fs.output = f'running command: {" ".join(cmd)}\n'
+            draw_output(fs)
             ok, stdoutlines = run_command(cmd)
-            if ok:
-                scr.addstr('  closed!')
-            else:
+            if not ok:
                 scr.addstr('  ERROR:\n')
-                for line in stdoutlines:
-                    scr.addstr(f'{line}\n')
+            fs.output += '\n'.join(stdoutlines)
         else:
-            scr.addstr(f'  ERROR: {fs.name} is not encrypted')
-    else:
-        scr.addstr(f'  ERROR: did not find entry # {entnum}')
+            fs.output = f'  {fs.name} is not encrypted'
 
 
 def toggle_nfs_server():
@@ -489,8 +500,8 @@ def main():
         init_status()
         draw_table(selected)
         scr.refresh()
-        rd, wr, ex = select.select([0], [], [], 60)
-        scr.move(rows['cursorline'], 0)
+        rd, wr, ex = select.select([0], [], [], 1)
+        scr.move(rows.cursorline, 0)
         scr.clrtobot()
         if len(rd) > 0:
             ch = scr.getch()
