@@ -560,9 +560,9 @@ def main():
 
 
 if __name__ == '__main__':
+    # resize window to 80x40, move to home, clear to end
+    tc = pfkterm.TermControl(use_curses=True, rows=40, cols=80)
     measure_widths()
-    tc = pfkterm.TermControl(use_curses=True)
-    tc.set_window_size(40, 80)
     scr = tc.scr
     r = 1
     err = None

@@ -178,9 +178,8 @@ def main():
 
 
 if __name__ == '__main__':
-    # resize window to 80x40, move to home, clear to end
-    tc = pfkterm.TermControl(use_curses=True)
-    tc.set_window_size(30, 80)
+    # resize window to 80x30, move to home, clear to end
+    tc = pfkterm.TermControl(use_curses=True, rows=30, cols=80)
     scr = tc.scr
     r = 1
     err = None

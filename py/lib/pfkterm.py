@@ -10,12 +10,14 @@ import curses
 
 
 class TermControl:
-    def __init__(self, use_curses: bool):
+    def __init__(self, use_curses: bool, rows: int = 0, cols: int = 0):
         self.infd = os.fdopen(0, buffering=False, mode='rb')
         self.old_settings = termios.tcgetattr(0)
         # tty.setraw(self.infd)
         tty.setcbreak(self.infd)
         self.old_rows, self.old_cols = self.get_window_size()
+        if rows and cols:
+            self.set_window_size(rows, cols)
         if use_curses:
             self.scr = curses.initscr()
             curses.noecho()
