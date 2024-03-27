@@ -11,9 +11,14 @@
 # on fedora, 'cpupower' is in kernel-tools, and powertop is in 'powertop'
 
 import os
+import sys
+
+sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
+
 import time
 import select
 import curses
+import pfkterm
 # import sys
 # import stat
 
@@ -173,27 +178,22 @@ def main():
 
 
 if __name__ == '__main__':
-    scr = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    scr.keypad(True)
+    # resize window to 80x40, move to home, clear to end
+    tc = pfkterm.TermControl(use_curses=True)
+    tc.set_window_size(30, 80)
+    scr = tc.scr
     r = 1
     err = None
     try:
         # r = main(sys.argv)
         r = main()
     except KeyboardInterrupt:
-        err = 'interrupted by keyboard'
-        pass
+        err = Exception('interrupted by keyboard')
     except curses.error as e:
         err = e
-        pass
-    scr.keypad(False)
-    del scr
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
+    except Exception as e:
+        err = e
+    del tc
     if err:
-        print(f'ERROR: {err}')
-        print('does the window need to be bigger?')
+        raise err
     exit(r)

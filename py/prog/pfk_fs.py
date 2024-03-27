@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+import os
+import sys
+
+sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
+
 import curses
 import select
 import subprocess
@@ -7,9 +12,9 @@ import re
 import tempfile
 import _pfk_fs
 import pfk_fs_config
-import os
 import time
 import json
+import pfkterm
 
 
 class Rows:
@@ -50,7 +55,7 @@ def measure_widths():
     cols.calc_cols(widths)
 
 
-def run_command(cmd: list[str]):
+def run_command(cmd: list[str], do_split: bool = True):
     try:
         cp = subprocess.run(cmd,
                             stdout=subprocess.PIPE,
@@ -60,7 +65,10 @@ def run_command(cmd: list[str]):
         print(f'ERROR: subprocess {cmd} timeout')
         time.sleep(5)
         exit(1)
-    stdoutlines = cp.stdout.decode().split('\n')
+    if do_split:
+        stdoutlines = cp.stdout.decode().split('\n')
+    else:
+        stdoutlines = cp.stdout.decode()
     ok = True
     if cp.returncode != 0:
         ok = False
@@ -147,10 +155,10 @@ def init_status():
                 if comm.strip() == "nfsd":
                     nfs_servers += 1
         except ValueError:
-            # skip
+            # skip, some things in /proc are not integers
             pass
         except FileNotFoundError:
-            # skip
+            # skip, sometimes processes exit as we read them
             pass
     nfs_server_running = nfs_servers > 0
 
@@ -158,11 +166,11 @@ def init_status():
     for fs in pfk_fs_config.fs_list:
         fs.online = False
     cmd = ['/bin/lsblk', '-fJ']
-    ok, stdoutlines = run_command(cmd)
+    ok, stdoutlines = run_command(cmd, False)
     if not ok:
         print(f'lblk failed:\n{stdoutlines}')
     else:
-        data = json.loads(" ".join(stdoutlines))
+        data = json.loads(stdoutlines)
 
         def do_bd(obj):
             if 'uuid' in obj:
@@ -365,10 +373,10 @@ def open_luks(selected: int):
                        '--key-file', passfile.name, source, fs.luks]
                 fs.output = f'running command: {" ".join(cmd)}\n'
                 draw_output(fs)
-                ok, stdoutlines = run_command(cmd)
+                ok, stdoutlines = run_command(cmd, False)
                 if not ok:
                     fs.output += '  ERROR:\n'
-                fs.output += '\n'.join(stdoutlines)
+                fs.output += stdoutlines
                 os.unlink(passfile.name)
         else:
             fs.output = f'   {fs.name} is not encrypted'
@@ -389,13 +397,13 @@ def fsck(selected: int):
         cmd = ['/sbin/fsck', '-y', source]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd)
+        ok, stdoutlines = run_command(cmd, False)
         if not ok:
-            fs.output += '   ERROR!\n'
+            fs.output += '   ERROR:\n'
             fs.checked = False
         else:
             fs.checked = True
-        fs.output += '\n'.join(stdoutlines)
+        fs.output += stdoutlines
 
 
 def mount(selected: int):
@@ -416,20 +424,20 @@ def mount(selected: int):
         cmd = ['/bin/mount', source, fs.mntpt]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd)
+        ok, stdoutlines = run_command(cmd, False)
         if not ok:
             fs.output += '  ERROR:\n'
-        fs.output += '\n'.join(stdoutlines)
+        fs.output += stdoutlines
 
         if fs.tickle:
             cmd = ['tickler', 'add', '30 ', fs.mntpt]
             runout = f'running command: {" ".join(cmd)}\n'
             fs.output += runout
             scr.addstr(runout)
-            ok, stdoutlines = run_command(cmd)
+            ok, stdoutlines = run_command(cmd, False)
             if not ok:
                 fs.output += '  ERROR:\n'
-            fs.output += '\n'.join(stdoutlines)
+            fs.output += stdoutlines
 
 
 def umount(selected: int):
@@ -439,22 +447,23 @@ def umount(selected: int):
     if 0 <= entnum < len(pfk_fs_config.fs_list):
         fs = pfk_fs_config.fs_list[entnum]
     if fs:
+        fs.output = ''
         if fs.tickle:
             cmd = ['tickler', 'remove', fs.mntpt]
             fs.output = f'running command: {" ".join(cmd)}\n'
             draw_output(fs)
-            ok, stdoutlines = run_command(cmd)
+            ok, stdoutlines = run_command(cmd, False)
             if not ok:
                 fs.output += '  ERROR:\n'
-            fs.output += '\n'.join(stdoutlines)
+            fs.output += stdoutlines
 
         cmd = ['/bin/umount', fs.mntpt]
         fs.output += f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd)
+        ok, stdoutlines = run_command(cmd, False)
         if not ok:
-            fs.output += '  ERROR!'
-        fs.output += '\n'.join(stdoutlines)
+            fs.output += '  ERROR:\n'
+        fs.output += stdoutlines
 
 
 def close_luks(selected: int):
@@ -468,10 +477,10 @@ def close_luks(selected: int):
             cmd = ['/sbin/cryptsetup', 'close', fs.luks]
             fs.output = f'running command: {" ".join(cmd)}\n'
             draw_output(fs)
-            ok, stdoutlines = run_command(cmd)
+            ok, stdoutlines = run_command(cmd, False)
             if not ok:
                 scr.addstr('  ERROR:\n')
-            fs.output += '\n'.join(stdoutlines)
+            fs.output += stdoutlines
         else:
             fs.output = f'  {fs.name} is not encrypted'
 
@@ -483,13 +492,12 @@ def toggle_nfs_server():
         cmd = 'stop'
     else:
         cmd = 'start'
-    ok, stdoutlines = run_command(['systemctl', cmd, 'nfs-server'])
+    ok, stdoutlines = run_command(['systemctl', cmd, 'nfs-server'], False)
     if not ok:
         scr.addstr('  ERROR:\n')
     else:
         scr.addstr('  done!\n')
-    for line in stdoutlines:
-        scr.addstr(f'{line}\n')
+    scr.addstr(stdoutlines)
 
 
 # def main(argv: list[str]):
@@ -553,25 +561,21 @@ def main():
 
 if __name__ == '__main__':
     measure_widths()
-    scr = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    scr.keypad(True)
+    tc = pfkterm.TermControl(use_curses=True)
+    tc.set_window_size(40, 80)
+    scr = tc.scr
     r = 1
-    # noinspection PyBroadException
+    err = None
     try:
         # r = main(sys.argv)
         r = main()
+    except KeyboardInterrupt:
+        err = Exception('interrupted by keyboard')
+    except curses.error as e:
+        err = e
     except Exception as e:
-        scr.keypad(False)
-        del scr
-        curses.nocbreak()
-        curses.echo()
-        curses.endwin()
-        raise
-    scr.keypad(False)
-    del scr
-    curses.nocbreak()
-    curses.echo()
-    curses.endwin()
+        err = e
+    del tc
+    if err:
+        raise err
     exit(r)

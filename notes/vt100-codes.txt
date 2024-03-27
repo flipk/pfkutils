@@ -19,7 +19,7 @@ ESC [ M = scroll window down one line
 ESC [ 6 n = report cursor position with next seq
 ESC [ ROW ; COL R = (response) cursor position is at {ROW,COL}
 ESC [ 18; t = report window size with next seq
-ESC [ 8; ROW ; COL t = (response) windows size is ROW x COL
+ESC [ 8; ROW ; COL t = (response to above, or cmd) windows size is ROW x COL
 ESC [ c = identify terminal type with next seq
 ESC [ ?1;<n>0c = (response) terminal is type code n (but what is n=2?)
 ESC c = reset terminal
