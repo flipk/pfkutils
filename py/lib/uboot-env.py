@@ -60,8 +60,6 @@ class UbootEnv:
     def encode_env(self) -> bool:
         """take a dict containing uboot environment variables, encoded them
         into binary format, and add the appropriate CRC."""
-        self.encoded.clear()
-        self.encoded.zfill(self.envlen)
         self.encoded = bytearray(self.envlen)
         pos = 4  # leave room for CRC at the front.
         for k in self.variables.keys():
