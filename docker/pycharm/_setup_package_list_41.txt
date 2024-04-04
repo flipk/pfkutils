@@ -1,0 +1,10 @@
+bzip2 gzip xz zip unzip tar
+curl wget libcap-devel
+git git-extras git-gui gitk
+python python-devel
+protobuf-compiler
+g++ gcc gcc-c++ flex byacc bison make
+autoconf automake libtool sed less
+net-tools hostname procps-ng util-linux vim
+p7zip p7zip-plugins
+libXtst

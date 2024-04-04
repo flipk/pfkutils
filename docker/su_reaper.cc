@@ -106,8 +106,12 @@ int main(int argc, char ** argv)
         fcntl(exec_error_pipe[1], F_SETFD, FD_CLOEXEC);
 
         // set my process credentials!
-        gid_t  mygid = (gid_t) docker_gid;
-        setgroups(1, &mygid);
+        gid_t  mygid;
+        if (docker_gid > 0)
+        {
+            mygid = (gid_t) docker_gid;
+            setgroups(1, &mygid);
+        }
         mygid = (gid_t) gid;
         setgid(mygid);
         uid_t  myuid = (uid_t) uid;
