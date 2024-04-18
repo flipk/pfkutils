@@ -5,6 +5,8 @@ if [ -f /etc/system-release-cpe ] ; then
         pf=fedora-$(awk -F: '/^cpe/ {print $5}' /etc/system-release-cpe)
     elif grep -q amazon /etc/system-release-cpe ; then
         pf=$(awk -F: '/^cpe/ {print $4 "-" $2}' /etc/system-release-cpe)
+    elif grep -q rocky /etc/system-release-cpe ; then
+        pf=$(awk -F: '/^cpe/ {print $4 "-" $5}' /etc/system-release-cpe)
     else
         pf=cpe-unknown
     fi
