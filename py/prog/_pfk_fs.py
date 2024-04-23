@@ -103,6 +103,7 @@ class Fs:
     checked: bool
     mounted: bool
     passgrp: int | None
+    discard: bool
     tickle: bool
     output: str
     widths: Widths
@@ -115,6 +116,7 @@ class Fs:
                  depends: str | None = None,
                  luks: str | None = None,
                  passgrp: int | None = None,
+                 discard: bool = False,
                  tickle: bool = False
                  ):
         count = 0
@@ -155,5 +157,6 @@ class Fs:
         self.passgrp = passgrp
         self.widths.mntpt = len(mntpt) if mntpt else 0
         self.mntpt = mntpt
+        self.discard = discard
         self.tickle = tickle
         self.output = ''

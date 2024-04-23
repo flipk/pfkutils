@@ -259,3 +259,22 @@ cryptsetup -v --cipher aes-xts-plain64 --key-size 256 --hash sha256 \
 cryptsetup open --type luks /dev/sda1 luks-alt
 mkfs.ext4 -L ALT /dev/mapper/luks-alt
 cryptsetup close luks-alt
+
+discards
+--------
+---for normal devices:
+tune2fs -E discard /dev/sdd
+mount -o discard
+
+---for USB devices:
+sudo dnf install sg3_utils
+sudo sg_vpd -p bl /dev/sdd
+  Maximum unmap LBA count: 65535
+sudo sg_readcap -l /dev/sdd
+   Logical block length=512 bytes
+   Last LBA=500118191 (0x1dcf32af), Number of logical blocks=500118192
+   Logical blocks per physical block exponent=3 [so physical block length=4096 bytes]
+
+(( 65535 * 512 ))
+
+echo unmap > /sys/devices/pci0000:00/0000:00:14.0/usb2/2-9/2-9.3/2-9.3.1/2-9.3.1:1.0/host11/target11:0:0/11:0:0:0/scsi_disk/11:0:0:0/provisioning_mode

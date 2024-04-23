@@ -372,7 +372,10 @@ def open_luks(selected: int):
                 else:
                     source = f'UUID={fs.UUID}'
                 cmd = ['/sbin/cryptsetup', 'open', '--type', 'luks',
-                       '--key-file', passfile.name, source, fs.luks]
+                       '--key-file', passfile.name]
+                if fs.discard:
+                    cmd.append('--allow-discards')
+                cmd = cmd + [source, fs.luks]
                 fs.output = f'running command: {" ".join(cmd)}\n'
                 draw_output(fs)
                 ok, stdoutlines = run_command(cmd, False)
@@ -423,7 +426,10 @@ def mount(selected: int):
         else:
             source = fs.nfs
 
-        cmd = ['/bin/mount', source, fs.mntpt]
+        cmd = ['/bin/mount']
+        if fs.discard:
+            cmd = cmd + ['-o', 'discard']
+        cmd = cmd + [source, fs.mntpt]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
         ok, stdoutlines = run_command(cmd, False)
