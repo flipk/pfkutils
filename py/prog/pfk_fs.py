@@ -9,6 +9,7 @@ import curses
 import select
 import subprocess
 import re
+import struct
 import tempfile
 import _pfk_fs
 import pfk_fs_config
@@ -529,6 +530,92 @@ def toggle_nfs_server():
         scr.addstr('  done!\n')
     scr.addstr(stdoutlines)
 
+# ls -l /sys/block/sdc
+# /sys/devices/pci0000:00/0000:00:14.0/usb2/2-9/2-9.3/2-9.3.1/2-9.3.1:1.0/host9/target9:0:0/9:0:0:0/block/sdc/
+# /sys/devices/pci0000:00/0000:00:14.0/usb2/2-9/2-9.3/2-9.3.1/2-9.3.1:1.0/host9/target9:0:0/9:0:0:0/scsi_disk/9:0:0:0/provisioning_mode
+# /sys/devices/pci0000:00/0000:00:14.0/usb2/2-9/2-9.3/2-9.3.1/2-9.3.1:1.0/host9/target9:0:0/9:0:0:0/vpd_pgb0
+
+# block limits! : read 2 be32's at VPD page 0xB0 offset 0x14
+# for f in $( find /sys/devices/ -name vpd_pgb0 ) ; do echo $f ; od -t x1 -Ax -j 20 -N 8 $f ; done
+# for f in $( find /sys/devices/ -name vpd_pgb0 ) ; do echo $f ; od -t x1 -Ax -v $f ; done
+
+# see
+# https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+# 5.4.5 Block Limits VPD page (B0h)
+
+# MAXIMUM UNMAP LBA COUNT field
+# The MAXIMUM UNMAP LBA COUNT field set to a non-zero value indicates the maximum number of LBAs that may be unmapped
+# by an UNMAP command (see 3.54). If the number of LBAs that may be unmapped by an UNMAP command is constrained only
+# by the amount of data that may be contained in the UNMAP parameter list (see 3.54.2), then the device server shall
+# set the MAXIMUM UNMAP LBA COUNT field to FFFF_FFFFh. If the device server implements the UNMAP command,
+# then the value in this field shall be greater than or equal to one. A MAXIMUM UNMAP LBA COUNT field set to
+# 0000_0000h indicates that the device server does not implement the UNMAP command.
+
+# MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field
+# The MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to a non-zero value indicates the maximum number of UNMAP block
+# descriptors (see 3.54.2) that shall be contained in the parameter data transferred to the device server for an
+# UNMAP command (see 3.54). If there is no limit on the number of UNMAP block descriptors contained in the parameter
+# data, then the device server shall set the MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field to FFFF_FFFFh. If the device
+# server implements the UNMAP command, then the value in the MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field shall be
+# greater than or equal to one. A MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to 0000_0000h indicates that the
+# device server does not implement the UNMAP command.
+
+
+def fix_usb_discard_devices() -> bool:
+    p_list = []
+    changes = False
+
+    def do_a_dir(dpath: str):
+        for de1 in os.scandir(dpath):
+            npath = dpath + '/' + de1.name
+            if de1.name == 'vpd_pgb0':
+                p_list.append(npath)
+            if de1.is_dir(follow_symlinks=False):
+                do_a_dir(npath)
+
+    do_a_dir('/sys/devices')
+
+    p: str
+    for p in p_list:
+        mulc = 0
+        mubdc = 0
+        with open(p, 'rb') as fd:
+            buf = fd.read()
+            # print(f'got {len(buf)} bytes from {p}')
+            if len(buf) > 27:
+                v = struct.unpack('>HIIIIIII', buf[6:36])
+                otlg = v[0]
+                mtl = v[1]
+                otl = v[2]
+                mulc = v[3]
+                mubdc = v[4]
+                oug = v[5]
+                uga = v[7]
+        if mubdc > 0:
+            print(f'otlg:{otlg} mtl:{mtl} otl:{otl} mulc:{mulc} mubdc:{mubdc} oug:{oug} uga:{uga}\n -->{p}')
+            basedir = p.removesuffix('/vpd_pgb0')
+            blockdir = basedir + '/block'
+            for de2 in os.scandir(blockdir):
+                print(f'found device: {de2.name}')
+            scsidisk = basedir + '/scsi_disk'
+            for de2 in os.scandir(scsidisk):
+                print(f'found scsidisk: {de2.name}')
+                pmnode = scsidisk + '/' + de2.name + '/provisioning_mode'
+                print(f'found pm: {pmnode}')
+                with open(pmnode, 'r') as fd:
+                    buf = fd.read().strip()
+                    print(f'pm contents: {buf}')
+                if buf != 'unmap':
+                    with open(pmnode, 'w') as fd:
+                        fd.write('unmap')
+                        print('wrote "UNMAP"')
+                    with open(pmnode, 'r') as fd:
+                        buf = fd.read().strip()
+                        print(f'pm contents: {buf}')
+                    changes = True
+            print('')
+    return changes
+
 
 # def main(argv: list[str]):
 def main():
@@ -593,6 +680,9 @@ def main():
 
 
 if __name__ == '__main__':
+    # if os.environ.get('FIX'):
+    if fix_usb_discard_devices():
+        input('press ENTER to continue:')
     # resize window to 80x40, move to home, clear to end
     tc = pfkterm.TermControl(use_curses=True, rows=40, cols=80)
     measure_widths()
