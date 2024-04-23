@@ -15,6 +15,7 @@ import pfk_fs_config
 import time
 import json
 import pfkterm
+import pfk_lsof
 
 
 class Rows:
@@ -298,6 +299,7 @@ def draw_table(selected: int):
                 scr.addstr('<m>ount ')
             else:
                 scr.addstr('<u>mount ')
+                scr.addstr('<l>sof ')
     elif selected_passnum:
         scr.addstr('<enter> load password ')
     scr.addstr(' <q>uit')
@@ -440,6 +442,28 @@ def mount(selected: int):
             fs.output += stdoutlines
 
 
+def lsof(selected: int):
+    global scr
+    entnum = selected - 1
+    fs = None
+    if 0 <= entnum < len(pfk_fs_config.fs_list):
+        fs = pfk_fs_config.fs_list[entnum]
+    if fs:
+        fs.output = 'open files:\n'
+        of = pfk_lsof.OpenFiles()
+        of.rescan()
+        limit = curses.LINES - rows.statusline - 3
+        for pid, cmdline, fn in of.filter(fs.mntpt):
+            if limit < 0:
+                break
+            limit -= 1
+            cmdline = ' '.join(cmdline)
+            out = f'{pid}({cmdline}):{fn}'
+            if len(out) >= curses.COLS:
+                out = out[0:curses.COLS - 1]
+            fs.output += f'{out}\n'
+
+
 def umount(selected: int):
     global scr
     entnum = selected - 1
@@ -530,6 +554,9 @@ def main():
             elif ch == ord('m'):
                 if selected < 100:
                     mount(selected)
+            elif ch == ord('l'):
+                if selected < 100:
+                    lsof(selected)
             elif ch == ord('u'):
                 if selected < 100:
                     umount(selected)
