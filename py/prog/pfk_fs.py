@@ -166,7 +166,10 @@ def init_status():
 
     # reset all online flags to False and re-walk lsblk
     for fs in pfk_fs_config.fs_list:
-        fs.online = False
+        if fs.nfs:
+            fs.online = True
+        else:
+            fs.online = False
     cmd = ['/bin/lsblk', '-fJ']
     ok, stdoutlines = run_command(cmd, False)
     if not ok:
