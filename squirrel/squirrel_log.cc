@@ -52,7 +52,32 @@ SquirrelLog :: SquirrelLog(const std::string &_dbpath, bool allow_core)
     process_name = program_invocation_short_name;
 
     int sqlret = sqlite3_open(dbpath.c_str(), &pdb);
+    if (sqlret != SQLITE_OK)
+    {
+        fprintf(stderr, "ERROR unable to open sqlite3 database '%s'\n",
+                dbpath.c_str());
+        return;
+    }
     sqlite3_busy_handler(pdb, &sql_busy, (void*) this);
+
+    char * errmsg = NULL;
+    sqlret = sqlite3_exec(pdb,
+                 "PRAGMA journal_mode = WAL",
+                 NULL, NULL, &errmsg);
+    if (sqlret != SQLITE_OK)
+    {
+        fprintf(stderr, "ERROR unable to enable journal mode: %s\n",
+                errmsg);
+    }
+    sqlret = sqlite3_exec(pdb,
+                 "PRAGMA synchronous = NORMAL",
+                 NULL, NULL, &errmsg);
+    if (sqlret != SQLITE_OK)
+    {
+        fprintf(stderr, "ERROR unable to enable synchronous mode: %s\n",
+                errmsg);
+    }
+
     squirrel_db::SQL_TABLE_ALL_TABLES::init_all(
         pdb, &SquirrelLog::init_sql_tables);
     squirrel_db::SQL_TABLE_ALL_TABLES::register_log_funcs(
