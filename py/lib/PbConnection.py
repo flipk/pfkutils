@@ -2,6 +2,7 @@ from typing import Callable, Union
 import os
 import threading
 import socket
+# noinspection PyPackageRequirements
 from google.protobuf import message
 
 
@@ -23,7 +24,7 @@ class PbConnection:
     _debug_binary: bool
     _recvdata: bytes
     _thread: threading.Thread | None
-    _callback_closed: Callable[[str], None]
+    _callback_closed: Union[Callable[[str], None], None]
     _callback_msg: Callable[[message], None]
     MAX_MESSAGE_LEN = 65000
 

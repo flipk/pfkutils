@@ -10,3 +10,5 @@ upb seems to have a memory leak tho, if you find where it's installed
 and the python API will fall back to a python implementation which 
 does not have a memory leak.
 
+# noinspection PyPackageRequirements
+from google.protobuf import message

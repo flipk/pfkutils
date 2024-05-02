@@ -3,7 +3,7 @@
 set -e -x
 
 dir=${0%/rebuild-proto.sh}
-cd $dir
+cd "$dir"
 
 protoc --python_out=. --mypy_out=. MyFS.proto
 

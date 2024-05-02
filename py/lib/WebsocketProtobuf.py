@@ -1,5 +1,6 @@
 
 from typing import Union
+# noinspection PyPackageRequirements
 from google.protobuf import message
 import websockets.sync.client as wsclient
 

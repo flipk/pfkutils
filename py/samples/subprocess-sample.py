@@ -1,33 +1,9 @@
 #!/usr/bin/env python3
 
-import subprocess
 import sys
-import os
-import fcntl
+import time
 import threading
-from typing import IO, Any
-import select
-
-
-def nonblock_file(fd: IO[Any]):
-    fileno = fd.fileno()
-    flags = fcntl.fcntl(fileno, fcntl.F_GETFL)
-    fcntl.fcntl(fileno, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-
-def reader(fd: IO[bytes]):
-    while True:
-        # fd is nonblocking, so the only way to block on it
-        # is with select.
-        # nonblock is the only way to get short reads (???)
-        r, w, x = select.select([fd], [], [], .2)
-        if len(r) > 0:
-            buf = fd.read()
-            if buf:
-                print(f'got buf: {len(buf)}:{buf}')
-            else:
-                break
-    print('reader done')
+from mysubproc import MyPipe
 
 
 # noinspection PyUnusedLocal
@@ -43,15 +19,37 @@ def main(args: list[str]) -> int:
     # print(f'got buf of len {len(buf)}:{buf}')
 
     cmd = ['./subprocess-sample.sh']
-    p = subprocess.Popen(cmd,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT)
-    nonblock_file(p.stdout)
-    rdr = threading.Thread(target=reader, args=[p.stdout])
-    rdr.start()
-    p.wait()
-    rdr.join()
+    p = MyPipe(cmd)
+
+    def reader(pp: MyPipe):
+        out = pp.reader()
+        print(f'got output len:{len(out)}')
+
+    t = threading.Thread(target=reader, args=[p])
+    t.start()
+
+    p.stdin.write('input 1\n')
+    print('wrote input 1')
+    p.stdin.flush()
+    time.sleep(2)
+    p.stdin.write('input 2\n')
+    print('wrote input 2')
+    p.stdin.flush()
+    time.sleep(2)
+    p.stdin.write('input 3\n')
+    print('wrote input 3')
+    p.stdin.flush()
+    time.sleep(2)
+    p.stdin.write('input 4\n')
+    print('wrote input 4')
+    p.stdin.flush()
+    time.sleep(2)
+    p.stdin.write('input 5\n')
+    print('wrote input 5')
+    p.stdin.flush()
+    time.sleep(2)
+
+    t.join()
     return 0
 
 
