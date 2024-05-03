@@ -1,7 +1,7 @@
 #!/bin/sh
 
 
-bg=$HOME/.background.png
+bg=$HOME/pfk/etc/background.png
 found=0
 # one of the following will succeed and the others
 # will make an error msg. redirect the errors to null

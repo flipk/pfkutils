@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-03-11.19:47:57
+#      Last update: 2024-05-02.20:51:25
 #
 #############################################################################
 
@@ -569,9 +569,11 @@ if __noninteractive ; then
     return
 fi
 
+pfk_environ_key=${HOME}/pfk/etc/pfk_environ_key
+
 sign_pfk_environ() {
-    if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
-        echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
+    if [[ ! -f $pfk_environ_key ]] ; then
+        echo ERROR: no $pfk_environ_key 1>&2
         return 1
     fi
     pfk_envfile=
@@ -585,7 +587,7 @@ sign_pfk_environ() {
     fi
     echo signing $PWD/${pfk_envfile} ...
     grep -v '#pfk_sign' ${pfk_envfile} > .pfk_environ.1
-    set -- `( cat ${HOME}/.pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
+    set -- `( cat $pfk_environ_key .pfk_environ.1 ; echo $PWD ) | sha256sum -`
     echo '#pfk_sign' $1 >> .pfk_environ.1
     mv .pfk_environ.1 ${pfk_envfile}
 }
@@ -596,11 +598,11 @@ verify_pfk_environ() {
     if [[ ! -f "$envfile" ]] ; then
         return 1
     fi
-    if [[ ! -f ${HOME}/.pfk_environ_key ]] ; then
-        echo ERROR: no ${HOME}/.pfk_environ_key 1>&2
+    if [[ ! -f $pfk_environ_key ]] ; then
+        echo ERROR: no $pfk_environ_key 1>&2
         return 1
     fi
-    set -- `( cat ${HOME}/.pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ; echo "$envdir" ) | sha256sum -`
+    set -- `( cat $pfk_environ_key ; grep -v '#pfk_sign' "$envfile" ; echo "$envdir" ) | sha256sum -`
     calculated=$1
     infile=$( awk '/#pfk_sign/ { print $2} ' "$envfile" )
     if [[ "x$infile" = "x$calculated" ]] ; then
