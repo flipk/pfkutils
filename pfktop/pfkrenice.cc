@@ -141,6 +141,10 @@ pfkrenice_main(int argc, char ** argv)
                 print_error("setsched FIFO");
             else
                 cout << "now FIFO rtprio " << par.sched_priority + 1 << endl;
+            if (setpriority(PRIO_PROCESS, pid, -20) < 0)
+                print_error("setpriority");
+            else
+                cout << "set to prio -20" << endl;
         }
         else
         {
