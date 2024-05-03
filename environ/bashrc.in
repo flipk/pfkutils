@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-05-02.20:51:25
+#      Last update: 2024-05-02.22:03:54
 #
 #############################################################################
 
@@ -33,12 +33,12 @@ if [[ -f "$HOME/.bashrc_early" ]] ; then
     . "$HOME/.bashrc_early"
 fi
 
-if [ ! -d $TMP ] ; then
+if [[ ! -d $TMP ]] ; then
     mkdir -p $TMP
     chmod 700 $TMP
 fi
 
-if [ -f $HOME/.verbose ] ; then
+if [[ -f $HOME/.verbose ]] ; then
     __verbose() {
         echo $$ $*
         echo `hostname` `tty` `date` $$ $* >> $HOME/.verbose
@@ -70,6 +70,8 @@ case $- in
         ;;
 esac
 
+# reverse mode : rev or mr      \e[7m
+# exit attributes: sgr0 or me   \e[m
 COLOR_INVERT="\e[7m"
 COLOR_FG_RED="\e[31;1m"
 COLOR_FG_YEL="\e[33;1m"
@@ -106,18 +108,11 @@ case x$ENV_SET in
     x)
         __extend_path() {
             if [[ -d $1 ]] ; then
-                if [[ x$p = x ]] ; then
-                    p=$1
-                else
-                    p=$p:$1
-                fi
+                p=$p:$1
             fi
         }
 
-        p=''
-        __extend_path @prefix@/$PFKARCH/bin
-        __extend_path @prefix@/bin
-        __extend_path ~/bin
+        p="@prefix@/$PFKARCH/bin:@prefix@/bin:${HOME}/bin"
         __extend_path /usr/misc/X11/bin
         __extend_path /usr/misc/GNU/bin
         __extend_path /opt/site/bin
@@ -155,8 +150,27 @@ case x$ENV_SET in
         ;;
 esac
 
-# reverse mode : rev or mr      \E[7m
-# exit attributes: sgr0 or me   \E[m
+# remove duplicate path entries from the $PATH
+prev_IFS="$IFS"
+IFS=":"
+v=($PATH)
+IFS="$prev_IFS"
+outp=''
+for p in "${v[@]}" ; do
+    tmpoutp=":${outp}:"
+    if [[ "${tmpoutp%:$p:*}" = "${tmpoutp}" ]] ; then
+        if [[ "$outp" = "" ]] ; then
+            outp="${p}"
+        else
+            outp="${outp}:${p}"
+        fi
+    else
+        echo removing duplicate $p from PATH
+    fi
+done
+export PATH="${outp}"
+unset v p outp prev_IFS
+
 
 TTY=`tty`
 TTY=${TTY#/dev/}
@@ -227,7 +241,7 @@ export HISTSIZE=250
 # fix up TERM to make it sane.
 #
 
-if [ x$RXVT_PID != x ] ; then
+if [[ x$RXVT_PID != x ]] ; then
     TERM=rxvt
 else
     case $TERM in
@@ -619,14 +633,14 @@ find_pfk_environ() {
                 echo "${d}/.pfk_environ"
                 return 0
             else
-                echo "${d}/.pfk_environ" failed signature check 1>&2
+                echo "${d}/.pfk_environ" failed signature check, run sign_pfk_environ 1>&2
             fi
         elif [[ -f "${d}/0-pfk_environ" ]] ; then
             if verify_pfk_environ "${d}" 0-pfk_environ ; then
                 echo "${d}/0-pfk_environ"
                 return 0
             else
-                echo "${d}/0-pfk_environ" failed signature check 1>&2
+                echo "${d}/0-pfk_environ" failed signature check, run sign_pfk_environ 1>&2
             fi
         fi
         d="${d%/*}"
