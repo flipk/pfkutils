@@ -104,6 +104,7 @@ Emacs*font: pfk13
 Emacs*boldFont: pfk13bold
 Emacs*foreground: yellow
 Emacs*background: black
+Emacs*ScrollBarWidth: 10
 
 xload*showLabel:      false
 xload*load.update:    5
