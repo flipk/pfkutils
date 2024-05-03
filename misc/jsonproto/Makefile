@@ -1,8 +1,8 @@
 
-ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
-CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
-else ifneq ($(wildcard $(HOME)/.pfkutils_config),)
-CONFIG_FILE := $(HOME)/.pfkutils_config
+ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)),)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)
+else ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config),)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config
 endif
 
 ifneq ($(CONFIG_FILE),)

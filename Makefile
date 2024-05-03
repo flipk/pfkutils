@@ -27,17 +27,17 @@
 
 NODENAME := $(shell scripts/architecture)
 
-ifneq ($(wildcard $(HOME)/.pfkutils_config.$(NODENAME)),)
+ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config.$(NODENAME)),)
 
-CONFIG_FILE := $(HOME)/.pfkutils_config.$(NODENAME)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config.$(NODENAME)
 
-else ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
+else ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)),)
 
-CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)
 
-else ifneq ($(wildcard $(HOME)/.pfkutils_config),)
+else ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config),)
 
-CONFIG_FILE := $(HOME)/.pfkutils_config
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config
 
 endif
 
@@ -46,7 +46,7 @@ ifeq ($(CONFIG_FILE),)
 ##############################################
 
 all:
-	@echo please create $(HOME)/.pfkutils_config using
+	@echo please create $(HOME)/pfk/etc/pfkutils.config using
 	@echo templates found in config/
 
 clean:

@@ -3,12 +3,12 @@
 DEBUG_H_MACRO_GENERATION=y
 
 NODENAME := $(shell uname -n)
-ifneq ($(wildcard $(HOME)/.pfkutils_config.$(NODENAME)),)
-CONFIG_FILE := $(HOME)/.pfkutils_config.$(NODENAME)
-else ifneq ($(wildcard $(HOME)/.pfkutils_config.$(CONFIG)),)
-CONFIG_FILE := $(HOME)/.pfkutils_config.$(CONFIG)
-else ifneq ($(wildcard $(HOME)/.pfkutils_config),)
-CONFIG_FILE := $(HOME)/.pfkutils_config
+ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config.$(NODENAME)),)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config.$(NODENAME)
+else ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)),)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config.$(CONFIG)
+else ifneq ($(wildcard $(HOME)/pfk/etc/pfkutils.config),)
+CONFIG_FILE := $(HOME)/pfk/etc/pfkutils.config
 endif
 
 include $(CONFIG_FILE)
