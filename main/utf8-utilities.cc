@@ -166,7 +166,7 @@ decode_utf8(uint32_t &point, const uint8_t *buf, size_t len)
     }
     else if ((len >= 4) && ((buf[0] & 0b11111000) == 0b11110000))
     {
-        // 3 byte format
+        // 4 byte format
         uint32_t b1 = buf[0] & 0b00000111;
         uint32_t b2 = buf[1] & 0b00111111;
         uint32_t b3 = buf[2] & 0b00111111;
