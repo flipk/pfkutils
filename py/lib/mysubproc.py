@@ -18,7 +18,8 @@ class MyPipe (subprocess.Popen):
 
     # TODO consider using os.read on the stdout fileno;
     #      do you need NONBLOCK then?
-    def reader(self, copy_stdout: bool = True) -> str:
+    def reader(self, copy_stdout: bool = True,
+               translate_newlines: bool = False) -> str:
         ret = ''
         fd = self.stdout
         fileno = fd.fileno()
@@ -33,7 +34,10 @@ class MyPipe (subprocess.Popen):
                 if buf:
                     ret += buf
                     if copy_stdout:
-                        print(buf, end='')
+                        if translate_newlines:
+                            print(buf.replace('\n', '\r\n'), end='')
+                        else:
+                            print(buf)
                     sys.stdout.flush()
                 else:
                     break

@@ -7,13 +7,12 @@ sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
 
 import curses
 import select
-import subprocess
+import mysubproc
 import re
 import struct
 import tempfile
 import _pfk_fs
 import pfk_fs_config
-import time
 import json
 import pfkterm
 import pfk_lsof
@@ -57,23 +56,20 @@ def measure_widths():
     cols.calc_cols(widths)
 
 
-def run_command(cmd: list[str], do_split: bool = True):
-    try:
-        cp = subprocess.run(cmd,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            timeout=30)
-    except subprocess.TimeoutExpired:
-        print(f'ERROR: subprocess {cmd} timeout')
-        time.sleep(5)
-        exit(1)
+def run_command(cmd: list[str], do_split: bool = True, copy_stdout: bool = False):
+    global scr
+    cp = mysubproc.MyPipe(cmd)
+    stdoutlines = cp.reader(copy_stdout=copy_stdout,
+                            translate_newlines=True)
     if do_split:
-        stdoutlines = cp.stdout.decode().split('\n')
-    else:
-        stdoutlines = cp.stdout.decode()
-    ok = True
+        stdoutlines = stdoutlines.split('\n')
     if cp.returncode != 0:
         ok = False
+    else:
+        ok = True
+    if copy_stdout:
+        scr.redrawwin()
+        scr.refresh()
     return ok, stdoutlines
 
 
@@ -382,7 +378,7 @@ def open_luks(selected: int):
                 cmd = cmd + [source, fs.luks]
                 fs.output = f'running command: {" ".join(cmd)}\n'
                 draw_output(fs)
-                ok, stdoutlines = run_command(cmd, False)
+                ok, stdoutlines = run_command(cmd, False, copy_stdout=True)
                 if not ok:
                     fs.output += '  ERROR:\n'
                 fs.output += stdoutlines
@@ -406,7 +402,7 @@ def fsck(selected: int):
         cmd = ['/sbin/fsck', '-y', source]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd, False)
+        ok, stdoutlines = run_command(cmd, False, copy_stdout=True)
         if not ok:
             fs.output += '   ERROR:\n'
             fs.checked = False
@@ -436,7 +432,7 @@ def mount(selected: int):
         cmd = cmd + [source, fs.mntpt]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd, False)
+        ok, stdoutlines = run_command(cmd, False, copy_stdout=True)
         if not ok:
             fs.output += '  ERROR:\n'
         fs.output += stdoutlines
@@ -494,7 +490,7 @@ def umount(selected: int):
         cmd = ['/bin/umount', fs.mntpt]
         fs.output += f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
-        ok, stdoutlines = run_command(cmd, False)
+        ok, stdoutlines = run_command(cmd, False, copy_stdout=True)
         if not ok:
             fs.output += '  ERROR:\n'
         fs.output += stdoutlines
@@ -511,7 +507,7 @@ def close_luks(selected: int):
             cmd = ['/sbin/cryptsetup', 'close', fs.luks]
             fs.output = f'running command: {" ".join(cmd)}\n'
             draw_output(fs)
-            ok, stdoutlines = run_command(cmd, False)
+            ok, stdoutlines = run_command(cmd, False, copy_stdout=True)
             if not ok:
                 scr.addstr('  ERROR:\n')
             fs.output += stdoutlines
@@ -526,7 +522,7 @@ def toggle_nfs_server():
         cmd = 'stop'
     else:
         cmd = 'start'
-    ok, stdoutlines = run_command(['systemctl', cmd, 'nfs-server'], False)
+    ok, stdoutlines = run_command(['systemctl', cmd, 'nfs-server'], False, copy_stdout=True)
     if not ok:
         scr.addstr('  ERROR:\n')
     else:
