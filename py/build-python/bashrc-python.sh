@@ -1,23 +1,35 @@
 
 python_install_path=/vice2/python
 
+_nopy() {
+    local prev_FS="$IFS"
+    IFS=":"
+    local pathparts=($PATH)
+    local np=()
+    for p in "${pathparts[@]}" ; do
+        if [[ "${p}" != "" ]] ; then
+            if [[ "${p}" = "${p#$python_install_path/python}" ]] ;then
+               np+=("$p")
+            fi
+        fi
+    done
+    export PATH="${np[*]}"
+    IFS="$prev_FS"
+}
+
 nopy() {
-    local np
-    np="$( echo $PATH | tr ':' '\n' | grep -v $python_install_path | tr '\n' ':' | sed -E -e 's/:+$//' )"
-    export PATH="$np"
+    _nopy
+    which python3
 }
 
 py39() {
-    nopy
+    _nopy
     export PATH=$python_install_path/3.9/bin:$PATH
-}
-
-py310() {
-    nopy
-    export PATH=$python_install_path/3.10/bin:$PATH
+    which python3
 }
 
 py311() {
-    nopy
+    _nopy
     export PATH=$python_install_path/3.11/bin:$PATH
+    which python3
 }
