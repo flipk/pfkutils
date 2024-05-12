@@ -44,6 +44,8 @@ vars
       img=${params[0]}
       volname=${params[1]}
       mountpoint=${params[2]}
+   $IFS : input field separator, default value " \t\n"
+          (note other shells have OFS, bash does not, it uses IFS)
    $0   : the name of the shell or shell script
    $*   : expand positional parameters 1-n as separate words, subject to
           further word splitting and pathname expansion.
@@ -64,6 +66,11 @@ vars
 index arrays
    for i in $( seq 0 7 ) ; do ... done
    gitdirs=(one two three)   <--- zero based indexing
+   gitdirs+=(four)
+   IFS=":" pathparts=($PATH)
+     <--- IFS can be on the same line for some reason (temporary)
+   newpath="${pathparts[*]}"
+     <--- IFS cannot be on the same line for some reason, must be already set
    gitdirs[$numgitdirs]=$gitdir
    gitdir=${gitdirs[$count]}
    unset gitdirs
@@ -71,6 +78,7 @@ index arrays
    number of elements in array: ${#gitdirs[@]} 
    all the values: "${gitdirs[@]}"  <-- many words
    all the values: "${gitdirs[*]}"  <-- a single word, using $IFS
+     NOTE IFS= can't be on the same line (IFS=":" newpath="${pathparts[*]}")
    all the keys: "${!gitdirs[@]}" (or *)
    afterspace=( $( du -ks $repodir ) )
    echo kb size after : ${afterspace[0]}
@@ -97,6 +105,11 @@ math
    (( ${#tag}  > $widest_tag  )) && widest_tag=${#tag}
 
 splitting a line
+   IFS=":" pathparts=($PATH)
+     <--- IFS can be on the same line for some reason (temporary)
+   newpath="${pathparts[*]}"
+     <--- IFS cannot be on the same line for some reason, must be already set
+or using positional args:
    IFS=" "  set -- $line
    echo $# $1 $2
    set -- $( docker inspect $id --format \
