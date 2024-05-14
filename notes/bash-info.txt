@@ -32,7 +32,25 @@ vars
    ${varname##word} : remove longest match from beginning
    ${varname[@]%word} : remove match from end of all members of array
    ${wt#${reposdir}/} : remove string ${reposdir}/ from beginning of $wt
+   ${parameter/pattern/string} : replace 1st pattern with string
+   ${parameter//pattern/string} : replace all pattern with string
+   ${parameter/#pattern/string} : replace pattern at beginning
+   ${parameter/%pattern/string} : replace pattern at end
+   ${parameter^pattern} : convert first match of pattern to upper case
+   ${parameter,pattern} : convert first match to lower case
+   ${parameter^^pattern} : convert all matches to upper case
+   ${parameter,,pattern} : convert all matches to lower case
+   ${parameter:offset} : substring expansion
+   ${parameter:offset:length} : substring expansion
+   ${parameter@operator}
+       U = uppercase, u = first char upper case,
+       L/l = lowercase, Q = quoted string,
+       E = backslash escapes expanded, P = expand as if prompt string,
+       A = string in the form of assign or declare statement,
+       K/k = print arrays as key-value pairs (can't get this one to work)
    ${#varname} : number of characters in string
+   ${!prefix*} : Names matching prefix (one word using IFS)
+   ${!prefix@} : Names matching prefix (each varname is separate word)
    printf "%-${widest_id}s %${sizeprefix}${widest_size}d %${widest_size}d\n" \
           "$idind"         $relsize                      $size
    local name : variable which exists only within a function

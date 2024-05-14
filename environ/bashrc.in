@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-05-02.22:03:54
+#      Last update: 2024-05-13.20:41:36
 #
 #############################################################################
 
@@ -118,26 +118,26 @@ case x$ENV_SET in
         __extend_path /opt/site/bin
         __extend_path /opt/local/bin
         __extend_path /opt/gnu/bin
-        __extend_path /usr/X11R6/bin
-        __extend_path /usr/openwin/bin
-        __extend_path /opt/X11R6.4/bin
+#       __extend_path /usr/X11R6/bin    # not needed anymore
+#       __extend_path /usr/openwin/bin  # not needed anymore
+#       __extend_path /opt/X11R6.4/bin  # not needed anymore
         __extend_path /usr/misc/bin
         __extend_path /usr/vendor/bin
-        __extend_path /usr/atria/bin
+#       __extend_path /usr/atria/bin    # clearcase
         __extend_path /usr/mot/bin
         __extend_path /apps/public/bin
         __extend_path /usr/local/bin
         __extend_path /usr/local/X11
-        __extend_path /usr/dt/bin
-        __extend_path /usr/ccs/bin
+#       __extend_path /usr/dt/bin   # solaris common desktop (CDE)
+#       __extend_path /usr/ccs/bin  # solaris C compiler
         __extend_path /bin
         __extend_path /usr/bin
         __extend_path /sbin
         __extend_path /usr/sbin
         __extend_path /share/scripts
         __extend_path /share/bin
-        __extend_path /open_source/bin-sun/gcc/bin
-        __extend_path /usr/bin/X11
+#       __extend_path /open_source/bin-sun/gcc/bin  # solaris gcc
+#       __extend_path /usr/bin/X11  # where was this needed?
 
         unset -f __extend_path
 
@@ -150,26 +150,52 @@ case x$ENV_SET in
         ;;
 esac
 
-# remove duplicate path entries from the $PATH
-prev_IFS="$IFS"
-IFS=":"
-v=($PATH)
-IFS="$prev_IFS"
-outp=''
-for p in "${v[@]}" ; do
-    tmpoutp=":${outp}:"
-    if [[ "${tmpoutp%:$p:*}" = "${tmpoutp}" ]] ; then
-        if [[ "$outp" = "" ]] ; then
-            outp="${p}"
-        else
-            outp="${outp}:${p}"
+# remove duplicate path entries from the $PATH, method 1, concatenation
+dedup_path1() {
+    local prev_IFS="$IFS"
+    IFS=":"
+    local pathparts=($PATH)
+    IFS="$prev_IFS"
+    local outp=''
+    for p in "${pathparts[@]}" ; do
+        if [[ "$p" != "" ]] ; then
+            local tmpoutp=":${outp}:"
+            if [[ "${tmpoutp%:$p:*}" = "${tmpoutp}" ]] ; then
+                if [[ "$outp" = "" ]] ; then
+                    outp="${p}"
+                else
+                    outp="${outp}:${p}"
+                fi
+#           else
+#               echo removing duplicate $p from PATH
+            fi
         fi
-    else
-        echo removing duplicate $p from PATH
-    fi
-done
-export PATH="${outp}"
-unset v p outp prev_IFS
+    done
+    export PATH="${outp}"
+}
+
+# remove duplicate path entries from the $PATH, method 2, arrays
+dedup_path2() {
+    local prev_IFS="$IFS"
+    IFS=":"
+    local pathparts=($PATH)
+    local outp=()
+    declare -A paths
+    for p in "${pathparts[@]}" ; do
+        if [[ "$p" != "" ]] ; then
+            if [[ "${paths[$p]}" = "" ]] ; then
+                outp+=("${p}")
+                paths["${p}"]=1
+#           else
+#               echo removing duplicate $p from PATH
+            fi
+        fi
+    done
+    export PATH="${outp[*]}"
+    IFS="$prev_IFS"
+}
+
+dedup_path2
 
 
 TTY=`tty`

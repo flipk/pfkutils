@@ -8,7 +8,7 @@ _nopy() {
     local np=()
     for p in "${pathparts[@]}" ; do
         if [[ "${p}" != "" ]] ; then
-            if [[ "${p}" = "${p#$python_install_path/python}" ]] ;then
+            if [[ "${p}" = "${p#$python_install_path/}" ]] ;then
                np+=("$p")
             fi
         fi
