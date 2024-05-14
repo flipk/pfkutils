@@ -107,9 +107,24 @@ def main(do_timings: bool):
 
     window = None     # will be rebuilt later.
     zero_buff = np.zeros(1024)
+
+    # do not force-raise window on EVERY SINGLE REPLOT.
+    # why would ANYONE want that????
+    plt.rcParams["figure.raise_window"] = False
+
     plt.figure(figsize=(10, 10), dpi=80)
+
+    # yuck. the argument type for onclick REALLY IS MouseEvent,
+    # and the arg type for on_key REALLY IS KeyEvent, but I can't
+    # figure out how to make PyCharm stop complaining about
+    # the real type. so..... pycharm loses.
+
+    # noinspection PyTypeChecker
     plt.connect('button_press_event', ps.on_click)
+
+    # noinspection PyTypeChecker
     plt.connect('key_press_event', ps.on_key)
+
     plt.ion()
     plt.show()
 
