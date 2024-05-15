@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-05-13.20:41:36
+#      Last update: 2024-05-14.20:02:59
 #
 #############################################################################
 
@@ -256,7 +256,6 @@ export NPCL_EDITOR=less
 export  LESS='-X -j5 -c -d -h 5 -i -M -q -S -n -e -R'
 export XLESS='-X -j5 -c -d -h 5 -i -M -q -R'
 export BLOCKSIZE=1024
-export WGFILE=$TMP/wg.$USER
 export PFKTOP_MODE=d
 
 # for some reason setting HISTSIZE resets the set -o emacs option!
@@ -334,11 +333,11 @@ x() {
 diffheight=50
 
 xsd() {
-    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd $1 $2" &
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -ic "sd $1 $2" &
 }
 
 xsd2() {
-    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -c "sd2 $1 $2" &
+    pfkterm -g 190x${diffheight}+25+20 -e $SHELL -ic "sd2 $1 $2" &
 }
 
 d() {

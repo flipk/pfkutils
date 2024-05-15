@@ -6,7 +6,7 @@ SCRIPT_FILES = \
 	pfkterm set-background.sh  \
 	git-lsm git-lso git-mcs git-root x11-capture dodmsg \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
-	git-pfkwt architecture \
+	git-pfkwt git-makeorig architecture \
 	docker-image-tree.sh ldd-findpaths.sh killme.sh \
 	ffprobepfk.sh
 

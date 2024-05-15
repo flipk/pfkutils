@@ -1,0 +1,27 @@
+#!/bin/bash
+
+last_modified=2024-05-14.20:22:03
+
+# Local Variables:
+# mode: shell-script
+# indent-tabs-mode: nil
+# tab-width: 8
+# eval: (add-hook 'write-file-functions 'time-stamp)
+# time-stamp-start: "last_modified="
+# time-stamp-format: "%:y-%02m-%02d.%02H:%02M:%02S"
+# time-stamp-end: "$"
+# End:
+
+# full path to file in question
+fp="$(realpath "$1")"
+root="$(git root)"
+# rel path to file in question, relative to $root
+rp="${fp#$root/}"
+# output file
+op="${fp}.orig"
+
+set -x
+echo git show HEAD:$rp ">" $op
+git show HEAD:$rp > $op
+
+exit 0
