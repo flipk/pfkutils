@@ -1,7 +1,7 @@
 
 #include "simpleWebSocket.h"
 #ifndef DEPENDING
-#include PROXYMSGS_PB_H
+#include SIMPLEWSTESTMSGS_PB_H
 #endif
 #include <list>
 #include <pthread.h>
@@ -12,7 +12,7 @@ void *connection_thread(void*arg);
 
 int main()
 {
-    ::proxyTcp::ProxyMsg  msg;
+    ::simpleWsTest::ProxyMsg  msg;
     SimpleWebSocket::WebSocketClientConn clnt(
 //        0x7f000001,1081,"/websocket/some_application"
         "ws://127.0.0.1:1081/websocket/some_application",
@@ -39,7 +39,7 @@ int main()
         case SimpleWebSocket::WEBSOCKET_CONNECTED:
             printf("WebSocket connected!\n");
             msg.Clear();
-            msg.set_type(proxyTcp::PMT_PROTOVERSION);
+            msg.set_type(simpleWsTest::PMT_PROTOVERSION);
             msg.set_sequence(0);
             msg.mutable_protover()->set_version(1);
             clnt.sendMessage(msg);
@@ -52,17 +52,17 @@ int main()
         case SimpleWebSocket::WEBSOCKET_MESSAGE:
             switch (msg.type())
             {
-            case proxyTcp::PMT_PROTOVERSION:
+            case simpleWsTest::PMT_PROTOVERSION:
                 printf("remote proto version = %d\n",
                        msg.protover().version());
                 break;
 
-            case proxyTcp::PMT_CLOSING:
+            case simpleWsTest::PMT_CLOSING:
                 printf("remote side is closing, so we are too\n");
                 done = true;
                 break;
 
-            case proxyTcp::PMT_DATA:
+            case simpleWsTest::PMT_DATA:
                 if (::write(1, msg.data().data().c_str(),
                             msg.data().data().size()) < 0)
                 {
@@ -71,7 +71,7 @@ int main()
                 }
                 break;
 
-            case proxyTcp::PMT_PING:
+            case simpleWsTest::PMT_PING:
                 printf("got ping\n");
                 break;
 
@@ -94,7 +94,7 @@ int main()
 void *
 connection_thread(void*arg)
 {
-    ::proxyTcp::ProxyMsg  msg;
+    ::simpleWsTest::ProxyMsg  msg;
     SimpleWebSocket::WebSocketClientConn *clnt =
         (SimpleWebSocket::WebSocketClientConn *) arg;
     int sequence = 1;
@@ -103,7 +103,7 @@ connection_thread(void*arg)
     while (!done)
     {
         msg.Clear();
-        msg.set_type(proxyTcp::PMT_DATA);
+        msg.set_type(simpleWsTest::PMT_DATA);
         msg.set_sequence(sequence++);
         std::string *buf = msg.mutable_data()->mutable_data();
         buf->resize(1024);
@@ -116,7 +116,7 @@ connection_thread(void*arg)
         else
         {
             msg.Clear();
-            msg.set_type(proxyTcp::PMT_CLOSING);
+            msg.set_type(simpleWsTest::PMT_CLOSING);
             msg.set_sequence(sequence++);
             clnt->sendMessage(msg);
             done = true;

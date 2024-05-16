@@ -36,4 +36,38 @@ endef
 
 $(eval $(foreach t,$(LIBWAS_TEST_TARGETS),$(BUILD_LIBWAS_TEST_TARGET)))
 
+
+LIB_TARGETS += simpleWsTestMsgs
+
+simpleWsTestMsgs_TARGET = $(OBJDIR)/libsimpleWsTestMsgs.a
+simpleWsTestMsgs_PROTOSRCS = libwebsocket/simpleWsTestMsgs.proto
+
+
+PROG_TARGETS += simpleWsTestClient
+
+simpleWsTestClient_TARGET = $(OBJDIR)/simpleWsTestClient
+simpleWsTestClient_CXXSRCS = libwebsocket/simpleWsTestClient.cc
+simpleWsTestClient_DEFS = \
+    -DSIMPLEWSTESTMSGS_PB_H=\"$(simpleWsTestMsgs_libwebsocket/simpleWsTestMsgs.proto_HDR)\"
+simpleWsTestClient_DEPLIBS = \
+	$(simpleWsTestMsgs_TARGET) \
+	$(libwebsocket_TARGET) \
+	$(libpfkutil_TARGET)
+simpleWsTestClient_INCS = $(PROTOBUF_INC) $(MBEDTLS_INCS)
+simpleWsTestClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS)
+
+
+PROG_TARGETS += simpleWsTestServer
+
+simpleWsTestServer_TARGET = $(OBJDIR)/simpleWsTestServer
+simpleWsTestServer_CXXSRCS = libwebsocket/simpleWsTestServer.cc
+simpleWsTestServer_DEFS = \
+    -DSIMPLEWSTESTMSGS_PB_H=\"$(simpleWsTestMsgs_libwebsocket/simpleWsTestMsgs.proto_HDR)\"
+simpleWsTestServer_DEPLIBS = \
+	$(simpleWsTestMsgs_TARGET) \
+	$(libwebsocket_TARGET) \
+	$(libpfkutil_TARGET)
+simpleWsTestServer_INCS = $(PROTOBUF_INC) $(MBEDTLS_INCS)
+simpleWsTestServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS)
+
 endif

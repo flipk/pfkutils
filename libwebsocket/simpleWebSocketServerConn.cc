@@ -6,6 +6,7 @@
 #include <sstream>
 #include <mbedtls/sha1.h>
 #include <errno.h>
+#include <fcntl.h>
 
 using namespace std;
 
@@ -94,6 +95,13 @@ WebSocketServerConn :: handle_header(void)
                 // don't keep trying to process text headers,
                 // at this point we're switching to binary encoding.
                 _ok = true;
+
+                // the text mode stuff doesn't handle short reads
+                // or short writes, but the binary mode stuff does.
+                // turn on O_NONBLOCK.
+                fcntl(fd, F_SETFL,
+                      fcntl(fd, F_GETFL, 0) | O_NONBLOCK);
+
                 return WEBSOCKET_CONNECTED;
             }
             else

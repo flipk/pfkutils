@@ -59,12 +59,17 @@ WebSocketConn :: WebSocketConn(int _fd, bool _server, bool _verbose)
       verbose(_verbose), readbuf(MAX_READBUF)
 {
     got_flags = 0;
+    pthread_mutexattr_t              mattr;
+    pthread_mutexattr_init         (&mattr);
+    pthread_mutex_init(&send_mutex, &mattr);
+    pthread_mutexattr_destroy      (&mattr);
 }
 
 WebSocketConn :: ~WebSocketConn(void)
 {
     if (fd > 0)
         close(fd);
+    pthread_mutex_destroy(&send_mutex);
 }
 
 /*virtual*/ WebSocketRet
@@ -333,8 +338,30 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
         printf("\n");
     }
 
-    int cc = ::write(fd, buf, len);
-    if (cc != len)
+    pthread_mutex_lock(&send_mutex);
+    int cc, writepos = 0, remaining = len, written = 0;
+    while (remaining > 0)
+    {
+        // this fd is O_NONBLOCK so we may get short writes.
+        // keep pushing data until the whole packet is written.
+        // the send_mutex is held the whole time so two threads
+        // can't intermingle pieces of messages.
+        cc = ::write(fd, buf, len);
+        if (cc == 0)
+            break;
+        if (cc < 0)
+        {
+            if (errno != EWOULDBLOCK)
+                break;
+            usleep(1);
+        }
+        writepos += cc;
+        remaining -= cc;
+        written += cc;
+    }
+    pthread_mutex_unlock(&send_mutex);
+
+    if (written != len)
     {
         fprintf(stderr, "WebSocketClient :: sendMessage: "
                 "write %d returned %d (err %d: %s)\n",

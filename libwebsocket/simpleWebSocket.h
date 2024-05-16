@@ -26,6 +26,7 @@ protected:
     } state;
     int got_flags;
     bool verbose;
+    pthread_mutex_t send_mutex;
     std::string send_buffer;
     std::string reassembly_buffer;
     WebSocketConn( int fd, bool server, bool _verbose );

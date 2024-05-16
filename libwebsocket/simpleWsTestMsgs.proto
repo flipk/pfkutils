@@ -1,6 +1,6 @@
 syntax = "proto2";
 
-package proxyTcp;
+package simpleWsTest;
 
 enum ProxyProtoVer {
      PMT_PROTO_VERSION_NUMBER = 1;

@@ -1,7 +1,7 @@
 
 #include "simpleWebSocket.h"
 #ifndef DEPENDING
-#include PROXYMSGS_PB_H
+#include SIMPLEWSTESTMSGS_PB_H
 #endif
 #include <map>
 #include <pthread.h>
@@ -42,7 +42,7 @@ std::map<int,SimpleWebSocket::WebSocketServerConn *> conns;
 
 void *connection_thread(void*arg)
 {
-    ::proxyTcp::ProxyMsg  msg;
+    ::simpleWsTest::ProxyMsg  msg;
     SimpleWebSocket::WebSocketServerConn *nc =
         (SimpleWebSocket::WebSocketServerConn *) arg;
 
@@ -86,7 +86,7 @@ void *connection_thread(void*arg)
             printf("WebSocket connected! path = '%s'\n",
                    path.c_str());
             msg.Clear();
-            msg.set_type(proxyTcp::PMT_PROTOVERSION);
+            msg.set_type(simpleWsTest::PMT_PROTOVERSION);
             msg.set_sequence(0);
             msg.mutable_protover()->set_version(1);
             nc->sendMessage(msg);
@@ -101,17 +101,17 @@ void *connection_thread(void*arg)
             doselect = false;
             switch (msg.type())
             {
-            case proxyTcp::PMT_PROTOVERSION:
+            case simpleWsTest::PMT_PROTOVERSION:
                 printf("remote proto version = %d\n",
                        msg.protover().version());
                 break;
 
-            case proxyTcp::PMT_CLOSING:
+            case simpleWsTest::PMT_CLOSING:
                 printf("remote side is closing, so we are too\n");
                 done = true;
                 break;
 
-            case proxyTcp::PMT_DATA:
+            case simpleWsTest::PMT_DATA:
             {
                 printf("got data length %d\n",
                        (int) msg.data().data().size());
@@ -124,7 +124,7 @@ void *connection_thread(void*arg)
                 pthread_mutex_unlock(&mutex);
                 break;
             }
-            case proxyTcp::PMT_PING:
+            case simpleWsTest::PMT_PING:
                 printf("got ping\n");
                 break;
 
