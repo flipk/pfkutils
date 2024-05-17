@@ -1,7 +1,7 @@
 
 # PFKUTILS #
 
-![PFK](/chat/html/pfk.png)
+![PFK](/images/pfk.png)
 
 This is a set of tools that pfk finds useful.  It also contains 
 bits and pieces and snippets of code that pfk often imports into other
