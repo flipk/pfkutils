@@ -355,9 +355,12 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
                 break;
             usleep(1);
         }
-        writepos += cc;
-        remaining -= cc;
-        written += cc;
+        else
+        {
+            writepos += cc;
+            remaining -= cc;
+            written += cc;
+        }
     }
     pthread_mutex_unlock(&send_mutex);
 
