@@ -54,7 +54,7 @@ simpleWsTestClient_DEPLIBS = \
 	$(libwebsocket_TARGET) \
 	$(libpfkutil_TARGET)
 simpleWsTestClient_INCS = $(PROTOBUF_INC) $(MBEDTLS_INCS)
-simpleWsTestClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS)
+simpleWsTestClient_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 
 PROG_TARGETS += simpleWsTestServer
@@ -68,6 +68,6 @@ simpleWsTestServer_DEPLIBS = \
 	$(libwebsocket_TARGET) \
 	$(libpfkutil_TARGET)
 simpleWsTestServer_INCS = $(PROTOBUF_INC) $(MBEDTLS_INCS)
-simpleWsTestServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS)
+simpleWsTestServer_LIBS = $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lpthread
 
 endif
