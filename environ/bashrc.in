@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-05-14.20:02:59
+#      Last update: 2024-05-24.11:08:33
 #
 #############################################################################
 
@@ -287,7 +287,6 @@ export TERM
 
 alias h='fc -l'
 alias s=screen
-alias res='eval `resize -u`'
 alias ls='ls -F'
 alias xl=xless
 alias l=less
@@ -330,6 +329,16 @@ x() {
     fi
 }
 
+resize() {
+    local rows="$1"
+    echo -en "\e[8;$rows;80t"
+}
+
+xtermbar() {
+    local title="$1"
+    echo -en "\e]0;${title}\007\e]1;${title}\007"
+}
+
 diffheight=50
 
 xsd() {
@@ -344,30 +353,19 @@ d() {
     xsd2 $1.orig $1
 }
 
-if [[ -x @prefix@/${PFKARCH}/bin/xtermbar ]] ; then
-    ___xtermbar() {
-        @prefix@/${PFKARCH}/bin/xtermbar "$@"
-    }
-else
-    ___xtermbar() {
-        # it is a no-op
-        return 0
-    }
-fi
-
 sd() {
     typeset cols
     cols=`stty size 2>/dev/null | awk '{print $2}'`
     if cmp -s $1 $2 ; then
         echo The files are identical.  | l
     else
-        ___xtermbar "sd $1 $2"
+        xtermbar "sd $1 $2"
         diff -bdNsyw --width $cols $* 2>&1 | l
     fi
 }
 
 sd2() {
-    ___xtermbar "sd2 $1 $2"
+    xtermbar "sd2 $1 $2"
     width=`stty size | awk '{print $2}'`
     diff -btyW $width $* | fmtsdiff $width | less '+/%[<>|]%'
 }
@@ -496,7 +494,7 @@ fp() {
 
 title() {
     shellstring "$*"
-    ___xtermbar $*
+    xtermbar $*
 }
 
 __aesenc() {
@@ -734,14 +732,14 @@ cd() {
     if [[ "x$DISPLAY" != x ]] ; then
         if [[ x$I_AM_XCONSOLE == x ]] ; then
             if [[ x$INSIDE_EMACS == x ]] ; then
-                ___xtermbar "$shellfilepart$REALUSER@$HOST:$bardisp"
+                xtermbar "$shellfilepart$REALUSER@$HOST:$bardisp"
             fi
         fi
     fi
     if [[ "x$TMUX" != x ]] ; then
         if [[ x$INSIDE_EMACS == x ]] ; then
             bardisp=`echo $PWD | awk '{i=length($1)-21; if (i<0) i=0; print substr($1,i); }'`
-            ___xtermbar "$shellfilepart$bardisp"
+            xtermbar "$shellfilepart$bardisp"
         fi
     fi
     if [[ "x$gitroot" == "x" ]] ; then

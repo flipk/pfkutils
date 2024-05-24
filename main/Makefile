@@ -30,12 +30,6 @@ waitpid_CSRCS = waitpid.c
 waitpid_DEFS = -Dwaitpid_main=main
 waitpid_INCS = -I ../libpfkutil
 
-PROG_TARGETS += xtermbar
-xtermbar_TARGET = $(OBJDIR)/xtermbar
-xtermbar_CSRCS = xtermbar.c
-xtermbar_DEFS = -Dxtermbar_main=main
-xtermbar_INCS = -I ../libpfkutil
-
 PROG_TARGETS += random_hex
 random_hex_TARGET = $(OBJDIR)/random-hex
 random_hex_CSRCS = random-hex.c

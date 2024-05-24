@@ -3,7 +3,7 @@
 SCRIPT_FILES = \
 	doxtrms ec ec1 ec2 ec3 ec4 ec5 ec6 ec7 ec8 ec9 \
 	git-diff-helper.sh git-merge-helper.sh make_linux_cscope \
-	pfkterm set-background.sh  \
+	pfkterm xtermbar set-background.sh  \
 	git-lsm git-lso git-mcs git-root x11-capture dodmsg \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
 	git-pfkwt git-makeorig architecture \
