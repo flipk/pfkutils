@@ -141,3 +141,13 @@ or using positional args:
              sed -e 's,\"sha256:\(............\).*,\1,' \
 	         -e 's,",,g' )
 
+coprocesses:
+   coproc CAT { cat; }
+   echo $CAT_PID
+   jobs -l
+   echo hi 1>&${CAT[1]}
+   cat 0<&${CAT[0]}
+close the write-end has to be done as an eval for some reason
+   eval "exec ${CAT[1]}>&-"
+
+
