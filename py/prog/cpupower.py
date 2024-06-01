@@ -113,13 +113,28 @@ def main():
     scr.addstr(menuline, 2, '(p) powersave   (P) Performance   (q) quit')
 
     while True:
+        with open(f'{cpudir}/cpu0/cpufreq/base_frequency',
+                  mode="r") as f:
+            basefreq = f.readline()
+            basefreq = basefreq.strip()
 
         # print the cpu table.
         for n in range(0, num_cpus):
             with open(f'{cpudir}/cpu{n}/cpufreq/scaling_cur_freq',
                       mode="r") as f:
                 freq = f.readline()
-                freq = int(freq.strip()) / 1000
+                freq = freq.strip()
+                if freq == basefreq:
+                    # gross heuristic: if it reads as identical
+                    # to base_freq, it's probably idle. we can't
+                    # tell for sure because i can't find a file
+                    # in /sys that actually tells you. i just found
+                    # the if-statement in the kernel driver that falls
+                    # back to base_freq if the cpu is idle, so....
+                    freqstr = '     -'
+                else:
+                    freq = int(freq) / 1000
+                    freqstr = f'{freq:6.1f}'
             with open(f'{cpudir}/cpu{n}/cpufreq/scaling_max_freq',
                       mode="r") as f:
                 scale_max = f.readline()
@@ -128,7 +143,7 @@ def main():
                        f'{n:2d}: '
                        f'({cpu_limits[n]["min"]/1000}-{cpu_limits[n]["max"]/1000})'
                        f':{scale_max/1000} '
-                       f'{freq:6.1f}')
+                       f'{freqstr}')
             scr.clrtoeol()
 
         # print temperatures
