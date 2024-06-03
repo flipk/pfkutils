@@ -253,8 +253,7 @@ class __t2t2_queue : public __t2t2_links<__t2t2_queue>
     }
     bool _validate(__t2t2_buffer_hdr *h) { return buffers.validate(h); }
 public:
-    __t2t2_queue(pthread_mutexattr_t *pmattr,
-                pthread_condattr_t  *pcattr);
+    __t2t2_queue(void);
     ~__t2t2_queue(void);
 
     bool _empty(void);
@@ -276,7 +275,6 @@ public:
 
     __T2T2_EVIL_CONSTRUCTORS(__t2t2_queue);
     __T2T2_EVIL_NEW(__t2t2_queue);
-    __T2T2_EVIL_DEFAULT_CONSTRUCTOR(__t2t2_queue);
 };
 
 //////////////////////////// __T2T2_QUEUE_SET ////////////////////////////
@@ -290,8 +288,7 @@ class __t2t2_queue_set
     int set_size;
     __t2t2_buffer_hdr * check_qs(int *id);
 public:
-    __t2t2_queue_set(pthread_mutexattr_t *pmattr = NULL,
-                    pthread_condattr_t  *pcattr = NULL);
+    __t2t2_queue_set(void);
     ~__t2t2_queue_set(void);
     bool _add_queue(__t2t2_queue *q, int id);
     void _remove_queue(__t2t2_queue *q);
@@ -313,9 +310,7 @@ protected:
     __t2t2_queue q;
     __t2t2_pool(int buffer_size,
                int _num_bufs_init,
-               int _bufs_to_add_when_growing,
-               pthread_mutexattr_t *pmattr,
-               pthread_condattr_t *pcattr);
+               int _bufs_to_add_when_growing);
     virtual ~__t2t2_pool(void);
 public:
     int get_buffer_size(void) const { return stats.buffer_size; }
@@ -366,9 +361,8 @@ bool t2t2_pool<BaseT,derivedTs...> :: alloc(
 //////////////////////////// T2T2_QUEUE<> ////////////////////////////
 
 template <class BaseT>
-t2t2_queue<BaseT> :: t2t2_queue(pthread_mutexattr_t *pmattr /*= NULL*/,
-                              pthread_condattr_t  *pcattr /*= NULL*/)
-    : q(pmattr,pcattr)
+t2t2_queue<BaseT> :: t2t2_queue(void)
+    : q()
 {
 }
 
@@ -418,10 +412,8 @@ pxfe_shared_ptr<BaseT>   t2t2_queue<BaseT> :: dequeue(int wait_ms)
 //////////////////////////// T2T2_QUEUE_SET<> ////////////////////////////
 
 template <class BaseT>
-t2t2_queue_set<BaseT> :: t2t2_queue_set(
-    pthread_mutexattr_t *pmattr /*= NULL*/,
-    pthread_condattr_t  *pcattr /*= NULL*/)
-    : qs(pmattr, pcattr)
+t2t2_queue_set<BaseT> :: t2t2_queue_set(void)
+    : qs()
 {
 }
 

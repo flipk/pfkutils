@@ -92,10 +92,8 @@ struct __t2t2_memory_block
 
 __t2t2_pool :: __t2t2_pool(int buffer_size,
                          int _num_bufs_init,
-                         int _bufs_to_add_when_growing,
-                         pthread_mutexattr_t *pmattr,
-                         pthread_condattr_t *pcattr)
-    : stats(buffer_size), q(pmattr, pcattr)
+                         int _bufs_to_add_when_growing)
+    : stats(buffer_size), q()
 {
     bufs_to_add_when_growing = _bufs_to_add_when_growing;
     add_bufs(_num_bufs_init);
@@ -185,17 +183,25 @@ void __t2t2_pool :: get_stats(t2t2_pool_stats &_stats) const
 
 //////////////////////////// __T2T2_QUEUE ////////////////////////////
 
-__t2t2_queue :: __t2t2_queue(pthread_mutexattr_t *pmattr,
-                           pthread_condattr_t *pcattr)
+__t2t2_queue :: __t2t2_queue(void)
 {
+    pthread_mutexattr_t mattr;
+    pthread_condattr_t  cattr;
+
     __t2t2_links::init();
-    pthread_mutex_init(&mutex, pmattr);
-    pthread_cond_init(&cond, pcattr);
-    if (pcattr)
-        pthread_condattr_getclock(pcattr, &clk_id);
-    else
-        // the default condattr clock appears to be REALTIME
-        clk_id = CLOCK_REALTIME;
+
+    clk_id = CLOCK_REALTIME;
+
+    pthread_mutexattr_init(&mattr);
+    pthread_condattr_init(&cattr);
+    pthread_condattr_setclock(&cattr, clk_id);
+
+    pthread_mutex_init(&mutex, &mattr);
+    pthread_cond_init(&cond, &cattr);
+
+    pthread_mutexattr_destroy(&mattr);
+    pthread_condattr_destroy(&cattr);
+
     psetmutex = NULL;
     psetcond = NULL;
     id = 0;
@@ -310,17 +316,22 @@ bool __t2t2_queue :: _enqueue_tail(__t2t2_buffer_hdr *h)
 
 //////////////////////////// __T2T2_QUEUE_SET ////////////////////////////
 
-__t2t2_queue_set ::__t2t2_queue_set(pthread_mutexattr_t *pmattr /*= NULL*/,
-                                    pthread_condattr_t  *pcattr /*= NULL*/)
+__t2t2_queue_set ::__t2t2_queue_set(void)
 {
-    pthread_mutex_init(&set_mutex, pmattr);
-    pthread_cond_init(&set_cond, pcattr);
+    pthread_mutexattr_t mattr;
+    pthread_condattr_t  cattr;
 
-    if (pcattr)
-        pthread_condattr_getclock(pcattr, &clk_id);
-    else
-        // the default condattr clock appears to be REALTIME
-        clk_id = CLOCK_REALTIME;
+    clk_id = CLOCK_REALTIME;
+
+    pthread_mutexattr_init(&mattr);
+    pthread_condattr_init(&cattr);
+    pthread_condattr_setclock(&cattr, clk_id);
+
+    pthread_mutex_init(&set_mutex, &mattr);
+    pthread_cond_init(&set_cond, &cattr);
+
+    pthread_mutexattr_destroy(&mattr);
+    pthread_condattr_destroy(&cattr);
 
     set_size = 0;
 }

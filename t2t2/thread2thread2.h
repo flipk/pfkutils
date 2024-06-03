@@ -124,19 +124,11 @@ public:
     /** \brief constructor for a pool.
      * \param _num_bufs_init  how many buffers to put in pool initially.
      * \param _bufs_to_add_when_growing  if you use get(wait==-2) and it
-     *        grows the pool, how many buffers should it add at a time.
-     * \param pmattr  pthread mutex attributes; may pass NULL
-     *                if you want defaults.
-     * \param pcattr  pthread condition attributes; may pass NULL if you
-     *                want defaults. take special note of
-     *   pthread_condattr_setclock(pcattr, CLOCK_MONOTONIC).   */
+     *        grows the pool, how many buffers should it add at a time. */
     t2t2_pool(int _num_bufs_init = 0,
-             int _bufs_to_add_when_growing = 1,
-             pthread_mutexattr_t *pmattr = NULL,
-             pthread_condattr_t *pcattr = NULL)
+             int _bufs_to_add_when_growing = 1)
         : __t2t2_pool(buffer_size, _num_bufs_init,
-                     _bufs_to_add_when_growing,
-                     pmattr, pcattr) { }
+                     _bufs_to_add_when_growing) { }
     virtual ~t2t2_pool(void) { }
 
     /** get a new message from the pool and specify how long to wait.
@@ -182,15 +174,8 @@ public:
     /** constructor for a queue.
      *  a queue has a linked list, a mutex to protect updates to the list,
      *  and a pthread condition for blocking to sleep if the queue is empty
-     *  and the user wants to wait to dequeue.
-     * \param pmattr  pointer to a mutex attributes object to configure
-     *                the mutex; NULL means accept pthread defaults.
-     * \param pcattr  pointer to a condition attributes object to configure
-     *                the condition; NULL means accept pthread defaults.
-     *                take special note of
-     *     pthread_condattr_setclock(pcattr, CLOCK_MONOTONIC).   */
-    t2t2_queue(pthread_mutexattr_t *pmattr = NULL,
-              pthread_condattr_t *pcattr = NULL);
+     *  and the user wants to wait to dequeue.  */
+    t2t2_queue(void);
     virtual ~t2t2_queue(void) { }
 
     /** enqueue a message into this queue; the message must come
@@ -232,7 +217,6 @@ public:
 
     __T2T2_EVIL_CONSTRUCTORS(t2t2_queue<BaseT>);
     __T2T2_EVIL_NEW(t2t2_queue<BaseT>);
-    __T2T2_EVIL_DEFAULT_CONSTRUCTOR(t2t2_queue<BaseT>);
 };
 
 //////////////////////////// T2T2_QUEUE_SET ////////////////////////////
@@ -256,8 +240,7 @@ public:
      * \note this class is not multi-thread safe, that is you should
      *       not allow one thread to do add/remove while another does
      *       dequeue. that would be very bad. */
-    t2t2_queue_set(pthread_mutexattr_t *pmattr = NULL,
-                  pthread_condattr_t  *pcattr = NULL);
+    t2t2_queue_set(void);
 
     /** destructor will clean up the list of queues. */
     ~t2t2_queue_set(void);

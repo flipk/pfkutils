@@ -166,7 +166,7 @@ public:
 
 int main()
 {
-    mypool_t   pool( 2, 0, NULL, NULL);
+    mypool_t   pool( 2, 0);
     MyHsm      hsm(true);
 
     if (!hsm.init())

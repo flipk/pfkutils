@@ -163,26 +163,16 @@ int main(int argc, char ** argv)
 {
     t2t2::t2t2_assert_handler = &my_t2t2_assert_handler;
 
-    pthread_mutexattr_t  mattr;
-    pthread_condattr_t   cattr;
-
-    pthread_mutexattr_init(&mattr);
-    pthread_condattr_init(&cattr);
-    pthread_condattr_setclock(&cattr, CLOCK_MONOTONIC);
-
-    my_message_derived1::pool1_t   mypool1( 1,10,&mattr,&cattr);
-    my_message_derived2::pool2_t   mypool2( 1,10,&mattr,&cattr);
-    pool1and2_t                mypool1and2( 1,10,&mattr,&cattr);
-    my_message_base    ::queue_t  myqueue1(      &mattr,&cattr);
-    my_message_base    ::queue_t  myqueue2(      &mattr,&cattr);
-    my_message_base::queue_set_t      qset(      &mattr,&cattr);
-    my_data::pool_t               datapool(20,20,&mattr,&cattr);
+    my_message_derived1::pool1_t   mypool1( 1,10);
+    my_message_derived2::pool2_t   mypool2( 1,10);
+    pool1and2_t                mypool1and2( 1,10);
+    my_message_base    ::queue_t  myqueue1;
+    my_message_base    ::queue_t  myqueue2;
+    my_message_base::queue_set_t      qset;
+    my_data::pool_t               datapool(20,20);
 
     qset.add_queue(&myqueue1, 1);
     qset.add_queue(&myqueue2, 2);
-
-    pthread_mutexattr_destroy(&mattr);
-    pthread_condattr_destroy(&cattr);
 
     printstats(&mypool1, "1");
     printstats(&mypool2, "2");

@@ -70,9 +70,18 @@ int main()
     }
     else
     {
+        printf("\n");
+        printf("EXPECTED: correct signature\n");
         r.test("_HSMBase::Action MyHsm::top(HSMEventBase::sp_t)");
+        printf("\n");
+
+        printf("EXPECTED: incorrect signature\n");
         r.test("_HSMBase2::Action MyHsm::top(HSMEventBase::sp_t)");
+        printf("\n");
+
+        printf("EXPECTED: incorrect signature\n");
         r.test("_HSMBase::Action MyHsm::top(HSMEventBase2::sp_t)");
+        printf("\n");
     }
 
     return 0;

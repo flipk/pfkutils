@@ -12,7 +12,7 @@ const char * HsmFuncRegex :: patt = HSM_FUNC_REGEX_PATTERN;
 _HSMBase :: _HSMBase(StateFuncBase_t _initial_func,
                      bool _debug /*= false*/ )
     : currentState(_initial_func), debug(_debug),
-      entryexitpool(4,1,NULL,NULL)
+      entryexitpool(4,1)
 {
     if (func_regex.ok() == false)
     {
