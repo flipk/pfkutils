@@ -91,6 +91,7 @@ index arrays
      <--- IFS cannot be on the same line for some reason, must be already set
    gitdirs[$numgitdirs]=$gitdir
    gitdir=${gitdirs[$count]}
+   unset gitdirs[4]
    unset gitdirs
    negative indexes are from the end (-1 is last)
    number of elements in array: ${#gitdirs[@]} 
@@ -106,8 +107,11 @@ associative arrays
    declare -A gitdirs
    gitdirs[stuff]=one
    gitdirs[things]=two
+   gitdirs=(stuff one things two)
+   gitdirs+=(whatsits three)
    echo ${gitdirs[stuff]}
    echo ${gitdirs[things]}
+   unset gitdirs['stuff']
    unset gitdirs
    number of elements in array: ${#gitdirs[@]}
    a list of keys: "${!gitdirs[@]}" (or *, many words vs single word IFS)
