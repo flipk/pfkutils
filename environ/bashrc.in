@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-05-24.11:08:33
+#      Last update: 2024-06-09.10:59:26
 #
 #############################################################################
 
@@ -247,6 +247,7 @@ else
     export VISUAL=emacsclient
     export VIEWER=emacsclient
     export PAGER=cat
+    alias xl=${HOME}/pfk/bin/xless
 fi
 
 #export LC_CTYPE=en_US.utf8
@@ -288,7 +289,6 @@ export TERM
 alias h='fc -l'
 alias s=screen
 alias ls='ls -F'
-alias xl=xless
 alias l=less
 alias lt='l -n +G'
 alias zl='zcat \!* | less'
@@ -330,12 +330,22 @@ x() {
 }
 
 resize() {
+    if [[ -z "$1" ]] ; then
+        echo 'usage: resize rows'
+        echo '       resize rows cols'
+        echo ' cols defaults to 80 if not specified'
+        return 1
+    fi
     local rows="$1"
-    echo -en "\e[8;$rows;80t"
+    local cols="$2"
+    if [[ -z "$cols" ]] ; then
+        cols=80
+    fi
+    echo -en "\e[8;${rows};${cols}t"
 }
 
 xtermbar() {
-    local title="$1"
+    local title="$*"
     echo -en "\e]0;${title}\007\e]1;${title}\007"
 }
 
@@ -370,7 +380,7 @@ sd2() {
     diff -btyW $width $* | fmtsdiff $width | less '+/%[<>|]%'
 }
 
-xless() {
+xl() {
     typeset args file dir i olddir
     olddir=$PWD
 

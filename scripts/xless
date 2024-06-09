@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# there is a bash function 'xl' but this is to support scripts.
+
+export LESS='-X -j5 -c -d -h 5 -i -M -q -R'
+
+pfkterm -g 80x45 -e less "$@" &
+
+exit 0

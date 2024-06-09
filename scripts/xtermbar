@@ -2,7 +2,7 @@
 
 # there is an alias in my bashrc but this is here
 # to support external scripts.
-title="$1"
+title="$*"
 echo -en "\e]0;${title}\007\e]1;${title}\007"
 
 exit 0

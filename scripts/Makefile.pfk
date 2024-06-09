@@ -8,7 +8,7 @@ SCRIPT_FILES = \
 	$(SCRIPT_FILES_EXTRA) git-mygc make_git_links.sh \
 	git-pfkwt git-makeorig architecture \
 	docker-image-tree.sh ldd-findpaths.sh killme.sh \
-	ffprobepfk.sh
+	ffprobepfk.sh xless
 
 PREPROC_SCRIPT_FILES = cs
 
