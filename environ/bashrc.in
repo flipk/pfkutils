@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-06-09.10:59:26
+#      Last update: 2024-06-10.19:47:25
 #
 #############################################################################
 
@@ -158,10 +158,10 @@ dedup_path1() {
     IFS="$prev_IFS"
     local outp=''
     for p in "${pathparts[@]}" ; do
-        if [[ "$p" != "" ]] ; then
+        if [[ ! -z "$p" ]] ; then
             local tmpoutp=":${outp}:"
             if [[ "${tmpoutp%:$p:*}" = "${tmpoutp}" ]] ; then
-                if [[ "$outp" = "" ]] ; then
+                if [[ -z "$outp" ]] ; then
                     outp="${p}"
                 else
                     outp="${outp}:${p}"
@@ -182,10 +182,11 @@ dedup_path2() {
     local outp=()
     declare -A paths
     for p in "${pathparts[@]}" ; do
-        if [[ "$p" != "" ]] ; then
-            if [[ "${paths[$p]}" = "" ]] ; then
+        if [[ ! -z "$p" ]] ; then
+            if [[ -z "${paths[$p]}" ]] ; then
                 outp+=("${p}")
                 paths["${p}"]=1
+# bash 5 only   paths+=("${p}" 1)
 #           else
 #               echo removing duplicate $p from PATH
             fi

@@ -18,15 +18,15 @@ srch() {
 }
 
 if srch urxvt ; then
-    exec urxvt "$@"
+    exec $result "$@"
 elif srch rxvt ; then
-    exec rxvt "$@"
+    exec $result "$@"
 elif srch xfce4-terminal ; then
-    exec xfce4-terminal  --disable-server "$@" > /dev/null 2>&1
+    exec $result  --disable-server "$@" > /dev/null 2>&1
 elif srch gnome-terminal ; then
-    exec gnome-terminal  --disable-factory "$@" > /dev/null 2>&1
+    exec $result  --disable-factory "$@" > /dev/null 2>&1
 elif srch xterm ; then
-    exec xterm "$@" > /dev/null 2>&1
+    exec $result "$@" > /dev/null 2>&1
 else
     echo NO TERMINAL FOUND
     exit 1

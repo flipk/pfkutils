@@ -107,8 +107,8 @@ associative arrays
    declare -A gitdirs
    gitdirs[stuff]=one
    gitdirs[things]=two
-   gitdirs=(stuff one things two)
-   gitdirs+=(whatsits three)
+   gitdirs=(stuff one things two)   # NOTE is this only bash 5?
+   gitdirs+=(whatsits three)   # NOTE: only in bash 5!
    echo ${gitdirs[stuff]}
    echo ${gitdirs[things]}
    unset gitdirs['stuff']
