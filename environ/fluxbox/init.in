@@ -12,8 +12,8 @@ session.configVersion:	13
 session.doubleClickInterval:	250
 session.forcePseudoTransparency:	true
 session.ignoreBorder:	false
-session.keyFile:	~/pfk/etc/fluxbox/keys
-session.menuFile:	~/pfk/etc/fluxbox/menu
+session.keyFile:	~/pfk/etc/fluxbox/@@keysfile@@
+session.menuFile:	~/pfk/etc/fluxbox/@@menufile@@
 session.menuSearch:	itemstart
 session.screen0.allowRemoteActions:	false
 session.screen0.autoRaise:	false
@@ -73,7 +73,7 @@ session.screen0.window.focus.alpha:	255
 session.screen0.window.unfocus.alpha:	255
 session.screen0.windowMenu:	~/pfk/etc/fluxbox/windowmenu
 session.screen0.windowPlacement:	UnderMousePlacement
-session.screen0.workspaceNames:	Desk1,Desk2,Desk3,Desk4,
+session.screen0.workspaceNames:	@@keysconfig@@ Desk1,@@keysconfig@@ Desk2,@@keysconfig@@ Desk3,@@keysconfig@@ Desk4,
 session.screen0.workspaces:	4
 session.screen0.workspacewarping:	false
 session.screen0.workspacewarpingvertical:	false

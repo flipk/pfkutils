@@ -25,6 +25,8 @@ export GROUPID=@PFK_GROUP_ID@
 export SCREENDIR=$TMPDIR/screen
 export TMUX_TMPDIR=$TMPDIR
 export TICKLER_SOCK=$TMP/tickler.sock
+export FLUXBOX_SETTINGS=$TMP/.fbsettings.$$
+export FLUXBOX_INIT_FILE=$TMP/.fbinit.$$
 
 # on AWS, hostnames and usernames SUCK. the bashrc_early concept allows
 # the local machine a chance to fix HOST and REALUSER to something that

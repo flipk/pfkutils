@@ -14,6 +14,14 @@ export ENV PFKARCH
 archbin=@prefix@/$PFKARCH/bin
 PATH=$archbin:@prefix@/bin:$PATH
 export PATH
+USER='@PFK_USER_NAME@'
+export USER
+TMP=/tmp/$USER
+export TMP
+FLUXBOX_SETTINGS=$TMP/.fbsettings.$$
+export FLUXBOX_SETTINGS
+FLUXBOX_INIT_FILE=$TMP/.fbinit.$$
+export FLUXBOX_INIT_FILE
 
 xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources
@@ -38,5 +46,5 @@ if [ $safe = 1 ] ; then
     urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
     exit 0
 else
-    exec ssh-agent pfkscript $HOME/.xsession.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fluxbox pfkSessionXrandr
+    exec ssh-agent pfkscript $HOME/.xsession.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fbox-start.sh pfkSessionXrandr
 fi

@@ -1,0 +1,6 @@
+[submenu] (Keys & Menu Config) {Keys & Menu Config}
+    [exec] (ALT / Console) { echo alt console > "$FLUXBOX_SETTINGS" }
+    [exec] (WIN / Console) { echo win console > "$FLUXBOX_SETTINGS" }
+    [exec] (ALT / VNC) { echo alt vnc > "$FLUXBOX_SETTINGS" }
+    [exec] (WIN / VNC) { echo win vnc > "$FLUXBOX_SETTINGS" }
+[end]

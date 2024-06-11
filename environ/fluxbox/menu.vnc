@@ -31,9 +31,7 @@
     [end]
     [separator]
     [config] (Configure)
-    [submenu] (System Styles) {Choose a style...}
-      [stylesdir] (~/pfk/share/fluxbox/styles)
-    [end]
+    [include] (~/pfk/etc/fluxbox/keymenuconfig)
     [submenu] (User Styles) {Choose a style...}
       [stylesdir] (~/pfk/etc/fluxbox/styles)
     [end]

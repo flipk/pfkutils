@@ -15,6 +15,14 @@ ENV=$HOME/.bashrc
 export ENV
 PATH=$HOME/pfk/$PFKARCH/bin:$HOME/pfk/bin:$PATH
 export PATH
+USER='@PFK_USER_NAME@'
+export USER
+TMP=/tmp/$USER
+export TMP
+FLUXBOX_SETTINGS=$TMP/.fbsettings.$$
+export FLUXBOX_SETTINGS
+FLUXBOX_INIT_FILE=$TMP/.fbinit.$$
+export FLUXBOX_INIT_FILE
 
 xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources
@@ -26,7 +34,7 @@ else
     # for safety's sake on that network where it is hard to get to
     # console, make it so there's a way to fix it if it's busted.
 #    urxvt -fn fixed -fb fixed || gnome-terminal || xfce4-terminal || xterm
-    ssh-agent pfkscript $HOME/.vnc/pfkSession${DISPLAY}.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s 'fluxbox -rc ~/pfk/etc/fluxbox/init.vnc' pfkSessionXrandr 'set-background.sh wait'
+    ssh-agent pfkscript $HOME/.vnc/pfkSession${DISPLAY}.log -s 4k -zg -n -O -m 5 -c pfkSessionMgr -s fbox-start.sh pfkSessionXrandr 'set-background.sh wait'
     # when the user "logs out" (pfkSessionMgr -c stop) the vnc will be killed.
 fi
 vncserver -kill $DISPLAY
