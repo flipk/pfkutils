@@ -25,6 +25,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include "regex.h"
 #include <stdio.h>
@@ -32,6 +33,9 @@ For more information, please refer to <http://unlicense.org>
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <inttypes.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "m.h"
 
@@ -69,6 +73,7 @@ usage( void )
 "    -u       unsigned decimal output\n"
 "    -h       hex output\n"
 "    -o       octal output\n"
+"    -t       time output\n"
 "    -x       print this help message\n"
 "    -4       restrict output to 32 bits (4 bytes)\n"
 "\n"
@@ -107,6 +112,7 @@ usage( void )
 "               -?[0-9]+,-?[0-9]+ : assembly decimal implicit\n"
 "     -?0x[0-9a-f]+,-?0x[0-9a-f]+ : assembly hex explicit\n"
 "                        [01]+bin : binary explicit\n"
+"      ((yy)yy)/mm/dd-)(hh:)mm:ss : time format\n"
 "                  base[0-9]+(.*) : arbitrary base N (see below)\n"
 "\n"
 "default char set for base 2, 8, 10, 16:\n   %s\n"
@@ -117,6 +123,8 @@ usage( void )
 "M_BASE_CHARSET containing the charset to use. to output in that charset,\n"
 "specify -B <base>.\n"
 "if you put <base> as 0, strlen(M_BASE_CHARSET) will be used.\n"
+"\n"
+"note all time formats are in UTC, not localtime.\n"
 "\n",
              m_base_16, m_base_62, m_base_64
         );
@@ -146,7 +154,7 @@ static const char * whtsp_expr_string = "[ \t\r\n]+";
  */
 
 static const char * arg_expr_string = "\
-^(-[sbBduho4x]+)$|\
+^(-[sbBduho4xt]+)$|\
 ^(\\+)$|\
 ^(-)$|\
 ^(\\*|times)$|\
@@ -174,8 +182,36 @@ static const char * arg_expr_string = "\
 ^(-?0x[0-9a-f]+,-?0x[0-9a-f]+)$|\
 ^([01]+bin)$|\
 ^(base([0-9]+)\\((.*)\\).*)$|\
+^(" // 1 ARG_TIME
+   "(" // 2
+     "(" // 3
+       "(" // 4
+         "(" // 5
+           "(" // 6 ARG_TIME_CENTURY
+             "[0-9][0-9]"
+           ")|"
+         ")"
+         "([0-9][0-9])" // 7 ARG_TIME_YEAR
+       ")"
+       "/"
+       "([0-9]+)" // 8 ARG_TIME_MONTH
+       "/"
+       "([0-9]+)" // 9 ARG_TIME_DAY
+       "-"
+     ")|"
+   ")"
+   "([0-9]+):" // 10 ARG_TIME_HOUR
+   "([0-9]+)" // 11 ARG_TIME_MINUTE
+   "(" // 12
+     "(" // 13
+       ":([0-9]+)"  // 14 ARG_TIME_SECOND
+     ")|"
+   ")"
+")$|"
+"^(now)$|\
 ^(.*)$\
 ";
+
 
 /*
  * the order of the above expressions must match the 
@@ -195,12 +231,17 @@ enum arg_type {
     ARG_OCTAL, ARG_DECIMAL, ARG_HEX_IMPL, ARG_HEX_P, ARG_HEX_H,
     ARG_HEX_ASSEM1, ARG_HEX_ASSEM2, ARG_BINARY,
     ARG_ARBITRARY_BASE, ARG_ARBBASE_BASE, ARG_ARBBASE_VALUE,
+    ARG_TIME, ARG_TIME_2, ARG_TIME_3, ARG_TIME_4, ARG_TIME_5,
+    ARG_TIME_6_CENTURY, ARG_TIME_7_YEAR,
+    ARG_TIME_8_MONTH, ARG_TIME_9_DAY,
+    ARG_TIME_10_HOUR, ARG_TIME_11_MINUTE,
+    ARG_TIME_12, ARG_TIME_13, ARG_TIME_14_SECOND,
+    ARG_NOW,
     ARG_ERR, ARG_MAX
 };
 
 #define MAX_MATCHES ARG_MAX
 
-#if 0
 /*
  * Only used in debugging prints; the index into this array
  * must match the above array.
@@ -215,9 +256,12 @@ static char * arg_type_names[] = {
     "hex implied", "hex w/prefix", "hex with 'h'",
     "hex in @ha,@l", "hex in (0x)@ha,@l", "binary",
     "arbitrary base", "arb base", "arb value",
+    "time", "_time2", "_time3", "_time4", "_time5",
+    "century", "year", "month", "day",
+    "hour", "minute", "_time12", "_time13", "second",
+    "now",
     "parse error"
 };
-#endif
 
 static char errbuf[80];
 static const char * m_chosen_base = NULL;
@@ -236,6 +280,65 @@ static int output_base_B = 10;
 #define FLAGS_HEX        0x20
 #define FLAGS_OCTAL      0x40
 #define FLAGS_32BIT      0x80
+#define FLAGS_TIME      0x100
+
+static int has_match(const regmatch_t *matches, int match_number)
+{
+    regoff_t eo, so = matches[match_number].rm_so;
+    if (so == -1)
+        return 0;
+    eo = matches[match_number].rm_eo;
+    if (so == eo)
+        return 0;
+    return 1;
+}
+
+static int
+match_substr(char *out, int outlen,
+             const char *in, const regmatch_t *matches,
+             int match_number)
+{
+    regoff_t so = matches[match_number].rm_so,
+        eo = matches[match_number].rm_eo;
+    int len = eo - so;
+    if (so == -1 || len == 0)
+        return 0;
+
+    if (len >= outlen)
+    {
+        fprintf(stderr, "regex overflow in field '%s'\n",
+                arg_type_names[match_number]);
+        return -1;
+    }
+    memcpy(out, in + so, len);
+    out[len] = 0;
+    return len;
+}
+
+static const char *
+format_time(M_INT64  v)
+{
+    time_t t;
+    static char ret[ 80 ];
+    struct tm tm_time;
+    char format[64];
+
+    t = (time_t) v;
+    gmtime_r(&t, &tm_time);
+
+    format[0] = 0;
+    if (tm_time.tm_year != 70 &&
+        tm_time.tm_mon != 0 &&
+        tm_time.tm_mday != 1)
+    {
+        strcat(format, "%Y/%m/%d-");
+    }
+    strcat(format, "%H:%M:%S");
+
+    strftime(ret, sizeof(ret),
+             format, &tm_time);
+    return ret;
+}
 
 static int
 parse_flags( char * str, int flags )
@@ -253,6 +356,7 @@ parse_flags( char * str, int flags )
             DOFLG('h',FLAGS_HEX     );
             DOFLG('o',FLAGS_OCTAL   );
             DOFLG('4',FLAGS_32BIT   );
+            DOFLG('t',FLAGS_TIME    );
 #undef      DOFLG
         case 'B':
             /* flag to the main parse loop that it
@@ -423,6 +527,55 @@ parse_value( int val_type, char * str )
 }
 
 static M_INT64
+parse_time( const char *val, const regmatch_t *matches )
+{
+    char format[64];
+    struct tm tm_time;
+    M_INT64  t;
+
+    format[0] = 0;
+
+    if (has_match(matches, ARG_TIME_6_CENTURY))
+        strcat(format, "%Y/%m/%d-");
+    else if (has_match(matches, ARG_TIME_7_YEAR))
+        strcat(format, "%y/%m/%d-");
+    if (has_match(matches, ARG_TIME_10_HOUR))
+        strcat(format, "%H:%M");
+    if (has_match(matches, ARG_TIME_14_SECOND))
+        strcat(format, ":%S");
+
+    memset(&tm_time, 0, sizeof(tm_time));
+    // if we don't write year and day, init to jan 1 1970
+    // so that "00:00" is the integer value 0.
+    tm_time.tm_year = 70;
+    tm_time.tm_mday = 1;
+    if (strptime(val, format, &tm_time) == NULL)
+    {
+        sprintf(errbuf, "unable to convert time string");
+        return 0;
+    }
+
+    if (getenv("M_REGEX") != NULL)
+    {
+        printf("BUILT FORMAT:  '%s'\n", format);
+        printf("year = %d\n", tm_time.tm_year);
+        printf("mon = %d\n", tm_time.tm_mon);
+        printf("day = %d\n", tm_time.tm_mday);
+        printf("hour = %d\n", tm_time.tm_hour);
+        printf("min = %d\n", tm_time.tm_min);
+        printf("sec = %d\n", tm_time.tm_sec);
+        printf("wday = %d\n", tm_time.tm_wday);
+        printf("yday = %d\n", tm_time.tm_yday);
+        printf("is dst = %d\n", tm_time.tm_isdst);
+    }
+
+    t = (M_INT64) timegm(&tm_time);
+//    printf("t = %" PRId64 "\n", t);
+
+    return t;
+}
+
+static M_INT64
 operation1( int operation, M_INT64 arg )
 {
     switch ( operation )
@@ -590,10 +743,25 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             goto out;
         }
 
-//        for ( i = 1; i < MAX_MATCHES; i++)
-//            printf("matches[%d] : %d - %d\n", i,
-//                   matches[i].rm_so,
-//                   matches[i].rm_eo);
+        if (getenv("M_REGEX") != NULL)
+        {
+            char fieldbuf[512];
+            printf("matches:\n");
+            for ( i = 1; i < MAX_MATCHES; i++)
+            {
+                if (has_match(matches, i) &&
+                    arg_type_names[i][0] != '_')
+                {
+                    match_substr(fieldbuf, sizeof(fieldbuf),
+                                 *args, matches, i);
+                    printf("  field \"%s\": (%d - %d) \"%s\"\n",
+                           arg_type_names[i],
+                           matches[i].rm_so,
+                           matches[i].rm_eo,
+                           fieldbuf);
+                }
+            }
+        }
 
         /* find the first subexpression of the regex 
            which matched */
@@ -772,6 +940,33 @@ m_do_math( int argc, char ** argv, M_INT64 *result, int *flags )
             stack[top++] = v;
             break;
         }
+
+        case ARG_TIME:
+
+            if ( top == STACK_SIZE )
+            {
+                err = M_MATH_STACKFULL;
+                goto out;
+            }
+            stack[ top ] = parse_time( *args, matches );
+            if ( errbuf[0] != 0 )
+            {
+                err = M_MATH_PARSEVALUEERR;
+                goto out;
+            }
+            top++;
+            break;
+
+        case ARG_NOW:
+
+            if ( top == STACK_SIZE )
+            {
+                err = M_MATH_STACKFULL;
+                goto out;
+            }
+            stack[ top ] = (M_INT64) time(NULL);
+            top++;
+            break;
 
         case ARG_PLUS:    case ARG_MINUS:    case ARG_TIMES:
         case ARG_DIVIDE:  case ARG_RSHFT:    case ARG_LSHFT:
@@ -1040,6 +1235,10 @@ m_main( int argc, char ** argv )
     if ( flags & FLAGS_OCTAL )
     {
         printf( "%s\n", m_dump_number( result, 8 ));
+    }
+    if ( flags & FLAGS_TIME )
+    {
+        printf( "%s\n", format_time( result ));
     }
 
  out:
