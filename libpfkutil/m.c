@@ -327,14 +327,24 @@ format_time(M_INT64  v)
     gmtime_r(&t, &tm_time);
 
     format[0] = 0;
-    if (tm_time.tm_year != 70 &&
-        tm_time.tm_mon != 0 &&
-        tm_time.tm_mday != 1)
+    if (tm_time.tm_year >= 90)
     {
         strcat(format, "%Y/%m/%d-");
     }
+    else if (v > 86400)
+    {
+        int days = v / 86400;
+        v -= 86400 * days;
+        if (days < 365)
+            sprintf(format, "%dd-", days);
+        else
+        {
+            int years = days / 365;
+            days -= years * 365;
+            sprintf(format, "%dy-%dd-", years, days);
+        }
+    }
     strcat(format, "%H:%M:%S");
-
     strftime(ret, sizeof(ret),
              format, &tm_time);
     return ret;
