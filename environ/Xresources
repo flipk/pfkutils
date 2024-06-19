@@ -12,6 +12,7 @@ URxvt.background: black
 URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
 URxvt.fading: 30
+URxvt.visualBell: true
 URxvt.font: pfk13
 URxvt.altFont: fixed
 URxvt.boldFont: pfk13bold
