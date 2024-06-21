@@ -112,7 +112,7 @@ usage( void )
 "               -?[0-9]+,-?[0-9]+ : assembly decimal implicit\n"
 "     -?0x[0-9a-f]+,-?0x[0-9a-f]+ : assembly hex explicit\n"
 "                        [01]+bin : binary explicit\n"
-"      ((yy)yy)/mm/dd-)(hh:)mm:ss : time format\n"
+"      ((yy)yy)/mm/dd-)hh:mm(:ss) : time format\n"
 "                  base[0-9]+(.*) : arbitrary base N (see below)\n"
 "\n"
 "default char set for base 2, 8, 10, 16:\n   %s\n"
