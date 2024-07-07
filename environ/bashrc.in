@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-06-24.20:05:18
+#      Last update: 2024-07-07.17:47:36
 #
 #############################################################################
 
@@ -295,10 +295,8 @@ alias ls='ls -F'
 alias l=less
 alias lt='l -n +G'
 alias zl='zcat \!* | less'
-alias zt='l -n +G ~/.messages'
 alias p='rm -f *~'
 alias ed='echo export DISPLAY=$DISPLAY'
-alias mem='top -n 1 | grep ^Mem'
 alias cdc='cd $HOME;clear'
 alias pfkman='MANPATH=`find @prefix@ -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
@@ -307,8 +305,7 @@ alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager 
 alias tmux='TERM=rxvt \tmux'
 alias dkr=docker
 alias dit=docker-image-tree.sh
-alias cpupower='sudo $HOME/proj/pfkutils/py/prog/cpupower.py'
-alias pfk_fs='sudo $HOME/proj/pfkutils/py/prog/pfk_fs.py'
+alias gs='git status'
 
 emacsn() {
     if [ $# -lt 1 ] ; then
@@ -571,7 +568,7 @@ __verbose funcs and aliases done
 
 #  
 # allow per-host customizations.  note that the file
-# .kshrc.local must have execute permissions
+# .bashrc.local must have execute permissions
 #  
 
 xconsole_hook() {

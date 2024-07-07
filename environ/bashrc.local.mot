@@ -1,5 +1,5 @@
 
-# Last update: 2023-02-10.18:13:24
+# Last update: 2024-07-07.17:55:22
 
 export GIT_SSL_NO_VERIFY=true
 
@@ -43,7 +43,11 @@ mhctrl() {
 }
 
 if [[ -f ${HOME}/.kshrc.local.mot.local ]] ; then
-    . ${HOME}/.kshrc.local.mot.local
+    echo NOTE: please rename kshrc.local.mot.local
+fi
+
+if [[ -f ${HOME}/.bashrc.local.mot.local ]] ; then
+    . ${HOME}/.bashrc.local.mot.local
 fi
 
 # Local Variables:
