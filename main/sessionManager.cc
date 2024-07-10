@@ -245,6 +245,66 @@ public:
 };
 procStatFileRegex  psf_re;
 
+static const char detach_varname[] = "PFK_DETACH_SESSION=";
+
+bool detached_session(uint32_t pid)
+{
+    std::ostringstream  os;
+
+    // if the process has set env var PFK_DETACH_SESSION=1,
+    // then don't kill it as an orphaned child. it wants to detach
+    // and live on beyond us.
+    // note my bashrc does that with the 'tmux' alias.
+
+    os << "/proc/" << pid << "/environ";
+    int fd = open(os.str().c_str(), O_RDONLY);
+    if (fd > 0)
+    {
+        char env[16384];
+        int cc = read(fd, env, sizeof(env));
+        close(fd);
+
+        for (int pos = 0; pos < (cc - sizeof(detach_varname)); pos++)
+        {
+            // the -1 is to not count the null.
+            // sizeof(char[]) includes the trailing null.
+            if (memcmp(env + pos, detach_varname,
+                       sizeof(detach_varname)-1) == 0)
+            {
+//              printf("found %s at pos %d\n", detach_varname, pos);
+                return true;
+            }
+        }
+    }
+
+    // the above procedure doesn't work for SCREEN because it
+    // is setuid, and "/proc/$pid/environ" is only readable by root.
+    // which sucks. just hardcode "SCREEN" since that is actually
+    // a pretty unique process name with the caps and all.
+
+    os.str("");
+    os << "/proc/" << pid << "/cmdline";
+    std::ifstream ifs(os.str().c_str());
+    if (ifs.good())
+    {
+        std::string l;
+        std::getline(ifs, l);
+
+//      printf("got cmdline '%s'\n", l.c_str());
+//      for (int ind = 0; ind < l.size(); ind++)
+//        printf("%02x ", (int) ((unsigned char)l[ind]));
+//      printf("\n");
+
+        // strip trailing NUL, since /cmdline always has a NUL
+        l.resize(l.size()-1);
+
+        if (l == "SCREEN")
+            return true;
+    }
+
+    return false;
+}
+
 bool pid_is_child(uint32_t pid)
 {
     std::ostringstream  os;
@@ -259,7 +319,16 @@ bool pid_is_child(uint32_t pid)
             if (psf_re.exec(l))
             {
                 if (psf_re.ppid(l) == getpid())
+                {
+                    if (detached_session(pid))
+                    {
+                        printf("found child pid %u, but DETACHED, "
+                               "so skipping\n", pid);
+                        return false;
+                    }
+                    printf("found child pid %u\n", pid);
                     return true;
+                }
             }
         }
     }
@@ -268,6 +337,7 @@ bool pid_is_child(uint32_t pid)
 
 static void list_orphaned_children(std::vector<pid_t> &pids)
 {
+    printf("looking for orphaned children:\n");
     pids.clear();
     pxfe_readdir   rd;
     if (rd.open("/proc"))
@@ -289,6 +359,7 @@ static void list_orphaned_children(std::vector<pid_t> &pids)
             }
         }
     }
+    printf("found %u orphaned children\n", pids.size());
 }
 
 static int try_to_kill_orphaned_children(int sig,
