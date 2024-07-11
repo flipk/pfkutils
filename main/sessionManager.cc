@@ -359,7 +359,7 @@ static void list_orphaned_children(std::vector<pid_t> &pids)
             }
         }
     }
-    printf("found %u orphaned children\n", pids.size());
+    printf("found %u orphaned children\n", (unsigned int) pids.size());
 }
 
 static int try_to_kill_orphaned_children(int sig,
