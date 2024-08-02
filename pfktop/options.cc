@@ -36,7 +36,7 @@ Options :: Options(int argc, const char * const * argv,
                    Screen &_screen)
     : screen(_screen)
 {
-    sort = SORT_TIME;
+    sort = SORT_10AV;
     background = BG_LIGHT;
 
     // ..... we could support command line options here ......
@@ -69,14 +69,14 @@ Options :: set_option(char c)
     case 'p': // sort by Prio
         sort = SORT_PRIO;
         break;
-    case 'v': // sort by Vsz
-        sort = SORT_VSZ;
-        break;
     case 'r': // sort by Rss
         sort = SORT_RSS;
         break;
     case 't': // sort by Time
         sort = SORT_TIME;
+        break;
+    case '1': // sort by 10s avg
+        sort = SORT_10AV;
         break;
     case 'c': // sort by Cmd
         sort = SORT_CMD;
@@ -109,9 +109,9 @@ Options :: usage(bool color)
         << screen.nl
         << "         i : sort by tid" << screen.nl
         << "         p : sort by prio" << screen.nl
-        << "         v : sort by vsz" << screen.nl
         << "         r : sort by rss" << screen.nl
         << "         t : sort by time" << screen.nl
+        << "         1 : sort by 10 s avg of time" << screen.nl
         << "         c : sort by cmd" << screen.nl
         << screen.nl
         << "         l : light background mode" << screen.nl

@@ -81,6 +81,7 @@ namespace pfktop {
         unsigned long long stime_diff;
         int diffsum;
         std::vector<int> history;
+        int avg10s; // in hundredths
         tidDb  db; // all threads of a process, ptr shared with pidlist.db
         tidEntry(pid_t tid, pid_t pid,
                  const std::string &path, tidEntry *_parent = NULL);

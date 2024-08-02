@@ -42,6 +42,7 @@ namespace pfktop {
         std::string &nl;
         std::string &erase;
         std::string &home;
+        pid_t  self;
         tidDb  db; // includes all threads of all processes
     public:
         PidList(const Options &_opts, Screen &screen);

@@ -40,6 +40,7 @@ PidList :: PidList(const Options &_opts, Screen &_screen)
       nl(_screen.nl), erase(_screen.erase), home(_screen.home),
       db(true)
 {
+    self = getpid();
 }
 
 PidList :: ~PidList(void)
@@ -73,6 +74,11 @@ PidList :: fetch(void)
             continue;
 
         pid_t pid = (pid_t) _pid;
+
+        if (pid == self)
+            // don't display ourselves.
+            continue;
+
         // this dirent is a valid pid. let's consume it.
         tidEntry * pe = db.find(pid);
         if (!pe)
@@ -173,13 +179,6 @@ struct mySorterClass {
                 return false;
             // break a prio tie by thread id
             return (a->tid < b->tid);
-        case Options::SORT_VSZ:
-            // first by vsz
-            if (a->vsz > b->vsz)
-                return true;
-            if (a->vsz < b->vsz)
-                return false;
-            return (a->tid < b->tid);
         case Options::SORT_RSS:
             // first by rss
             if (a->rss > b->rss)
@@ -193,6 +192,12 @@ struct mySorterClass {
             if (a->history[0] < b->history[0])
                 return false;
             return (a->tid < b->tid);
+        case Options::SORT_10AV:
+            if (a->avg10s > b->avg10s)
+                return true;
+            if (a->avg10s < b->avg10s)
+                return false;
+            return (a->tid > b->tid);
         case Options::SORT_CMD:
             if (a->cmd < b->cmd)
                 return true;
@@ -245,20 +250,19 @@ PidList :: print(void) const
     // no, there IS no "nl" here. this code prints a nl
     // prior to each entry so the cursor always ends up
     // on the right of the last entry.
-    cout << screen.header_color << "    ";
+    cout << screen.header_color << "     ";
     cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
     cout << "              ";
     cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
-    cout << "      ";
-    cout << ((opts.sort == Options::SORT_VSZ) ? "VSZ" : "Vsz");
-    cout << "     ";
+    cout << "       ";
     cout << ((opts.sort == Options::SORT_RSS) ? "RSS" : "Rss");
     cout << " ";
     cout << ((opts.sort == Options::SORT_PRIO) ? "PRIO" : "Prio");
     cout << "   ";
     cout << ((opts.sort == Options::SORT_TIME) ? "TIME" : "Time");
-    cout << " (10 sec history)      10av"
-         << screen.normal_color;
+    cout << " (10 sec history)      ";
+    cout << ((opts.sort == Options::SORT_10AV) ? "10AV" : "10av");
+    cout << screen.normal_color;
 
     int totalCpu = 0;
     pidVec_t::iterator vit;
@@ -267,7 +271,7 @@ PidList :: print(void) const
         tidEntry * te = *vit;
         cout
             << nl
-            << setw(7)  << te->tid;
+            << setw(8)  << te->tid;
 
         if (te->tid == te->pid)
             cout << "+";
@@ -281,13 +285,9 @@ PidList :: print(void) const
 
         cout
             << setw(16) << te->cmd  << " " << screen.normal_color
-            << setw(8)  << te->vsz  << " "
-            << setw(7)  << te->rss  << " "
+            << setw(9)  << te->rss  << " "
             << setw(4)  << te->prio << "  ";
 
-        // sum and count the CPU history, for the 'average' column.
-        int s = 0;
-        int c = 0;
         if (te->history.size() > 0)
             if (te->history[0] > 0)
                 totalCpu += te->history[0];
@@ -312,18 +312,15 @@ PidList :: print(void) const
                 cout << "   ";
             else
             {
-                s += v;
                 if (v == 0)
                     cout << screen.zero_color;
                 else
                     cout << screen.nonzero_color;
                 cout << setw(2) << v << " " << screen.normal_color;
-                c++;
             }
         }
-        if (c > 0)
-            s /= c;
-        cout << setw(2) << s; // average
+        // the +50 is to round up to the next integer.
+        cout << setw(2) << ((te->avg10s + 50) / 100); // average
     }
 
     cout
@@ -334,10 +331,10 @@ PidList :: print(void) const
 
     if (more)
         cout
-            << "                         MORE";
+            << "                   MORE";
     else
         cout
-            << "                             ";
+            << "                       ";
 
     cout
         << screen.normal_color;

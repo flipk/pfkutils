@@ -59,8 +59,7 @@ public:
     void start(int _ind) { ind = _ind; create(); }
 };
 
-extern "C" int
-spinner_main(int argc, char ** argv)
+int main(int argc, char ** argv)
 {
     if (argc != 2)
     {

@@ -36,7 +36,7 @@ tidEntry :: tidEntry(pid_t _tid, pid_t _pid,
                      const std::string &_path,
                      tidEntry * _parent /*= NULL*/)
     : tid(_tid), pid(_pid), pathToDir(_path), parent(_parent),
-      stamp(false), first_update(true), db(false)
+      stamp(false), first_update(true), db(false), avg10s(0)
 {
 //    cout << "new pid " << pid << " tid " << tid << "\r\n";
 }
@@ -199,6 +199,23 @@ tidEntry :: update(void)
             history.insert(history.begin(), diffsum);
             if (history.size() > 10)
                 history.resize(10);
+
+            // sum and count the CPU history, for the 'average' column.
+            int s = 0;
+            int c = 0;
+
+            for (int ind = 0; ind < history.size(); ind++)
+            {
+                int v = history[ind];
+                if (v >= 0)
+                {
+                    s += (v * 100);
+                    c ++;
+                }
+            }
+            if (c > 0)
+                s /= c;
+            avg10s = s;
         }
         utime_prev = utime;
         stime_prev = stime;
