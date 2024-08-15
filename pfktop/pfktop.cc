@@ -95,6 +95,7 @@ pfktop_main(int argc, char ** argv)
                     case 'r': // sort by Rss
                     case 't': // sort by Time
                     case 'c': // sort by Cmd
+                    case 'R': // reverse sort order
                     case '1': // sort by 10s
                     case 'l': // light background
                     case 'd': // dark background

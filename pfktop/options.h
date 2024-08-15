@@ -50,6 +50,7 @@ namespace pfktop {
             SORT_10AV, // '1'
             SORT_CMD   // 'c'
         } sort;
+        bool reverse;
         enum {
             BG_LIGHT,  // 'l'
             BG_DARK    // 'd'

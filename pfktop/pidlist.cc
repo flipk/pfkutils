@@ -165,45 +165,109 @@ PidList :: fetch(void)
 
 struct mySorterClass {
     Options::sort_type type;
-    mySorterClass(Options::sort_type _type) : type(_type) { }
+    bool reverse;
+    mySorterClass(Options::sort_type _type, bool _reverse)
+        : type(_type), reverse(_reverse) { }
     bool operator() (const tidEntry * a,
                      const tidEntry * b) {
         switch (type) {
+
         case Options::SORT_TID:
+            if (reverse)
+                return (a->tid > b->tid);
+            // else
             return (a->tid < b->tid);
+
         case Options::SORT_PRIO:
             // sort first by prio
-            if (a->prio < b->prio)
-                return true;
-            if (a->prio > b->prio)
-                return false;
-            // break a prio tie by thread id
-            return (a->tid < b->tid);
+            if (reverse)
+            {
+                if (a->prio > b->prio)
+                    return true;
+                if (a->prio < b->prio)
+                    return false;
+            }
+            else
+            {
+                if (a->prio < b->prio)
+                    return true;
+                if (a->prio > b->prio)
+                    return false;
+            }
+            // break a tie by 10AV
+            return (a->avg10s > b->avg10s);
+
         case Options::SORT_RSS:
             // first by rss
-            if (a->rss > b->rss)
-                return true;
-            if (a->rss < b->rss)
-                return false;
-            return (a->tid < b->tid);
+            if (reverse)
+            {
+                if (a->rss < b->rss)
+                    return true;
+                if (a->rss > b->rss)
+                    return false;
+            }
+            else
+            {
+                if (a->rss > b->rss)
+                    return true;
+                if (a->rss < b->rss)
+                    return false;
+            }
+            // break a tie by 10AV
+            return (a->avg10s > b->avg10s);
+
         case Options::SORT_TIME:
-            if (a->history[0] > b->history[0])
-                return true;
-            if (a->history[0] < b->history[0])
-                return false;
-            return (a->tid < b->tid);
+            if (reverse)
+            {
+                if (a->history[0] < b->history[0])
+                    return true;
+                if (a->history[0] > b->history[0])
+                    return false;
+            }
+            else
+            {
+                if (a->history[0] > b->history[0])
+                    return true;
+                if (a->history[0] < b->history[0])
+                    return false;
+            }
+            // break a tie by 10AV
+            return (a->avg10s > b->avg10s);
+
         case Options::SORT_10AV:
-            if (a->avg10s > b->avg10s)
-                return true;
-            if (a->avg10s < b->avg10s)
-                return false;
+            if (reverse)
+            {
+                if (a->avg10s < b->avg10s)
+                    return true;
+                if (a->avg10s > b->avg10s)
+                    return false;
+            }
+            else
+            {
+                if (a->avg10s > b->avg10s)
+                    return true;
+                if (a->avg10s < b->avg10s)
+                    return false;
+            }
             return (a->tid > b->tid);
+
         case Options::SORT_CMD:
-            if (a->cmd < b->cmd)
-                return true;
-            if (a->cmd > b->cmd)
-                return false;
-            return (a->tid < b->tid);
+            if (reverse)
+            {
+                if (a->cmd > b->cmd)
+                    return true;
+                if (a->cmd < b->cmd)
+                    return false;
+            }
+            else
+            {
+                if (a->cmd < b->cmd)
+                    return true;
+                if (a->cmd > b->cmd)
+                    return false;
+            }
+            // break a tie by 10AV
+            return (a->avg10s > b->avg10s);
         }
         // shouldn't be reached
         return false;
@@ -237,7 +301,7 @@ PidList :: print(void) const
     }
 
     // sort the list by priority, highest prio at the top.
-    mySorterClass mySorter(opts.sort);
+    mySorterClass mySorter(opts.sort, opts.reverse);
     std::sort(printList.begin(), printList.end(), mySorter);
 
     bool more = false;
@@ -252,7 +316,9 @@ PidList :: print(void) const
     // on the right of the last entry.
     cout << screen.header_color << "     ";
     cout << ((opts.sort == Options::SORT_TID) ? "TID" : "tId");
-    cout << "              ";
+    cout << "  ";
+    cout << ((opts.reverse) ? "(R)-fwd  " : "(R)everse");
+    cout << "   ";
     cout << ((opts.sort == Options::SORT_CMD) ? "CMD" : "Cmd");
     cout << "       ";
     cout << ((opts.sort == Options::SORT_RSS) ? "RSS" : "Rss");

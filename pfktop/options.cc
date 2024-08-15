@@ -37,6 +37,7 @@ Options :: Options(int argc, const char * const * argv,
     : screen(_screen)
 {
     sort = SORT_10AV;
+    reverse = false;
     background = BG_LIGHT;
 
     // ..... we could support command line options here ......
@@ -81,6 +82,9 @@ Options :: set_option(char c)
     case 'c': // sort by Cmd
         sort = SORT_CMD;
         break;
+    case 'R': // reverse order
+        reverse = !reverse;
+        break;
     case 'l': // light background
         background = BG_LIGHT;
         screen.set_light_background(true);
@@ -108,11 +112,12 @@ Options :: usage(bool color)
         << "         q : quit" << screen.nl
         << screen.nl
         << "         i : sort by tid" << screen.nl
-        << "         p : sort by prio" << screen.nl
-        << "         r : sort by rss" << screen.nl
+        << "         p : sort by prio (then by 10s avg)" << screen.nl
+        << "         r : sort by rss (then by 10s avg)" << screen.nl
         << "         t : sort by time" << screen.nl
-        << "         1 : sort by 10 s avg of time" << screen.nl
-        << "         c : sort by cmd" << screen.nl
+        << "         1 : sort by 10s avg of time" << screen.nl
+        << "         c : sort by cmd (then by 10s avg)" << screen.nl
+        << "         R : reverse sort order" << screen.nl
         << screen.nl
         << "         l : light background mode" << screen.nl
         << "         d : dark background mode" << screen.nl
