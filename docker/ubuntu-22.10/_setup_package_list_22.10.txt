@@ -13,8 +13,8 @@ gdb
 git
 git-extras
 git-gui
-git-lfs
 gitk
+git-lfs
 googletest
 gzip
 libboost-all-dev
@@ -24,14 +24,15 @@ libconfig++-dev
 libfftw3-dev
 libgdk-pixbuf2.0-dev
 libgtest-dev
-libgtk-3-dev
 libgtk2.0-dev
+libgtk-3-dev
 libmbedtls-dev
 libncurses5-dev
 libprotobuf-dev
 libreoffice
 libsctp-dev
 libsqlite3-dev
+libssl-dev
 libuhd-dev
 libx11-dev
 libxaw7-dev
