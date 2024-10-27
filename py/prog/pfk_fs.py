@@ -2,18 +2,17 @@
 
 import os
 import sys
-
-sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
-
 import curses
 import select
-import mysubproc
 import re
 import struct
 import tempfile
+import json
+
 import _pfk_fs
 import pfk_fs_config
-import json
+sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
+import mysubproc
 import pfkterm
 import pfk_lsof
 
