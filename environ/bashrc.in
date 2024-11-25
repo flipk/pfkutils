@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-07-07.18:01:47
+#      Last update: 2024-11-24.23:19:39
 #
 #############################################################################
 
@@ -306,6 +306,12 @@ alias tmux='PFK_DETACH_SESSION=1 TERM=rxvt \tmux'
 alias dkr=docker
 alias dit=docker-image-tree.sh
 alias gs='git status'
+
+export _REAL_VNC=$(which vlc | head -1)
+vlc() {
+    $_REAL_VNC $* > /dev/null 2>&1
+}
+alias v=vlc
 
 emacsn() {
     if [ $# -lt 1 ] ; then
