@@ -8,6 +8,15 @@ chrome_url=https://dl.google.com/linux/direct/google-chrome-stable_current_x86_6
 sudo dnf install -y $chrome_url
 
 
+--------------41
+dnf install \
+https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-41.noarch.rpm \
+https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-41.noarch.rpm
+
+dnf install -y --allowerasing \
+vlc ffmpeg dosemu lame unace unrar handbrake handbrake-gui \
+x264 exfat-utils fuse-exfat  simplescreenrecorder xv
+
 --------------39
 dnf install \
 https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-39.noarch.rpm \
