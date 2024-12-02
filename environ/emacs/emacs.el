@@ -1,11 +1,5 @@
 
-
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
 (package-initialize)
-
 (setq custom-file (concat (getenv "HOME") "/pfk/etc/emacs/emacs-custom.el"))
 (load custom-file)
 
@@ -184,9 +178,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 ; useful without ivy : (ido-mode)
 (ivy-mode 1)
-(global-git-gutter-mode +1)
-
-(cscope-setup)
+; broken? (global-git-gutter-mode +1)
+; broken? (cscope-setup)
 
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
@@ -204,9 +197,5 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (global-set-key [f8] 'next-error)
 (global-set-key [S-f8] 'previous-error)
 (global-set-key (kbd "C-x g") 'magit-status)
-
-;todo
-;org-mode
-
 
 (garbage-collect)
