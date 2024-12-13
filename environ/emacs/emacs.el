@@ -178,8 +178,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 
 ; useful without ivy : (ido-mode)
 (ivy-mode 1)
-; broken? (global-git-gutter-mode +1)
-; broken? (cscope-setup)
+(global-git-gutter-mode +1)
+(cscope-setup)
 
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
