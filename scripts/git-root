@@ -44,9 +44,49 @@ else
     }
 fi
 
+# read "HEAD" and parse a ref name or shortened commit ID from it
+# $1 : topdir
+parseHEAD() {
+    local head
+    cd "$1"
+    gitdir="$(git rev-parse --git-dir)"
+    if [[ "$gitdir" == "." ]] ; then
+        gitdir="$PWD"
+    fi
+    head="$(cat "$gitdir/HEAD" 2> /dev/null)"
+    IFS="/"
+    set -- $head
+    IFS=" "
+    if [[ "x$1" == "xref: refs" ]] ; then
+        gh="${head#ref: refs/heads/}"
+    else
+        gh="${head:0:7}"
+    fi
+}
+
 if [[ "x$(git rev-parse --is-inside-git-dir 2> /dev/null)" == xtrue ]] ; then
-    # treat it like we're not in any git dir
-    gitdir=''
+    # if we're inside the .git dir or a bare repo, special values ensue.
+    parseHEAD "$PWD"
+    real gitdir=\"$gitdir\"
+    real gr=\"$gitdir\"
+    rp="${PWD#$gitdir}"
+    rp="${rp#/}"
+    if [[ "$rp" == "" ]] ; then
+        rp=.
+    fi
+    modname="${gitdir##*/}"
+    if [[ "$modname" == ".git" ]] ; then
+        parentdir="${gitdir%/.git}"
+        modname="${parentdir##*/}/.git"
+    fi
+    real gitrelpath=\"$rp\"
+    real gitnummods=1
+    real gitroot[0]=\"$gitdir\"
+    real gitsubdir[0]=\"$gitdir\"
+    real gitrelpath[0]=\"$rp\"
+    real gitmodname[0]=\"${modname}\"
+    real githead[0]=\"$gh\"
+    exit 0
 else
     gitdir="$(git rev-parse --git-dir 2> /dev/null)"
 fi
@@ -62,23 +102,6 @@ if [[ "x$gitdir" == "x" ]] ; then
     exit 0
 fi
 
-# read "HEAD" and parse a ref name or shortened commit ID from it
-# $1 : topdir
-parseHEAD() {
-    local head
-    cd "$1"
-    gitdir="$(git rev-parse --git-dir)"
-    head="$(cat "$gitdir/HEAD" 2> /dev/null)"
-    IFS="/"
-    set -- $head
-    IFS=" "
-    if [[ "x$1" == "xref: refs" ]] ; then
-        gh="${head#ref: refs/heads/}"
-    else
-        gh="${head:0:7}"
-    fi
-}
-
 getrelpath() {
     rp="$(git rev-parse --show-prefix)"
     rp="${rp%/}"
@@ -87,7 +110,7 @@ getrelpath() {
 toplevel="$(git rev-parse --show-toplevel 2> /dev/null)"
 tops[0]="$toplevel"
 modname[0]="${toplevel##*/}"
-gr=$toplevel
+gr="$toplevel"
 
 getrelpath
 gitrelpath="$rp"
@@ -124,7 +147,7 @@ gitnummods=1
 # order, where the superrepo is index 0
 
 if [[ $vars == 1 ]] ; then
-    real gr=$gr
+    real gr=\"$gr\"
     real gitnummods=$gitnummods
     index=$gitnummods
     count=0
@@ -137,7 +160,7 @@ if [[ $vars == 1 ]] ; then
         real gitmodname[$count]=\"${modname[$index]}\"
         (( count++ ))
     done
-    real gitrelpath=$gitrelpath
+    real gitrelpath=\"$gitrelpath\"
 else
     real $gr
 fi
