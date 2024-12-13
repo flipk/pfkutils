@@ -10,7 +10,9 @@ import curses
 
 
 class TermControl:
-    def __init__(self, use_curses: bool, rows: int = 0, cols: int = 0):
+    def __init__(self, use_curses: bool,
+                 reset_window_size: bool = True,
+                 rows: int = 0, cols: int = 0):
         self.infd = os.fdopen(0, buffering=False, mode='rb')
         self.old_settings = termios.tcgetattr(0)
         # tty.setraw(self.infd)
@@ -25,6 +27,7 @@ class TermControl:
             self.scr.keypad(True)
         else:
             self.scr = None
+        self.reset_window_size = reset_window_size
 
     def __del__(self):
         if self.scr:
@@ -33,7 +36,8 @@ class TermControl:
             curses.nocbreak()
             curses.echo()
             curses.endwin()
-        self.set_window_size(self.old_rows, self.old_cols)
+        if self.reset_window_size:
+            self.set_window_size(self.old_rows, self.old_cols)
         termios.tcsetattr(0, termios.TCSADRAIN, self.old_settings)
 
     def _read_from_term(self) -> (int, int):
@@ -62,5 +66,9 @@ class TermControl:
     @staticmethod
     def set_window_size(rows: int, cols: int):
         """resize window, home cursor, erase to end of screen"""
-        print(f'\033[8;{rows};{cols}t\033[H\033[J')
+        print(f'\033[8;{rows};{cols}t', end='')
         time.sleep(0.1)
+
+    def erase(self):
+        """erase screen"""
+        print(f'\033[H\033[J', end='')
