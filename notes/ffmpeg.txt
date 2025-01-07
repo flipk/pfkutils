@@ -98,7 +98,10 @@ ffmpeg -y -i "$input" -ss $half_duration -vframes 1 -q:v 2 -s 256x160 $output
 --changing frame rate.
 ffmpeg -i <input> -filter:v fps=fps=30 <output>
 
+--changing resolution to 1920x1080
+ffmpeg -i <input> -vf "scale=1920:1080" <output>
 
+note "-vf" and "-filter:v" are the same thing.
 
 
 --changing audio sample rate
