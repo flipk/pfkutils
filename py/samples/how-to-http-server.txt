@@ -1,0 +1,5 @@
+
+python -m http.server 8000
+
+serves from current working directory
+

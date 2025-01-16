@@ -1,0 +1,10 @@
+
+https://rpmfusion.org/Howto/CUDA
+---- everything on this web page is wrong.
+
+corrected:
+sudo dnf config-manager addrepo --from-repofile=https://developer.download.nvidia.com/compute/cuda/repos/fedora41/x86_64/cuda-fedora41.repo
+sudo dnf clean all
+sudo dnf module disable nvidia-driver
+sudo dnf install xorg-x11-drv-nvidia-cuda 
+
