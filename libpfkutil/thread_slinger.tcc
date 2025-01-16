@@ -265,7 +265,7 @@ _thread_slinger_queue :: _dequeue_int(int uSecs, bool dotail)
             {
                 waiter = &_waiter;
                 pthread_cond_wait( waiter, &mutex );
-                waiter = NULL;
+// wrong        waiter = NULL;
             }
             else
             {
@@ -273,7 +273,7 @@ _thread_slinger_queue :: _dequeue_int(int uSecs, bool dotail)
                     setup_abstime(uSecs, &abstime);
                 waiter = &_waiter;
                 int ret = pthread_cond_timedwait( waiter, &mutex, &abstime );
-                waiter = NULL;
+// wrong        waiter = NULL;
                 if ( ret != 0 )
                     break;
             }
