@@ -75,13 +75,11 @@ WebSocketClientConn :: init_common(void)
     state = STATE_HEADER;
 
     const string &hdrstr = hdrs.str();
-    int writeLen = hdrstr.length();
-    int cc = ::write(fd, hdrstr.c_str(), writeLen);
-    if (cc != writeLen)
+    if (!write_buf(fd, hdrstr.c_str(), hdrstr.length()))
     {
         fprintf(stderr, "WebSocketClient :: init_common: "
-                "write %d returned %d (err %d: %s)\n",
-                writeLen, cc, errno, strerror(errno));
+                "write failed (err %d: %s)\n",
+                errno, strerror(errno));
     }
 
     got_flags = GOT_NONE;

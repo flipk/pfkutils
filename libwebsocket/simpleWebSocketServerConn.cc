@@ -243,7 +243,7 @@ WebSocketServerConn :: send_handshake_response(void)
     if (verbose)
         cout << "writing headers: " << out_frame << endl;
 
-    if (::write(fd, out_frame.c_str(), out_frame.size()) < 0)
+    if (!write_buf(fd, out_frame.c_str(), out_frame.size()))
     {
         fprintf(stderr, "send_handshake_response: write failed: %d (%s)\n",
                 errno, strerror(errno));

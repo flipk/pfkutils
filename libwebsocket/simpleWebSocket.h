@@ -2,6 +2,7 @@
 
 #include <string>
 #include <ostream>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <google/protobuf/message.h>
 #include "CircularReader.h"
@@ -136,5 +137,25 @@ public:
 };
 
 extern const std::string websocket_guid;
+
+static inline bool write_buf(int fd, const void *_buf, int len)
+{
+    const char *buf = (const char *)_buf; // so we can use +=
+    while (len > 0)
+    {
+        int cc = ::write(fd, buf, len);
+        if (cc == 0)
+            return false;
+        if (cc < 0)
+        {
+            if (errno != EWOULDBLOCK)
+                return false;
+            usleep(1);
+        }
+        buf += cc;
+        len -= cc;
+    }
+    return true;
+}
 
 }; // namespace SimpleWebSocket

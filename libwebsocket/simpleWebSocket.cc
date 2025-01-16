@@ -339,36 +339,14 @@ WebSocketConn::sendMessage(const ::google::protobuf::Message &msg)
     }
 
     pthread_mutex_lock(&send_mutex);
-    int cc, writepos = 0, remaining = len, written = 0;
-    while (remaining > 0)
-    {
-        // this fd is O_NONBLOCK so we may get short writes.
-        // keep pushing data until the whole packet is written.
-        // the send_mutex is held the whole time so two threads
-        // can't intermingle pieces of messages.
-        cc = ::write(fd, buf, len);
-        if (cc == 0)
-            break;
-        if (cc < 0)
-        {
-            if (errno != EWOULDBLOCK)
-                break;
-            usleep(1);
-        }
-        else
-        {
-            writepos += cc;
-            remaining -= cc;
-            written += cc;
-        }
-    }
+    bool ret = write_buf(fd, buf, len);
     pthread_mutex_unlock(&send_mutex);
 
-    if (written != len)
+    if (!ret)
     {
         fprintf(stderr, "WebSocketClient :: sendMessage: "
-                "write %d returned %d (err %d: %s)\n",
-                len, cc, errno, strerror(errno));
+                "write failed (err %d: %s)\n",
+                errno, strerror(errno));
         return false;
     }
 
