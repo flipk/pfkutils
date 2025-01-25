@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
 
 import re
+from abc import ABC, abstractmethod
+
+
+class EditDistanceBase(ABC):
+    @abstractmethod
+    def get_edit_distance_name(self) -> str:
+        pass
+
+    @abstractmethod
+    def set_edit_distance_value(self, v: int):
+        pass
+
+
+def edit_distance_list(lst: list[EditDistanceBase], str2: str):
+    for item in lst:
+        str1 = item.get_edit_distance_name()
+        v = edit_distance(str1, str2)
+        item.set_edit_distance_value(v)
 
 
 # this is basically the Levenshtein Distance.
