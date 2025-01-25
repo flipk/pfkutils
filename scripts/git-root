@@ -116,7 +116,7 @@ getrelpath
 gitrelpath="$rp"
 rels[0]="$rp"
 
-parseHEAD $toplevel
+parseHEAD "$toplevel"
 dotgit[0]="$gitdir"
 heads[0]="$gh"
 gitnummods=1
@@ -131,7 +131,7 @@ gitnummods=1
             cd ..
             getrelpath
             rels[$gitnummods]="$rp"
-            parseHEAD $d
+            parseHEAD "$d"
             dotgit[$gitnummods]="$gitdir"
             heads[$gitnummods]="$gh"
             modname[$gitnummods]="${d##*/}"
