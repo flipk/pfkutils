@@ -407,7 +407,7 @@ class pxfe_shared_ptr {
     }
 public:
     /** normal constructor, adds a ref to the object */
-    pxfe_shared_ptr<T>(T * _ptr = NULL)
+    pxfe_shared_ptr(T * _ptr = NULL)
     {
         ptr = _ptr;
         ref();
@@ -423,19 +423,19 @@ public:
     /** casting constructor, if dynamic_cast to the new type
      * succeeds, takes a ref, otherwise sets to empty/NULL */
     template <class BaseT>
-    pxfe_shared_ptr<T>(const pxfe_shared_ptr<BaseT> &other)
+    pxfe_shared_ptr(const pxfe_shared_ptr<BaseT> &other)
     {
         ptr = dynamic_cast<T*>(*other);
         ref();
     }
     /** move constructor, transfers ownership */
-    pxfe_shared_ptr<T>(pxfe_shared_ptr<T> &&other)
+    pxfe_shared_ptr(pxfe_shared_ptr<T> &&other)
     {
         ptr = other.ptr;
         other.ptr = NULL;
     }
     /** destructor which derefs the object (deleting it if ref==0) */
-    ~pxfe_shared_ptr<T>(void)
+    ~pxfe_shared_ptr(void)
     {
         deref();
     }

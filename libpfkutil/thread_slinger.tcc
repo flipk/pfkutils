@@ -135,7 +135,6 @@ thread_slinger_pool<T,InitArgs...>::~thread_slinger_pool(void)
 template <class T,typename... InitArgs>
 void thread_slinger_pool<T,InitArgs...>::add(int items)
 {
-    T * item;
     while (items-- > 0)
     {
         release(new T);
