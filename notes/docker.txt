@@ -30,6 +30,15 @@ useradd --uid $uid --gid $gid --home-dir $HOME --shell $SHELL $USER
 echo -e "$USER\tALL=(ALL) ALL" >> /etc/sudoers
 su - $USER
 
+if a stupid container has a default entry point and you want to
+override it, you can on the command line
+    docker run --rm -it --entrypoint /bin/bash CONTAINER
+
+if you want to renice stuff to realtime inside a container:
+    docker run --privileged --cap-add=SYS_NICE --cpuset-cpus="0"
+    os.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, new_send_buffer_size)
+    os.sched_setscheduler(0, os.SCHED_FIFO, os.sched_param(90))
+    os.setpriority(os.PRIO_PROCESS, 0, -20)
 
 Avoid disk space limitations of /var.
 # systemctl docker stop
