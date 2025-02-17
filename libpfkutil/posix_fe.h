@@ -625,6 +625,32 @@ public:
     const uint8_t * u8ptr(void) const {
         return (const uint8_t *) c_str();
     }
+    bool startswith(const char *prefix, size_t prefixlen = 0) {
+        if (prefixlen == 0)
+            prefixlen = strlen(prefix);
+        if (size() < prefixlen)
+            return false;
+        if (compare(0, prefixlen, prefix) == 0)
+            return true;
+        return false;
+    }
+    bool startswith(const std::string &prefix) {
+        return startswith(prefix.c_str(), prefix.size());
+    }
+    bool endswith(const char *suffix, size_t suffixlen = 0) {
+        if (suffixlen == 0)
+            suffixlen = strlen(suffix);
+        if (size() < suffixlen)
+            return false;
+        if (compare(size()-suffixlen,
+                    suffixlen,
+                    suffix) == 0)
+            return true;
+        return false;
+    }
+    bool endswith(const std::string &suffix) {
+        return endswith(suffix.c_str(), suffix.size());
+    }
     /** make a human readable string containing a "%02x" format of 
      * this buffer */
     std::string format_hex(void) {

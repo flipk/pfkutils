@@ -53,6 +53,27 @@ static void test_format_thousands(void)
     }
 }
 
+static void test_string(void)
+{
+    pxfe_string  s = "filename.txt";
+    if (s.endswith(".txt", 4))
+        printf("endswith 1 success\n");
+    else
+        printf("endswith 1 fail\n");
+    if (s.endswith(".txt"))
+        printf("endswith 2 success\n");
+    else
+        printf("endswith 2 fail\n");
+    if (s.startswith("filename", 8))
+        printf("startswith 1 success\n");
+    else
+        printf("startswith 1 fail\n");
+    if (s.startswith("filename"))
+        printf("startswith 2 success\n");
+    else
+        printf("startswith 2 fail\n");
+}
+
 int main()
 {
     struct thread_data td;
@@ -78,6 +99,8 @@ int main()
     pthread_join(id, &ret);
 
     test_format_thousands();
+
+    test_string();
 
     return 0;
 }
