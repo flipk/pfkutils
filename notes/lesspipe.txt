@@ -1,0 +1,6 @@
+
+to make the 'less' command open directories, tarfiles, and other things,
+look for 'lesspipe.sh', and set this environment variable:
+
+  export LESSOPEN="||/usr/bin/lesspipe.sh %s"
+
