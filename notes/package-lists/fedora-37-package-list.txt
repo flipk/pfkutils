@@ -346,3 +346,4 @@ xz
 xz-devel
 zip
 zlib-devel
+vmtouch
