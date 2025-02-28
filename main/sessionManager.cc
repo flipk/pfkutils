@@ -133,7 +133,13 @@ pfkSessionMgr_main(int argc, char ** argv)
     {
     case OP_START:
         if (pid != -1)
+        {
             op = OP_BAD;
+            fprintf(stderr,
+                    "ERROR: a session manager session already exists.\n"
+                    "  unset PFK_SESSION_MANAGER_PID to allow starting\n"
+                    "  a new session.\n");
+        }
         break;
     case OP_STOP:
     case OP_RESTART:

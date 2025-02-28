@@ -24,6 +24,11 @@ export FLUXBOX_SETTINGS
 FLUXBOX_INIT_FILE=$TMP/.fbinit.$$
 export FLUXBOX_INIT_FILE
 
+# if this is started from within a console fluxbox session,
+# then this is already set. unset it so the vnc session can
+# get its own new session.
+unset PFK_SESSION_MANAGER_PID
+
 xset +fp $HOME/pfk/fonts
 xrdb -load .Xresources
 set-background.sh
