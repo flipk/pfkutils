@@ -346,3 +346,4 @@ xz-devel
 zip
 zlib-devel
 vmtouch
+libheif-devel
