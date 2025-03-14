@@ -4,3 +4,18 @@ look for 'lesspipe.sh', and set this environment variable:
 
   export LESSOPEN="||/usr/bin/lesspipe.sh %s"
 
+ % lesspipe
+export LESSOPEN="| /bin/lesspipe %s";
+export LESSCLOSE="/bin/lesspipe %s %s";
+
+eval "$(lesspipe)"
+
+
+~/.lessfilter :
+#!/bin/bash
+if [[ -d "$1" ]] ; then
+    ls -l "$1"
+else
+    exit 1
+fi
+exit 0

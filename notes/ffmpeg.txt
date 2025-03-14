@@ -228,3 +228,33 @@ ffmpeg -i input.gif \
        -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" \
        -y output.mp4
 
+
+
+-------- blender
+
+blender doesn't like videos that aren't one of its preconfigured
+frame-rates, so use the FPS filter to convert the video portion,
+e.g. to 30 fps.
+
+sometimes blender doesn't like the audio, where the graphical
+representation of audio doesn't line up with the actual audio heard.
+to fix, extract and convert the audio track to WAV with the pcm_s32le
+filter above.  then drop into blender and calculate the error in
+length.
+
+e.g.  original audio shows as 9524 frames long
+       but new audio shows as 9397 frames long.
+this is a ratio of 0.986665267
+so hexedit the wav file to change the original
+sample rate (e.g. 44100==0xAC44, remember its little endian)
+to a new sample rate such as 43512 (0xA9F8).
+then use ffmpeg to convert that audio file to the new
+sample rate using the -ar argument.
+
+# 9397 / 9524  = 0.986665267
+# 0.986665267×44100 = 43512
+
+when you drop the new audio file into blender it should
+show up as the correct length and what you hear should match
+what's showing in the display -- and most importantly, should
+match up to the video.
