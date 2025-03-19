@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2024-12-10.20:17:32
+#      Last update: 2025-03-18.22:35:40
 #
 #############################################################################
 
@@ -307,11 +307,33 @@ alias dkr=docker
 alias dit=docker-image-tree.sh
 alias gs='git status'
 
-export _REAL_VNC=$(which vlc | head -1)
-vlc() {
-    $_REAL_VNC "$@" > /dev/null 2>&1
+__findvlc() {
+    local prev_IFS="$IFS"
+    IFS=":"
+    local pathparts=($PATH)
+    _REAL_VNC=NONE
+    for p in "${pathparts[@]}" ; do
+        if [[ -f "${p}/vlc" ]] ; then
+            _REAL_VNC="${p}/vlc"
+            break;
+        fi
+    done
+    if [[ "$_REAL_VNC" != "NONE" ]] ; then
+
+# from output of 'vlc -H':
+#  --stereo-mode {0 (Unset), 1 (Stereo), 2 (Reverse stereo),
+#                 3 (Left), 4 (Right), 5 (Dolby Surround),
+#                 6 (Headphones), 7 (Mono)}
+
+        vlc() {
+            $_REAL_VNC --stereo-mode 6 "$@" > /dev/null 2>&1
+        }
+        alias v=vlc
+    fi
+    IFS="$prev_IFS"
 }
-alias v=vlc
+__findvlc
+unset -f __findvlc
 
 emacsn() {
     if [ $# -lt 1 ] ; then
