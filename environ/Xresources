@@ -11,7 +11,8 @@ URxvt.foreground: green
 URxvt.background: black
 URxvt.highlightColor: blue
 URxvt.highlightTextColor: yellow
-URxvt.fading: 30
+! i decided i hate this
+! URxvt.fading: 30
 URxvt.visualBell: true
 URxvt.font: pfk13
 URxvt.altFont: fixed
