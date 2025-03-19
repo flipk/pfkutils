@@ -17,7 +17,7 @@ apt-get install -y $( cat _setup_package_list_22.10.txt )
 
 pip -q install pip --upgrade
 pip install \
-     mypy-protobuf types-protobuf \
+     mypy-protobuf types-protobuf websockets \
      jupyter numpy docx python-docx regex umap \
      pandas scipy scikit-learn matplotlib \
      statemachine python-statemachine \
