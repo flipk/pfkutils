@@ -37,9 +37,12 @@ do
     # with spaces in them stay in the same positional arg location.
     # oh, and Cmd must be last because $*.
 
+    # NOTE on newer versions of docker,
+    #      ContainerConfig is renamed to Config.
+
     set -- $( docker inspect $id --format \
                      '{{.Id}} "{{.Parent}}" {{.Size}}
-                     "{{.RepoTags}}" {{.ContainerConfig.Cmd}}' )
+                     "{{.RepoTags}}" {{.Config.Cmd}}' )
 
     # use 'sed' to grab the first 12 chars of the sha
     id=$(
