@@ -4,7 +4,7 @@
 cmd="/bin/bash"
 
 USER=$( id -un )
-container=${USER}-ubuntu22.10
+container=${USER}-ubuntu22.04
 
 if [[ "$1" = "root" ]] ; then
 

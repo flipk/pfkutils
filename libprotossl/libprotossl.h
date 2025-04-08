@@ -23,6 +23,13 @@
 #error "DTLS not supported by this build of MBEDTLS ?"
 #endif
 
+#ifdef MBEDTLS_SSL_MAX_CONTENT_LEN
+#define  PROTOSSL_MAX_CONTENT_LEN MBEDTLS_SSL_MAX_CONTENT_LEN
+#endif
+#ifdef MBEDTLS_SSL_OUT_CONTENT_LEN
+#define  PROTOSSL_MAX_CONTENT_LEN MBEDTLS_SSL_OUT_CONTENT_LEN
+#endif
+
 #include "thread_slinger.h"
 #include "posix_fe.h"
 #include "dll3.h"
@@ -94,7 +101,7 @@ class ProtoSSLConnClient : public ClientList_t::Links
     bool init_common(unsigned char *client_ip, size_t cliip_len); // returns ok
     WaitUtil::Lockable ssl_lock;
 public:
-    static const uint32_t MAX_MSG_SIZE = MBEDTLS_SSL_MAX_CONTENT_LEN;
+    static const uint32_t MAX_MSG_SIZE = PROTOSSL_MAX_CONTENT_LEN;
 
     virtual ~ProtoSSLConnClient(void);
     int get_fd(void) const { return netctx.fd; };

@@ -185,6 +185,15 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     if (debugFlag)
         fprintf(stderr,"loading my cert key from %s\n", params.myKey.c_str());
     if (params.myKey.compare(0,5,"file:") == 0)
+
+// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+// the args changed!
+// this no longer compiles on mbed 3.6.3 (from fedora 43)
+//   two more args are needed:
+//   int (*f_rng)(void *, unsigned char *, size_t)
+//   void *p_rng
+// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+
         ret = mbedtls_pk_parse_keyfile( &mykey,
                                 params.myKey.c_str() + 5,
                                 keyPassword);

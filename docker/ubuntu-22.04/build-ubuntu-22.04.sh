@@ -1,7 +1,7 @@
 #!/bin/bash
 
-tag=pfk-ubuntu-22.10:1
-tarfile=docker-pfk-ubuntu-22.10-1.tar
+tag=pfk-ubuntu-22.04:1
+tarfile=docker-pfk-ubuntu-22.04-1.tar
 
 cp ../su_reaper.cc _setup_su_reaper.cc
 

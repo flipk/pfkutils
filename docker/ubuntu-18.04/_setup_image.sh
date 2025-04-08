@@ -21,4 +21,9 @@ pip3 install \
      jupyter numpy docx python-docx regex umap \
      pandas scipy scikit-learn matplotlib
 
+mv _setup_user_shell.sh /
+chmod 755 /_setup_user_shell.sh
+g++ su_reaper.cc -o /su_reaper
+rm -f su_reaper.cc
+
 exit 0

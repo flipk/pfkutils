@@ -13,7 +13,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 # this prevents wireshark from asking about permissions.
 echo "wireshark-common wireshark-common/install-setuid boolean false" | debconf-set-selections
 
-apt-get install -y $( cat _setup_package_list_22.10.txt )
+apt-get install -y $( cat _setup_package_list_22.04.txt )
 
 pip -q install pip --upgrade
 pip install \

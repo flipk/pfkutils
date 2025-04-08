@@ -1,4 +1,4 @@
-FROM ubuntu:22.10
+FROM ubuntu:22.04
 
 WORKDIR /
 COPY ./_setup* /tmp/

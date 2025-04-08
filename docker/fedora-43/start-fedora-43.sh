@@ -6,14 +6,12 @@ mappings=""
 # TODO support a custom command argument
 cmd="/bin/bash"
 
-# this is only really needed on fedora 33 docker 19.
-# why?  "clone3" --> not supported, oops
 seccomp_stupid="--security-opt seccomp=unconfined"
 
-tag=pfk-ubuntu-22.10:1
+tag=pfk-fedora-43:1
 
 USER=$( id -un )
-container=${USER}-ubuntu22.10
+container=${USER}-fedora43
 
 userid=$( id -u )
 groupid=$( id -g )
