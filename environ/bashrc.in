@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2025-03-18.22:35:40
+#      Last update: 2025-04-08.20:17:43
 #
 #############################################################################
 
@@ -200,6 +200,23 @@ dedup_path2() {
 
 dedup_path2
 
+# remove a path from PATH, arg: path_to_remove
+unpath() {
+    path_to_remove="$1"
+    local prev_IFS="$IFS"
+    IFS=":"
+    local pathparts=($PATH)
+    local outp=()
+    for p in "${pathparts[@]}" ; do
+        if [[ ! -z "$p" ]] ; then
+            if [[ "$p" != "$path_to_remove" ]] ; then
+                outp+=("${p}")
+            fi
+        fi
+    done
+    export PATH="${outp[*]}"
+    IFS="$prev_IFS"
+}
 
 TTY=`tty`
 TTY=${TTY#/dev/}
