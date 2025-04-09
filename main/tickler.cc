@@ -84,8 +84,10 @@ private:
         {
             tv.getNow();
             std::string now = tv.Format();
-            write(fd, now.c_str(), now.size());
-            write(fd, "\n", 1);
+            if (write(fd, now.c_str(), now.size()) < 0)
+            { /*ignore*/ }
+            if (write(fd, "\n", 1) < 0)
+            { /*ignore*/ }
 
             count ++;
             if (count > 1000)
@@ -199,7 +201,12 @@ int tickler_main(int argc, char ** argv)
             return 1;
         }
 
-        daemon(0,0);
+        if (daemon(0,0) < 0)
+        {
+            int e = errno;
+            fprintf(stderr, "daemon: %d (%s)\n", e, strerror(e));
+            return 1;
+        }
 
         act.sa_handler = &sig_hand;
         sigfillset(&act.sa_mask);

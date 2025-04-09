@@ -11,6 +11,7 @@
 
 #include "uuz_options.h"
 #include "posix_fe.h"
+#include "pfkutils_config.h"
 
 namespace PFK_uuz {
 
@@ -154,7 +155,7 @@ uuzopts :: uuzopts(int argc, char ** argv)
         case 'e':
         {
             encryption_key.resize(32);
-            mbedtls_sha256_ret( (const unsigned char*) optarg,
+            MBEDTLS_SHA256( (const unsigned char*) optarg,
                                 strlen(optarg),
                                 (unsigned char *) encryption_key.c_str(),
                                 /*is224*/ 0 );

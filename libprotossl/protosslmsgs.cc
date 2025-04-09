@@ -1,5 +1,6 @@
 
 #include "libprotossl.h"
+#include <mbedtls/version.h>
 
 using namespace ProtoSSL;
 
@@ -185,24 +186,35 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
     if (debugFlag)
         fprintf(stderr,"loading my cert key from %s\n", params.myKey.c_str());
     if (params.myKey.compare(0,5,"file:") == 0)
-
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-// the args changed!
-// this no longer compiles on mbed 3.6.3 (from fedora 43)
-//   two more args are needed:
-//   int (*f_rng)(void *, unsigned char *, size_t)
-//   void *p_rng
-// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-
+    {
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER < 0x03000000)
         ret = mbedtls_pk_parse_keyfile( &mykey,
                                 params.myKey.c_str() + 5,
                                 keyPassword);
+#else
+    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+    // the args changed!
+    // this no longer compiles on mbed 3.6.3 (from fedora 43)
+    //   two more args are needed:
+    //   int (*f_rng)(void *, unsigned char *, size_t)
+    //   void *p_rng
+    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+#endif
+    }
     else
+    {
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER < 0x03000000)
         ret = mbedtls_pk_parse_key( &mykey,
                             (const unsigned char *) params.myKey.c_str(),
                             params.myKey.size()+1,
                             (const unsigned char *) keyPassword,
                             keyPasswordLen);
+#else
+    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+    // the args changed!
+    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+#endif
+    }
     if (ret != 0)
     {
         mbedtls_strerror( ret, strbuf, sizeof(strbuf));

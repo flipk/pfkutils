@@ -6,7 +6,7 @@ CONFIG = fed43
 MAKEJOBS ?= -j8
 
 PFK_BUILD_pfkbak=1
-PFK_BUILD_ts2=0 # 1 BROKEN
+PFK_BUILD_ts2=1
 PFK_BUILD_sudo=1
 PFK_BUILD_t2t2=1
 PFK_BUILD_pfkscript=1
@@ -18,12 +18,12 @@ PFK_BUILD_libpfkfb=1
 PFK_BUILD_slowlink=1
 PFK_BUILD_libwebsock=1
 PFK_BUILD_fonts=1
-PFK_BUILD_xlock=0 # 1 BROKEN
+PFK_BUILD_xlock=0 # BROKEN: GCC 15 HATES THE K&R FUNC DECLS
 PFK_BUILD_hilite=1
 PFK_BUILD_do_fft=1
-PFK_BUILD_protossl=0 # 1 BROKEN
-PFK_BUILD_i3=0 # 1 DEPENDS ON PROTOSSL
-PFK_BUILD_uuz=0 # 1 BROKEN
+PFK_BUILD_protossl=0 # BROKEN: see TODO TODO TODO
+PFK_BUILD_i3=0 # BROKEN: depends on protossl
+PFK_BUILD_uuz=1
 PFK_BUILD_tickler=1
 
 BASHRC_LOCAL = bashrc.local.blade
@@ -43,7 +43,7 @@ PFKUTILS_OS = fedora43
 
 # not used right now: fish-pfk
 # no longer used: ctwm-pfk mscgen-pfk
-CONTRIB_PROGS= cscope-pfk rxvt-pfk # fluxbox-pfk
+CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
 export PFK_CONFIG_flubox_xinerama=disable
 export PFK_CONFIG_contrib_makejobs=-j9

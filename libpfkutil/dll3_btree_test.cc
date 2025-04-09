@@ -171,13 +171,13 @@ operator new[](size_t sz)
 }
 
 void
-operator delete(void * ptr)
+operator delete(void * ptr) noexcept
 {
     mgr.free(ptr);
 }
 
 void
-operator delete[](void * ptr)
+operator delete[](void * ptr) noexcept
 {
     mgr.free(ptr);
 }

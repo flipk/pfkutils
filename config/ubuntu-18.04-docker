@@ -1,30 +1,30 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-CONFIG = ubuntu-18.04-docker
+CONFIG = ub18
 
 # blade is a hyperthreaded quad-core-- use it.
 MAKEJOBS ?= -j8
 
-PFK_BUILD_pfkbak=0
+PFK_BUILD_pfkbak=1
 PFK_BUILD_ts2=1
-PFK_BUILD_sudo=0
+PFK_BUILD_sudo=1
 PFK_BUILD_t2t2=1
 PFK_BUILD_pfkscript=1
-PFK_BUILD_pfktop=0
-PFK_BUILD_sessionmgr=0
-PFK_BUILD_xrandr=0
+PFK_BUILD_pfktop=1
+PFK_BUILD_sessionmgr=1
+PFK_BUILD_xrandr=1
 PFK_BUILD_he=1
-PFK_BUILD_libpfkfb=0
-PFK_BUILD_slowlink=0
-PFK_BUILD_libwebsock=0
-PFK_BUILD_fonts=0
-PFK_BUILD_xlock=0
-PFK_BUILD_hilite=0
-PFK_BUILD_do_fft=0
-PFK_BUILD_protossl=0
-PFK_BUILD_i3=0
+PFK_BUILD_libpfkfb=1
+PFK_BUILD_slowlink=1
+PFK_BUILD_libwebsock=1
+PFK_BUILD_fonts=1
+PFK_BUILD_xlock=1
+PFK_BUILD_hilite=1
+PFK_BUILD_do_fft=1
+PFK_BUILD_protossl=1
+PFK_BUILD_i3=1
 PFK_BUILD_uuz=1
-PFK_BUILD_tickler=0
+PFK_BUILD_tickler=1
 
 BASHRC_LOCAL = bashrc.local.blade
 PROTOC_PATH = /usr/bin/protoc

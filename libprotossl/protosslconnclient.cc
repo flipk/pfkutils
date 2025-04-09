@@ -245,7 +245,7 @@ ProtoSSLConnClient :: handle_read_raw(std::string &buffer)
     int ret;
     WaitUtil::Lock lock(&ssl_lock);
 
-    buffer.resize(MBEDTLS_SSL_MAX_CONTENT_LEN);
+    buffer.resize(PROTOSSL_MAX_CONTENT_LEN);
     ret = mbedtls_ssl_read( &sslctx,
                             (unsigned char*) buffer.c_str(),
                             buffer.length());

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fnmatch.h>
 #include <mbedtls/sha256.h>
+#include "pfkutils_config.h"
 
 static bool
 calc_hash(const std::string &path, unsigned char output[32])
@@ -47,9 +48,9 @@ calc_hash(const std::string &path, unsigned char output[32])
 
     mbedtls_sha256_context ctx;
     mbedtls_sha256_init(&ctx);
-    mbedtls_sha256_starts_ret(&ctx, /*is224*/0);
-    mbedtls_sha256_update_ret(&ctx, temp_buffer, cc);
-    mbedtls_sha256_finish_ret(&ctx, output);
+    MBEDTLS_SHA256_STARTS(&ctx, /*is224*/0);
+    MBEDTLS_SHA256_UPDATE(&ctx, temp_buffer, cc);
+    MBEDTLS_SHA256_FINISH(&ctx, output);
     mbedtls_sha256_free(&ctx);
 
     return true;
