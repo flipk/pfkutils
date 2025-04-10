@@ -1,6 +1,6 @@
 # -*- Mode:makefile-gmake; tab-width:8 -*-
 
-CONFIG = ub18
+CONFIG = ub24
 
 # blade is a hyperthreaded quad-core-- use it.
 MAKEJOBS ?= -j8
@@ -35,7 +35,7 @@ MBEDTLS_LIBS = -lmbedtls -lmbedx509 -lmbedcrypto
 LIBZ_INCS =
 LIBZ_LIB = -lz
 
-PFKUTILS_OS = ubuntu18
+PFKUTILS_OS = ubuntu24
 
 CONTRIB_PROGS= cscope-pfk rxvt-pfk fluxbox-pfk
 
