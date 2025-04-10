@@ -51,12 +51,15 @@ extern Bool enablesaver;
 extern Bool allowaccess;
 extern Bool echokeys;
 extern Bool verbose;
-extern void (*callback) ();
-extern void (*init) ();
+extern void (*init) (Window);
+extern void (*callback) (Window);
 
-extern void GetResources();
-extern void hsbramp();
-extern long seconds();
+extern void GetResources(int argc, char *argv[]);
+extern void hsbramp(double h1, double s1, double b1,
+        double h2, double s2, double b2,
+        int count,
+        u_char *red, u_char *green, u_char *blue);
+extern long seconds(void);
 
 #include <sys/time.h>
 #include <poll.h>

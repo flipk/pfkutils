@@ -88,7 +88,13 @@ int main(int argc, char ** argv)
     }
 
     int exec_error_pipe[2];
-    pipe(exec_error_pipe);
+    if (pipe(exec_error_pipe) < 0)
+    {
+        int e = errno;
+        printf("pipe: %d (%s)\n",
+               e, strerror(e));
+        return 1;
+    }
 
     // use vfork because all we're going
     // to do is exec a child.
@@ -113,9 +119,11 @@ int main(int argc, char ** argv)
             setgroups(1, &mygid);
         }
         mygid = (gid_t) gid;
-        setgid(mygid);
+        if (setgid(mygid) < 0)
+        { /*ignore*/ }
         uid_t  myuid = (uid_t) uid;
-        setuid(myuid);
+        if (setuid(myuid) < 0)
+        { /*ignore*/ }
 
         // run the shell.
         (void) execl(cmd, cmd, NULL);
@@ -124,7 +132,8 @@ int main(int argc, char ** argv)
         // and we don't get here. if exec is failed, we
         // get here and send errno back to parent.
         int e = errno;
-        (void) write(exec_error_pipe[1], &e, sizeof(e));
+        if (write(exec_error_pipe[1], &e, sizeof(e)) < 0)
+        { /*ignore*/ }
 
         // call _exit, not exit, because we don't want
         // to call registered atexit() handlers in a vfork'd

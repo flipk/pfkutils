@@ -2,6 +2,14 @@
 #include "libprotossl.h"
 #include <mbedtls/version.h>
 
+// psa_util doesn't exist in mbed < 3
+#if defined(MBEDTLS_VERSION_NUMBER) && (MBEDTLS_VERSION_NUMBER >= 0x03000000)
+extern "C" {
+// all other mbed files have extern "C" in them but not this one!
+#include <mbedtls/psa_util.h>
+}
+#endif
+
 using namespace ProtoSSL;
 
 #define ssl_personality "ProtoSSLDRBG"
@@ -192,13 +200,12 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
                                 params.myKey.c_str() + 5,
                                 keyPassword);
 #else
-    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-    // the args changed!
-    // this no longer compiles on mbed 3.6.3 (from fedora 43)
-    //   two more args are needed:
-    //   int (*f_rng)(void *, unsigned char *, size_t)
-    //   void *p_rng
-    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        // the args changed in 3.x!
+        ret = mbedtls_pk_parse_keyfile( &mykey,
+                                        params.myKey.c_str() + 5,
+                                        keyPassword,
+                                        mbedtls_psa_get_random,
+                                        MBEDTLS_PSA_RANDOM_STATE);
 #endif
     }
     else
@@ -210,9 +217,13 @@ ProtoSSLMsgs :: loadCertificates(const ProtoSSLCertParams &params)
                             (const unsigned char *) keyPassword,
                             keyPasswordLen);
 #else
-    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-    // the args changed!
-    // TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        ret = mbedtls_pk_parse_key( &mykey,
+                            (const unsigned char *) params.myKey.c_str(),
+                            params.myKey.size()+1,
+                            (const unsigned char *) keyPassword,
+                            keyPasswordLen,
+                            mbedtls_psa_get_random,
+                            MBEDTLS_PSA_RANDOM_STATE);
 #endif
     }
     if (ret != 0)

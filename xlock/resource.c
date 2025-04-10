@@ -38,40 +38,25 @@ static char sccsid[] = "@(#)resource.c  1.20 91/09/27 XLOCK";
  * Declare external interface routines for supported screen savers.
  */
 
-extern void inithop();
-extern void drawhop();
+extern void initswarm(Window);
+extern void drawswarm(Window);
 
-extern void initlife();
-extern void drawlife();
+extern void initrotor(Window);
+extern void drawrotor(Window);
 
-extern void initqix();
-extern void drawqix();
+extern void initpyro(Window);
+extern void drawpyro(Window);
 
-extern void initblank();
-extern void drawblank();
+extern void initflame(Window);
+extern void drawflame(Window);
 
-extern void initswarm();
-extern void drawswarm();
-
-extern void initrotor();
-extern void drawrotor();
-
-extern void initpyro();
-extern void drawpyro();
-
-extern void initflame();
-extern void drawflame();
-
-extern void initworm();
-extern void drawworm();
-
-extern void initspline();
-extern void drawspline();
+extern void initworm(Window);
+extern void drawworm(Window);
 
 typedef struct {
     char       *cmdline_arg;
-    void        (*lp_init) ();
-    void        (*lp_callback) ();
+    void        (*lp_init) (Window);
+    void        (*lp_callback) (Window);
     int         def_delay;
     int         def_batchcount;
     float       def_saturation;
@@ -92,8 +77,6 @@ static LockStruct LockProcs[] = {
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 64   /* SunOS 3.5 does not define this */
 #endif
-
-extern char *getenv();
 
 #ifndef DEF_FILESEARCHPATH
 #define DEF_FILESEARCHPATH "/usr/lib/X11/%T/%N%S"
@@ -284,8 +267,7 @@ static argtype modevars[] = {
 
 
 static void
-Syntax(badOption)
-    char       *badOption;
+Syntax(char *badOption)
 {
     int         col, len, i;
 
@@ -373,8 +355,7 @@ DumpResources()
 
 
 static void
-LowerString(s)
-    char       *s;
+LowerString(char *s)
 {
 
     while (*s) {
@@ -385,16 +366,15 @@ LowerString(s)
 }
 
 static void
-GetResource(database, parentname, parentclass,
-            name, class, valueType, def, valuep)
-    XrmDatabase database;
-    char       *parentname;
-    char       *parentclass;
-    char       *name;
-    char       *class;
-    int         valueType;
-    char       *def;
-    caddr_t    *valuep;     /* RETURN */
+GetResource(XrmDatabase database,
+            char       *parentname,
+            char       *parentclass,
+            char       *name,
+            char       *class,
+            int         valueType,
+            char       *def,
+            caddr_t    *valuep     /* RETURN */
+    )
 {
     char       *type;
     XrmValue    value;
@@ -445,10 +425,9 @@ GetResource(database, parentname, parentclass,
 
 
 static      XrmDatabase
-parsefilepath(xfilesearchpath, TypeName, ClassName)
-    char       *xfilesearchpath;
-    char       *TypeName;
-    char       *ClassName;
+parsefilepath(char       *xfilesearchpath,
+              char       *TypeName,
+              char       *ClassName)
 {
     XrmDatabase database = NULL;
     char        appdefaults[1024];
@@ -555,9 +534,7 @@ open_display()
 
 
 void
-printvar(class, var)
-    char       *class;
-    argtype     var;
+printvar(char  *class, argtype     var)
 {
     switch (var.type) {
     case t_String:
@@ -582,9 +559,8 @@ printvar(class, var)
 
 
 void
-GetResources(argc, argv)
-    int         argc;
-    char       *argv[];
+GetResources(int         argc,
+             char       *argv[])
 {
     XrmDatabase RDB = NULL;
     XrmDatabase nameDB = NULL;

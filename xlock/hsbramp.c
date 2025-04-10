@@ -18,13 +18,8 @@ static char sccsid[] = "@(#)hsbramp.c	23.5 91/05/24 XLOCK";
 #include <math.h>
 
 void
-hsb2rgb(H, S, B, r, g, b)
-    double      H,
-                S,
-                B;
-    u_char     *r,
-               *g,
-               *b;
+hsb2rgb(double H, double S, double B,
+        u_char *r, u_char *g, u_char *b)
 {
     int         i;
     double      f;
@@ -85,18 +80,10 @@ hsb2rgb(H, S, B, r, g, b)
  */
 
 void
-hsbramp(h1, s1, b1, h2, s2, b2, count, red, green, blue)
-    double      h1,
-                s1,
-                b1,
-                h2,
-                s2,
-                b2;
-    int         count;
-
-    u_char     *red,
-               *green,
-               *blue;
+hsbramp(double h1, double s1, double b1,
+        double h2, double s2, double b2,
+        int count,
+        u_char *red, u_char *green, u_char *blue)
 {
     double      dh;
     double      ds;

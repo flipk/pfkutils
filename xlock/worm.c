@@ -63,8 +63,7 @@ typedef struct {
 static wormstruct worms[MAXSCREENS];
 
 int
-myround(x)
-    float       x;
+myround(float x)
 {
 #ifdef sco
     return ((int) x);
@@ -75,11 +74,10 @@ myround(x)
 
 
 void
-worm_doit(win, wp, which, color)
-    Window      win;
-    wormstruct *wp;
-    int         which;
-    unsigned long color;
+worm_doit(Window      win,
+          wormstruct *wp,
+          int         which,
+          unsigned long color)
 {
     wormstuff  *ws = &wp->worm[which];
     int         x, y;
@@ -113,8 +111,7 @@ worm_doit(win, wp, which, color)
 
 
 void
-initworm(win)
-    Window      win;
+initworm(Window win)
 {
     int         i, j;
     wormstruct *wp = &worms[screen];
@@ -173,8 +170,7 @@ initworm(win)
 
 
 void
-drawworm(win)
-    Window      win;
+drawworm(Window win)
 {
     int         i;
     wormstruct *wp = &worms[screen];

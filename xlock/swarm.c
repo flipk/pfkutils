@@ -46,8 +46,7 @@ static swarmstruct swarms[MAXSCREENS];
 static int initialized = 0;
 
 void
-initswarm(win)
-    Window      win;
+initswarm(Window win)
 {
     XWindowAttributes xgwa;
     swarmstruct *sp = &swarms[screen];
@@ -99,8 +98,7 @@ initswarm(win)
 }
 
 void
-drawswarm(win)
-    Window      win;
+drawswarm(Window win)
 {
     swarmstruct *sp = &swarms[screen];
     int         b;

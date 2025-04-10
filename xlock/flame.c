@@ -38,8 +38,7 @@ typedef struct {
 static flamestruct flames[MAXSCREENS];
 
 static short
-halfrandom(mv)
-    int         mv;
+halfrandom(int mv)
 {
     static short lasthalf = 0;
     unsigned long r;
@@ -55,8 +54,7 @@ halfrandom(mv)
 }
 
 void
-initflame(win)
-    Window      win;
+initflame(Window win)
 {
     flamestruct *fs = &flames[screen];
     XWindowAttributes xwa;
@@ -80,10 +78,9 @@ initflame(win)
 }
 
 static      Bool
-recurse(fs, x, y, l)
-    flamestruct *fs;
-    register double x, y;
-    register int l;
+recurse(flamestruct *fs,
+        double x, double y,
+        int l)
 {
     int         xp, yp, i;
     double      nx, ny;
@@ -122,8 +119,7 @@ recurse(fs, x, y, l)
 
 
 void
-drawflame(win)
-    Window      win;
+drawflame(Window win)
 {
     flamestruct *fs = &flames[screen];
 

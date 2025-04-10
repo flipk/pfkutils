@@ -68,8 +68,7 @@ typedef struct flightstruct {
 static flightstruct flights[MAXSCREENS];
 
 void
-initrotor(win)
-    Window      win;
+initrotor(Window win)
 {
     flightstruct *fs = &flights[screen];
     XWindowAttributes xgwa;
@@ -136,8 +135,7 @@ initrotor(win)
 }
 
 void
-drawrotor(win)
-    Window      win;
+drawrotor(Window win)
 {
     register flightstruct *fs = &flights[screen];
     register struct elem *pelem;

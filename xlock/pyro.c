@@ -65,11 +65,6 @@ static char sccsid[] = "@(#)pyro.c  1.1 91/05/24 XLOCK";
 #define INTRAND(min,max) (random()%((max+1)-(min))+(min))
 #define FLOATRAND(min,max) ((min)+(random()/MAXRAND)*((max)-(min)))
 
-static void ignite();
-static void animate();
-static void shootup();
-static void burst();
-
 typedef struct {
     int         state;
     int         shelltype;
@@ -109,13 +104,17 @@ typedef struct {
     rocket     *rockq;
 }           pyrostruct;
 
+static void ignite(pyrostruct *);
+static void animate(Window, pyrostruct *, rocket *);
+static void shootup(Window win, pyrostruct *, rocket *);
+static void burst(Window win, pyrostruct *pp, rocket *rp);
+
 static pyrostruct pyros[MAXSCREENS];
 static int  orig_p_ignite;
 static int  just_started = True;/* Greet the user right away */
 
 void
-initpyro(win)
-    Window      win;
+initpyro(Window win)
 {
     pyrostruct *pp = &pyros[screen];
     rocket     *rp;
@@ -183,8 +182,7 @@ initpyro(win)
 
 /*ARGSUSED*/
 void
-drawpyro(win)
-    Window      win;
+drawpyro(Window win)
 {
     pyrostruct *pp = &pyros[screen];
     rocket     *rp;
@@ -210,9 +208,7 @@ drawpyro(win)
     }
 }
 
-static void
-ignite(pp)
-    pyrostruct *pp;
+static void ignite(pyrostruct *pp)
 {
     rocket     *rp;
     int         multi, fuse, npix, pix;
@@ -291,10 +287,7 @@ ignite(pp)
 }
 
 static void
-animate(win, pp, rp)
-    Window      win;
-    pyrostruct *pp;
-    rocket     *rp;
+animate(Window win, pyrostruct *pp, rocket *rp)
 {
     int         starn;
     float       r, theta;
@@ -328,10 +321,7 @@ animate(win, pp, rp)
 }
 
 static void
-shootup(win, pp, rp)
-    Window      win;
-    pyrostruct *pp;
-    rocket     *rp;
+shootup(Window win, pyrostruct *pp, rocket *rp)
 {
     XFillRectangle(dsp, win, pp->bgGC, (int) (rp->x), (int) (rp->y),
                    ROCKETW, ROCKETH + 3);
@@ -349,10 +339,7 @@ shootup(win, pp, rp)
 }
 
 static void
-burst(win, pp, rp)
-    Window      win;
-    pyrostruct *pp;
-    rocket     *rp;
+burst(Window win, pyrostruct *pp, rocket *rp)
 {
     register int starn;
     register int nstars, stype;

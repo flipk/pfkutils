@@ -130,15 +130,12 @@ static char sccsid[] = "@(#)xlock.c 23.21 91/06/27 XLOCK";
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>
 
-extern char *crypt();
-extern char *getenv();
-
 char       *ProgramName;    /* argv[0] */
 perscreen   Scr[MAXSCREENS];
 Display    *dsp = NULL;     /* server display connection */
 int         screen;     /* current screen */
-void        (*callback) () = NULL;
-void        (*init) () = NULL;
+void        (*callback) (Window) = NULL;
+void        (*init) (Window) = NULL;
 
 static int  screens;        /* number of screens */
 static Window win[MAXSCREENS];  /* window used to cover screen */
@@ -187,8 +184,7 @@ static int  HostAccessCount;    /* the number of machines in XHosts */
 static Bool HostAccessState;    /* whether or not we even look at the list */
 
 static void
-XGrabHosts(dsp)
-    Display    *dsp;
+XGrabHosts(Display *dsp)
 {
     XHosts = XListHosts(dsp, &HostAccessCount, &HostAccessState);
     if (XHosts)
@@ -197,8 +193,7 @@ XGrabHosts(dsp)
 }
 
 static void
-XUngrabHosts(dsp)
-    Display    *dsp;
+XUngrabHosts(Display *dsp)
 {
     if (XHosts) {
         XAddHosts(dsp, XHosts, HostAccessCount);
@@ -262,8 +257,7 @@ GrabKeyboardAndMouse()
  * just grab it again with a new cursor shape and ignore the return code.
  */
 static void
-XChangeGrabbedCursor(cursor)
-    Cursor      cursor;
+XChangeGrabbedCursor(Cursor cursor)
 {
 #ifndef DEBUG
     (void) XGrabPointer(dsp, win[0], True, AllPointerEventMask,
@@ -276,7 +270,7 @@ XChangeGrabbedCursor(cursor)
  * Restore all grabs, reset screensaver, restore colormap, close connection.
  */
 static void
-finish()
+finish(void)
 {
     XSync(dsp, False);
     if (!nolock && !allowaccess)
@@ -291,9 +285,8 @@ finish()
 
 
 static int
-ReadXString(s, slen)
-    char       *s;
-    int         slen;
+ReadXString(char       *s,
+            int         slen)
 {
     XEvent      event;
     char        keystr[20];
@@ -412,7 +405,7 @@ ReadXString(s, slen)
 }
 
 static int
-getPassword()
+getPassword(void)
 {
     char        buffer[PASSLENGTH];
     char        userpass[PASSLENGTH];
@@ -555,7 +548,7 @@ justDisplay()
 
 
 static void
-sigcatch()
+sigcatch(int s)
 {
     finish();
     fprintf( stderr, "%s: caught terminate signal!\n", ProgramName );
@@ -577,10 +570,10 @@ lockDisplay()
         sigaddset(&newsigmask, SIGTERM);
         sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
 
-        signal(SIGHUP, (void (*) ()) sigcatch);
-        signal(SIGINT, (void (*) ()) sigcatch);
-        signal(SIGQUIT, (void (*) ()) sigcatch);
-        signal(SIGTERM, (void (*) ()) sigcatch);
+        signal(SIGHUP,  sigcatch);
+        signal(SIGINT,  sigcatch);
+        signal(SIGQUIT, sigcatch);
+        signal(SIGTERM, sigcatch);
 
         XGrabHosts(dsp);
 
@@ -593,10 +586,9 @@ lockDisplay()
 
 
 long
-allocpixel(cmap, name, def)
-    Colormap    cmap;
-    char       *name;
-    char       *def;
+allocpixel(Colormap    cmap,
+           char       *name,
+           char       *def)
 {
     XColor      col;
     XColor      tmp;
@@ -610,9 +602,8 @@ allocpixel(cmap, name, def)
 }
 
 int
-main(argc, argv)
-    int         argc;
-    char       *argv[];
+main(int         argc,
+     char       *argv[])
 {
     XSetWindowAttributes xswa;
     XGCValues   xgcv;
