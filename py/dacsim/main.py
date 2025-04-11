@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from dofft import real_fft_dbfs
+from generate_tone import generate_tone
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -8,7 +9,8 @@ import sys
 
 
 def animate_fft(start_freq, end_freq, freq_step, delay_ms,
-                sample_rate, duration, bit_width, fft_size):
+                sample_rate, duration, bit_width, fft_size,
+                cosine_table_size, target_freq):
     """
     Animates the FFT of a sine wave over a range of frequencies.
 
@@ -32,7 +34,7 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('Magnitude (dBFS)')
     # title =
-    ax.set_title('FFT (dBFS)')
+    ax.set_title(f'FFT (dBFS), target freq {target_freq:.3f} MHz')
     ax.grid(True)
     # ax.set_xlim(0, sample_rate / 2)  # Set x-axis limits
 
@@ -41,15 +43,16 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
         if frequency > end_freq:
             return line,
 
-        t = np.linspace(0, duration, int(sample_rate * duration), endpoint=False)
-        orig_signal = np.sin(2 * np.pi * frequency * t[:fft_size])
-        full_scale = 2**(bit_width - 1) - 1
-        int_signal = (orig_signal * full_scale).astype(np.int64)
-        fft_dbfs = real_fft_dbfs(int_signal, bit_width)
+        orig_signal = generate_tone(sample_rate, frequency, 
+                                    output_array_size = fft_size,
+                                    cosine_table_bit_width = bit_width,
+                                    cosine_table_size = cosine_table_size)
+
+        fft_dbfs = real_fft_dbfs(orig_signal, bit_width)
         line.set_ydata(fft_dbfs)
-        print(f'\r  freq: {frequency/1e6:.2f} MHz  <hit q to stop>', end='')
+        print(f'\r  freq: {frequency/1e6:.3f} MHz  <hit q to stop>', end='')
         # this does NOT work for some reason
-        # title.set_text(f'FFT (dBFS) - Frequency: {frequency:.2f} Hz')
+        # title.set_text(f'FFT (dBFS) - Frequency: {frequency:.3f} Hz')
         return line,  # title
 
     num_frames = int((end_freq - start_freq) / freq_step) + 1
@@ -75,17 +78,20 @@ def main() -> int:
     # ratios, the noise floor drops out and makes the animation
     # look not as good.
     if sys.argv[1] == "1":
-        start_freq = 29111111
-        end_freq = 33111111
-        freq_step = 20e3
+        target_freq = 125.0 / 4
+        start_freq = 31240003
+        end_freq = 31260003
+        freq_step = 0.1e3
     elif sys.argv[1] == "2":
-        start_freq = 20111111
-        end_freq = 22111111
-        freq_step = 20e3
+        target_freq = 125.0 / 6
+        start_freq = 20823333
+        end_freq = 20843333
+        freq_step = 0.1e3
     elif sys.argv[1] == "3":
-        start_freq = 14111111
-        end_freq = 16111111
-        freq_step = 20e3
+        target_freq = 125.0 / 8
+        start_freq = 15615003
+        end_freq = 15635003
+        freq_step = 0.1e3
     else:
         usage()
         return 1
@@ -95,9 +101,11 @@ def main() -> int:
     duration = 0.001
     bit_width = 14
     fft_size = 16384
+    cosine_table_size = 2048
 
     animate_fft(start_freq, end_freq, freq_step, delay_ms, sample_rate,
-                duration, bit_width, fft_size)
+                duration, bit_width, fft_size, cosine_table_size,
+                target_freq)
     return 0
 
 

@@ -74,13 +74,14 @@ if __name__ == '__main__':
     bit_width = 14
     array_size = 16384
     cosine_values_np = generate_cosine_table(bit_width, array_size)
+    labels = np.linspace(0, 1.0, array_size, endpoint=False)
 
     import matplotlib.pyplot as plt
 
     plt.figure()
-    plt.plot(cosine_values_np)
-    plt.xlabel('binary angle')
-    plt.ylabel('cosine')
+    plt.plot(labels, cosine_values_np)
+    plt.xlabel('binary angle (normalized to 1.0)')
+    plt.ylabel('cosine (14-bit signed)')
     plt.title(f'{bit_width} bit cosine lookup table, 16384 entries')
     plt.grid(True)
     plt.show()
