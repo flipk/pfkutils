@@ -5,6 +5,8 @@
 # upsamples it by 5x, constructs a low pass FIR filter of 0.18 normalized
 # frequency (but make the 0.18 value a top level global variable so i can
 # easily tweak it later) and returns the upsampled result.
+#
+# (note modifications were made after it generated code)
 
 import numpy as np
 from scipy import signal
@@ -55,13 +57,13 @@ if __name__ == '__main__':
 
     plt.subplot(2, 1, 1)
     plt.plot(t[:100], original_signal[:100])
-    plt.title(f'Original Signal (Sample Rate: {original_sample_rate} Hz)')
+    plt.title(f'{original_sample_rate} Hz tone @ {original_sample_rate} S/s)')
     plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
 
     plt.subplot(2, 1, 2)
     plt.plot(t_upsampled[:500], upsampled_filtered_signal[:500])
-    plt.title(f'Upsampled and Filtered Signal (Sample Rate: {new_sample_rate} Hz)')
+    plt.title(f'Upsampled to {new_sample_rate} S/s)')
     plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
 

@@ -19,6 +19,8 @@
 # accumulator value will be used to index the cosine lookup table and populate
 # the output. the accumulator should then be incremented by an integer
 # value corresponding to the sample rate and tone frequency.
+#
+# (note modifications were made after it generated code)
 
 import numpy as np
 import math
@@ -47,7 +49,7 @@ def _gentable(cosine_table_bit_width: int, cosine_table_size: int):
         _cosine_table_size = cosine_table_size
 
 
-def generate_tone(output_sample_rate: int, frequency: float, output_array_size: int,
+def generate_tone(output_sample_rate: float, frequency: float, output_array_size: int,
                   cosine_table_bit_width: int, cosine_table_size: int) -> np.ndarray:
     """
     Generates a NumPy array of integers representing a sinusoidal tone using a
@@ -84,9 +86,9 @@ def generate_tone(output_sample_rate: int, frequency: float, output_array_size: 
 
 
 if __name__ == '__main__':
-    sample_rate = 48000  # Samples per second
-    tone_frequency = 440.0  # Hz (A4 note)
-    output_size = 1024
+    sample_rate = 125e6
+    tone_frequency = 24e6
+    output_size = 256
     cosine_bit_width = 12
     cosine_table_length = 2048  # Must be a power of 2
 
@@ -97,8 +99,15 @@ if __name__ == '__main__':
         print(f"First 100 elements of the tone:\n{tone[:100]}")
         print(f"Data type of the tone array: {tone.dtype}")
 
-        # You could further process this 'tone' array, for example, to
-        # save it to a WAV file or plot it.
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.plot(tone)
+        plt.xlabel('time')
+        plt.ylabel('sample value')
+        plt.title(f'{tone_frequency} Hz at {sample_rate} S/s')
+        plt.grid(True)
+        plt.show()
 
     except ValueError as e:
         print(f"Error: {e}")

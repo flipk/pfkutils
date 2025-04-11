@@ -9,6 +9,8 @@
 # the function should verify this size is a power of 2. the value at each position
 # in the array is the cosine of an angle. the angle goes from 0 to 2*PI over
 # the length of the array.
+#
+# (note modifications were made after it generated code)
 
 import numpy as np
 import math
@@ -68,3 +70,17 @@ if __name__ == '__main__':
 
     except ValueError as e:
         print(f"Error: {e}")
+
+    bit_width = 14
+    array_size = 16384
+    cosine_values_np = generate_cosine_table(bit_width, array_size)
+
+    import matplotlib.pyplot as plt
+
+    plt.figure()
+    plt.plot(cosine_values_np)
+    plt.xlabel('binary angle')
+    plt.ylabel('cosine')
+    plt.title(f'{bit_width} bit cosine lookup table, 16384 entries')
+    plt.grid(True)
+    plt.show()
