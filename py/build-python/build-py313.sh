@@ -1,7 +1,7 @@
 #!/bin/bash
 
-version=3.11.12
-short_vers=3.11
+version=3.13.3
+short_vers=3.13
 packages="virtualenv pipreqs \
      protobuf mypy-protobuf types-protobuf python-protobuf \
      numpy pandas scipy \

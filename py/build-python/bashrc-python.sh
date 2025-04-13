@@ -33,3 +33,9 @@ py311() {
     export PATH=$python_install_path/3.11/bin:$PATH
     which python3
 }
+
+py313() {
+    _nopy
+    export PATH=$python_install_path/3.13/bin:$PATH
+    which python3
+}
