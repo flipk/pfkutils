@@ -1,0 +1,13 @@
+
+
+- change all docker builds to use the template way
+   - todo
+       blade-sshd
+       fedora-38
+       fedora-41
+       pycharm
+       ubuntu-22.04
+   - done
+       fedora-43
+       ubuntu-24.04
+       ubuntu-18.04

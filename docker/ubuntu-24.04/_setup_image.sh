@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e -x
 
 cd /tmp
 
@@ -14,11 +14,6 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 echo "wireshark-common wireshark-common/install-setuid boolean false" | debconf-set-selections
 
 apt-get install -y $( cat _setup_package_list_24.04.txt )
-
-apt-get install -y \
-        mypy-protobuf python3-websockets python3-numpy \
-        python3-regex python3-pandas python3-scipy \
-        python3-matplotlib python3-importlib-resources
 
 cd /tmp
 mv _setup_user_shell.sh /

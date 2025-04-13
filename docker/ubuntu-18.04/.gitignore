@@ -1,4 +1,4 @@
 _setup_su_reaper.cc
-join-ubuntu-24.sh
-start-ubuntu-24.sh
+join-ubuntu-18.sh
+start-ubuntu-18.sh
 _setup_user_shell.sh

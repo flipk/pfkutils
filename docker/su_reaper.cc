@@ -23,6 +23,7 @@
 #include <inttypes.h>
 #include <sys/wait.h>
 #include <grp.h>
+#include <vector>
 
 static pid_t our_bash_pid = -1;
 static bool run = true;
@@ -58,16 +59,20 @@ sighand(int s)
 
 int main(int argc, char ** argv)
 {
-    if (argc != 5)
+    if (argc < 5)
     {
-        fprintf(stderr, "usage: su_reaper  uid gid docker_gid cmd\n");
+        fprintf(stderr, "usage: su_reaper  uid gid docker_gid cmd [args...]\n");
         exit(1);
     }
 
     int uid = atoi(argv[1]);
     int gid = atoi(argv[2]);
     int docker_gid = atoi(argv[3]);
-    const char *cmd = argv[4];
+
+    std::vector<char*>  cmd;
+    for (int argind = 4; argind < argc; argind++)
+        cmd.push_back(argv[argind]);
+    cmd.push_back(NULL); // execv expects a null terminated list of pointers
 
     struct sigaction sa;
     sa.sa_handler = &sighand;
@@ -126,7 +131,7 @@ int main(int argc, char ** argv)
         { /*ignore*/ }
 
         // run the shell.
-        (void) execl(cmd, cmd, NULL);
+        (void) execv(cmd[0], cmd.data());
 
         // if exec is successful, pipe[1] is CLOEXEC'd
         // and we don't get here. if exec is failed, we

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e -x
 
 cd /tmp
 
@@ -15,15 +15,12 @@ echo "wireshark-common wireshark-common/install-setuid boolean false" | debconf-
 
 apt-get install -y $( cat _setup_package_list_18.04.txt )
 
-pip3 -q install pip --upgrade
-pip3 install \
-     mypy-protobuf types-protobuf \
-     jupyter numpy docx python-docx regex umap \
-     pandas scipy scikit-learn matplotlib
-
+cd /tmp
 mv _setup_user_shell.sh /
 chmod 755 /_setup_user_shell.sh
-g++ su_reaper.cc -o /su_reaper
-rm -f su_reaper.cc
+
+g++ _setup_su_reaper.cc -o /su_reaper
+
+rm -f _setup*
 
 exit 0
