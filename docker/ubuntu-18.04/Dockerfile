@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
 WORKDIR /
-COPY ./_setup* su_reaper.cc /tmp/
+COPY ./_setup* /tmp/
 RUN bash  /tmp/_setup_image.sh
 
 ENV LC_ALL=en_US.UTF-8
