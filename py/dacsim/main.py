@@ -9,7 +9,7 @@ import sys
 
 
 def animate_fft(start_freq, end_freq, freq_step, delay_ms,
-                sample_rate, duration, bit_width, fft_size,
+                sample_rate, bit_width, fft_size,
                 cosine_table_size, target_freq):
     """
     Animates the FFT of a sine wave over a range of frequencies.
@@ -20,9 +20,10 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
         freq_step: Frequency step size (Hz).
         delay_ms: Delay between frames (milliseconds).
         sample_rate: Sample rate (Hz).
-        duration: Duration of the signal (seconds).
         bit_width: Bit width of the samples.
         fft_size: the number of buckets to use in the fft
+        target_freq: put the target freq in the plot title
+        cosine_table_size: number of entries in the table
     """
 
     fig, ax = plt.subplots()
@@ -33,7 +34,6 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
 
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('Magnitude (dBFS)')
-    # title =
     ax.set_title(f'FFT (dBFS), target freq {target_freq:.3f} MHz')
     ax.grid(True)
     # ax.set_xlim(0, sample_rate / 2)  # Set x-axis limits
@@ -44,23 +44,27 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
             return line,
 
         orig_signal = generate_tone(sample_rate, frequency, 
-                                    output_array_size = fft_size,
-                                    cosine_table_bit_width = bit_width,
-                                    cosine_table_size = cosine_table_size)
+                                    output_array_size=fft_size,
+                                    cosine_table_bit_width=bit_width,
+                                    cosine_table_size=cosine_table_size)
 
         fft_dbfs = real_fft_dbfs(orig_signal, bit_width)
         line.set_ydata(fft_dbfs)
-        print(f'\r  freq: {frequency/1e6:.3f} MHz  <hit q to stop>', end='')
-        # this does NOT work for some reason
-        # title.set_text(f'FFT (dBFS) - Frequency: {frequency:.3f} Hz')
-        return line,  # title
+        ax.set_title(f'FFT (dBFS) ({frequency/1e6:.3f} MHz, target {target_freq:.3f} MHz)')
+        return line,
 
     num_frames = int((end_freq - start_freq) / freq_step) + 1
     # you don't need the return value, but if you don't collect
     # the return value, it doesn't do anything, because the return
     # value is the object which does the work; if you don't keep it,
     # it gets garbage-collected immediately.
-    ani = animation.FuncAnimation(fig, update, frames=num_frames, interval=delay_ms, blit=True)
+    # also, updating the title doesn't seem to work when blit=True,
+    # even if the update function returns "ax" in the list of artists.
+    # the only workaround to get the title to animate properly seems
+    # to be to just disable blitting.
+    # noinspection PyUnusedLocal
+    ani = animation.FuncAnimation(fig, update, frames=num_frames,
+                                  interval=delay_ms, blit=False)
     plt.show()
     print('')
 
@@ -98,13 +102,12 @@ def main() -> int:
 
     delay_ms = 50
     sample_rate = 125e6
-    duration = 0.001
     bit_width = 14
     fft_size = 16384
     cosine_table_size = 2048
 
     animate_fft(start_freq, end_freq, freq_step, delay_ms, sample_rate,
-                duration, bit_width, fft_size, cosine_table_size,
+                bit_width, fft_size, cosine_table_size,
                 target_freq)
     return 0
 

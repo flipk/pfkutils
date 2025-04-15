@@ -80,6 +80,7 @@ def real_fft_dbfs(samples: np.ndarray, bit_width: int) -> np.ndarray:
 
     return dbfs - dbfs_full_scale
 
+
 def animate_fft(start_freq, end_freq, freq_step, delay_ms,
                 sample_rate, duration, bit_width, fft_size,
                 quantized, target_freq):
@@ -96,6 +97,7 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
         bit_width: Bit width of the samples.
         fft_size: the number of buckets to use in the fft
         quantized: should it be quantized to integers
+        target_freq: put the target freq in the plot title
     """
 
     fig, ax = plt.subplots()
@@ -106,10 +108,8 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
 
     ax.set_xlabel('Frequency (MHz)')
     ax.set_ylabel('Magnitude (dBFS)')
-    # title =
-    ax.set_title(f'FFT (dBFS), target freq {target_freq:.3f} MHz')
+    ax.set_title('FFT (dBFS)')
     ax.grid(True)
-    # ax.set_xlim(0, sample_rate / 2)  # Set x-axis limits
 
     def update(frame):
         frequency = start_freq + frame * freq_step
@@ -125,17 +125,23 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
             int_signal = orig_signal * full_scale
         fft_dbfs = real_fft_dbfs(int_signal, bit_width)
         line.set_ydata(fft_dbfs)
-        print(f'\r  freq: {frequency/1e6:.2f} MHz  <hit q to stop>', end='')
-        # this does NOT work for some reason
-        # title.set_text(f'FFT (dBFS) - Frequency: {frequency:.2f} Hz')
-        return line,  # title
+        ax.set_title(f'FFT (dBFS) ({frequency/1e6:.3f} MHz, target {target_freq:.3f} MHz)')
+        return line,
 
     num_frames = int((end_freq - start_freq) / freq_step) + 1
     # you don't need the return value, but if you don't collect
     # the return value, it doesn't do anything, because the return
     # value is the object which does the work; if you don't keep it,
     # it gets garbage-collected immediately.
-    ani = animation.FuncAnimation(fig, update, frames=num_frames, interval=delay_ms, blit=True)
+    # also, updating the title doesn't seem to work when blit=True,
+    # even if the update function returns "ax" in the list of artists.
+    # the only workaround to get the title to animate properly seems
+    # to be to just disable blitting.
+    # noinspection PyUnusedLocal
+    ani = animation.FuncAnimation(fig, update,
+                                  frames=num_frames,
+                                  interval=delay_ms,
+                                  blit=False)
     plt.show()
     print('')
 
