@@ -25,6 +25,7 @@
 import numpy as np
 import math
 from typing import Union
+import random
 
 from generate_cosine_table import generate_cosine_table
 
@@ -50,7 +51,8 @@ def _gentable(cosine_table_bit_width: int, cosine_table_size: int):
 
 
 def generate_tone(output_sample_rate: float, frequency: float, output_array_size: int,
-                  cosine_table_bit_width: int, cosine_table_size: int) -> np.ndarray:
+                  cosine_table_bit_width: int, cosine_table_size: int,
+                  dither) -> np.ndarray:
     """
     Generates a NumPy array of integers representing a sinusoidal tone using a
     cosine lookup table and a phase accumulator.
@@ -61,6 +63,7 @@ def generate_tone(output_sample_rate: float, frequency: float, output_array_size
         output_array_size: The number of samples to generate in the output array.
         cosine_table_bit_width: The bit width for the cosine lookup table integers.
         cosine_table_size: The size of the cosine lookup table (must be a power of 2).
+        dither: apply random dithering to samples to reduce harmonics
 
     Returns:
         A NumPy array of integers representing the generated tone.
@@ -76,11 +79,15 @@ def generate_tone(output_sample_rate: float, frequency: float, output_array_size
     # Mask to extract the top 'table_lookup_bits'
     mask = (2**32 - 1) >> (32 - _cosine_table_lookup_bits)
 
+    # if dithering, this is the amount to dither by.
+    dithermult = 1 << (32 - _cosine_table_lookup_bits)
+    offset = 0
     for i in range(output_array_size):
-        table_index = (phase_accumulator >> (32 - _cosine_table_lookup_bits)) & mask
+        if dither:
+            offset = int((random.random() - 0.5) * dithermult)
+        table_index = ((phase_accumulator + offset) >> (32 - _cosine_table_lookup_bits)) & mask
         output_array[i] = _cosine_table[table_index]
-        # Keep within 32 bits
-        phase_accumulator = (phase_accumulator + phase_increment) & (2**32 - 1)
+        phase_accumulator = (phase_accumulator + phase_increment)
 
     return output_array
 
@@ -94,7 +101,8 @@ if __name__ == '__main__':
 
     try:
         tone = generate_tone(sample_rate, tone_frequency, output_size,
-                             cosine_bit_width, cosine_table_length)
+                             cosine_bit_width, cosine_table_length,
+                             dither=False)
         print(f"Generated tone array of size: {tone.shape}")
         print(f"First 100 elements of the tone:\n{tone[:100]}")
         print(f"Data type of the tone array: {tone.dtype}")

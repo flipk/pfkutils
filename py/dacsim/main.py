@@ -10,7 +10,7 @@ import sys
 
 def animate_fft(start_freq, end_freq, freq_step, delay_ms,
                 sample_rate, bit_width, fft_size,
-                cosine_table_size, target_freq):
+                cosine_table_size, target_freq, dither):
     """
     Animates the FFT of a sine wave over a range of frequencies.
 
@@ -24,6 +24,7 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
         fft_size: the number of buckets to use in the fft
         target_freq: put the target freq in the plot title
         cosine_table_size: number of entries in the table
+        dither: apply random dithering to samples to reduce harmonics
     """
 
     fig, ax = plt.subplots()
@@ -46,7 +47,8 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
         orig_signal = generate_tone(sample_rate, frequency, 
                                     output_array_size=fft_size,
                                     cosine_table_bit_width=bit_width,
-                                    cosine_table_size=cosine_table_size)
+                                    cosine_table_size=cosine_table_size,
+                                    dither=dither)
 
         fft_dbfs = real_fft_dbfs(orig_signal, bit_width)
         line.set_ydata(fft_dbfs)
@@ -70,28 +72,35 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
 
 
 def usage():
-    print('usage: main.py <testnumber>')
+    print('usage: main.py <dither> <testnumber>')
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
+        usage()
+        return 1
+    if sys.argv[1] == "y":
+        dither = True
+    elif sys.argv[1] == "n":
+        dither = False
+    else:
         usage()
         return 1
     # these start and end values have strange offsets to avoid
     # exact ratios with the sample rate. when we line up to exact
     # ratios, the noise floor drops out and makes the animation
     # look not as good.
-    if sys.argv[1] == "1":
+    if sys.argv[2] == "1":
         target_freq = 125.0 / 4
         start_freq = 31240003
         end_freq = 31260003
         freq_step = 0.1e3
-    elif sys.argv[1] == "2":
+    elif sys.argv[2] == "2":
         target_freq = 125.0 / 6
         start_freq = 20823333
         end_freq = 20843333
         freq_step = 0.1e3
-    elif sys.argv[1] == "3":
+    elif sys.argv[2] == "3":
         target_freq = 125.0 / 8
         start_freq = 15615003
         end_freq = 15635003
@@ -108,7 +117,7 @@ def main() -> int:
 
     animate_fft(start_freq, end_freq, freq_step, delay_ms, sample_rate,
                 bit_width, fft_size, cosine_table_size,
-                target_freq)
+                target_freq, dither)
     return 0
 
 
