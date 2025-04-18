@@ -15,14 +15,6 @@ echo "wireshark-common wireshark-common/install-setuid boolean false" | debconf-
 
 apt-get install -y $( cat _setup_package_list_22.04.txt )
 
-pip -q install pip --upgrade
-pip install \
-     mypy-protobuf types-protobuf websockets \
-     jupyter numpy docx python-docx regex umap \
-     pandas scipy scikit-learn matplotlib \
-     statemachine python-statemachine \
-     mypy-protobuf types-protobuf importlib-resources
-
 cd /tmp
 mv _setup_user_shell.sh /
 chmod 755 /_setup_user_shell.sh

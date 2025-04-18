@@ -1,1 +1,4 @@
 _setup_su_reaper.cc
+join-ubuntu-22.sh
+start-ubuntu-22.sh
+_setup_user_shell.sh

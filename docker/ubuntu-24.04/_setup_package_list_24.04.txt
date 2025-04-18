@@ -4,7 +4,6 @@ build-essential
 bzip2
 cmake
 coreutils
-docker.io
 flex
 g++
 gcc
