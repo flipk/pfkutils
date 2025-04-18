@@ -68,7 +68,6 @@ def animate_fft(start_freq, end_freq, freq_step, delay_ms,
     ani = animation.FuncAnimation(fig, update, frames=num_frames,
                                   interval=delay_ms, blit=False)
     plt.show()
-    print('')
 
 
 def usage():
