@@ -4,7 +4,6 @@ build-essential
 bzip2
 cmake
 coreutils
-docker.io
 flex
 g++
 gcc
@@ -35,6 +34,7 @@ libssl-dev
 libuhd-dev
 libx11-dev
 libxaw7-dev
+libxcb-cursor0
 libxft-dev
 libxinerama-dev
 libxmu-dev
