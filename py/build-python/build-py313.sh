@@ -4,14 +4,14 @@ version=3.13.3
 short_vers=3.13
 packages="virtualenv pipreqs \
      protobuf mypy-protobuf types-protobuf python-protobuf \
-     numpy pandas scipy \
+     numpy pandas scipy pyqt6 \
      websockets matplotlib"
 
 # umap python-prctl
 
-build_path=/vice2/python/build-$short_vers
-install_path=/vice2/python/$short_vers
-dnload_path=/vice2/python/dnload-$short_vers
+build_path=/opt/pfk/build-$short_vers
+install_path=/opt/pfk/python-$short_vers
+dnload_path=/opt/pfk/build-$short_vers
 
 srctar=Python-${version}.tgz
 srcdir=Python-${version}
