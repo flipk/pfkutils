@@ -5,6 +5,15 @@ set -e -x
 dnf update -y
 dnf install -y `cat /tmp/_setup_package_list_43.txt`
 
+# /usr/sbin/emacs points to /etc/alternatives/emacs
+# which FOR SOME STUPID REASON insists on executing
+# the broken emacs-30.1-pgtk.  make it do the right thing.
+rm -f /usr/sbin/emacs
+cd /usr/bin
+rm -f emacs-30.1-pgtk
+ln -s emacs-lucid emacs
+cd /tmp
+
 # install rpmfusion repos and keys.
 
 fusion=https://download1.rpmfusion.org

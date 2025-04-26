@@ -17,7 +17,7 @@ diffutils
 doxygen
 doxygen-doxywizard
 e2fsprogs
-emacs
+emacs-lucid
 fftw-devel
 file
 findutils
