@@ -155,3 +155,6 @@ close the write-end has to be done as an eval for some reason
    eval "exec ${CAT[1]}>&-"
 
 
+extract cmd line args from previous command:
+   last arg:  esc-.
+   arbitrary arg by #:  esc-digit-esc-.
