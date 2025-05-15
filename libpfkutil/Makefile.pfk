@@ -15,6 +15,7 @@ libpfkutil_CXXSRCS = \
 	libpfkutil/signal_backtrace.cc \
 	libpfkutil/simpleUrl.cc \
 	libpfkutil/newbase64.cc \
+	libpfkutil/TimerManager.cc \
 	libpfkutil/timers.cc
 libpfkutil_INSTALL_HDRS = \
 	libpfkutil/LockWait.h \
@@ -35,6 +36,7 @@ libpfkutil_INSTALL_HDRS = \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h \
 	libpfkutil/newbase64.h \
+	libpfkutil/TimerManager.h \
 	libpfkutil/timers.h
 libpfkutil_HDRS = \
 	libpfkutil/LockWait.h \
@@ -53,6 +55,7 @@ libpfkutil_HDRS = \
 	libpfkutil/thread_slinger.h \
 	libpfkutil/signal_backtrace.h \
 	libpfkutil/simpleUrl.h \
+	libpfkutil/TimerManager.h \
 	libpfkutil/timers.h
 
 DOXYGEN_TARGETS += dll3 shmempipe threadslinger
@@ -97,3 +100,8 @@ PROG_TARGETS += threadstates_print
 threadstates_print_TARGET = $(OBJDIR)/thread_states_print
 threadstates_print_CXXSRCS = libpfkutil/thread_states_print.cc
 threadstates_print_DEPLIBS = $(libthreadstates_TARGET)
+
+PROG_TARGETS += timer_manager_test
+timer_manager_test_TARGET = $(OBJDIR)/timer_manager_test
+timer_manager_test_CXXSRCS = libpfkutil/TimerManager.cc
+timer_manager_test_DEFS = -D__TIMER_MANAGER_TEST_MAIN__
