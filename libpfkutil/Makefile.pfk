@@ -105,3 +105,4 @@ PROG_TARGETS += timer_manager_test
 timer_manager_test_TARGET = $(OBJDIR)/timer_manager_test
 timer_manager_test_CXXSRCS = libpfkutil/TimerManager.cc
 timer_manager_test_DEFS = -D__TIMER_MANAGER_TEST_MAIN__
+timer_manager_test_LIBS = -lpthread
