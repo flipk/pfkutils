@@ -6,3 +6,4 @@ protobuf
 mypy-protobuf
 python-prctl
 scipy
+cstruct
