@@ -11,6 +11,7 @@ ESC [ NUM B = cursor down NUM times
 ESC [ NUM C = cursor forward NUM times
 ESC [ NUM D = cursor backward NUM times
 ESC [ ROW ; COL H = move to position
+ESC [ Pn G = move to column Pn on current line
 ESC [ H = move to position 0,0 (HOME)
 ESC [ K = clear to end of line
 ESC [ J = clear to end of screen
