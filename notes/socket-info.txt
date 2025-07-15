@@ -1,0 +1,7 @@
+to get a list of all tcp and udp sockets:
+
+sudo ss -tuap
+
+in fedora, 'ss' is in the 'iproute' package.
+you can get some info without 'sudo' but not all process names will populate.
+'sudo' will give you all process names.
