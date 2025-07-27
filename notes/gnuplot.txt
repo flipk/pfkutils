@@ -37,3 +37,22 @@ do for [i=0:71] {
 set output
 set terminal wxt
 
+
+
+set hidden3d
+set dgrid3d 32,32 qnorm 2
+set xrange [0:31]
+set yrange [0:31]
+set xtics 4
+set ytics 4
+splot 'data.txt' with lines title 'SFDR'
+cntr=0
+stop=0
+bind "q" "stop=1"
+while (!stop) {
+   set view 70,cntr*5,1,1
+   replot
+   pause 0.1
+   cntr = (cntr + 1) % 72
+}
+bind "q" ""
