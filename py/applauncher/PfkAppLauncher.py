@@ -43,6 +43,7 @@ import configparser
 import subprocess
 import os
 import sys
+import shlex
 
 # Attempt to import Pillow (PIL). Provide guidance if it's not installed.
 try:
@@ -202,17 +203,21 @@ class AppLauncher(tk.Tk):
         for widget in frame.winfo_children():
             widget.config(bg=original_color)
 
-    def launch_application(self, executable_path):
+    def launch_application(self, command_line):
         """
         Executes the program specified in the config and optionally minimizes the launcher.
         """
         path = "[None]"
         try:
-            # Expand variables for cross-platform compatibility (e.g., ~ for home dir)
-            path = os.path.expanduser(os.path.expandvars(executable_path))
+            # Expand environment variables and user home directory shortcuts in the command
+            full_command = os.path.expanduser(os.path.expandvars(command_line))
+
+            # Use shlex to split the command line into a list of arguments,
+            # correctly handling spaces and quotes.
+            args = shlex.split(full_command)
 
             # Popen is non-blocking, so the launcher GUI remains responsive.
-            subprocess.Popen(path)
+            subprocess.Popen(args)
 
             if self.minimize_on_launch:
                 self.iconify()  # Minimizes the window
@@ -226,54 +231,9 @@ class AppLauncher(tk.Tk):
         Writes a default/example config.ini file if one does not exist.
         """
         default_content = R"""
-# Configuration file for PfkAppLauncher
 
-[Global]
-rows = 1
-columns = 3
-icon_size = 96
-window_x = 200
-window_y = 200
-minimize_on_launch = false
-bgcolor=#203040
-textcolor=#ffffff
-highlight_color=#00ff00
+< update me >
 
-# --- Application Slots ---
-# Define each application in a section named Slot_ROW_COLUMN, starting from 0.
-# For example, Slot_0_0 is the top-left item.
-
-# Example for Windows (Notepad)
-#[Slot_0_0]
-#title = Notepad
-## You can often use the executable itself as the icon source for .exe files.
-#icon = %SystemRoot%\System32\notepad.exe
-#executable = notepad.exe
-
-# Example for Windows (Calculator)
-#[Slot_0_1]
-#title = Calculator
-# You can also use PNG files.
-#icon = C:\path\to\your\icons\calculator.png
-#executable = calc.exe
-
-# Example for Linux (Terminal)
-[Slot_0_0]
-title = pfkterm
-icon = /usr/share/icons/gnome/48x48/apps/utilities-terminal.png
-executable = pfkterm
-
-# Example for Linux (Terminal)
-[Slot_0_1]
-title = Gnome-Terminal
-icon = /usr/share/icons/gnome/48x48/apps/utilities-terminal.png
-executable = gnome-terminal
-
-# Example for Linux (Firefox)
-[Slot_0_2]
-title = Firefox
-icon = /usr/share/icons/hicolor/48x48/apps/firefox.png
-executable = firefox
 """
         try:
             with open(self.config_path, 'w') as f:
