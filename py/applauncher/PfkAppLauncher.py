@@ -56,6 +56,10 @@ except ImportError:
     print("Please install it by running: pip install Pillow")
     sys.exit(1)
 
+try:
+    import ctypes
+except:
+    pass
 
 class AppLauncher(tk.Tk):
     """
@@ -212,12 +216,18 @@ class AppLauncher(tk.Tk):
             # Expand environment variables and user home directory shortcuts in the command
             full_command = os.path.expanduser(os.path.expandvars(command_line))
 
-            # Use shlex to split the command line into a list of arguments,
-            # correctly handling spaces and quotes.
-            args = shlex.split(full_command)
+            if full_command.startswith("shell:"):
+                SW_SHOWNORMAL = 1
+                ctypes.windll.shell32.ShellExecuteW(None, "open",
+                                                    full_command,
+                                                    None, None, SW_SHOWNORMAL)
+            else:
+                # Use shlex to split the command line into a list of arguments,
+                # correctly handling spaces and quotes.
+                args = shlex.split(full_command)
 
-            # Popen is non-blocking, so the launcher GUI remains responsive.
-            subprocess.Popen(args)
+                # Popen is non-blocking, so the launcher GUI remains responsive.
+                subprocess.Popen(args)
 
             if self.minimize_on_launch:
                 self.iconify()  # Minimizes the window
