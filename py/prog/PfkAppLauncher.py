@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+
+# prompt to google gemini:
+#
+# I would like to make a graphical “application launcher” program that
+# runs on both python-for-windows (pyw.exe) and python on linux.  This
+# program should take a configuration file in INI format which the user
+# may edit. The INI file should have a “global config” section. The
+# program should display a simple window with a grid of M by N
+# icons. Each grid position contains a square icon with a text title
+# beneath it.  The global config should have an entry configuring the
+# size of this grid (M and N, e.g. 5 rows by 8 columns) and an entry
+# configuring the pixel-size for the icons (e.g. 128x128) used in each
+# grid position. The INI file should have a section for each grid
+# square, and each of these sections should specify, for that grid
+# square, a path to an image file to use for the icon (supporting PNG
+# and ICO files minimally), a text title to go underneath the icon, and
+# a path to an executable to launch. The image should be scaled to fit
+# the configured pixel-size. In the case of an ICO file with multiple
+# resolutions, the best resolution for resizing into the grid should be
+# chosen. A grid square should highlight when the mouse cursor hovers
+# over it. A single click in a grid square should execute the configured
+# executable.  Whenever a program is launched in this way, the launcher
+# should optionally minimize itself after launching (a line in the
+# global config section of the INI file should enable or disable this
+# behavior).  The global config should also have an entry which
+# configures the horizontal and vertical position of the window upon
+# startup.  On Windows, it should be runnable with pyw.exe (no console)
+# or py.exe (with console, for debugging).
+#
+# changes by pfk:
+#
+# added support for configurable fg, bg, and highlight colors in the INI.
+# renamed default "config.ini" to "PfkAppLauncher.ini".
+# made it "clean" in PyCharm's syntax checker.
+# updated the "default config" to match my new INI syntax.
+#
+# TODO:  test on windows 11.
+
+import tkinter as tk
+from tkinter import messagebox
+import configparser
+import subprocess
+import os
+import sys
+
+# Attempt to import Pillow (PIL). Provide guidance if it's not installed.
+try:
+    # noinspection PyPackageRequirements,PyUnresolvedReferences
+    from PIL import Image, ImageTk
+except ImportError:
+    # Use a simple print statement for the error, as tkinter may not be
+    # available in a context where this script is first run.
+    print("ERROR: The 'Pillow' library is required to run this application.")
+    print("Please install it by running: pip install Pillow")
+    sys.exit(1)
+
+
+class AppLauncher(tk.Tk):
+    """
+    A simple graphical application launcher that displays a grid of icons
+    based on a configuration file.
+    """
+    CONFIG_INI_FILE = "PfkAppLauncher.ini"
+
+    def __init__(self, config_path):
+        super().__init__()
+
+        self.config_path = config_path
+        self.apps_config = []
+        self.icon_photo_images = []  # Must keep a reference to images
+
+        if not self.load_configuration():
+            # If config loading fails (e.g., file not found and couldn't be created),
+            # destroy the window and exit.
+            self.destroy()
+            return
+
+        # Configure the main window
+        self.title("Application Launcher")
+        self.geometry(f"+{self.win_x}+{self.win_y}")
+        self.resizable(False, False)
+
+        # Set the background color. 'SystemButtonFace' is a default system color.
+        self.configure(bg=self.bgcolor)
+
+        # Create the grid of application icons
+        self.create_grid_widgets()
+
+    # noinspection PyAttributeOutsideInit
+    def load_configuration(self):
+        """
+        Loads settings from the INI file. If the file doesn't exist,
+        it creates a default one.
+        """
+        if not os.path.exists(self.config_path):
+            self.create_default_config()
+            messagebox.showinfo(
+                "Configuration Created",
+                f"'{self.config_path}' was not found.\n\nA default configuration "
+                "file has been created for you. Please edit it to add your "
+                "applications."
+            )
+            return False
+
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+
+        # Load settings from the [Global] section with sane defaults
+        self.rows = config.getint('Global', 'rows', fallback=3)
+        self.cols = config.getint('Global', 'columns', fallback=5)
+        self.icon_size = config.getint('Global', 'icon_size', fallback=96)
+        self.win_x = config.getint('Global', 'window_x', fallback=200)
+        self.win_y = config.getint('Global', 'window_y', fallback=200)
+        self.minimize_on_launch = config.getboolean('Global', 'minimize_on_launch', fallback=True)
+        self.bgcolor = config.get('Global', 'bgcolor', fallback='black')
+        self.textcolor = config.get('Global', 'textcolor', fallback='white')
+        self.highlight_color = config.get('Global', 'highlight_color', fallback='white')
+
+        # Load settings for each application slot
+        for r in range(self.rows):
+            for c in range(self.cols):
+                section = f'Slot_{r}_{c}'
+                if config.has_section(section):
+                    self.apps_config.append({
+                        'title': config.get(section, 'title', fallback=''),
+                        'icon': config.get(section, 'icon', fallback=''),
+                        'executable': config.get(section, 'executable', fallback='')
+                    })
+                else:
+                    # Use None as a placeholder for an empty grid slot
+                    self.apps_config.append(None)
+        return True
+
+    def create_grid_widgets(self):
+        """
+        Populates the main window with frames, icons, and labels for each app.
+        """
+        for i, app_info in enumerate(self.apps_config):
+            row = i // self.cols
+            col = i % self.cols
+
+            # Each item is a Frame containing an icon Label and a text Label
+            item_frame = tk.Frame(self, bg=self.cget('bg'))
+            item_frame.grid(row=row, column=col, padx=10, pady=10, sticky='nsew')
+
+            if app_info and app_info['executable']:
+                # --- Icon Label ---
+                icon_label = tk.Label(item_frame, bg=item_frame.cget('bg'))
+                try:
+                    # Expand environment variables and user home directory shortcuts
+                    icon_path = os.path.expanduser(os.path.expandvars(app_info['icon']))
+                    if os.path.exists(icon_path):
+                        # Open image with Pillow
+                        img = Image.open(icon_path)
+                        # Resize the image smoothly to the configured size
+                        img.thumbnail((self.icon_size, self.icon_size), Image.Resampling.LANCZOS)
+                        # Convert to a PhotoImage that tkinter can use
+                        photo = ImageTk.PhotoImage(img)
+                        # noinspection PyTypeChecker
+                        icon_label.config(image=photo)
+                        # IMPORTANT: Keep a reference to the PhotoImage to prevent garbage collection
+                        self.icon_photo_images.append(photo)
+                    else:
+                        # Show text if icon is not found
+                        icon_label.config(text="[No Icon]", width=self.icon_size // 6, height=self.icon_size // 20)
+                except Exception as e:
+                    print(f"Error loading icon for {app_info['title']}: {e}")
+                    icon_label.config(text="[Bad Icon]", width=self.icon_size // 6, height=self.icon_size // 20)
+
+                icon_label.pack(pady=(0, 5))
+
+                # --- Title Label ---
+                title_label = tk.Label(item_frame,
+                                       text=app_info['title'],
+                                       bg=item_frame.cget('bg'),
+                                       fg=self.textcolor)
+                title_label.pack()
+
+                # --- Bind Events ---
+                # We use a lambda to pass the specific frame and command to the handlers.
+                # All widgets inside the frame should trigger the launch and hover effects.
+                widgets_to_bind = [item_frame, icon_label, title_label]
+                for widget in widgets_to_bind:
+                    widget.bind("<Enter>", lambda evt, f=item_frame: self.on_hover(f))
+                    widget.bind("<Leave>", lambda evt, f=item_frame: self.on_leave(f))
+                    widget.bind("<Button-1>", lambda evt, cmd=app_info['executable']: self.launch_application(cmd))
+            else:
+                # This is an empty slot, create a blank frame to maintain grid structure
+                item_frame.config(width=self.icon_size + 20, height=self.icon_size + 40)
+
+    def on_hover(self, frame):
+        """Changes background color of a grid item on mouse-over."""
+        frame.config(bg=self.highlight_color)
+        for widget in frame.winfo_children():
+            widget.config(bg=self.highlight_color)
+
+    def on_leave(self, frame):
+        """Resets background color when the mouse leaves a grid item."""
+        original_color = self.cget('bg')
+        frame.config(bg=original_color)
+        for widget in frame.winfo_children():
+            widget.config(bg=original_color)
+
+    def launch_application(self, executable_path):
+        """
+        Executes the program specified in the config and optionally minimizes the launcher.
+        """
+        path = "[None]"
+        try:
+            # Expand variables for cross-platform compatibility (e.g., ~ for home dir)
+            path = os.path.expanduser(os.path.expandvars(executable_path))
+
+            # Popen is non-blocking, so the launcher GUI remains responsive.
+            subprocess.Popen(path)
+
+            if self.minimize_on_launch:
+                self.iconify()  # Minimizes the window
+        except FileNotFoundError:
+            messagebox.showerror("Error", f"Executable not found:\n{path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to launch application:\n{e}")
+
+    def create_default_config(self):
+        """
+        Writes a default/example config.ini file if one does not exist.
+        """
+        default_content = R"""
+# Configuration file for PfkAppLauncher
+
+[Global]
+rows = 1
+columns = 3
+icon_size = 96
+window_x = 200
+window_y = 200
+minimize_on_launch = false
+bgcolor=#203040
+textcolor=#ffffff
+highlight_color=#00ff00
+
+# --- Application Slots ---
+# Define each application in a section named Slot_ROW_COLUMN, starting from 0.
+# For example, Slot_0_0 is the top-left item.
+
+# Example for Windows (Notepad)
+#[Slot_0_0]
+#title = Notepad
+## You can often use the executable itself as the icon source for .exe files.
+#icon = %SystemRoot%\System32\notepad.exe
+#executable = notepad.exe
+
+# Example for Windows (Calculator)
+#[Slot_0_1]
+#title = Calculator
+# You can also use PNG files.
+#icon = C:\path\to\your\icons\calculator.png
+#executable = calc.exe
+
+# Example for Linux (Terminal)
+[Slot_0_0]
+title = pfkterm
+icon = /usr/share/icons/gnome/48x48/apps/utilities-terminal.png
+executable = pfkterm
+
+# Example for Linux (Terminal)
+[Slot_0_1]
+title = Gnome-Terminal
+icon = /usr/share/icons/gnome/48x48/apps/utilities-terminal.png
+executable = gnome-terminal
+
+# Example for Linux (Firefox)
+[Slot_0_2]
+title = Firefox
+icon = /usr/share/icons/hicolor/48x48/apps/firefox.png
+executable = firefox
+"""
+        try:
+            with open(self.config_path, 'w') as f:
+                f.write(default_content)
+        except Exception as e:
+            messagebox.showerror("Fatal Error", f"Could not create default config file:\n{e}")
+
+
+if __name__ == "__main__":
+    # Create the main application instance and run it
+    app = AppLauncher(config_path=AppLauncher.CONFIG_INI_FILE)
+    if app.winfo_exists():
+        app.mainloop()
