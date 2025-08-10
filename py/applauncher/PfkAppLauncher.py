@@ -46,31 +46,27 @@ class AppLauncher(tk.Tk):
 
         # --- Set Taskbar Icon (Platform Specific) ---
         # This must be done after the window is initialized but before the main loop.
-        if sys.platform == "win32" and self.taskbar_icon:
-            try:
-                icon_path = os.path.expanduser(os.path.expandvars(self.taskbar_icon))
-                if os.path.exists(icon_path):
-                    self.iconbitmap(icon_path)
-                else:
-                    print(f"Warning: Taskbar icon not found at '{icon_path}'")
-            except Exception as e:
-                print(f"Warning: Failed to set taskbar icon. {e}")
-        else:
-            if self.taskbar_icon:
+        if self.taskbar_icon:
+            if sys.platform == "win32":
                 try:
                     icon_path = os.path.expanduser(os.path.expandvars(self.taskbar_icon))
-                    if not os.path.exists(icon_path):
-                        print(f"Warning: Taskbar icon not found at '{icon_path}'")
-                    elif sys.platform == "win32":
-                        # On Windows, use iconbitmap with an .ico file
+                    if os.path.exists(icon_path):
                         self.iconbitmap(icon_path)
                     else:
-                        # On Linux (and other platforms), use iconphoto with a PNG/GIF
+                        print(f"Warning: Taskbar icon not found at '{icon_path}'")
+                except Exception as e:
+                    print(f"Warning: Failed to set taskbar icon. {e}")
+            else:
+                try:
+                    icon_path = self.taskbar_icon
+                    if not os.path.exists(icon_path):
+                        print(f"Warning: Taskbar icon not found at '{icon_path}'")
+                    else:
+                        # use iconphoto with a PNG/GIF.
                         # We must keep a reference to this image to prevent it from being
                         # garbage collected.
                         self.taskbar_photo_image = tk.PhotoImage(file=icon_path)
                         self.iconphoto(True, self.taskbar_photo_image)
-
                 except Exception as e:
                     print(f"Warning: Failed to set taskbar icon. {e}")
 
@@ -181,6 +177,7 @@ class AppLauncher(tk.Tk):
             else:
                 # This is an empty slot, create a blank frame to maintain grid structure
                 item_frame.config(width=self.icon_size + 20, height=self.icon_size + 40)
+            self.bind("<Key-q>", lambda evt: self.destroy())
 
     def on_hover(self, frame):
         """Changes background color of a grid item on mouse-over."""
