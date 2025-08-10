@@ -1,0 +1,12 @@
+
+in PowerShell, use "Get-Command pyw.exe" to figure out where your python install is.
+
+target path:
+
+C:\Users\pknaack1\AppData\Local\Programs\Python\Launcher\pyw.exe PfkAppLauncher.py config-windows.ini
+
+start in:
+
+C:\Users\pknaack1\data\applauncher\
+
+then, Change Icon and use the app-launcher.ico file.

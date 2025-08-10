@@ -1,0 +1,14 @@
+
+powershell:
+Get-StartApps
+Start-Process "shell:appsFolder\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"
+Start-Process "shell:appsFolder\Chrome._crx_fmgjjdbjimcfncm.UserData.Profile3"
+
+Python:
+import ctypes
+SW_SHOWNORMAL = 1
+app_id = R"shell:appsFolder\{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe"
+app_id = R"shell:appsFolder\CanonicalGroupLimited.Ubuntu22.04LTS_79rhkp1fndgsc!ubuntu2204"
+ctypes.windll.shell32.ShellExecuteW(None, "open", app_id, None, None, SW_SHOWNORMAL)
+
+
