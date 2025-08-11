@@ -76,11 +76,15 @@ class AppLauncher(tk.Tk):
         # Create the grid of application icons
         self.create_grid_widgets()
 
-        if sys.platform == "linux":
+        homedir = None
+        if sys.platform == "win32":
+            # launched apps should start in USERPROFILE directory
+            homedir = os.getenv('USERPROFILE')
+        else:
             # launched apps should start in $HOME
             homedir = os.getenv('HOME')
-            if homedir:
-                os.chdir(homedir)
+        if homedir:
+            os.chdir(homedir)
 
     # noinspection PyAttributeOutsideInit
     def load_configuration(self):
