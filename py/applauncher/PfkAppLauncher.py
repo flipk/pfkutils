@@ -107,6 +107,7 @@ class AppLauncher(tk.Tk):
         self.rows = config.getint('Global', 'rows', fallback=3)
         self.cols = config.getint('Global', 'columns', fallback=5)
         self.icon_size = config.getint('Global', 'icon_size', fallback=96)
+        self.padding = config.getint('Global', 'padding', fallback=10)
         self.win_x = config.getint('Global', 'window_x', fallback=200)
         self.win_y = config.getint('Global', 'window_y', fallback=200)
         self.minimize_on_launch = config.getboolean('Global', 'minimize_on_launch', fallback=True)
@@ -141,7 +142,9 @@ class AppLauncher(tk.Tk):
 
             # Each item is a Frame containing an icon Label and a text Label
             item_frame = tk.Frame(self, bg=self.cget('bg'))
-            item_frame.grid(row=row, column=col, padx=10, pady=10, sticky='nsew')
+            item_frame.grid(row=row, column=col,
+                            padx=self.padding, pady=self.padding,
+                            sticky='nsew')
 
             if app_info and app_info['cmd']:
                 # --- Icon Label ---
@@ -167,7 +170,7 @@ class AppLauncher(tk.Tk):
                     print(f"Error loading icon for {app_info['title']}: {e}")
                     icon_label.config(text="[Bad Icon]", width=self.icon_size // 6, height=self.icon_size // 20)
 
-                icon_label.pack(pady=(0, 5))
+                icon_label.pack(pady=(0, 0))
 
                 # --- Title Label ---
                 title_label = tk.Label(item_frame,
@@ -186,7 +189,7 @@ class AppLauncher(tk.Tk):
                     widget.bind("<Button-1>", lambda evt, cmd=app_info['cmd']: self.launch_application(cmd))
             else:
                 # This is an empty slot, create a blank frame to maintain grid structure
-                item_frame.config(width=self.icon_size + 20, height=self.icon_size + 40)
+                item_frame.config(width=self.icon_size, height=self.icon_size)
             self.bind("<Key-q>", lambda evt: self.destroy())
 
     def on_hover(self, frame):
