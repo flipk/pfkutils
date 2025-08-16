@@ -1,0 +1,20 @@
+
+to list TCP and UDP ports in use :
+
+   ss -tuaxp
+
+note combining x and p makes the output very wide, needs "| less"
+
+  -a, --all
+    Display  both  listening and non-listening (for TCP this means
+    established connections) sockets.
+  -t, --tcp
+    Display TCP sockets.
+  -u, --udp
+    Display UDP sockets.
+  -x, --unix
+    Display Unix domain sockets (alias for -f unix).
+  -p, --processes
+    Show process using socket.
+
+many other options, see man page!
