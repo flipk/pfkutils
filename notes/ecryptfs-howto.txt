@@ -1,0 +1,41 @@
+
+first time:
+ecryptfs-setup-private
+
+to mount:
+ecryptfs-mount-private
+
+to unmount:
+ecryptfs-umount-private
+
+Files in ~/Private/
+Storage in ~/.Private/
+Setup files in ~/.ecryptfs/
+
+Note ~/.ecryptfs/auto-mount and auto-umount can be touched or removed
+to cause automounting during login/logout (done by a PAM plugin i guess)
+
+--------------------
+
+create the directories
+e.g. mount point:  /home/user/project/
+The backing store: /home/user/.ecryptfs.project/
+
+the first time you run this it will ask a bunch of questions:
+
+sudo mount -t ecryptfs /home/user/.ecryptfs.project/ /home/user/project/
+
+When it mounts, it will print option values.  Turn them into a command
+for the next time you mount (and save this somewhere!):
+
+sudo mount -t ecryptfs -o \
+ecryptfs_unlink_sigs,\
+ecryptfs_passthrough=n,\
+ecryptfs_fnek_sig=<HEX NUMBER>,\
+ecryptfs_key_bytes=32,\
+ecryptfs_cipher=aes,\
+ecryptfs_sig=<HEX BYTES> \
+/path/to/store  /path/to/mountpoint
+
+when done:
+sudo umount /home/user/project/
