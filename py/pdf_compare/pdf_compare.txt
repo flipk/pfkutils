@@ -1,0 +1,7 @@
+
+to make this into a standalone exe for windows:
+
+python -m venv venv
+venv\Scripts\activate
+pip install Pillow PyMuPDF pyinstaller
+pyinstaller --onefile --windowed pdf_compare.py

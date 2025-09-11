@@ -7,4 +7,5 @@ mypy-protobuf
 python-prctl
 scipy
 cstruct
-easyocr
+pillow
+pymupdf
