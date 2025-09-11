@@ -8,6 +8,7 @@ import os
 import sys
 import shlex
 import ctypes
+from enum import Enum
 
 # Attempt to import Pillow (PIL). Provide guidance if it's not installed.
 try:
@@ -21,6 +22,11 @@ except ImportError:
     sys.exit(1)
 
 
+class Lower(Enum):
+    IMMEDIATE = 1
+    TIMER = 2
+    NONE = 3
+
 class AppLauncher(tk.Tk):
     """
     A simple graphical application launcher that displays a grid of icons
@@ -32,6 +38,7 @@ class AppLauncher(tk.Tk):
         self.config_path = config_path
         self.apps_config = []
         self.icon_photo_images = []  # Must keep a reference to images
+        self.lower_flag = Lower.NONE
 
         if not self.load_configuration():
             # If config loading fails (e.g., file not found and couldn't be created),
@@ -42,7 +49,7 @@ class AppLauncher(tk.Tk):
         # Configure the main window
         self.title("Application Launcher")
         self.geometry(f"+{self.win_x}+{self.win_y}")
-        self.resizable(False, False)
+        # self.resizable(False, False)
 
         # --- Set Taskbar Icon (Platform Specific) ---
         # This must be done after the window is initialized but before the main loop.
@@ -116,6 +123,20 @@ class AppLauncher(tk.Tk):
         self.bgcolor = config.get('Global', 'bgcolor', fallback='black')
         self.textcolor = config.get('Global', 'textcolor', fallback='white')
         self.highlight_color = config.get('Global', 'highlight_color', fallback='white')
+
+        lower = config.get('Global','lower', fallback='notset')
+        if lower == 'immediate':
+            self.lower_flag = Lower.IMMEDIATE
+        elif lower == 'timer':
+            self.lower_flag = Lower.TIMER
+        elif lower == 'none':
+            self.lower_flag = Lower.NONE
+        else:
+            messagebox.showinfo(
+                "Config file error",
+                "Global.lower must be one of immediate, timer, or none"
+            )
+            return False
 
         # Load settings for each application slot
         for r in range(self.rows):
@@ -209,6 +230,9 @@ class AppLauncher(tk.Tk):
         """
         Executes the program specified in the config and optionally minimizes the launcher.
         """
+        if command_line == "LOWER":
+            self.lower()
+            return
         path = "[None]"
         try:
             # Expand environment variables and user home directory shortcuts in the command
@@ -236,6 +260,12 @@ class AppLauncher(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to launch application:\n{e}")
 
+        if self.lower_flag == Lower.IMMEDIATE:
+            self.lower()
+        elif self.lower_flag == Lower.TIMER:
+            def lower_window():
+                self.lower()
+            self.after(1000, lower_window)
 
 if __name__ == "__main__":
     # Create the main application instance and run it
