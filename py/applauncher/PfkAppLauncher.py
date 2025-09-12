@@ -146,7 +146,8 @@ class AppLauncher(tk.Tk):
                     self.apps_config.append({
                         'title': config.get(section, 'title', fallback=''),
                         'icon': config.get(section, 'icon', fallback=''),
-                        'cmd': config.get(section, 'cmd', fallback='')
+                        'cmd': config.get(section, 'cmd', fallback=''),
+                        'startfile': config.get(section, 'startfile', fallback=''),
                     })
                 else:
                     # Use None as a placeholder for an empty grid slot
@@ -167,7 +168,7 @@ class AppLauncher(tk.Tk):
                             padx=self.padding, pady=self.padding,
                             sticky='nsew')
 
-            if app_info and app_info['cmd']:
+            if app_info and (app_info['cmd'] or app_info['startfile']):
                 # --- Icon Label ---
                 icon_label = tk.Label(item_frame, bg=item_frame.cget('bg'))
                 try:
@@ -207,7 +208,11 @@ class AppLauncher(tk.Tk):
                 for widget in widgets_to_bind:
                     widget.bind("<Enter>", lambda evt, f=item_frame: self.on_hover(f))
                     widget.bind("<Leave>", lambda evt, f=item_frame: self.on_leave(f))
-                    widget.bind("<Button-1>", lambda evt, cmd=app_info['cmd']: self.launch_application(cmd))
+                    widget.bind("<Button-1>", lambda
+                                evt,
+                                cmd=app_info['cmd'],
+                                startfile=app_info['startfile']:
+                                self.launch_application(cmd, startfile))
             else:
                 # This is an empty slot, create a blank frame to maintain grid structure
                 item_frame.config(width=self.icon_size, height=self.icon_size)
@@ -226,7 +231,7 @@ class AppLauncher(tk.Tk):
         for widget in frame.winfo_children():
             widget.config(bg=original_color)
 
-    def launch_application(self, command_line):
+    def launch_application(self, command_line, startfile):
         """
         Executes the program specified in the config and optionally minimizes the launcher.
         """
@@ -235,23 +240,31 @@ class AppLauncher(tk.Tk):
             return
         path = "[None]"
         try:
-            # Expand environment variables and user home directory shortcuts in the command
-            full_command = os.path.expanduser(os.path.expandvars(command_line))
+            if command_line:
+                # Expand environment variables and user home directory shortcuts in the command
+                full_command = os.path.expanduser(os.path.expandvars(command_line))
 
-            if full_command.startswith("shell:"):
-                # this name matches the C library #define name
-                # noinspection PyPep8Naming
-                SW_SHOWNORMAL = 1
-                ctypes.windll.shell32.ShellExecuteW(None, "open",
-                                                    full_command,
-                                                    None, None, SW_SHOWNORMAL)
-            else:
-                # Use shlex to split the command line into a list of arguments,
-                # correctly handling spaces and quotes.
-                args = shlex.split(full_command)
+                if full_command.startswith("shell:"):
+                    # this name matches the C library #define name
+                    # noinspection PyPep8Naming
+                    SW_SHOWNORMAL = 1
+                    ctypes.windll.shell32.ShellExecuteW(None, "open",
+                                                        full_command,
+                                                        None, None, SW_SHOWNORMAL)
+                else:
+                    # Use shlex to split the command line into a list of arguments,
+                    # correctly handling spaces and quotes.
+                    args = shlex.split(full_command)
 
-                # Popen is non-blocking, so the launcher GUI remains responsive.
-                subprocess.Popen(args)
+                    # Popen is non-blocking, so the launcher GUI remains responsive.
+                    subprocess.Popen(args)
+
+            elif startfile:
+                # on windows, some programs don't start properly unless they go through
+                # startfile(). MS Excel is one such program -- for some reason, it won't
+                # save its window size&position on exit if it was started by Popen,
+                # but it works properly if started by startfile().
+                os.startfile(startfile)
 
             if self.minimize_on_launch:
                 self.iconify()  # Minimizes the window
