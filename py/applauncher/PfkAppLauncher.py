@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 import configparser
 import subprocess
+import threading
 import os
 import sys
 import shlex
@@ -264,7 +265,11 @@ class AppLauncher(tk.Tk):
                 # startfile(). MS Excel is one such program -- for some reason, it won't
                 # save its window size&position on exit if it was started by Popen,
                 # but it works properly if started by startfile().
-                os.startfile(startfile)
+                def startthread():
+                    # also, start it in a child thread, because this often blocks for a long
+                    # time while the application launches (!!)
+                    os.startfile(startfile)
+                threading.Thread(target=startthread, daemon=True).start()
 
             if self.minimize_on_launch:
                 self.iconify()  # Minimizes the window
