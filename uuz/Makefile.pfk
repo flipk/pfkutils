@@ -2,6 +2,10 @@
 
 ifeq ($(PFK_BUILD_uuz),1)
 
+ifeq ($(PFK_BUILD_protossl),0)
+$(error PFK_BUILD_protossl is required for PFK_BUILD_uuz)
+endif
+
 # enable this to see what PROTOSRCS does
 # DEBUG_H_MACRO_GENERATION=y
 
