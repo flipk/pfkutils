@@ -10,6 +10,7 @@ import sys
 import shlex
 import ctypes
 from enum import Enum
+import datetime
 
 # Attempt to import Pillow (PIL). Provide guidance if it's not installed.
 try:
@@ -39,6 +40,7 @@ class AppLauncher(tk.Tk):
         self.config_path = config_path
         self.apps_config = []
         self.icon_photo_images = []  # Must keep a reference to images
+        self.time_labels = []  # To hold labels that display the time
         self.lower_flag = Lower.NONE
 
         if not self.load_configuration():
@@ -94,6 +96,9 @@ class AppLauncher(tk.Tk):
         if homedir:
             os.chdir(homedir)
 
+        # Start the clock update loop
+        self.update_time_labels()
+
     # noinspection PyAttributeOutsideInit
     def load_configuration(self):
         """
@@ -115,6 +120,8 @@ class AppLauncher(tk.Tk):
         self.rows = config.getint('Global', 'rows', fallback=3)
         self.cols = config.getint('Global', 'columns', fallback=5)
         self.icon_size = config.getint('Global', 'icon_size', fallback=96)
+        self.time_font = config.get('Global', 'time_font', fallback="Consolas")
+        self.time_font_size = config.getint('Global', 'time_font_size', fallback=12)
         self.padding = config.getint('Global', 'padding', fallback=10)
         self.win_x = config.getint('Global', 'window_x', fallback=200)
         self.win_y = config.getint('Global', 'window_y', fallback=200)
@@ -169,7 +176,19 @@ class AppLauncher(tk.Tk):
                             padx=self.padding, pady=self.padding,
                             sticky='nsew')
 
-            if app_info and (app_info['cmd'] or app_info['startfile']):
+            # Special case for displaying the time
+            if app_info and app_info.get('cmd') == 'TIME':
+                time_label = tk.Label(item_frame,
+                                      text="",  # Initial text, will be updated
+                                      bg=item_frame.cget('bg'),
+                                      fg=self.textcolor,
+                                      font=(self.time_font,
+                                            self.time_font_size,
+                                            "bold"))
+                time_label.pack(expand=True, fill='both')
+                self.time_labels.append(time_label)
+
+            elif app_info and (app_info['cmd'] or app_info['startfile']):
                 # --- Icon Label ---
                 icon_label = tk.Label(item_frame, bg=item_frame.cget('bg'))
                 try:
@@ -218,6 +237,14 @@ class AppLauncher(tk.Tk):
                 # This is an empty slot, create a blank frame to maintain grid structure
                 item_frame.config(width=self.icon_size, height=self.icon_size)
             self.bind("<Key-q>", lambda evt: self.destroy())
+
+    def update_time_labels(self):
+        """Updates all time labels with the current time and reschedules itself."""
+        current_time = datetime.datetime.now().strftime('%m/%d/%y\n%H:%M:%S\n%A')
+        for label in self.time_labels:
+            label.config(text=current_time)
+        # Schedule the next update in 1000ms (1 second)
+        self.after(1000, self.update_time_labels)
 
     def on_hover(self, frame):
         """Changes background color of a grid item on mouse-over."""
