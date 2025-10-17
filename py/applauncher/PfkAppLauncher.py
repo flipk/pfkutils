@@ -122,6 +122,8 @@ class AppLauncher(tk.Tk):
         self.icon_size = config.getint('Global', 'icon_size', fallback=96)
         self.time_font = config.get('Global', 'time_font', fallback="Consolas")
         self.time_font_size = config.getint('Global', 'time_font_size', fallback=12)
+        self.time_format = config.get('Global', 'time_format', fallback='%m/%d/%y\n%H:%M:%S\n%A')
+        self.time_format = self.time_format.replace('\\n','\n')
         self.padding = config.getint('Global', 'padding', fallback=10)
         self.win_x = config.getint('Global', 'window_x', fallback=200)
         self.win_y = config.getint('Global', 'window_y', fallback=200)
@@ -240,7 +242,7 @@ class AppLauncher(tk.Tk):
 
     def update_time_labels(self):
         """Updates all time labels with the current time and reschedules itself."""
-        current_time = datetime.datetime.now().strftime('%m/%d/%y\n%H:%M:%S\n%A')
+        current_time = datetime.datetime.now().strftime(self.time_format)
         for label in self.time_labels:
             label.config(text=current_time)
         # Schedule the next update in 1000ms (1 second)
