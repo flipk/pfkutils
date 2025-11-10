@@ -1,0 +1,20 @@
+
+syntax = "proto2";
+
+package wstest;
+
+enum MessageType {
+    MESSAGE_TYPE_HELLO = 1;
+    MESSAGE_TYPE_BYE   = 2;
+    MESSAGE_TYPE_DATA  = 3;
+}
+
+message Data {
+    optional string  data = 1;
+}
+
+message ClientMsg {
+    optional int32 conn_id = 1;
+    optional MessageType type = 2;
+    optional Data data = 3;
+}
