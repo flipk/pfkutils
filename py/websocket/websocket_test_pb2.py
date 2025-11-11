@@ -15,13 +15,13 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14websocket_test.proto\x12\x06wstest\"\x14\n\x04\x44\x61ta\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\t\"[\n\tClientMsg\x12\x0f\n\x07\x63onn_id\x18\x01 \x01(\x05\x12!\n\x04type\x18\x02 \x01(\x0e\x32\x13.wstest.MessageType\x12\x1a\n\x04\x64\x61ta\x18\x03 \x01(\x0b\x32\x0c.wstest.Data*R\n\x0bMessageType\x12\x16\n\x12MESSAGE_TYPE_HELLO\x10\x01\x12\x14\n\x10MESSAGE_TYPE_BYE\x10\x02\x12\x15\n\x11MESSAGE_TYPE_DATA\x10\x03')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14websocket_test.proto\x12\x06wstest\"\"\n\x04\x44\x61ta\x12\x11\n\x04\x64\x61ta\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x07\n\x05_data\"\xac\x01\n\tClientMsg\x12\x14\n\x07\x63onn_id\x18\x01 \x01(\x05H\x00\x88\x01\x01\x12\x15\n\x08username\x18\x02 \x01(\tH\x01\x88\x01\x01\x12&\n\x04type\x18\x03 \x01(\x0e\x32\x13.wstest.MessageTypeH\x02\x88\x01\x01\x12\x1f\n\x04\x64\x61ta\x18\x04 \x01(\x0b\x32\x0c.wstest.DataH\x03\x88\x01\x01\x42\n\n\x08_conn_idB\x0b\n\t_usernameB\x07\n\x05_typeB\x07\n\x05_data*R\n\x0bMessageType\x12\x16\n\x12MESSAGE_TYPE_HELLO\x10\x00\x12\x14\n\x10MESSAGE_TYPE_BYE\x10\x01\x12\x15\n\x11MESSAGE_TYPE_DATA\x10\x02\x62\x06proto3')
 
 _MESSAGETYPE = DESCRIPTOR.enum_types_by_name['MessageType']
 MessageType = enum_type_wrapper.EnumTypeWrapper(_MESSAGETYPE)
-MESSAGE_TYPE_HELLO = 1
-MESSAGE_TYPE_BYE = 2
-MESSAGE_TYPE_DATA = 3
+MESSAGE_TYPE_HELLO = 0
+MESSAGE_TYPE_BYE = 1
+MESSAGE_TYPE_DATA = 2
 
 
 _DATA = DESCRIPTOR.message_types_by_name['Data']
@@ -43,10 +43,10 @@ _sym_db.RegisterMessage(ClientMsg)
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _MESSAGETYPE._serialized_start=147
-  _MESSAGETYPE._serialized_end=229
+  _MESSAGETYPE._serialized_start=243
+  _MESSAGETYPE._serialized_end=325
   _DATA._serialized_start=32
-  _DATA._serialized_end=52
-  _CLIENTMSG._serialized_start=54
-  _CLIENTMSG._serialized_end=145
+  _DATA._serialized_end=66
+  _CLIENTMSG._serialized_start=69
+  _CLIENTMSG._serialized_end=241
 # @@protoc_insertion_point(module_scope)

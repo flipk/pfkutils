@@ -43,6 +43,7 @@ class WebsocketProtobufServer:
     _port: int
     _svr: wsserver.Server
     _conns: dict[int, wsserver.ServerConnection]
+    _connlock: threading.Lock
 
     class QmsgType(Enum):
         CONNECT = 1
@@ -67,26 +68,40 @@ class WebsocketProtobufServer:
                  recv_msg_factory: Callable[[], pbmsg.Message],
                  debug_text: bool = False,
                  debug_binary: bool = False):
+        """construct a websocket server.
+        :param port:  TCP Port # to listen for connections
+        :param recv_msg_factory: a function which returns a new protobuf
+              message of the desired receive-type. will be called once
+              for each new websocket.
+        :param debug_text:  set to True for full protobuf decode of messages
+        :param debug_binary: set to True for binary debug of messages
+        """
+        self.ok = False
         self._port = port
         self._recv_msg_factory = recv_msg_factory
         self._debug_text = debug_text
         self._debug_binary = debug_binary
         self._recv_q = queue.Queue()
         self._conns = {}
+        self._connlock = threading.Lock()
         self._svr = wsserver.serve(handler=self._conn_handler,
                                    host="",
                                    port=self._port)
         self._svr_thread = threading.Thread(target=self._svr.serve_forever,
                                             daemon=True)
         self._svr_thread.start()
+        self.ok = True
 
     def _conn_handler(self, conn: wsserver.ServerConnection):
+        """internal method spawned by serve_forever as a new thread
+        for each new websocket connection."""
         recv_msg: pbmsg.Message = self._recv_msg_factory()
-        while True:
-            conn_id = random.randrange(1, 1000000)
-            if conn_id not in self._conns:
-                break
-        self._conns[conn_id] = conn
+        with self._connlock:
+            while True:
+                conn_id = random.randrange(1, 100000)
+                if conn_id not in self._conns:
+                    break
+            self._conns[conn_id] = conn
         self._recv_q.put(
             WebsocketProtobufServer._Qmsg(
                 conn_id,
@@ -114,26 +129,49 @@ class WebsocketProtobufServer:
             WebsocketProtobufServer._Qmsg(
                 conn_id,
                 WebsocketProtobufServer.QmsgType.DISCO))
-        del self._conns[conn_id]
+        with self._connlock:
+            del self._conns[conn_id]
 
-    def get_message(self) -> (int,
-                              WebsocketProtobufServer.QmsgType,
-                              Union[pbmsg.Message, str]):
+    def shutdown(self):
+        """shutdown the server port, then close all open connections,
+        then return EXIT to the get_message caller."""
+        self._svr.shutdown()
+        with self._connlock:
+            for c in self._conns.values():
+                c.close()
+        self._recv_q.put(WebsocketProtobufServer._Qmsg(0, self.EXIT))
+
+    def get_message(self, timeout: float | None = None) -> \
+            (int,
+             WebsocketProtobufServer.QmsgType,
+             Union[pbmsg.Message, str]):
+        """block and wait for the next incoming message on any
+        websocket.  also returns if a new socket has been opened or an
+        existing one has been closed. NOTE when this returns a decoded
+        message, it is the same message object reused for each
+        successive message, so be sure to consume what you need from
+        the msg before returning to next call to this function."""
         qm: WebsocketProtobufServer._Qmsg
-        qm = self._recv_q.get()
+        qm = self._recv_q.get(timeout=timeout)
         if qm:
+            if qm.t == self.EXIT:
+                return 0, self.EXIT, ''
             return qm.conn_id, qm.t, qm.msg
         return 0, self.EXIT, ''
 
     def send_message(self, conn_id: int, msg: pbmsg.Message,
-                     all_but: int = -1) -> (bool, str):
-        if conn_id == 0:
-            clist = [c for i, c in self._conns.items() if i != all_but]
-        else:
-            conn = self._conns.get(conn_id, None)
-            if not conn:
-                return False, "conn_id not valid"
-            clist = [conn]
+                     all_except: int = -1) -> (bool, str):
+        """send a message on the specified connection id.
+        if conn_id is zero, that means broadcast to all open sockets.
+        when conn_id==0, all_but specifies one conn_id as an exception."""
+        with self._connlock:
+            if conn_id == 0:
+                clist = [c for i, c in self._conns.items() if i != all_except]
+            else:
+                conn = self._conns.get(conn_id, None)
+                if not conn:
+                    return False, "conn_id not valid"
+                clist = [conn]
         body = msg.SerializeToString()
         if self._debug_text:
             print(f'sending message: {msg}')

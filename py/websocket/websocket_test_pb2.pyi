@@ -23,15 +23,15 @@ class _MessageType:
 
 class _MessageTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_MessageType.ValueType], builtins.type):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
-    MESSAGE_TYPE_HELLO: _MessageType.ValueType  # 1
-    MESSAGE_TYPE_BYE: _MessageType.ValueType  # 2
-    MESSAGE_TYPE_DATA: _MessageType.ValueType  # 3
+    MESSAGE_TYPE_HELLO: _MessageType.ValueType  # 0
+    MESSAGE_TYPE_BYE: _MessageType.ValueType  # 1
+    MESSAGE_TYPE_DATA: _MessageType.ValueType  # 2
 
 class MessageType(_MessageType, metaclass=_MessageTypeEnumTypeWrapper): ...
 
-MESSAGE_TYPE_HELLO: MessageType.ValueType  # 1
-MESSAGE_TYPE_BYE: MessageType.ValueType  # 2
-MESSAGE_TYPE_DATA: MessageType.ValueType  # 3
+MESSAGE_TYPE_HELLO: MessageType.ValueType  # 0
+MESSAGE_TYPE_BYE: MessageType.ValueType  # 1
+MESSAGE_TYPE_DATA: MessageType.ValueType  # 2
 global___MessageType = MessageType
 
 @typing.final
@@ -45,8 +45,9 @@ class Data(google.protobuf.message.Message):
         *,
         data: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["data", b"data"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["data", b"data"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_data", b"_data", "data", b"data"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_data", b"_data", "data", b"data"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing.Literal["_data", b"_data"]) -> typing.Literal["data"] | None: ...
 
 global___Data = Data
 
@@ -55,9 +56,11 @@ class ClientMsg(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
     CONN_ID_FIELD_NUMBER: builtins.int
+    USERNAME_FIELD_NUMBER: builtins.int
     TYPE_FIELD_NUMBER: builtins.int
     DATA_FIELD_NUMBER: builtins.int
     conn_id: builtins.int
+    username: builtins.str
     type: global___MessageType.ValueType
     @property
     def data(self) -> global___Data: ...
@@ -65,10 +68,19 @@ class ClientMsg(google.protobuf.message.Message):
         self,
         *,
         conn_id: builtins.int | None = ...,
+        username: builtins.str | None = ...,
         type: global___MessageType.ValueType | None = ...,
         data: global___Data | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["conn_id", b"conn_id", "data", b"data", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["conn_id", b"conn_id", "data", b"data", "type", b"type"]) -> None: ...
+    def HasField(self, field_name: typing.Literal["_conn_id", b"_conn_id", "_data", b"_data", "_type", b"_type", "_username", b"_username", "conn_id", b"conn_id", "data", b"data", "type", b"type", "username", b"username"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing.Literal["_conn_id", b"_conn_id", "_data", b"_data", "_type", b"_type", "_username", b"_username", "conn_id", b"conn_id", "data", b"data", "type", b"type", "username", b"username"]) -> None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_conn_id", b"_conn_id"]) -> typing.Literal["conn_id"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_data", b"_data"]) -> typing.Literal["data"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_type", b"_type"]) -> typing.Literal["type"] | None: ...
+    @typing.overload
+    def WhichOneof(self, oneof_group: typing.Literal["_username", b"_username"]) -> typing.Literal["username"] | None: ...
 
 global___ClientMsg = ClientMsg

@@ -1,12 +1,12 @@
 
-syntax = "proto2";
+syntax = "proto3";
 
 package wstest;
 
 enum MessageType {
-    MESSAGE_TYPE_HELLO = 1;
-    MESSAGE_TYPE_BYE   = 2;
-    MESSAGE_TYPE_DATA  = 3;
+    MESSAGE_TYPE_HELLO = 0;
+    MESSAGE_TYPE_BYE   = 1;
+    MESSAGE_TYPE_DATA  = 2;
 }
 
 message Data {
@@ -15,6 +15,7 @@ message Data {
 
 message ClientMsg {
     optional int32 conn_id = 1;
-    optional MessageType type = 2;
-    optional Data data = 3;
+    optional string username = 2;
+    optional MessageType type = 3;
+    optional Data data = 4;
 }
