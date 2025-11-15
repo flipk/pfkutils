@@ -196,6 +196,30 @@ outrate=48000
 ffmpeg -i $input -ar $outrate -y $output
 
 
+--- analyse the timestamps in the video stream and print
+    out the real frame rate, ignoring the file header information,
+    which is sometimes wrong.
+    it also displays if it is VFR (variable frame rate).
+
+ffmpeg -err_detect ignore_err \
+  -i <input_file> \
+  -vf vfrdet \
+  -f null -
+
+--- reencode a video file to regenerate the PTS (playback
+    timestamps) to a fixed framerate, and copies audio
+    without changing.
+
+recode() {
+   ffmpeg \
+      -fflags +genpts \
+      -i "$1" \
+      -vf "fps=30" -c:v libx264 -crf 18 -preset medium \
+      -c:a copy \
+      -y "$2"
+}
+
+
 --- rotate video 90 degrees by reencoding
 ffmpeg -i input.mp4 -vf "transpose=1" output.mp4
 0 : ccw and flip vertically
