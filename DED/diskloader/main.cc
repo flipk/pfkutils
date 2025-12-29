@@ -95,8 +95,8 @@ signal_handler(int sig)
     stopping = true;
 }
 
-extern "C" int
-diskloader_main(int argc, char ** argv)
+int
+main(int argc, char ** argv)
 {
     if (argc != 5)
     {
