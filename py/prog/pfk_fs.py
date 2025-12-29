@@ -8,6 +8,7 @@ import re
 import struct
 import tempfile
 import json
+import time
 
 import _pfk_fs
 import pfk_fs_config
@@ -15,6 +16,7 @@ sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
 import mysubproc
 import pfkterm
 import pfk_lsof
+from scsi_devices import ScsiDevices, ScsiDevice
 
 
 class Rows:
@@ -165,6 +167,8 @@ def init_status():
             fs.online = True
         else:
             fs.online = False
+
+    scsi_devs = ScsiDevices()
     cmd = ['/bin/lsblk', '-fJ']
     ok, stdoutlines = run_command(cmd, False)
     if not ok:
@@ -172,13 +176,14 @@ def init_status():
     else:
         data = json.loads(stdoutlines)
 
-        def do_bd(obj):
+        def do_bd(obj, sd):
             if 'uuid' in obj:
                 uuid = obj['uuid']
                 if uuid:
                     for fs2 in pfk_fs_config.fs_list:
                         if fs2.UUID == uuid:
                             fs2.online = True
+                            fs2.sd = sd
                             if fs2.mounted:
                                 for fs3 in pfk_fs_config.fs_list:
                                     if fs3.depends == fs2.name:
@@ -186,11 +191,15 @@ def init_status():
                             break
             if 'children' in obj:
                 for child in obj['children']:
-                    do_bd(child)
+                    do_bd(child, sd)
 
         if 'blockdevices' in data:
             for bd in data['blockdevices']:
-                do_bd(bd)
+                sd = None
+                if 'name' in bd:
+                    name = bd['name']
+                    sd = scsi_devs.find_device(name)
+                do_bd(bd, sd)
 
 
 def draw_table(selected: int):
@@ -205,6 +214,7 @@ def draw_table(selected: int):
 
     scr.addstr(0, cols.num, '##', curses.A_UNDERLINE)
     scr.addstr(0, cols.name, 'name', curses.A_UNDERLINE)
+    scr.addstr(0, cols.dev, 'dev', curses.A_UNDERLINE)
     if widths.depends > 0:
         scr.addstr(0, cols.depends, 'depends', curses.A_UNDERLINE)
     if widths.luksnfs > 0:
@@ -229,6 +239,10 @@ def draw_table(selected: int):
             scr.attron(curses.A_REVERSE)
         scr.addstr(rownum, cols.num, f'{rownum:2d}')
         scr.addstr(rownum, cols.name, f'{fs.name}')
+
+        if fs.sd:
+            scr.addstr(rownum, cols.dev, f'{fs.sd.blockdev}')
+
         if fs.depends:
             scr.addstr(rownum, cols.depends, f'{fs.depends}')
 
@@ -393,6 +407,10 @@ def fsck(selected: int):
     if 0 <= entnum < len(pfk_fs_config.fs_list):
         fs = pfk_fs_config.fs_list[entnum]
     if fs:
+        if fs.ecrypt_src:
+            fs.checked = True
+            fs.output = 'no need to fsck ecryptfs partitions'
+            return
         if fs.luks:
             source = f'/dev/mapper/{fs.luks}'
         else:
@@ -413,6 +431,7 @@ def fsck(selected: int):
 def mount(selected: int):
     global scr
     global rows
+    password = ''  # only for ecryptfs
     entnum = selected - 1
     fs = None
     if 0 <= entnum < len(pfk_fs_config.fs_list):
@@ -422,12 +441,32 @@ def mount(selected: int):
             source = f'/dev/mapper/{fs.luks}'
         elif fs.UUID:
             source = f'UUID={fs.UUID}'
+        elif fs.ecrypt_src:
+            source = fs.ecrypt_src
+            password = passwords[fs.passgrp]
+            if len(password) == 0:
+                fs.output = f'   password {fs.passgrp} is not loaded!'
+                return
         else:
             source = fs.nfs
 
         cmd = ['/bin/mount']
         if fs.discard:
             cmd = cmd + ['-o', 'discard']
+        if fs.ecrypt_src:
+            cmd = cmd + [
+                '-t', 'ecryptfs',
+                '-o',
+                'ecryptfs_unlink_sigs,' +
+                'ecryptfs_passthrough=n,' +
+                'ecryptfs_fnek_sig=' + fs.ecryptfs_fnek_sig + ',' +
+                'ecryptfs_key_bytes=32,' +
+                'ecryptfs_cipher=aes,' +
+                'ecryptfs_sig=' + fs.ecryptfs_sig + ',' +
+                'no_sig_cache,' +
+                'key=passphrase:' +
+                'passphrase_passwd=' + password.decode()
+            ]
         cmd = cmd + [source, fs.mntpt]
         fs.output = f'running command: {" ".join(cmd)}\n'
         draw_output(fs)
@@ -542,36 +581,42 @@ def toggle_nfs_server():
 # 5.4.5 Block Limits VPD page (B0h)
 
 # MAXIMUM UNMAP LBA COUNT field
-# The MAXIMUM UNMAP LBA COUNT field set to a non-zero value indicates the maximum number of LBAs that may be unmapped
-# by an UNMAP command (see 3.54). If the number of LBAs that may be unmapped by an UNMAP command is constrained only
-# by the amount of data that may be contained in the UNMAP parameter list (see 3.54.2), then the device server shall
-# set the MAXIMUM UNMAP LBA COUNT field to FFFF_FFFFh. If the device server implements the UNMAP command,
-# then the value in this field shall be greater than or equal to one. A MAXIMUM UNMAP LBA COUNT field set to
-# 0000_0000h indicates that the device server does not implement the UNMAP command.
+# The MAXIMUM UNMAP LBA COUNT field set to a non-zero value indicates
+# the maximum number of LBAs that may be unmapped by an UNMAP command
+# (see 3.54). If the number of LBAs that may be unmapped by an UNMAP
+# command is constrained only by the amount of data that may be
+# contained in the UNMAP parameter list (see 3.54.2), then the device
+# server shall set the MAXIMUM UNMAP LBA COUNT field to FFFF_FFFFh. If
+# the device server implements the UNMAP command, then the value in
+# this field shall be greater than or equal to one. A MAXIMUM UNMAP
+# LBA COUNT field set to 0000_0000h indicates that the device server
+# does not implement the UNMAP command.
 
 # MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field
-# The MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to a non-zero value indicates the maximum number of UNMAP block
-# descriptors (see 3.54.2) that shall be contained in the parameter data transferred to the device server for an
-# UNMAP command (see 3.54). If there is no limit on the number of UNMAP block descriptors contained in the parameter
-# data, then the device server shall set the MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field to FFFF_FFFFh. If the device
-# server implements the UNMAP command, then the value in the MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field shall be
-# greater than or equal to one. A MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to 0000_0000h indicates that the
-# device server does not implement the UNMAP command.
+# The MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to a non-zero
+# value indicates the maximum number of UNMAP block descriptors (see
+# 3.54.2) that shall be contained in the parameter data transferred to
+# the device server for an UNMAP command (see 3.54). If there is no
+# limit on the number of UNMAP block descriptors contained in the
+# parameter data, then the device server shall set the MAXIMUM UNMAP
+# BLOCK DESCRIPTOR COUNT field to FFFF_FFFFh. If the device server
+# implements the UNMAP command, then the value in the MAXIMUM UNMAP
+# BLOCK DESCRIPTOR COUNT field shall be greater than or equal to
+# one. A MAXIMUM UNMAP BLOCK DESCRIPTOR COUNT field set to 0000_0000h
+# indicates that the device server does not implement the UNMAP
+# command.
 
 
 def fix_usb_discard_devices() -> bool:
     p_list = []
     changes = False
 
-    def do_a_dir(dpath: str):
-        for de1 in os.scandir(dpath):
-            npath = dpath + '/' + de1.name
-            if de1.name == 'vpd_pgb0':
-                p_list.append(npath)
-            if de1.is_dir(follow_symlinks=False):
-                do_a_dir(npath)
-
-    do_a_dir('/sys/devices')
+    sd_path = '/sys/bus/scsi/drivers/sd'
+    de: os.DirEntry
+    for de in os.scandir(sd_path):
+        pgb0_path = sd_path + '/' + de.name + '/vpd_pgb0'
+        if os.path.exists(pgb0_path):
+            p_list.append(pgb0_path)
 
     p: str
     for p in p_list:
@@ -615,7 +660,6 @@ def fix_usb_discard_devices() -> bool:
     return changes
 
 
-# def main(argv: list[str]):
 def main():
     global scr
     selected = 101

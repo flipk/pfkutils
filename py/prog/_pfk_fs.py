@@ -2,6 +2,7 @@
 class Widths:
     num: int
     name: int
+    dev: int
     depends: int
     uuid: int
     luks: int
@@ -17,6 +18,7 @@ class Widths:
     def __init__(self):
         self.num = 2  # fixed
         self.name = 4
+        self.dev = 3
         self.depends = 0
         self.uuid = 0
         self.luks = 0  # not used for cols (luksfs instead)
@@ -32,6 +34,8 @@ class Widths:
     def max(self, other):
         if other.name > self.name:
             self.name = other.name
+        if other.dev > self.dev:
+            self.dev = other.dev
         if other.depends > self.depends:
             self.depends = other.depends
         if other.uuid > self.uuid:
@@ -59,6 +63,8 @@ class Widths:
         pos += other.num + 1
         self.name = pos
         pos += other.name + 1
+        self.dev = pos
+        pos += other.dev + 1
         self.depends = pos
         if other.depends > 0:
             pos += other.depends + 1
@@ -84,7 +90,8 @@ class Widths:
         # pos += other.tickle + 1
 
     def __str__(self):
-        return f'num:{self.num} name:{self.name} dep:{self.depends} ' + \
+        return f'num:{self.num} name:{self.name} dev:{self.dev} ' + \
+               f'dep:{self.depends} ' + \
                f'uuid:{self.uuid} luks:{self.luks} passgrp:{self.passgrp} ' + \
                f'open:{self.open} checked:{self.checked} nfs:{self.nfs} ' + \
                f'mntpt:{self.mntpt} mounted:{self.mounted}'
@@ -104,9 +111,13 @@ class Fs:
     mounted: bool
     passgrp: int | None
     discard: bool
+    ecrypt_src: str | None
+    ecryptfs_fnek_sig: str | None
+    ecryptfs_sig: str | None
     tickle: bool
     output: str
     widths: Widths
+    sd: object | None  # ScsiDevice
 
     def __init__(self, name: str,
                  mntpt: str,
@@ -117,22 +128,30 @@ class Fs:
                  luks: str | None = None,
                  passgrp: int | None = None,
                  discard: bool = False,
-                 tickle: bool = False
+                 tickle: bool = False,
+                 ecrypt_src: str | None = None,
+                 ecryptfs_fnek_sig: str | None = None,
+                 ecryptfs_sig: str | None = None,
                  ):
         count = 0
         count += 1 if uuid else 0
         count += 1 if imgfile else 0
         count += 1 if nfs else 0
+        count += 1 if ecrypt_src else 0
         if count != 1:
             print(f'ERROR: must specify only one of [uuid, imgfile, nfs]')
             return
         self.widths = Widths()
         self.widths.name = len(name) if name else 0
         self.name = name
+        self.sd = None
         self.widths.uuid = len(uuid) if uuid else 0
         self.UUID = uuid
         self.online = False
         self.imgfile = imgfile
+        if ecrypt_src and not (ecryptfs_fnek_sig and ecryptfs_sig):
+            print(f'ERROR: if ecrypt, fnek and sig required')
+            return
         if imgfile or uuid:
             self.widths.checked = 3
         self.widths.nfs = len(nfs) if nfs else 0
@@ -151,12 +170,18 @@ class Fs:
         else:
             self.open = True
         self.luks = luks
-        self.checked = False
+        if ecrypt_src:
+            self.checked = True
+        else:
+            self.checked = False
         self.mounted = False
         self.widths.passgrp = 1 if passgrp else 0
         self.passgrp = passgrp
         self.widths.mntpt = len(mntpt) if mntpt else 0
         self.mntpt = mntpt
         self.discard = discard
+        self.ecrypt_src = ecrypt_src
+        self.ecryptfs_fnek_sig = ecryptfs_fnek_sig
+        self.ecryptfs_sig = ecryptfs_sig
         self.tickle = tickle
         self.output = ''
