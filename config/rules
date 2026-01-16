@@ -97,7 +97,8 @@ $(CONFIG_H): Makefile config/rules config/os/$(PFKUTILS_OS) \
 PFKUTIL_DIRS = \
 	libpfkfb libpfkutil libpfkdll2 libprotossl \
 	libwebsocket i2 i3 backup hilite t2t2 \
-	pfkscript pfktop uuz xlock environ scripts fonts contrib main
+	pfkscript pfktop uuz xlock environ scripts fonts contrib main \
+	py
 
 PFKUTIL_MAKEFILES = $(foreach d,$(PFKUTIL_DIRS),$(d)/Makefile.pfk)
 

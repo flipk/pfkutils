@@ -1,0 +1,16 @@
+# -*- Mode:makefile-gmake; tab-width:8 -*-
+
+POSTINSTALL += py_install_simple # py_applauncher
+
+#
+PYTOOLS_SIMPLE = pfk_dbm.py
+
+py_install_simple:
+	@echo installing python utils
+	$(Q)cd py/prog && cp $(PYTOOLS_SIMPLE) $(SCRIPTS_DIR)
+	$(Q)cd $(SCRIPTS_DIR) && chmod a+x $(PYTOOLS_SIMPLE)
+
+#
+py_applauncher:
+	echo TODO install applauncher
+
