@@ -8,7 +8,6 @@ import re
 import struct
 import tempfile
 import json
-import time
 
 import _pfk_fs
 import pfk_fs_config
@@ -16,7 +15,7 @@ sys.path.append(f'{os.environ["HOME"]}/proj/pfkutils/py/lib')
 import mysubproc
 import pfkterm
 import pfk_lsof
-from scsi_devices import ScsiDevices, ScsiDevice
+from scsi_devices import ScsiDevices  # ScsiDevice
 
 
 class Rows:
@@ -176,14 +175,14 @@ def init_status():
     else:
         data = json.loads(stdoutlines)
 
-        def do_bd(obj, sd):
+        def do_bd(obj, sd2):
             if 'uuid' in obj:
                 uuid = obj['uuid']
                 if uuid:
                     for fs2 in pfk_fs_config.fs_list:
                         if fs2.UUID == uuid:
                             fs2.online = True
-                            fs2.sd = sd
+                            fs2.sd = sd2
                             if fs2.mounted:
                                 for fs3 in pfk_fs_config.fs_list:
                                     if fs3.depends == fs2.name:
@@ -191,7 +190,7 @@ def init_status():
                             break
             if 'children' in obj:
                 for child in obj['children']:
-                    do_bd(child, sd)
+                    do_bd(child, sd2)
 
         if 'blockdevices' in data:
             for bd in data['blockdevices']:
