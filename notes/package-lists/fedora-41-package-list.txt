@@ -151,6 +151,7 @@ libglade2-devel
 libglvnd-devel
 libglvnd-glx
 libglvnd-opengl
+libheif-devel
 libICE-devel
 libicu-devel
 libjpeg-turbo-devel
@@ -286,6 +287,7 @@ seahorse
 sed
 simple-scan
 socat
+solaar
 sqlitebrowser
 sqlite-devel
 strace
@@ -316,6 +318,7 @@ valgrind-devel
 vconfig
 vim
 vim-X11
+vmtouch
 wget
 which
 wireshark
@@ -345,5 +348,3 @@ xz
 xz-devel
 zip
 zlib-devel
-vmtouch
-libheif-devel
