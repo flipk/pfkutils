@@ -1,0 +1,14 @@
+
+python3 -m venv venv
+ln -s venv/bin/activate
+. activate
+pip install --upgrade pip setuptools wheel meson ninja
+
+ubuntu:
+  sudo apt install python3-dev libgirepository1.0-dev libcairo2-dev pkg-config
+fedora:
+  ?
+
+mkdir venv/packages
+pip download -r requirements.txt -d venv/packages
+pip install venv/packages/*whl

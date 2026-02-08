@@ -2,10 +2,15 @@ websockets
 matplotlib
 numpy
 pandas
+scipy
+
 protobuf
 mypy-protobuf
+
 python-prctl
-scipy
 cstruct
 pillow
 pymupdf
+tk
+#PyQt5
+#pyqt5-tools

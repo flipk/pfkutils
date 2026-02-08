@@ -3,3 +3,5 @@ test.csv
 __pycache__
 completer.log
 0*
+venv
+activate
