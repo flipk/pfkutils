@@ -61,12 +61,11 @@ public:
             closedir(d);
     }
     const bool ok(void) const { return isOk; }
-    bool read(dirent &de) {
-        dirent * result = NULL;
-        int cc = readdir_r(d, &de, &result);
-        if (cc != 0 || result == NULL)
-            return false;
-        return true;
+    dirent * read(void) {
+        // readdir_r was officially DEPRECATED in POSIX.1-2008 for
+        // several reasons, which can easily be explained in an
+        // internet search. Not duplicating the explanation here.
+        return readdir(d);
     }
     void rewind(void) {
         rewinddir(d);
@@ -79,20 +78,20 @@ process_directory(const std::string &dirname, int pass)
     (void) chmod(dirname.c_str(), 0700);
     {
         myReaddir d(dirname.c_str());
-        dirent de;
         if (!d.ok())
         {
             printf("couldn't open %s\n", dirname.c_str());
             return;
         }
         printf("wiping dir '%s'\n", dirname.c_str());
-        while (d.read(de))
+        dirent * de;
+        while ((de = d.read()) != NULL)
         {
-            const std::string fname(de.d_name);
+            const std::string fname(de->d_name);
             if (fname == "." || fname == "..")
                 continue;
             const std::string fullname = dirname + "/" + fname;
-            switch (de.d_type)
+            switch (de->d_type)
             {
             case DT_DIR:
                 process_directory(fullname, pass);
