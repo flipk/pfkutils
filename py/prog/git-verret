@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+# gemini3 pro:
+# write a python script that works inside a git work tree and takes a
+# filename (in the current working directory) and a commit id or branch
+# name or tag name, and it retrieves that version of that file, creating
+# a "filename.version" in the current directory.
+
+import argparse
+import subprocess
+import sys
+import os
+
+def main():
+    parser = argparse.ArgumentParser(description="Retrieve a specific version of a file from Git history.")
+    parser.add_argument("filename", help="The file to retrieve (in current directory)")
+    parser.add_argument("revision", help="The commit hash, branch, or tag")
+    args = parser.parse_args()
+
+    # 1. Resolve the path relative to the Git repository root.  Git
+    # commands like `git show rev:path` require the path to be
+    # relative to the repo root, not the current working directory.
+    try:
+        # --show-prefix outputs the directory path relative to the top-level (e.g., "src/utils/")
+        prefix_bytes = subprocess.check_output(["git", "rev-parse", "--show-prefix"])
+        prefix = prefix_bytes.decode("utf-8").strip()
+    except subprocess.CalledProcessError:
+        print("Error: This script must be run inside a git repository.")
+        sys.exit(1)
+
+    # Combine prefix and filename to get the full path for Git We
+    # replace os.sep with '/' because Git expects forward slashes even
+    # on Windows
+    repo_relative_path = os.path.join(prefix, args.filename).replace(os.sep, '/')
+
+    # 2. Construct the output filename Replace slashes in branch names
+    # (e.g., "feature/login") to avoid path errors
+    safe_revision = args.revision.replace('/', '_')
+    output_filename = f"{args.filename}.{safe_revision}"
+
+    # 3. Retrieve the content
+    # Syntax: git show <revision>:<repo_relative_path>
+    object_spec = f"{args.revision}:{repo_relative_path}"
+    
+    cmd = ["git", "show", object_spec]
+    
+    print(f"Retrieving '{object_spec}'...")
+
+    # We use subprocess.call or run to capture output directly Using
+    # check_output allows us to capture the binary data (important for
+    # images/binaries)
+    try:
+        content = subprocess.check_output(cmd)
+        
+        with open(output_filename, "wb") as f:
+            f.write(content)
+            
+        print(f"Saved version to: {output_filename}")
+
+    except subprocess.CalledProcessError:
+        # Git will usually print its own error message (e.g., "path
+        # 'x' does not exist in 'y'") to stderr, so we just exit
+        # cleanly.
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
