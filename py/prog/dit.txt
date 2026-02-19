@@ -1,0 +1,75 @@
+
+# write a python script which runs docker commands and then presents a
+# unified view of images, containers, and volumes. this only needs to
+# support common versions of docker on linux (no windows support
+# needed). it should run docker commands which output in
+# machine-parsable text (docker commands can produce JSON if i remember
+# right). it should output two tables.
+# 
+# the first table:
+# 
+# this table shows all images and containers, not just images with tags
+# but also images that have no tags. there should be indentation to show
+# which image is derived from which image. e.g. base images start in
+# column 0, and any image based on that image would start in column 2,
+# and images based on those would be in column 4, etc. if the command
+# line "-v" option is specified it should show all images whether they
+# have tags or not, and if "-v" is not given, it should show only tagged
+# images and images which are 'leaf nodes' (such as those left behind by
+# a failed docker build).
+# 
+# this table should also show containers, with 2 more spaces of
+# indentation below the image the container is running off of. the line
+# for a container should start with a "C".
+# 
+# columns:
+# 
+# 1. image or container id, with the "C" and indentation as specified above.
+# 2. for images, display the total size of that image in bytes.
+#    for containers this column is blank.
+# 3. for images, display the "relative size", e.g. how many bytes this layer
+#    adds to the layer above it.
+#    for containers, this column displays the 'state' of the container,
+#    e.g. running/stopped/etc.
+# 4. for images, display REPOSITORY:TAG:NAME of the image, or the command
+#    string for untagged images.
+#    for containers, display the container's name.
+# 
+# the second table:
+# 
+# this table displays volumes, their ids and names, and what containers
+# they are attached to.
+# 
+# -------------------------------------------
+# 
+# the json returned by "container ls" appears to be a json array (with
+# square brackets) only if there's more than one running container. if
+# there's exactly one, it is a single entry (with curly braces), and
+# line 155 fails because cont is not a dict.
+# 
+# it is showing images and indentation correctly but it doesn't show the
+# containers in the output. if you can figure out why that might be
+# failing, fix it, or if not, add diagnostics that i can run and paste
+# back here to assist in debugging.
+# 
+# -------------------------------------------
+# 
+# this is very good and appears to be working. now formatting updates only.
+# 
+# for containers, currently it is "C <space> container_id" where the "C"
+# is indented 2 from the image above it. instead put the C in the first
+# char of the line and the container ID should start 2-spaces indented
+# from the image above it.
+# 
+# the IMAGE/CONTAINER ID column should be only as wide as it needs to
+# be, if it can be made to gather all the data and calculate which row
+# will have the widest entry in that column and then draw the table with
+# that column only as wide as it needs to be.
+# 
+# make the volume name column only as wide as necessary.  add a size
+# column to the volume table.  make the periods line up vertically in
+# size and relsize columns.
+# 
+# currently the size column is blank for a container (per my original
+# request), but instead make the size column for a container show the
+# size of disk space consumed by that container.

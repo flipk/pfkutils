@@ -1,0 +1,458 @@
+#!/usr/bin/env python3
+
+# GEMINI 3 PROMPTS:
+#
+# write a python script which runs docker commands and then presents a
+# unified view of images, containers, and volumes. this only needs to
+# support common versions of docker on linux (no windows support
+# needed). it should run docker commands which output in
+# machine-parsable text (docker commands can produce JSON if i remember
+# right). it should output two tables.
+# 
+# the first table:
+# 
+# this table shows all images and containers, not just images with tags
+# but also images that have no tags. there should be indentation to show
+# which image is derived from which image. e.g. base images start in
+# column 0, and any image based on that image would start in column 2,
+# and images based on those would be in column 4, etc. if the command
+# line "-v" option is specified it should show all images whether they
+# have tags or not, and if "-v" is not given, it should show only tagged
+# images and images which are 'leaf nodes' (such as those left behind by
+# a failed docker build).
+# 
+# this table should also show containers, with 2 more spaces of
+# indentation below the image the container is running off of. the line
+# for a container should start with a "C".
+# 
+# columns:
+# 
+# 1. image or container id, with the "C" and indentation as specified above.
+# 2. for images, display the total size of that image in bytes.
+#    for containers this column is blank.
+# 3. for images, display the "relative size", e.g. how many bytes this layer
+#    adds to the layer above it.
+#    for containers, this column displays the 'state' of the container,
+#    e.g. running/stopped/etc.
+# 4. for images, display REPOSITORY:TAG:NAME of the image, or the command
+#    string for untagged images.
+#    for containers, display the container's name.
+# 
+# the second table:
+# 
+# this table displays volumes, their ids and names, and what containers
+# they are attached to.
+# 
+# -------------------------------------------
+# 
+# the json returned by "container ls" appears to be a json array (with
+# square brackets) only if there's more than one running container. if
+# there's exactly one, it is a single entry (with curly braces), and
+# line 155 fails because cont is not a dict.
+# 
+# it is showing images and indentation correctly but it doesn't show the
+# containers in the output. if you can figure out why that might be
+# failing, fix it, or if not, add diagnostics that i can run and paste
+# back here to assist in debugging.
+# 
+# -------------------------------------------
+# 
+# this is very good and appears to be working. now formatting updates only.
+# 
+# for containers, currently it is "C <space> container_id" where the "C"
+# is indented 2 from the image above it. instead put the C in the first
+# char of the line and the container ID should start 2-spaces indented
+# from the image above it.
+# 
+# the IMAGE/CONTAINER ID column should be only as wide as it needs to
+# be, if it can be made to gather all the data and calculate which row
+# will have the widest entry in that column and then draw the table with
+# that column only as wide as it needs to be.
+# 
+# make the volume name column only as wide as necessary.  add a size
+# column to the volume table.  make the periods line up vertically in
+# size and relsize columns.
+# 
+# currently the size column is blank for a container (per my original
+# request), but instead make the size column for a container show the
+# size of disk space consumed by that container.
+
+import subprocess
+import json
+import sys
+import argparse
+import shlex
+
+# Defensive coding: Check for Python version compatibility if needed, 
+# though this script is standard Python 3.
+
+all_commands_run = []
+
+def run_command(cmd):
+    """
+    Runs a shell command and returns the stdout as a string.
+    Includes error handling for failed execution.
+    """
+    global all_commands_run
+    try:
+        # We use shell=True to allow piping if needed, but here we are
+        # passing strict lists.  We split the command string for
+        # safety when shell=False is used, but for simple docker
+        # commands, list format is safer.
+        result = subprocess.run(
+            cmd, 
+            capture_output=True, 
+            text=True, 
+            check=True
+        )
+        all_commands_run.append(cmd)
+        return result.stdout.strip()
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running command: {' '.join(cmd)}")
+        print(f"Error message: {e.stderr}")
+        sys.exit(1)
+
+    except FileNotFoundError:
+        print("Error: 'docker' command not found. "
+              "Is Docker installed and in your PATH?")
+        sys.exit(1)
+
+def get_json_output(cmd):
+    """
+    Runs a docker command that outputs JSON and returns the parsed object.
+    Always returns a list of objects, even if Docker outputs a single object.
+    """
+    raw_output = run_command(cmd)
+    if not raw_output:
+        return []
+    
+    try:
+        # Docker sometimes outputs multiple JSON objects separated by
+        # newlines (json-lines) or a single JSON array depending on
+        # the command.  We try standard load first.
+        data = json.loads(raw_output)
+        
+        # when there's two or more items, docker's json mode outputs a
+        # list with this format: [{..},{..}]
+        # however if there's only one item, it doesn't do that, it skips
+        # the square brackets and just does a single object: {..}
+        # this is easy to work around.
+        if isinstance(data, dict):
+            return [data]
+        return data
+        
+    except json.JSONDecodeError:
+        # If it fails, it might be json-lines. We try to wrap it.
+        try:
+            # Split lines, parse each, assemble into list
+            return [json.loads(line)
+                    for line in raw_output.splitlines()
+                    if line.strip()]
+
+        except json.JSONDecodeError as e:
+            print("Failed to parse Docker output.")
+            print(f"Raw output start: {raw_output[:100]}")
+            sys.exit(1)
+
+def human_size(bytes_val):
+    """
+    Converts bytes to human readable string (MB, GB).
+    Ensures unit is always 2 chars (padded) for alignment.
+    """
+    try:
+        bytes_val = float(bytes_val)
+    except (ValueError, TypeError):
+        return "0.00 B"
+        
+    # Units with consistent length for alignment.
+    # Note ' B' has a leading space.
+    units = [' B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    
+    for unit in units:
+        if bytes_val < 1024.0:
+            return f"{bytes_val:.2f}{unit}"
+        bytes_val /= 1024.0
+    return f"{bytes_val:.2f}PB"
+
+def clean_id(docker_id):
+    """
+    Removes the 'sha256:' prefix if present for cleaner display.
+    """
+    if docker_id and docker_id.startswith("sha256:"):
+        return docker_id[7:]
+    return docker_id
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Visualize Docker images and containers."
+    )
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="Show all images (intermediate layers)")
+    args = parser.parse_args()
+
+    # 1. Get all containers
+    container_ids_raw = run_command(["docker", "container", "ls",
+                                     "--all", "-q"])
+    container_ids = container_ids_raw.splitlines()
+    
+    containers_data = []
+    if container_ids:
+        chunk_size = 50
+        for i in range(0, len(container_ids), chunk_size):
+            chunk = container_ids[i:i + chunk_size]
+            # Inspect gives us rich metadata including full Image ID
+            # and Mounts; Added '-s' flag to calculate container
+            # writable layer size
+            inspect_cmd = ["docker", "inspect", "-s"] + chunk
+            chunk_data = get_json_output(inspect_cmd)
+            containers_data.extend(chunk_data)
+
+    # 2. Get all images
+    image_ids_raw = run_command(["docker", "image", "ls", "-aq"])
+    image_ids = image_ids_raw.splitlines()
+
+    images_data = []
+    if image_ids:
+        chunk_size = 50
+        for i in range(0, len(image_ids), chunk_size):
+            chunk = image_ids[i:i + chunk_size]
+            inspect_cmd = ["docker", "inspect"] + chunk
+            chunk_data = get_json_output(inspect_cmd)
+            images_data.extend(chunk_data)
+
+    # 3. Get Volumes & Volume Sizes
+    volumes_data_raw = get_json_output(["docker", "volume", "ls",
+                                        "--format", "{{json .}}"])
+    volumes_data = volumes_data_raw \
+        if isinstance(volumes_data_raw, list) \
+           else [volumes_data_raw]
+
+    # Use 'docker system df' to get volume sizes (available in newer
+    # docker versions)
+    volume_sizes = {}
+    try:
+        # Returns object with key "Volumes": [ { "Name": "...",
+        # "Size": "..." }, ... ]
+        df_output = get_json_output(["docker", "system", "df",
+                                     "-v", "--format", "{{json .}}"])
+        # df_output might be a list containing one dict or just the dict
+        df_obj = df_output[0] \
+            if isinstance(df_output, list) and df_output \
+               else df_output
+
+        if isinstance(df_obj, dict) and \
+           "Volumes" in df_obj \
+           and df_obj["Volumes"]:
+
+            for vol in df_obj["Volumes"]:
+                v_name = vol.get("Name")
+                v_size = vol.get("Size", "N/A")
+                if v_name:
+                    volume_sizes[v_name] = v_size
+
+    except Exception:
+        # Fallback if docker system df fails or format differs
+        pass
+
+    # --- PROCESS DATA FOR TABLE 1 (HIERARCHY) ---
+
+    images_map = {}
+    children_map = {}
+    image_containers = {}
+    
+    all_image_ids = set()
+
+    for img in images_data:
+        img_id = clean_id(img.get("Id", ""))
+        parent_id = clean_id(img.get("Parent", ""))
+        
+        images_map[img_id] = img
+        all_image_ids.add(img_id)
+
+        if parent_id:
+            if parent_id not in children_map:
+                children_map[parent_id] = []
+            children_map[parent_id].append(img_id)
+
+    roots = []
+    for img_id, img in images_map.items():
+        parent_id = clean_id(img.get("Parent", ""))
+        if not parent_id or parent_id not in images_map:
+            roots.append(img_id)
+
+    for cont in containers_data:
+        img_id = clean_id(cont.get("Image", ""))
+        if img_id not in image_containers:
+            image_containers[img_id] = []
+        image_containers[img_id].append(cont)
+
+    # --- COLLECT TABLE 1 ROWS ---
+
+    table_rows = []
+
+    def process_node(node_id, indent):
+        img = images_map.get(node_id)
+        if not img: 
+            return
+
+        short_id = node_id[:12]
+        size_bytes = img.get("Size", 0)
+        size_str = human_size(size_bytes)
+        
+        parent_id = clean_id(img.get("Parent", ""))
+        parent_img = images_map.get(parent_id)
+        parent_size = parent_img.get("Size", 0) if parent_img else 0
+        rel_size = size_bytes - parent_size
+        if rel_size < 0: rel_size = 0
+        rel_size_str = f"+{human_size(rel_size)}"
+
+        repo_tags = img.get("RepoTags", [])
+        if repo_tags is None: 
+            repo_tags = []
+        
+        is_leaf = node_id not in children_map or \
+            len(children_map[node_id]) == 0
+        has_tags = len(repo_tags) > 0 and repo_tags[0] != "<none>:<none>"
+        should_print = args.verbose or has_tags or is_leaf
+
+        if should_print:
+            if has_tags:
+                desc = ", ".join(repo_tags)
+            else:
+                config = img.get("Config", {})
+                cmd_arr = config.get("Cmd", [])
+                if not cmd_arr:
+                    cmd_arr = config.get("Entrypoint", [])
+                cmd_str = " ".join(cmd_arr) if cmd_arr else "<no command>"
+                desc = f"Cmd: {cmd_str[:50]}..." \
+                    if len(cmd_str) > 50 \
+                       else f"Cmd: {cmd_str}"
+
+            col1 = (" " * indent) + short_id
+            
+            table_rows.append({
+                "c1": col1,
+                "c2": size_str,
+                "c3": rel_size_str,
+                "c4": desc
+            })
+
+        if node_id in image_containers:
+            for cont in image_containers[node_id]:
+                c_id_raw = cont.get("Id", "")[:12]
+                state_obj = cont.get("State", {})
+                c_state = state_obj.get("Status", "unknown") \
+                    if isinstance(state_obj, dict) \
+                       else "unknown"
+                c_name = cont.get("Name", "").strip("/")
+                
+                # Extract Writable Layer Size (SizeRw)
+                # SizeRw is only present if 'docker inspect -s' was used
+                c_size_rw = cont.get("SizeRw", 0)
+                c_size_str = human_size(c_size_rw)
+
+                spacer_len = indent + 1
+                col1 = "C" + (" " * spacer_len) + c_id_raw
+
+                table_rows.append({
+                    "c1": col1,
+                    "c2": c_size_str,
+                    "c3": '<' + c_state.upper() + '>',
+                    "c4": c_name
+                })
+
+        next_indent = indent + 2
+        children = children_map.get(node_id, [])
+        for child_id in children:
+            process_node(child_id, next_indent)
+
+    for root_id in roots:
+        process_node(root_id, 0)
+
+    # --- RENDER TABLE 1 ---
+
+    header_c1 = "Image/Container"
+    max_c1_width = len(header_c1)
+    for row in table_rows:
+        if len(row["c1"]) > max_c1_width:
+            max_c1_width = len(row["c1"])
+    c1_width = max_c1_width + 2
+
+    # Using right alignment (>9) for size columns to align periods
+    print(f"\n{header_c1:<{c1_width}} {'Size':>9} "
+          f"{'+Size/St':>10} {'Tag/Name/Cmd'}")
+    print("-" * (c1_width + 9 + 10 + 40))
+
+    for row in table_rows:
+        print(f"{row['c1']:<{c1_width}} {row['c2']:>9} "
+              f"{row['c3']:>10} {row['c4']}")
+
+    # --- PROCESS TABLE 2 (VOLUMES) ---
+
+    vol_attachment = {}
+    
+    for cont in containers_data:
+        c_name = cont.get("Name", "").strip("/")
+        mounts = cont.get("Mounts", [])
+        for m in mounts:
+            if m.get("Type") == "volume":
+                vol_name = m.get("Name")
+                if vol_name not in vol_attachment:
+                    vol_attachment[vol_name] = []
+                vol_attachment[vol_name].append(c_name)
+
+    # Collect Volume Rows for dynamic sizing
+    vol_rows = []
+    if volumes_data:
+        for vol in volumes_data:
+            v_name = vol.get("Name", vol.get("name", "Unknown"))
+            
+            attached = vol_attachment.get(v_name, [])
+            attached_str = ", ".join(attached) \
+                if attached \
+                   else "<none>"
+            
+            # Retrieve size from previously fetched system df map
+            v_size = volume_sizes.get(v_name, "N/A")
+
+            vol_rows.append({
+                "name": v_name,
+                "size": v_size,
+                "attached": attached_str
+            })
+
+    if vol_rows:
+        # Calculate dynamic width for Volume Name
+        header_v1 = "Volume Name"
+        max_v1_width = len(header_v1)
+        for row in vol_rows:
+            if len(row["name"]) > max_v1_width:
+                max_v1_width = len(row["name"])
+        v1_width = max_v1_width + 2
+
+        # Right align size column (>10)
+        print(f"\n{header_v1:<{v1_width}} {'Size':>10} "
+              f" {'Containers Attached'}")
+        print("-" * (v1_width + 12 + 40))
+
+        for row in vol_rows:
+            print(f"{row['name']:<{v1_width}} {row['size']:>10} "
+                  f" {row['attached']}")
+
+        print('')
+    else:
+        print("\nNo volumes found.")
+
+
+    if args.verbose:
+        # if you have python <3.8, use this instead of shlex.join:
+        # ' '.join(shlex.quote(arg) for arg in cmd)
+        print('All commands executed:')
+        for cmd in all_commands_run:
+            print('  ' + shlex.join(cmd))
+
+        print('')
+
+if __name__ == "__main__":
+    main()

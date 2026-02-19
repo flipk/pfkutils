@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2026-02-17.21:23:27
+#      Last update: 2026-02-18.22:03:31
 #
 #############################################################################
 
@@ -324,7 +324,7 @@ alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
 alias tmux='PFK_DETACH_SESSION=1 TERM=rxvt \tmux'
 alias dkr=docker
-alias dit=docker-image-tree.sh
+# old, use python version now alias dit=docker-image-tree.sh
 alias gs='git status'
 
 __findvlc() {

@@ -3,7 +3,7 @@
 POSTINSTALL += py_install_simple # py_applauncher
 
 #
-PYTOOLS_SIMPLE = pfk_dbm.py i4.py git-verret
+PYTOOLS_SIMPLE = pfk_dbm.py i4.py git-verret dit
 
 py_install_simple:
 	@echo installing python utils
