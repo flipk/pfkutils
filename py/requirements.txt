@@ -4,6 +4,9 @@ numpy
 pandas
 scipy
 
+pyotp
+cryptography
+
 protobuf
 mypy-protobuf
 
