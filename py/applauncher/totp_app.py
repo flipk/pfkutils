@@ -12,6 +12,7 @@ from tkinter import ttk, messagebox
 import time
 import sys
 import save_secret
+import ctypes
 
 try:
     import pyotp
@@ -20,7 +21,6 @@ except:
         print('please install package pyotp')
         exit(1)
     else:
-        import ctypes
         ctypes.windll.user32.MessageBoxW(
             0, "Please install package 'pyotp'.",
             "Import Error", 0x10)
@@ -31,13 +31,14 @@ class TOTPApp:
         self.root = root
         self.secret = secret
         self.root.title("TOTP Generator")
+        self.root.configure(bg="black")
 
         self.left = tk.Frame(root)
         self.left.grid(row=0, column=0, padx=0, pady=0)
         self.right = tk.Frame(root)
         self.right.grid(row=0, column=1, padx=0, pady=0)
 
-        self.root.geometry("270x60") 
+        self.root.geometry("230x40")
         self.root.resizable(False, False)
         self.root.bind("<Key-q>", lambda evt: self.root.destroy())
         
@@ -45,16 +46,21 @@ class TOTPApp:
         self.code_var = tk.StringVar()
         
         self.code_label = tk.Label(self.left, textvariable=self.code_var,
-                                   font=("Consolas", 34, "bold"))
+                                   font=("Consolas", 24, "bold"),
+                                   bg="black", fg="white")
         self.code_label.bind("<Button-1>",
                              lambda evt: self.copy_to_clipboard())
         self.code_label.pack(padx=0, pady=0)
-        
+
+        self.progress_style = ttk.Style()
+        self.progress_style.configure("black.Horizontal.TProgressbar",
+                                      bg="black", fg="green")
         self.progress = ttk.Progressbar(self.right,
                                         orient="horizontal",
                                         length=100,
                                         mode="determinate",
-                                        maximum=60)
+                                        maximum=60,
+                                        style="black.Horizontal.TProgressbar")
         self.progress.pack(padx=0, pady=0)
         
         self.update_ui()
@@ -98,7 +104,7 @@ def ask_pin(root):
     tk.Label(dialog, text="Enter TOTP secret pin").pack(padx=20, pady=(10, 5))
     
     # show="*" masks the PIN characters
-    entry = tk.Entry(dialog, show="*")
+    entry = tk.Entry(dialog, show="*", bg="black", fg="white")
     entry.pack(padx=20, pady=(0, 10))
     entry.focus_set()
     
@@ -121,25 +127,44 @@ def ask_pin(root):
     
     return pin
 
+def protect_window(root):
+    if sys.platform.startswith('linux'):
+        # no such ctypes API
+        return
+
+    # Constants for Windows Display Affinity
+    WDA_NONE = 0x00000000
+    WDA_MONITOR = 0x00000001  # Use this to hide from screenshots
+
+    # Get the window handle (HWND)
+    hwnd = ctypes.windll.user32.GetParent(root.winfo_id())
+
+    # Set the affinity to WDA_MONITOR
+    # This prevents the window content from being captured
+    ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, WDA_MONITOR)
+
 def main(secret_filename):
     root = tk.Tk()
 
-    pin = ask_pin(root)
-    if pin is None:
-        # The user pressed ESC or closed the window
-        sys.exit(0)
+    if False:
+        # a dummy secret for testing.
+        secret = "CLEFDHTP43VLP2UAYYBX532XKLWG6YU4"
+    else:
+        pin = ask_pin(root)
+        if pin is None:
+            # The user pressed ESC or closed the window
+            sys.exit(0)
 
-    try:
-        # Attempt to load and decrypt
-        secret = save_secret.load_secret(pin, secret_filename)
-    except Exception:
-        # Catch decryption failures (like InvalidToken)
-        messagebox.showerror("Error", "Incorrect PIN or corrupted data.")
-        sys.exit(1)
+        try:
+            # Attempt to load and decrypt
+            secret = save_secret.load_secret(pin, secret_filename)
+        except Exception:
+            # Catch decryption failures (like InvalidToken)
+            messagebox.showerror("Error", "Incorrect PIN or corrupted data.")
+            sys.exit(1)
 
-    # If decryption succeeds, show the main app!
-    root.deiconify() 
     app = TOTPApp(root, secret)
+    root.after(100, lambda: protect_window(root))
     root.mainloop()
 
 if __name__ == "__main__":
