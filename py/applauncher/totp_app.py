@@ -1,11 +1,30 @@
 #!/usr/bin/env python3
 
+# ub: apt install zbar-tools oathtool
+# fed: dnf install zbar oathtool
+# zbarimg -q --nodbus --raw qr.png
+# oathtool --totp -b --time-step-size=60s "$secret"
+# Where ‘secret’ is 32 character base32
+# someday: system tray icon on windows?
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import time
 import sys
-import pyotp
 import save_secret
+
+try:
+    import pyotp
+except:
+    if sys.platform.startswith('linux'):
+        print('please install package pyotp')
+        exit(1)
+    else:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(
+            0, "Please install package 'pyotp'.",
+            "Import Error", 0x10)
+        exit()
 
 class TOTPApp:
     def __init__(self, root, secret):
