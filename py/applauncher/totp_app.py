@@ -62,23 +62,59 @@ class TOTPApp:
                                         maximum=60,
                                         style="black.Horizontal.TProgressbar")
         self.progress.pack(padx=0, pady=0)
-        
+
+        # tracking variables for the tooltip and timer
+        self.tooltip_window = None
+        self.clear_timer = None
+
         self.update_ui()
 
     def copy_to_clipboard(self):
         v = self.code_var.get()
 
-        # 1. Update the CLIPBOARD (Ctrl+V / Right-click Paste)
+        # 1. Update the CLIPBOARD
         self.root.clipboard_clear()
         self.root.clipboard_append(v)
 
+        # 2. Update the PRIMARY selection (Linux)
         if sys.platform.startswith('linux'):
-            # 2. Update the PRIMARY (Middle-click Paste)
             self.root.selection_clear(selection='PRIMARY')
             self.root.selection_own(selection='PRIMARY')
             self.root.selection_handle(lambda offset, length:
                                   v[int(offset):int(offset)+int(length)],
                                   selection='PRIMARY')
+
+        # 3. Reset existing tooltip and timer if user clicks multiple times
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+        if self.clear_timer:
+            self.root.after_cancel(self.clear_timer)
+
+        # 4. Create the "Copied!" tooltip
+        x = self.root.winfo_pointerx() + 10
+        y = self.root.winfo_pointery() + 10
+        
+        self.tooltip_window = tk.Toplevel(self.root)
+        self.tooltip_window.wm_overrideredirect(True) # Removes window decorations/title bar
+        self.tooltip_window.wm_geometry(f"+{x}+{y}")
+        
+        label = tk.Label(self.tooltip_window, text="Copied!", bg="#333333", 
+                         fg="white", relief="solid", borderwidth=1, padx=4, pady=2)
+        label.pack()
+
+        # 5. Set the 10-second (10000ms) timer
+        self.clear_timer = self.root.after(10000, self.clear_clipboard_and_tooltip)
+
+    def clear_clipboard_and_tooltip(self):
+        # Destroy the tooltip
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+            
+        # Clear clipboards
+        self.root.clipboard_clear()
+        if sys.platform.startswith('linux'):
+            self.root.selection_clear(selection='PRIMARY')
 
     def update_ui(self):
         current_time = time.time()
@@ -146,7 +182,7 @@ def protect_window(root):
 def main(secret_filename):
     root = tk.Tk()
 
-    if False:
+    if True:
         # a dummy secret for testing.
         secret = "CLEFDHTP43VLP2UAYYBX532XKLWG6YU4"
     else:
