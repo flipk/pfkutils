@@ -79,12 +79,9 @@
 
 import subprocess
 import json
-import sys
 import argparse
 import shlex
-
-# Defensive coding: Check for Python version compatibility if needed, 
-# though this script is standard Python 3.
+import datetime
 
 all_commands_run = []
 
@@ -183,6 +180,30 @@ def clean_id(docker_id):
         return docker_id[7:]
     return docker_id
 
+def format_age(created_str):
+    if not created_str:
+        return ""
+    
+    # Docker timestamps look like "2024-03-05T18:22:43.123456789Z"
+    # Strip nanoseconds and Z, then parse and make timezone-aware
+    clean_str = created_str.split('.')[0].rstrip('Z')
+    created_dt = datetime.datetime.strptime(clean_str, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=datetime.timezone.utc)
+    
+    # Use timezone-aware current time
+    now = datetime.datetime.now(datetime.timezone.utc)
+    diff = now - created_dt
+    
+    days = diff.days
+    hours = diff.seconds // 3600
+    mins = (diff.seconds % 3600) // 60
+    
+    if days > 0:
+        return f"{days}d{hours:02d}h"
+    elif hours > 0:
+        return f"{hours}h{mins:02d}m"
+    else:
+        return f"{mins}m"
+
 def main():
     parser = argparse.ArgumentParser(
         description="Visualize Docker images and containers."
@@ -192,8 +213,7 @@ def main():
     args = parser.parse_args()
 
     # 1. Get all containers
-    container_ids_raw = run_command(["docker", "container", "ls",
-                                     "--all", "-q"])
+    container_ids_raw = run_command(["docker", "container", "ls", "--all", "-q"])
     container_ids = container_ids_raw.splitlines()
     
     containers_data = []
@@ -231,6 +251,8 @@ def main():
     # Use 'docker system df' to get volume sizes (available in newer
     # docker versions)
     volume_sizes = {}
+    
+    # Not all docker setups support system df the same way, keeping basic check
     try:
         # Returns object with key "Volumes": [ { "Name": "...",
         # "Size": "..." }, ... ]
@@ -303,16 +325,16 @@ def main():
         parent_id = clean_id(img.get("Parent", ""))
         parent_img = images_map.get(parent_id)
         parent_size = parent_img.get("Size", 0) if parent_img else 0
-        rel_size = size_bytes - parent_size
-        if rel_size < 0: rel_size = 0
+        rel_size = max(0, size_bytes - parent_size)
         rel_size_str = f"+{human_size(rel_size)}"
+
+        age_str = format_age(img.get("Created", ""))
 
         repo_tags = img.get("RepoTags", [])
         if repo_tags is None: 
             repo_tags = []
         
-        is_leaf = node_id not in children_map or \
-            len(children_map[node_id]) == 0
+        is_leaf = node_id not in children_map or len(children_map[node_id]) == 0
         has_tags = len(repo_tags) > 0 and repo_tags[0] != "<none>:<none>"
         should_print = args.verbose or has_tags or is_leaf
 
@@ -321,18 +343,15 @@ def main():
                 desc = ", ".join(repo_tags)
             else:
                 config = img.get("Config", {})
-                cmd_arr = config.get("Cmd", [])
-                if not cmd_arr:
-                    cmd_arr = config.get("Entrypoint", [])
+                cmd_arr = config.get("Cmd", []) or config.get("Entrypoint", [])
                 cmd_str = " ".join(cmd_arr) if cmd_arr else "<no command>"
-                desc = f"Cmd: {cmd_str[:50]}..." \
-                    if len(cmd_str) > 50 \
-                       else f"Cmd: {cmd_str}"
+                desc = f"Cmd: {cmd_str[:50]}..." if len(cmd_str) > 50 else f"Cmd: {cmd_str}"
 
             col1 = (" " * indent) + short_id
             
             table_rows.append({
                 "c1": col1,
+                "age": age_str,
                 "c2": size_str,
                 "c3": rel_size_str,
                 "c4": desc
@@ -352,50 +371,43 @@ def main():
                 c_size_rw = cont.get("SizeRw", 0)
                 c_size_str = human_size(c_size_rw)
 
+                c_age_str = format_age(cont.get("Created", ""))
+
                 spacer_len = indent + 1
                 col1 = "C" + (" " * spacer_len) + c_id_raw
 
                 table_rows.append({
                     "c1": col1,
+                    "age": c_age_str,
                     "c2": c_size_str,
                     "c3": '<' + c_state.upper() + '>',
                     "c4": c_name
                 })
 
         next_indent = indent + 2
-        children = children_map.get(node_id, [])
-        for child_id in children:
+        for child_id in children_map.get(node_id, []):
             process_node(child_id, next_indent)
 
     for root_id in roots:
         process_node(root_id, 0)
 
     # --- RENDER TABLE 1 ---
-
     header_c1 = "Image/Container"
-    max_c1_width = len(header_c1)
-    for row in table_rows:
-        if len(row["c1"]) > max_c1_width:
-            max_c1_width = len(row["c1"])
+    max_c1_width = max([len(row["c1"]) for row in table_rows] + [len(header_c1)])
     c1_width = max_c1_width + 2
 
-    # Using right alignment (>9) for size columns to align periods
-    print(f"\n{header_c1:<{c1_width}} {'Size':>9} "
-          f"{'+Size/St':>10} {'Tag/Name/Cmd'}")
-    print("-" * (c1_width + 9 + 10 + 40))
+    print(f"\n{header_c1:<{c1_width}} {'Age':>8} {'Size':>9} {'+Size/St':>10} {'Tag/Name/Cmd'}")
+    print("-" * (c1_width + 8 + 9 + 10 + 40 + 3))
 
     for row in table_rows:
-        print(f"{row['c1']:<{c1_width}} {row['c2']:>9} "
-              f"{row['c3']:>10} {row['c4']}")
+        print(f"{row['c1']:<{c1_width}} {row['age']:>8} {row['c2']:>9} {row['c3']:>10} {row['c4']}")
 
     # --- PROCESS TABLE 2 (VOLUMES) ---
-
     vol_attachment = {}
     
     for cont in containers_data:
         c_name = cont.get("Name", "").strip("/")
-        mounts = cont.get("Mounts", [])
-        for m in mounts:
+        for m in cont.get("Mounts", []):
             if m.get("Type") == "volume":
                 vol_name = m.get("Name")
                 if vol_name not in vol_attachment:
@@ -425,25 +437,17 @@ def main():
     if vol_rows:
         # Calculate dynamic width for Volume Name
         header_v1 = "Volume Name"
-        max_v1_width = len(header_v1)
-        for row in vol_rows:
-            if len(row["name"]) > max_v1_width:
-                max_v1_width = len(row["name"])
+        max_v1_width = max([len(row["name"]) for row in vol_rows] + [len(header_v1)])
         v1_width = max_v1_width + 2
 
-        # Right align size column (>10)
-        print(f"\n{header_v1:<{v1_width}} {'Size':>10} "
-              f" {'Containers Attached'}")
+        print(f"\n{header_v1:<{v1_width}} {'Size':>10}  {'Containers Attached'}")
         print("-" * (v1_width + 12 + 40))
 
         for row in vol_rows:
-            print(f"{row['name']:<{v1_width}} {row['size']:>10} "
-                  f" {row['attached']}")
-
+            print(f"{row['name']:<{v1_width}} {row['size']:>10}  {row['attached']}")
         print('')
     else:
         print("\nNo volumes found.")
-
 
     if args.verbose:
         # if you have python <3.8, use this instead of shlex.join:
@@ -451,8 +455,8 @@ def main():
         print('All commands executed:')
         for cmd in all_commands_run:
             print('  ' + shlex.join(cmd))
-
         print('')
 
 if __name__ == "__main__":
     main()
+    
