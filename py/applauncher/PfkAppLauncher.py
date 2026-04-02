@@ -24,6 +24,12 @@ class Lower(Enum):
     TIMER = 2
     NONE = 3
 
+# location of LANCZOS changed between Pillow 8 and 9
+if hasattr(Image, 'Resampling'):
+    resample_filter = Image.Resampling.LANCZOS
+else:
+    resample_filter = Image.LANCZOS
+
 class AppLauncher(tk.Tk):
     """
     A simple graphical application launcher that displays a grid of icons
@@ -165,7 +171,7 @@ class AppLauncher(tk.Tk):
                 icon_path = os.path.expanduser(os.path.expandvars(app_info['icon']))
                 if os.path.exists(icon_path):
                     img = Image.open(icon_path)
-                    img = img.resize((self.icon_size, self.icon_size), Image.Resampling.LANCZOS)
+                    img = img.resize((self.icon_size, self.icon_size), resample_filter)
                     photo = ImageTk.PhotoImage(img)
                     icon_label.config(image=photo, height=self.icon_size, width=self.icon_size)
                     self.icon_photo_images.append(photo)
