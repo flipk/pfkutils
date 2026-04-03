@@ -25,6 +25,17 @@ flocking
    echo doing stuff while locked
    exec 9>&-
 
+how to split a path into its components:
+# -r : treat backslashes literally
+# -a dirs : place result in array 'dirs'
+# "${PWD#/}" : a 'here-string' with leading slash stripped
+#              to prevent dirs[0] being null-string
+# Loop through and print the array elements
+IFS='/' read -ra dirs <<< "${PWD#/}"
+for i in "${!dirs[@]}"; do
+    echo "Index $i: '${dirs[$i]}'"
+done
+
 vars
    ${varname%word} : remove 'word' shortest match from end of string (shortest)
    ${varname%%word} : remove longest match from end of string

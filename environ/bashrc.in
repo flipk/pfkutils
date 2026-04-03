@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2026-02-18.22:03:31
+#      Last update: 2026-04-05.13:24:56
 #
 #############################################################################
 
@@ -229,10 +229,10 @@ _set_prompt() {
         _ps=''
     fi
     if [[ "x$VIRTUAL_ENV" != x ]] ; then
-        _ps="${_ps}VENV:"
+        _ps="${_ps}${COLOR_FG_RED}py${py_pfk_vers}${COLOR_NORMAL}:${COLOR_FG_YEL}${COLOR_BG_BLU}${VIRTUAL_ENV}${COLOR_NORMAL}\n"
     fi
     if [[ "x$1" != x ]] ; then
-        _ps="${_ps}$COLOR_FG_YEL$COLOR_BG_BLU$1$COLOR_NORMAL\n"
+        _ps="${_ps}${COLOR_FG_YEL}${COLOR_BG_BLU}$1${COLOR_NORMAL}\n"
     fi
     if [[ $REALUSER == "root" ]] ; then
         _ps="${_ps}$COLOR_INVERT$REALUSER@$HOST$COLOR_NORMAL[$PFKARCH]"
@@ -310,7 +310,6 @@ export TERM
 #
 
 alias h='fc -l'
-alias s='PFK_DETACH_SESSION=1 screen'
 alias ls='ls -F'
 alias l=less
 alias lt='l -n +G'
@@ -322,10 +321,14 @@ alias pfkman='MANPATH=`find @prefix@ -name man | tr "\n" ":"` man'
 alias setdate='date "+date %m%d%H%M%Y.%S"'
 alias gitlog='git log --decorate=full --parents --graph'
 alias gitdiff='GIT_EXTERNAL_DIFF=@prefix@/bin/git-diff-helper.sh git --no-pager diff'
+# main/sessionManager.cc kills orphans on logout, but
+# recognizes detached processes as not orphaned
 alias tmux='PFK_DETACH_SESSION=1 TERM=rxvt \tmux'
+alias s='PFK_DETACH_SESSION=1 screen'
 alias dkr=docker
-# old, use python version now alias dit=docker-image-tree.sh
+# alias a typo i do 5 times a day
 alias gs='git status'
+alias py=python3
 
 __findvlc() {
     local prev_IFS="$IFS"
@@ -729,8 +732,24 @@ find_pfk_environ() {
     return 1
 }
 
+find_venv() {
+    d="$PWD"
+    while [[ "x${d}" != x ]] ; do
+        venv_dir="${d}/venv"
+        if [[ -d "$venv_dir" ]] ; then
+            if [[ -r "${venv_dir}/bin/activate" ]] ; then
+                echo "$venv_dir"
+                return 0
+            fi
+        fi
+        d="${d%/*}"
+    done
+    return 1
+}
+
 new_pfk_environ_file=
 current_pfk_environ_file=
+py_pfk_vers=
 
 cd() {
     if [[ $# -eq 0 ]] ; then
@@ -754,6 +773,53 @@ cd() {
             . "$new_pfk_environ_file" enter
         fi
         current_pfk_environ_file="$new_pfk_environ_file"
+    fi
+
+    new_pfk_venv=$(find_venv)
+    if [[ "x$new_pfk_venv" == "x" ]] ; then
+        stickenv() {
+            echo no venv to stick
+        }
+        detected_pfk_venv=
+    fi
+    if [[ "x$new_pfk_venv" != "x$current_pfk_venv" ]] ; then
+        if [[ "x$stuck_pfk_venv" == "x" ]] ; then
+            if [[ "x$current_pfk_venv" != "x" ]] ; then
+                #echo leaving VENV
+                unpath "${VIRTUAL_ENV}/bin"
+                unset VIRTUAL_ENV
+                stickenv() {
+                    echo no venv set to stick
+                }
+                unstickenv() {
+                    echo no venv set to unstick
+                }
+            fi
+            if [[ "x$new_pfk_venv" != "x" ]] ; then
+                VIRTUAL_ENV="$new_pfk_venv"
+                PATH="${VIRTUAL_ENV}/bin:$PATH"
+                dedup_path2
+                py_pfk_vers=$(python3 -c 'import sys ; print(".".join([str(v) for v in sys.version_info[0:3]]))')
+                #echo entering $py_pfk_vers, type stickenv to stick
+                stickenv() {
+                    stuck_pfk_venv=1
+                    echo VENV stuck, type unstickenv to unstick
+                    unstickenv() {
+                        stuck_pfk_venv=
+                        cd .
+                    }
+                }
+            fi
+            detected_pfk_venv="$new_pfk_venv"
+            current_pfk_venv="$new_pfk_venv"
+        else
+            if [[ "x$new_pfk_venv" != "x" ]] ; then
+                if [[ "x$new_pfk_venv" != "x$detected_pfk_venv" ]] ; then
+                    echo detected new venv, but stuck
+                    detected_pfk_venv="$new_pfk_venv"
+                fi
+            fi
+        fi
     fi
 
     if [[ x$INSIDE_EMACS != x ]] ; then
