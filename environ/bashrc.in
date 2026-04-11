@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2026-04-05.13:24:56
+#      Last update: 2026-04-10.20:06:00
 #
 #############################################################################
 
@@ -229,7 +229,7 @@ _set_prompt() {
         _ps=''
     fi
     if [[ "x$VIRTUAL_ENV" != x ]] ; then
-        _ps="${_ps}${COLOR_FG_RED}py${py_pfk_vers}${COLOR_NORMAL}:${COLOR_FG_YEL}${COLOR_BG_BLU}${VIRTUAL_ENV}${COLOR_NORMAL}\n"
+        _ps="${_ps}${COLOR_FG_RED}VENV-${py_pfk_vers}${COLOR_NORMAL}:"
     fi
     if [[ "x$1" != x ]] ; then
         _ps="${_ps}${COLOR_FG_YEL}${COLOR_BG_BLU}$1${COLOR_NORMAL}\n"
@@ -785,7 +785,7 @@ cd() {
     if [[ "x$new_pfk_venv" != "x$current_pfk_venv" ]] ; then
         if [[ "x$stuck_pfk_venv" == "x" ]] ; then
             if [[ "x$current_pfk_venv" != "x" ]] ; then
-                #echo leaving VENV
+                echo leaving VENV
                 unpath "${VIRTUAL_ENV}/bin"
                 unset VIRTUAL_ENV
                 stickenv() {
@@ -800,7 +800,7 @@ cd() {
                 PATH="${VIRTUAL_ENV}/bin:$PATH"
                 dedup_path2
                 py_pfk_vers=$(python3 -c 'import sys ; print(".".join([str(v) for v in sys.version_info[0:3]]))')
-                #echo entering $py_pfk_vers, type stickenv to stick
+                echo entering VENV $py_pfk_vers, type stickenv to stick
                 stickenv() {
                     stuck_pfk_venv=1
                     echo VENV stuck, type unstickenv to unstick

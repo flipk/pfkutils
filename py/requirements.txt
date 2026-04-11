@@ -1,3 +1,26 @@
+
+# on destination machine:
+# python -m pip debug --verbose
+# what to look for:
+#   - implementation version (e.g. 3.10)
+#   - platform: e.g. manylinux_2_17_x86_64, win_amd64
+#   - ABI : tags like cp310, abi3, none.
+# may show a string under 'Compatible tags' like:
+#    cp313-cp313-manylinux_2_40_x86_64
+#
+# on download machine:
+#   pip download  --only-binary=:all: \
+#    --platform <TARGET_PLATFORM> \
+#    --python-version <TARGET_PYTHON_VERSION> \
+#    --implementation <TARGET_ID> \
+#    --abi <TARGET_ABI> \
+#    -d ./package_dir \
+#    <PACKAGE_NAME>
+# (or) -r requirements.txt
+#
+# on destination:
+# pip install --no-index --find-links=C:\path\to\your\wheels package_name
+
 websockets
 matplotlib
 numpy
