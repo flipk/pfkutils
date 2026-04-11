@@ -1,6 +1,6 @@
 ###########################################################################
 #
-#      Last update: 2026-04-10.20:06:00
+#      Last update: 2026-04-11.11:38:00
 #
 #############################################################################
 
@@ -842,10 +842,12 @@ cd() {
         typeset count
         count=0
         while [[ $count -lt $gitnummods ]] ; do
-            bardisp="$bardisp{${gitmodname[$count]}:${githead[$count]}}:"
-            count=$(( count + 1 ))
+            if [[ $count -gt 0 ]] ; then
+                bardisp="${bardisp}:"
+            fi
+            bardisp="$bardisp{${gitmodname[$count]}:${githead[$count]}}:${gitrelpath[$count]}"
+            (( count ++ ))
         done
-        bardisp="$bardisp$gitrelpath"
     else
         bardisp="$bardisp${PWD}"
     fi

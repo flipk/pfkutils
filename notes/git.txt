@@ -129,3 +129,11 @@ stage a particular submodule hash to the index:
 https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux
 git://git.denx.de/u-boot.git
 https://kernel.googlesource.com/pub/scm/linux/hotplug/udev
+
+
+
+if you get this error:
+    fatal: transport 'file' not allowed
+
+run this:
+    git config --global protocol.file.allow always

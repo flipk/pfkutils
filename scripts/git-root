@@ -19,7 +19,7 @@
 #              gitmodname[x]="dir name of working tree root or submod"
 #              githead[x]="branch or commit id for HEAD"
 #
-#              gitrelpath="current directory relative to last $gitroot"
+#              gitrelpathcur="current directory relative to last $gitroot"
 #
 
 vars=0
@@ -79,7 +79,7 @@ if [[ "x$(git rev-parse --is-inside-git-dir 2> /dev/null)" == xtrue ]] ; then
         parentdir="${gitdir%/.git}"
         modname="${parentdir##*/}/.git"
     fi
-    real gitrelpath=\"$rp\"
+    real gitrelpathcur=\"$rp\"
     real gitnummods=1
     real gitroot[0]=\"$gitdir\"
     real gitsubdir[0]=\"$gitdir\"
@@ -96,7 +96,7 @@ if [[ "x$gitdir" == "x" ]] ; then
     if [[ $vars == 1 ]] ; then
 	real gr=''
 	real gitdir=''
-	real gitrelpath=''
+	real gitrelpathcur=''
 	real gitnummods=0
     fi
     exit 0
@@ -113,7 +113,7 @@ modname[0]="${toplevel##*/}"
 gr="$toplevel"
 
 getrelpath
-gitrelpath="$rp"
+gitrelpathcur="$rp"
 rels[0]="$rp"
 
 parseHEAD "$toplevel"
@@ -160,7 +160,7 @@ if [[ $vars == 1 ]] ; then
         real gitmodname[$count]=\"${modname[$index]}\"
         (( count++ ))
     done
-    real gitrelpath=\"$gitrelpath\"
+    real gitrelpathcur=\"$gitrelpathcur\"
 else
     real $gr
 fi

@@ -9,3 +9,4 @@ cscope.out
 /pfkutils*.bundle*
 *.o
 .pfk_environ
+*.orig
