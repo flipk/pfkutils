@@ -1,6 +1,6 @@
 #!/bin/bash
 
-last_modified=2024-05-14.20:22:03
+last_modified=2026-04-11.11:07:20
 
 # Local Variables:
 # mode: shell-script
@@ -12,11 +12,9 @@ last_modified=2024-05-14.20:22:03
 # time-stamp-end: "$"
 # End:
 
-# full path to file in question
-fp="$(realpath "$1")"
-root="$(git root)"
-# rel path to file in question, relative to $root
-rp="${fp#$root/}"
+# rel path to file in question, relative to root of this repo
+rp="$(git rev-parse --show-prefix)"
+
 # output file
 op="${fp}.orig"
 
