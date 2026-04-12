@@ -20,6 +20,8 @@
 #
 # on destination:
 # pip install --no-index --find-links=C:\path\to\your\wheels package_name
+#
+# (see also venv-commands.txt)
 
 websockets
 matplotlib

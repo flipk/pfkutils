@@ -1,8 +1,31 @@
 ###########################################################################
 #
-#      Last update: 2026-04-11.11:38:00
+#      Last update: 2026-04-11.20:22:44
 #
 #############################################################################
+
+# to diff this against the installed ~/.bashrc, do this:
+diffbashrc() {
+    prefix=${HOME}/pfk
+    username=$(id -u -n)
+    userid=$(id -u)
+    groupid=$(id -g)
+    tmpbashrc=$(mktemp)
+    # note the installer wants to substitute all the @patterns@ below
+    # which would actually break this function's purpose; to prevent
+    # those substitutions, i throw in a backslash so the pattern doesn't
+    # match during install but is ignored when executed.
+    sed \
+        -e s,@\PFK_USER_NAME@,$username,g \
+        -e s,@\prefix@,$prefix,g \
+        -e s,@\PFK_HOME@,$HOME,g \
+        -e s,@\PFK_USER_ID@,$userid,g \
+        -e s,@\PFK_GROUP_ID@,$groupid,g \
+        < ${HOME}/proj/pfkutils/environ/bashrc.in > $tmpbashrc
+    echo diff $tmpbashrc ~/.bashrc
+    diff $tmpbashrc ~/.bashrc
+    rm $tmpbashrc
+}
 
 #
 # always ensure this file is specified as ENV.
@@ -329,6 +352,16 @@ alias dkr=docker
 # alias a typo i do 5 times a day
 alias gs='git status'
 alias py=python3
+
+# apparently vi likes to run python stuff, so when you're in a venv,
+# it breaks. when running vi, set PATH back to something simple so it
+# keeps working.
+alias vi='VIRTUAL_ENV= PATH=/bin:/usr/bin:/usr/local/bin  vi'
+
+# another solution, from gemini:
+# alias vi='env PATH="/usr/bin:/bin" vi'
+# another solution, add this line to ~/.vimrc:
+# let g:python3_host_prog = '/usr/bin/python3'
 
 __findvlc() {
     local prev_IFS="$IFS"
@@ -732,14 +765,67 @@ find_pfk_environ() {
     return 1
 }
 
+sign_pfk_venv() {
+    venvdir="${PWD}/venv"
+    venvcfg="${venvdir}/pyvenv.cfg"
+    venvsig="${venvdir}/pfksig"
+    if [[ ! -d "$venvdir" ]] ; then
+        echo ERROR: no venv here 1>&2
+        return 1
+    fi
+    if [[ ! -f "$venvcfg" ]] ; then
+        echo ERROR no $venvcfg 1>&2
+        return 1
+    fi
+    if [[ ! -f $pfk_environ_key ]] ; then
+        echo ERROR: no $pfk_environ_key 1>&2
+        return 1
+    fi
+    set -- `( cat $pfk_environ_key $venvcfg ) | sha256sum -`
+    calculated=$1
+    echo $calculated > "$venvsig"
+    echo signed venv 1>&2
+}
+
+verify_pfk_venv() {
+    venvdir="$1"
+    venvcfg="${venvdir}/pyvenv.cfg"
+    venvsig="${venvdir}/pfksig"
+    if [[ ! -f "$venvcfg" ]] ; then
+        echo no $venvcfg 1>&2
+        return 1
+    fi
+    if [[ ! -f "$venvsig" ]] ; then
+        echo no venv sig 1>&2
+        return 1
+    fi
+    if [[ ! -f $pfk_environ_key ]] ; then
+        # echo ERROR: no $pfk_environ_key 1>&2
+        return 1
+    fi
+    set -- `( cat $pfk_environ_key $venvcfg ) | sha256sum - ; cat $venvsig`
+    calculated=$1
+    signature="$3"
+    # echo calculated: "${calculated}" 1>&2
+    # echo signature : "${signature}" 1>&2
+    if [[ "x$calculated" = "x$signature" ]] ; then
+        # echo venv signature match 1>&2
+        return 0
+    fi
+    echo venv sig mismatch 1>&2
+    return 1
+}
+
 find_venv() {
     d="$PWD"
     while [[ "x${d}" != x ]] ; do
         venv_dir="${d}/venv"
         if [[ -d "$venv_dir" ]] ; then
             if [[ -r "${venv_dir}/bin/activate" ]] ; then
-                echo "$venv_dir"
-                return 0
+                if verify_pfk_venv "$venv_dir" ; then
+                    echo "$venv_dir"
+                    return 0
+                fi
             fi
         fi
         d="${d%/*}"

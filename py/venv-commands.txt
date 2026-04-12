@@ -9,6 +9,8 @@ ubuntu:
 fedora:
   ?
 
-mkdir venv/packages
-pip download -r requirements.txt -d venv/packages
-pip install venv/packages/*whl
+(see also comments in requirements.txt on pip commands)
+mkdir venv/wheelhouse
+pip download -r requirements.txt -d venv/wheelhouse
+pip install --no-index --find-links=venv/wheelhouse <packagename>
+pip install --no-index ./venv/wheelhouse/*.whl <packagename>
