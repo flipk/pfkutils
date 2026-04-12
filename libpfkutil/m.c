@@ -124,7 +124,12 @@ usage( void )
 "specify -B <base>.\n"
 "if you put <base> as 0, strlen(M_BASE_CHARSET) will be used.\n"
 "\n"
-"note all time formats are in UTC, not localtime.\n"
+"time format: if a value interpreted as UTC is prior to jan 1 1990, it\n"
+"is treated as a number of years-days-H:M:S (relative time duration)\n"
+"rather than absolute date&time; in other words you can represent\n"
+"durations up to 20 years, or absolute date&time jan 1 1990 or later,\n"
+"but not a date prior to jan 1 1990 or a duration greater than 20\n"
+"years.\n"
 "\n",
              m_base_16, m_base_62, m_base_64
         );
@@ -331,7 +336,7 @@ format_time(M_INT64  v)
     {
         strcat(format, "%Y/%m/%d-");
     }
-    else if (v > 86400)
+    else if (v >= 86400)
     {
         int days = v / 86400;
         v -= 86400 * days;
