@@ -180,6 +180,7 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (ivy-mode 1)
 (global-git-gutter-mode +1)
 (cscope-setup)
+(global-auto-revert-mode 1)
 
 (defun isearch-or-swiper ()
   "calls either isearch-foward or swiper based on size of buffer"
