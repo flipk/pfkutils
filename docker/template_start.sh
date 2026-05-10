@@ -9,7 +9,6 @@ if [[ $# -eq 0 ]] ; then
 else
     cmd=()
     while [[ $# -gt 0 ]] ; do
-        # TODO check if this is a bash5-only feature.
         cmd+=("$1")
         shift
     done
