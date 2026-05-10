@@ -210,13 +210,7 @@ def main():
     )
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Show verbose debug (commands used)")
-    parser.add_argument("-a", "--all", action="store_true",
-                        help="Show all images (intermediate layers)")
     args = parser.parse_args()
-
-    # if -v is set, implies -a
-    if args.verbose:
-        args.all = True
 
     # 1. Get all containers
     container_ids_raw = run_command(["docker", "container", "ls", "--all", "-q"])
@@ -340,28 +334,26 @@ def main():
         if repo_tags is None: 
             repo_tags = []
         
-        is_leaf = node_id not in children_map or len(children_map[node_id]) == 0
+        # is_leaf = node_id not in children_map or len(children_map[node_id]) == 0
         has_tags = len(repo_tags) > 0 and repo_tags[0] != "<none>:<none>"
-        should_print = args.all or has_tags or is_leaf
 
-        if should_print:
-            if has_tags:
-                desc = ", ".join(repo_tags)
-            else:
-                config = img.get("Config", {})
-                cmd_arr = config.get("Cmd", []) or config.get("Entrypoint", [])
-                cmd_str = " ".join(cmd_arr) if cmd_arr else "<no command>"
-                desc = f"Cmd: {cmd_str[:50]}..." if len(cmd_str) > 50 else f"Cmd: {cmd_str}"
+        if has_tags:
+            desc = ", ".join(repo_tags)
+        else:
+            config = img.get("Config", {})
+            cmd_arr = config.get("Cmd", []) or config.get("Entrypoint", [])
+            cmd_str = " ".join(cmd_arr) if cmd_arr else "<no command>"
+            desc = f"Cmd: {cmd_str[:50]}..." if len(cmd_str) > 50 else f"Cmd: {cmd_str}"
 
-            col1 = (" " * indent) + short_id
-            
-            table_rows.append({
-                "c1": col1,
-                "age": age_str,
-                "c2": size_str,
-                "c3": rel_size_str,
-                "c4": desc
-            })
+        col1 = (" " * indent) + short_id
+        
+        table_rows.append({
+            "c1": col1,
+            "age": age_str,
+            "c2": size_str,
+            "c3": rel_size_str,
+            "c4": desc
+        })
 
         if node_id in image_containers:
             for cont in image_containers[node_id]:
