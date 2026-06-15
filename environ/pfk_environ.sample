@@ -1,0 +1,23 @@
+# -*- Mode:shell-script -*-
+
+environ_last_modified="2026-06-14.19:01:02"
+
+if [[ "x$1" = xenter ]] ; then
+    echo ENTERING PFKUTILS LAND, BRANCHES:
+    git branch -v
+fi
+
+if [[ "x$1" = xleave ]] ; then
+    echo LEAVING PFKUTILS LAND
+fi
+
+# Local Variables:
+# mode: Text
+# indent-tabs-mode: nil
+# tab-width: 8
+# eval: (add-hook 'write-file-functions 'time-stamp)
+# eval: (add-hook 'after-save-hook (lambda () (shell-command "sign_pfk_environ.sh") (revert-buffer t t t)) nil t)
+# time-stamp-start: "environ_last_modified="
+# time-stamp-format: "\"%:y-%02m-%02d.%02H:%02M:%02S\""
+# time-stamp-end: "$"
+# End:
