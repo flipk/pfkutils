@@ -77,6 +77,7 @@ For more information, please refer to <http://unlicense.org>
 #include <vector>
 #include <algorithm>
 #include <atomic>
+#include <math.h>
 
 /** wrapper for struct timeval */
 struct pxfe_timeval : public timeval
@@ -91,6 +92,12 @@ struct pxfe_timeval : public timeval
     }
     /** set method which accepts sec and usec args */
     void set(time_t s, long u) { tv_sec = s; tv_usec = u; }
+    void set(double s) {
+        double integ;
+        double frac = modf(s, &integ);
+        tv_sec = (time_t) integ;
+        tv_usec = (suseconds_t) (frac * 1e6 + 0.5);
+    }
     /** assignment operator from another timeval */
     const pxfe_timeval& operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
@@ -170,6 +177,9 @@ struct pxfe_timeval : public timeval
         minutes  = seconds / 60;
         seconds -= minutes * 60;
         usecs = tv_usec;
+    }
+    double to_double(void) {
+        return tv_sec + (tv_usec / 1000000.0);
     }
     /** convert sec/usec into single milliseconds value */
     uint32_t msecs(void) {
