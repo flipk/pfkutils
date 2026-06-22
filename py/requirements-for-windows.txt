@@ -1,0 +1,5 @@
+
+# windows management interface, useful for
+# getting a list of ethernet interfaces etc
+WMI
+
