@@ -56,3 +56,51 @@ while (!stop) {
    cntr = (cntr + 1) % 72
 }
 bind "q" ""
+
+
+# To plot only the first N samples from a data file,
+# use the every keyword.  The syntax for limiting the
+# number of rows is:
+plot 'filename' every ::0::N-1
+
+# Plotting 16-bit signed big-endian integers on the Y axis
+plot 'data.bin' \
+    binary endian=big format='%int16' \
+    every ::0::1000 \
+    using 0:1 with lines
+
+# Plotting I (col 1) and Q (col 2) in 3D
+# The index (time/sample number) can be plotted as the Z-axis
+splot 'data.bin' \
+     binary endian=big format='%int16%int16' \
+     every ::0::1000 \
+     using 0:1:2 \
+     with lines
+
+# If your file format differs, change the format string.
+# Other common specifiers include %int8, %uint16, %int32, and %float.
+
+
+# if it has records
+
+# Each block: 16 bytes header + (350 * 4 bytes) data = 1416 bytes per record
+splot 'data.bin' binary \
+    endian=big \
+    format='%*2int16%int16%int16' \
+    record=350 \
+    skip=16 \
+    with lines
+
+# Explanation of the Options:
+#  record=350: This tells Gnuplot that each "record" (or block)
+#              contains exactly 350 data points. Gnuplot will automatically
+#              handle the headers if configured correctly.
+#  skip=16:    This tells Gnuplot to skip 16 bytes at the start
+#              of each record.
+#  format='%*2int16%int16%int16':
+#      %*2int16:     The * indicates a "discarded" column. This effectively
+#                    skips the 16-byte header (assuming the header can be
+#                    interpreted as two int16 units, or you can adjust this
+#                    to match the exact byte size of your header).
+#      %int16%int16: These read your IQ data (I and Q values) for each sample.
+

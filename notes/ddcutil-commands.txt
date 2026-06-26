@@ -1,0 +1,7 @@
+
+# to change brightness of monitor 
+
+sudo ddcutil getvcp 10
+sudo ddcutil setvcp 10 32
+sudo ddcutil setvcp 10 0
+

@@ -42,3 +42,6 @@ pymupdf
 tk
 #PyQt5
 #pyqt5-tools
+
+# for github previews of markdown
+grip
