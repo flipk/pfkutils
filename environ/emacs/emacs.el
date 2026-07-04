@@ -164,7 +164,6 @@ nEnter c-mode-tabwidth value (4 or 8):")
      (setq pfk-make-big-flag t))))
 
 (global-set-key [f3]  'my-make-big)
-
 (global-set-key [f2]  'fill-region)
 (global-set-key [f6]  'eval-last-sexp)
 (global-set-key [f9]  'make-frame)
@@ -176,7 +175,8 @@ nEnter c-mode-tabwidth value (4 or 8):")
 (put 'scroll-left 'disabled nil)
 (put 'erase-buffer 'disabled nil)
 
-; useful without ivy : (ido-mode)
+; useful without ivy:
+;(ido-mode)
 (ivy-mode 1)
 (global-git-gutter-mode +1)
 (cscope-setup)

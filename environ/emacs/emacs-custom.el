@@ -9,53 +9,49 @@
  '(cscope-close-window-after-select nil)
  '(cscope-option-kernel-mode t)
  '(display-time-format "%H:%M")
- '(display-time-mail-file (quote false))
+ '(display-time-mail-file 'false)
  '(display-time-mode t)
  '(face-font-family-alternatives
-   (quote
-    (("pfk" "courier" "fixed" "Monospace")
+   '(("pfk" "courier" "fixed" "Monospace")
      ("pfk" "CMU Typewriter Text" "fixed" "courier")
      ("pfk" "helv" "helvetica" "arial" "fixed" "Sans Serif")
-     ("pfk" "helvetica" "arial" "fixed" "helv"))))
+     ("pfk" "helvetica" "arial" "fixed" "helv")))
  '(face-font-registry-alternatives
-   (quote
-    (("pfk" "gb2312.1980" "gb2312.80&gb8565.88" "gbk" "gb18030")
+   '(("pfk" "gb2312.1980" "gb2312.80&gb8565.88" "gbk" "gb18030")
      ("pfk" "jisx0208.1990" "jisx0208.1983" "jisx0208.1978")
      ("pfk" "ksc5601.1989" "ksx1001.1992" "ksc5601.1987")
-     ("pfk" "muletibetan-2" "muletibetan-0"))))
+     ("pfk" "muletibetan-2" "muletibetan-0")))
  '(ibuffer-formats
-   (quote
-    ((mark modified read-only " "
-           (name 47 47 :left :elide)
-           " "
-           (size 9 -1 :right)
-           " "
-           (mode 16 16 :left :elide))
+   '((mark modified read-only " "
+	   (name 47 47 :left :elide)
+	   " "
+	   (size 9 -1 :right)
+	   " "
+	   (mode 16 16 :left :elide))
      (mark " "
-           (name 16 -1)
-           " " filename))))
- '(inhibit-startup-screen t)
- '(menu-bar-mode nil)
+	   (name 16 -1)
+	   " " filename)))
  '(inhibit-startup-echo-area-message (getenv "USER"))
+ '(inhibit-startup-screen t)
  '(initial-scratch-message "")
  '(ivy-use-virtual-buffers t)
+ '(menu-bar-mode nil)
  '(mode-line-format
-   (quote
-    (" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] "
+   '(" " mode-line-mule-info mode-line-modified " " mode-line-buffer-identification " " global-mode-string " %[(" mode-name mode-line-process minor-mode-alist "%n" ")%] "
      (line-number-mode "L%l ")
      (column-number-mode "C%c ")
-     (-3 . "%p"))))
+     (-3 . "%p")))
  '(mode-line-inverse-video t)
  '(mouse-buffer-menu-maxlen 100)
  '(mouse-buffer-menu-mode-mult 100)
+ '(package-selected-packages
+   '(counsel-pydoc flycheck-clang-tidy lua-mode code-library counsel-projectile dap-mode flycheck flycheck-clang-analyzer flycheck-clangcheck flycheck-inline git-gutter git-timemachine ibuffer-git ibuffer-project ibuffer-projectile ivy-todo lsp-mode magit magit-lfs org-doing org-notebook org-projectile projectile projectile-codesearch protobuf-mode term-projectile xcscope counsel ivy org org-modern swiper))
  '(speedbar-show-unknown-files t)
+ '(tool-bar-mode nil)
  '(verilog-auto-delete-trailing-whitespace t)
  '(verilog-auto-inst-column 10)
  '(verilog-auto-newline nil)
- '(verilog-indent-begin-after-if nil)
- '(package-selected-packages
-   '(code-library counsel-projectile dap-mode flycheck flycheck-clang-analyzer flycheck-clangcheck flycheck-inline git-gutter git-timemachine ibuffer-git ibuffer-project ibuffer-projectile ivy-todo lsp-mode magit magit-lfs org-doing org-notebook org-projectile projectile projectile-codesearch protobuf-mode term-projectile xcscope counsel ivy org org-modern swiper))
- '(tool-bar-mode nil))
+ '(verilog-indent-begin-after-if nil))
 
 
 ;; custom-set-faces is normally added by Custom, but
@@ -67,8 +63,6 @@
 (if window-system
     (custom-set-faces
      '(default ((t (:foreground "yellow" :background "black" :font "pfk13"))))
-                                        ; i dont know why this doesnt work!
-                                        ; '(bold ((t (:font "pfk13bold"))))
      '(bold ((t (:font "pfk13" :foreground "white"))))
      '(bold-italic ((t (:inherit bold))))
      '(button ((t (:inherit default))))

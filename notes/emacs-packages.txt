@@ -12,11 +12,20 @@ then, M-x list-packages
 and type 'i' next to every package you want. type 'x' to install them.
 
 package list :
+   git-gutter ibuffer-git ivy-todo lua-mode magit magit-lfs protobuf-mode
+   xcscope counsel ivy swiper git-timemachine ibuffer-project
+
+look into:
+   org-mode org-notebook
+   projectile
+   flycheck
+
+not currently installed:
    code-library counsel-projectile dap-mode flycheck flycheck-clang-analyzer
-   flycheck-clangcheck flycheck-inline git-gutter git-timemachine ibuffer-git
-   ibuffer-project ibuffer-projectile ivy-todo lsp-mode magit magit-lfs
+   flycheck-clangcheck flycheck-inline 
+   ibuffer-projectile lsp-mode 
    org-doing org-notebook org-projectile projectile projectile-codesearch
-   protobuf-mode term-projectile xcscope counsel ivy org org-modern swiper
+   term-projectile org org-modern 
 
 (note this is listed in "package-selected-packages" in emacs-custom.el)
 
