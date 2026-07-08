@@ -1,0 +1,16 @@
+
+from:
+   https://gnu.mirror.constant.com/emacs/emacs-29.4.tar.xz
+
+apt install texinfo
+dnf install gnutls-devel
+
+./configure \
+    --prefix=/opt/pfk/emacs-29.4 \
+    --without-gif --without-pop --without-mailutils \
+    --without-xpm --without-jpeg --without-tiff \
+    --without-png --without-rsvg --without-webp \
+    --without-lcms2 --without-libsystemd \
+    --with-cairo --with-x-toolkit=gtk
+
+
