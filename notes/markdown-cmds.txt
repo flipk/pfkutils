@@ -5,4 +5,8 @@ output=Costpoint.pdf
 pandoc -s $input -o $output \
     --pdf-engine=xelatex \
     -V monofont="DejaVu Sans Mono" \
-    -V mainfont="DejaVu Sans"
+    -V mainfont="DejaVu Sans" \
+    -V geometry:top=0.75in \
+    -V geometry:bottom=0.75in \
+    -V geometry:left=0.75in \
+    -V geometry:right=0.75in
