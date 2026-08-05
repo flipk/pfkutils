@@ -1,0 +1,8 @@
+
+sudo apt install pandoc texlive-xetex
+input=Costpoint.md
+output=Costpoint.pdf
+pandoc -s $input -o $output \
+    --pdf-engine=xelatex \
+    -V monofont="DejaVu Sans Mono" \
+    -V mainfont="DejaVu Sans"

@@ -1,0 +1,13 @@
+
+eval "$(lesspipe)"
+
+# ignore all the 'honeypot' files that security software inserts.
+ignore_patterns="-I '\!\!\!\!\!*' -I 'ZZZZZ*' -I 'XORXOR*' -I 'cAISCv*'"
+
+alias ls="ls $ignore_patterns"
+unset dir
+
+dir () 
+{ 
+    ls -F -n "$@" | $__sed 's, ->.*, @,'
+}
