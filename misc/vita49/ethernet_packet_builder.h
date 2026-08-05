@@ -158,7 +158,7 @@ static inline bool build_ethernet_packet(
     uint8_t   dest_eth[6],
     uint8_t   source_eth[6],
     uint16_t  ether_type,
-    uint8_t * packet_contents,
+    const uint8_t * packet_contents,
     uint32_t  packet_length,
     uint8_t*  output_eth_buffer,
     uint32_t* output_eth_buffer_len)
@@ -176,3 +176,4 @@ static inline bool build_ethernet_packet(
     memcpy(output_eth_buffer, packet_contents, packet_length);
     return true;
 }
+

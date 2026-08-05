@@ -10,6 +10,7 @@ exit 0
 #include <stdio.h>
 #include "vita49.h"
 #include "ethernet_packet_builder.h"
+#include "pcap.h"
 
 void print_buffer(uint8_t * buf, int len)
 {
@@ -55,7 +56,7 @@ int main()
 
     len = h.encode(v49buffer, sizeof(v49buffer));
 
-    uint8_t   ip_buffer[512];
+    uint8_t   ip_buffer[1500];
     uint32_t  ip_buffer_len = sizeof(ip_buffer);
 
     if (!build_ipv4_udp_packet(0x0a000002, 0x0a000001,
@@ -67,7 +68,7 @@ int main()
         return 1;
     }
 
-    uint8_t  eth_buffer[512];
+    uint8_t  eth_buffer[1500];
     uint32_t eth_buffer_len = sizeof(eth_buffer);
     uint8_t  dest[6] = { 0x1a, 0x01, 0x55, 0x15, 0x88, 0x0a };
     uint8_t  src[6] =  { 0x3a, 0x02, 0x55, 0x17, 0x22, 0x0b };
@@ -83,6 +84,33 @@ int main()
 
     printf("eth packet: %08x bytes\n", eth_buffer_len);
     print_buffer(eth_buffer, eth_buffer_len);
+
+
+    // for a double-check, output to a PCAP file so you can
+    // open with wireshark and validate. (configure VITA49
+    // protocol on port 25004).
+
+    uint8_t  pcap_pkt[1500];
+    uint32_t pcap_len = sizeof(pcap_pkt);
+
+    if (!build_pcap_header(pcap_pkt, &pcap_len))
+    {
+        printf("FAIL building pcap header\n");
+        return 1;
+    }
+    FILE * f = fopen("log.pcap", "wb");
+    printf("writing log.pcap\n");
+    fwrite(pcap_pkt, pcap_len, 1, f);
+
+    pcap_len = sizeof(pcap_pkt);
+    if (!build_pcap_packet(eth_buffer, eth_buffer_len,
+                           pcap_pkt, &pcap_len))
+    {
+        printf("FAIL building pcap packet\n");
+        return 1;
+    }
+    fwrite(pcap_pkt, pcap_len, 1, f);
+    fclose(f);
 
     return 0;
 }
