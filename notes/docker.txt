@@ -1,4 +1,6 @@
 
+also look into podman, buildah, rootless docker (rootlesskit)
+
 /etc/docker/daemon.json
   { "data-root": "/path/to/var/lib/docker" }
 
