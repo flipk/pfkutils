@@ -2279,7 +2279,6 @@ class pxfe_poll {
         fdindex(void) { ind = -1; }
         int ind;
     };
-    std::vector<int> freestack; // value : index into fds
     std::vector<fdindex> by_fd; // index : fd#, value : index into fds
     std::vector<pollfd> fds;
 public:
@@ -2298,40 +2297,39 @@ public:
         if (fd >= (int)by_fd.size())
             by_fd.resize(fd+1);
         fdindex &ind = by_fd[fd];
-        pollfd *pfd = NULL;
         if (events == 0)
         {
             if (ind.ind == -1)
                 // nothing to do
                 return;
-            pfd = &fds[ind.ind];
-            pfd->events = 0;
-            pfd->fd = -1;
-            freestack.push_back(ind.ind);
+            // Swap-and-pop: Move the last element into the deleted slot
+            int last_idx = fds.size() - 1;
+            if (ind.ind != last_idx)
+            {
+                fds[ind.ind] = fds[last_idx];
+                // Update the lookup index for the element that just moved
+                by_fd[fds[ind.ind].fd].ind = ind.ind;
+            }
+            fds.pop_back();
             ind.ind = -1;
         }
         else
         {
             if (ind.ind == -1)
             {
-                if (freestack.size() == 0)
-                {
-                    ind.ind = fds.size();
-                    fds.resize(fds.size() + 1);
-                }
-                else
-                {
-                    ind.ind = freestack.back();
-                    freestack.pop_back();
-                }
-                pfd = &fds[ind.ind];
-                pfd->fd = fd;
+                // Add new descriptor
+                ind.ind = fds.size();
+                pollfd pfd;
+                pfd.fd = fd;
+                pfd.events = events;
+                pfd.revents = 0;
+                fds.push_back(pfd);
             }
             else
             {
-                pfd = &fds[ind.ind];
+                // Update existing descriptor
+                fds[ind.ind].events = events;
             }
-            pfd->events = events;
         }
     }
     /** wait for one of the descriptors in the set to become ready,
@@ -2341,49 +2339,16 @@ public:
     }
     /** retrieve events set for a descriptor, returns 0 if none */
     short eget(int fd) {
-        if (fd >= (int)by_fd.size())
+        if (fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
             return 0;
-        fdindex &ind = by_fd[fd];
-        if (ind.ind == -1)
-            return 0;
-        return fds[ind.ind].events;
+        return fds[by_fd[fd].ind].events;
     }
     /** retrieve events that actually occurred on a descriptor,
      * or 0 if none */
     short rget(int fd) {
-        if (fd >= (int)by_fd.size())
+        if (fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
             return 0;
-        fdindex &ind = by_fd[fd];
-        if (ind.ind == -1)
-            return 0;
-        return fds[ind.ind].revents;
-    }
-    /** over time, internal data structure may get large and
-     * fragmented, call this from time to time to clean up and
-     * compact them */
-    void compact(void) {
-        int ind;
-        // the compaction works only if the fds vector
-        // is processed in reverse; so sort the freestack
-        // in ascending order and process it backwards.
-        std::sort(freestack.begin(), freestack.end());
-        while (freestack.size() > 0)
-        {
-            ind = freestack.back();
-            freestack.pop_back();
-            // stupid ubuntu 10, i wanted to use "auto" here, grr.
-            std::vector<pollfd>::iterator it = fds.begin() + ind;
-            for (it = fds.erase(it); it != fds.end(); it++)
-                // adjust indexes which have now moved down by 1
-                if (it->fd != -1)
-                    by_fd[it->fd].ind --;
-        }
-        // trim by_fd of trailing -1's
-        for (ind = by_fd.size()-1;
-             ind >= 0 && by_fd[ind].ind == -1;
-             ind--)
-            ;
-        by_fd.resize(ind+1);
+        return fds[by_fd[fd].ind].revents;
     }
     /** debugging, print out contents of this object */
     void print(void) {
@@ -2391,9 +2356,6 @@ public:
         printf("by_fd.size = %d : ", (int) by_fd.size());
         for (ind = 0; ind < by_fd.size(); ind++)
             printf(" %d", by_fd[ind].ind);
-        printf("\nfreestack.size = %d : ", (int) freestack.size());
-        for (ind = 0; ind < freestack.size(); ind++)
-            printf(" %d", freestack[ind]);
         printf("\nfds.size = %d : ", (int) fds.size());
         for (ind = 0; ind < fds.size(); ind++)
             printf(" [%d %04x]", fds[ind].fd, fds[ind].events);
