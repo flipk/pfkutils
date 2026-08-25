@@ -10,7 +10,7 @@ else
     dirs="$*"
 fi
 
-find $dirs -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) -a -size -1000000c | sort > cscope.files
+find $dirs -type f -a \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' -o -name '*.h' -o -name '*.hxx' -o -name '*.H' \) -a -size -1000000c | sort > cscope.files
 cscope -bk
 
 exit 0
