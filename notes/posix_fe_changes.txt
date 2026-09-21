@@ -1,0 +1,117 @@
+====================================================================
+in the last git commit in this repo, a lot of changes were made to
+posix_fe.h.  would any of those changes require changes to
+applications which include this file? don't make any edits, just
+review.
+====================================================================
+
+     Yes. While the existing applications within this repository compile and
+     pass tests, several changes in commit 61ddc909 introduce API-breaking,
+     behavioral-breaking, and ABI-breaking changes that could require changes
+     to applications including posix_fe.h:
+
+     ─────────────────────────────────────────────────────────────────────────
+
+     1. Critical Behavioral & API Breaking Changes
+
+     - pxfe_semaphore: P() and V() swapped semantics and signatures
+       - Before: P() called give() (void P(void)), and V() called take(expire)
+          (bool V(timespec *expire = NULL)).
+       - Now: Corrected to standard Dijkstra semantics: P() calls take(expire)
+          (bool P(const timespec * = NULL)), and V() calls give() (void V(
+         void)).
+       - Impact:
+         - Calling sem.V(&expire) or checking if (sem.V()) will fail to
+           compile (now returns void and takes no arguments).
+         - Any application calling sem.P() expecting to signal/give will now
+           block/wait (deadlock).
+         - Any application calling sem.V() expecting to wait will now signal/
+           give.
+
+     - pxfe_pthread: Destructor no longer calls stopjoin()
+       - Before: ~pxfe_pthread() invoked stopjoin() automatically.
+       - Now: ~pxfe_pthread() is an empty virtual ~pxfe_pthread() (to avoid
+         calling pure virtual send_stop() during base destruction).
+       - Impact: Any derived class that did not explicitly call stopjoin() in
+         its own destructor will now leak a running background thread
+         accessing freed object memory after destruction. Derived classes
+         must be updated to call stopjoin() in their own destructors.
+
+     - pxfe_pthread::running() lost const qualifier
+       - Before: const bool running(void) const
+       - Now: bool running(void) (acquires internal mutex mut).
+       - Impact: Any caller invoking .running() on a const pxfe_pthread& or
+         inside a const member method will fail to compile.
+
+     ─────────────────────────────────────────────────────────────────────────
+
+     2. Potential Compilation Breakages
+
+     - Deleted copy constructors and assignment operators
+       - Copy operations are now explicitly = delete on pxfe_pipe, pxfe_fd,
+         pxfe_semaphore, pxfe_pthread, pxfe_pthread_mutex,
+         pxfe_pthread_mutex_lock, pxfe_pthread_cond, pxfe_pthread_attr,
+         pxfe_pthread_mutexattr, pxfe_pthread_condattr, and pxfe_readdir.
+       - Impact: Code performing copies or storing these objects in
+         containers requiring copyability will fail to compile.
+
+     - pxfe_timeval::msecs() and pxfe_timespec::msecs() return type change
+       - Before: returned uint32_t.
+       - Now: returns uint64_t.
+       - Impact: Code passing the result to functions expecting uint32_t&,
+         template deduction (e.g. std::min(tv.msecs(), 1000U)), or builds
+         using -Werror=conversion will fail to compile.
+
+     - pxfe_sockaddr_in and pxfe_sockaddr_un are no longer aggregate types
+       - User-defined default constructors pxfe_sockaddr_in() and
+         pxfe_sockaddr_un() were added (which zero memory via memset).
+       - Impact: Aggregate initialization (e.g., pxfe_sockaddr_in sa = { ... }
+         ;) will fail to compile.
+
+     - Port type changed from short to uint16_t
+       - In pxfe_udp_socket and pxfe_tcp_socket, connect() and init() changed
+         parameter types from signed short to uint16_t.
+       - Impact: Affects method pointer signatures and any strict overload
+         resolution.
+
+     - Include guard rename
+       - Changed from __posix_fe_h__ to PFK_POSIX_FE_H.
+       - Impact: Any code testing #ifdef __posix_fe_h__ will fail to detect
+         it.
+
+     ─────────────────────────────────────────────────────────────────────────
+
+     3. Runtime & Behavioral Changes
+
+     - pxfe_string::vptr(), ucptr(), and u8ptr() return NULL on empty string
+       - Before: Returned (void*)c_str(), which is guaranteed to be a valid
+         non-null pointer to \0.
+       - Now: Returns NULL if empty().
+       - Impact: Passing s.vptr() to C APIs or validation routines that
+         reject NULL even when length is 0 will crash or fail.
+
+     - pxfe_tcp_stream_socket::listen() backlog changed
+       - Before: ::listen(fd, 1)
+       - Now: ::listen(fd, backlog = SOMAXCONN)
+       - Impact: Kernel listen queue depth changed from 1 to system maximum.
+
+     - pxfe_utils::parse_number() validation strictness
+       - Empty strings, null pointers, strings causing errno != 0, or values
+         exceeding 32 bits for uint32_t/int32_t now return false instead of
+         truncating or returning unvalidated values.
+
+     ─────────────────────────────────────────────────────────────────────────
+
+     4. ABI / Binary Incompatibility
+
+     If an application is dynamically linked against libpfkutil.so or links
+     objects without a clean rebuild:
+
+     - sizeof(pxfe_errno) grew by 136 bytes (error_string_storage expanded
+       from 120 to 256 bytes).
+     - sizeof(pxfe_ticker) changed (added pxfe_pthread_mutex int_mut, changed
+       paused to std::atomic<bool>).
+     - pxfe_pthread added JOINING enum value and virtual ~pxfe_pthread().
+     - Impact: Mixing pre-commit binaries with this updated header will cause
+       memory corruption and segfaults. Full recompilation is required.
+

@@ -26,8 +26,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 
-#ifndef __posix_fe_h__
-#define __posix_fe_h__
+#ifndef PFK_POSIX_FE_H
+#define PFK_POSIX_FE_H
 
 // use inttypes.h instead of stdint.h.  inttypes.h includes
 // stdint.h for you, and then gives you more!
@@ -91,29 +91,49 @@ struct pxfe_timeval : public timeval
     pxfe_timeval(const pxfe_timeval &other) {
         tv_sec = other.tv_sec;  tv_usec = other.tv_usec;
     }
+    /** copy assignment operator */
+    pxfe_timeval& operator=(const pxfe_timeval &other) {
+        tv_sec = other.tv_sec;  tv_usec = other.tv_usec;
+        return *this;
+    }
     /** set method which accepts sec and usec args */
     void set(time_t s, long u) { tv_sec = s; tv_usec = u; }
     /** set method which accepts double */
     void set(double s) {
-        double integ;
-        double frac = modf(s, &integ);
-        tv_sec = (time_t) integ;
-        tv_usec = (suseconds_t) (frac * 1e6 + 0.5);
+        if (s < 0.0) {
+            double integ;
+            double frac = modf(-s, &integ);
+            tv_sec = -(time_t) integ;
+            tv_usec = -(suseconds_t) (frac * 1e6 + 0.5);
+            if (tv_usec <= -1000000) {
+                tv_sec -= 1;
+                tv_usec += 1000000;
+            }
+        } else {
+            double integ;
+            double frac = modf(s, &integ);
+            tv_sec = (time_t) integ;
+            tv_usec = (suseconds_t) (frac * 1e6 + 0.5);
+            if (tv_usec >= 1000000) {
+                tv_sec += 1;
+                tv_usec -= 1000000;
+            }
+        }
     }
     /** assignment operator from another timeval */
-    const pxfe_timeval& operator=(const timeval &rhs) {
+    pxfe_timeval& operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
         tv_usec = rhs.tv_usec;
         return *this;
     }
     /** assignment operator from struct timespec, converts nsec to usec */
-    const pxfe_timeval& operator=(const timespec &rhs) {
+    pxfe_timeval& operator=(const timespec &rhs) {
         tv_sec = rhs.tv_sec;
         tv_usec = rhs.tv_nsec / 1000;
         return *this;
     }
     /** subtract in place operator */
-    const pxfe_timeval& operator-=(const timeval &rhs) {
+    pxfe_timeval& operator-=(const timeval &rhs) {
         bool borrow = false;
         if (rhs.tv_usec > tv_usec)
             borrow = true;
@@ -127,10 +147,10 @@ struct pxfe_timeval : public timeval
         return *this;
     }
     /** add in place operator */
-    const pxfe_timeval& operator+=(const timeval &rhs) {
+    pxfe_timeval& operator+=(const timeval &rhs) {
         tv_sec += rhs.tv_sec;
         tv_usec += rhs.tv_usec;
-        if (tv_usec > 1000000)
+        if (tv_usec >= 1000000)
         {
             tv_usec -= 1000000;
             tv_sec += 1;
@@ -138,7 +158,7 @@ struct pxfe_timeval : public timeval
         return *this;
     }
     /** comparison operator checks both sec and usec */
-    const bool operator==(const timeval &other) {
+    bool operator==(const timeval &other) const {
         if (tv_sec != other.tv_sec)
             return false;
         if (tv_usec != other.tv_usec)
@@ -146,17 +166,17 @@ struct pxfe_timeval : public timeval
         return true;
     }
     /** comparison operator */
-    const bool operator!=(const timeval &other) {
+    bool operator!=(const timeval &other) const {
         return !operator==(other);
     }
     /** gettimeofday initializes this object to "now" and returns it */
-    const pxfe_timeval &getNow(void) {
+    pxfe_timeval &getNow(void) {
         gettimeofday(this, NULL);
         return *this;
     }
     /** turns this time into a string, plus optional format, usecs included,
      * see strftime for format definition */
-    const std::string Format(const char *format = NULL) {
+    std::string Format(const char *format = NULL) const {
         if (format == NULL)
             format = "%Y-%m-%d %H:%M:%S";
         time_t seconds = tv_sec;
@@ -165,38 +185,40 @@ struct pxfe_timeval : public timeval
         char ymdhms[128], ms[12];
         strftime(ymdhms,sizeof(ymdhms),format,&t);
         ymdhms[sizeof(ymdhms)-1] = 0;
-        snprintf(ms,sizeof(ms),"%06ld", tv_usec);
+        snprintf(ms,sizeof(ms),"%06ld", (long)tv_usec);
         ms[sizeof(ms)-1] = 0;
         return std::string(ymdhms) + "." + ms;
     }
     /** if this timeval is a duration, turn it into h,m,s,usec
      * which you can easily format using %02u:%02u:%02u.%06u */
     void breakdown(uint32_t &hours, uint32_t &minutes,
-                   uint32_t &seconds, uint32_t &usecs) {
-        seconds = tv_sec;
-        hours  = seconds / 3600;
-        seconds -= hours * 3600;
-        minutes  = seconds / 60;
-        seconds -= minutes * 60;
-        usecs = tv_usec;
+                   uint32_t &seconds, uint32_t &usecs) const {
+        time_t sec = tv_sec > 0 ? tv_sec : 0;
+        hours  = (uint32_t)(sec / 3600);
+        sec   -= hours * 3600;
+        minutes  = (uint32_t)(sec / 60);
+        sec   -= minutes * 60;
+        seconds = (uint32_t)sec;
+        usecs = (uint32_t)(tv_usec > 0 ? tv_usec : 0);
     }
-    double to_double(void) {
+    double to_double(void) const {
         return tv_sec + (tv_usec / 1000000.0);
     }
     /** convert sec/usec into single milliseconds value */
-    uint32_t msecs(void) {
-        return (tv_sec * 1000) + (tv_usec / 1000);
+    uint64_t msecs(void) const {
+        return ((uint64_t)tv_sec * 1000) + (tv_usec / 1000);
     }
     /** convert sec/usec into single microseconds value */
-    uint64_t usecs(void) {
+    uint64_t usecs(void) const {
         return ((uint64_t)tv_sec * 1000000) + tv_usec;
     }
     /** convert sec/usec into single nanoseconds value */
-    uint64_t nsecs(void) {
-        return ((uint64_t)tv_sec * 1000000000) + (tv_usec * 1000);
+    uint64_t nsecs(void) const {
+        return ((uint64_t)tv_sec * 1000000000) + ((uint64_t)tv_usec * 1000);
     }
     /** return this object as a struct timeval pointer */
     timeval *operator()(void) { return this; }
+    const timeval *operator()(void) const { return this; }
 };
 /** output a pxfe_timeval as "pxfe_timeval(sec,usec)" to an ostream */
 static inline std::ostream& operator<<(std::ostream& ostr,
@@ -231,6 +253,12 @@ static inline bool operator<(const pxfe_timeval &lhs, const pxfe_timeval &other)
       return false;
    return lhs.tv_usec < other.tv_usec;
 }
+static inline bool operator>=(const pxfe_timeval &lhs, const pxfe_timeval &other) {
+   return !(lhs < other);
+}
+static inline bool operator<=(const pxfe_timeval &lhs, const pxfe_timeval &other) {
+   return !(lhs > other);
+}
 
 /** wrapper for struct timespec */
 struct pxfe_timespec : public timespec
@@ -245,29 +273,49 @@ struct pxfe_timespec : public timespec
     pxfe_timespec(const pxfe_timespec &other) {
         tv_sec = other.tv_sec; tv_nsec = other.tv_nsec;
     }
+    /** copy assignment operator */
+    pxfe_timespec& operator=(const pxfe_timespec &other) {
+        tv_sec = other.tv_sec; tv_nsec = other.tv_nsec;
+        return *this;
+    }
     /** set method which accepts sec and nsec args */
     void set(time_t s, long n) { tv_sec = s; tv_nsec = n; }
     /** set method which accepts double */
     void set(double s) {
-        double integ;
-        double frac = modf(s, &integ);
-        tv_sec = (time_t) integ;
-        tv_nsec = (frac * 1e9 + 0.5);
+        if (s < 0.0) {
+            double integ;
+            double frac = modf(-s, &integ);
+            tv_sec = -(time_t) integ;
+            tv_nsec = -(long) (frac * 1e9 + 0.5);
+            if (tv_nsec <= -1000000000) {
+                tv_sec -= 1;
+                tv_nsec += 1000000000;
+            }
+        } else {
+            double integ;
+            double frac = modf(s, &integ);
+            tv_sec = (time_t) integ;
+            tv_nsec = (long) (frac * 1e9 + 0.5);
+            if (tv_nsec >= 1000000000) {
+                tv_sec += 1;
+                tv_nsec -= 1000000000;
+            }
+        }
     }
     /** assignment operator from another timespec */
-    const pxfe_timespec &operator=(const timespec &rhs) {
+    pxfe_timespec &operator=(const timespec &rhs) {
         tv_sec = rhs.tv_sec;
         tv_nsec = rhs.tv_nsec;
         return *this;
     }
     /** assignment operator from struct timeval, converts usec to nsec */
-    const pxfe_timespec &operator=(const timeval &rhs) {
+    pxfe_timespec &operator=(const timeval &rhs) {
         tv_sec = rhs.tv_sec;
         tv_nsec = rhs.tv_usec * 1000;
         return *this;
     }
     /** subtract in place operator */
-    const pxfe_timespec &operator-=(const timespec &rhs) {
+    pxfe_timespec &operator-=(const timespec &rhs) {
         bool borrow = false;
         if (rhs.tv_nsec > tv_nsec)
             borrow = true;
@@ -281,10 +329,10 @@ struct pxfe_timespec : public timespec
         return *this;
     }
     /** add in place operator */
-    const pxfe_timespec &operator+=(const timespec &rhs) {
+    pxfe_timespec &operator+=(const timespec &rhs) {
         tv_sec += rhs.tv_sec;
         tv_nsec += rhs.tv_nsec;
-        if (tv_nsec > 1000000000)
+        if (tv_nsec >= 1000000000)
         {
             tv_nsec -= 1000000000;
             tv_sec += 1;
@@ -292,25 +340,25 @@ struct pxfe_timespec : public timespec
         return *this;
     }
     /** comparison operator checks both sec and nsec */
-    const bool operator==(const timespec &rhs) {
+    bool operator==(const timespec &rhs) const {
         return (tv_sec == rhs.tv_sec) && (tv_nsec == rhs.tv_nsec);
     }
     /** comparison operator */
-    const bool operator!=(const timespec &rhs) {
+    bool operator!=(const timespec &rhs) const {
         return !operator==(rhs);
     }
     /** clock_gettime initializes this object to "now" and returns it */
-    const pxfe_timespec &getNow(clockid_t clk_id = CLOCK_REALTIME) {
+    pxfe_timespec &getNow(clockid_t clk_id = CLOCK_REALTIME) {
         clock_gettime(clk_id, this);
         return *this;
     }
     /** shortcut for clock_gettime(CLOCK_MONOTONIC) */
-    const pxfe_timespec &getMonotonic(void) {
+    pxfe_timespec &getMonotonic(void) {
         return getNow(CLOCK_MONOTONIC);
     }
     /** turns this time into a string, plus optional format, nsecs included,
      * see strftime for format definition */
-    const std::string Format(const char *format = NULL) {
+    std::string Format(const char *format = NULL) const {
         if (format == NULL)
             format = "%Y-%m-%d %H:%M:%S";
         time_t seconds = tv_sec;
@@ -319,35 +367,37 @@ struct pxfe_timespec : public timespec
         char ymdhms[128], ns[12];
         strftime(ymdhms,sizeof(ymdhms),format,&t);
         ymdhms[sizeof(ymdhms)-1] = 0;
-        snprintf(ns,sizeof(ns),"%09ld", tv_nsec);
+        snprintf(ns,sizeof(ns),"%09ld", (long)tv_nsec);
         ns[sizeof(ns)-1] = 0;
         return std::string(ymdhms) + "." + ns;
     }
     /** if this timeval is a duration, turn it into h,m,s,nsec
      * which you can easily format using %02u:%02u:%02u.%09u */
     void breakdown(uint32_t &hours, uint32_t &minutes,
-                   uint32_t &seconds, uint32_t &nsecs) {
-        seconds = tv_sec;
-        hours  = seconds / 3600;
-        seconds -= hours * 3600;
-        minutes  = seconds / 60;
-        seconds -= minutes * 60;
-        nsecs = tv_nsec;
+                   uint32_t &seconds, uint32_t &nsecs) const {
+        time_t sec = tv_sec > 0 ? tv_sec : 0;
+        hours  = (uint32_t)(sec / 3600);
+        sec   -= hours * 3600;
+        minutes  = (uint32_t)(sec / 60);
+        sec   -= minutes * 60;
+        seconds = (uint32_t)sec;
+        nsecs = (uint32_t)(tv_nsec > 0 ? tv_nsec : 0);
     }
     /** convert sec/usec into single milliseconds value */
-    uint32_t msecs(void) {
-        return (tv_sec * 1000) + (tv_nsec / 1000000);
+    uint64_t msecs(void) const {
+        return ((uint64_t)tv_sec * 1000) + (tv_nsec / 1000000);
     }
     /** convert sec/usec into single microseconds value */
-    uint64_t usecs(void) {
+    uint64_t usecs(void) const {
         return ((uint64_t)tv_sec * 1000000) + (tv_nsec / 1000);
     }
     /** convert sec/usec into single nanoseconds value */
-    uint64_t nsecs(void) {
+    uint64_t nsecs(void) const {
         return ((uint64_t)tv_sec * 1000000000) + tv_nsec;
     }
     /** return this object as a struct timespec pointer */
     timespec *operator()(void) { return this; }
+    const timespec *operator()(void) const { return this; }
 };
 static inline std::ostream& operator<<(std::ostream& ostr,
                                        const pxfe_timespec &rhs)
@@ -379,6 +429,14 @@ static inline bool operator<(const pxfe_timespec &lhs,
       return false;
    return lhs.tv_nsec < other.tv_nsec;
 }
+static inline bool operator>=(const pxfe_timespec &lhs,
+                              const pxfe_timespec &other) {
+   return !(lhs < other);
+}
+static inline bool operator<=(const pxfe_timespec &lhs,
+                              const pxfe_timespec &other) {
+   return !(lhs > other);
+}
 
 
 /** base type for use with pxfe_shared_ptr */
@@ -388,6 +446,12 @@ class pxfe_shared_ptr_base {
 public:
     pxfe_shared_ptr_base(void)
         : __pxfe_sp_refcount(0) { /*nothing*/ }
+    pxfe_shared_ptr_base(const pxfe_shared_ptr_base &)
+        : __pxfe_sp_refcount(0) { /*new copy starts with 0 refs*/ }
+    pxfe_shared_ptr_base &operator=(const pxfe_shared_ptr_base &) {
+        // refcount belongs to this instance, do not copy
+        return *this;
+    }
     virtual ~pxfe_shared_ptr_base(void) { /* nothing*/ }
     /** returns the current usage counter;
      * note this is only advisory because if there's more
@@ -434,8 +498,6 @@ public:
         ref();
     }
     /** copy constructor */
-    /* constexpr <-- gcc error?
-       "constexpr constructor does not have empty body" */
     pxfe_shared_ptr(const pxfe_shared_ptr<T>& other)
     {
         ptr = other.ptr;
@@ -446,11 +508,11 @@ public:
     template <class BaseT>
     pxfe_shared_ptr(const pxfe_shared_ptr<BaseT> &other)
     {
-        ptr = dynamic_cast<T*>(*other);
+        ptr = dynamic_cast<T*>(other.get());
         ref();
     }
     /** move constructor, transfers ownership */
-    pxfe_shared_ptr(pxfe_shared_ptr<T> &&other)
+    pxfe_shared_ptr(pxfe_shared_ptr<T> &&other) noexcept
     {
         ptr = other.ptr;
         other.ptr = NULL;
@@ -461,18 +523,26 @@ public:
         deref();
     }
     /** point this object to something else,
-     *  deref the old and ref the new */
+     *  deref the old and ref the new safely */
     void reset(T * _ptr = NULL)
     {
-        deref();
+        if (ptr == _ptr)
+            return;
+        T * old = ptr;
         ptr = _ptr;
         ref();
+        if (old && old->__pxfe_sp_refcount-- <= 1)
+        {
+            delete old;
+        }
     }
     /** give an object to this class for safe keeping; assumes
      * the reference count is already set properly and does not
      * change it (but does deref anything this class previously held) */
     void _give(T * _ptr)
     {
+        if (ptr == _ptr)
+            return;
         deref();
         ptr = _ptr;
         // the caller is passing ownership to us,
@@ -492,11 +562,18 @@ public:
     }
 
     /** explicit assignment operator */
-    constexpr pxfe_shared_ptr<T>& operator=(const pxfe_shared_ptr<T>& other)
+    pxfe_shared_ptr<T>& operator=(const pxfe_shared_ptr<T>& other)
     {
-        deref();
-        ptr = other.ptr;
-        ref();
+        if (this != &other && ptr != other.ptr)
+        {
+            T * old = ptr;
+            ptr = other.ptr;
+            ref();
+            if (old && old->__pxfe_sp_refcount-- <= 1)
+            {
+                delete old;
+            }
+        }
         return *this;
     }
     /** casting assignment operator, attempts dynamic_cast. if
@@ -504,17 +581,28 @@ public:
     template <class BaseT>
     pxfe_shared_ptr<T> &operator=(const pxfe_shared_ptr<BaseT> &other)
     {
-        deref();
-        ptr = dynamic_cast<T*>(*other);
-        ref();
+        T * new_ptr = dynamic_cast<T*>(other.get());
+        if (ptr != new_ptr)
+        {
+            T * old = ptr;
+            ptr = new_ptr;
+            ref();
+            if (old && old->__pxfe_sp_refcount-- <= 1)
+            {
+                delete old;
+            }
+        }
         return *this;
     }
     /** move assignment operator, takes over ownership */
-    pxfe_shared_ptr<T> &operator=(pxfe_shared_ptr<T> &&other)
+    pxfe_shared_ptr<T> &operator=(pxfe_shared_ptr<T> &&other) noexcept
     {
-        deref();
-        ptr = other.ptr;
-        other.ptr = NULL;
+        if (this != &other)
+        {
+            deref();
+            ptr = other.ptr;
+            other.ptr = NULL;
+        }
         return *this;
     }
     /** if this is the only shared ptr referencing this object */
@@ -537,7 +625,17 @@ public:
 
 /** container for an 'errno' */
 class pxfe_errno {
-    char error_string_storage[ 120 ];
+    char error_string_storage[ 256 ];
+    void copy_from(const pxfe_errno &other) {
+        e = other.e;
+        what = other.what;
+        memcpy(error_string_storage, other.error_string_storage,
+               sizeof(error_string_storage));
+        if (other.err == other.error_string_storage)
+            err = error_string_storage;
+        else
+            err = other.err;
+    }
 public:
     /** the actual errno */
     int e;
@@ -547,6 +645,14 @@ public:
     const char * what;
     /** default constructor will init errno=0 and what="" */
     pxfe_errno(int _e = 0, const char *_what = NULL) { init(_e, _what); }
+    /** copy constructor */
+    pxfe_errno(const pxfe_errno &other) { copy_from(other); }
+    /** copy assignment operator */
+    pxfe_errno &operator=(const pxfe_errno &other) {
+        if (this != &other)
+            copy_from(other);
+        return *this;
+    }
     /** set errno and "what", will also set err = strerror */
     void init(int _e, const char *_what = NULL) {
         e = _e;
@@ -600,7 +706,7 @@ public:
         }
     }
     /** format this errno into "what: error <number> (strerror)" */
-    std::string Format(void) {
+    std::string Format(void) const {
         std::ostringstream  ostr;
         if (what)
             ostr << what << ": ";
@@ -622,59 +728,61 @@ public:
     pxfe_string(const char *s, size_t len) : std::string(s,len) { }
     /** construct with a string */
     pxfe_string(const std::string &other) : std::string(other) { }
-    /** cast c_str to a void* ptr */
+    /** cast to a void* ptr */
     void * vptr(void) {
-        return (void*) c_str();
+        return empty() ? NULL : (void*) &(*this)[0];
     }
-    /** cast c_str to a const void* ptr */
+    /** cast to a const void* ptr */
     const void * vptr(void) const {
-        return (const void*) c_str();
+        return (const void*) data();
     }
-    /** cast c_str to unsigned char* ptr */
+    /** cast to unsigned char* ptr */
     unsigned char * ucptr(void) {
-        return (unsigned char *) c_str();
+        return empty() ? NULL : (unsigned char *) &(*this)[0];
     }
-    /** cast c_str to const unsigned char* ptr */
+    /** cast to const unsigned char* ptr */
     const unsigned char * ucptr(void) const {
-        return (const unsigned char *) c_str();
+        return (const unsigned char *) data();
     }
-    /** cast c_str to uint8_t* ptr */
+    /** cast to uint8_t* ptr */
     uint8_t * u8ptr(void) {
-        return (uint8_t *) c_str();
+        return empty() ? NULL : (uint8_t *) &(*this)[0];
     }
-    /** cast c_str to const uint8_t* ptr */
+    /** cast to const uint8_t* ptr */
     const uint8_t * u8ptr(void) const {
-        return (const uint8_t *) c_str();
+        return (const uint8_t *) data();
     }
-    bool startswith(const char *prefix, size_t prefixlen = 0) {
-        if (prefixlen == 0)
+    bool startswith(const char *prefix, size_t prefixlen = 0) const {
+        if (prefix == NULL)
+            return false;
+        if (prefixlen == 0 && prefix[0] != '\0')
             prefixlen = strlen(prefix);
         if (size() < prefixlen)
             return false;
-        if (compare(0, prefixlen, prefix) == 0)
+        if (compare(0, prefixlen, prefix, prefixlen) == 0)
             return true;
         return false;
     }
-    bool startswith(const std::string &prefix) {
-        return startswith(prefix.c_str(), prefix.size());
+    bool startswith(const std::string &prefix) const {
+        return startswith(prefix.data(), prefix.size());
     }
-    bool endswith(const char *suffix, size_t suffixlen = 0) {
-        if (suffixlen == 0)
+    bool endswith(const char *suffix, size_t suffixlen = 0) const {
+        if (suffix == NULL)
+            return false;
+        if (suffixlen == 0 && suffix[0] != '\0')
             suffixlen = strlen(suffix);
         if (size() < suffixlen)
             return false;
-        if (compare(size()-suffixlen,
-                    suffixlen,
-                    suffix) == 0)
+        if (compare(size()-suffixlen, suffixlen, suffix, suffixlen) == 0)
             return true;
         return false;
     }
-    bool endswith(const std::string &suffix) {
-        return endswith(suffix.c_str(), suffix.size());
+    bool endswith(const std::string &suffix) const {
+        return endswith(suffix.data(), suffix.size());
     }
     /** make a human readable string containing a "%02x" format of 
      * this buffer */
-    std::string format_hex(void) {
+    std::string format_hex(void) const {
         std::ostringstream out;
         // at() returns a signed char, but the char and unsigned char
         // overloads for ostream operator<< try to output the char.
@@ -707,8 +815,13 @@ public:
         return cc;
     }
     /** assignment operator calls std::string.assign() */
-    void operator=(const std::string &other) {
-        assign(other.c_str(), other.length());
+    pxfe_string& operator=(const std::string &other) {
+        assign(other.data(), other.length());
+        return *this;
+    }
+    pxfe_string& operator=(const char *s) {
+        assign(s);
+        return *this;
     }
 };
 
@@ -716,6 +829,8 @@ public:
 class pxfe_pthread_mutexattr {
     pthread_mutexattr_t  attr;
 public:
+    pxfe_pthread_mutexattr(const pxfe_pthread_mutexattr &) = delete;
+    pxfe_pthread_mutexattr &operator=(const pxfe_pthread_mutexattr &) = delete;
     /** constructor does mutexattr_init */
     pxfe_pthread_mutexattr(void) {
         pthread_mutexattr_init(&attr);
@@ -725,7 +840,7 @@ public:
         pthread_mutexattr_destroy(&attr);
     }
     /** return a "const pthread_mutexattr_t *" */
-    const pthread_mutexattr_t *operator()(void) { return &attr; }
+    const pthread_mutexattr_t *operator()(void) const { return &attr; }
     /** set to PTHREAD_PROCESS_SHARED or PRIVATE
      * (init defaults to private) */
     void setpshared(bool shared = true) {
@@ -758,6 +873,7 @@ public:
     /** set to PTHREAD_MUTEX_ROBUST or PTHREAD_MUTEX_STALLED
      * (default is STALLED) */
     void setrobust(bool robust = true) {
+        (void) robust;
         std::cerr << " WARNING : ROBUST MUTEX NOT SUPPORTED" << std::endl;
     }
 #endif
@@ -769,6 +885,8 @@ class pxfe_pthread_mutex {
     pthread_mutex_t  mutex;
     bool initialized;
 public:
+    pxfe_pthread_mutex(const pxfe_pthread_mutex &) = delete;
+    pxfe_pthread_mutex &operator=(const pxfe_pthread_mutex &) = delete;
     /** attributes; you will want to fill this out before calling init */
     pxfe_pthread_mutexattr attr;
     /** constructor does nothing; you need to call init when you're done
@@ -789,21 +907,21 @@ public:
         initialized = true;
     }
     /** return a pthread_mutex_t * pointer */
-    pthread_mutex_t *operator()(void) { return initialized ? &mutex : NULL; }
-    /** lock the mutex or block waiting */
+    pthread_mutex_t *operator()(void) {
+        if (!initialized)
+            init();
+        return &mutex;
+    }
+    /** lock the mutex or block waiting; auto-initializes if not initialized */
     void lock(void) {
         if (!initialized)
-            std::cerr << "pxfe_pthread_mutex::lock: not initialized\n";
-        else
-            pthread_mutex_lock(&mutex);
+            init();
+        pthread_mutex_lock(&mutex);
     }
     /** try locking the mutex, return <0 if currently locked by someone else */
     int trylock(void) {
-        if (!initialized) {
-            std::cerr << "pxfe_pthread_mutex::trylock: not initialized\n";
-            return EINVAL;
-        }
-        // else
+        if (!initialized)
+            init();
         return pthread_mutex_trylock(&mutex);
     }
     /** unlock the mutex and unblock any potential lock waiters */
@@ -821,6 +939,8 @@ class pxfe_pthread_mutex_lock {
     pxfe_pthread_mutex &mut;
     bool ilocked;
 public:
+    pxfe_pthread_mutex_lock(const pxfe_pthread_mutex_lock &) = delete;
+    pxfe_pthread_mutex_lock &operator=(const pxfe_pthread_mutex_lock &) = delete;
     /** constructor will automatically lock the mutex on construction */
      pxfe_pthread_mutex_lock(pxfe_pthread_mutex &_mut, bool dolock=true)
         : mut(_mut), ilocked(dolock) {
@@ -855,6 +975,8 @@ public:
 class pxfe_pthread_condattr {
     pthread_condattr_t attr;
 public:
+    pxfe_pthread_condattr(const pxfe_pthread_condattr &) = delete;
+    pxfe_pthread_condattr &operator=(const pxfe_pthread_condattr &) = delete;
     /** constructor does condattr_init */
     pxfe_pthread_condattr(void) {
         pthread_condattr_init(&attr);
@@ -864,7 +986,7 @@ public:
         pthread_condattr_destroy(&attr);
     }
     /** return a const pthread_condattr_t *pointer */
-    const pthread_condattr_t *operator()(void) { return &attr; }
+    const pthread_condattr_t *operator()(void) const { return &attr; }
     /** set clock type to CLOCK_REALTIME or MONOTONIC or BOOTTIME */
     void setclock(clockid_t id) {
     // but not: CLOCK_PROCESS_CPUTIME_ID, CLOCK_THREAD_CPUTIME_ID
@@ -888,6 +1010,8 @@ class pxfe_pthread_cond {
     pthread_cond_t  cond;
     bool initialized;
 public:
+    pxfe_pthread_cond(const pxfe_pthread_cond &) = delete;
+    pxfe_pthread_cond &operator=(const pxfe_pthread_cond &) = delete;
     /** attributes; you will want to fill this out before calling init */
     pxfe_pthread_condattr attr;
     /** constructor does nothing; you need to call init when you're done
@@ -912,7 +1036,7 @@ public:
         return initialized ? &cond : NULL; }
     /** block waiting on this condition; if time is NULL, block forever,
      * otherwise block until timeout expires */
-    int wait(pthread_mutex_t *mut, timespec *abstime = NULL) {
+    int wait(pthread_mutex_t *mut, const timespec *abstime = NULL) {
         if (!initialized) {
             std::cerr << "pxfe_pthread_cond::wait: not initialized\n";
             return EINVAL;
@@ -959,6 +1083,8 @@ class pxfe_semaphore {
     pxfe_pthread_mutex mut;
     int value;
 public:
+    pxfe_semaphore(const pxfe_semaphore &) = delete;
+    pxfe_semaphore &operator=(const pxfe_semaphore &) = delete;
     /** initialize semaphore with an initial value */
     pxfe_semaphore(int initial = 1) {
         value = initial;
@@ -967,30 +1093,34 @@ public:
     }
     /** cleanup */
     ~pxfe_semaphore(void) { /* what */ }
-    /** "give" the semaphore (P) */
+    /** "give" the semaphore (V operation) */
     void give(void) {
         pxfe_pthread_mutex_lock lock(mut);
         value++;
         lock.unlock();
         cond.signal();
     }
-    /** take the semaphore (V) and wait forever if time is NULL */
-    bool take(timespec *expire = NULL) {
+    /** take the semaphore (P operation) and wait forever if time is NULL */
+    bool take(const timespec *expire = NULL) {
         pxfe_pthread_mutex_lock lock(mut);
         while (value <= 0) {
-            if (cond.wait(mut(), expire) < 0)
+            if (cond.wait(mut(), expire) != 0)
                 return false;
         }
         value--;
         return true;
     }
-    void P(void) { give(); }
-    bool V(timespec *expire = NULL) { return take(expire); }
+    /** P operation (prolaag / wait / take) */
+    bool P(const timespec *expire = NULL) { return take(expire); }
+    /** V operation (verhoog / signal / give) */
+    void V(void) { give(); }
 };
 
 class pxfe_pthread_attr {
     pthread_attr_t _attr;
 public:
+    pxfe_pthread_attr(const pxfe_pthread_attr &) = delete;
+    pxfe_pthread_attr &operator=(const pxfe_pthread_attr &) = delete;
     /** initializes attr with pthread defaults */
     pxfe_pthread_attr(void) {
         pthread_attr_init(&_attr);
@@ -1000,7 +1130,7 @@ public:
         pthread_attr_destroy(&_attr);
     }
     /** handy accessor returns the attr for passing to pthread_create */
-    const pthread_attr_t *operator()(void) { return &_attr; }
+    const pthread_attr_t *operator()(void) const { return &_attr; }
     /** select DETACHED vs JOINABLE */
     void set_detach(bool set=true) {
         int state = set ? PTHREAD_CREATE_DETACHED : PTHREAD_CREATE_JOINABLE;
@@ -1058,29 +1188,57 @@ public:
     int readEnd;
     /** the write-end of this pipe */
     int writeEnd;
+    pxfe_pipe(const pxfe_pipe &) = delete;
+    pxfe_pipe &operator=(const pxfe_pipe &) = delete;
+    pxfe_pipe(pxfe_pipe &&other) noexcept {
+        readEnd = other.readEnd;
+        writeEnd = other.writeEnd;
+        other.readEnd = -1;
+        other.writeEnd = -1;
+    }
+    pxfe_pipe &operator=(pxfe_pipe &&other) noexcept {
+        if (this != &other) {
+            close();
+            readEnd = other.readEnd;
+            writeEnd = other.writeEnd;
+            other.readEnd = -1;
+            other.writeEnd = -1;
+        }
+        return *this;
+    }
+    /** close both descriptors */
+    void close(void) {
+        if (writeEnd >= 0) ::close(writeEnd);
+        if (readEnd >= 0) ::close(readEnd);
+        writeEnd = -1;
+        readEnd = -1;
+    }
     /** constructor calls pipe(2) and inits */
     pxfe_pipe(void)
     {
+        readEnd = -1;
+        writeEnd = -1;
         int fds[2];
         if (pipe(fds) < 0)
             fprintf(stderr, "pxfe_pipe: pipe failed\n");
-        readEnd = fds[0];
-        writeEnd = fds[1];
+        else {
+            readEnd = fds[0];
+            writeEnd = fds[1];
+        }
     }
     /** destructor automatically closes both descriptors */
     ~pxfe_pipe(void)
     {
-        close(writeEnd);
-        close(readEnd);
+        close();
     }
     /** read from the readEnd into a string, of a max size, resize
      * string to actual size read, and set errno and return false
      * if the read fails */
     bool read(std::string &buf, int max, pxfe_errno *e = NULL)
     {
-        pxfe_string &_buf = (pxfe_string &)buf;
         buf.resize(max);
-        int cc = ::read(readEnd, _buf.vptr(), _buf.length());
+        void *p = buf.empty() ? NULL : (void*)&buf[0];
+        int cc = ::read(readEnd, p, max);
         if (cc < 0) {
             if (e) e->init(errno, "read");
             buf.resize(0);
@@ -1093,16 +1251,16 @@ public:
      *  if it fails */
     bool write(const std::string &buf, pxfe_errno *e = NULL)
     {
-        pxfe_string &_buf = (pxfe_string &)buf;
-        int cc = ::write(writeEnd, _buf.vptr(), _buf.length());
+        const void *p = buf.data();
+        int cc = ::write(writeEnd, p, buf.length());
         if (cc < 0) {
             if (e) e->init(errno, "write");
             return false;
         }
-        if (cc != (int)_buf.length()) {
+        if (cc != (int)buf.length()) {
             // i don't yet know if this is a case i have to handle.
             fprintf(stderr, "pxfe_pipe: short write %d != %d!\n",
-                    cc, (int) _buf.length());
+                    cc, (int) buf.length());
         }
         return true;
     }
@@ -1130,6 +1288,20 @@ class pxfe_fd {
 protected:
     int fd;
 public:
+    pxfe_fd(const pxfe_fd &) = delete;
+    pxfe_fd &operator=(const pxfe_fd &) = delete;
+    pxfe_fd(pxfe_fd &&other) noexcept {
+        fd = other.fd;
+        other.fd = -1;
+    }
+    pxfe_fd &operator=(pxfe_fd &&other) noexcept {
+        if (this != &other) {
+            close();
+            fd = other.fd;
+            other.fd = -1;
+        }
+        return *this;
+    }
     /** max size of a message this API supports */
     static const std::string::size_type MAX_MSG_LEN = 16384;
     /** constructor initializes fd to -1 */
@@ -1143,7 +1315,7 @@ public:
     /** return the descriptor */
     int  getFd(void) const { return fd; }
     /** set the descriptor, closing old fd it was set before */
-    void setFd(int nfd) { close(); fd = nfd; }
+    void setFd(int nfd) { if (fd != nfd) { close(); fd = nfd; } }
     /** use fcntl to toggle O_NONBLOCK off */
     bool set_blocking(pxfe_errno *e = NULL) {
         int flags = fcntl(fd, F_GETFL, 0);
@@ -1186,6 +1358,7 @@ public:
     bool open(const char *path, int flags,
               pxfe_errno *e = NULL,
               mode_t mode = 0600) {
+        close();
         fd = ::open(path, flags | O_CLOEXEC, mode);
         if (fd < 0)
             if (e) e->init(errno, "open");
@@ -1212,30 +1385,30 @@ public:
     /** attempt to read into string, of up to max size, resize string to
      * actual size read, set errno and return false if fail */
     bool read(std::string &buf, int max = 16384, pxfe_errno *e = NULL) {
-        pxfe_string &_buf = (pxfe_string &)buf;
-        _buf.resize(max);
-        int cc = ::read(fd, _buf.vptr(), max);
+        buf.resize(max);
+        void *p = buf.empty() ? NULL : (void*)&buf[0];
+        int cc = ::read(fd, p, max);
         if (cc < 0) {
             if (e) e->init(errno, "read");
-            _buf.resize(0);
+            buf.resize(0);
             return false;
         }
-        _buf.resize(cc);
+        buf.resize(cc);
         return true;
     }
     /** attempt write of string, set errno and return false if fail */
     bool write(const std::string &buf, pxfe_errno *e = NULL) {
-        pxfe_string &_buf = (pxfe_string &)buf;
-        int cc = ::write(fd, _buf.vptr(), _buf.length());
+        const void *p = buf.data();
+        int cc = ::write(fd, p, buf.length());
         if (cc < 0) {
             if (e) e->init(errno, "write");
             return false;
         }
-        if (cc != (int)_buf.length())
+        if (cc != (int)buf.length())
         {
             // haven't figured out if i need to handle this yet.
             fprintf(stderr, " **** SHORT WRITE %d != %d\n",
-                    cc, (int) _buf.length());
+                    cc, (int) buf.length());
         }
         return true;
     }
@@ -1246,7 +1419,7 @@ class pxfe_pthread {
     pxfe_pthread_mutex mut;
     pxfe_pthread_cond cond;
     enum {
-        INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE
+        INIT, NEWBORN, RUNNING, STOPPING, ZOMBIE, JOINING
     } state;
     pthread_t  id;
     void *user_arg;
@@ -1266,27 +1439,25 @@ protected:
     virtual void send_stop(void) = 0;
 public:
     pxfe_pthread_attr attr;
+    pxfe_pthread(const pxfe_pthread &) = delete;
+    pxfe_pthread &operator=(const pxfe_pthread &) = delete;
     pxfe_pthread(void) {
         state = INIT;
         mut.init();
         cond.init();
     }
-    ~pxfe_pthread(void) {
-        // derived class destructor really should do stop/join
-        // before destroying anything else in derived, but it doesn't
-        // hurt to repeat it here since stop and join both check the state.
-        stopjoin();
+    virtual ~pxfe_pthread(void) {
+        // Derived classes should invoke stopjoin() in their own destructor
+        // to avoid invoking pure virtual functions during base destruction.
     }
     int create(void *_user_arg=NULL) {
         pxfe_pthread_mutex_lock lock(mut);
         if (state != INIT)
             return -1;
         state = NEWBORN;
-        lock.unlock();
         attr.set_detach(false); // this class depends on joinable.
         user_arg = _user_arg;
         int ret = pthread_create(&id, attr(), &_entry, this);
-        lock.lock();
         if (ret == 0) {
             while (state == NEWBORN) {
                 pxfe_timespec ts(5,0);
@@ -1303,12 +1474,14 @@ public:
         if (state != RUNNING)
             return;
         state = STOPPING;
+        lock.unlock();
         send_stop();
     }
     void * join(void) {
         pxfe_pthread_mutex_lock lock(mut);
         if (state != STOPPING && state != ZOMBIE)
             return NULL;
+        state = JOINING;
         lock.unlock();
         void * ret = NULL;
         pthread_join(id, &ret);
@@ -1317,13 +1490,18 @@ public:
         return ret;
     }
     void * stopjoin(void) { stop(); return join(); }
-    const bool running(void) const { return (state != INIT); }
+    bool running(void) {
+        pxfe_pthread_mutex_lock lock(mut);
+        return (state != INIT);
+    }
 };
 
 /** wrapper for opendir/readdir/closedir */
 class pxfe_readdir {
     DIR * d;
 public:
+    pxfe_readdir(const pxfe_readdir &) = delete;
+    pxfe_readdir &operator=(const pxfe_readdir &) = delete;
     /** constructor, does nothing */
     pxfe_readdir(void) {
         d = NULL;
@@ -1424,7 +1602,7 @@ struct pxfe_sockaddr {
             sockaddr_in,
             sockaddr_in6,
             sockaddr_un   >::size;
-    uint8_t  addr_data[addr_data_size];
+    alignas(sockaddr_storage) uint8_t  addr_data[addr_data_size];
 
     sockaddr * sa(void) {
         return (sockaddr *) addr_data;
@@ -1434,6 +1612,9 @@ struct pxfe_sockaddr {
     }
     sockaddr *operator()() {
         return (sockaddr *) addr_data;
+    }
+    const sockaddr *operator()() const {
+        return (const sockaddr *) addr_data;
     }
     socklen_t sasize(void) const {
         switch (family()) {
@@ -1465,7 +1646,7 @@ struct pxfe_sockaddr {
         return (sockaddr_un *) addr_data;
     }
     const sockaddr_un *un(void) const {
-        return (sockaddr_un *) addr_data;
+        return (const sockaddr_un *) addr_data;
     }
     bool set4(const char * s) {
         if (inet_pton(AF_INET, s, &in4()->sin_addr) == 1)
@@ -1490,28 +1671,29 @@ struct pxfe_sockaddr {
     }
     void set_un(const std::string &str) { set_un(str.c_str()); }
     void set_un(const char *p) {
+        set_family(AF_UNIX);
         int len = sizeof(un()->sun_path)-1;
         strncpy(un()->sun_path, p, len);
         un()->sun_path[len] = 0;
     }
-    void get_un(std::string &str) {
-        if (family() == AF_INET)
+    void get_un(std::string &str) const {
+        if (family() == AF_UNIX)
             str.assign(un()->sun_path);
         else
             str = "";
     }
-    std::string Format(void) {
+    std::string Format(void) const {
         std::string ret;
         switch (family()) {
         case AF_INET:
             ret.resize(INET_ADDRSTRLEN);
             inet_ntop(AF_INET, &in4()->sin_addr,
-                      (char*) ret.c_str(), ret.length());
+                      &ret[0], ret.length());
             break;
         case AF_INET6:
             ret.resize(INET6_ADDRSTRLEN);
             inet_ntop(AF_INET6, &in6()->sin6_addr,
-                      (char*) ret.c_str(), ret.length());
+                      &ret[0], ret.length());
             break;
         case AF_UNIX:
             ret = "unix:";
@@ -1526,8 +1708,12 @@ struct pxfe_sockaddr {
 
 /** wrapper for struct sockaddr_in (IP address) */
 struct pxfe_sockaddr_in : public sockaddr_in {
+    pxfe_sockaddr_in(void) { init(); }
     /** set family to AF_INET */
-    void init(void) { sin_family = AF_INET; }
+    void init(void) {
+        memset(this, 0, sizeof(sockaddr_in));
+        sin_family = AF_INET;
+    }
     /** set family, set addr to INADDR_ANY, set port number to p */
     void init_any(uint16_t p) { init(); set_addr(INADDR_ANY); set_port(p); }
     /** set family, set addr to a, set port number to p */
@@ -1554,8 +1740,12 @@ struct pxfe_sockaddr_in : public sockaddr_in {
 
 /** wrapper for struct sockaddr_un (unix domain address) */
 struct pxfe_sockaddr_un : public sockaddr_un {
+    pxfe_sockaddr_un(void) { init(); }
     /** init family to AF_UNIX */
-    void init(void) { sun_family = AF_UNIX; }
+    void init(void) {
+        memset(this, 0, sizeof(sockaddr_un));
+        sun_family = AF_UNIX;
+    }
     /** set family and path (using std::string) */
     void init(const std::string &str) { init(); set_path(str); }
     /** set family and path (using char *) */
@@ -1569,11 +1759,8 @@ struct pxfe_sockaddr_un : public sockaddr_un {
         sun_path[len] = 0;
     }
     /** retrieve path into std::string */
-    void get_path(std::string &str) {
-        pxfe_string &_str = (pxfe_string &)str;
-        int len = strnlen(sun_path, sizeof(sun_path)-1);
-        _str.resize(len);
-        memcpy(_str.vptr(), sun_path, len);
+    void get_path(std::string &str) const {
+        str.assign(sun_path, strnlen(sun_path, sizeof(sun_path)-1));
     }
     /** return a struct sockaddr * pointer */
     sockaddr *operator()() {
@@ -1600,14 +1787,17 @@ public:
     static bool parse_number( const char *s, uint32_t *_val,
                               int base = 0 )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         unsigned long val = strtoul(s, &endptr, base);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = (uint32_t) val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        if (val > UINT32_MAX)
+            return false;
+        *_val = (uint32_t) val;
+        return true;
     }
     /** parse a std::string into an int32_t number, return false for error */
     static bool parse_number( const std::string &s, int32_t *val,
@@ -1619,14 +1809,17 @@ public:
     static bool parse_number( const char *s, int32_t *_val,
                               int base = 0 )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         long val = strtol(s, &endptr, base);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = (int32_t) val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        if (val < INT32_MIN || val > INT32_MAX)
+            return false;
+        *_val = (int32_t) val;
+        return true;
     }
     /** parse a std::string into a uint64_t number, return false for error */
     static bool parse_number( const std::string &s, uint64_t *val,
@@ -1638,14 +1831,15 @@ public:
     static bool parse_number( const char *s, uint64_t *_val,
                               int base = 0 )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         unsigned long long val = strtoull(s, &endptr, base);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = (uint64_t) val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        *_val = (uint64_t) val;
+        return true;
     }
     /** parse a std::string into an int64_t number, return false for error */
     static bool parse_number( const std::string &s, int64_t *val,
@@ -1657,14 +1851,15 @@ public:
     static bool parse_number( const char *s, int64_t *_val,
                               int base = 0 )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         long long val = strtoll(s, &endptr, base);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = (int64_t) val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        *_val = (int64_t) val;
+        return true;
     }
     /** parse a std::string into a double, return false for error */
     static bool parse_number( const std::string &s, double *val )
@@ -1674,14 +1869,15 @@ public:
     /** parse a char* into a double, return false for error */
     static bool parse_number( const char *s, double *_val )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         double val = strtod(s, &endptr);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        *_val = val;
+        return true;
     }
     /** parse a std::string into a float, return false for error */
     static bool parse_number( const std::string &s, float *val )
@@ -1691,14 +1887,15 @@ public:
     /** parse a char* into a float, return false for error */
     static bool parse_number( const char *s, float *_val )
     {
+        if (s == NULL || *s == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         float val = strtof(s, &endptr);
-        if (endptr != NULL && *endptr == 0)
-        {
-            *_val = val;
-            return true;
-        }
-        return false;
+        if (errno != 0 || endptr == s || *endptr != 0)
+            return false;
+        *_val = val;
+        return true;
     }
     static void format_thousands(std::string &out, uint64_t  v)
     {
@@ -1708,7 +1905,7 @@ public:
             return;
         }
         out.resize(48);
-        char * buf = (char*) out.c_str();
+        char * buf = &out[0];
         memset(buf, '-', 48);
         char * triple = buf + 48;
         while (true)
@@ -1777,9 +1974,12 @@ public:
     /** parse a char* into a uint16_t, return false for error */
     static bool parse_port_number( const char * portstr, uint16_t *_port )
     {
+        if (portstr == NULL || *portstr == '\0')
+            return false;
         char * endptr = NULL;
+        errno = 0;
         unsigned long val = strtoul(portstr, &endptr, 0);
-        if (endptr != NULL && *endptr == 0)
+        if (errno == 0 && endptr != portstr && *endptr == 0)
         {
             // consumed the whole input string, thus good integer.
             if (val > 65535)
@@ -1792,7 +1992,7 @@ public:
             return true;
         }
         fprintf(stderr, "parse error: expecting a port number, not '%s'\n",
-                portstr);
+                portstr ? portstr : "(null)");
         // string was not an integer
         return false;
     }
@@ -1802,7 +2002,7 @@ public:
         ret.resize(INET_ADDRSTRLEN);
         // string.resize() on a brand new string
         // guarantees the bytes are already zero'd.
-        inet_ntop(AF_INET, &ia, (char*) ret.c_str(), ret.length());
+        inet_ntop(AF_INET, &ia, &ret[0], ret.length());
         ret.resize(strlen(ret.c_str()));
         return ret;
     }
@@ -1818,7 +2018,7 @@ public:
         ret.resize(INET6_ADDRSTRLEN);
         // string.resize() on a brand new string
         // guarantees the bytes are already zero'd.
-        inet_ntop(AF_INET6, &ia, (char*) ret.c_str(), ret.length());
+        inet_ntop(AF_INET6, &ia, &ret[0], ret.length());
         ret.resize(strlen(ret.c_str()));
         return ret;
     }
@@ -1826,10 +2026,9 @@ public:
 
 /** a pxfe_fd derived class for unix datagram socket abstraction */
 class pxfe_unix_dgram_socket : public pxfe_fd {
-    static int counter;
     std::string path;
     bool init_common(bool new_path, pxfe_errno *e) {
-        static int counter = 1;
+        static std::atomic<int> ucounter(1);
         if (new_path)
         {
             const char * temp_path = getenv("TMP");
@@ -1840,8 +2039,7 @@ class pxfe_unix_dgram_socket : public pxfe_fd {
             if (temp_path == NULL)
                 temp_path = "/tmp";
             std::ostringstream  str;
-            str << temp_path << "/udslibtmp." << getpid() << "." << counter;
-            counter++;
+            str << temp_path << "/udslibtmp." << getpid() << "." << ucounter++;
             path = str.str();
         }
         fd = ::socket(AF_UNIX, SOCK_DGRAM | SOCK_CLOEXEC, 0);
@@ -1868,7 +2066,7 @@ public:
     }
     /** destructor closes the socket if it is open */
     ~pxfe_unix_dgram_socket(void) {
-        if (fd > 0)
+        if (fd >= 0)
             (void) unlink( path.c_str() );
     }
     /** initialize with a random path for outbound connections */
@@ -1902,7 +2100,7 @@ public:
             if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        if (::send(fd, msg.data(), msg.size(), /*flags*/0) < 0)
         {
             if (e) e->init(errno, "send");
             return false;
@@ -1912,7 +2110,8 @@ public:
     /** receive a message on connected socket */
     bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
-        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+        void *p = msg.empty() ? NULL : (void*)&msg[0];
+        ssize_t msglen = ::recv(fd, p,
                                 MAX_MSG_LEN, /*flags*/0);
         if (msglen < 0)
         {
@@ -1933,15 +2132,13 @@ public:
     /** send a message to a remote path (using sockaddr_un) */
     bool send(const std::string &msg, const sockaddr_un &sa,
               pxfe_errno *e = NULL) {
-        pxfe_string &_msg = (pxfe_string &)msg;
-        pxfe_sockaddr_un &_sa = (pxfe_sockaddr_un &)sa;
         if (msg.size() > MAX_MSG_LEN)
         {
             if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::sendto(fd, _msg.vptr(), _msg.size(), /*flags*/0,
-                     _sa(), sizeof(sa)) < 0) {
+        if (::sendto(fd, msg.data(), msg.size(), /*flags*/0,
+                     (const sockaddr*)&sa, sizeof(sa)) < 0) {
             if (e) e->init(errno, "sendto");
             return false;
         }
@@ -1960,12 +2157,11 @@ public:
     /** receive a message from any source, return source path in sockaddr_un */
     bool recv(std::string &msg, sockaddr_un &sa,
               pxfe_errno *e = NULL) {
-        pxfe_string &_msg = (pxfe_string &)msg;
-        pxfe_sockaddr_un &_sa = (pxfe_sockaddr_un &)sa;
-        _msg.resize(MAX_MSG_LEN);
+        msg.resize(MAX_MSG_LEN);
         socklen_t salen = sizeof(sa);
-        ssize_t msglen = ::recvfrom(fd, _msg.vptr(), _msg.size(),
-                                    /*flags*/0, _sa(), &salen);
+        void *p = msg.empty() ? NULL : (void*)&msg[0];
+        ssize_t msglen = ::recvfrom(fd, p, msg.size(),
+                                    /*flags*/0, (sockaddr*)&sa, &salen);
         if (msglen < 0)
         {
             if (e) e->init(errno, "recvfrom");
@@ -2019,7 +2215,7 @@ public:
         return true;
     }
     /** put udp socket in connected mode to remote addr/port */
-    bool connect(uint32_t addr, short port, pxfe_errno *e = NULL) {
+    bool connect(uint32_t addr, uint16_t port, pxfe_errno *e = NULL) {
         pxfe_sockaddr_in sa;
         sa.init(addr, port);
         return connect(sa,e);
@@ -2041,7 +2237,7 @@ public:
             if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0)
+        if (::send(fd, msg.data(), msg.size(), /*flags*/0) < 0)
         {
             if (e) e->init(errno, "send");
             return false;
@@ -2051,7 +2247,8 @@ public:
     /** recv data from connected-mode udp port */
     bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
-        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+        void *p = msg.empty() ? NULL : (void*)&msg[0];
+        ssize_t msglen = ::recv(fd, p,
                                 MAX_MSG_LEN, /*flags*/0);
         if (msglen < 0)
         {
@@ -2071,7 +2268,7 @@ public:
             if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::sendto(fd, msg.c_str(), msg.size(), /*flags*/0,
+        if (::sendto(fd, msg.data(), msg.size(), /*flags*/0,
                      _sa(), sizeof(sa)) < 0)
         {
             if (e) e->init(errno, "sendto");
@@ -2085,7 +2282,8 @@ public:
         pxfe_sockaddr_in &_sa = (pxfe_sockaddr_in &) sa;
         msg.resize(MAX_MSG_LEN);
         socklen_t salen = sizeof(sa);
-        ssize_t msglen = ::recvfrom(fd, (void*) msg.c_str(), MAX_MSG_LEN,
+        void *p = msg.empty() ? NULL : (void*)&msg[0];
+        ssize_t msglen = ::recvfrom(fd, p, MAX_MSG_LEN,
                                     /*flags*/0, _sa(), &salen);
         if (msglen < 0)
         {
@@ -2133,7 +2331,7 @@ public:
         return true;
     }
     /** attempt to connect out to addr/port, returns false if failure */
-    bool connect(uint32_t addr, short port, pxfe_errno *e = NULL) {
+    bool connect(uint32_t addr, uint16_t port, pxfe_errno *e = NULL) {
         sa.init(addr, port);
         if (::connect(fd, sa(), sizeof(sa)) < 0) {
             if (e) e->init(errno, "connect");
@@ -2144,7 +2342,7 @@ public:
     /** init the socket for listening, binding to particular local
      * interface only, return false if failure, you must call listen
      * to start it listening */
-    bool init(uint32_t addr, short port, bool reuse=false,
+    bool init(uint32_t addr, uint16_t port, bool reuse=false,
               pxfe_errno *e = NULL) {
         if (init(e) == false)
             return false;
@@ -2155,33 +2353,35 @@ public:
         }
         if (::bind(fd, sa(), sa.sasize()) < 0) {
             if (e) e->init(errno, "bind");
+            close();
             return false;
         }
         return true;
     }
     /** init for listening, binding to INADDR_ANY, you must call
      * listen to start it listening */
-    bool init(short port, bool reuse=false, pxfe_errno *e = NULL) {
+    bool init(uint16_t port, bool reuse=false, pxfe_errno *e = NULL) {
         return init(INADDR_ANY,port,reuse,e);
     }
     /** start a bound socket listening for incoming connections, note
      * you can't do this without calling one of the init methods first */
-    void listen(void) {
-        (void) ::listen(fd, 1);
+    void listen(int backlog = SOMAXCONN) {
+        (void) ::listen(fd, backlog);
     }
     /** call accept on the socket, returning a new connected stream
      * object, or returns NULL if accept fails */
     _pxfe_stream_socket *accept(pxfe_errno *e = NULL) {
-        socklen_t sz = sizeof(sa);
-        int fdnew = ::accept4(fd, sa(), &sz, SOCK_CLOEXEC);
+        pxfe_sockaddr_in client_sa;
+        socklen_t sz = sizeof(client_sa);
+        int fdnew = ::accept4(fd, client_sa(), &sz, SOCK_CLOEXEC);
         if (fdnew < 0) {
             if (e) e->init(errno, "accept");
             return NULL;
         }
-        _pxfe_stream_socket *s = new _pxfe_stream_socket(fdnew,sa);
+        _pxfe_stream_socket *s = new (std::nothrow) _pxfe_stream_socket(fdnew, client_sa);
         if (s)
             return s;
-        e->init(0,"");
+        if (e) e->init(ENOMEM, "new _pxfe_stream_socket");
         ::close(fdnew);
         return NULL;
     }
@@ -2193,7 +2393,7 @@ public:
             if (e) e->init(EMSGSIZE, "msg.size");
             return false;
         }
-        if (::send(fd, msg.c_str(), msg.size(), /*flags*/0) < 0) {
+        if (::send(fd, msg.data(), msg.size(), /*flags*/0) < 0) {
             if (e) e->init(errno, "send");
             return false;
         }
@@ -2202,7 +2402,8 @@ public:
     /** receive data on a connected socket, or return false if failure */
     bool recv(std::string &msg, pxfe_errno *e = NULL) {
         msg.resize(MAX_MSG_LEN);
-        ssize_t msglen = ::recv(fd, (void*) msg.c_str(),
+        void *p = msg.empty() ? NULL : (void*)&msg[0];
+        ssize_t msglen = ::recv(fd, p,
                                 MAX_MSG_LEN, /*flags*/0);
         if (msglen < 0) {
             if (e) e->init(errno, "recv");
@@ -2237,17 +2438,27 @@ public:
     /** remove a descriptor from the set (any pxfe_fd derived class) */
     void clr(const pxfe_fd &fd) { clr(fd.getFd()); }
     /** test whether descriptor in the set (any pxfe_fd derived class) */
-    bool is_set(const pxfe_fd &fd) { return is_set(fd.getFd()); }
+    bool is_set(const pxfe_fd &fd) const { return is_set(fd.getFd()); }
     /** set a descriptor (specifying fd) */
-    void set(int fd) { FD_SET(fd, &fds); if (fd > max_fd) max_fd = fd; }
+    void set(int fd) {
+        if (fd < 0 || fd >= FD_SETSIZE) return;
+        FD_SET(fd, &fds);
+        if (fd > max_fd) max_fd = fd;
+    }
     /** remove descriptor from the set (specifying fd) */
-    void clr(int fd) { FD_CLR(fd, &fds); }
+    void clr(int fd) {
+        if (fd < 0 || fd >= FD_SETSIZE) return;
+        FD_CLR(fd, &fds);
+    }
     /** test whether descriptor is in the set (specifying fd) */
-    bool is_set(int fd) { return FD_ISSET(fd, &fds) != 0; }
+    bool is_set(int fd) const {
+        if (fd < 0 || fd >= FD_SETSIZE) return false;
+        return FD_ISSET(fd, &fds) != 0;
+    }
     /** return an fd_set * pointer (ie, for select(2)) */
     fd_set *operator()(void) { return max_fd==-1 ? NULL : &fds; }
     /** return a value suitable for the "nfds" arg of select(2) */
-    int nfds(void) { return max_fd + 1; }
+    int nfds(void) const { return max_fd + 1; }
 };
 
 /** helper class to make select(2) very easy to use */
@@ -2305,6 +2516,8 @@ public:
     /** add or remove a descriptor to/from the poll set, if setting,
      * use POLLIN | POLLOUT | POLLERR, or zero to remove a descriptor */
     void set(int fd, short events) {
+        if (fd < 0)
+            return;
         if (fd >= (int)by_fd.size())
             by_fd.resize(fd+1);
         fdindex &ind = by_fd[fd];
@@ -2350,14 +2563,14 @@ public:
     }
     /** retrieve events set for a descriptor, returns 0 if none */
     short eget(int fd) {
-        if (fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
+        if (fd < 0 || fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
             return 0;
         return fds[by_fd[fd].ind].events;
     }
     /** retrieve events that actually occurred on a descriptor,
      * or 0 if none */
     short rget(int fd) {
-        if (fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
+        if (fd < 0 || fd >= (int)by_fd.size() || by_fd[fd].ind == -1)
             return 0;
         return fds[by_fd[fd].ind].revents;
     }
@@ -2376,21 +2589,30 @@ public:
 
 // needs doxygen
 class pxfe_ticker : public pxfe_pthread {
-    bool paused;
+    std::atomic<bool> paused;
     pxfe_pipe closer_pipe;
     pxfe_pipe pipe;
+    pxfe_pthread_mutex int_mut;
     pxfe_timeval interval;
     /*virtual*/ void * entry(void *arg) {
+        (void) arg;
         char c = 1;
         pxfe_select   sel;
+        int flags = fcntl(pipe.writeEnd, F_GETFL, 0);
+        if (flags >= 0)
+            fcntl(pipe.writeEnd, F_SETFL, flags | O_NONBLOCK);
         while (1) {
-            sel.tv = interval;
+            {
+                pxfe_pthread_mutex_lock lock(int_mut);
+                sel.tv = interval;
+            }
             sel.rfds.zero();
             sel.rfds.set(closer_pipe.readEnd);
             if (sel.select() <= 0) {
-                if (paused == false)
-                    if (pipe.write(&c, 1) != 1)
-                        fprintf(stderr, "pxfe_ticker: write failed\n");
+                if (!paused.load()) {
+                    ssize_t ret = ::write(pipe.writeEnd, &c, 1);
+                    (void) ret;
+                }
                 continue;
             }
             if (sel.rfds.is_set(closer_pipe.readEnd)) {
@@ -2408,32 +2630,37 @@ class pxfe_ticker : public pxfe_pthread {
     }
 public:
     pxfe_ticker(void) {
+        int_mut.init();
         interval.set(1,0);
-        paused = false;
+        paused.store(false);
+        int flags = fcntl(pipe.readEnd, F_GETFL, 0);
+        if (flags >= 0)
+            fcntl(pipe.readEnd, F_SETFL, flags | O_NONBLOCK);
     }
     ~pxfe_ticker(void) {
-        paused = true;
+        paused.store(true);
         stopjoin();
     }
     void start(time_t s, long us) {
-        interval.set(s,us);
+        {
+            pxfe_pthread_mutex_lock lock(int_mut);
+            interval.set(s,us);
+        }
         if (!running())
             create();
-        paused = false;
+        paused.store(false);
     }
-    void pause(void) { paused = true; }
-    void resume(void) { paused = false; }
+    void pause(void) { paused.store(true); }
+    void resume(void) { paused.store(false); }
     int fd(void) { return pipe.readEnd; }
     bool doread(void) {
-        char c;
-        int cc = ::read(pipe.readEnd, &c, 1);
-        if (cc > 0)
-            return true;
-        return false;
+        char c[32];
+        int cc = ::read(pipe.readEnd, c, sizeof(c));
+        return (cc > 0);
     }
 };
 
-#endif /* __posix_fe_h__ */
+#endif /* PFK_POSIX_FE_H */
 
 /** \mainpage posix_fe
 
@@ -2474,10 +2701,10 @@ Demo of pxfe_pipe, pxfe_errno, pxfe_select, pxfe_ticker:
  {
    sel.rfds.set(p.readEnd);
    sel.rfds.set(fd);
-   sel.rfds.set(ticker.fd());
+   sel.rfds.set(tick.fd());
    sel.tv.set(10,0);
    sel.select();
-   if (sel.rfds.isset(p.readEnd))
+   if (sel.rfds.is_set(p.readEnd))
    {
      if (buf.read(fd, 4000, &e) == false)
      {
@@ -2486,11 +2713,11 @@ Demo of pxfe_pipe, pxfe_errno, pxfe_select, pxfe_ticker:
         done = true;
      }
    }
-   if (sel.rfds.isset(fd))
+   if (sel.rfds.is_set(fd))
       handle_fd(fd); // read and do something
-   if (sel.rfds.isset(ticker.fd()))
+   if (sel.rfds.is_set(tick.fd()))
    {
-     ticker.doread();
+     tick.doread();
      // handle tick here
    }
  }
@@ -2501,20 +2728,20 @@ the same code, except using pxfe_poll:
 
 \code
  pxfe_fd      fd; // assume this was already initialized
- pxfe_pipe    p;  // assume someone else is wring to p.writeEnd
+ pxfe_pipe    p;  // assume someone else is writing to p.writeEnd
  pxfe_string  buf;
  pxfe_errno   e;
- pxfe_poll    p;
+ pxfe_poll    pol;
  pxfe_ticker  tick;
  bool done = false;
  tick.start(1, 0);
- p.set(fd, POLLIN);
- p.set(ticker.fd, POLLIN);
- p.set(p.readEnd, POLLIN);
+ pol.set(fd, POLLIN);
+ pol.set(tick.fd(), POLLIN);
+ pol.set(p.readEnd, POLLIN);
  while (!done)
  {
-   p.poll(10000);
-   if (p.rget(p.readEnd) & POLLIN)
+   pol.poll(10000);
+   if (pol.rget(p.readEnd) & POLLIN)
    {
      if (buf.read(fd, 4000, &e) == false)
      {
@@ -2523,11 +2750,11 @@ the same code, except using pxfe_poll:
         done = true;
      }
    }
-   if (p.rget(fd) & POLLIN)
+   if (pol.rget(fd) & POLLIN)
       handle_fd(fd); // read and do something
-   if (p.rget(ticker.fd()) & POLLIN)
+   if (pol.rget(tick.fd()) & POLLIN)
    {
-     ticker.doread();
+     tick.doread();
      // handle tick here
    }
  }
