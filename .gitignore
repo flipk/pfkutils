@@ -10,3 +10,5 @@ cscope.out
 *.o
 .pfk_environ
 *.orig
+DESIGN.html
+/OVERVIEW.html
