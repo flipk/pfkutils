@@ -23,6 +23,11 @@
 #
 # (see also venv-commands.txt)
 
+markdown-it-py
+linkify-it-py
+mdit-py-plugins
+latex2mathml
+
 websockets
 matplotlib
 numpy
