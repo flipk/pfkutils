@@ -1,0 +1,5 @@
+
+nmcli connection show --active
+nmcli connection modify "Wired connection 1" ipv6.method disabled
+nmcli connection up "Wired connection 1"
+
