@@ -31,8 +31,10 @@ if [[ ! -d $srcdir ]] ; then
     tar zxf $srctar
 fi
 
+# note --enable-shared is required if you're doing pyinstaller
+
 cd $srcdir
-./configure --prefix=$install_path --disable-test-modules
+./configure --prefix=$install_path --disable-test-modules --enable-shared
 make $makejobs
 make install
 
