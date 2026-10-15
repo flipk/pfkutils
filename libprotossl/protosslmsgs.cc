@@ -253,7 +253,8 @@ static time_t x509_time_to_linux_time(const mbedtls_x509_time &xt)
     t.tm_min = xt.min;
     t.tm_sec = xt.sec;
 
-    return mktime(&t);
+    // xt is in UTC (GMT) as parsed from ASN.1 time; timegm converts UTC struct tm to time_t
+    return timegm(&t);
 }
 
 bool
