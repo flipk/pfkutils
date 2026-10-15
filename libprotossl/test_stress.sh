@@ -32,32 +32,6 @@ if [ ! -f "keys/Root-CA.crt" ] || [ ! -f "keys/Server-Cert.crt" ] || [ ! -f "key
     (cd keys && ./genkey.sh)
 fi
 
-# Verify certificates with openssl
-if ! openssl verify -CAfile keys/Root-CA.crt keys/Server-Cert.crt >/dev/null 2>&1; then
-    echo "Fixing CA extensions on certificates..."
-    cat > /tmp/ca_ext.cnf <<EOF
-[v3_ca]
-basicConstraints = critical,CA:TRUE
-keyUsage = critical,keyCertSign,cRLSign
-subjectKeyIdentifier = hash
-EOF
-    cat > /tmp/srv_ext.cnf <<EOF
-[v3_req]
-basicConstraints = CA:FALSE
-keyUsage = digitalSignature,keyEncipherment
-extendedKeyUsage = serverAuth,clientAuth
-subjectKeyIdentifier = hash
-authorityKeyIdentifier = keyid,issuer
-EOF
-    faketime '12 hours ago' openssl x509 -in keys/Root-CA.csr -out keys/Root-CA.crt \
-        -req -sha512 -signkey keys/Root-CA-plain.key -days 3650 -extfile /tmp/ca_ext.cnf -extensions v3_ca
-    faketime '12 hours ago' openssl x509 -in keys/Server-Cert.csr -out keys/Server-Cert.crt \
-        -req -sha512 -CA keys/Root-CA.crt -CAkey keys/Root-CA-plain.key -CAcreateserial -days 3650 -extfile /tmp/srv_ext.cnf -extensions v3_req
-    faketime '12 hours ago' openssl x509 -in keys/Client-Cert.csr -out keys/Client-Cert.crt \
-        -req -sha512 -CA keys/Root-CA.crt -CAkey keys/Root-CA-plain.key -CAcreateserial -days 3650 -extfile /tmp/srv_ext.cnf -extensions v3_req
-    rm -f /tmp/ca_ext.cnf /tmp/srv_ext.cnf
-fi
-
 SERVER_LOG=$(mktemp /tmp/dtlsq_server_XXXXXX.log)
 PROXY_LOG=$(mktemp /tmp/dtlsq_proxy_XXXXXX.log)
 CLIENT_LOG=$(mktemp /tmp/dtlsq_client_XXXXXX.log)
