@@ -1,0 +1,33 @@
+
+ubuntu: apt install libc-bin
+fedora: dnf install glibc-common
+
+# Convert UTF-16 (auto-detects BOM if present) to UTF-8
+iconv -f UTF-16 -t UTF-8 input.txt -o output.txt
+
+# If auto-detection fails or there is no BOM, specify endianness explicitly:
+iconv -f UTF-16LE -t UTF-8 input.txt -o output.txt
+
+# Convert UTF-8 to UTF-16 Little Endian (common for Windows)
+iconv -f UTF-8 -t UTF-16LE input.txt -o output.txt
+
+# Or standard UTF-16 (usually prepends a Byte Order Mark / BOM):
+iconv -f UTF-8 -t UTF-16 input.txt -o output.txt
+
+ubuntu: apt install icu-devtools
+fedora: dnf install icu
+
+uconv -f UTF-16 -t UTF-8 -o output.txt input.txt
+
+
+don't forget dos2unix, unix2dos
+
+
+# Remove trailing carriage returns (\r)
+sed -i 's/\r$//' filename.txt
+
+# Delete all carriage returns
+tr -d '\r' < input.txt > output.txt
+
+All in one, windows UCS-2/UTF-16 to UTF-8
+iconv -f UTF-16LE -t UTF-8 input.txt | tr -d '\r' > output.txt
