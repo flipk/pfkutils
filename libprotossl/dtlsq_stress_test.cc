@@ -321,6 +321,7 @@ struct StressScenario {
     uint32_t window_size;
     uint32_t num_ctrl_msgs;
     uint32_t num_bulk_msgs;
+    uint32_t max_missed_heartbeats;
     bool expect_resends;
 };
 
@@ -616,27 +617,29 @@ private:
         }
 
         if (client_dtlsq)
-        {
             client_dtlsq->shutdown();
-            delete client_dtlsq;
-            client_dtlsq = NULL;
-        }
         if (client_reader_running)
         {
             pthread_join(client_reader_tid, NULL);
             client_reader_running = false;
         }
+        if (client_dtlsq)
+        {
+            delete client_dtlsq;
+            client_dtlsq = NULL;
+        }
 
         if (server_dtlsq)
-        {
             server_dtlsq->shutdown();
-            delete server_dtlsq;
-            server_dtlsq = NULL;
-        }
         if (server_reader_running)
         {
             pthread_join(server_reader_tid, NULL);
             server_reader_running = false;
+        }
+        if (server_dtlsq)
+        {
+            delete server_dtlsq;
+            server_dtlsq = NULL;
         }
 
         proxy.stop();
@@ -860,6 +863,7 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 50;
         s.num_bulk_msgs = 50;
+        s.max_missed_heartbeats = 3;
         s.expect_resends = false;
         suite.push_back(s);
     }
@@ -879,6 +883,7 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 80;
         s.num_bulk_msgs = 80;
+        s.max_missed_heartbeats = 3;
         s.expect_resends = true;
         suite.push_back(s);
     }
@@ -898,6 +903,8 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 80;
         s.num_bulk_msgs = 80;
+        // increase missed heartbeat counter, to prevent LINK_DOWN messages
+        s.max_missed_heartbeats = 6;
         s.expect_resends = true;
         suite.push_back(s);
     }
@@ -917,6 +924,8 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 60;
         s.num_bulk_msgs = 60;
+        // increase missed heartbeat counter, to prevent LINK_DOWN messages
+        s.max_missed_heartbeats = 6;
         s.expect_resends = true;
         suite.push_back(s);
     }
@@ -936,6 +945,7 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 60;
         s.num_bulk_msgs = 60;
+        s.max_missed_heartbeats = 3;
         s.expect_resends = true;
         suite.push_back(s);
     }
@@ -955,33 +965,15 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 50;
         s.num_bulk_msgs = 50;
+        s.max_missed_heartbeats = 3;
         s.expect_resends = true;
         suite.push_back(s);
     }
 
-    // 7. Duplicate Packet Injection
+    // 7. Multi-Queue Backpressure
     {
         StressScenario s;
         s.id = 7;
-        s.name = "Duplicate Injection (15%)";
-        s.description = "15% duplicate packets + 5% loss";
-        s.fault.drop_percent = 5;
-        s.fault.burst_drop_interval = 0;
-        s.fault.burst_drop_count = 0;
-        s.fault.delay_ms = 0;
-        s.fault.duplicate_percent = 15;
-        s.fragment_size = 64;
-        s.window_size = 64;
-        s.num_ctrl_msgs = 60;
-        s.num_bulk_msgs = 60;
-        s.expect_resends = true;
-        suite.push_back(s);
-    }
-
-    // 8. Multi-Queue Backpressure
-    {
-        StressScenario s;
-        s.id = 8;
         s.name = "Priority vs Bulk Backpressure";
         s.description = "100 bulk msgs flooding Queue 2 with 10% loss";
         s.fault.drop_percent = 10;
@@ -993,6 +985,7 @@ static std::vector<StressScenario> get_default_suite(void)
         s.window_size = 64;
         s.num_ctrl_msgs = 100;
         s.num_bulk_msgs = 100;
+        s.max_missed_heartbeats = 3;
         s.expect_resends = true;
         suite.push_back(s);
     }

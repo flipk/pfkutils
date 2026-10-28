@@ -95,14 +95,13 @@ public:
         if (dtlsq)
         {
             dtlsq->shutdown();
-            delete dtlsq;
             if (dtlsq_reader_running)
             {
                 void * dummy = NULL;
-                // the delete should cause ProtoSslDtlsQueue::handle_read
-                // to return and the thread should exit on its own.
                 pthread_join(dtlsq_reader_id, &dummy);
             }
+            delete dtlsq;
+            dtlsq = NULL;
         }
         if (server)
             delete server;

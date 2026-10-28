@@ -301,6 +301,8 @@ class ProtoSslDtlsQueue
     bool link_up;
     bool link_changed;
     bool _ok;
+    bool shutting_down;
+    bool is_shutdown;
     ProtoSslDtlsQueueStatistics stats;
 
 public:

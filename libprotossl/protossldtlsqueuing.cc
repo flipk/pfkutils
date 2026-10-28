@@ -74,6 +74,8 @@ ProtoSslDtlsQueue :: ProtoSslDtlsQueue(const ProtoSslDtlsQueueConfig &_config,
     // returns index into queues[] (but not into queue_config[]).
 
     _ok = true;
+    shutting_down = false;
+    is_shutdown = false;
     link_up = true;
     link_changed = false;
 
@@ -163,29 +165,12 @@ ProtoSslDtlsQueue :: fragpool_t :: release(dtls_fragment *frag)
 void
 ProtoSslDtlsQueue :: shutdown(void)
 {
-    // prevent a possible race condition:
-    //   we send a DIE packet to send_thread.
-    //   it sends GOT_DISCONNECT to recv_q and dies.
-    //   two things happen in parallel in different threads:
-    //   1.a. handle_read gets the message and returns it to caller.
-    //     b. caller deletes ProtoSslDtlsQueue which calls shutdown again.
-    //     c. shutdown tries to delete client.
-    //   2.a. this thread wakes up from pthread_join
-    //     b. this thread deletes client (double free!)
-    // how do we prevent this?
-    // use dtls_lock, and atomically read and NULL the client pointer.
-    // then unlock the lock, and do the cleanup, deleting the client
-    // (which is now a thread-local private variable)
-    // error-free.
-
     WaitUtil::Lock lock(&dtls_lock);
-    if (client == NULL)
-        // already been shutdown()
+    if (shutting_down || is_shutdown)
         return;
 
-    ProtoSSLConnClient * l_client = client;
-    // signal that we should not call shutdown twice.
-    client = NULL;
+    // signal that shutdown is initiated.
+    shutting_down = true;
     lock.unlock();
 
     char dummy = 0;
@@ -205,9 +190,23 @@ ProtoSslDtlsQueue :: shutdown(void)
     die_evt.type = dtls_send_event::DIE;
     send_q.enqueue(&die_evt);
 
+    // wait for all 3 worker threads to exit completely.
+    // only after all worker threads have joined is it safe
+    // to delete client.
     for (uint32_t which = 0; which < num_threads; which++)
+    {
         if (thread_started[which])
+        {
             pthread_join(thread_ids[which], &ptr);
+            thread_started[which] = false;
+        }
+    }
+
+    lock.lock();
+    ProtoSSLConnClient * l_client = client;
+    client = NULL;
+    is_shutdown = true;
+    lock.unlock();
 
     delete l_client;
 }
@@ -302,7 +301,7 @@ ProtoSslDtlsQueueStatistics ::Format(void)
 bool
 ProtoSslDtlsQueue :: get_peer_info(ProtoSSLPeerInfo &info)
 {
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         return false;
     return client->get_peer_info(info);
 }
@@ -317,7 +316,7 @@ ProtoSslDtlsQueue::read_return_t
 ProtoSslDtlsQueue :: handle_read(MESSAGE &msg)
 {
     // this object has been shutdown()
-    if (client == NULL)
+    if (client == NULL || is_shutdown)
         return GOT_DISCONNECT;
 
     // no lock required here because recv_q and read_pool internally safe.
@@ -347,13 +346,14 @@ void
 ProtoSslDtlsQueue :: recv_thread(void)
 {
     bool alive = true;
+    int client_fd = client ? client->get_fd() : -1;
     // no lock here; see called functions.
     while (1)
     {
         pxfe_select  sel;
         sel.rfds.set(closer_pipe.readEnd);
-        if (alive)
-            sel.rfds.set(client->get_fd());
+        if (alive && client_fd >= 0)
+            sel.rfds.set(client_fd);
         sel.tv.set(1,0);
         sel.select();
 
@@ -361,8 +361,11 @@ ProtoSslDtlsQueue :: recv_thread(void)
             // time to exit.
             break;
 
-        if (alive && sel.rfds.is_set(client->get_fd()))
+        if (alive && client_fd >= 0 && sel.rfds.is_set(client_fd))
         {
+            if (client == NULL || shutting_down)
+                break;
+
             ProtoSSLConnClient::read_return_t rr =
                 client->handle_read_raw(frag_recv_buffer);
 
@@ -787,7 +790,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
 {
     PRINTF("SENDING message :\n%s\n", msg.DebugString().c_str());
 
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         return CONN_SHUTDOWN;
 
     // locked only when needed. queues are internally safe.
@@ -1004,6 +1007,12 @@ ProtoSslDtlsQueue :: send_thread(void)
         send_event_release(dte);
     }
 
+    if (sender_on_deck)
+    {
+        send_event_release(sender_on_deck);
+        sender_on_deck = NULL;
+    }
+
     // if we're going down, we're taking handle_read down with us!
     // this covers the case where the user deletes the object
     // while still having a thread sitting in handle_read.
@@ -1021,6 +1030,9 @@ void
 ProtoSslDtlsQueue :: handle_tick(void)
 {
     WaitUtil::Lock   lock(&dtls_lock);
+
+    if (client == NULL || shutting_down)
+        return;
 
     ticks_without_recv++;
     if (link_up)
@@ -1078,7 +1090,7 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
 {
     WaitUtil::Lock   lock(&dtls_lock);
 
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         // dont attempt anything! we must be in a race.
         // this means shutdown() is partway through, but we
         // probably have a buildup of messages in send_q
@@ -1164,6 +1176,10 @@ void
 ProtoSslDtlsQueue :: handle_nack(dtls_send_event *dte)
 {
     WaitUtil::Lock   lock(&dtls_lock);
+
+    if (client == NULL || shutting_down)
+        return;
+
     uint32_t seqno = dte->seqno;
     uint32_t wpos = seqno % config.window_size;
 
@@ -1185,6 +1201,9 @@ ProtoSslDtlsQueue :: handle_nack(dtls_send_event *dte)
 void
 ProtoSslDtlsQueue :: send_frag(FragPtr frag, const char *reason)
 {
+    if (client == NULL || shutting_down)
+        return;
+
     if (!frag)
     {
         frag = fragpool.alloc();
