@@ -27,7 +27,7 @@ protossl_INCS = \
 protossl_DEFS = \
 	-DPROTODTLSQUEUING_HDR=\"$(protossl_protossldtlsqueuing.proto_HDR)\"
 
-PROG_TARGETS = protossl_test udp_proxy
+PROG_TARGETS = protossl_test udp_proxy dtlsq_stress_test
 
 protossl_test_TARGET = $(OBJDIR)/protossl_test
 protossl_test_CXXSRCS = \
@@ -44,6 +44,22 @@ protossl_test_DEFS = \
 protossl_test_DEPLIBS = $(protossl_TARGET)
 protossl_test_LIBS = -lpthread $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lrt
 protossl_test_LDFLAGS = -rdynamic
+
+dtlsq_stress_test_TARGET = $(OBJDIR)/dtlsq_stress_test
+dtlsq_stress_test_CXXSRCS = \
+	dtlsq_stress_test.cc \
+	../libpfkutil/signal_backtrace.cc \
+	../libpfkutil/thread_slinger.cc \
+	../libpfkutil/dll3.cc
+dtlsq_stress_test_PROTOSRCS = test_proto.proto
+dtlsq_stress_test_INCS = \
+	-I../libpfkutil -I../obj.$(CONFIG) \
+	$(PROTOBUF_INC) $(MBEDTLS_INCS)
+dtlsq_stress_test_DEFS = \
+	-DTEST_PROTO_HDR=\"$(protossl_test_test_proto.proto_HDR)\"
+dtlsq_stress_test_DEPLIBS = $(protossl_TARGET)
+dtlsq_stress_test_LIBS = -lpthread $(PROTOBUF_LIB) $(MBEDTLS_LIBS) -lrt
+dtlsq_stress_test_LDFLAGS = -rdynamic
 
 udp_proxy_TARGET = $(OBJDIR)/udp_proxy
 udp_proxy_CXXSRCS = ../misc/udp_proxy.cc

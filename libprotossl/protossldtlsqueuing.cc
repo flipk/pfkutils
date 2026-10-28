@@ -20,6 +20,8 @@ using namespace ProtoSSL;
 ProtoSslDtlsQueue :: dtls_fragment :: dtls_fragment(void)
 {
     pkthdr = new ProtoSSL :: DTLS :: DTLS_PacketHeader_m;
+    pool = NULL;
+    refcount.store(0, std::memory_order_relaxed);
     init();
 }
 
@@ -36,7 +38,6 @@ ProtoSslDtlsQueue :: dtls_fragment :: init()
     seqno = 0;
     delivered = false;
     age = 0;
-    refcount = 0;
 }
 
 std::string
@@ -73,6 +74,8 @@ ProtoSslDtlsQueue :: ProtoSslDtlsQueue(const ProtoSslDtlsQueueConfig &_config,
     // returns index into queues[] (but not into queue_config[]).
 
     _ok = true;
+    shutting_down = false;
+    is_shutdown = false;
     link_up = true;
     link_changed = false;
 
@@ -123,9 +126,21 @@ ProtoSslDtlsQueue :: ~ProtoSslDtlsQueue(void)
         if (ind != 0)
             delete queues[ind];
     }
+
+    send_window.clear();
+    recv_window.clear();
+    recv_reassembly.clear();
+    recv_frag_list.clear();
 }
 
-inline ProtoSslDtlsQueue::dtls_fragment *
+ProtoSslDtlsQueue::fragpool_t :: ~fragpool_t(void)
+{
+    dtls_fragment * f;
+    while ((f = fragpool.alloc(0)) != NULL)
+        delete f;
+}
+
+ProtoSslDtlsQueue::FragPtr
 ProtoSslDtlsQueue :: fragpool_t :: alloc(void)
 {
     // note thread_slinger_pool requires a buffer
@@ -136,46 +151,26 @@ ProtoSslDtlsQueue :: fragpool_t :: alloc(void)
         fragpool.add(10);
     dtls_fragment * frag = fragpool.alloc(0);
     frag->init();
-    frag->refcount = 1;
-    return frag;
+    frag->pool = this;
+    frag->refcount.store(0, std::memory_order_relaxed);
+    return FragPtr(frag);
 }
 
-inline void
-ProtoSslDtlsQueue :: fragpool_t :: deref(dtls_fragment *frag)
+void
+ProtoSslDtlsQueue :: fragpool_t :: release(dtls_fragment *frag)
 {
-    if (--frag->refcount == 0)
-    {
-        frag->init();
-        fragpool.release(frag);
-    }
+    fragpool.release(frag);
 }
 
 void
 ProtoSslDtlsQueue :: shutdown(void)
 {
-    // prevent a possible race condition:
-    //   we send a DIE packet to send_thread.
-    //   it sends GOT_DISCONNECT to recv_q and dies.
-    //   two things happen in parallel in different threads:
-    //   1.a. handle_read gets the message and returns it to caller.
-    //     b. caller deletes ProtoSslDtlsQueue which calls shutdown again.
-    //     c. shutdown tries to delete client.
-    //   2.a. this thread wakes up from pthread_join
-    //     b. this thread deletes client (double free!)
-    // how do we prevent this?
-    // use dtls_lock, and atomically read and NULL the client pointer.
-    // then unlock the lock, and do the cleanup, deleting the client
-    // (which is now a thread-local private variable)
-    // error-free.
-
     WaitUtil::Lock lock(&dtls_lock);
-    if (client == NULL)
-        // already been shutdown()
+    if (shutting_down || is_shutdown)
         return;
 
-    ProtoSSLConnClient * l_client = client;
-    // signal that we should not call shutdown twice.
-    client = NULL;
+    // signal that shutdown is initiated.
+    shutting_down = true;
     lock.unlock();
 
     char dummy = 0;
@@ -195,9 +190,23 @@ ProtoSslDtlsQueue :: shutdown(void)
     die_evt.type = dtls_send_event::DIE;
     send_q.enqueue(&die_evt);
 
+    // wait for all 3 worker threads to exit completely.
+    // only after all worker threads have joined is it safe
+    // to delete client.
     for (uint32_t which = 0; which < num_threads; which++)
+    {
         if (thread_started[which])
+        {
             pthread_join(thread_ids[which], &ptr);
+            thread_started[which] = false;
+        }
+    }
+
+    lock.lock();
+    ProtoSSLConnClient * l_client = client;
+    client = NULL;
+    is_shutdown = true;
+    lock.unlock();
 
     delete l_client;
 }
@@ -292,7 +301,7 @@ ProtoSslDtlsQueueStatistics ::Format(void)
 bool
 ProtoSslDtlsQueue :: get_peer_info(ProtoSSLPeerInfo &info)
 {
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         return false;
     return client->get_peer_info(info);
 }
@@ -307,7 +316,7 @@ ProtoSslDtlsQueue::read_return_t
 ProtoSslDtlsQueue :: handle_read(MESSAGE &msg)
 {
     // this object has been shutdown()
-    if (client == NULL)
+    if (client == NULL || is_shutdown)
         return GOT_DISCONNECT;
 
     // no lock required here because recv_q and read_pool internally safe.
@@ -337,13 +346,14 @@ void
 ProtoSslDtlsQueue :: recv_thread(void)
 {
     bool alive = true;
+    int client_fd = client ? client->get_fd() : -1;
     // no lock here; see called functions.
     while (1)
     {
         pxfe_select  sel;
         sel.rfds.set(closer_pipe.readEnd);
-        if (alive)
-            sel.rfds.set(client->get_fd());
+        if (alive && client_fd >= 0)
+            sel.rfds.set(client_fd);
         sel.tv.set(1,0);
         sel.select();
 
@@ -351,8 +361,11 @@ ProtoSslDtlsQueue :: recv_thread(void)
             // time to exit.
             break;
 
-        if (alive && sel.rfds.is_set(client->get_fd()))
+        if (alive && client_fd >= 0 && sel.rfds.is_set(client_fd))
         {
+            if (client == NULL || shutting_down)
+                break;
+
             ProtoSSLConnClient::read_return_t rr =
                 client->handle_read_raw(frag_recv_buffer);
 
@@ -399,7 +412,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
     // it is locked in the appropriate places below.
     WaitUtil::Lock   lock(&dtls_lock, false);
 
-    dtls_fragment * frag = NULL;
+    FragPtr frag;
     google::protobuf::io::CodedInputStream::Limit l;
     uint32_t seqno = 0;
     uint32_t wpos = 0;
@@ -414,7 +427,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
         // PRINT SOMETHING
         fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                 "failed to read header_size\n");
-        goto fail1;
+        return;
     }
 
     if ((uint32_t) instr.BytesUntilLimit() < header_size)
@@ -422,7 +435,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
         // PRINT SOMETHING
         fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                 "packet does not contain complete PacketHeader\n");
-        goto fail1;
+        return;
     }
 
     l = instr.PushLimit(header_size);
@@ -432,7 +445,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
         // PRINT SOMETHING
         fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                 "failure parsing PacketHeader\n");
-        goto fail2;
+        return;
     }
     instr.PopLimit(l);
 
@@ -490,7 +503,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
                 frag->pkthdr->sequence_no() : 0,
                 frag->pkthdr->has_window_size() ?
                 frag->pkthdr->window_size() : 0);
-        goto fail2;
+        return;
     }
 
     // if we received a rtd_req, immediately send an rtd_rsp.
@@ -559,7 +572,7 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
             fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                     "packet too short for message body (%d:%u)\n",
                     instr.BytesUntilLimit(), body_size);
-            goto fail2;
+            return;
         }
         l = instr.PushLimit(body_size);
         frag->fragment.resize(body_size);
@@ -569,22 +582,13 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
             // PRINT SOMETHING
             fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                     "readRaw of message body failed\n");
-            goto fail2;
+            return;
         }
         instr.PopLimit(l);
 
         if (reliable)
         {
             push_ondeck_acks(seqno);
-
-// when we receive a fragment, we put it both in the reassembly map
-// and in the recv_window, and we send an ack. reference count = 2.
-// when a slot in recv_window gets overwritten by a new seqno,
-// the old frag is removed from that slot, refcount --.
-// when a complete message can be reassembled from reassembly map,
-// they are marked as delivered but left in the map for a while.
-// eventually seqnos more than 2*recv_window.size() are removed, refcount--.
-// when refcount == 0, released back to frag pool.
 
             wpos = seqno % recv_window.size();
 
@@ -594,15 +598,11 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
                 // we got the same fragment twice.
                 // our last ack must not have gotten through.
                 // so send an ack.
-                fragpool.deref(frag);
             }
             else
             {
-                if (recv_window[wpos] != NULL)
-                    fragpool.deref(recv_window[wpos]);
-                recv_window[wpos] = frag; // this counts as refcount 1.
-                recv_reassembly[seqno] = frag;
-                frag->refcount ++; // this counts as refcount 2.
+                recv_window[wpos] = frag; // auto-derefs old slot occupant
+                recv_reassembly[seqno] = frag; // shared ownership via FragPtr
             }
 
             uint32_t seqno_started = recv_seqno;
@@ -620,11 +620,13 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
             // two window sizes behind the ones we just consumed.
             for (seqno = seqno_started; seqno != recv_seqno; seqno++)
             {
-                rmi = recv_reassembly.find(seqno - (2*recv_window.size()));
-                if (rmi != recv_reassembly.end())
+                if (seqno >= (2 * recv_window.size()))
                 {
-                    fragpool.deref(rmi->second);
-                    recv_reassembly.erase(rmi);
+                    rmi = recv_reassembly.find(seqno - (2*recv_window.size()));
+                    if (rmi != recv_reassembly.end())
+                    {
+                        recv_reassembly.erase(rmi); // auto-derefs FragPtr
+                    }
                 }
             }
         }
@@ -635,24 +637,9 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
             dtls_read_event * dre = read_pool.alloc(-1);
             dre->retcode = GOT_MESSAGE;
             dre->encoded_msg = frag->fragment;
-            fragpool.deref(frag);
             recv_q.enqueue(dre);
         }
     }
-    else
-    {
-        // done processing this frag, nothing to keep.
-        fragpool.deref(frag);
-    }
-
-    if (0)
-    {
-fail2:
-        fragpool.deref(frag);
-    }
-
-fail1:
-    return;
 }
 
 uint32_t
@@ -663,7 +650,7 @@ ProtoSslDtlsQueue :: recv_reassemble_deliver(uint32_t seqno)
         // not present.
         return 0;
 
-    dtls_fragment * f, * first_f = rmi->second;
+    FragPtr f, first_f = rmi->second;
 
     recv_frag_list.clear();
     // if this frag has no fragno/num_frags, it must be a
@@ -730,7 +717,7 @@ ProtoSslDtlsQueue :: recv_reassemble_deliver(uint32_t seqno)
     PRINTF("reassembling message from frags:\n");
     for (uint32_t ind = 0; ind < recv_frag_list.size(); ind++)
     {
-        dtls_fragment * f = recv_frag_list[ind];
+        FragPtr & f = recv_frag_list[ind];
         PRINTF("fragment %u : %s\n", ind, f->print().c_str());
         dre->encoded_msg.append(f->fragment);
         f->delivered = true;
@@ -758,8 +745,8 @@ ProtoSslDtlsQueue :: handle_recv_ack(uint32_t recv_seq_no)
     uint32_t seqno = recv_seq_no;
     uint32_t wpos = seqno % config.window_size;
 
-    dtls_fragment * frag = send_window[wpos];
-    if (frag == NULL || frag->seqno != seqno)
+    FragPtr frag = send_window[wpos];
+    if (!frag || frag->seqno != seqno)
     {
         // this happens whenever message containing a list of ACKs is
         // lost -- the sender may have retransmitted several packets,
@@ -768,8 +755,8 @@ ProtoSslDtlsQueue :: handle_recv_ack(uint32_t recv_seq_no)
         // that's okay.
         return;
     }
-    send_window[wpos] = NULL;
-    fragpool.deref(frag);
+    send_window[wpos].reset();
+    frag.reset();
     lock.unlock();
 
     // tickle send thread, if it's in full-window condition,
@@ -803,7 +790,7 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
 {
     PRINTF("SENDING message :\n%s\n", msg.DebugString().c_str());
 
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         return CONN_SHUTDOWN;
 
     // locked only when needed. queues are internally safe.
@@ -1020,6 +1007,12 @@ ProtoSslDtlsQueue :: send_thread(void)
         send_event_release(dte);
     }
 
+    if (sender_on_deck)
+    {
+        send_event_release(sender_on_deck);
+        sender_on_deck = NULL;
+    }
+
     // if we're going down, we're taking handle_read down with us!
     // this covers the case where the user deletes the object
     // while still having a thread sitting in handle_read.
@@ -1037,6 +1030,9 @@ void
 ProtoSslDtlsQueue :: handle_tick(void)
 {
     WaitUtil::Lock   lock(&dtls_lock);
+
+    if (client == NULL || shutting_down)
+        return;
 
     ticks_without_recv++;
     if (link_up)
@@ -1057,8 +1053,8 @@ ProtoSslDtlsQueue :: handle_tick(void)
              ind < send_window.size();
              ind++)
         {
-            dtls_fragment * frag = send_window[ind];
-            if (frag == NULL)
+            FragPtr &frag = send_window[ind];
+            if (!frag)
                 continue;
             frag->age++;
             if (frag->age > retransmit_age)
@@ -1094,7 +1090,7 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
 {
     WaitUtil::Lock   lock(&dtls_lock);
 
-    if (client == NULL)
+    if (client == NULL || shutting_down)
         // dont attempt anything! we must be in a race.
         // this means shutdown() is partway through, but we
         // probably have a buildup of messages in send_q
@@ -1106,10 +1102,9 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
     if (dte->reliable == false)
     {
         // just send it and forget it.
-        dtls_fragment * frag = fragpool.alloc();
+        FragPtr frag = fragpool.alloc();
         frag->fragment = msg;
         send_frag(frag);
-        fragpool.deref(frag);
         return true;
     }
 
@@ -1130,7 +1125,7 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
     for (uint32_t ind = 0; ind < frags_needed; ind++)
     {
         uint32_t wpos = (send_seqno + ind) % config.window_size;
-        if (send_window[wpos] != NULL)
+        if (send_window[wpos])
         {
             PRINTF("SEND putting dbg seqno %x on deck because window full\n",
                    dte->seqno);
@@ -1145,7 +1140,7 @@ ProtoSslDtlsQueue :: handle_send_msg(dtls_send_event *dte,
     for (uint32_t ind = 0; ind < frags_needed; ind++)
     {
         uint32_t wpos = send_seqno % config.window_size;
-        dtls_fragment * frag = fragpool.alloc();
+        FragPtr frag = fragpool.alloc();
 
         PRINTF("SEND MSG queuing fragment %u of message "
                "with dbg seqno %x link seqno %u to wpos %u\n", ind,
@@ -1181,11 +1176,15 @@ void
 ProtoSslDtlsQueue :: handle_nack(dtls_send_event *dte)
 {
     WaitUtil::Lock   lock(&dtls_lock);
+
+    if (client == NULL || shutting_down)
+        return;
+
     uint32_t seqno = dte->seqno;
     uint32_t wpos = seqno % config.window_size;
 
-    dtls_fragment * frag = send_window[wpos];
-    if (frag == NULL)
+    FragPtr &frag = send_window[wpos];
+    if (!frag)
     {
         fprintf(stderr, "ProtoSslDtlsQueue :: handle_nack : "
                 "got NACK for slot already freed (%u)!\n", seqno);
@@ -1197,15 +1196,16 @@ ProtoSslDtlsQueue :: handle_nack(dtls_send_event *dte)
     send_frag(frag, "NACK");
 }
 
-// invoke with NULL to just send a heartbeat and maybe
+// invoke with empty/NULL to just send a heartbeat and maybe
 // some acknacks. this should be invoked with dtls_lock locked.
 void
-ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
+ProtoSslDtlsQueue :: send_frag(FragPtr frag, const char *reason)
 {
-    bool temp = false;
-    if (frag == NULL)
+    if (client == NULL || shutting_down)
+        return;
+
+    if (!frag)
     {
-        temp = true;
         frag = fragpool.alloc();
     }
 
@@ -1320,9 +1320,6 @@ ProtoSslDtlsQueue :: send_frag(dtls_fragment *frag, const char *reason)
         link_up = false;
         link_changed = true;
     }
-
-    if (temp)
-        fragpool.deref(frag);
 
     ticks_without_send = 0;
 }

@@ -36,6 +36,7 @@
 #include "dll3.h"
 #include <map>
 #include <deque>
+#include <atomic>
 
 namespace ProtoSSL {
     namespace DTLS {
@@ -300,6 +301,8 @@ class ProtoSslDtlsQueue
     bool link_up;
     bool link_changed;
     bool _ok;
+    bool shutting_down;
+    bool is_shutdown;
     ProtoSslDtlsQueueStatistics stats;
 
 public:
@@ -395,14 +398,43 @@ private:
     // false ret means send window is full, couldn't send.
     bool handle_send_msg(dtls_send_event *dte, int queue_number = -1);
     void handle_nack(dtls_send_event *dte);
-    void send_heartbeat(void) { WaitUtil::Lock l(&dtls_lock); send_frag(NULL); }
+    void send_heartbeat(void) { WaitUtil::Lock l(&dtls_lock); send_frag(); }
+
+    struct dtls_fragment;
+    struct fragpool_t;
+
+    class FragPtr {
+        dtls_fragment *ptr;
+    public:
+        FragPtr(void) : ptr(NULL) {}
+        FragPtr(dtls_fragment *_ptr);
+        FragPtr(const FragPtr &other);
+        FragPtr(FragPtr &&other) noexcept;
+        ~FragPtr(void);
+        FragPtr &operator=(const FragPtr &other);
+        FragPtr &operator=(FragPtr &&other) noexcept;
+        FragPtr &operator=(dtls_fragment *_ptr);
+        FragPtr &operator=(std::nullptr_t);
+        void reset(void);
+        dtls_fragment *get(void) const { return ptr; }
+        dtls_fragment *operator->(void) const { return ptr; }
+        dtls_fragment &operator*(void) const { return *ptr; }
+        explicit operator bool(void) const { return ptr != NULL; }
+        bool operator==(const FragPtr &other) const { return ptr == other.ptr; }
+        bool operator!=(const FragPtr &other) const { return ptr != other.ptr; }
+        bool operator==(std::nullptr_t) const { return ptr == NULL; }
+        bool operator!=(std::nullptr_t) const { return ptr != NULL; }
+    };
 
     struct dtls_fragment : public ThreadSlinger::thread_slinger_message
     {
         dtls_fragment(void);
         ~dtls_fragment(void);
+        dtls_fragment(const dtls_fragment &) = delete;
+        dtls_fragment &operator=(const dtls_fragment &) = delete;
         void init();
-        int refcount;
+        std::atomic_int refcount;
+        fragpool_t *pool;
         uint32_t seqno; // non-modulo'd original seqno.
         bool delivered; // used to detect lost ack and prevent double-delivery
         uint32_t age; // set to 0 on entry to send_window.
@@ -411,15 +443,21 @@ private:
         // debug
         std::string print(void) const;
         void cleanup(void) { fragment.clear(); }
+
+        void ref(void)
+        {
+            refcount.fetch_add(1, std::memory_order_relaxed);
+        }
+        void deref(void);
     };
 
     struct fragpool_t {
     private:
         ThreadSlinger::thread_slinger_pool<dtls_fragment> fragpool;
     public:
-        // alloc from fragpool first; if empty, new.
-        inline dtls_fragment *alloc(void); // note frag->refcount == 1
-        inline void deref(dtls_fragment *);
+        ~fragpool_t(void);
+        FragPtr alloc(void);
+        void release(dtls_fragment *frag);
     } fragpool;
 
     // fragsender. if we have an ack or nack to send, but
@@ -429,14 +467,14 @@ private:
     std::deque<uint32_t> ondeck_nack_seq_nos;
     void push_ondeck_acks(uint32_t seqno);
     std::string frag_send_buffer; // reuse, to prevent excessive reallocs
-    // invoke with NULL to just send heartbeat, acknacks.
-    void send_frag(dtls_fragment *, const char *reason = NULL);
+    // invoke with empty/NULL to just send heartbeat, acknacks.
+    void send_frag(FragPtr frag = FragPtr(), const char *reason = NULL);
 
     // this is the next sequence number we're going to send.
     // the position in send_window where it belongs is
     // "send_seqno % config.window_size"
     uint32_t send_seqno;
-    std::vector<dtls_fragment*>   send_window;
+    std::vector<FragPtr>   send_window;
 
     // for calculating retransmit age.
     uint64_t  rtd_rsp_timestamp;
@@ -455,11 +493,11 @@ private:
     // to application.
     uint32_t recv_seqno;
     std::string frag_recv_buffer; // reuse, to prevent excessive reallocs
-    std::vector<dtls_fragment *> recv_frag_list; // reuse to prevent reallocs
+    std::vector<FragPtr> recv_frag_list; // reuse to prevent reallocs
 
     // see the big comment in got_frag to see how these are used.
-    std::vector<dtls_fragment*>   recv_window;
-    typedef std::map<uint32_t/*seqno*/,dtls_fragment*>  ReassemblyMap;
+    std::vector<FragPtr>   recv_window;
+    typedef std::map<uint32_t/*seqno*/,FragPtr>  ReassemblyMap;
     ReassemblyMap recv_reassembly;
 
     uint32_t ticks_without_recv; // trigger for LINK_DOWN
@@ -505,6 +543,104 @@ public:
     // the pointer after deletion.
     void shutdown(void);
 };
+
+inline void
+ProtoSslDtlsQueue::dtls_fragment::deref(void)
+{
+    if (refcount.fetch_sub(1, std::memory_order_acq_rel) == 1)
+    {
+        init();
+        if (pool)
+            pool->release(this);
+        else
+            delete this;
+    }
+}
+
+inline ProtoSslDtlsQueue::FragPtr::FragPtr(dtls_fragment *_ptr)
+    : ptr(_ptr)
+{
+    if (ptr)
+        ptr->ref();
+}
+
+inline ProtoSslDtlsQueue::FragPtr::FragPtr(const FragPtr &other)
+    : ptr(other.ptr)
+{
+    if (ptr)
+        ptr->ref();
+}
+
+inline ProtoSslDtlsQueue::FragPtr::FragPtr(FragPtr &&other) noexcept
+    : ptr(other.ptr)
+{
+    other.ptr = NULL;
+}
+
+inline ProtoSslDtlsQueue::FragPtr::~FragPtr(void)
+{
+    if (ptr)
+        ptr->deref();
+}
+
+inline ProtoSslDtlsQueue::FragPtr &
+ProtoSslDtlsQueue::FragPtr::operator=(const FragPtr &other)
+{
+    if (this != &other)
+    {
+        if (other.ptr)
+            other.ptr->ref();
+        if (ptr)
+            ptr->deref();
+        ptr = other.ptr;
+    }
+    return *this;
+}
+
+inline ProtoSslDtlsQueue::FragPtr &
+ProtoSslDtlsQueue::FragPtr::operator=(FragPtr &&other) noexcept
+{
+    if (this != &other)
+    {
+        if (ptr)
+            ptr->deref();
+        ptr = other.ptr;
+        other.ptr = NULL;
+    }
+    return *this;
+}
+
+inline ProtoSslDtlsQueue::FragPtr &
+ProtoSslDtlsQueue::FragPtr::operator=(dtls_fragment *_ptr)
+{
+    if (ptr != _ptr)
+    {
+        if (_ptr)
+            _ptr->ref();
+        if (ptr)
+            ptr->deref();
+        ptr = _ptr;
+    }
+    return *this;
+}
+
+inline ProtoSslDtlsQueue::FragPtr &
+ProtoSslDtlsQueue::FragPtr::operator=(std::nullptr_t)
+{
+    reset();
+    return *this;
+}
+
+inline void
+ProtoSslDtlsQueue::FragPtr::reset(void)
+{
+    if (ptr)
+    {
+        dtls_fragment *t = ptr;
+        ptr = NULL;
+        t->deref();
+    }
+}
 
 }; // namespace ProtoSSL
 
