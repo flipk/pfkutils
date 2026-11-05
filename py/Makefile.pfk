@@ -7,7 +7,8 @@ PYTOOLS_SIMPLE = \
 	pfk_dbm.py \
 	i4.py \
 	find_honeypot_prefixes.py \
-	opencode-session-render.py \
+	opencode_session_list.py \
+	opencode_session_render.py \
 	git-verret \
 	dit
 

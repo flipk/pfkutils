@@ -1,7 +1,10 @@
+#!/usr/bin/env python3
+
 import sqlite3
 import json
+import os
 
-db_file = '/home/flipk/.local/share/opencode/opencode.db'
+db_file = os.environ['HOME'] + '/.local/share/opencode/opencode.db'
 db = sqlite3.connect(db_file)
 
 if True:
