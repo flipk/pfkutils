@@ -44,6 +44,7 @@ def convert(input_file, output_file):
         double_inline=True,
         renderer=math_renderer
     )
+    md.linkify.set({"fuzzy_link": False})
     # md = MarkdownIt().enable("table")
 
     try:

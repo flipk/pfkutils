@@ -10,3 +10,4 @@ cscope.out
 *.o
 .pfk_environ
 *.orig
+/AGENTS-md-readme.html
