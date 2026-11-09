@@ -32,7 +32,7 @@ static void sig_hand(int s)
     keep_running = false;
 }
 
-struct tickler_thread : public pxfe_pthread
+struct tickler_thread : public __pxfe_pthread
 {
     int fd;
     bool _ok;

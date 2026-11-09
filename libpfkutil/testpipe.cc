@@ -32,7 +32,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "posix_fe.h"
 
-class readerThread : public pxfe_pthread
+class readerThread : public __pxfe_pthread
 {
     int which;
     pxfe_pipe closerPipe;

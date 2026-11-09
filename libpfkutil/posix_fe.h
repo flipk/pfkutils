@@ -1414,8 +1414,8 @@ public:
     }
 };
 
-// needs doxygen
-class pxfe_pthread {
+// deprecated: don't use this in new projects.
+class __pxfe_pthread {
     pxfe_pthread_mutex mut;
     pxfe_pthread_cond cond;
     enum {
@@ -1424,7 +1424,7 @@ class pxfe_pthread {
     pthread_t  id;
     void *user_arg;
     static void * _entry(void *thread_obj) {
-        pxfe_pthread * th = (pxfe_pthread *)thread_obj;
+        __pxfe_pthread * th = (__pxfe_pthread *)thread_obj;
         pxfe_pthread_mutex_lock lock(th->mut);
         th->state = RUNNING;
         lock.unlock();
@@ -1439,14 +1439,14 @@ protected:
     virtual void send_stop(void) = 0;
 public:
     pxfe_pthread_attr attr;
-    pxfe_pthread(const pxfe_pthread &) = delete;
-    pxfe_pthread &operator=(const pxfe_pthread &) = delete;
-    pxfe_pthread(void) {
+    __pxfe_pthread(const __pxfe_pthread &) = delete;
+    __pxfe_pthread &operator=(const __pxfe_pthread &) = delete;
+    __pxfe_pthread(void) {
         state = INIT;
         mut.init();
         cond.init();
     }
-    virtual ~pxfe_pthread(void) {
+    virtual ~__pxfe_pthread(void) {
         // Derived classes should invoke stopjoin() in their own destructor
         // to avoid invoking pure virtual functions during base destruction.
     }
@@ -2588,7 +2588,7 @@ public:
 };
 
 // needs doxygen
-class pxfe_ticker : public pxfe_pthread {
+class pxfe_ticker : public __pxfe_pthread {
     std::atomic<bool> paused;
     pxfe_pipe closer_pipe;
     pxfe_pipe pipe;
