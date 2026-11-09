@@ -5,6 +5,7 @@ from tkinter import messagebox, ttk
 import configparser
 import subprocess
 import threading
+import multiprocessing as mp
 import os
 import sys
 import shlex
@@ -274,13 +275,41 @@ class AppLauncher(tk.Tk):
         if False:
             # a dummy secret for testing.
             secret = "CLEFDHTP43VLP2UAYYBX532XKLWG6YU4"
+            self.finish_unlock_totp(secret)
         else:
+            self.unlock_btn.configure(text='Enter\nPIN')
             pin = self.ask_pin()
             if pin is None:
+                self.unlock_btn.configure(text="Unlock\nTOTP")
                 return
-            secret = save_secret.load_secret(pin, self.totp_secret)
-            del pin
+            self.unlock_btn.configure(text="Loading")
 
+            self.unlock_q = mp.Queue()
+            self.unlock_proc = mp.Process(target=self.unlock_worker,
+                                          args=(self.unlock_q, pin),
+                                          daemon=True)
+            self.unlock_proc.start()
+            self.unlock_check_q()
+
+    def unlock_worker(self, result_queue: mp.Queue, pin):
+        secret = save_secret.load_secret(pin, self.totp_secret)
+        result_queue.put(secret)
+
+    def unlock_check_q(self):
+        try:
+            secret = self.unlock_q.get_nowait()
+            if self.unlock_proc:
+                self.unlock_proc.join(timeout=1)
+                self.unlock_proc = None
+            if secret:
+                self.after(0, lambda: self.finish_unlock_totp(secret))
+            else:
+                self.unlock_btn.configure(text="Unlock\nTOTP")
+            self.unlock_q = None
+        except:
+            self.after(50, self.unlock_check_q)
+
+    def finish_unlock_totp(self, secret):
         self.totp = pyotp.TOTP(secret, interval=60)
         self.unlock_btn.destroy()
 

@@ -9,7 +9,7 @@ script_path = Path(sys.argv[0]).absolute()
 script_dir = script_path.parent
 LOWER_IMAGE = script_dir / "lower.png"
 BACKGROUND_COLOR = "#102030"
-icon_size = 256
+icon_size = 64
 
 root = tk.Tk()
 root.title("Blank")

@@ -46,7 +46,7 @@ def save_secret(secret: str, pin: str, filename: str):
 def load_secret(pin: str, filename: str) -> str:
     """Loads and decrypts a secret string from a file using a PIN."""
     if not os.path.exists(filename):
-        raise Exception("File not found.")
+        raise Exception(f"File {filename} not found.")
 
     with open(filename, 'rb') as file:
         file_data = file.read()
@@ -60,7 +60,11 @@ def load_secret(pin: str, filename: str) -> str:
     f = Fernet(key)
 
     # 3. Attempt to decrypt
-    decrypted_data = f.decrypt(encrypted_data)
+    try:
+        decrypted_data = f.decrypt(encrypted_data)
+    except:
+        print(f'FAILED DECRYPT: is pin incorrect?')
+        return None
     return decrypted_data.decode('utf-8')
 
 def generate_totp_secret(length=32):
