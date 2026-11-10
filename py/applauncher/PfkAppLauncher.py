@@ -31,6 +31,10 @@ if hasattr(Image, 'Resampling'):
 else:
     resample_filter = Image.LANCZOS
 
+def _unlock_worker(result_queue: mp.Queue, pin, totp_secret):
+    secret = save_secret.load_secret(pin, totp_secret)
+    result_queue.put(secret)
+
 class AppLauncher(tk.Tk):
     """
     A simple graphical application launcher that displays a grid of icons
@@ -285,15 +289,11 @@ class AppLauncher(tk.Tk):
             self.unlock_btn.configure(text="Loading")
 
             self.unlock_q = mp.Queue()
-            self.unlock_proc = mp.Process(target=self.unlock_worker,
-                                          args=(self.unlock_q, pin),
+            self.unlock_proc = mp.Process(target=_unlock_worker,
+                                          args=(self.unlock_q, pin, self.totp_secret),
                                           daemon=True)
             self.unlock_proc.start()
             self.unlock_check_q()
-
-    def unlock_worker(self, result_queue: mp.Queue, pin):
-        secret = save_secret.load_secret(pin, self.totp_secret)
-        result_queue.put(secret)
 
     def unlock_check_q(self):
         try:
