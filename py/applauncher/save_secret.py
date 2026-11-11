@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
 
+# This implementation locks using Scrypt for key derivation, and
+# Fernet (AES-128-CBC + HMAC-SHA256) for encryption, which is a very strong
+# enterprise-grade configuration.
+#
+# the strength of Scrypt is that, as configured below, it requires 1 GB
+# of RAM per instance (128 * 2**20 * 8), thus high parallelization on
+# GPUs is not feasible without an extreme amount of VRAM.
+#
+# however the PIN# is just a sequence of digits, which has a somewhat
+# small keyspace. I use a 7 digit PIN just to make it a little more
+# secure, but you can still crack this on a GPU.
+
 import os
 import sys
 import base64
@@ -40,6 +52,7 @@ def save_secret(secret: str, pin: str, filename: str):
     # 4. Save salt + encrypted data together. 
     # The salt isn't a secret, but it is required to re-derive the key later.
     with open(filename, 'wb') as file:
+        os.chmod(filename, 0o600)
         file.write(salt + encrypted_data)
     print(f"Secret successfully secured in {filename}.")
 

@@ -18,7 +18,7 @@ from PIL import Image, ImageTk
 
 # TOTP Dependencies
 import pyotp
-import save_secret
+import save_secret2
 
 class Lower(Enum):
     IMMEDIATE = 1
@@ -31,9 +31,9 @@ if hasattr(Image, 'Resampling'):
 else:
     resample_filter = Image.LANCZOS
 
-def _unlock_worker(result_queue: mp.Queue, pin, totp_secret):
-    secret = save_secret.load_secret(pin, totp_secret)
-    result_queue.put(secret)
+def _unlock_worker(result_queue: mp.Queue, passphrase, totp_secret):
+    err, secret = save_secret2.load_secret(passphrase, totp_secret)
+    result_queue.put((err, secret))
 
 class AppLauncher(tk.Tk):
     """
@@ -246,21 +246,21 @@ class AppLauncher(tk.Tk):
 
     # --- TOTP Specific Methods ---
 
-    def ask_pin(self):
-        pin = None
+    def ask_pass(self):
+        passphrase = None
         dialog = tk.Toplevel(self)
         dialog.title("Unlock")
         dialog.attributes("-topmost", True)
         dialog.resizable(False, False)
         
-        tk.Label(dialog, text="Enter TOTP secret pin").pack(padx=20, pady=(10, 5))
+        tk.Label(dialog, text="Enter TOTP secret passphrase").pack(padx=20, pady=(10, 5))
         entry = tk.Entry(dialog, show="*", bg="black", fg="white")
         entry.pack(padx=20, pady=(0, 10))
         entry.focus_set()
         
         def on_enter(event=None):
-            nonlocal pin
-            pin = entry.get()
+            nonlocal passphrase
+            passphrase = entry.get()
             dialog.destroy()
             
         def on_esc(event=None):
@@ -273,7 +273,7 @@ class AppLauncher(tk.Tk):
         dialog.grab_set()
         self.wait_window(dialog)
         
-        return pin
+        return passphrase
 
     def unlock_totp(self):
         if False:
@@ -281,29 +281,62 @@ class AppLauncher(tk.Tk):
             secret = "CLEFDHTP43VLP2UAYYBX532XKLWG6YU4"
             self.finish_unlock_totp(secret)
         else:
-            self.unlock_btn.configure(text='Enter\nPIN')
-            pin = self.ask_pin()
-            if pin is None:
+            self.unlock_btn.configure(text='Enter\nPASS')
+            passphrase = self.ask_pass()
+            if passphrase is None:
                 self.unlock_btn.configure(text="Unlock\nTOTP")
                 return
             self.unlock_btn.configure(text="Loading")
 
+            # (old information, relevant to save_secret.py
+            #  (Scrypt+Fernet) but not to save_secret2.py
+            #  (Argon2id+AES-GCM) -- now that I've switched to
+            #  save_secret2.py, it is questionable whether I need the
+            #  separate process anymore, but I don't want to change it
+            #  because it's useful teaching code)
+            #
+            # the unlock can take several seconds, at least 5 on a
+            # slower computer (2**20 rounds of PBKDF2), longer if you
+            # just logged into Windows and it is still starting up all
+            # those services.
+            #
+            # it doesn't help to run the unlock as a threading.Thread,
+            # because the work is still in python statements, thus the
+            # GIL (global interpreter lock) is starved, thus blocking
+            # tkinter event thread, freezing the window.
+            #
+            # however, if it's done as a separate multiprocess.Process,
+            # tkinter continues to handle events and the GUI is responsive.
+            #
+            # this is fine on linux, but on Windows, mp.Process uses
+            # the Windows 'spawn' interface (no such thing as fork),
+            # and because of that, the args=() list must be
+            # 'picklable' arguments.
+            #
+            # if you want to dive down a deep rabbit hole (and learn a
+            # few things along the way), ask google 'how does python
+            # pickle a multiprocess.Queue when passing to a worker
+            # multiprocessing.Process?'
+
             self.unlock_q = mp.Queue()
             self.unlock_proc = mp.Process(target=_unlock_worker,
-                                          args=(self.unlock_q, pin, self.totp_secret),
+                                          args=(self.unlock_q,
+                                                passphrase,
+                                                self.totp_secret),
                                           daemon=True)
             self.unlock_proc.start()
             self.unlock_check_q()
 
     def unlock_check_q(self):
         try:
-            secret = self.unlock_q.get_nowait()
+            err, secret = self.unlock_q.get_nowait()
             if self.unlock_proc:
                 self.unlock_proc.join(timeout=1)
                 self.unlock_proc = None
             if secret:
                 self.after(0, lambda: self.finish_unlock_totp(secret))
             else:
+                print(f' got ERR : {err}')
                 self.unlock_btn.configure(text="Unlock\nTOTP")
             self.unlock_q = None
         except:
