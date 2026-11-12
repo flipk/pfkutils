@@ -19,7 +19,7 @@ using namespace ProtoSSL;
 
 ProtoSslDtlsQueue :: dtls_fragment :: dtls_fragment(void)
 {
-    pkthdr = new ProtoSSL :: DTLS :: DTLS_PacketHeader_m;
+    pkthdr = std::make_unique<ProtoSSL :: DTLS :: DTLS_PacketHeader_m>();
     pool = NULL;
     refcount.store(0, std::memory_order_relaxed);
     init();
@@ -27,7 +27,6 @@ ProtoSslDtlsQueue :: dtls_fragment :: dtls_fragment(void)
 
 ProtoSslDtlsQueue :: dtls_fragment :: ~dtls_fragment(void)
 {
-    delete pkthdr;
 }
 
 void
@@ -405,49 +404,165 @@ ProtoSslDtlsQueue :: recv_thread(void)
     }
 }
 
+bool
+ProtoSslDtlsQueue :: parse_packet_header(
+    google::protobuf::io::CodedInputStream &instr, FragPtr &frag)
+{
+    uint32_t header_size;
+    if (instr.ReadVarint32(&header_size) == false)
+    {
+        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+                "failed to read header_size\n");
+        return false;
+    }
+
+    if ((uint32_t) instr.BytesUntilLimit() < header_size)
+    {
+        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+                "packet does not contain complete PacketHeader\n");
+        return false;
+    }
+
+    google::protobuf::io::CodedInputStream::Limit l = instr.PushLimit(header_size);
+    frag = fragpool.alloc();
+    if (frag->pkthdr->ParseFromCodedStream(&instr) == false)
+    {
+        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+                "failure parsing PacketHeader\n");
+        return false;
+    }
+    instr.PopLimit(l);
+    return true;
+}
+
+void
+ProtoSslDtlsQueue :: process_rtd_and_heartbeat(const FragPtr &frag)
+{
+    if (frag->pkthdr->has_rtd_req_timestamp())
+    {
+        rtd_rsp_timestamp = frag->pkthdr->rtd_req_timestamp();
+        send_heartbeat();
+    }
+
+    if (frag->pkthdr->has_rtd_rsp_timestamp())
+    {
+        pxfe_timeval tv;
+        tv.getNow();
+        uint64_t diff = tv.usecs() - frag->pkthdr->rtd_rsp_timestamp();
+        retransmit_age = (diff / (1000000 / config.ticks_per_second)) * 2;
+        PRINTF("retransmit_age set to %u because rtd %" PRIu64 "\n",
+               retransmit_age, diff);
+        if (retransmit_age < 2)
+            retransmit_age = 2;
+    }
+}
+
+void
+ProtoSslDtlsQueue :: process_acknowledgements(const FragPtr &frag)
+{
+    for (int ind = 0;
+         ind < frag->pkthdr->ack_seq_no_size();
+         ind++)
+    {
+        PRINTF("processing ack %u\n", frag->pkthdr->ack_seq_no(ind));
+        handle_recv_ack(frag->pkthdr->ack_seq_no(ind));
+    }
+    for (int ind = 0;
+         ind < frag->pkthdr->nack_seq_no_size();
+         ind++)
+    {
+        PRINTF("processing nack %u\n", frag->pkthdr->nack_seq_no(ind));
+        handle_recv_nack(frag->pkthdr->nack_seq_no(ind));
+    }
+}
+
+bool
+ProtoSslDtlsQueue :: process_message_body(
+    google::protobuf::io::CodedInputStream &instr, FragPtr &frag,
+    uint32_t seqno, bool reliable)
+{
+    google::protobuf::io::CodedInputStream::Limit l;
+    uint32_t body_size = frag->pkthdr->message_body_size();
+    if ((uint32_t) instr.BytesUntilLimit() < body_size)
+    {
+        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+                "packet too short for message body (%d:%u)\n",
+                instr.BytesUntilLimit(), body_size);
+        return false;
+    }
+    l = instr.PushLimit(body_size);
+    frag->fragment.resize(body_size);
+    if (instr.ReadRaw((void*) frag->fragment.c_str(),
+                      body_size) == false)
+    {
+        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
+                "readRaw of message body failed\n");
+        return false;
+    }
+    instr.PopLimit(l);
+
+    if (reliable)
+    {
+        push_ondeck_acks(seqno);
+
+        uint32_t wpos = seqno % recv_window.size();
+
+        ReassemblyMap::iterator rmi = recv_reassembly.find(seqno);
+        if (rmi != recv_reassembly.end())
+        {
+            // duplicate fragment
+        }
+        else
+        {
+            recv_window[wpos] = frag;
+            recv_reassembly[seqno] = frag;
+        }
+
+        uint32_t seqno_started = recv_seqno;
+        while (1)
+        {
+            uint32_t consumed = recv_reassemble_deliver(recv_seqno);
+            if (consumed == 0)
+                break;
+            recv_seqno += consumed;
+        }
+
+        for (uint32_t s = seqno_started; s != recv_seqno; s++)
+        {
+            if (s >= (2 * recv_window.size()))
+            {
+                rmi = recv_reassembly.find(s - (2 * recv_window.size()));
+                if (rmi != recv_reassembly.end())
+                {
+                    recv_reassembly.erase(rmi);
+                }
+            }
+        }
+    }
+    else
+    {
+        dtls_read_event * dre = read_pool.alloc(-1);
+        dre->retcode = GOT_MESSAGE;
+        dre->encoded_msg = frag->fragment;
+        recv_q.enqueue(dre);
+    }
+    return true;
+}
+
 void
 ProtoSslDtlsQueue :: handle_got_frag(void)
 {
-    // need lock because we access recv_window and ondeck_ack/nack;
-    // it is locked in the appropriate places below.
     WaitUtil::Lock   lock(&dtls_lock, false);
 
     FragPtr frag;
-    google::protobuf::io::CodedInputStream::Limit l;
     uint32_t seqno = 0;
-    uint32_t wpos = 0;
     bool reliable = true;
     google::protobuf::io::CodedInputStream  instr(
         (const uint8_t *) frag_recv_buffer.c_str(),
         (int) frag_recv_buffer.size());
 
-    uint32_t header_size;
-    if (instr.ReadVarint32(&header_size) == false)
-    {
-        // PRINT SOMETHING
-        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
-                "failed to read header_size\n");
+    if (!parse_packet_header(instr, frag))
         return;
-    }
-
-    if ((uint32_t) instr.BytesUntilLimit() < header_size)
-    {
-        // PRINT SOMETHING
-        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
-                "packet does not contain complete PacketHeader\n");
-        return;
-    }
-
-    l = instr.PushLimit(header_size);
-    frag = fragpool.alloc();
-    if (frag->pkthdr->ParseFromCodedStream(&instr) == false)
-    {
-        // PRINT SOMETHING
-        fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
-                "failure parsing PacketHeader\n");
-        return;
-    }
-    instr.PopLimit(l);
 
     PRINTF("received fragment:\n%s\n", frag->pkthdr->DebugString().c_str());
 
@@ -494,7 +609,6 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
 
     if (frag->pkthdr->has_window_size() == false)
     {
-        // PRINT SOMETHING
         fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
                 "incomplete PacketHeader (%d%d %u:%u)\n",
                 frag->pkthdr->has_sequence_no(),
@@ -506,29 +620,8 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
         return;
     }
 
-    // if we received a rtd_req, immediately send an rtd_rsp.
-    if (frag->pkthdr->has_rtd_req_timestamp())
-    {
-        rtd_rsp_timestamp = frag->pkthdr->rtd_req_timestamp();
-        send_heartbeat();
-    }
+    process_rtd_and_heartbeat(frag);
 
-    // if we received a rtd_rsp, recalculate the rtd and update
-    // the max age for retransmissions.
-    if (frag->pkthdr->has_rtd_rsp_timestamp())
-    {
-        pxfe_timeval tv;
-        tv.getNow();
-        uint64_t diff = tv.usecs() - frag->pkthdr->rtd_rsp_timestamp();
-        retransmit_age = (diff / (1000000 / config.ticks_per_second)) * 2;
-        PRINTF("retransmit_age set to %u because rtd %" PRIu64 "\n",
-               retransmit_age, diff);
-        if (retransmit_age < 2)
-            retransmit_age = 2;
-    }
-
-    // below this point, accessing resources shared in the class
-    // which are not already internally safe.
     lock.lock();
 
     ticks_without_recv = 0;
@@ -548,97 +641,11 @@ ProtoSslDtlsQueue :: handle_got_frag(void)
         recv_window.resize(frag->pkthdr->window_size());
     }
 
-    for (int ind = 0;
-         ind < frag->pkthdr->ack_seq_no_size();
-         ind++)
-    {
-        PRINTF("processing ack %u\n", frag->pkthdr->ack_seq_no(ind));
-        handle_recv_ack(frag->pkthdr->ack_seq_no(ind));
-    }
-    for (int ind = 0;
-         ind < frag->pkthdr->nack_seq_no_size();
-         ind++)
-    {
-        PRINTF("processing nack %u\n", frag->pkthdr->nack_seq_no(ind));
-        handle_recv_nack(frag->pkthdr->nack_seq_no(ind));
-    }
+    process_acknowledgements(frag);
 
     if (frag->pkthdr->has_message_body_size())
     {
-        uint32_t body_size = frag->pkthdr->message_body_size();
-        if ((uint32_t) instr.BytesUntilLimit() < body_size)
-        {
-            // PRINT SOMETHING
-            fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
-                    "packet too short for message body (%d:%u)\n",
-                    instr.BytesUntilLimit(), body_size);
-            return;
-        }
-        l = instr.PushLimit(body_size);
-        frag->fragment.resize(body_size);
-        if (instr.ReadRaw((void*) frag->fragment.c_str(),
-                          body_size) == false)
-        {
-            // PRINT SOMETHING
-            fprintf(stderr, "ProtoSslDtlsQueue :: handle_got_frag : "
-                    "readRaw of message body failed\n");
-            return;
-        }
-        instr.PopLimit(l);
-
-        if (reliable)
-        {
-            push_ondeck_acks(seqno);
-
-            wpos = seqno % recv_window.size();
-
-            ReassemblyMap::iterator rmi = recv_reassembly.find(seqno);
-            if (rmi != recv_reassembly.end())
-            {
-                // we got the same fragment twice.
-                // our last ack must not have gotten through.
-                // so send an ack.
-            }
-            else
-            {
-                recv_window[wpos] = frag; // auto-derefs old slot occupant
-                recv_reassembly[seqno] = frag; // shared ownership via FragPtr
-            }
-
-            uint32_t seqno_started = recv_seqno;
-            while (1)
-            {
-                // now attempt reassembly of the next message
-                // due to be delivered to the app.
-                uint32_t consumed = recv_reassemble_deliver(recv_seqno);
-                if (consumed == 0)
-                    break;
-                recv_seqno += consumed;
-            }
-
-            // clean the map of excessively old seqnos by trailing
-            // two window sizes behind the ones we just consumed.
-            for (seqno = seqno_started; seqno != recv_seqno; seqno++)
-            {
-                if (seqno >= (2 * recv_window.size()))
-                {
-                    rmi = recv_reassembly.find(seqno - (2*recv_window.size()));
-                    if (rmi != recv_reassembly.end())
-                    {
-                        recv_reassembly.erase(rmi); // auto-derefs FragPtr
-                    }
-                }
-            }
-        }
-        else // reliable = false
-        {
-            // deliver now, no questions.
-
-            dtls_read_event * dre = read_pool.alloc(-1);
-            dre->retcode = GOT_MESSAGE;
-            dre->encoded_msg = frag->fragment;
-            recv_q.enqueue(dre);
-        }
+        process_message_body(instr, frag, seqno, reliable);
     }
 }
 
@@ -796,11 +803,11 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
     // locked only when needed. queues are internally safe.
     WaitUtil::Lock   lock(&dtls_lock, false);
 
-    if (queue_number >= num_queues)
+    if (!is_valid_user_queue(queue_number))
     {
         fprintf(stderr, "ProtoSslDtlsQueue :: send_message : "
-                "bogus queue_number (%d >= %d)\n",
-                queue_number, num_queues);
+                "bogus queue_number (%d, valid range 1..%u)\n",
+                queue_number, num_queues - 1);
         return BOGUS_QUEUE_NUMBER;
     }
 
@@ -841,63 +848,53 @@ ProtoSslDtlsQueue :: send_message(uint32_t queue_number,
         return MESSAGE_TOO_BIG;
     }
 
-    switch (cfg.qt)
+    if (cfg.lt != ProtoSslDtlsQueueConfig::NONE)
     {
-    case ProtoSslDtlsQueueConfig::STACK:
-        // always enqueue to head, but drop from tail when
-        // over the limit.
-        switch (cfg.lt)
+        if (cfg.qt == ProtoSslDtlsQueueConfig::STACK)
         {
-        case ProtoSslDtlsQueueConfig::MESSAGES:
-            while ((uint32_t) queues[queue_number]->get_count() >=
-                   cfg.limit)
+            // always enqueue to head, but drop from tail when
+            // over the limit.
+            if (cfg.lt == ProtoSslDtlsQueueConfig::MESSAGES)
             {
-                dtls_send_event * dte =
-                    queues[queue_number]->dequeue_tail(0);
-                queue_sizes[queue_number] -= dte->encoded_msg.size();
-                send_event_release(dte);
+                while ((uint32_t) queues[queue_number]->get_count() >=
+                       cfg.limit)
+                {
+                    dtls_send_event * dte =
+                        queues[queue_number]->dequeue_tail(0);
+                    if (!dte) break;
+                    WaitUtil::Lock l(&dtls_lock);
+                    queue_sizes[queue_number] -= dte->encoded_msg.size();
+                    send_event_release(dte);
+                }
             }
-            break;
-
-        case ProtoSslDtlsQueueConfig::BYTES:
-            lock.lock();
-            while (queue_sizes[queue_number] >= cfg.limit)
+            else // BYTES
             {
-                dtls_send_event * dte =
-                    queues[queue_number]->dequeue_tail(0);
-                queue_sizes[queue_number] -= dte->encoded_msg.size();
-                send_event_release(dte);
+                WaitUtil::Lock l(&dtls_lock);
+                while (queue_sizes[queue_number] >= cfg.limit)
+                {
+                    dtls_send_event * dte =
+                        queues[queue_number]->dequeue_tail(0);
+                    if (!dte) break;
+                    queue_sizes[queue_number] -= dte->encoded_msg.size();
+                    send_event_release(dte);
+                }
             }
-            lock.unlock();
-            break;
-
-        case ProtoSslDtlsQueueConfig::NONE:
-            // no check.
-            break;
         }
-        break;
-
-    case ProtoSslDtlsQueueConfig::FIFO:
-        // don't enqueue if over the limit.
-        switch (cfg.lt)
+        else // FIFO
         {
-        case ProtoSslDtlsQueueConfig::MESSAGES:
-            if ((uint32_t) queues[queue_number]->get_count() >= cfg.limit)
-                return QOS_DROP;
-            break;
-
-        case ProtoSslDtlsQueueConfig::BYTES:
-            lock.lock();
-            if (queue_sizes[queue_number] >= cfg.limit)
-                return QOS_DROP;
-            lock.unlock();
-            break;
-
-        case ProtoSslDtlsQueueConfig::NONE:
-            // no check.
-            break;
+            // don't enqueue if over the limit.
+            if (cfg.lt == ProtoSslDtlsQueueConfig::MESSAGES)
+            {
+                if ((uint32_t) queues[queue_number]->get_count() >= cfg.limit)
+                    return QOS_DROP;
+            }
+            else // BYTES
+            {
+                WaitUtil::Lock l(&dtls_lock);
+                if (queue_sizes[queue_number] >= cfg.limit)
+                    return QOS_DROP;
+            }
         }
-        break;
     }
 
     // dtls_lock must not be locked here, in case this
@@ -975,23 +972,21 @@ ProtoSslDtlsQueue :: send_thread(void)
             // the send_window part was already handled
             // for expediency.
             send_other_pool.release(dte);
+            dte = NULL;
             // the purpose of this message was just to
             // tickle us to check our ondeck.
 
-            // reuse dte variable.
-            dte = sender_on_deck;
-            if (dte != NULL)
+            if (sender_on_deck != NULL)
             {
                 // reattempt sending. if we still can't
                 // send it, leave it on deck.
-                if (handle_send_msg(dte))
+                if (handle_send_msg(sender_on_deck))
+                {
                     // sent! not saving anymore,
                     // okay to release it.
+                    send_event_release(sender_on_deck);
                     sender_on_deck = NULL;
-                else
-                    // still keeping it,
-                    // still don't release it.
-                    dte = NULL;
+                }
             }
             break;
 

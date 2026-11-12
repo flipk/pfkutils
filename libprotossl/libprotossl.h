@@ -37,6 +37,7 @@
 #include <map>
 #include <deque>
 #include <atomic>
+#include <memory>
 
 namespace ProtoSSL {
     namespace DTLS {
@@ -264,8 +265,7 @@ public:
     const queue_config_t &get_queue_config(uint32_t queue_number) const
     {
         // note queue_numbers are numbered 1-N
-        if (queue_number > num_queues)
-            // handle error?
+        if (queue_number == 0 || queue_number > num_queues)
             return queue_config[0];
         return queue_config[queue_number-1];
     }
@@ -400,6 +400,11 @@ private:
     void handle_nack(dtls_send_event *dte);
     void send_heartbeat(void) { WaitUtil::Lock l(&dtls_lock); send_frag(); }
 
+    bool is_valid_user_queue(uint32_t queue_number) const
+    {
+        return queue_number > 0 && queue_number < num_queues;
+    }
+
     struct dtls_fragment;
     struct fragpool_t;
 
@@ -439,7 +444,7 @@ private:
         bool delivered; // used to detect lost ack and prevent double-delivery
         uint32_t age; // set to 0 on entry to send_window.
         std::string fragment; // body, not header
-        ProtoSSL :: DTLS :: DTLS_PacketHeader_m  *pkthdr;
+        std::unique_ptr<ProtoSSL :: DTLS :: DTLS_PacketHeader_m> pkthdr;
         // debug
         std::string print(void) const;
         void cleanup(void) { fragment.clear(); }
@@ -459,6 +464,11 @@ private:
         FragPtr alloc(void);
         void release(dtls_fragment *frag);
     } fragpool;
+
+    bool parse_packet_header(google::protobuf::io::CodedInputStream &instr, FragPtr &frag);
+    void process_rtd_and_heartbeat(const FragPtr &frag);
+    void process_acknowledgements(const FragPtr &frag);
+    bool process_message_body(google::protobuf::io::CodedInputStream &instr, FragPtr &frag, uint32_t seqno, bool reliable);
 
     // fragsender. if we have an ack or nack to send, but
     // don't want to send them immediately, we can wait until

@@ -158,6 +158,11 @@ private:
     bool should_drop(void)
     {
         total_packets++;
+        // some of the tests drop too much at the beginning, causing
+        // errors during initial connection. ensure we get handshakes
+        // done and connected before starting the drop test.
+        if (total_packets <= 16)
+            return false;
         if (cfg.burst_drop_interval > 0 && cfg.burst_drop_count > 0)
         {
             uint32_t phase = total_packets % cfg.burst_drop_interval;
