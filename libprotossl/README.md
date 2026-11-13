@@ -31,10 +31,11 @@ std::string key_file = "file:keys/Server-Cert-plain.key";
 
 ProtoSSL::ProtoSSLCertParams cert_params(ca_file, cert_file, key_file, "");
 
-// Create the context manager (non-blocking, TCP or UDP)
+// Create the context manager (non-blocking, TCP or UDP, optional Suite B mode)
 ProtoSSL::ProtoSSLMsgs msgs(/*nonblock*/ true, /*debug*/ false,
                             /*read_timeout*/ 0, /*use_tcp*/ false,
-                            /*dtls_timeout_min*/ 1000, /*dtls_timeout_max*/ 2000);
+                            /*dtls_timeout_min*/ 1000, /*dtls_timeout_max*/ 2000,
+                            /*use_suite_b*/ false);
 
 if (!msgs.loadCertificates(cert_params) || !msgs.validateCertificates()) {
     // Handle error

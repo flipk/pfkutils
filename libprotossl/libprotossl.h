@@ -165,6 +165,7 @@ class ProtoSSLMsgs
     bool                     nonBlockingMode;
     bool                     debugFlag;
     bool                     use_tcp;
+    bool                     use_suite_b;
     ClientList_t             clientList;
     ServerList_t             serverList;
     void   registerServer(ProtoSSLConnServer * svr);
@@ -176,7 +177,8 @@ public:
     ProtoSSLMsgs(bool _nonBlockingMode, bool _debugFlag = false,
                  uint32_t read_timeout = 0, bool use_tcp = true,
                  uint32_t dtls_timeout_min = 1000,
-                 uint32_t dtls_timeout_max = 2000 );
+                 uint32_t dtls_timeout_max = 2000,
+                 bool use_suite_b = false);
     ~ProtoSSLMsgs(void);
     // returns true if it could load, false if error
     bool loadCertificates(const ProtoSSLCertParams &params);

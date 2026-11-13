@@ -99,12 +99,13 @@ Acts as the central context manager for mbedtls configurations, cryptographic en
 - `bool nonBlockingMode`: Whether created sockets operate in non-blocking mode.
 - `bool debugFlag`: Enables verbose mbedtls internal debugging logs (threshold `999`).
 - `bool use_tcp`: Configures `MBEDTLS_SSL_TRANSPORT_STREAM` (TCP) vs `MBEDTLS_SSL_TRANSPORT_DATAGRAM` (UDP).
+- `bool use_suite_b`: When true, configures mbedtls with `MBEDTLS_SSL_PRESET_SUITEB` and `mbedtls_x509_crt_profile_suiteb`.
 - `ClientList_t clientList`: Intrusive doubly linked list (`DLL3`) tracking active `ProtoSSLConnClient` instances.
 - `ServerList_t serverList`: Intrusive doubly linked list (`DLL3`) tracking active `ProtoSSLConnServer` instances.
 
 #### Key Functions
-- `ProtoSSLMsgs(bool nonBlockingMode, bool debugFlag, uint32_t read_timeout, bool use_tcp, uint32_t dtls_timeout_min, uint32_t dtls_timeout_max)`:
-  Initializes mbedtls subsystems, seeds DRBG from entropy, configures transport type, authentication mode (`MBEDTLS_SSL_VERIFY_REQUIRED`), DTLS handshake retransmission timeouts, and cookie verification callbacks.
+- `ProtoSSLMsgs(bool nonBlockingMode, bool debugFlag, uint32_t read_timeout, bool use_tcp, uint32_t dtls_timeout_min, uint32_t dtls_timeout_max, bool use_suite_b = false)`:
+  Initializes mbedtls subsystems, seeds DRBG from entropy, configures transport type, authentication mode (`MBEDTLS_SSL_VERIFY_REQUIRED`), DTLS handshake retransmission timeouts, cookie verification callbacks, and optional Suite B preset (`MBEDTLS_SSL_PRESET_SUITEB`).
 - `~ProtoSSLMsgs()`:
   Iteratively deletes all remaining registered server and client objects, and frees all mbedtls cryptographic contexts.
 - `bool loadCertificates(const ProtoSSLCertParams &params)`:

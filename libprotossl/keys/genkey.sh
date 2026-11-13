@@ -36,7 +36,7 @@ $email
 
 EOF
 
-    openssl req -sha512 -utf8 -new -key "$plain_key_file" -out "$request_file" < "$params_file"
+    openssl req -sha384 -utf8 -new -key "$plain_key_file" -out "$request_file" < "$params_file"
 
     if [ -z "$root" ]; then
         cat > "$ext_file" <<EOF
@@ -46,19 +46,19 @@ keyUsage = critical,keyCertSign,cRLSign
 subjectKeyIdentifier = hash
 EOF
         openssl x509 -in "$request_file" -out "$cert_file" \
-            -req -sha512 -signkey "$plain_key_file" -days 3650 \
+            -req -sha384 -signkey "$plain_key_file" -days 3650 \
             -extfile "$ext_file" -extensions v3_ca
     else
         cat > "$ext_file" <<EOF
 [v3_req]
 basicConstraints = CA:FALSE
-keyUsage = digitalSignature,keyEncipherment
+keyUsage = critical,digitalSignature
 extendedKeyUsage = serverAuth,clientAuth
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
 EOF
         openssl x509 -in "$request_file" -out "$cert_file" \
-            -req -sha512 -CA "${root}.crt" -CAkey "${root}-plain.key" \
+            -req -sha384 -CA "${root}.crt" -CAkey "${root}-plain.key" \
             -CAcreateserial -days 3650 \
             -extfile "$ext_file" -extensions v3_req
     fi

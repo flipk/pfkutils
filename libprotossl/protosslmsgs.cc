@@ -32,9 +32,10 @@ ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
                              uint32_t read_timeout /*= 0*/,
                              bool _use_tcp /*= true*/,
                              uint32_t dtls_timeout_min /*= 500*/,
-                             uint32_t dtls_timeout_max /*= 10000*/)
+                             uint32_t dtls_timeout_max /*= 10000*/,
+                             bool _use_suite_b /*= false*/)
     : nonBlockingMode(_nonBlockingMode), debugFlag(_debugFlag),
-      use_tcp(_use_tcp)
+      use_tcp(_use_tcp), use_suite_b(_use_suite_b)
 {
     mbedtls_entropy_init( &entropy );
     memset( &mycert, 0, sizeof( mbedtls_x509_crt ) );
@@ -45,7 +46,13 @@ ProtoSSLMsgs :: ProtoSSLMsgs(bool _nonBlockingMode,
                                  use_tcp ?
                                  MBEDTLS_SSL_TRANSPORT_STREAM :
                                  MBEDTLS_SSL_TRANSPORT_DATAGRAM,
+                                 use_suite_b ?
+                                 MBEDTLS_SSL_PRESET_SUITEB :
                                  MBEDTLS_SSL_PRESET_DEFAULT );
+    if (use_suite_b)
+    {
+        mbedtls_ssl_conf_cert_profile( &sslcfg, &mbedtls_x509_crt_profile_suiteb );
+    }
     mbedtls_ssl_cookie_init( &cookie_ctx );
 
     //mbedtls_ssl_conf_read_timeout( &sslcfg, 0 );
@@ -349,11 +356,23 @@ ProtoSSLMsgs :: validateCertificates(void)
     }
 
     uint32_t flags = 0;
-    parseRet =
-        mbedtls_x509_crt_verify(
-            &mycert, &cacert, /*ca_crl*/ NULL,
-            /*cn*/ NULL, &flags,
-            /*f_vrfy*/ NULL, /*p_vrfy*/ NULL );
+    if (use_suite_b)
+    {
+        parseRet =
+            mbedtls_x509_crt_verify_with_profile(
+                &mycert, &cacert, /*ca_crl*/ NULL,
+                &mbedtls_x509_crt_profile_suiteb,
+                /*cn*/ NULL, &flags,
+                /*f_vrfy*/ NULL, /*p_vrfy*/ NULL );
+    }
+    else
+    {
+        parseRet =
+            mbedtls_x509_crt_verify(
+                &mycert, &cacert, /*ca_crl*/ NULL,
+                /*cn*/ NULL, &flags,
+                /*f_vrfy*/ NULL, /*p_vrfy*/ NULL );
+    }
 
     if (parseRet != 0)
     {
