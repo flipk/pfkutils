@@ -1,11 +1,56 @@
 #!/usr/bin/env python3
 # 
-# opencode export <session_id> > export.json
+# opencode v1:
+#    opencode export <session_id> > export.json
+# opencode v2:
+#    opencode session export <session_id> > export.json
 # python render.py export.json session.html
+
+# differences between json schema of opencode v1 and v2:
+#
+# 1. Message Role & Type Resolution (get_message_role):
+#    - v1: Role was stored in msg["info"]["role"] or msg["role"].
+#    - v2: Role/type is stored directly in msg["type"] ("user",
+#      "assistant", "idle", "compaction", etc.).
+#    - Updated helper to check msg["info"]["role"], msg["role"],
+#      and msg["type"]. Non-transcript internal state messages (such
+#      as type: "idle") are filtered out automatically.
+#
+# 2. Message Text & Part Extraction (extract_activities):
+#    - v1: User text and assistant parts were stored in msg["parts"]
+#      or msg["content"].
+#    - v2: User prompts are in msg["text"], while assistant responses
+#      (text, reasoning, tool calls) are in msg["content"].
+#    - Updated helper to extract content across msg["parts"],
+#      msg["content"] (string or array of part dicts), and
+#      msg["text"].
+#
+# 3. Tool Call & Execution Formatting (format_tool_call):
+#    - v1: Tool name was part["tool"], call ID was part["callID"],
+#      state output was part["state"][ "output"], and timestamps were
+#      state["time"]["start"]/end.
+#    - v2: Tool name is part["name"], call ID is part["id"], tool
+#      execution output is inside part[ "state"]["content"] (or
+#      part["state"]["error"]), and timestamps are in part["time"] or
+#      state[ "time"] (created, ran, completed).
+#    - Updated format_tool_call to normalize tool names, call IDs
+#      (stripping call_ prefix if present), inputs, errors, outputs,
+#      and execution duration calculation across both versions.
+#
+# 4. Timestamps & Compaction Checks:
+#    - Normalized timestamp extraction across msg["time"]["created"],
+#      msg["info"]["time"], and msg[ "created"].
+#    - Updated compaction message detection to match both v1
+#      (info.mode == "compaction") and v2 (type == "compaction").
+#    - Display session title in header and <title> when present in
+#    - top-level info.title.
+
 
 import json
 import sys
+import os
 import html
+import tempfile
 from datetime import datetime
 
 try:
@@ -15,17 +60,40 @@ except ImportError:
     print("Please install it by running: pip install markdown")
     sys.exit(1)
 
-if len(sys.argv) < 2:
-    print("Usage: opencode export <session_id> > export.json")
+def usage():
+    print("Usage: opencode v1: opencode         export <session_id> > export.json")
+    print("Usage: opencode v2: opencode session export <session_id> > export.json")
     print("       python render.py <export.json> <output.html>")
+    print("       python render.py <session_id> <output.html>")
     sys.exit(1)
 
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    data = json.load(f)
+if len(sys.argv) < 2:
+    usage()
+
+fname = sys.argv[1]
+
+if fname.startswith('ses_'):
+    # testing: with open('poo.json', mode='w+') as tmpf:
+    with tempfile.NamedTemporaryFile(mode='r+', delete=True) as tmpf:
+        # attempt the opencode v1 version of command
+        ret = os.system(f'opencode export {fname} > {tmpf.name} 2>/dev/null')
+        # if it returns a nonzero exit code,
+        if ret != 0:
+            # attempt the opencode v2 version
+            ret = os.system(f'opencode session export {fname} > {tmpf.name} 2>/dev/null')
+        data = json.load(tmpf)
+elif fname.endswith('.json'):
+    with open(fname, "r", encoding="utf-8") as f:
+        data = json.load(f)
+else:
+    print('must supply a session id or json filename')
+    usage()
+
 
 out_path = sys.argv[2] if len(sys.argv) > 2 else "session.html"
 
 messages = data.get("messages", data.get("history", []))
+session_title = data.get("title") or data.get("info", {}).get("title") or ""
 
 md = markdown.Markdown(extensions=['fenced_code', 'tables'])
 
@@ -34,47 +102,122 @@ def format_timestamp(ts_ms):
     """Convert milliseconds timestamp to readable format."""
     if ts_ms is None:
         return ""
-    dt = datetime.fromtimestamp(ts_ms / 1000)
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        dt = datetime.fromtimestamp(ts_ms / 1000)
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return ""
+
+
+def get_message_timestamp(msg):
+    """Extract creation timestamp from v1 or v2 message structures."""
+    t = msg.get("time")
+    if isinstance(t, dict):
+        ts = t.get("created") or t.get("start")
+        if ts:
+            return format_timestamp(ts)
+    info = msg.get("info")
+    if isinstance(info, dict):
+        t = info.get("time")
+        if isinstance(t, dict):
+            ts = t.get("created") or t.get("start")
+            if ts:
+                return format_timestamp(ts)
+        if "created" in info:
+            return format_timestamp(info["created"])
+    if "created" in msg:
+        return format_timestamp(msg["created"])
+    return ""
+
+
+def get_message_role(msg):
+    """Extract message role/type across v1 and v2 schemas."""
+    info = msg.get("info")
+    if isinstance(info, dict) and "role" in info:
+        return info["role"]
+    if "role" in msg:
+        return msg["role"]
+    if "type" in msg:
+        return msg["type"]
+    return "unknown"
+
 
 def is_compaction_message(msg):
     """Check if a message is a compaction message."""
-    info = msg.get("info", {})
-    return info.get("mode") == "compaction" and info.get("agent") == "compaction"
+    info = msg.get("info")
+    if isinstance(info, dict):
+        if info.get("mode") == "compaction" and info.get("agent") == "compaction":
+            return True
+    if msg.get("type") == "compaction" or msg.get("role") == "compaction":
+        return True
+    return False
+
 
 def format_tool_call(part):
-    tool_name = part.get("tool", "unknown")
-    call_id = part.get("callID", "")[:8]
+    tool_name = part.get("name") or part.get("tool") or "unknown"
+    call_id = part.get("id") or part.get("callID") or ""
+    if call_id.startswith("call_"):
+        call_id = call_id[5:]
+    call_id = call_id[:8]
+
     state = part.get("state", {})
     status = state.get("status", "unknown")
     input_data = state.get("input", {})
-    output_data = state.get("output", {})
     error = state.get("error")
-    time_info = state.get("time", {})
-    
-    input_str = json.dumps(input_data, indent=2) if input_data else ""
+
+    output_str = ""
     if error:
-        output_str = f"ERROR: {error}"
-    elif output_data:
-        if isinstance(output_data, dict):
+        if isinstance(error, dict):
+            err_msg = error.get("message") or json.dumps(error, indent=2)
+            output_str = f"ERROR: {err_msg}"
+        else:
+            output_str = f"ERROR: {error}"
+    elif "output" in state and state["output"] is not None:
+        output_data = state["output"]
+        if isinstance(output_data, (dict, list)):
             output_str = json.dumps(output_data, indent=2)
         else:
             output_str = str(output_data)
+    elif "content" in state and state["content"] is not None:
+        content_list = state["content"]
+        if isinstance(content_list, list):
+            text_parts = []
+            for item in content_list:
+                if isinstance(item, dict):
+                    if item.get("type") == "text" and "text" in item:
+                        text_parts.append(item["text"])
+                    else:
+                        text_parts.append(json.dumps(item, indent=2))
+                elif isinstance(item, str):
+                    text_parts.append(item)
+            output_str = "\n".join(text_parts)
+        elif isinstance(content_list, dict):
+            output_str = json.dumps(content_list, indent=2)
+        else:
+            output_str = str(content_list)
     else:
         output_str = "(no output)"
-    
+
+    if not output_str:
+        output_str = "(no output)"
+
+    time_info = part.get("time") or state.get("time") or {}
+    start = time_info.get("start") or time_info.get("ran") or time_info.get("created")
+    end = time_info.get("end") or time_info.get("completed")
     time_str = ""
-    if time_info.get("start") and time_info.get("end"):
-        duration = time_info["end"] - time_info["start"]
+    if start and end:
+        duration = end - start
         time_str = f" ({duration}ms)"
-    
+
+    input_str = json.dumps(input_data, indent=2) if input_data else ""
+
     output_lines = output_str.split('\n')
     is_long = len(output_lines) > 5
     summary_lines = output_lines[:5] if is_long else output_lines
     summary = '\n'.join(summary_lines)
     if is_long:
         summary += f"\n... ({len(output_lines)} lines total, click to expand)"
-    
+
     if is_long:
         output_html = f"""<details class="tool-output-full">
 <summary><pre>{html.escape(summary)}</pre></summary>
@@ -82,9 +225,9 @@ def format_tool_call(part):
 </details>"""
     else:
         output_html = f"""<div class="tool-output-summary"><pre>{html.escape(summary)}</pre></div>"""
-    
+
     return f"""<details class="tool-call">
-<summary class="tool-summary">🔧 {tool_name} [{status}]{time_str} <span class="call-id">#{call_id}</span></summary>
+<summary class="tool-summary">🔧 {html.escape(tool_name)} [{html.escape(status)}]{time_str} <span class="call-id">#{html.escape(call_id)}</span></summary>
 <div class="tool-detail">
 <div class="tool-input"><strong>Input:</strong><pre>{html.escape(input_str)}</pre></div>
 <div class="tool-output"><strong>Output:</strong>
@@ -92,6 +235,7 @@ def format_tool_call(part):
 </div>
 </div>
 </details>"""
+
 
 def format_reasoning(text, open_by_default=False):
     rendered = md.convert(text)
@@ -102,9 +246,76 @@ def format_reasoning(text, open_by_default=False):
 <div class="thinking-content">{rendered}</div>
 </details>"""
 
+
+def extract_activities(msg):
+    """Extract activity groups and regular content from a message."""
+    regular_parts = []
+    activity_groups = []
+    current_activity = []
+
+    parts = []
+    if "parts" in msg and isinstance(msg["parts"], list):
+        parts = msg["parts"]
+    elif "content" in msg:
+        if isinstance(msg["content"], list):
+            parts = msg["content"]
+        elif isinstance(msg["content"], str):
+            regular_parts.append(msg["content"])
+
+    for p in parts:
+        if isinstance(p, dict):
+            ptype = p.get("type", "text")
+            if ptype in ("reasoning", "thought"):
+                text = p.get("text", "") or p.get("reasoning", "")
+                if text:
+                    current_activity.append(("reasoning", text))
+            elif ptype in ("tool", "tool-call", "tool_use"):
+                current_activity.append(("tool", p))
+            elif ptype == "text":
+                text = p.get("text", "")
+                if text:
+                    if current_activity:
+                        activity_groups.append(current_activity)
+                        current_activity = []
+                    regular_parts.append(text)
+            else:
+                text = p.get("text", "")
+                if text:
+                    if current_activity:
+                        activity_groups.append(current_activity)
+                        current_activity = []
+                    regular_parts.append(text)
+        elif isinstance(p, str):
+            if current_activity:
+                activity_groups.append(current_activity)
+                current_activity = []
+            regular_parts.append(p)
+
+    if current_activity:
+        activity_groups.append(current_activity)
+
+    if "text" in msg and isinstance(msg["text"], str) and msg["text"]:
+        if msg["text"] not in regular_parts:
+            regular_parts.append(msg["text"])
+
+    return regular_parts, activity_groups
+
+
+def has_activities(activity_groups):
+    """Check if activity groups contain any reasoning or tool calls."""
+    for activity in activity_groups:
+        for item_type, _ in activity:
+            if item_type in ("reasoning", "tool"):
+                return True
+    return False
+
+
+page_title = f"OpenCode Session: {session_title}" if session_title else "OpenCode Session Export"
+header_title = f"OpenCode Session Transcript: {html.escape(session_title)}" if session_title else "OpenCode Session Transcript"
+
 html_parts = [
     "<!DOCTYPE html><html><head><meta charset='utf-8'>",
-    "<title>OpenCode Session Export</title>",
+    f"<title>{html.escape(page_title)}</title>",
     "<style>",
     "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #0f172a; color: #e2e8f0; line-height: 1.6; }",
     ".msg { margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 8px; }",
@@ -159,54 +370,15 @@ html_parts = [
     ".thinking .thinking-content { margin-top: 0.5rem; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.85em; color: #94a3b8; }",
     ".thinking[open] summary::before { content: '▼ '; }",
     ".thinking summary::before { content: '▶ '; }",
-    "</style></head><body><h1>OpenCode Session Transcript</h1>"
+    f"</style></head><body><h1>{header_title}</h1>"
 ]
-
-def extract_activities(msg):
-    """Extract activity groups and regular content from a message."""
-    regular_parts = []
-    activity_groups = []
-    current_activity = []
-    
-    if "parts" in msg:
-        for p in msg["parts"]:
-            ptype = p.get("type", "text")
-            if ptype == "reasoning":
-                text = p.get("text", "")
-                if text:
-                    current_activity.append(("reasoning", text))
-            elif ptype == "tool":
-                current_activity.append(("tool", p))
-            else:
-                text = p.get("text", "")
-                if text:
-                    if current_activity:
-                        activity_groups.append(current_activity)
-                        current_activity = []
-                    regular_parts.append(text)
-        if current_activity:
-            activity_groups.append(current_activity)
-    elif "content" in msg:
-        content = msg["content"] if isinstance(msg["content"], str) else json.dumps(msg["content"], indent=2)
-        regular_parts.append(content)
-    
-    return regular_parts, activity_groups
-
-
-def has_activities(activity_groups):
-    """Check if activity groups contain any reasoning or tool calls."""
-    for activity in activity_groups:
-        for item_type, _ in activity:
-            if item_type in ("reasoning", "tool"):
-                return True
-    return False
 
 
 def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
     """Render a single message or group of messages."""
     compaction = is_compaction_message(msg)
     msg_class = "compaction" if compaction else html.escape(role)
-    
+
     if compaction:
         html_parts.append(f"<details class='msg {msg_class}'><summary class='compaction-summary'>COMPACTION")
         if timestamp:
@@ -218,13 +390,13 @@ def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
         role_label = html.escape(role).upper()
         time_label = f" <span class='timestamp'>{html.escape(timestamp)}</span>" if timestamp else ""
         html_parts.append(f"<div class='role'>{role_label}{time_label}</div>")
-    
+
     if regular_parts:
-        content = "\n".join(regular_parts)
+        content = "\n\n".join(regular_parts)
         rendered_html = md.convert(content)
         md.reset()
         html_parts.append(f"<div class='content'>{rendered_html}</div>")
-    
+
     if activity_groups:
         all_reasoning = []
         all_tools = []
@@ -234,32 +406,33 @@ def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
                     all_reasoning.append(item_data)
                 elif item_type == "tool":
                     all_tools.append(item_data)
-        
+
         reasoning_count = len(all_reasoning)
         tool_count = len(all_tools)
         total_chars = sum(len(t) for t in all_reasoning)
-        
+
         label_parts = []
         if reasoning_count:
             label_parts.append(f"{reasoning_count} reasoning")
         if tool_count:
-            label_parts.append(f"{tool_count} tool call{'s' if tool_count > 1 else ''}")
+            plural = "s" if tool_count > 1 else ""
+            label_parts.append(f"{tool_count} tool call{plural}")
         if compaction:
             label_parts.append("compaction")
         label = ", ".join(label_parts)
-        
+
         html_parts.append(f"<details class='activity'><summary>Activity: {label} ({total_chars} chars)</summary>")
         html_parts.append("<div class='activity-content'>")
-        
+
         for activity in activity_groups:
             for item_type, item_data in activity:
                 if item_type == "reasoning":
                     html_parts.append(format_reasoning(item_data, open_by_default=not compaction))
                 else:
                     html_parts.append(format_tool_call(item_data))
-        
+
         html_parts.append("</div></details>")
-    
+
     if compaction:
         html_parts.append("</div></details>")
     else:
@@ -269,51 +442,43 @@ def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
 i = 0
 while i < len(messages):
     msg = messages[i]
-    role = msg.get("info", {}).get("role", "unknown")
-    info = msg.get("info", {})
-    
-    # Get timestamp from message info
-    timestamp = ""
-    if "time" in info and "created" in info["time"]:
-        timestamp = format_timestamp(info["time"]["created"])
-    elif "created" in info:
-        timestamp = format_timestamp(info["created"])
-    
-    regular_parts, activity_groups = extract_activities(msg)
-    msg_has_activities = has_activities(activity_groups)
+    role = get_message_role(msg)
+    timestamp = get_message_timestamp(msg)
     compaction = is_compaction_message(msg)
-    
-    if role == "assistant" and msg_has_activities and not compaction:
+
+    reg_test, act_test = extract_activities(msg)
+    if role == "idle" and not reg_test and not has_activities(act_test):
+        i += 1
+        continue
+
+    if role == "assistant" and not compaction:
         combined_regular = []
         combined_activities = []
         combined_timestamp = timestamp
         j = i
         while j < len(messages):
             next_msg = messages[j]
-            next_role = next_msg.get("info", {}).get("role", "unknown")
-            next_info = next_msg.get("info", {})
-            next_regular, next_activities = extract_activities(next_msg)
-            next_has_activities = has_activities(next_activities)
+            next_role = get_message_role(next_msg)
+            next_reg, next_act = extract_activities(next_msg)
+            if next_role == "idle" and not next_reg and not has_activities(next_act):
+                j += 1
+                continue
             next_compaction = is_compaction_message(next_msg)
-            
-            if next_role == "assistant" and next_has_activities and not next_compaction:
-                combined_regular.extend(next_regular)
-                combined_activities.extend(next_activities)
-                # Use the earliest timestamp
-                next_ts = ""
-                if "time" in next_info and "created" in next_info["time"]:
-                    next_ts = format_timestamp(next_info["time"]["created"])
-                elif "created" in next_info:
-                    next_ts = format_timestamp(next_info["created"])
+
+            if next_role == "assistant" and not next_compaction:
+                combined_regular.extend(next_reg)
+                combined_activities.extend(next_act)
+                next_ts = get_message_timestamp(next_msg)
                 if next_ts and (not combined_timestamp or next_ts < combined_timestamp):
                     combined_timestamp = next_ts
                 j += 1
             else:
                 break
-        
+
         render_message(msg, role, combined_regular, combined_activities, combined_timestamp)
         i = j
     else:
+        regular_parts, activity_groups = extract_activities(msg)
         render_message(msg, role, regular_parts, activity_groups, timestamp)
         i += 1
 

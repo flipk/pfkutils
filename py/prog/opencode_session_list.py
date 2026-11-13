@@ -9,10 +9,6 @@ db = sqlite3.connect(db_file)
 
 if True:
    print(f'{"="*35} SESSIONS {"="*35}')
-   sessions = db.execute('select id,directory,title from session')
-   for s in sessions:
-      print(f'{s[0]}: {s[1]}\n'
-            f'title: {s[2]}')
    try:
       sessions = db.execute('select id,directory,title from session_v2')
       for s in sessions:
@@ -20,6 +16,14 @@ if True:
                f'title: {s[2]}')
    except:
       # opencode v1 may not have the _v2 table, skip it
+      pass
+   try:
+      sessions = db.execute('select id,directory,title from session')
+      for s in sessions:
+         print(f'{s[0]}: {s[1]}\n'
+               f'title: {s[2]}')
+   except:
+      # opencode v2 may not have the v1 table, skip it
       pass
    print ("="*80+'\n')
 
