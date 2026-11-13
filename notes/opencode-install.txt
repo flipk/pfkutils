@@ -1,0 +1,10 @@
+
+do not use the RPM from the website
+
+cd ~/pfk/
+npm install @opencode/cli
+cd ~/pfk/bin/
+ln -s ../node_modules/.bin/opencode
+
+cd ~/pfk/
+npm update @opencode/cli
