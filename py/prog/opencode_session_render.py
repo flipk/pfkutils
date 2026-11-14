@@ -50,14 +50,17 @@ import json
 import sys
 import os
 import html
+import re
 import tempfile
 from datetime import datetime
 
 try:
-    import markdown
+    from markdown_it import MarkdownIt
+    from mdit_py_plugins.dollarmath import dollarmath_plugin
+    from latex2mathml.converter import convert as tex2mml
 except ImportError:
-    print("Error: The 'markdown' package is missing.")
-    print("Please install it by running: pip install markdown")
+    print("Error: Required packages missing.")
+    print("Please install them by running: pip install markdown-it-py linkify-it-py mdit-py-plugins latex2mathml")
     sys.exit(1)
 
 def usage():
@@ -95,7 +98,34 @@ out_path = sys.argv[2] if len(sys.argv) > 2 else "session.html"
 messages = data.get("messages", data.get("history", []))
 session_title = data.get("title") or data.get("info", {}).get("title") or ""
 
-md = markdown.Markdown(extensions=['fenced_code', 'tables'])
+_TEXT_CMD_RE = re.compile(r"(\\(?:text[a-z]*|mbox|hbox|fbox|emph))\{([^{}]*)\}")
+_MTEXT_RE = re.compile(r"(<mtext[^>]*>)(.*?)(</mtext>)")
+
+def _clean_text_cmd(match):
+    cmd = match.group(1)
+    content = match.group(2)
+    # LaTeX text escapes like \_ \% \& \$ \# should produce literal characters in text mode
+    content = re.sub(r"\\([_%$&*#])", r"\1", content)
+    return f"{cmd}{{{content}}}"
+
+def math_renderer(content, options):
+    display_mode = options.get("display_mode", False)
+    try:
+        cleaned = _TEXT_CMD_RE.sub(_clean_text_cmd, content)
+        mml = tex2mml(cleaned, display="block" if display_mode else "inline")
+        mml = _MTEXT_RE.sub(lambda m: m.group(1) + m.group(2).replace(r"\_", "_") + m.group(3), mml)
+        return mml
+    except Exception:
+        escaped = html.escape(content)
+        delimiter = "$$" if display_mode else "$"
+        return f"<code>{delimiter}{escaped}{delimiter}</code>"
+
+md = MarkdownIt("gfm-like").use(
+    dollarmath_plugin,
+    double_inline=True,
+    renderer=math_renderer
+)
+md.linkify.set({"fuzzy_link": False})
 
 
 def format_timestamp(ts_ms):
@@ -238,8 +268,7 @@ def format_tool_call(part):
 
 
 def format_reasoning(text, open_by_default=False):
-    rendered = md.convert(text)
-    md.reset()
+    rendered = md.render(text)
     open_attr = " open" if open_by_default else ""
     return f"""<details class="thinking"{open_attr}>
 <summary>💭 Thinking ({len(text)} chars)</summary>
@@ -342,6 +371,8 @@ html_parts = [
     ".content th, .content td { border: 1px solid #334155; padding: 0.5rem; text-align: left; }",
     ".content th { background-color: #0b1120; font-weight: 600; }",
     ".content blockquote { border-left: 4px solid #475569; margin: 0; padding-left: 1rem; color: #cbd5e1; }",
+    ".content del, .thinking-content del { text-decoration: line-through; }",
+    "math { font-size: 1.05em; color: inherit; }",
     ".activity { border-left: 4px solid #fbbf24; background: #1e293b; margin: 0.75rem 0; padding: 1rem; border-radius: 6px; }",
     ".activity summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; }",
     ".activity summary:hover { color: #fcd34d; }",
@@ -367,7 +398,12 @@ html_parts = [
     ".thinking { margin: 0.5rem 0; padding: 0.75rem; background: #0b1120; border-radius: 4px; border-left: 3px solid #fbbf24; }",
     ".thinking summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; font-size: 0.9em; }",
     ".thinking summary:hover { color: #fcd34d; }",
-    ".thinking .thinking-content { margin-top: 0.5rem; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.85em; color: #94a3b8; }",
+    ".thinking .thinking-content { margin-top: 0.5rem; font-size: 0.85em; color: #94a3b8; }",
+    ".thinking .thinking-content p { margin-top: 0; margin-bottom: 0.75rem; }",
+    ".thinking .thinking-content p:last-child { margin-bottom: 0; }",
+    ".thinking .thinking-content code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; background: #080d1a; padding: 0.2rem 0.4rem; border-radius: 4px; color: #cbd5e1; }",
+    ".thinking .thinking-content pre { background: #080d1a; padding: 0.75rem; border-radius: 6px; overflow-x: auto; border: 1px solid #1e293b; margin-bottom: 0.75rem; }",
+    ".thinking .thinking-content pre code { padding: 0; background: transparent; border-radius: 0; color: inherit; }",
     ".thinking[open] summary::before { content: '▼ '; }",
     ".thinking summary::before { content: '▶ '; }",
     f"</style></head><body><h1>{header_title}</h1>"
@@ -393,8 +429,7 @@ def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
 
     if regular_parts:
         content = "\n\n".join(regular_parts)
-        rendered_html = md.convert(content)
-        md.reset()
+        rendered_html = md.render(content)
         html_parts.append(f"<div class='content'>{rendered_html}</div>")
 
     if activity_groups:

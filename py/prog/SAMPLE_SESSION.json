@@ -1,0 +1,104 @@
+{
+  "info": {
+    "id": "ses_e2874dd20ffeUpV5fE3yl4SXW4",
+    "projectID": "2aa360be2a422f5312e7549b0648fa4af813c6e6",
+    "agent": "build",
+    "model": {
+      "id": "gemini-4-argon",
+      "providerID": "google",
+      "variant": "medium"
+    },
+    "cost": 0.0383769,
+    "tokens": {
+      "input": 7029,
+      "output": 2103,
+      "reasoning": 441,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "outcome": "succeeded",
+    "time": {
+      "created": 1794617582314,
+      "updated": 1794617618468,
+      "busy": 1794617582363,
+      "idle": 1794617618471,
+      "viewed": 1794617618471
+    },
+    "title": "Opencode session HTML test export",
+    "location": {
+      "directory": "/home/flipk/proj/pfkutils"
+    }
+  },
+  "messages": [
+    {
+      "id": "msg_1d78b22e0001dWYyNIGV5R71II",
+      "time": {
+        "created": 1794617582367
+      },
+      "text": "i have written a tool for taking a json export of an opencode session and rendering it into HTML. this tool specifically handles several situations that arise that are somewhat nonstandard in markdown but occur often in LLM outputs, such as nested bulleted lists which don't have the 'required' blank lines, gfm-like, dollarmath / latex formulas (the tool tries to recognize the dollar symbols and turn them into MathML), linkify to automatically produce hyperlinks on anything that looks like a url (but not on strings like 'AGENTS.md' or the like), and nice table formatting.  in this turn,  please output some sample output which contains variants of all these things that i can use to test the tool.  once you produce output with all these things in it, i can then do an 'opencode session export' and test my tool.",
+      "files": [],
+      "agents": [],
+      "type": "user"
+    },
+    {
+      "id": "msg_1d78b2325001Qhl4tc3ZC6WoJs",
+      "time": {
+        "created": 1794617582375,
+        "firstToken": 1794617589078,
+        "streamed": 1794617618450,
+        "completed": 1794617618468
+      },
+      "type": "assistant",
+      "agent": "build",
+      "model": {
+        "id": "gemini-4-argon",
+        "providerID": "google",
+        "variant": "medium"
+      },
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "**Developing Markdown Strategy**\n\nI'm focusing on crafting intricate Markdown structures. I am building nested lists, using diverse bullet and number formats, all without extraneous spacing. My goal is clean, readable, and functional output. I'm exploring the nuances of each list type.\n\n\n**Expanding Markdown Scope**\n\nI'm now integrating GFM elements, like strikethrough and task lists, into the Markdown structures. Inline code and code blocks with syntax highlighting are also on the agenda. Next, I'll dive into implementing both inline and display math with LaTeX formulas and edge cases to ensure proper handling of dollar signs. Lastly, I'm working to expand link handling by including bare URLs and explicit Markdown links, including how to handle non-URLs that could be mistaken as broken links.\n\n\n",
+          "time": {
+            "created": 1794617589079,
+            "completed": 1794617593297
+          }
+        },
+        {
+          "type": "text",
+          "text": "Here is a comprehensive test payload containing variants and edge cases for each of the features your HTML renderer handles.\n\n---\n\n# 1. Tightly Nested Lists (No Blank Lines)\n\nHere is a paragraph immediately followed by a bulleted list with **no blank line** in between:\n- Top-level item one (using `-`)\n  - Second-level item A (indented 2 spaces, no blank line above)\n  - Second-level item B with `inline_code()` and **bold text**\n    * Third-level item 1 (switching marker to `*`)\n    * Third-level item 2\n      + Fourth-level item i (switching marker to `+`)\n      + Fourth-level item ii\n- Top-level item two with an immediate ordered sublist:\n  1. First ordered sub-item\n  2. Second ordered sub-item\n     - Nested bullet inside ordered list\n     - Another nested bullet with inline math: $\\alpha + \\beta = \\gamma$\n  3. Third ordered sub-item\n- Top-level item three with GFM task lists:\n  - [x] Completed task: parse tight sublists\n  - [ ] Pending task: verify MathML rendering of $\\int_0^\\infty e^{-x^2} dx$\n  - [x] ~~Deprecated task~~ (with strikethrough)\n\nAnd an ordered list immediately following a colon without a blank line:\n1. Step one: check `AGENTS.md` and `Makefile.am`\n   - Sub-bullet under step one\n   - Second sub-bullet under step one\n2. Step two: run build\n   1. Sub-step 2.1\n   2. Sub-step 2.2\n\n---\n\n# 2. Dollar-Math / LaTeX Formulas (Inline & Display)\n\n### Inline Math Variants\n- **Simple algebraic & Greek:** Let $f(x) = ax^2 + bx + c$ where $a \\neq 0$, and consider $\\theta \\in [0, 2\\pi)$.\n- **Subscripts, superscripts, and roots:** The Euclidean norm is $\\|x\\|_2 = \\sqrt{x_1^2 + x_2^2 + \\dots + x_n^2}$, and Euler's identity is $e^{i\\pi} + 1 = 0$.\n- **Fractions and binomials:** Recall that $\\binom{n}{k} = \\frac{n!}{k!(n-k)!}$ and $\\lim_{x \\to 0} \\frac{\\sin x}{x} = 1$.\n- **Adjacent punctuation:** Does $(\\nabla \\times \\mathbf{E} = -\\frac{\\partial \\mathbf{B}}{\\partial t})$ hold in vacuum? Yes, by Faraday's law: $\\nabla \\cdot \\mathbf{B} = 0$, $\\nabla \\cdot \\mathbf{E} = \\frac{\\rho}{\\varepsilon_0}$.\n- **Currency / Non-math Dollar Edge Cases:** If an item costs $10.50 and another costs $25.00, the total is $35.50 (whereas math $x = 10.50 + 25.00 = 35.50$ uses single dollars without spaces). Also check shell variables like `$HOME` or `${PATH}` inside code vs. prose.\n\n### Single-Line Display Math\n$$ \\hat{f}(\\xi) = \\int_{-\\infty}^{\\infty} f(x)\\, e^{-2\\pi i x \\xi}\\, dx $$\n\n### Multi-Line Display Math (Gaussian Integral & Series)\n$$\n\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}, \\qquad\n\\Gamma(z) = \\int_0^\\infty t^{z-1} e^{-t}\\, dt\n$$\n\n### Multi-Line Aligned Equations (Navier–Stokes / Maxwell / Cauchy)\n$$\n\\begin{aligned}\n\\nabla \\cdot \\mathbf{E} &= \\frac{\\rho}{\\varepsilon_0} \\\\\n\\nabla \\cdot \\mathbf{B} &= 0 \\\\\n\\nabla \\times \\mathbf{E} &= -\\frac{\\partial \\mathbf{B}}{\\partial t} \\\\\n\\nabla \\times \\mathbf{B} &= \\mu_0 \\left( \\mathbf{J} + \\varepsilon_0 \\frac{\\partial \\mathbf{E}}{\\partial t} \\right)\n\\end{aligned}\n$$\n\n### Matrices and Piecewise Cases\n$$\nA = \\begin{pmatrix}\na_{11} & a_{12} & \\cdots & a_{1n} \\\\\na_{21} & a_{22} & \\cdots & a_{2n} \\\\\n\\vdots & \\vdots & \\ddots & \\vdots \\\\\na_{m1} & a_{m2} & \\cdots & a_{mn}\n\\end{pmatrix},\n\\qquad\n\\text{ReLU}(x) = \\begin{cases}\nx & \\text{if } x > 0, \\\\\n0 & \\text{otherwise.}\n\\end{cases}\n$$\n\n---\n\n# 3. Linkify & Non-Link Filename Edge Cases\n\n### Should Be Linkified (Bare URLs & Explicit Links)\n- Standard HTTPS URL: https://github.com/sst/opencode\n- URL with path, query params, and fragment: https://example.com/api/v2/search?q=markdown+mathml&page=1&sort=desc#section-3\n- URL with port and localhost: http://localhost:8080/healthz\n- URL with parentheses (Wikipedia style): https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization_(RAII)\n- URL inside parentheses: (see https://en.cppreference.com/w/cpp/memory/unique_ptr for details)\n- URL followed by trailing punctuation: Visit https://opencode.ai/docs, or check https://news.ycombinator.com.\n- Explicit Markdown link: [MathML Core Specification](https://www.w3.org/TR/mathml-core/)\n\n### Should NOT Be Linkified (Filenames, Identifiers, Versions)\n- Markdown & documentation filenames: `AGENTS.md`, AGENTS.md, README.md, CONTRIBUTING.md, CHANGELOG.txt\n- Source code filenames: main.cpp, parser.h, html_renderer.py, configure.ac, Makefile.in, CMakeLists.txt\n- Config & data files: package.json, tsconfig.json, Cargo.toml, docker-compose.yml\n- Dotted identifiers & member access: `std::filesystem::path`, `obj.member.value`, `req.headers.host`, `sys.stdout.write`\n- Version numbers & IPs: v1.24.3, 2.0.1-beta.4\n\n---\n\n# 4. Tables with Formatting, Math, Alignment, and Links\n\n| Feature / Test Case | Left-Aligned Notes | Centered Formula / Code | Right-Aligned Metric | Status |\n| :--- | :--- | :---: | ---: | :---: |\n| **Time Complexity** | Fast Fourier Transform (Cooley–Tukey) | $\\mathcal{O}(N \\log N)$ | `1,024 ms` | Passed |\n| **Quadratic Formula** | Roots of $ax^2 + bx + c = 0$ | $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$ | `0.0042 s` | Passed |\n| **File Reference** | Do not linkify bare AGENTS.md or main.rs | `std::unique_ptr<T>` | `100.0%` | Verified |\n| **Auto-Linkify** | Bare URL: https://example.org/test | `[link](https://example.org)` | `200 OK` | Active |\n| **Escaped Pipes & Style** | Bitwise OR `a \\| b` and ~~old~~ **new** | $\\|x\\|_1 = \\sum_i \\|x_i\\|$ | `$42.99` | Done |\n\n---\n\n# 5. Blockquotes & Code Blocks (Ensure No Math/Linkify Inside Code)\n\n> **Note on Parser Isolation:**\n> Inside fenced code blocks and inline code spans, strings like `$x^2 + y^2 = z^2$` and `https://should-not-break-code-blocks.example.com` or `AGENTS.md` are typically rendered verbatim:\n> - Bullet inside blockquote without blank line\n>   - Nested bullet inside blockquote with math: $E = \\hbar \\omega$\n\n```cpp\n// C++20 sample: ensure $math$ and https://example.com in comments/strings stay intact\n#include <iostream>\n#include <memory>\n#include <string_view>\n\nint main() {\n    constexpr std::string_view doc_file = \"AGENTS.md\";\n    constexpr std::string_view endpoint = \"https://api.example.com/v1/export?format=html\";\n    // Formula in comment: $f(x) = \\sum_{i=0}^n a_i x^i$\n    auto ptr = std::make_unique<double>(3.141592653589793);\n    std::cout << doc_file << \" -> \" << endpoint << \" (\" << *ptr << \")\\n\";\n    return 0;\n}\n```",
+          "native": {
+            "thoughtSignature": "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"
+          }
+        }
+      ],
+      "snapshot": {
+        "start": "4dc72067497d8afe8d94f728fe19833bbc5b2f5c",
+        "end": "4dc72067497d8afe8d94f728fe19833bbc5b2f5c",
+        "files": []
+      },
+      "finish": "stop",
+      "rawFinish": "STOP",
+      "cost": 0.038172,
+      "tokens": {
+        "input": 6396,
+        "output": 2097,
+        "reasoning": 441,
+        "cache": {
+          "read": 0,
+          "write": 0
+        }
+      }
+    },
+    {
+      "id": "msg_1d78bb027001ASjRaPrpdxYxQM",
+      "time": {
+        "created": 1794617618471
+      },
+      "type": "idle",
+      "outcome": "succeeded"
+    }
+  ]
+}
