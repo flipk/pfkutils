@@ -23,10 +23,15 @@
 #
 # (see also venv-commands.txt)
 
+# for markdown tools
 markdown-it-py
 linkify-it-py
 mdit-py-plugins
 latex2mathml
+
+# for OCR tools
+easyocr
+pytesseract
 
 websockets
 matplotlib
@@ -40,13 +45,19 @@ cryptography
 protobuf
 mypy-protobuf
 
-python-prctl
+# i think this one is optional
+# python-prctl
+
 cstruct
 pillow
 pymupdf
 tk
+
+# qt sucks
 #PyQt5
 #pyqt5-tools
 
-# for github previews of markdown
-grip
+# for github previews of markdown --
+# note this does NOT render markdown locally,
+# it sends it to a server!
+# grip
