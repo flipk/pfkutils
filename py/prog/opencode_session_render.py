@@ -1,56 +1,20 @@
 #!/usr/bin/env python3
-# 
-# opencode v1:
-#    opencode export <session_id> > export.json
-# opencode v2:
-#    opencode session export <session_id> > export.json
-# python render.py export.json session.html
+#
+# opencode session render:
+# Render an OpenCode session export (JSON or via opencode export) to HTML and/or Markdown.
+#
+# Usage:
+#   python opencode_session_render.py -j <export.json> --html <output.html>
+#   python opencode_session_render.py -j <export.json> -m <output.md>
+#   python opencode_session_render.py -e <session_id> --html <output.html> -m <output.md>
 
-# differences between json schema of opencode v1 and v2:
-#
-# 1. Message Role & Type Resolution (get_message_role):
-#    - v1: Role was stored in msg["info"]["role"] or msg["role"].
-#    - v2: Role/type is stored directly in msg["type"] ("user",
-#      "assistant", "idle", "compaction", etc.).
-#    - Updated helper to check msg["info"]["role"], msg["role"],
-#      and msg["type"]. Non-transcript internal state messages (such
-#      as type: "idle") are filtered out automatically.
-#
-# 2. Message Text & Part Extraction (extract_activities):
-#    - v1: User text and assistant parts were stored in msg["parts"]
-#      or msg["content"].
-#    - v2: User prompts are in msg["text"], while assistant responses
-#      (text, reasoning, tool calls) are in msg["content"].
-#    - Updated helper to extract content across msg["parts"],
-#      msg["content"] (string or array of part dicts), and
-#      msg["text"].
-#
-# 3. Tool Call & Execution Formatting (format_tool_call):
-#    - v1: Tool name was part["tool"], call ID was part["callID"],
-#      state output was part["state"][ "output"], and timestamps were
-#      state["time"]["start"]/end.
-#    - v2: Tool name is part["name"], call ID is part["id"], tool
-#      execution output is inside part[ "state"]["content"] (or
-#      part["state"]["error"]), and timestamps are in part["time"] or
-#      state[ "time"] (created, ran, completed).
-#    - Updated format_tool_call to normalize tool names, call IDs
-#      (stripping call_ prefix if present), inputs, errors, outputs,
-#      and execution duration calculation across both versions.
-#
-# 4. Timestamps & Compaction Checks:
-#    - Normalized timestamp extraction across msg["time"]["created"],
-#      msg["info"]["time"], and msg[ "created"].
-#    - Updated compaction message detection to match both v1
-#      (info.mode == "compaction") and v2 (type == "compaction").
-#    - Display session title in header and <title> when present in
-#    - top-level info.title.
-
-
-import json
-import sys
-import os
+import argparse
 import html
+import json
+import os
 import re
+import subprocess
+import sys
 import tempfile
 from datetime import datetime
 
@@ -59,54 +23,21 @@ try:
     from mdit_py_plugins.dollarmath import dollarmath_plugin
     from latex2mathml.converter import convert as tex2mml
 except ImportError:
-    print("Error: Required packages missing.")
-    print("Please install them by running: pip install markdown-it-py linkify-it-py mdit-py-plugins latex2mathml")
+    print("Error: Required packages missing.", file=sys.stderr)
+    print("Please install them by running: pip install markdown-it-py linkify-it-py mdit-py-plugins latex2mathml", file=sys.stderr)
     sys.exit(1)
 
-def usage():
-    print("Usage: opencode v1: opencode         export <session_id> > export.json")
-    print("Usage: opencode v2: opencode session export <session_id> > export.json")
-    print("       python render.py <export.json> <output.html>")
-    print("       python render.py <session_id> <output.html>")
-    sys.exit(1)
-
-if len(sys.argv) < 2:
-    usage()
-
-fname = sys.argv[1]
-
-if fname.startswith('ses_'):
-    # testing: with open('poo.json', mode='w+') as tmpf:
-    with tempfile.NamedTemporaryFile(mode='r+', delete=True) as tmpf:
-        # attempt the opencode v1 version of command
-        ret = os.system(f'opencode export {fname} > {tmpf.name} 2>/dev/null')
-        # if it returns a nonzero exit code,
-        if ret != 0:
-            # attempt the opencode v2 version
-            ret = os.system(f'opencode session export {fname} > {tmpf.name} 2>/dev/null')
-        data = json.load(tmpf)
-elif fname.endswith('.json'):
-    with open(fname, "r", encoding="utf-8") as f:
-        data = json.load(f)
-else:
-    print('must supply a session id or json filename')
-    usage()
-
-
-out_path = sys.argv[2] if len(sys.argv) > 2 else "session.html"
-
-messages = data.get("messages", data.get("history", []))
-session_title = data.get("title") or data.get("info", {}).get("title") or ""
 
 _TEXT_CMD_RE = re.compile(r"(\\(?:text[a-z]*|mbox|hbox|fbox|emph))\{([^{}]*)\}")
 _MTEXT_RE = re.compile(r"(<mtext[^>]*>)(.*?)(</mtext>)")
 
+
 def _clean_text_cmd(match):
     cmd = match.group(1)
     content = match.group(2)
-    # LaTeX text escapes like \_ \% \& \$ \# should produce literal characters in text mode
     content = re.sub(r"\\([_%$&*#])", r"\1", content)
     return f"{cmd}{{{content}}}"
+
 
 def math_renderer(content, options):
     display_mode = options.get("display_mode", False)
@@ -119,6 +50,7 @@ def math_renderer(content, options):
         escaped = html.escape(content)
         delimiter = "$$" if display_mode else "$"
         return f"<code>{delimiter}{escaped}{delimiter}</code>"
+
 
 md = MarkdownIt("gfm-like").use(
     dollarmath_plugin,
@@ -339,187 +271,444 @@ def has_activities(activity_groups):
     return False
 
 
-page_title = f"OpenCode Session: {session_title}" if session_title else "OpenCode Session Export"
-header_title = f"OpenCode Session Transcript: {html.escape(session_title)}" if session_title else "OpenCode Session Transcript"
-
-html_parts = [
-    "<!DOCTYPE html><html><head><meta charset='utf-8'>",
-    f"<title>{html.escape(page_title)}</title>",
-    "<style>",
-    "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #0f172a; color: #e2e8f0; line-height: 1.6; }",
-    ".msg { margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 8px; }",
-    ".user { background: #1e293b; border-left: 4px solid #38bdf8; }",
-    ".assistant { background: #1e293b; border-left: 4px solid #4ade80; }",
-    ".role { font-weight: bold; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 1rem; color: #94a3b8; }",
-    ".timestamp { font-weight: normal; text-transform: none; font-size: 0.7rem; color: #64748b; margin-left: 0.75rem; }",
-    ".compaction { background: #1e293b; border-left: 4px solid #f87171; }",
-    ".compaction .role { color: #f87171; }",
-    ".compaction-summary { cursor: pointer; font-weight: 600; color: #f87171; user-select: none; padding: 0.75rem 0; }",
-    ".compaction-summary:hover { color: #fca5a5; }",
-    ".compaction[open] .compaction-summary::before { content: '▼ '; }",
-    ".compaction .compaction-summary::before { content: '▶ '; }",
-    ".compaction-content { padding: 0.5rem 0 0.75rem; }",
-    ".compaction-content .role { display: none; }",
-    ".content p { margin-top: 0; margin-bottom: 1rem; }",
-    ".content p:last-child { margin-bottom: 0; }",
-    ".content a { color: #38bdf8; text-decoration: none; }",
-    ".content a:hover { text-decoration: underline; }",
-    ".content code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; background: #0b1120; padding: 0.2rem 0.4rem; border-radius: 4px; color: #e2e8f0; }",
-    ".content pre { background: #0b1120; padding: 1rem; border-radius: 6px; overflow-x: auto; border: 1px solid #334155; margin-bottom: 1rem; }",
-    ".content pre code { padding: 0; background: transparent; border-radius: 0; color: inherit; }",
-    ".content table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }",
-    ".content th, .content td { border: 1px solid #334155; padding: 0.5rem; text-align: left; }",
-    ".content th { background-color: #0b1120; font-weight: 600; }",
-    ".content blockquote { border-left: 4px solid #475569; margin: 0; padding-left: 1rem; color: #cbd5e1; }",
-    ".content del, .thinking-content del { text-decoration: line-through; }",
-    "math { font-size: 1.05em; color: inherit; }",
-    ".activity { border-left: 4px solid #fbbf24; background: #1e293b; margin: 0.75rem 0; padding: 1rem; border-radius: 6px; }",
-    ".activity summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; }",
-    ".activity summary:hover { color: #fcd34d; }",
-    ".activity[open] summary::before { content: '▼ '; }",
-    ".activity summary::before { content: '▶ '; }",
-    ".activity-content { margin-top: 0.75rem; }",
-    ".tool-call { background: #0b1120; border: 1px solid #334155; border-radius: 4px; margin: 0.5rem 0; }",
-    ".tool-call summary { padding: 0.5rem 0.75rem; cursor: pointer; user-select: none; }",
-    ".tool-call summary:hover { background: #1e293b; }",
-    ".tool-summary { display: flex; align-items: center; gap: 0.5rem; }",
-    ".call-id { color: #64748b; font-size: 0.8em; }",
-    ".tool-detail { padding: 0.75rem; border-top: 1px solid #334155; }",
-    ".tool-input pre, .tool-output pre { background: #0b1120; padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.85em; color: #94a3b8; margin: 0.25rem 0; white-space: pre-wrap; }",
-    ".tool-output-full { margin-top: 0.5rem; }",
-    ".tool-output-full summary { cursor: pointer; user-select: none; padding: 0; margin: 0; }",
-    ".tool-output-full summary pre { color: #94a3b8; background: #0b1120; padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.85em; margin: 0.25rem 0; white-space: pre-wrap; }",
-    ".tool-output-full summary pre:hover { color: #cbd5e1; }",
-    ".tool-output-full summary::marker { display: none; }",
-    ".tool-output-full summary::-webkit-details-marker { display: none; }",
-    ".tool-output-full[open] summary { display: none; }",
-    ".tool-output-full pre { background: #0b1120; color: #e2e8f0; }",
-    ".tool-output-summary pre { color: #94a3b8; }",
-    ".thinking { margin: 0.5rem 0; padding: 0.75rem; background: #0b1120; border-radius: 4px; border-left: 3px solid #fbbf24; }",
-    ".thinking summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; font-size: 0.9em; }",
-    ".thinking summary:hover { color: #fcd34d; }",
-    ".thinking .thinking-content { margin-top: 0.5rem; font-size: 0.85em; color: #94a3b8; }",
-    ".thinking .thinking-content p { margin-top: 0; margin-bottom: 0.75rem; }",
-    ".thinking .thinking-content p:last-child { margin-bottom: 0; }",
-    ".thinking .thinking-content code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; background: #080d1a; padding: 0.2rem 0.4rem; border-radius: 4px; color: #cbd5e1; }",
-    ".thinking .thinking-content pre { background: #080d1a; padding: 0.75rem; border-radius: 6px; overflow-x: auto; border: 1px solid #1e293b; margin-bottom: 0.75rem; }",
-    ".thinking .thinking-content pre code { padding: 0; background: transparent; border-radius: 0; color: inherit; }",
-    ".thinking[open] summary::before { content: '▼ '; }",
-    ".thinking summary::before { content: '▶ '; }",
-    f"</style></head><body><h1>{header_title}</h1>"
-]
+def load_session_export(session_id):
+    with tempfile.NamedTemporaryFile(mode='w+', encoding='utf-8', delete=True) as tmpf:
+        # Attempt opencode v1: opencode export <session_id>
+        res = subprocess.run(['opencode', 'export', session_id], stdout=tmpf, stderr=subprocess.DEVNULL)
+        if res.returncode != 0:
+            tmpf.seek(0)
+            tmpf.truncate()
+            # Attempt opencode v2: opencode session export <session_id>
+            res = subprocess.run(['opencode', 'session', 'export', session_id], stdout=tmpf, stderr=subprocess.DEVNULL)
+            if res.returncode != 0:
+                print(f"Error: Failed to export session '{session_id}' via opencode CLI.", file=sys.stderr)
+                sys.exit(1)
+        tmpf.seek(0)
+        return json.load(tmpf)
 
 
-def render_message(msg, role, regular_parts, activity_groups, timestamp=""):
-    """Render a single message or group of messages."""
-    compaction = is_compaction_message(msg)
-    msg_class = "compaction" if compaction else html.escape(role)
+def build_turns(messages):
+    turns = []
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+        role = get_message_role(msg)
+        timestamp = get_message_timestamp(msg)
+        compaction = is_compaction_message(msg)
 
-    if compaction:
-        html_parts.append(f"<details class='msg {msg_class}'><summary class='compaction-summary'>COMPACTION")
-        if timestamp:
-            html_parts.append(f" <span class='timestamp'>{html.escape(timestamp)}</span>")
-        html_parts.append("</summary>")
-        html_parts.append("<div class='compaction-content'>")
-    else:
-        html_parts.append(f"<div class='msg {msg_class}'>")
-        role_label = html.escape(role).upper()
-        time_label = f" <span class='timestamp'>{html.escape(timestamp)}</span>" if timestamp else ""
-        html_parts.append(f"<div class='role'>{role_label}{time_label}</div>")
+        reg_test, act_test = extract_activities(msg)
+        if role == "idle" and not reg_test and not has_activities(act_test):
+            i += 1
+            continue
 
-    if regular_parts:
-        content = "\n\n".join(regular_parts)
-        rendered_html = md.render(content)
-        html_parts.append(f"<div class='content'>{rendered_html}</div>")
+        if role == "assistant" and not compaction:
+            combined_regular = []
+            combined_activities = []
+            combined_timestamp = timestamp
+            j = i
+            while j < len(messages):
+                next_msg = messages[j]
+                next_role = get_message_role(next_msg)
+                next_reg, next_act = extract_activities(next_msg)
+                if next_role == "idle" and not next_reg and not has_activities(next_act):
+                    j += 1
+                    continue
+                next_compaction = is_compaction_message(next_msg)
 
-    if activity_groups:
-        all_reasoning = []
-        all_tools = []
-        for activity in activity_groups:
-            for item_type, item_data in activity:
-                if item_type == "reasoning":
-                    all_reasoning.append(item_data)
-                elif item_type == "tool":
-                    all_tools.append(item_data)
-
-        reasoning_count = len(all_reasoning)
-        tool_count = len(all_tools)
-        total_chars = sum(len(t) for t in all_reasoning)
-
-        label_parts = []
-        if reasoning_count:
-            label_parts.append(f"{reasoning_count} reasoning")
-        if tool_count:
-            plural = "s" if tool_count > 1 else ""
-            label_parts.append(f"{tool_count} tool call{plural}")
-        if compaction:
-            label_parts.append("compaction")
-        label = ", ".join(label_parts)
-
-        html_parts.append(f"<details class='activity'><summary>Activity: {label} ({total_chars} chars)</summary>")
-        html_parts.append("<div class='activity-content'>")
-
-        for activity in activity_groups:
-            for item_type, item_data in activity:
-                if item_type == "reasoning":
-                    html_parts.append(format_reasoning(item_data, open_by_default=not compaction))
+                if next_role == "assistant" and not next_compaction:
+                    combined_regular.extend(next_reg)
+                    combined_activities.extend(next_act)
+                    next_ts = get_message_timestamp(next_msg)
+                    if next_ts and (not combined_timestamp or next_ts < combined_timestamp):
+                        combined_timestamp = next_ts
+                    j += 1
                 else:
-                    html_parts.append(format_tool_call(item_data))
+                    break
 
-        html_parts.append("</div></details>")
+            turns.append({
+                "msg": msg,
+                "role": role,
+                "regular_parts": combined_regular,
+                "activity_groups": combined_activities,
+                "timestamp": combined_timestamp,
+                "compaction": False,
+            })
+            i = j
+        else:
+            regular_parts, activity_groups = extract_activities(msg)
+            turns.append({
+                "msg": msg,
+                "role": role,
+                "regular_parts": regular_parts,
+                "activity_groups": activity_groups,
+                "timestamp": timestamp,
+                "compaction": compaction,
+            })
+            i += 1
 
-    if compaction:
-        html_parts.append("</div></details>")
+    return turns
+
+
+def render_html(turns, session_title):
+    page_title = f"OpenCode Session: {session_title}" if session_title else "OpenCode Session Export"
+    header_title = f"OpenCode Session Transcript: {html.escape(session_title)}" if session_title else "OpenCode Session Transcript"
+
+    html_parts = [
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>",
+        f"<title>{html.escape(page_title)}</title>",
+        "<style>",
+        "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; background: #0f172a; color: #e2e8f0; line-height: 1.6; }",
+        ".msg { margin-bottom: 1.5rem; padding: 1.25rem 1.5rem; border-radius: 8px; }",
+        ".user { background: #1e293b; border-left: 4px solid #38bdf8; }",
+        ".assistant { background: #1e293b; border-left: 4px solid #4ade80; }",
+        ".role { font-weight: bold; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 1rem; color: #94a3b8; }",
+        ".timestamp { font-weight: normal; text-transform: none; font-size: 0.7rem; color: #64748b; margin-left: 0.75rem; }",
+        ".compaction { background: #1e293b; border-left: 4px solid #f87171; }",
+        ".compaction .role { color: #f87171; }",
+        ".compaction-summary { cursor: pointer; font-weight: 600; color: #f87171; user-select: none; padding: 0.75rem 0; }",
+        ".compaction-summary:hover { color: #fca5a5; }",
+        ".compaction[open] .compaction-summary::before { content: '▼ '; }",
+        ".compaction .compaction-summary::before { content: '▶ '; }",
+        ".compaction-content { padding: 0.5rem 0 0.75rem; }",
+        ".compaction-content .role { display: none; }",
+        ".content p { margin-top: 0; margin-bottom: 1rem; }",
+        ".content p:last-child { margin-bottom: 0; }",
+        ".content a { color: #38bdf8; text-decoration: none; }",
+        ".content a:hover { text-decoration: underline; }",
+        ".content code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; background: #0b1120; padding: 0.2rem 0.4rem; border-radius: 4px; color: #e2e8f0; }",
+        ".content pre { background: #0b1120; padding: 1rem; border-radius: 6px; overflow-x: auto; border: 1px solid #334155; margin-bottom: 1rem; }",
+        ".content pre code { padding: 0; background: transparent; border-radius: 0; color: inherit; }",
+        ".content table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }",
+        ".content th, .content td { border: 1px solid #334155; padding: 0.5rem; text-align: left; }",
+        ".content th { background-color: #0b1120; font-weight: 600; }",
+        ".content blockquote { border-left: 4px solid #475569; margin: 0; padding-left: 1rem; color: #cbd5e1; }",
+        ".content del, .thinking-content del { text-decoration: line-through; }",
+        "math { font-size: 1.05em; color: inherit; }",
+        ".activity { border-left: 4px solid #fbbf24; background: #1e293b; margin: 0.75rem 0; padding: 1rem; border-radius: 6px; }",
+        ".activity summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; }",
+        ".activity summary:hover { color: #fcd34d; }",
+        ".activity[open] summary::before { content: '▼ '; }",
+        ".activity summary::before { content: '▶ '; }",
+        ".activity-content { margin-top: 0.75rem; }",
+        ".tool-call { background: #0b1120; border: 1px solid #334155; border-radius: 4px; margin: 0.5rem 0; }",
+        ".tool-call summary { padding: 0.5rem 0.75rem; cursor: pointer; user-select: none; }",
+        ".tool-call summary:hover { background: #1e293b; }",
+        ".tool-summary { display: flex; align-items: center; gap: 0.5rem; }",
+        ".call-id { color: #64748b; font-size: 0.8em; }",
+        ".tool-detail { padding: 0.75rem; border-top: 1px solid #334155; }",
+        ".tool-input pre, .tool-output pre { background: #0b1120; padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.85em; color: #94a3b8; margin: 0.25rem 0; white-space: pre-wrap; }",
+        ".tool-output-full { margin-top: 0.5rem; }",
+        ".tool-output-full summary { cursor: pointer; user-select: none; padding: 0; margin: 0; }",
+        ".tool-output-full summary pre { color: #94a3b8; background: #0b1120; padding: 0.5rem; border-radius: 4px; overflow-x: auto; font-size: 0.85em; margin: 0.25rem 0; white-space: pre-wrap; }",
+        ".tool-output-full summary pre:hover { color: #cbd5e1; }",
+        ".tool-output-full summary::marker { display: none; }",
+        ".tool-output-full summary::-webkit-details-marker { display: none; }",
+        ".tool-output-full[open] summary { display: none; }",
+        ".tool-output-full pre { background: #0b1120; color: #e2e8f0; }",
+        ".tool-output-summary pre { color: #94a3b8; }",
+        ".thinking { margin: 0.5rem 0; padding: 0.75rem; background: #0b1120; border-radius: 4px; border-left: 3px solid #fbbf24; }",
+        ".thinking summary { cursor: pointer; font-weight: 600; color: #fbbf24; user-select: none; font-size: 0.9em; }",
+        ".thinking summary:hover { color: #fcd34d; }",
+        ".thinking .thinking-content { margin-top: 0.5rem; font-size: 0.85em; color: #94a3b8; }",
+        ".thinking .thinking-content p { margin-top: 0; margin-bottom: 0.75rem; }",
+        ".thinking .thinking-content p:last-child { margin-bottom: 0; }",
+        ".thinking .thinking-content code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 0.9em; background: #080d1a; padding: 0.2rem 0.4rem; border-radius: 4px; color: #cbd5e1; }",
+        ".thinking .thinking-content pre { background: #080d1a; padding: 0.75rem; border-radius: 6px; overflow-x: auto; border: 1px solid #1e293b; margin-bottom: 0.75rem; }",
+        ".thinking .thinking-content pre code { padding: 0; background: transparent; border-radius: 0; color: inherit; }",
+        ".thinking[open] summary::before { content: '▼ '; }",
+        ".thinking summary::before { content: '▶ '; }",
+        f"</style></head><body><h1>{header_title}</h1>"
+    ]
+
+    for turn in turns:
+        msg = turn["msg"]
+        role = turn["role"]
+        regular_parts = turn["regular_parts"]
+        activity_groups = turn["activity_groups"]
+        timestamp = turn["timestamp"]
+        compaction = turn["compaction"]
+
+        msg_class = "compaction" if compaction else html.escape(role)
+
+        if compaction:
+            html_parts.append(f"<details class='msg {msg_class}'><summary class='compaction-summary'>COMPACTION")
+            if timestamp:
+                html_parts.append(f" <span class='timestamp'>{html.escape(timestamp)}</span>")
+            html_parts.append("</summary>")
+            html_parts.append("<div class='compaction-content'>")
+        else:
+            html_parts.append(f"<div class='msg {msg_class}'>")
+            role_label = html.escape(role).upper()
+            time_label = f" <span class='timestamp'>{html.escape(timestamp)}</span>" if timestamp else ""
+            html_parts.append(f"<div class='role'>{role_label}{time_label}</div>")
+
+        if regular_parts:
+            content = "\n\n".join(regular_parts)
+            rendered_html = md.render(content)
+            html_parts.append(f"<div class='content'>{rendered_html}</div>")
+
+        if activity_groups:
+            all_reasoning = []
+            all_tools = []
+            for activity in activity_groups:
+                for item_type, item_data in activity:
+                    if item_type == "reasoning":
+                        all_reasoning.append(item_data)
+                    elif item_type == "tool":
+                        all_tools.append(item_data)
+
+            reasoning_count = len(all_reasoning)
+            tool_count = len(all_tools)
+            total_chars = sum(len(t) for t in all_reasoning)
+
+            label_parts = []
+            if reasoning_count:
+                label_parts.append(f"{reasoning_count} reasoning")
+            if tool_count:
+                plural = "s" if tool_count > 1 else ""
+                label_parts.append(f"{tool_count} tool call{plural}")
+            if compaction:
+                label_parts.append("compaction")
+            label = ", ".join(label_parts)
+
+            html_parts.append(f"<details class='activity'><summary>Activity: {label} ({total_chars} chars)</summary>")
+            html_parts.append("<div class='activity-content'>")
+
+            for activity in activity_groups:
+                for item_type, item_data in activity:
+                    if item_type == "reasoning":
+                        html_parts.append(format_reasoning(item_data, open_by_default=not compaction))
+                    else:
+                        html_parts.append(format_tool_call(item_data))
+
+            html_parts.append("</div></details>")
+
+        if compaction:
+            html_parts.append("</div></details>")
+        else:
+            html_parts.append("</div>")
+
+    html_parts.append("</body></html>")
+    return "\n".join(html_parts)
+
+
+def format_reasoning_md(text):
+    return f"<details>\n<summary>💭 Thinking ({len(text)} chars)</summary>\n\n{text}\n\n</details>"
+
+
+def make_code_block_md(text, lang=""):
+    if not text:
+        text = "(empty)"
+    if "```" in text:
+        max_run = max((len(m) for m in re.findall(r"`+", text)), default=2)
+        fence = "`" * max(3, max_run + 1)
+        return f"{fence}{lang}\n{text}\n{fence}"
     else:
-        html_parts.append("</div>")
+        return f"```{lang}\n{text}\n```"
 
 
-i = 0
-while i < len(messages):
-    msg = messages[i]
-    role = get_message_role(msg)
-    timestamp = get_message_timestamp(msg)
-    compaction = is_compaction_message(msg)
+def get_tool_summary_arg(part):
+    tool_name = part.get("name") or part.get("tool") or "unknown"
+    state = part.get("state", {})
+    input_data = state.get("input")
+    if not isinstance(input_data, dict):
+        input_data = part.get("input") if isinstance(part.get("input"), dict) else {}
 
-    reg_test, act_test = extract_activities(msg)
-    if role == "idle" and not reg_test and not has_activities(act_test):
-        i += 1
-        continue
-
-    if role == "assistant" and not compaction:
-        combined_regular = []
-        combined_activities = []
-        combined_timestamp = timestamp
-        j = i
-        while j < len(messages):
-            next_msg = messages[j]
-            next_role = get_message_role(next_msg)
-            next_reg, next_act = extract_activities(next_msg)
-            if next_role == "idle" and not next_reg and not has_activities(next_act):
-                j += 1
-                continue
-            next_compaction = is_compaction_message(next_msg)
-
-            if next_role == "assistant" and not next_compaction:
-                combined_regular.extend(next_reg)
-                combined_activities.extend(next_act)
-                next_ts = get_message_timestamp(next_msg)
-                if next_ts and (not combined_timestamp or next_ts < combined_timestamp):
-                    combined_timestamp = next_ts
-                j += 1
-            else:
+    summary_arg = ""
+    if isinstance(input_data, dict) and input_data:
+        for key in ("command", "cmd", "path", "file", "filepath", "filename", "pattern", "query", "url", "prompt", "description"):
+            if key in input_data and input_data[key]:
+                summary_arg = str(input_data[key])
                 break
+        if not summary_arg:
+            for val in input_data.values():
+                if val:
+                    if isinstance(val, (str, int, float, bool)):
+                        summary_arg = str(val)
+                        break
+                    elif isinstance(val, list) and val and isinstance(val[0], (str, int, float, bool)):
+                        summary_arg = str(val[0])
+                        break
 
-        render_message(msg, role, combined_regular, combined_activities, combined_timestamp)
-        i = j
+    if summary_arg:
+        summary_arg = " ".join(summary_arg.strip().split())
+        if len(summary_arg) > 80:
+            summary_arg = summary_arg[:77] + "..."
+    return summary_arg
+
+
+def extract_tool_input_str(part):
+    tool_name = part.get("name") or part.get("tool") or "unknown"
+    state = part.get("state", {})
+    input_data = state.get("input")
+    if input_data is None:
+        input_data = part.get("input", {})
+
+    if isinstance(input_data, dict):
+        if tool_name in ("shell", "bash", "exec", "terminal") and ("command" in input_data or "cmd" in input_data):
+            return str(input_data.get("command") or input_data.get("cmd"))
+        elif input_data:
+            return json.dumps(input_data, indent=2)
+        else:
+            return ""
+    elif isinstance(input_data, str):
+        return input_data
     else:
-        regular_parts, activity_groups = extract_activities(msg)
-        render_message(msg, role, regular_parts, activity_groups, timestamp)
-        i += 1
+        return json.dumps(input_data, indent=2) if input_data else ""
 
-html_parts.append("</body></html>")
 
-with open(out_path, "w", encoding="utf-8") as f:
-    f.write("\n".join(html_parts))
+def extract_tool_output_str(part):
+    state = part.get("state", {})
+    error = state.get("error")
+    output_str = ""
 
-print(f"Rendered to {out_path}")
+    if error:
+        if isinstance(error, dict):
+            err_msg = error.get("message") or json.dumps(error, indent=2)
+            output_str = f"ERROR: {err_msg}"
+        else:
+            output_str = f"ERROR: {error}"
+    elif "output" in state and state["output"] is not None:
+        output_data = state["output"]
+        if isinstance(output_data, (dict, list)):
+            output_str = json.dumps(output_data, indent=2)
+        else:
+            output_str = str(output_data)
+    elif "content" in state and state["content"] is not None:
+        content_list = state["content"]
+        if isinstance(content_list, list):
+            text_parts = []
+            for item in content_list:
+                if isinstance(item, dict):
+                    if item.get("type") == "text" and "text" in item:
+                        text_parts.append(item["text"])
+                    else:
+                        text_parts.append(json.dumps(item, indent=2))
+                elif isinstance(item, str):
+                    text_parts.append(item)
+            output_str = "\n".join(text_parts)
+        elif isinstance(content_list, dict):
+            output_str = json.dumps(content_list, indent=2)
+        else:
+            output_str = str(content_list)
+    else:
+        output_str = "(no output)"
+
+    if not output_str:
+        output_str = "(no output)"
+
+    return output_str
+
+
+def format_tool_call_md(part):
+    tool_name = part.get("name") or part.get("tool") or "unknown"
+    summary_arg = get_tool_summary_arg(part)
+
+    input_str = extract_tool_input_str(part)
+    output_str = extract_tool_output_str(part)
+
+    if summary_arg:
+        cmd_summary = f"🔧 Tool Call: `{tool_name}` (`{summary_arg}`)"
+    else:
+        cmd_summary = f"🔧 Tool Call: `{tool_name}`"
+
+    lines_cnt = len(output_str.splitlines())
+    res_summary = f"📋 Tool Result: `{tool_name}` ({lines_cnt} line{'s' if lines_cnt != 1 else ''})"
+
+    cmd_block = make_code_block_md(input_str if input_str else "(no input arguments)")
+    out_block = make_code_block_md(output_str)
+
+    cmd_details = f"<details>\n<summary>{cmd_summary}</summary>\n\n{cmd_block}\n\n</details>"
+    out_details = f"<details>\n<summary>{res_summary}</summary>\n\n{out_block}\n\n</details>"
+
+    return f"{cmd_details}\n\n{out_details}"
+
+
+def render_markdown(turns, session_title):
+    md_parts = []
+    header_title = f"# OpenCode Session: {session_title}" if session_title else "# OpenCode Session Transcript"
+    md_parts.append(header_title)
+
+    for turn in turns:
+        role = turn["role"]
+        regular_parts = turn["regular_parts"]
+        activity_groups = turn["activity_groups"]
+        timestamp = turn["timestamp"]
+        compaction = turn["compaction"]
+
+        time_str = f" *({timestamp})*" if timestamp else ""
+        role_label = "COMPACTION" if compaction else role.upper()
+
+        turn_lines = [f"## {role_label}{time_str}"]
+
+        if regular_parts:
+            turn_lines.append("\n\n".join(regular_parts))
+
+        if activity_groups:
+            for activity in activity_groups:
+                for item_type, item_data in activity:
+                    if item_type == "reasoning":
+                        turn_lines.append(format_reasoning_md(item_data))
+                    elif item_type == "tool":
+                        turn_lines.append(format_tool_call_md(item_data))
+
+        md_parts.append("\n\n".join(turn_lines))
+
+    return "\n\n---\n\n".join(md_parts) + "\n"
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Render an OpenCode session export to HTML and/or Markdown."
+    )
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
+        "-j", "--json", metavar="FILE", help="Path to JSON session export file"
+    )
+    input_group.add_argument(
+        "-e", "--export", metavar="SESSION_ID", help="Session ID to export using opencode"
+    )
+
+    parser.add_argument(
+        "--html", metavar="FILE", help="Path for output HTML file"
+    )
+    parser.add_argument(
+        "-m", "--markdown", "--md", metavar="FILE", help="Path for output Markdown file"
+    )
+
+    args = parser.parse_args()
+
+    if not args.html and not args.markdown:
+        parser.error("At least one output option (--html or -m/--markdown) must be specified.")
+
+    if args.json:
+        if not os.path.exists(args.json):
+            print(f"Error: File '{args.json}' does not exist.", file=sys.stderr)
+            sys.exit(1)
+        with open(args.json, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    elif args.export:
+        data = load_session_export(args.export)
+    else:
+        data = {}
+
+    messages = data.get("messages", data.get("history", []))
+    session_title = data.get("title") or data.get("info", {}).get("title") or ""
+
+    turns = build_turns(messages)
+
+    if args.html:
+        html_content = render_html(turns, session_title)
+        with open(args.html, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        print(f"Rendered HTML to {args.html}")
+
+    if args.markdown:
+        md_content = render_markdown(turns, session_title)
+        with open(args.markdown, "w", encoding="utf-8") as f:
+            f.write(md_content)
+        print(f"Rendered Markdown to {args.markdown}")
+
+
+if __name__ == "__main__":
+    main()
